@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+	Enable
+-->
+<CustomItemBank Enable="1" >
+	<Message>
+	<!-- Mess-->
+		<Msg Index="0"	Text="[Bank] Chức năng không khả dụng" />
+		<Msg Index="1"	Text="[Bank] Thùng đồ không có %s để gửi!" />
+		<Msg Index="2"	Text="[Bank] Không đủ để rút, hết rồi ba!" />
+		<Msg Index="3"	Text="[Bank] (%s) chỉ gửi được tối đa %d !" />
+		<Msg Index="4"	Text="[Bank] Bạn vừa (+%d) (%s) vào Bank" />
+		<Msg Index="5"	Text="[Bank] Bạn vừa (%d) (%s) từ Bank" />
+		<Msg Index="6"	Text="[Bank] Thùng đồ không đủ chỗ trống, hãy sắp xếp lại" />
+	</Message>
+	<!-- Active = 0 (không hiển thị ở bank, không rút gửi được)
+		AutoLoot = 1 khi nhặt Item sẽ tự động gửi vào Bank...
+		ItemIndex,ItemLevel = Item
+		MaxCountTypeX = số lượng tối đa được phép gửi vào bank theo type nhân vật (vip 0, 1,2,3)
+	-->
+	<ListBank>
+		<Item  Active="1" AutoLoot="1" ItemIndex="6159" ItemLevel="0"   Cum10Index="6285"  Cum10Level="0"  Cum20Index="6285" Cum20Level="1" Cum30Index="6285" Cum30Level="2"   MaxCountType0="10000" MaxCountType1="10000" MaxCountType2="10000" MaxCountType3="10000" MaxRut="10"/>
+     	<Item  Active="1" AutoLoot="1" ItemIndex="7181" ItemLevel="0"   Cum10Index="6174"  Cum10Level="0"  Cum20Index="6174" Cum20Level="1" Cum30Index="6174" Cum30Level="2"   MaxCountType0="10000" MaxCountType1="10000" MaxCountType2="10000" MaxCountType3="10000" MaxRut="10"/>
+		<Item  Active="1" AutoLoot="1" ItemIndex="7182" ItemLevel="0"   Cum10Index="6175"  Cum10Level="0"  Cum20Index="6175" Cum20Level="1" Cum30Index="6175" Cum30Level="2"   MaxCountType0="10000" MaxCountType1="10000" MaxCountType2="10000" MaxCountType3="10000" MaxRut="10"/>
+		<Item  Active="1" AutoLoot="1" ItemIndex="7184" ItemLevel="0"   Cum10Index="6280"  Cum10Level="0"  Cum20Index="6280" Cum20Level="1" Cum30Index="6280" Cum30Level="2"   MaxCountType0="10000" MaxCountType1="10000" MaxCountType2="10000" MaxCountType3="10000" MaxRut="10"/>
+		<Item  Active="1" AutoLoot="1" ItemIndex="7190" ItemLevel="0"   Cum10Index="6281"  Cum10Level="0"  Cum20Index="6281" Cum20Level="1" Cum30Index="6281" Cum30Level="2"   MaxCountType0="10000" MaxCountType1="10000" MaxCountType2="10000" MaxCountType3="10000" MaxRut="10"/>
+		<Item  Active="1" AutoLoot="1" ItemIndex="7199" ItemLevel="0"   Cum10Index="6282"  Cum10Level="0"  Cum20Index="6282" Cum20Level="1" Cum30Index="6282" Cum30Level="2"   MaxCountType0="10000" MaxCountType1="10000" MaxCountType2="10000" MaxCountType3="10000" MaxRut="10"/>
+		<Item  Active="1" AutoLoot="1" ItemIndex="7209" ItemLevel="0"   Cum10Index="6283"  Cum10Level="0"  Cum20Index="6283" Cum20Level="1" Cum30Index="6283" Cum30Level="2"   MaxCountType0="10000" MaxCountType1="10000" MaxCountType2="10000" MaxCountType3="10000" MaxRut="10"/>
+		<Item  Active="1" AutoLoot="1" ItemIndex="7210" ItemLevel="0"   Cum10Index="6284"  Cum10Level="0"  Cum20Index="6284" Cum20Level="1" Cum30Index="6284" Cum30Level="2"   MaxCountType0="10000" MaxCountType1="10000" MaxCountType2="10000" MaxCountType3="10000" MaxRut="10"/>		
+		<Item  Active="1" AutoLoot="1" ItemIndex="7211" ItemLevel="0"   Cum10Index="7211"  Cum10Level="0"  Cum20Index="7211" Cum20Level="1" Cum30Index="7211" Cum30Level="2"   MaxCountType0="10000" MaxCountType1="10000" MaxCountType2="10000" MaxCountType3="10000" MaxRut="10"/>		
+		<Item  Active="1" AutoLoot="1" ItemIndex="7212" ItemLevel="0"   Cum10Index="6287"  Cum10Level="0"  Cum20Index="6287" Cum20Level="1" Cum30Index="6287" Cum30Level="2"   MaxCountType0="10000" MaxCountType1="10000" MaxCountType2="10000" MaxCountType3="10000" MaxRut="10"/>		
+		<Item  Active="1" AutoLoot="1" ItemIndex="7179" ItemLevel="8"   Cum10Index="-1"    Cum10Level="8"  Cum20Index="-1" 	 Cum20Level="8"  Cum30Index="-1" Cum30Level="8"    MaxCountType0="10000" MaxCountType1="10000" MaxCountType2="10000" MaxCountType3="10000" MaxRut="10"/>		
+		<Item  Active="1" AutoLoot="1" ItemIndex="7179" ItemLevel="9"   Cum10Index="-1"    Cum10Level="9"  Cum20Index="-1" 	 Cum20Level="9"  Cum30Index="-1" Cum30Level="9"    MaxCountType0="10000" MaxCountType1="10000" MaxCountType2="10000" MaxCountType3="10000" MaxRut="10"/>		
+		<Item  Active="1" AutoLoot="1" ItemIndex="7179" ItemLevel="10"  Cum10Index="-1"    Cum10Level="10" Cum20Index="-1" 	 Cum20Level="10" Cum30Index="-1" Cum30Level="10"   MaxCountType0="10000" MaxCountType1="10000" MaxCountType2="10000" MaxCountType3="10000" MaxRut="10"/>		
+		<Item  Active="1" AutoLoot="1" ItemIndex="7179" ItemLevel="11"  Cum10Index="-1"    Cum10Level="11" Cum20Index="-1" 	 Cum20Level="11" Cum30Index="-1" Cum30Level="11"   MaxCountType0="10000" MaxCountType1="10000" MaxCountType2="10000" MaxCountType3="10000" MaxRut="10"/>		
+		<Item  Active="1" AutoLoot="1" ItemIndex="7179" ItemLevel="12"  Cum10Index="-1"    Cum10Level="12" Cum20Index="-1" 	 Cum20Level="12" Cum30Index="-1" Cum30Level="12"   MaxCountType0="10000" MaxCountType1="10000" MaxCountType2="10000" MaxCountType3="10000" MaxRut="10"/>		
+		
+		<Item  Active="1" AutoLoot="1" ItemIndex="7412" ItemLevel="0"   Cum10Index="-1"  Cum10Level="0"  Cum20Index="-1" Cum20Level="1" Cum30Index="-1" Cum30Level="2"   MaxCountType0="10000" MaxCountType1="10000" MaxCountType2="10000" MaxCountType3="10000" MaxRut="10"/>		
+		<Item  Active="1" AutoLoot="1" ItemIndex="7413" ItemLevel="0"   Cum10Index="-1"  Cum10Level="0"  Cum20Index="-1" Cum20Level="1" Cum30Index="-1" Cum30Level="2"   MaxCountType0="10000" MaxCountType1="10000" MaxCountType2="10000" MaxCountType3="10000" MaxRut="10"/>		
+		<Item  Active="1" AutoLoot="1" ItemIndex="7414" ItemLevel="0"   Cum10Index="-1"  Cum10Level="0"  Cum20Index="-1" Cum20Level="1" Cum30Index="-1" Cum30Level="2"   MaxCountType0="10000" MaxCountType1="10000" MaxCountType2="10000" MaxCountType3="10000" MaxRut="10"/>		
+		<Item  Active="1" AutoLoot="1" ItemIndex="7415" ItemLevel="0"   Cum10Index="-1"  Cum10Level="0"  Cum20Index="-1" Cum20Level="1" Cum30Index="-1" Cum30Level="2"   MaxCountType0="10000" MaxCountType1="10000" MaxCountType2="10000" MaxCountType3="10000" MaxRut="10"/>		
+		<Item  Active="1" AutoLoot="1" ItemIndex="7416" ItemLevel="0"   Cum10Index="-1"  Cum10Level="0"  Cum20Index="-1" Cum20Level="1" Cum30Index="-1" Cum30Level="2"   MaxCountType0="10000" MaxCountType1="10000" MaxCountType2="10000" MaxCountType3="10000" MaxRut="10"/>		
+		<Item  Active="1" AutoLoot="1" ItemIndex="7417" ItemLevel="0"   Cum10Index="-1"  Cum10Level="0"  Cum20Index="-1" Cum20Level="1" Cum30Index="-1" Cum30Level="2"   MaxCountType0="10000" MaxCountType1="10000" MaxCountType2="10000" MaxCountType3="10000" MaxRut="10"/>		
+		<Item  Active="1" AutoLoot="1" ItemIndex="7418" ItemLevel="0"   Cum10Index="-1"  Cum10Level="0"  Cum20Index="-1" Cum20Level="1" Cum30Index="-1" Cum30Level="2"   MaxCountType0="10000" MaxCountType1="10000" MaxCountType2="10000" MaxCountType3="10000" MaxRut="10"/>		
+		<Item  Active="1" AutoLoot="1" ItemIndex="7419" ItemLevel="0"   Cum10Index="-1"  Cum10Level="0"  Cum20Index="-1" Cum20Level="1" Cum30Index="-1" Cum30Level="2"   MaxCountType0="10000" MaxCountType1="10000" MaxCountType2="10000" MaxCountType3="10000" MaxRut="10"/>		
+		<Item  Active="1" AutoLoot="1" ItemIndex="7420" ItemLevel="0"   Cum10Index="-1"  Cum10Level="0"  Cum20Index="-1" Cum20Level="1" Cum30Index="-1" Cum30Level="2"   MaxCountType0="10000" MaxCountType1="10000" MaxCountType2="10000" MaxCountType3="10000" MaxRut="10"/>		
+		<Item  Active="1" AutoLoot="1" ItemIndex="7428" ItemLevel="0"   Cum10Index="-1"  Cum10Level="0"  Cum20Index="-1" Cum20Level="1" Cum30Index="-1" Cum30Level="2"   MaxCountType0="10000" MaxCountType1="10000" MaxCountType2="10000" MaxCountType3="10000" MaxRut="10"/>		
+		<Item  Active="1" AutoLoot="1" ItemIndex="7429" ItemLevel="0"   Cum10Index="-1"  Cum10Level="0"  Cum20Index="-1" Cum20Level="1" Cum30Index="-1" Cum30Level="2"   MaxCountType0="10000" MaxCountType1="10000" MaxCountType2="10000" MaxCountType3="10000" MaxRut="10"/>		
+	
+	</ListBank>
+	
+	
+</CustomItemBank>

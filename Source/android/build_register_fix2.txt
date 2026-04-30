@@ -1,0 +1,752 @@
+
+> Configure project :app
+TakumiMu native ABIs: x86_64
+
+> Task :app:patchSourceJniLibs16k
+> Task :app:preBuild
+> Task :app:preUniversalDebugBuild
+> Task :app:mergeUniversalDebugNativeDebugMetadata NO-SOURCE
+> Task :app:generateUniversalDebugBuildConfig UP-TO-DATE
+> Task :app:javaPreCompileUniversalDebug UP-TO-DATE
+> Task :app:checkUniversalDebugAarMetadata UP-TO-DATE
+> Task :app:generateUniversalDebugResValues UP-TO-DATE
+> Task :app:mapUniversalDebugSourceSetPaths UP-TO-DATE
+> Task :app:generateUniversalDebugResources UP-TO-DATE
+> Task :app:mergeUniversalDebugResources UP-TO-DATE
+> Task :app:packageUniversalDebugResources UP-TO-DATE
+> Task :app:parseUniversalDebugLocalResources UP-TO-DATE
+> Task :app:createUniversalDebugCompatibleScreenManifests UP-TO-DATE
+> Task :app:extractDeepLinksUniversalDebug UP-TO-DATE
+> Task :app:processUniversalDebugMainManifest UP-TO-DATE
+> Task :app:processUniversalDebugManifest UP-TO-DATE
+> Task :app:processUniversalDebugManifestForPackage UP-TO-DATE
+> Task :app:processUniversalDebugResources UP-TO-DATE
+> Task :app:compileUniversalDebugJavaWithJavac UP-TO-DATE
+> Task :app:mergeUniversalDebugShaders UP-TO-DATE
+> Task :app:compileUniversalDebugShaders NO-SOURCE
+> Task :app:generateUniversalDebugAssets UP-TO-DATE
+> Task :app:mergeUniversalDebugAssets UP-TO-DATE
+> Task :app:compressUniversalDebugAssets UP-TO-DATE
+> Task :app:checkUniversalDebugDuplicateClasses UP-TO-DATE
+> Task :app:desugarUniversalDebugFileDependencies UP-TO-DATE
+> Task :app:mergeExtDexUniversalDebug UP-TO-DATE
+> Task :app:mergeLibDexUniversalDebug UP-TO-DATE
+> Task :app:dexBuilderUniversalDebug UP-TO-DATE
+> Task :app:mergeProjectDexUniversalDebug UP-TO-DATE
+> Task :app:mergeUniversalDebugGlobalSynthetics UP-TO-DATE
+> Task :app:processUniversalDebugJavaRes NO-SOURCE
+> Task :app:mergeUniversalDebugJavaResource UP-TO-DATE
+> Task :app:configureCMakeDebug[x86_64]
+
+> Task :app:buildCMakeDebug[x86_64]
+C/C++: ninja: Entering directory `D:\takumi\Source\android\app\.cxx\Debug\2y1y272p\x86_64'
+C/C++: D:/takumi/Source/5.Main/source/CB_DangKyInGame.cpp:1:10: warning: non-portable path to file '"stdafx.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "StdAfx.h"
+C/C++:          ^~~~~~~~~~
+C/C++:          "stdafx.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/CB_DangKyInGame.cpp:1:
+C/C++: In file included from D:/takumi/Source/5.Main/source/StdAfx.h:94:
+C/C++: D:/takumi/Source/5.Main/source/Platform/PlatformDefs.h:678:14: warning: '__stdcall' calling convention is not supported for this target [-Wignored-attributes]
+C/C++:     unsigned(__stdcall* fn)(void*);
+C/C++:              ^
+C/C++: D:/takumi/Source/5.Main/source/Platform/PlatformDefs.h:2366:59: warning: '__stdcall' calling convention is not supported for this target [-Wignored-attributes]
+C/C++: inline uintptr_t _beginthreadex(void*, unsigned, unsigned(__stdcall* fn)(void*), void* arg, unsigned, unsigned* pThreadId) {
+C/C++:                                                           ^
+C/C++: D:/takumi/Source/5.Main/source/Platform/PlatformDefs.h:2642:201: warning: '__stdcall' calling convention is not supported for this target [-Wignored-attributes]
+C/C++: inline HANDLE CreateThread(void*, SIZE_T, LPTHREAD_START_ROUTINE start, void* param, DWORD, DWORD* threadId) { unsigned id = 0; uintptr_t handle = _beginthreadex(nullptr, 0, reinterpret_cast<unsigned(__stdcall*)(void*)>(start), param, 0, &id); if (threadId) *threadId = id; return reinterpret_cast<HANDLE>(handle); }
+C/C++:                                                                                                                                                                                                         ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/CB_DangKyInGame.cpp:1:
+C/C++: In file included from D:/takumi/Source/5.Main/source/StdAfx.h:108:
+C/C++: D:/takumi/Source/5.Main/source/_define.h:320:9: warning: 'IME_CONVERSIONMODE' macro redefined [-Wmacro-redefined]
+C/C++: #define IME_CONVERSIONMODE  1
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/Platform/PlatformDefs.h:750:9: note: previous definition is here
+C/C++: #define IME_CONVERSIONMODE     0x0001
+C/C++:         ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/CB_DangKyInGame.cpp:1:
+C/C++: In file included from D:/takumi/Source/5.Main/source/StdAfx.h:108:
+C/C++: D:/takumi/Source/5.Main/source/_define.h:321:9: warning: 'IME_SENTENCEMODE' macro redefined [-Wmacro-redefined]
+C/C++: #define IME_SENTENCEMODE    2
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/Platform/PlatformDefs.h:753:9: note: previous definition is here
+C/C++: #define IME_SENTENCEMODE       0x0002
+C/C++:         ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/CB_DangKyInGame.cpp:1:
+C/C++: In file included from D:/takumi/Source/5.Main/source/StdAfx.h:111:
+C/C++: In file included from D:/takumi/Source/5.Main/source/_struct.h:10:
+C/C++: D:/takumi/Source/5.Main/source/w_CharacterInfo.h:114:15: warning: anonymous non-C-compatible type given name for linkage purposes by typedef declaration; add a tag name here [-Wnon-c-typedef-for-linkage]
+C/C++: typedef struct
+C/C++:               ^
+C/C++:                NEW_HEALTH_BAR
+C/C++: D:/takumi/Source/5.Main/source/w_CharacterInfo.h:122:2: note: type is not C-compatible due to this member declaration
+C/C++:         void Clear()
+C/C++:         ^~~~~~~~~~~~
+C/C++: D:/takumi/Source/5.Main/source/w_CharacterInfo.h:131:3: note: type is given name 'NEW_HEALTH_BAR' for linkage purposes by this typedef declaration
+C/C++: } NEW_HEALTH_BAR;
+C/C++:   ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/CB_DangKyInGame.cpp:1:
+C/C++: In file included from D:/takumi/Source/5.Main/source/StdAfx.h:111:
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:481:3: warning: 'memset' will set 0 bytes; maybe the arguments got flipped? [-Wuser-defined-warnings]
+C/C++:                 FillMemory(ViewDamageTable,0,sizeof(ViewDamageTable));
+C/C++:                 ^
+C/C++: D:/takumi/Source/5.Main/source/Platform/PlatformDefs.h:240:56: note: expanded from macro 'FillMemory'
+C/C++: #define FillMemory(ptr,sz,val)  memset((ptr),(val),(sz))
+C/C++:                                                        ^
+C/C++: C:/Users/thanh/AppData/Local/Android/Sdk/ndk/25.1.8937393/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/bits/fortify/string.h:144:9: note: from 'diagnose_if' attribute on 'memset':
+C/C++:         __clang_warning_if(c && !n, "'memset' will set 0 bytes; maybe the arguments got flipped?") {
+C/C++:         ^                  ~~~~~~~
+C/C++: C:/Users/thanh/AppData/Local/Android/Sdk/ndk/25.1.8937393/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/sys/cdefs.h:139:54: note: expanded from macro '__clang_warning_if'
+C/C++: #define __clang_warning_if(cond, msg) __attribute__((diagnose_if(cond, msg, "warning")))
+C/C++:                                                      ^           ~~~~
+C/C++: In file included from D:/takumi/Source/5.Main/source/CB_DangKyInGame.cpp:1:
+C/C++: In file included from D:/takumi/Source/5.Main/source/StdAfx.h:111:
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:392:15: warning: anonymous non-C-compatible type given name for linkage purposes by typedef declaration; add a tag name here [-Wnon-c-typedef-for-linkage]
+C/C++: typedef struct
+C/C++:               ^
+C/C++:                PRINT_PLAYER_S6
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:463:2: note: type is not C-compatible due to this member declaration
+C/C++:         void Clear()
+C/C++:         ^~~~~~~~~~~~
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:535:3: note: type is given name 'PRINT_PLAYER_S6' for linkage purposes by this typedef declaration
+C/C++: } PRINT_PLAYER_S6;
+C/C++:   ^
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:999:3: warning: array index 2 is past the end of the array (which contains 2 elements) [-Warray-bounds]
+C/C++:                 ReBuff[2] = 0;
+C/C++:                 ^      ~
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:977:2: note: array 'ReBuff' declared here
+C/C++:         bool ReBuff[2];
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:1089:8: warning: extra tokens at end of #endif directive [-Wextra-tokens]
+C/C++: #endif ___STRUCT_H__
+C/C++:        ^
+C/C++:        //
+C/C++: In file included from D:/takumi/Source/5.Main/source/CB_DangKyInGame.cpp:1:
+C/C++: In file included from D:/takumi/Source/5.Main/source/StdAfx.h:113:
+C/C++: In file included from D:/takumi/Source/5.Main/source/_GlobalFunctions.h:4:
+C/C++: D:/takumi/Source/5.Main/source/ZzzScene.h:2:10: warning: non-portable path to file '"ZzzInfomation.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzinfomation.h"
+C/C++:          ^~~~~~~~~~~~~~~~~
+C/C++:          "ZzzInfomation.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/CB_DangKyInGame.cpp:2:
+C/C++: In file included from D:/takumi/Source/5.Main/source/CB_DangKyInGame.h:2:
+C/C++: In file included from D:/takumi/Source/5.Main/source/Protocol.h:2:
+C/C++: In file included from D:/takumi/Source/5.Main/source/WSclient.h:6:
+C/C++: In file included from D:/takumi/Source/5.Main/source/wsctlc.h:10:
+C/C++: In file included from D:/takumi/Source/5.Main/source/Protect.h:11:
+C/C++: D:/takumi/Source/5.Main/source/CustomCloak.h:4:10: warning: non-portable path to file '"ZzzInfomation.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzinfomation.h"
+C/C++:          ^~~~~~~~~~~~~~~~~
+C/C++:          "ZzzInfomation.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/CB_DangKyInGame.cpp:2:
+C/C++: In file included from D:/takumi/Source/5.Main/source/CB_DangKyInGame.h:2:
+C/C++: In file included from D:/takumi/Source/5.Main/source/Protocol.h:2:
+C/C++: D:/takumi/Source/5.Main/source/WSclient.h:2000:29: warning: implicit conversion of NULL constant to 'int' [-Wnull-conversion]
+C/C++:                 memset(&m_MatchTeamName1, NULL, MAX_ID_SIZE); 
+C/C++:                 ~~~~~~                    ^~~~
+C/C++:                                           0
+C/C++: D:/takumi/Source/5.Main/source/WSclient.h:2001:29: warning: implicit conversion of NULL constant to 'int' [-Wnull-conversion]
+C/C++:                 memset(&m_MatchTeamName2, NULL, MAX_ID_SIZE);
+C/C++:                 ~~~~~~                    ^~~~
+C/C++:                                           0
+C/C++: D:/takumi/Source/5.Main/source/WSclient.h:1996:15: warning: anonymous non-C-compatible type given name for linkage purposes by typedef declaration; add a tag name here [-Wnon-c-typedef-for-linkage]
+C/C++: typedef struct
+C/C++:               ^
+C/C++:                PMSG_MATCH_RESULT
+C/C++: D:/takumi/Source/5.Main/source/WSclient.h:1998:2: note: type is not C-compatible due to this member declaration
+C/C++:         void                    Clear()
+C/C++:         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C/C++: D:/takumi/Source/5.Main/source/WSclient.h:2017:2: note: type is given name 'PMSG_MATCH_RESULT' for linkage purposes by this typedef declaration
+C/C++: }PMSG_MATCH_RESULT, *LPPMSG_MATCH_RESULT;
+C/C++:  ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/CB_DangKyInGame.cpp:3:
+C/C++: In file included from D:/takumi/Source/5.Main/source/NewUISystem.h:11:
+C/C++: In file included from D:/takumi/Source/5.Main/source/NewUIChatLogWindow.h:7:
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.h:4:
+C/C++: In file included from D:/takumi/Source/5.Main/source/GlobalBitmap.h:12:
+C/C++: D:/takumi/Source/android/app/src/main/cpp/compat_include/Jpeglib.h:24:10: warning: non-portable path to file '"Jconfig.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "jconfig.h"            /* widely used configuration options */
+C/C++:          ^~~~~~~~~~~
+C/C++:          "Jconfig.h"
+C/C++: D:/takumi/Source/android/app/src/main/cpp/compat_include/Jpeglib.h:26:10: warning: non-portable path to file '"Jmorecfg.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "jmorecfg.h"           /* seldom changed options */
+C/C++:          ^~~~~~~~~~~~
+C/C++:          "Jmorecfg.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/CB_DangKyInGame.cpp:3:
+C/C++: In file included from D:/takumi/Source/5.Main/source/NewUISystem.h:11:
+C/C++: In file included from D:/takumi/Source/5.Main/source/NewUIChatLogWindow.h:7:
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.h:4:
+C/C++: D:/takumi/Source/5.Main/source/GlobalBitmap.h:18:15: warning: anonymous non-C-compatible type given name for linkage purposes by typedef declaration; add a tag name here [-Wnon-c-typedef-for-linkage]
+C/C++: typedef struct
+C/C++:               ^
+C/C++:                BITMAP_t
+C/C++: D:/takumi/Source/5.Main/source/GlobalBitmap.h:29:1: note: type is not C-compatible due to this member declaration
+C/C++: private:
+C/C++: ^~~~~~~~
+C/C++: D:/takumi/Source/5.Main/source/GlobalBitmap.h:32:3: note: type is given name 'BITMAP_t' for linkage purposes by this typedef declaration
+C/C++: } BITMAP_t;
+C/C++:   ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/CB_DangKyInGame.cpp:3:
+C/C++: In file included from D:/takumi/Source/5.Main/source/NewUISystem.h:12:
+C/C++: In file included from D:/takumi/Source/5.Main/source/NewUISlideWindow.h:11:
+C/C++: D:/takumi/Source/5.Main/source/UIControls.h:5:10: warning: non-portable path to file '"ZzzInfomation.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzinfomation.h"
+C/C++:          ^~~~~~~~~~~~~~~~~
+C/C++:          "ZzzInfomation.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/CB_DangKyInGame.cpp:3:
+C/C++: In file included from D:/takumi/Source/5.Main/source/NewUISystem.h:13:
+C/C++: In file included from D:/takumi/Source/5.Main/source/NewUIGuildMakeWindow.h:12:
+C/C++: D:/takumi/Source/5.Main/source/NewUIMessageBox.h:7:10: warning: non-portable path to file '"./ExternalObject/Leaf/xstreambuf.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "./ExternalObject/leaf/xstreambuf.h"
+C/C++:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C/C++:          "./ExternalObject/Leaf/xstreambuf.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/CB_DangKyInGame.cpp:3:
+C/C++: In file included from D:/takumi/Source/5.Main/source/NewUISystem.h:20:
+C/C++: D:/takumi/Source/5.Main/source/NewUIPetInfoWindow.h:13:10: warning: non-portable path to file '"NewUIInventoryCtrl.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "NewUIInventoryctrl.h"
+C/C++:          ^~~~~~~~~~~~~~~~~~~~~~
+C/C++:          "NewUIInventoryCtrl.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/CB_DangKyInGame.cpp:3:
+C/C++: In file included from D:/takumi/Source/5.Main/source/NewUISystem.h:62:
+C/C++: D:/takumi/Source/5.Main/source/NewUIMasterSkillTree.h:63:3: warning: expression result unused [-Wunused-value]
+C/C++:                 sizeof(_MASTER_SKILL_TOOLTIP);
+C/C++:                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C/C++: In file included from D:/takumi/Source/5.Main/source/CB_DangKyInGame.cpp:3:
+C/C++: In file included from D:/takumi/Source/5.Main/source/NewUISystem.h:65:
+C/C++: In file included from D:/takumi/Source/5.Main/source/NewUIRegistrationLuckyCoin.h:11:
+C/C++: D:/takumi/Source/5.Main/source/ZzzInventory.h:4:1: warning: 'const' is not permitted on a declaration of a type [-Wmissing-declarations]
+C/C++: const enum _COLUMN_TYPE
+C/C++: ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzInventory.h:25:1: warning: 'const' is not permitted on a declaration of a type [-Wmissing-declarations]
+C/C++: const enum ITEMSETOPTION
+C/C++: ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzInventory.h:42:1: warning: 'const' is not permitted on a declaration of a type [-Wmissing-declarations]
+C/C++: const enum SKILL_TOOLTIP_RENDER_POINT
+C/C++: ^
+C/C++: D:/takumi/Source/5.Main/source/CB_DangKyInGame.cpp:179:30: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:                         gInterface.OpenMessageBox("Error", "Invalid Captcha");
+C/C++:                                                   ^
+C/C++: D:/takumi/Source/5.Main/source/CB_DangKyInGame.cpp:179:39: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:                         gInterface.OpenMessageBox("Error", "Invalid Captcha");
+C/C++:                                                            ^
+C/C++: D:/takumi/Source/5.Main/source/CB_DangKyInGame.cpp:201:4: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:                         "",
+C/C++:                         ^
+C/C++: D:/takumi/Source/5.Main/source/CB_DangKyInGame.cpp:313:29: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:                 gInterface.OpenMessageBox("Error", "Thao tac cham lai");
+C/C++:                                           ^
+C/C++: D:/takumi/Source/5.Main/source/CB_DangKyInGame.cpp:313:38: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:                 gInterface.OpenMessageBox("Error", "Thao tac cham lai");
+C/C++:                                                    ^
+C/C++: D:/takumi/Source/5.Main/source/CB_DangKyInGame.cpp:319:29: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:                 gInterface.OpenMessageBox("Error", "Vui long nhap tai khoan");
+C/C++:                                           ^
+C/C++: D:/takumi/Source/5.Main/source/CB_DangKyInGame.cpp:319:38: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:                 gInterface.OpenMessageBox("Error", "Vui long nhap tai khoan");
+C/C++:                                                    ^
+C/C++: D:/takumi/Source/5.Main/source/CB_DangKyInGame.cpp:325:29: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:                 gInterface.OpenMessageBox("Error", "Vui long nhap mat khau");
+C/C++:                                           ^
+C/C++: D:/takumi/Source/5.Main/source/CB_DangKyInGame.cpp:325:38: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:                 gInterface.OpenMessageBox("Error", "Vui long nhap mat khau");
+C/C++:                                                    ^
+C/C++: D:/takumi/Source/5.Main/source/CB_DangKyInGame.cpp:331:29: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:                 gInterface.OpenMessageBox("Error", "Vui long nhap 7 so bao mat");
+C/C++:                                           ^
+C/C++: D:/takumi/Source/5.Main/source/CB_DangKyInGame.cpp:331:38: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:                 gInterface.OpenMessageBox("Error", "Vui long nhap 7 so bao mat");
+C/C++:                                                    ^
+C/C++: D:/takumi/Source/5.Main/source/CB_DangKyInGame.cpp:337:29: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:                 gInterface.OpenMessageBox("Error", "Vui long nhap so dien thoai");
+C/C++:                                           ^
+C/C++: D:/takumi/Source/5.Main/source/CB_DangKyInGame.cpp:337:38: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:                 gInterface.OpenMessageBox("Error", "Vui long nhap so dien thoai");
+C/C++:                                                    ^
+C/C++: D:/takumi/Source/5.Main/source/CB_DangKyInGame.cpp:343:29: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:                 gInterface.OpenMessageBox("Error", "Tai khoan hoac mat khau co ky tu khong hop le");
+C/C++:                                           ^
+C/C++: D:/takumi/Source/5.Main/source/CB_DangKyInGame.cpp:343:38: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:                 gInterface.OpenMessageBox("Error", "Tai khoan hoac mat khau co ky tu khong hop le");
+C/C++:                                                    ^
+C/C++: D:/takumi/Source/5.Main/source/CB_DangKyInGame.cpp:393:30: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:                         gInterface.OpenMessageBox("Ket Qua", "Dang ky thanh cong\nID : %s", szID);
+C/C++:                                                   ^
+C/C++: D:/takumi/Source/5.Main/source/CB_DangKyInGame.cpp:393:41: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:                         gInterface.OpenMessageBox("Ket Qua", "Dang ky thanh cong\nID : %s", szID);
+C/C++:                                                              ^
+C/C++: D:/takumi/Source/5.Main/source/CB_DangKyInGame.cpp:403:29: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:                 gInterface.OpenMessageBox("Ket Qua", "ID %s da ton tai", szID);
+C/C++:                                           ^
+C/C++: D:/takumi/Source/5.Main/source/CB_DangKyInGame.cpp:403:40: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:                 gInterface.OpenMessageBox("Ket Qua", "ID %s da ton tai", szID);
+C/C++:                                                      ^
+C/C++: D:/takumi/Source/5.Main/source/CB_DangKyInGame.cpp:407:29: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:                 gInterface.OpenMessageBox("Ket Qua", "Thong tin nhap khong hop le");
+C/C++:                                           ^
+C/C++: D:/takumi/Source/5.Main/source/CB_DangKyInGame.cpp:407:40: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:                 gInterface.OpenMessageBox("Ket Qua", "Thong tin nhap khong hop le");
+C/C++:                                                      ^
+C/C++: 47 warnings generated.
+C/C++: D:/takumi/Source/5.Main/source/CBInterfaceVIPChar.cpp:1:10: warning: non-portable path to file '"stdafx.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "StdAfx.h"
+C/C++:          ^~~~~~~~~~
+C/C++:          "stdafx.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/CBInterfaceVIPChar.cpp:1:
+C/C++: In file included from D:/takumi/Source/5.Main/source/StdAfx.h:94:
+C/C++: D:/takumi/Source/5.Main/source/Platform/PlatformDefs.h:678:14: warning: '__stdcall' calling convention is not supported for this target [-Wignored-attributes]
+C/C++:     unsigned(__stdcall* fn)(void*);
+C/C++:              ^
+C/C++: D:/takumi/Source/5.Main/source/Platform/PlatformDefs.h:2366:59: warning: '__stdcall' calling convention is not supported for this target [-Wignored-attributes]
+C/C++: inline uintptr_t _beginthreadex(void*, unsigned, unsigned(__stdcall* fn)(void*), void* arg, unsigned, unsigned* pThreadId) {
+C/C++:                                                           ^
+C/C++: D:/takumi/Source/5.Main/source/Platform/PlatformDefs.h:2642:201: warning: '__stdcall' calling convention is not supported for this target [-Wignored-attributes]
+C/C++: inline HANDLE CreateThread(void*, SIZE_T, LPTHREAD_START_ROUTINE start, void* param, DWORD, DWORD* threadId) { unsigned id = 0; uintptr_t handle = _beginthreadex(nullptr, 0, reinterpret_cast<unsigned(__stdcall*)(void*)>(start), param, 0, &id); if (threadId) *threadId = id; return reinterpret_cast<HANDLE>(handle); }
+C/C++:                                                                                                                                                                                                         ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/CBInterfaceVIPChar.cpp:1:
+C/C++: In file included from D:/takumi/Source/5.Main/source/StdAfx.h:108:
+C/C++: D:/takumi/Source/5.Main/source/_define.h:320:9: warning: 'IME_CONVERSIONMODE' macro redefined [-Wmacro-redefined]
+C/C++: #define IME_CONVERSIONMODE  1
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/Platform/PlatformDefs.h:750:9: note: previous definition is here
+C/C++: #define IME_CONVERSIONMODE     0x0001
+C/C++:         ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/CBInterfaceVIPChar.cpp:1:
+C/C++: In file included from D:/takumi/Source/5.Main/source/StdAfx.h:108:
+C/C++: D:/takumi/Source/5.Main/source/_define.h:321:9: warning: 'IME_SENTENCEMODE' macro redefined [-Wmacro-redefined]
+C/C++: #define IME_SENTENCEMODE    2
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/Platform/PlatformDefs.h:753:9: note: previous definition is here
+C/C++: #define IME_SENTENCEMODE       0x0002
+C/C++:         ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/CBInterfaceVIPChar.cpp:1:
+C/C++: In file included from D:/takumi/Source/5.Main/source/StdAfx.h:111:
+C/C++: In file included from D:/takumi/Source/5.Main/source/_struct.h:10:
+C/C++: D:/takumi/Source/5.Main/source/w_CharacterInfo.h:114:15: warning: anonymous non-C-compatible type given name for linkage purposes by typedef declaration; add a tag name here [-Wnon-c-typedef-for-linkage]
+C/C++: typedef struct
+C/C++:               ^
+C/C++:                NEW_HEALTH_BAR
+C/C++: D:/takumi/Source/5.Main/source/w_CharacterInfo.h:122:2: note: type is not C-compatible due to this member declaration
+C/C++:         void Clear()
+C/C++:         ^~~~~~~~~~~~
+C/C++: D:/takumi/Source/5.Main/source/w_CharacterInfo.h:131:3: note: type is given name 'NEW_HEALTH_BAR' for linkage purposes by this typedef declaration
+C/C++: } NEW_HEALTH_BAR;
+C/C++:   ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/CBInterfaceVIPChar.cpp:1:
+C/C++: In file included from D:/takumi/Source/5.Main/source/StdAfx.h:111:
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:481:3: warning: 'memset' will set 0 bytes; maybe the arguments got flipped? [-Wuser-defined-warnings]
+C/C++:                 FillMemory(ViewDamageTable,0,sizeof(ViewDamageTable));
+C/C++:                 ^
+C/C++: D:/takumi/Source/5.Main/source/Platform/PlatformDefs.h:240:56: note: expanded from macro 'FillMemory'
+C/C++: #define FillMemory(ptr,sz,val)  memset((ptr),(val),(sz))
+C/C++:                                                        ^
+C/C++: C:/Users/thanh/AppData/Local/Android/Sdk/ndk/25.1.8937393/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/bits/fortify/string.h:144:9: note: from 'diagnose_if' attribute on 'memset':
+C/C++:         __clang_warning_if(c && !n, "'memset' will set 0 bytes; maybe the arguments got flipped?") {
+C/C++:         ^                  ~~~~~~~
+C/C++: C:/Users/thanh/AppData/Local/Android/Sdk/ndk/25.1.8937393/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/sys/cdefs.h:139:54: note: expanded from macro '__clang_warning_if'
+C/C++: #define __clang_warning_if(cond, msg) __attribute__((diagnose_if(cond, msg, "warning")))
+C/C++:                                                      ^           ~~~~
+C/C++: In file included from D:/takumi/Source/5.Main/source/CBInterfaceVIPChar.cpp:1:
+C/C++: In file included from D:/takumi/Source/5.Main/source/StdAfx.h:111:
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:392:15: warning: anonymous non-C-compatible type given name for linkage purposes by typedef declaration; add a tag name here [-Wnon-c-typedef-for-linkage]
+C/C++: typedef struct
+C/C++:               ^
+C/C++:                PRINT_PLAYER_S6
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:463:2: note: type is not C-compatible due to this member declaration
+C/C++:         void Clear()
+C/C++:         ^~~~~~~~~~~~
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:535:3: note: type is given name 'PRINT_PLAYER_S6' for linkage purposes by this typedef declaration
+C/C++: } PRINT_PLAYER_S6;
+C/C++:   ^
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:999:3: warning: array index 2 is past the end of the array (which contains 2 elements) [-Warray-bounds]
+C/C++:                 ReBuff[2] = 0;
+C/C++:                 ^      ~
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:977:2: note: array 'ReBuff' declared here
+C/C++:         bool ReBuff[2];
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:1089:8: warning: extra tokens at end of #endif directive [-Wextra-tokens]
+C/C++: #endif ___STRUCT_H__
+C/C++:        ^
+C/C++:        //
+C/C++: In file included from D:/takumi/Source/5.Main/source/CBInterfaceVIPChar.cpp:1:
+C/C++: In file included from D:/takumi/Source/5.Main/source/StdAfx.h:113:
+C/C++: In file included from D:/takumi/Source/5.Main/source/_GlobalFunctions.h:4:
+C/C++: D:/takumi/Source/5.Main/source/ZzzScene.h:2:10: warning: non-portable path to file '"ZzzInfomation.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzinfomation.h"
+C/C++:          ^~~~~~~~~~~~~~~~~
+C/C++:          "ZzzInfomation.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/CBInterfaceVIPChar.cpp:2:
+C/C++: In file included from D:/takumi/Source/5.Main/source/CBInterfaceVIPChar.h:2:
+C/C++: In file included from D:/takumi/Source/5.Main/source/Protocol.h:2:
+C/C++: In file included from D:/takumi/Source/5.Main/source/WSclient.h:6:
+C/C++: In file included from D:/takumi/Source/5.Main/source/wsctlc.h:10:
+C/C++: In file included from D:/takumi/Source/5.Main/source/Protect.h:11:
+C/C++: D:/takumi/Source/5.Main/source/CustomCloak.h:4:10: warning: non-portable path to file '"ZzzInfomation.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzinfomation.h"
+C/C++:          ^~~~~~~~~~~~~~~~~
+C/C++:          "ZzzInfomation.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/CBInterfaceVIPChar.cpp:2:
+C/C++: In file included from D:/takumi/Source/5.Main/source/CBInterfaceVIPChar.h:2:
+C/C++: In file included from D:/takumi/Source/5.Main/source/Protocol.h:2:
+C/C++: D:/takumi/Source/5.Main/source/WSclient.h:2000:29: warning: implicit conversion of NULL constant to 'int' [-Wnull-conversion]
+C/C++:                 memset(&m_MatchTeamName1, NULL, MAX_ID_SIZE); 
+C/C++:                 ~~~~~~                    ^~~~
+C/C++:                                           0
+C/C++: D:/takumi/Source/5.Main/source/WSclient.h:2001:29: warning: implicit conversion of NULL constant to 'int' [-Wnull-conversion]
+C/C++:                 memset(&m_MatchTeamName2, NULL, MAX_ID_SIZE);
+C/C++:                 ~~~~~~                    ^~~~
+C/C++:                                           0
+C/C++: D:/takumi/Source/5.Main/source/WSclient.h:1996:15: warning: anonymous non-C-compatible type given name for linkage purposes by typedef declaration; add a tag name here [-Wnon-c-typedef-for-linkage]
+C/C++: typedef struct
+C/C++:               ^
+C/C++:                PMSG_MATCH_RESULT
+C/C++: D:/takumi/Source/5.Main/source/WSclient.h:1998:2: note: type is not C-compatible due to this member declaration
+C/C++:         void                    Clear()
+C/C++:         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C/C++: D:/takumi/Source/5.Main/source/WSclient.h:2017:2: note: type is given name 'PMSG_MATCH_RESULT' for linkage purposes by this typedef declaration
+C/C++: }PMSG_MATCH_RESULT, *LPPMSG_MATCH_RESULT;
+C/C++:  ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/CBInterfaceVIPChar.cpp:3:
+C/C++: In file included from D:/takumi/Source/5.Main/source/NewUISystem.h:11:
+C/C++: In file included from D:/takumi/Source/5.Main/source/NewUIChatLogWindow.h:7:
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.h:4:
+C/C++: In file included from D:/takumi/Source/5.Main/source/GlobalBitmap.h:12:
+C/C++: D:/takumi/Source/android/app/src/main/cpp/compat_include/Jpeglib.h:24:10: warning: non-portable path to file '"Jconfig.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "jconfig.h"            /* widely used configuration options */
+C/C++:          ^~~~~~~~~~~
+C/C++:          "Jconfig.h"
+C/C++: D:/takumi/Source/android/app/src/main/cpp/compat_include/Jpeglib.h:26:10: warning: non-portable path to file '"Jmorecfg.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "jmorecfg.h"           /* seldom changed options */
+C/C++:          ^~~~~~~~~~~~
+C/C++:          "Jmorecfg.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/CBInterfaceVIPChar.cpp:3:
+C/C++: In file included from D:/takumi/Source/5.Main/source/NewUISystem.h:11:
+C/C++: In file included from D:/takumi/Source/5.Main/source/NewUIChatLogWindow.h:7:
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.h:4:
+C/C++: D:/takumi/Source/5.Main/source/GlobalBitmap.h:18:15: warning: anonymous non-C-compatible type given name for linkage purposes by typedef declaration; add a tag name here [-Wnon-c-typedef-for-linkage]
+C/C++: typedef struct
+C/C++:               ^
+C/C++:                BITMAP_t
+C/C++: D:/takumi/Source/5.Main/source/GlobalBitmap.h:29:1: note: type is not C-compatible due to this member declaration
+C/C++: private:
+C/C++: ^~~~~~~~
+C/C++: D:/takumi/Source/5.Main/source/GlobalBitmap.h:32:3: note: type is given name 'BITMAP_t' for linkage purposes by this typedef declaration
+C/C++: } BITMAP_t;
+C/C++:   ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/CBInterfaceVIPChar.cpp:3:
+C/C++: In file included from D:/takumi/Source/5.Main/source/NewUISystem.h:12:
+C/C++: In file included from D:/takumi/Source/5.Main/source/NewUISlideWindow.h:11:
+C/C++: D:/takumi/Source/5.Main/source/UIControls.h:5:10: warning: non-portable path to file '"ZzzInfomation.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzinfomation.h"
+C/C++:          ^~~~~~~~~~~~~~~~~
+C/C++:          "ZzzInfomation.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/CBInterfaceVIPChar.cpp:3:
+C/C++: In file included from D:/takumi/Source/5.Main/source/NewUISystem.h:13:
+C/C++: In file included from D:/takumi/Source/5.Main/source/NewUIGuildMakeWindow.h:12:
+C/C++: D:/takumi/Source/5.Main/source/NewUIMessageBox.h:7:10: warning: non-portable path to file '"./ExternalObject/Leaf/xstreambuf.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "./ExternalObject/leaf/xstreambuf.h"
+C/C++:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C/C++:          "./ExternalObject/Leaf/xstreambuf.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/CBInterfaceVIPChar.cpp:3:
+C/C++: In file included from D:/takumi/Source/5.Main/source/NewUISystem.h:20:
+C/C++: D:/takumi/Source/5.Main/source/NewUIPetInfoWindow.h:13:10: warning: non-portable path to file '"NewUIInventoryCtrl.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "NewUIInventoryctrl.h"
+C/C++:          ^~~~~~~~~~~~~~~~~~~~~~
+C/C++:          "NewUIInventoryCtrl.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/CBInterfaceVIPChar.cpp:3:
+C/C++: In file included from D:/takumi/Source/5.Main/source/NewUISystem.h:62:
+C/C++: D:/takumi/Source/5.Main/source/NewUIMasterSkillTree.h:63:3: warning: expression result unused [-Wunused-value]
+C/C++:                 sizeof(_MASTER_SKILL_TOOLTIP);
+C/C++:                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C/C++: In file included from D:/takumi/Source/5.Main/source/CBInterfaceVIPChar.cpp:3:
+C/C++: In file included from D:/takumi/Source/5.Main/source/NewUISystem.h:65:
+C/C++: In file included from D:/takumi/Source/5.Main/source/NewUIRegistrationLuckyCoin.h:11:
+C/C++: D:/takumi/Source/5.Main/source/ZzzInventory.h:4:1: warning: 'const' is not permitted on a declaration of a type [-Wmissing-declarations]
+C/C++: const enum _COLUMN_TYPE
+C/C++: ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzInventory.h:25:1: warning: 'const' is not permitted on a declaration of a type [-Wmissing-declarations]
+C/C++: const enum ITEMSETOPTION
+C/C++: ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzInventory.h:42:1: warning: 'const' is not permitted on a declaration of a type [-Wmissing-declarations]
+C/C++: const enum SKILL_TOOLTIP_RENDER_POINT
+C/C++: ^
+C/C++: D:/takumi/Source/5.Main/source/CBInterfaceVIPChar.cpp:50:15: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:         char* path = "Data\\Custom\\VIPCharRank.txt";
+C/C++:                      ^
+C/C++: D:/takumi/Source/5.Main/source/CBInterfaceVIPChar.cpp:57:39: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:                 CBInterfaceVIPChar::ErrorMessageBox(MEM_SCRIPT_ALLOC_ERROR, path);
+C/C++:                                                     ^
+C/C++: D:/takumi/Source/5.Main/source/MemScript.h:7:32: note: expanded from macro 'MEM_SCRIPT_ALLOC_ERROR'
+C/C++: #define MEM_SCRIPT_ALLOC_ERROR "[%s] Could not alloc memory for MemScript"
+C/C++:                                ^
+C/C++: D:/takumi/Source/5.Main/source/CBInterfaceVIPChar.cpp:325:70: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:                 if (g_pBCustomMenuInfo->DrawButton(ButtonX + 120, ButtonY, 60, 12, "R", 20))
+C/C++:                                                                                    ^
+C/C++: 29 warnings generated.
+C/C++: In file included from D:/takumi/Source/5.Main/source/CBInterface.cpp:1:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:94:
+C/C++: D:/takumi/Source/5.Main/source/Platform/PlatformDefs.h:678:14: warning: '__stdcall' calling convention is not supported for this target [-Wignored-attributes]
+C/C++:     unsigned(__stdcall* fn)(void*);
+C/C++:              ^
+C/C++: D:/takumi/Source/5.Main/source/Platform/PlatformDefs.h:2366:59: warning: '__stdcall' calling convention is not supported for this target [-Wignored-attributes]
+C/C++: inline uintptr_t _beginthreadex(void*, unsigned, unsigned(__stdcall* fn)(void*), void* arg, unsigned, unsigned* pThreadId) {
+C/C++:                                                           ^
+C/C++: D:/takumi/Source/5.Main/source/Platform/PlatformDefs.h:2642:201: warning: '__stdcall' calling convention is not supported for this target [-Wignored-attributes]
+C/C++: inline HANDLE CreateThread(void*, SIZE_T, LPTHREAD_START_ROUTINE start, void* param, DWORD, DWORD* threadId) { unsigned id = 0; uintptr_t handle = _beginthreadex(nullptr, 0, reinterpret_cast<unsigned(__stdcall*)(void*)>(start), param, 0, &id); if (threadId) *threadId = id; return reinterpret_cast<HANDLE>(handle); }
+C/C++:                                                                                                                                                                                                         ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/CBInterface.cpp:1:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:108:
+C/C++: D:/takumi/Source/5.Main/source/_define.h:320:9: warning: 'IME_CONVERSIONMODE' macro redefined [-Wmacro-redefined]
+C/C++: #define IME_CONVERSIONMODE  1
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/Platform/PlatformDefs.h:750:9: note: previous definition is here
+C/C++: #define IME_CONVERSIONMODE     0x0001
+C/C++:         ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/CBInterface.cpp:1:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:108:
+C/C++: D:/takumi/Source/5.Main/source/_define.h:321:9: warning: 'IME_SENTENCEMODE' macro redefined [-Wmacro-redefined]
+C/C++: #define IME_SENTENCEMODE    2
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/Platform/PlatformDefs.h:753:9: note: previous definition is here
+C/C++: #define IME_SENTENCEMODE       0x0002
+C/C++:         ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/CBInterface.cpp:1:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:111:
+C/C++: In file included from D:/takumi/Source/5.Main/source/_struct.h:10:
+C/C++: D:/takumi/Source/5.Main/source/w_CharacterInfo.h:114:15: warning: anonymous non-C-compatible type given name for linkage purposes by typedef declaration; add a tag name here [-Wnon-c-typedef-for-linkage]
+C/C++: typedef struct
+C/C++:               ^
+C/C++:                NEW_HEALTH_BAR
+C/C++: D:/takumi/Source/5.Main/source/w_CharacterInfo.h:122:2: note: type is not C-compatible due to this member declaration
+C/C++:         void Clear()
+C/C++:         ^~~~~~~~~~~~
+C/C++: D:/takumi/Source/5.Main/source/w_CharacterInfo.h:131:3: note: type is given name 'NEW_HEALTH_BAR' for linkage purposes by this typedef declaration
+C/C++: } NEW_HEALTH_BAR;
+C/C++:   ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/CBInterface.cpp:1:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:111:
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:481:3: warning: 'memset' will set 0 bytes; maybe the arguments got flipped? [-Wuser-defined-warnings]
+C/C++:                 FillMemory(ViewDamageTable,0,sizeof(ViewDamageTable));
+C/C++:                 ^
+C/C++: D:/takumi/Source/5.Main/source/Platform/PlatformDefs.h:240:56: note: expanded from macro 'FillMemory'
+C/C++: #define FillMemory(ptr,sz,val)  memset((ptr),(val),(sz))
+C/C++:                                                        ^
+C/C++: C:/Users/thanh/AppData/Local/Android/Sdk/ndk/25.1.8937393/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/bits/fortify/string.h:144:9: note: from 'diagnose_if' attribute on 'memset':
+C/C++:         __clang_warning_if(c && !n, "'memset' will set 0 bytes; maybe the arguments got flipped?") {
+C/C++:         ^                  ~~~~~~~
+C/C++: C:/Users/thanh/AppData/Local/Android/Sdk/ndk/25.1.8937393/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/sys/cdefs.h:139:54: note: expanded from macro '__clang_warning_if'
+C/C++: #define __clang_warning_if(cond, msg) __attribute__((diagnose_if(cond, msg, "warning")))
+C/C++:                                                      ^           ~~~~
+C/C++: In file included from D:/takumi/Source/5.Main/source/CBInterface.cpp:1:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:111:
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:392:15: warning: anonymous non-C-compatible type given name for linkage purposes by typedef declaration; add a tag name here [-Wnon-c-typedef-for-linkage]
+C/C++: typedef struct
+C/C++:               ^
+C/C++:                PRINT_PLAYER_S6
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:463:2: note: type is not C-compatible due to this member declaration
+C/C++:         void Clear()
+C/C++:         ^~~~~~~~~~~~
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:535:3: note: type is given name 'PRINT_PLAYER_S6' for linkage purposes by this typedef declaration
+C/C++: } PRINT_PLAYER_S6;
+C/C++:   ^
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:999:3: warning: array index 2 is past the end of the array (which contains 2 elements) [-Warray-bounds]
+C/C++:                 ReBuff[2] = 0;
+C/C++:                 ^      ~
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:977:2: note: array 'ReBuff' declared here
+C/C++:         bool ReBuff[2];
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:1089:8: warning: extra tokens at end of #endif directive [-Wextra-tokens]
+C/C++: #endif ___STRUCT_H__
+C/C++:        ^
+C/C++:        //
+C/C++: In file included from D:/takumi/Source/5.Main/source/CBInterface.cpp:1:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:113:
+C/C++: In file included from D:/takumi/Source/5.Main/source/_GlobalFunctions.h:4:
+C/C++: D:/takumi/Source/5.Main/source/ZzzScene.h:2:10: warning: non-portable path to file '"ZzzInfomation.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzinfomation.h"
+C/C++:          ^~~~~~~~~~~~~~~~~
+C/C++:          "ZzzInfomation.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/CBInterface.cpp:2:
+C/C++: In file included from D:/takumi/Source/5.Main/source/CBInterface.h:3:
+C/C++: In file included from D:/takumi/Source/5.Main/source/Protocol.h:2:
+C/C++: In file included from D:/takumi/Source/5.Main/source/WSclient.h:6:
+C/C++: In file included from D:/takumi/Source/5.Main/source/wsctlc.h:10:
+C/C++: In file included from D:/takumi/Source/5.Main/source/Protect.h:11:
+C/C++: D:/takumi/Source/5.Main/source/CustomCloak.h:4:10: warning: non-portable path to file '"ZzzInfomation.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzinfomation.h"
+C/C++:          ^~~~~~~~~~~~~~~~~
+C/C++:          "ZzzInfomation.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/CBInterface.cpp:2:
+C/C++: In file included from D:/takumi/Source/5.Main/source/CBInterface.h:3:
+C/C++: In file included from D:/takumi/Source/5.Main/source/Protocol.h:2:
+C/C++: D:/takumi/Source/5.Main/source/WSclient.h:2000:29: warning: implicit conversion of NULL constant to 'int' [-Wnull-conversion]
+C/C++:                 memset(&m_MatchTeamName1, NULL, MAX_ID_SIZE); 
+C/C++:                 ~~~~~~                    ^~~~
+C/C++:                                           0
+C/C++: D:/takumi/Source/5.Main/source/WSclient.h:2001:29: warning: implicit conversion of NULL constant to 'int' [-Wnull-conversion]
+C/C++:                 memset(&m_MatchTeamName2, NULL, MAX_ID_SIZE);
+C/C++:                 ~~~~~~                    ^~~~
+C/C++:                                           0
+C/C++: D:/takumi/Source/5.Main/source/WSclient.h:1996:15: warning: anonymous non-C-compatible type given name for linkage purposes by typedef declaration; add a tag name here [-Wnon-c-typedef-for-linkage]
+C/C++: typedef struct
+C/C++:               ^
+C/C++:                PMSG_MATCH_RESULT
+C/C++: D:/takumi/Source/5.Main/source/WSclient.h:1998:2: note: type is not C-compatible due to this member declaration
+C/C++:         void                    Clear()
+C/C++:         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C/C++: D:/takumi/Source/5.Main/source/WSclient.h:2017:2: note: type is given name 'PMSG_MATCH_RESULT' for linkage purposes by this typedef declaration
+C/C++: }PMSG_MATCH_RESULT, *LPPMSG_MATCH_RESULT;
+C/C++:  ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/CBInterface.cpp:2:
+C/C++: In file included from D:/takumi/Source/5.Main/source/CBInterface.h:7:
+C/C++: D:/takumi/Source/5.Main/source/UIControls.h:5:10: warning: non-portable path to file '"ZzzInfomation.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzinfomation.h"
+C/C++:          ^~~~~~~~~~~~~~~~~
+C/C++:          "ZzzInfomation.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/CBInterface.cpp:3:
+C/C++: In file included from D:/takumi/Source/5.Main/source/NewUISystem.h:11:
+C/C++: In file included from D:/takumi/Source/5.Main/source/NewUIChatLogWindow.h:7:
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.h:4:
+C/C++: In file included from D:/takumi/Source/5.Main/source/GlobalBitmap.h:12:
+C/C++: D:/takumi/Source/android/app/src/main/cpp/compat_include/Jpeglib.h:24:10: warning: non-portable path to file '"Jconfig.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "jconfig.h"            /* widely used configuration options */
+C/C++:          ^~~~~~~~~~~
+C/C++:          "Jconfig.h"
+C/C++: D:/takumi/Source/android/app/src/main/cpp/compat_include/Jpeglib.h:26:10: warning: non-portable path to file '"Jmorecfg.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "jmorecfg.h"           /* seldom changed options */
+C/C++:          ^~~~~~~~~~~~
+C/C++:          "Jmorecfg.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/CBInterface.cpp:3:
+C/C++: In file included from D:/takumi/Source/5.Main/source/NewUISystem.h:11:
+C/C++: In file included from D:/takumi/Source/5.Main/source/NewUIChatLogWindow.h:7:
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.h:4:
+C/C++: D:/takumi/Source/5.Main/source/GlobalBitmap.h:18:15: warning: anonymous non-C-compatible type given name for linkage purposes by typedef declaration; add a tag name here [-Wnon-c-typedef-for-linkage]
+C/C++: typedef struct
+C/C++:               ^
+C/C++:                BITMAP_t
+C/C++: D:/takumi/Source/5.Main/source/GlobalBitmap.h:29:1: note: type is not C-compatible due to this member declaration
+C/C++: private:
+C/C++: ^~~~~~~~
+C/C++: D:/takumi/Source/5.Main/source/GlobalBitmap.h:32:3: note: type is given name 'BITMAP_t' for linkage purposes by this typedef declaration
+C/C++: } BITMAP_t;
+C/C++:   ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/CBInterface.cpp:3:
+C/C++: In file included from D:/takumi/Source/5.Main/source/NewUISystem.h:13:
+C/C++: In file included from D:/takumi/Source/5.Main/source/NewUIGuildMakeWindow.h:12:
+C/C++: D:/takumi/Source/5.Main/source/NewUIMessageBox.h:7:10: warning: non-portable path to file '"./ExternalObject/Leaf/xstreambuf.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "./ExternalObject/leaf/xstreambuf.h"
+C/C++:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C/C++:          "./ExternalObject/Leaf/xstreambuf.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/CBInterface.cpp:3:
+C/C++: In file included from D:/takumi/Source/5.Main/source/NewUISystem.h:20:
+C/C++: D:/takumi/Source/5.Main/source/NewUIPetInfoWindow.h:13:10: warning: non-portable path to file '"NewUIInventoryCtrl.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "NewUIInventoryctrl.h"
+C/C++:          ^~~~~~~~~~~~~~~~~~~~~~
+C/C++:          "NewUIInventoryCtrl.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/CBInterface.cpp:3:
+C/C++: In file included from D:/takumi/Source/5.Main/source/NewUISystem.h:62:
+C/C++: D:/takumi/Source/5.Main/source/NewUIMasterSkillTree.h:63:3: warning: expression result unused [-Wunused-value]
+C/C++:                 sizeof(_MASTER_SKILL_TOOLTIP);
+C/C++:                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C/C++: In file included from D:/takumi/Source/5.Main/source/CBInterface.cpp:3:
+C/C++: In file included from D:/takumi/Source/5.Main/source/NewUISystem.h:65:
+C/C++: In file included from D:/takumi/Source/5.Main/source/NewUIRegistrationLuckyCoin.h:11:
+C/C++: D:/takumi/Source/5.Main/source/ZzzInventory.h:4:1: warning: 'const' is not permitted on a declaration of a type [-Wmissing-declarations]
+C/C++: const enum _COLUMN_TYPE
+C/C++: ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzInventory.h:25:1: warning: 'const' is not permitted on a declaration of a type [-Wmissing-declarations]
+C/C++: const enum ITEMSETOPTION
+C/C++: ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzInventory.h:42:1: warning: 'const' is not permitted on a declaration of a type [-Wmissing-declarations]
+C/C++: const enum SKILL_TOOLTIP_RENDER_POINT
+C/C++: ^
+C/C++: D:/takumi/Source/5.Main/source/CBInterface.cpp:149:124: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:                 if (g_pBCustomMenuInfo->DrawButton(StartX + CuaSoW / 2 - (BtnWidth / 2), StartY + CuaSoH - BtnHeight - 10, BtnWidth, 12, "Close"))
+C/C++:                                                                                                                                          ^
+C/C++: D:/takumi/Source/5.Main/source/CBInterface.cpp:158:126: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:                 if (g_pBCustomMenuInfo->DrawButton(StartX + CuaSoW / 2 - (BtnWidth + 7.5), StartY + CuaSoH - BtnHeight - 10, BtnWidth, 12, "OK"))
+C/C++:                                                                                                                                            ^
+C/C++: D:/takumi/Source/5.Main/source/CBInterface.cpp:165:115: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:                 if (g_pBCustomMenuInfo->DrawButton(StartX + CuaSoW / 2 + (7.5), StartY + CuaSoH - BtnHeight - 10, BtnWidth, 12, "Close"))
+C/C++:                                                                                                                                 ^
+C/C++: D:/takumi/Source/5.Main/source/CBInterface.cpp:260:27: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:         if (Number < 0) { return "0"; }
+C/C++:                                  ^
+C/C++: D:/takumi/Source/5.Main/source/CBInterface.cpp:295:9: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:         return "0";
+C/C++:                ^
+C/C++: D:/takumi/Source/5.Main/source/CBInterface.cpp:362:16: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:                 CreateNotice("[F6] Antilag I", 1);
+C/C++:                              ^
+C/C++: D:/takumi/Source/5.Main/source/CBInterface.cpp:374:16: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:                 CreateNotice("[F7] Antilag II", 1);
+C/C++:                              ^
+C/C++: D:/takumi/Source/5.Main/source/CBInterface.cpp:432:17: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:                         CreateNotice("On Camera 3D", 1);
+C/C++:                                      ^
+C/C++: D:/takumi/Source/5.Main/source/CBInterface.cpp:436:17: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:                         CreateNotice("Off Camera 3D", 1);
+C/C++:                                      ^
+C/C++: D:/takumi/Source/5.Main/source/CBInterface.cpp:455:16: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:                 CreateNotice("Reset Camera 3D", 1);
+C/C++:                              ^
+C/C++: D:/takumi/Source/5.Main/source/CBInterface.cpp:703:40: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:         g_pBCustomMenuInfo->BindObject(eMenu, "Interface\\Menu2.tga", 16, 12, -1, -1);
+C/C++:                                               ^
+C/C++: D:/takumi/Source/5.Main/source/CBInterface.cpp:704:42: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:         g_pBCustomMenuInfo->BindObject(eMenuBG, "Interface\\Menu_BG.tga", 36, 18, 174, 0);
+C/C++:                                                 ^
+C/C++: D:/takumi/Source/5.Main/source/CBInterface.cpp:705:45: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:         g_pBCustomMenuInfo->BindObject(eButtonMXH, "Custom\\Interface\\buttonex.tga");
+C/C++:                                                    ^
+C/C++: D:/takumi/Source/5.Main/source/CBInterface.cpp:706:46: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:         g_pBCustomMenuInfo->BindObject(eButtonNext, "Interface\\Next.tga");
+C/C++:                                                     ^
+C/C++: D:/takumi/Source/5.Main/source/CBInterface.cpp:707:50: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:         g_pBCustomMenuInfo->BindObject(eButtonPrevious, "Interface\\Previous.tga");
+C/C++:                                                         ^
+C/C++: D:/takumi/Source/5.Main/source/CBInterface.cpp:717:44: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:         g_pBCustomMenuInfo->BindObject(IMG_31617, "Interface\\newui_SW_MiniMap_Bt_clearness.jpg");
+C/C++:                                                   ^
+C/C++: D:/takumi/Source/5.Main/source/CBInterface.cpp:718:44: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:         g_pBCustomMenuInfo->BindObject(IMG_31618, "Interface\\newui_SW_Minimap_Bt_group.tga");
+C/C++:                                                   ^
+C/C++: D:/takumi/Source/5.Main/source/CBInterface.cpp:719:44: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:         g_pBCustomMenuInfo->BindObject(IMG_31764, "Interface\\MacroUI\\MacroUI_Gauge_Frame.tga");
+C/C++:                                                   ^
+C/C++: D:/takumi/Source/5.Main/source/CBInterface.cpp:720:44: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:         g_pBCustomMenuInfo->BindObject(IMG_31765, "Interface\\MacroUI\\MacroUI_Gauge_Bar_(B).jpg");
+C/C++:                                                   ^
+C/C++: D:/takumi/Source/5.Main/source/CBInterface.cpp:725:44: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:         g_pBCustomMenuInfo->BindObject(IMG_71620, "Custom\\Interface\\newui_button_register.tga");
+C/C++:                                                   ^
+C/C++: D:/takumi/Source/5.Main/source/CBInterface.cpp:729:49: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:         g_pBCustomMenuInfo->BindObject(IMG_HPBarFrame, "Custom\\HPBarFrame.tga");
+C/C++:                                                        ^
+C/C++: D:/takumi/Source/5.Main/source/CBInterface.cpp:730:49: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:         g_pBCustomMenuInfo->BindObject(IMG_HPBarValue, "Custom\\HPBarValue.jpg");
+C/C++:                                                        ^
+C/C++: D:/takumi/Source/5.Main/source/CBInterface.cpp:738:25: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:         char* required_chars = "0123456789";
+C/C++:                                ^
+C/C++: D:/takumi/Source/5.Main/source/CBInterface.cpp:902:130: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:                 if (g_pBCustomMenuInfo->DrawButton(gProtect.m_MainInfo.ViTriRS[0], gProtect.m_MainInfo.ViTriRS[1] + DisplayHeightExt, 100, 12, " ", 55))
+C/C++:                                                                                                                                                ^
+C/C++: D:/takumi/Source/5.Main/source/CBInterface.cpp:917:138: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:                 if (g_pBCustomMenuInfo->DrawButton(gProtect.m_MainInfo.ViTriAutoHP[0], gProtect.m_MainInfo.ViTriAutoHP[1] + DisplayHeightExt, 100, 12, " ", 55))
+C/C++:                                                                                                                                                        ^
+C/C++: D:/takumi/Source/5.Main/source/CBInterface.cpp:935:138: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:                 if (g_pBCustomMenuInfo->DrawButton(gProtect.m_MainInfo.ViTriAutoPK[0], gProtect.m_MainInfo.ViTriAutoPK[1] + DisplayHeightExt, 100, 12, " ", 55))
+C/C++:                                                                                                                                                        ^
+C/C++: 51 warnings generated.
+
+> Task :app:mergeUniversalDebugJniLibFolders UP-TO-DATE
+> Task :app:validateSigningUniversalDebug UP-TO-DATE
+> Task :app:writeUniversalDebugAppMetadata UP-TO-DATE
+> Task :app:writeUniversalDebugSigningConfigVersions UP-TO-DATE
+> Task :app:mergeUniversalDebugNativeLibs
+> Task :app:stripUniversalDebugDebugSymbols
+> Task :app:packageUniversalDebug
+> Task :app:createUniversalDebugApkListingFileRedirect UP-TO-DATE
+> Task :app:assembleUniversalDebug
+
+BUILD SUCCESSFUL in 4s
+37 actionable tasks: 6 executed, 31 up-to-date

@@ -1,0 +1,76 @@
+<BotThuMua EnableBot="true">
+	<!--
+		EnableBot		: true = mở
+		: false = tắt
+		Index Bot		: Số thứ tự của Bot ( bắt đàu từ 0 )
+		ClassBot		: 0,1,2	    DW,SM,GM
+		: 16,17,18	DK,BK,BM
+		: 32,33,34	Elf,ME,HE
+		: 48,49,50	MG,DM
+		: 64,65,66	DL,LE
+		: 80,81,82	SU,BS,DS
+		: 97,98     RF,FM
+		SucessRateBot	: Tỷ lệ đổi thành công
+		Type 			: 0: DoiItem : Áo, Quần, Mũ, Tay, Chân, Vũ Khí, Khiên 
+						  1: IDoiItemList: Đổi Item theo list).
+		NameBot			: Tên bot
+		IDMapBot		: ID Map bot đứng
+		CoordXBot		: Toạ độ X của Map
+		CoordYBot		: Toạ độ Y của Map
+		DirBot			: Hướng Bot quay mặt
+	-->
+	<CreateBot>
+		<NewBot	IndexBot="0"	ClassBot="17"	SucessRateBot="100"	Type="2"	NameBot="ThuMuaEx"	IDMapBot="0"	CoordXBot="131"	CoordYBot="137"	DirBot="2" />
+	</CreateBot>
+	<!--
+		SlotItemBot		:{1 Weapon, 2 Helm, 3 Amor, Pants, 5 Gloves, 6 Boots, 7 Wings, 8 Pet}
+	-->
+	<ItemBot>
+		<ItemsBot	IndexBot="0"	SlotItemBot="1"	TypeItemBot="5"		IndexItemBot="10"	LevelItemBot="13"	OptionItemBot="4"/>
+		<ItemsBot	IndexBot="0"	SlotItemBot="2"	TypeItemBot="7"		IndexItemBot="3"	LevelItemBot="13"	OptionItemBot="4"/>
+		<ItemsBot	IndexBot="0"	SlotItemBot="3"	TypeItemBot="8"		IndexItemBot="3"	LevelItemBot="13"	OptionItemBot="4"/>
+		<ItemsBot	IndexBot="0"	SlotItemBot="4"	TypeItemBot="9"		IndexItemBot="3"	LevelItemBot="13"	OptionItemBot="4"/>
+		<ItemsBot	IndexBot="0"	SlotItemBot="5"	TypeItemBot="10"	IndexItemBot="3"	LevelItemBot="13"	OptionItemBot="4"/>
+		<ItemsBot	IndexBot="0"	SlotItemBot="6"	TypeItemBot="11"	IndexItemBot="3"	LevelItemBot="13"	OptionItemBot="4"/>
+		<ItemsBot	IndexBot="0"	SlotItemBot="7"	TypeItemBot="12"	IndexItemBot="4"	LevelItemBot="13"	OptionItemBot="4"/>
+		
+	</ItemBot>
+	
+	<!--
+		DoiItem 			: Đổi item theo list ( CreateBot | Type = 0 )
+		Đổi item			: Áo, Quần, Mũ, Tay, Chân, Vũ Khí, Khiên
+		LoaiTien			: 0 = Zen, 1 Wcoin , 2 WcoinP, 3 GobinCoin
+		MinCoin ~ MaxCoin	: Coin sẽ nhận được randon trong khoảng này (Nếu muốn coin mặc định thì set min, max bằng nhau)
+		SeriCheck 			: 1 thì chỉ nhận các item có seri
+		ItemExc= "1"			: Item phải là đồ ex mới cho phép đổi
+		ItemAnc= "1"		: Item phải là đồ thần mới cho phép đổi
+		AddPoin= "1"		: Công thêm poin khi đổi đồ thành công (-1 tắt)
+		ItemBag= "1"		: Tặng đồ khi đổi đồ ex (-1 tắt) (Tính theo số lần đổi)
+	-->
+	<DoiItem>
+		<OpBot IndexBot="0" OnlyVip="0" LoaiTien="1" MinCoin="500" MaxCoin="1000" SeriCheck= "1"  ItemExc="1"  ItemAnc= "0" ItemBag="-1" />	
+	</DoiItem>
+	<!--
+		DoiItemList 		: Đổi item theo list ( CreateBot | Type = 1 )
+		ItemIndex 			: Mã Item cho phép đổi
+		LoaiTien 			: 0 = Zen, 1 Wcoin , 2 WcoinP, 3 GobinCoin
+		MinCoin ~ MaxCoin	: Coin nhận được random trong khoảng này
+		SeriCheck 			: 1 thì chỉ nhận các item có seri (Check trong TitanEdit)
+		AddPoin= "1"		: Công thêm poin khi đổi đồ thành công (-1 tắt)
+		ItemBag= "1"		: Tặng đồ khi đổi đồ ex (-1 tắt)
+	-->	
+	<DoiItemList>
+		<ListItem IndexBot="0" ItemIndex="6159" LoaiTien="1" MinCoin="50" MaxCoin="100" SeriCheck= "1" ItemBag="-1" />
+		<ListItem IndexBot="0" ItemIndex="7190" LoaiTien="1" MinCoin="10" MaxCoin="50" SeriCheck= "1" ItemBag="-1" />
+	</DoiItemList>	
+	
+	<!--LƯU Ý: CHỈ LOAD BOT KHI KHÔNG CÒN AI TRADE, NẾU KHÔNG SẼ BỊ TREO CỬA SỔ TRADE CỦA NHÂN VẬT ĐÓ-->	
+	<MessageInfo>
+		<Message Index="0" Text="[ThuMua]Đổi item thành công" />
+		<Message Index="1" Text="[ThuMua]Đổi item thất bại" />
+		<Message Index="2" Text="[ThuMua]Bạn không phải VIP" />
+		<Message Index="3" Text="[ThuMua]Item không hợp lệ" />
+		<Message Index="4" Text="[ThuMua]Tôi đã sẵn sàng" />
+		<Message Index="5" Text="[ThuMua]Không tìm thấy thông tin bot Index" />
+	</MessageInfo>	
+</BotThuMua>

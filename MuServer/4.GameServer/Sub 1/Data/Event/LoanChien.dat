@@ -1,0 +1,28 @@
+0
+//AlarmTime   	StandTime   EventTime   CloseTime
+1          		0              15          0             
+end
+
+1
+//Year   Month   Day   DoW   Hour   Minute   Second
+*        *       *     5      21      50       0
+end
+
+2
+//ReqItemIndex   ReqItemLevel   ReqItemCount   EventMap     WaitingGate   BlueTeamGate   RedTeamGate  MaxDie   SetSkin		MinLevel  MaxLevel MinReset MaxReset  MinMasterReset MaxMasterReset
+  0              0              0               88            362           363            367        	100	     1        	150	  	 	* 	   0	    *	      	*		     *
+end
+
+//Reward Characters 
+3
+//WC	WP	GP    WinGame	DROPKILL
+0  		0	0      0		  145			
+end
+
+//Reward Top Tối đa Topp 10
+4
+// Top		WX		WP		GP  Indexitembag
+	1		6		0  		0		146					
+	2		5		0  		0		-1					
+	3		4		0  		0		-1					
+end

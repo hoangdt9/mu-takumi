@@ -1,0 +1,13 @@
+//=================================================
+// Config : DUY ĐẠT
+// Zalo: DUY ĐẠT - 0961.87.37.67
+//=================================================
+0
+//EventName         		DropZen    ItemDropRate   ItemDropCount   SetItemDropRate   ItemDropType   Fireworks	
+"Steel Jewelry Case"		1000	   	100		  	   1		  	   0		   		 0		   		0
+end
+
+1
+//Section   Type   	MinLevel   	MaxLevel   	Skill   Luck   	Option	Excellent	Rate
+12			15		0			0			0		0		0		0			100
+end

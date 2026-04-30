@@ -1,0 +1,1 @@
+18:01:31 [ChoTroi][admin][Admin] Rao Ban item (Quần Quỷ Vương | Index: 4660 Gia: 100000 [1] Level: 15, Serial: 000000D4, Option1: 0, Option2: 1, Option3: 7, NewOption: 063, JewelOfHarmonyOption: 000, ItemOptionEx: 000, SocketOption: 255, 255, 255, 255, 255)

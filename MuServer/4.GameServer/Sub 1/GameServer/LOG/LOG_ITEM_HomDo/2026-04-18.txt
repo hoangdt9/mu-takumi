@@ -1,0 +1,2 @@
+20:04:46 [CHECKITEMWAREHOUSE] Đóng Hòm đồ Account:[admin]- Name[Admin]
+20:04:46 [CHECKITEMWAREHOUSE]Đóng Hòm đồ [admin][Admin] 

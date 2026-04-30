@@ -1,0 +1,59 @@
+0
+//EventName              DropZen    ItemDropRate   ItemDropCount   SetItemDropRate   ItemDropType   Fireworks	
+"Box Item Thanh Than"	 	  1000	   		100		  		5		  		0		   		 1		   		0
+end
+1
+//Section	Type	MinLevel   MaxLevel   Skill   Luck   Option   Excellent
+//Đồ Item Custom Thánh Thần
+
+
+0           57		0          0          0       1      1        1		100	//Mũ Thánh Thần
+0           58		0          0          0       1      1        1		100	//Mũ Thánh Thần
+0           59		0          0          0       1      1        1		100	//Mũ Thánh Thần
+2           27		0          0          0       1      1        1		100	//Mũ Thánh Thần
+4           36		0          0          0       1      1        1		100	//Mũ Thánh Thần
+5           53		0          0          0       1      1        1		100	//Mũ Thánh Thần
+5           54		0          0          0       1      1        1		100	//Mũ Thánh Thần
+
+7           138		0          0          0       1      1        1		100	//Mũ Thánh Thần
+7           139		0          0          0       1      1        1		100	//Mũ Thánh Thần
+7           140		0          0          0       1      1        1		100	//Mũ Thánh Thần
+7           141		0          0          0       1      1        1		100	//Mũ Thánh Thần
+7           143		0          0          0       1      1        1		100	//Mũ Thánh Thần
+7           144		0          0          0       1      1        1		100	//Mũ Thánh Thần
+                                                        
+8           138		0          0          0       1      1        1		100	//Áo Thánh Thần
+8           139		0          0          0       1      1        1		100	//Áo Thánh Thần
+8           140		0          0          0       1      1        1		100	//Áo Thánh Thần
+8           141		0          0          0       1      1        1		100	//Áo Thánh Thần
+8           142		0          0          0       1      1        1		100	//Áo Thánh Thần
+8           143		0          0          0       1      1        1		100	//Áo Thánh Thần
+8           144		0          0          0       1      1        1		100	//Áo Thánh Thần
+                                                        
+9           138		0          0          0       1      1        1		100	//Quần Thánh Thần
+9           139		0          0          0       1      1        1		100	//Quần Thánh Thần
+9           140		0          0          0       1      1        1		100	//Quần Thánh Thần
+9           141		0          0          0       1      1        1		100	//Quần Thánh Thần
+9           142		0          0          0       1      1        1		100	//Quần Thánh Thần
+9           143		0          0          0       1      1        1		100	//Quần Thánh Thần
+9           144		0          0          0       1      1        1		100	//Quần Thánh Thần
+                                                        
+10          138		0          0          0       1      1        1		100	//Găng Thánh Thần
+10          139		0          0          0       1      1        1		100	//Găng Thánh Thần
+10          140		0          0          0       1      1        1		100	//Găng Thánh Thần
+10          141		0          0          0       1      1        1		100	//Găng Thánh Thần
+10          142		0          0          0       1      1        1		100	//Găng Thánh Thần
+10          143		0          0          0       1      1        1		100	//Găng Thánh Thần
+10          144		0          0          0       1      1        1		100	//Găng Thánh Thần
+                                                        
+11          138		0          0          0       1      1        1		100	//Giầy Thánh Thần
+11          139		0          0          0       1      1        1		100	//Giầy Thánh Thần
+11          140		0          0          0       1      1        1		100	//Giầy Thánh Thần
+11          141		0          0          0       1      1        1		100	//Giầy Thánh Thần
+11          142		0          0          0       1      1        1		100	//Giầy Thánh Thần
+11          143		0          0          0       1      1        1		100	//Giầy Thánh Thần
+11          144		0          0          0       1      1        1		100	//Giầy Thánh Thần
+
+
+
+end

@@ -1,0 +1,2 @@
+10:28:29 [SocketManager] Protocol header error (Index: 9001, Header: 34)
+10:29:11 [SocketManager] Protocol header error (Index: 9002, Header: 34)

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--Bật /Tắt
+	Firework		- Hiệu ứng pháo hoa khi nâng cấp
+	Notice			- Bật, tắt thông báo
+-->
+<CustomVongQuay Enable="1" Firework="0" Notice="3">
+	
+	<MessageInfo>
+		<Message Index="0" Text="[Mốc Nạp]Chức năng không được kích hoạt!!!" />
+		<Message Index="1" Text="[Mốc Nạp]Không có thông tin Mốc Nạp!!!" />
+		<Message Index="2" Text="Bạn cần nhận thưởng Mốc (%d) trước !!" />
+		<Message Index="3" Text="Bạn cần nạp nhiều hơn [%s] để nhận Mốc Nạp này!" />
+		<Message Index="4" Text="Bạn đã nhận thưởng mốc nạp này rồi!" />
+		<Message Index="5" Text="[%s] nhận [%s] Từ Vòng Quay" />
+		<Message Index="6" Text="Hãy sắp xếp lại thùng đồ cá nhân !" />
+		<Message Index="7" Text="Bạn Không Có [%d] Vật Phẩm [%s] Theo Yêu Cầu !" />
+	</MessageInfo>	
+	
+	<ConfigVongQuay>
+		
+		<VongQuay Name="Vòng Quay 1" Type="12" Index="15" WC="50000" WP="0" GP="0" Count="0">
+			<ItemNhan>
+			<!--
+				SizeBMD : kích cỡ hiển thị ở Client, nếu Item to thì giảm số này để thu nhỏ lại
+				Count : số lượng item
+				IndexItem,LvItem,Skill,Luck,Opt,Exc,Anc : Option Item
+				HSD : 0 là vĩnh viễn > 0 là số phút sử dụng (tính từ lúc nhận)
+				SKX,SKBonus : SocketOpt
+				rate 
+			-->
+				<Item SizeBMD="1.0"	PosX="5"  PosY="-25" Type="14" Index="011" LvItem="12"  Dur="-1" Skill="0" Luck="0" Opt="0" Exc="0" Anc="0" SK1="255" SK2="255" SK3="255" SK4="255" SK5="255" SKBonus="0" HSD="0"  Rate="100"  />
+				<Item SizeBMD="1.0"	PosX="5"  PosY="-25" Type="12" Index="030" LvItem="00"  Dur="-1" Skill="0" Luck="0" Opt="0" Exc="0" Anc="0" SK1="255" SK2="255" SK3="255" SK4="255" SK5="255" SKBonus="0" HSD="0"  Rate="30"  />
+				<Item SizeBMD="1.0"	PosX="5"  PosY="-25" Type="12" Index="031" LvItem="00"  Dur="-1" Skill="0" Luck="0" Opt="0" Exc="0" Anc="0" SK1="255" SK2="255" SK3="255" SK4="255" SK5="255" SKBonus="0" HSD="0"  Rate="30"  />
+				<Item SizeBMD="1.0"	PosX="5"  PosY="-25" Type="12" Index="137" LvItem="00"  Dur="-1" Skill="0" Luck="0" Opt="0" Exc="0" Anc="0" SK1="255" SK2="255" SK3="255" SK4="255" SK5="255" SKBonus="0" HSD="0"  Rate="100"  />
+				<Item SizeBMD="1.0"	PosX="5"  PosY="-25" Type="12" Index="140" LvItem="00"  Dur="-1" Skill="0" Luck="0" Opt="0" Exc="0" Anc="0" SK1="255" SK2="255" SK3="255" SK4="255" SK5="255" SKBonus="0" HSD="0"  Rate="20"  />
+				<Item SizeBMD="1.0"	PosX="5"  PosY="-25" Type="12" Index="141" LvItem="00"  Dur="-1" Skill="0" Luck="0" Opt="0" Exc="0" Anc="0" SK1="255" SK2="255" SK3="255" SK4="255" SK5="255" SKBonus="0" HSD="0"  Rate="100"  />
+				<Item SizeBMD="1.0"	PosX="5"  PosY="-25" Type="14" Index="096" LvItem="00"  Dur="-1" Skill="0" Luck="0" Opt="0" Exc="0" Anc="0" SK1="255" SK2="255" SK3="255" SK4="255" SK5="255" SKBonus="0" HSD="0"  Rate="50"  />
+				<Item SizeBMD="1.0"	PosX="5"  PosY="-25" Type="14" Index="244" LvItem="00"  Dur="-1" Skill="0" Luck="0" Opt="0" Exc="0" Anc="0" SK1="255" SK2="255" SK3="255" SK4="255" SK5="255" SKBonus="0" HSD="0"  Rate="5"  />
+				<Item SizeBMD="1.0"	PosX="5"  PosY="-25" Type="14" Index="245" LvItem="00"  Dur="-1" Skill="0" Luck="0" Opt="0" Exc="0" Anc="0" SK1="255" SK2="255" SK3="255" SK4="255" SK5="255" SKBonus="0" HSD="0"  Rate="100"  />
+				<Item SizeBMD="1.0"	PosX="5"  PosY="-25" Type="14" Index="246" LvItem="00"  Dur="-1" Skill="0" Luck="0" Opt="0" Exc="0" Anc="0" SK1="255" SK2="255" SK3="255" SK4="255" SK5="255" SKBonus="0" HSD="0"  Rate="100"  />
+				<Item SizeBMD="1.0"	PosX="5"  PosY="-25" Type="14" Index="247" LvItem="00"  Dur="-1" Skill="0" Luck="0" Opt="0" Exc="0" Anc="0" SK1="255" SK2="255" SK3="255" SK4="255" SK5="255" SKBonus="0" HSD="0"  Rate="100"  />
+				<Item SizeBMD="1.0"	PosX="5"  PosY="-25" Type="14" Index="248" LvItem="00"  Dur="-1" Skill="0" Luck="0" Opt="0" Exc="0" Anc="0" SK1="255" SK2="255" SK3="255" SK4="255" SK5="255" SKBonus="0" HSD="0"  Rate="5"  />
+			
+			</ItemNhan>
+		</VongQuay>
+		
+	</ConfigVongQuay>
+	
+</CustomVongQuay>
+

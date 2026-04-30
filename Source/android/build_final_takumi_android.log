@@ -1,0 +1,621 @@
+
+> Configure project :app
+TakumiMu native ABIs: armeabi-v7a, arm64-v8a, x86, x86_64
+
+> Task :app:patchSourceJniLibs16k
+> Task :app:preBuild
+> Task :app:preUniversalReleaseBuild
+> Task :app:generateUniversalReleaseBuildConfig UP-TO-DATE
+> Task :app:javaPreCompileUniversalRelease UP-TO-DATE
+> Task :app:checkUniversalReleaseAarMetadata UP-TO-DATE
+> Task :app:generateUniversalReleaseResValues UP-TO-DATE
+> Task :app:mapUniversalReleaseSourceSetPaths UP-TO-DATE
+> Task :app:generateUniversalReleaseResources UP-TO-DATE
+> Task :app:mergeUniversalReleaseResources UP-TO-DATE
+> Task :app:packageUniversalReleaseResources UP-TO-DATE
+> Task :app:parseUniversalReleaseLocalResources UP-TO-DATE
+> Task :app:createUniversalReleaseCompatibleScreenManifests UP-TO-DATE
+> Task :app:extractDeepLinksUniversalRelease UP-TO-DATE
+> Task :app:processUniversalReleaseMainManifest UP-TO-DATE
+> Task :app:processUniversalReleaseManifest UP-TO-DATE
+> Task :app:processUniversalReleaseManifestForPackage UP-TO-DATE
+> Task :app:processUniversalReleaseResources UP-TO-DATE
+> Task :app:compileUniversalReleaseJavaWithJavac UP-TO-DATE
+> Task :app:extractProguardFiles UP-TO-DATE
+> Task :app:generateUniversalReleaseLintVitalReportModel UP-TO-DATE
+> Task :app:lintVitalAnalyzeUniversalRelease UP-TO-DATE
+> Task :app:lintVitalReportUniversalRelease UP-TO-DATE
+> Task :app:lintVitalUniversalRelease
+> Task :app:configureCMakeRelWithDebInfo[arm64-v8a]
+
+> Task :app:buildCMakeRelWithDebInfo[arm64-v8a]
+C/C++: ninja: Entering directory `D:\takumi\Source\android\app\.cxx\RelWithDebInfo\3t373u5g\arm64-v8a'
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.cpp:4:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:94:
+C/C++: D:/takumi/Source/5.Main/source/Platform/PlatformDefs.h:678:14: warning: '__stdcall' calling convention is not supported for this target [-Wignored-attributes]
+C/C++:     unsigned(__stdcall* fn)(void*);
+C/C++:              ^
+C/C++: D:/takumi/Source/5.Main/source/Platform/PlatformDefs.h:2330:59: warning: '__stdcall' calling convention is not supported for this target [-Wignored-attributes]
+C/C++: inline uintptr_t _beginthreadex(void*, unsigned, unsigned(__stdcall* fn)(void*), void* arg, unsigned, unsigned* pThreadId) {
+C/C++:                                                           ^
+C/C++: D:/takumi/Source/5.Main/source/Platform/PlatformDefs.h:2606:201: warning: '__stdcall' calling convention is not supported for this target [-Wignored-attributes]
+C/C++: inline HANDLE CreateThread(void*, SIZE_T, LPTHREAD_START_ROUTINE start, void* param, DWORD, DWORD* threadId) { unsigned id = 0; uintptr_t handle = _beginthreadex(nullptr, 0, reinterpret_cast<unsigned(__stdcall*)(void*)>(start), param, 0, &id); if (threadId) *threadId = id; return reinterpret_cast<HANDLE>(handle); }
+C/C++:                                                                                                                                                                                                         ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.cpp:4:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:108:
+C/C++: D:/takumi/Source/5.Main/source/_define.h:320:9: warning: 'IME_CONVERSIONMODE' macro redefined [-Wmacro-redefined]
+C/C++: #define IME_CONVERSIONMODE  1
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/Platform/PlatformDefs.h:750:9: note: previous definition is here
+C/C++: #define IME_CONVERSIONMODE     0x0001
+C/C++:         ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.cpp:4:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:108:
+C/C++: D:/takumi/Source/5.Main/source/_define.h:321:9: warning: 'IME_SENTENCEMODE' macro redefined [-Wmacro-redefined]
+C/C++: #define IME_SENTENCEMODE    2
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/Platform/PlatformDefs.h:753:9: note: previous definition is here
+C/C++: #define IME_SENTENCEMODE       0x0002
+C/C++:         ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.cpp:4:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:111:
+C/C++: In file included from D:/takumi/Source/5.Main/source/_struct.h:10:
+C/C++: D:/takumi/Source/5.Main/source/w_CharacterInfo.h:114:15: warning: anonymous non-C-compatible type given name for linkage purposes by typedef declaration; add a tag name here [-Wnon-c-typedef-for-linkage]
+C/C++: typedef struct
+C/C++:               ^
+C/C++:                NEW_HEALTH_BAR
+C/C++: D:/takumi/Source/5.Main/source/w_CharacterInfo.h:122:2: note: type is not C-compatible due to this member declaration
+C/C++:         void Clear()
+C/C++:         ^~~~~~~~~~~~
+C/C++: D:/takumi/Source/5.Main/source/w_CharacterInfo.h:131:3: note: type is given name 'NEW_HEALTH_BAR' for linkage purposes by this typedef declaration
+C/C++: } NEW_HEALTH_BAR;
+C/C++:   ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.cpp:4:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:111:
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:481:3: warning: 'memset' will set 0 bytes; maybe the arguments got flipped? [-Wuser-defined-warnings]
+C/C++:                 FillMemory(ViewDamageTable,0,sizeof(ViewDamageTable));
+C/C++:                 ^
+C/C++: D:/takumi/Source/5.Main/source/Platform/PlatformDefs.h:240:56: note: expanded from macro 'FillMemory'
+C/C++: #define FillMemory(ptr,sz,val)  memset((ptr),(val),(sz))
+C/C++:                                                        ^
+C/C++: C:/Users/thanh/AppData/Local/Android/Sdk/ndk/25.1.8937393/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/bits/fortify/string.h:144:9: note: from 'diagnose_if' attribute on 'memset':
+C/C++:         __clang_warning_if(c && !n, "'memset' will set 0 bytes; maybe the arguments got flipped?") {
+C/C++:         ^                  ~~~~~~~
+C/C++: C:/Users/thanh/AppData/Local/Android/Sdk/ndk/25.1.8937393/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/sys/cdefs.h:139:54: note: expanded from macro '__clang_warning_if'
+C/C++: #define __clang_warning_if(cond, msg) __attribute__((diagnose_if(cond, msg, "warning")))
+C/C++:                                                      ^           ~~~~
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.cpp:4:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:111:
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:392:15: warning: anonymous non-C-compatible type given name for linkage purposes by typedef declaration; add a tag name here [-Wnon-c-typedef-for-linkage]
+C/C++: typedef struct
+C/C++:               ^
+C/C++:                PRINT_PLAYER_S6
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:463:2: note: type is not C-compatible due to this member declaration
+C/C++:         void Clear()
+C/C++:         ^~~~~~~~~~~~
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:535:3: note: type is given name 'PRINT_PLAYER_S6' for linkage purposes by this typedef declaration
+C/C++: } PRINT_PLAYER_S6;
+C/C++:   ^
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:999:3: warning: array index 2 is past the end of the array (which contains 2 elements) [-Warray-bounds]
+C/C++:                 ReBuff[2] = 0;
+C/C++:                 ^      ~
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:977:2: note: array 'ReBuff' declared here
+C/C++:         bool ReBuff[2];
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:1089:8: warning: extra tokens at end of #endif directive [-Wextra-tokens]
+C/C++: #endif ___STRUCT_H__
+C/C++:        ^
+C/C++:        //
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.cpp:4:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:113:
+C/C++: In file included from D:/takumi/Source/5.Main/source/_GlobalFunctions.h:4:
+C/C++: D:/takumi/Source/5.Main/source/ZzzScene.h:2:10: warning: non-portable path to file '"ZzzInfomation.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzinfomation.h"
+C/C++:          ^~~~~~~~~~~~~~~~~
+C/C++:          "ZzzInfomation.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.cpp:6:
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.h:4:
+C/C++: In file included from D:/takumi/Source/5.Main/source/GlobalBitmap.h:12:
+C/C++: D:/takumi/Source/android/app/src/main/cpp/compat_include/Jpeglib.h:24:10: warning: non-portable path to file '"Jconfig.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "jconfig.h"            /* widely used configuration options */
+C/C++:          ^~~~~~~~~~~
+C/C++:          "Jconfig.h"
+C/C++: D:/takumi/Source/android/app/src/main/cpp/compat_include/Jpeglib.h:26:10: warning: non-portable path to file '"Jmorecfg.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "jmorecfg.h"           /* seldom changed options */
+C/C++:          ^~~~~~~~~~~~
+C/C++:          "Jmorecfg.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.cpp:6:
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.h:4:
+C/C++: D:/takumi/Source/5.Main/source/GlobalBitmap.h:18:15: warning: anonymous non-C-compatible type given name for linkage purposes by typedef declaration; add a tag name here [-Wnon-c-typedef-for-linkage]
+C/C++: typedef struct
+C/C++:               ^
+C/C++:                BITMAP_t
+C/C++: D:/takumi/Source/5.Main/source/GlobalBitmap.h:29:1: note: type is not C-compatible due to this member declaration
+C/C++: private:
+C/C++: ^~~~~~~~
+C/C++: D:/takumi/Source/5.Main/source/GlobalBitmap.h:32:3: note: type is given name 'BITMAP_t' for linkage purposes by this typedef declaration
+C/C++: } BITMAP_t;
+C/C++:   ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.cpp:8:
+C/C++: In file included from D:/takumi/Source/5.Main/source/WSclient.h:6:
+C/C++: In file included from D:/takumi/Source/5.Main/source/wsctlc.h:10:
+C/C++: In file included from D:/takumi/Source/5.Main/source/Protect.h:11:
+C/C++: D:/takumi/Source/5.Main/source/CustomCloak.h:4:10: warning: non-portable path to file '"ZzzInfomation.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzinfomation.h"
+C/C++:          ^~~~~~~~~~~~~~~~~
+C/C++:          "ZzzInfomation.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.cpp:8:
+C/C++: D:/takumi/Source/5.Main/source/WSclient.h:2000:29: warning: implicit conversion of NULL constant to 'int' [-Wnull-conversion]
+C/C++:                 memset(&m_MatchTeamName1, NULL, MAX_ID_SIZE); 
+C/C++:                 ~~~~~~                    ^~~~
+C/C++:                                           0
+C/C++: D:/takumi/Source/5.Main/source/WSclient.h:2001:29: warning: implicit conversion of NULL constant to 'int' [-Wnull-conversion]
+C/C++:                 memset(&m_MatchTeamName2, NULL, MAX_ID_SIZE);
+C/C++:                 ~~~~~~                    ^~~~
+C/C++:                                           0
+C/C++: D:/takumi/Source/5.Main/source/WSclient.h:1996:15: warning: anonymous non-C-compatible type given name for linkage purposes by typedef declaration; add a tag name here [-Wnon-c-typedef-for-linkage]
+C/C++: typedef struct
+C/C++:               ^
+C/C++:                PMSG_MATCH_RESULT
+C/C++: D:/takumi/Source/5.Main/source/WSclient.h:1998:2: note: type is not C-compatible due to this member declaration
+C/C++:         void                    Clear()
+C/C++:         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C/C++: D:/takumi/Source/5.Main/source/WSclient.h:2017:2: note: type is given name 'PMSG_MATCH_RESULT' for linkage purposes by this typedef declaration
+C/C++: }PMSG_MATCH_RESULT, *LPPMSG_MATCH_RESULT;
+C/C++:  ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzTexture.cpp:101:28: warning: implicit conversion of NULL constant to 'char' [-Wnull-conversion]
+C/C++:         NewFileName[iTextcnt+1] = NULL;
+C/C++:                                 ~ ^~~~
+C/C++:                                   '\0'
+C/C++: D:/takumi/Source/5.Main/source/ZzzTexture.cpp:136:28: warning: implicit conversion of NULL constant to 'char' [-Wnull-conversion]
+C/C++:         NewFileName[iTextcnt+1] = NULL;
+C/C++:                                 ~ ^~~~
+C/C++:                                   '\0'
+C/C++: 20 warnings generated.
+
+> Task :app:configureCMakeRelWithDebInfo[armeabi-v7a]
+
+> Task :app:buildCMakeRelWithDebInfo[armeabi-v7a]
+C/C++: ninja: Entering directory `D:\takumi\Source\android\app\.cxx\RelWithDebInfo\3t373u5g\armeabi-v7a'
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.cpp:4:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:94:
+C/C++: D:/takumi/Source/5.Main/source/Platform/PlatformDefs.h:678:14: warning: '__stdcall' calling convention is not supported for this target [-Wignored-attributes]
+C/C++:     unsigned(__stdcall* fn)(void*);
+C/C++:              ^
+C/C++: D:/takumi/Source/5.Main/source/Platform/PlatformDefs.h:2330:59: warning: '__stdcall' calling convention is not supported for this target [-Wignored-attributes]
+C/C++: inline uintptr_t _beginthreadex(void*, unsigned, unsigned(__stdcall* fn)(void*), void* arg, unsigned, unsigned* pThreadId) {
+C/C++:                                                           ^
+C/C++: D:/takumi/Source/5.Main/source/Platform/PlatformDefs.h:2606:201: warning: '__stdcall' calling convention is not supported for this target [-Wignored-attributes]
+C/C++: inline HANDLE CreateThread(void*, SIZE_T, LPTHREAD_START_ROUTINE start, void* param, DWORD, DWORD* threadId) { unsigned id = 0; uintptr_t handle = _beginthreadex(nullptr, 0, reinterpret_cast<unsigned(__stdcall*)(void*)>(start), param, 0, &id); if (threadId) *threadId = id; return reinterpret_cast<HANDLE>(handle); }
+C/C++:                                                                                                                                                                                                         ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.cpp:4:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:108:
+C/C++: D:/takumi/Source/5.Main/source/_define.h:320:9: warning: 'IME_CONVERSIONMODE' macro redefined [-Wmacro-redefined]
+C/C++: #define IME_CONVERSIONMODE  1
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/Platform/PlatformDefs.h:750:9: note: previous definition is here
+C/C++: #define IME_CONVERSIONMODE     0x0001
+C/C++:         ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.cpp:4:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:108:
+C/C++: D:/takumi/Source/5.Main/source/_define.h:321:9: warning: 'IME_SENTENCEMODE' macro redefined [-Wmacro-redefined]
+C/C++: #define IME_SENTENCEMODE    2
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/Platform/PlatformDefs.h:753:9: note: previous definition is here
+C/C++: #define IME_SENTENCEMODE       0x0002
+C/C++:         ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.cpp:4:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:111:
+C/C++: In file included from D:/takumi/Source/5.Main/source/_struct.h:10:
+C/C++: D:/takumi/Source/5.Main/source/w_CharacterInfo.h:114:15: warning: anonymous non-C-compatible type given name for linkage purposes by typedef declaration; add a tag name here [-Wnon-c-typedef-for-linkage]
+C/C++: typedef struct
+C/C++:               ^
+C/C++:                NEW_HEALTH_BAR
+C/C++: D:/takumi/Source/5.Main/source/w_CharacterInfo.h:122:2: note: type is not C-compatible due to this member declaration
+C/C++:         void Clear()
+C/C++:         ^~~~~~~~~~~~
+C/C++: D:/takumi/Source/5.Main/source/w_CharacterInfo.h:131:3: note: type is given name 'NEW_HEALTH_BAR' for linkage purposes by this typedef declaration
+C/C++: } NEW_HEALTH_BAR;
+C/C++:   ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.cpp:4:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:111:
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:481:3: warning: 'memset' will set 0 bytes; maybe the arguments got flipped? [-Wuser-defined-warnings]
+C/C++:                 FillMemory(ViewDamageTable,0,sizeof(ViewDamageTable));
+C/C++:                 ^
+C/C++: D:/takumi/Source/5.Main/source/Platform/PlatformDefs.h:240:56: note: expanded from macro 'FillMemory'
+C/C++: #define FillMemory(ptr,sz,val)  memset((ptr),(val),(sz))
+C/C++:                                                        ^
+C/C++: C:/Users/thanh/AppData/Local/Android/Sdk/ndk/25.1.8937393/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/bits/fortify/string.h:144:9: note: from 'diagnose_if' attribute on 'memset':
+C/C++:         __clang_warning_if(c && !n, "'memset' will set 0 bytes; maybe the arguments got flipped?") {
+C/C++:         ^                  ~~~~~~~
+C/C++: C:/Users/thanh/AppData/Local/Android/Sdk/ndk/25.1.8937393/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/sys/cdefs.h:139:54: note: expanded from macro '__clang_warning_if'
+C/C++: #define __clang_warning_if(cond, msg) __attribute__((diagnose_if(cond, msg, "warning")))
+C/C++:                                                      ^           ~~~~
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.cpp:4:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:111:
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:392:15: warning: anonymous non-C-compatible type given name for linkage purposes by typedef declaration; add a tag name here [-Wnon-c-typedef-for-linkage]
+C/C++: typedef struct
+C/C++:               ^
+C/C++:                PRINT_PLAYER_S6
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:463:2: note: type is not C-compatible due to this member declaration
+C/C++:         void Clear()
+C/C++:         ^~~~~~~~~~~~
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:535:3: note: type is given name 'PRINT_PLAYER_S6' for linkage purposes by this typedef declaration
+C/C++: } PRINT_PLAYER_S6;
+C/C++:   ^
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:999:3: warning: array index 2 is past the end of the array (which contains 2 elements) [-Warray-bounds]
+C/C++:                 ReBuff[2] = 0;
+C/C++:                 ^      ~
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:977:2: note: array 'ReBuff' declared here
+C/C++:         bool ReBuff[2];
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:1089:8: warning: extra tokens at end of #endif directive [-Wextra-tokens]
+C/C++: #endif ___STRUCT_H__
+C/C++:        ^
+C/C++:        //
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.cpp:4:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:113:
+C/C++: In file included from D:/takumi/Source/5.Main/source/_GlobalFunctions.h:4:
+C/C++: D:/takumi/Source/5.Main/source/ZzzScene.h:2:10: warning: non-portable path to file '"ZzzInfomation.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzinfomation.h"
+C/C++:          ^~~~~~~~~~~~~~~~~
+C/C++:          "ZzzInfomation.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.cpp:6:
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.h:4:
+C/C++: In file included from D:/takumi/Source/5.Main/source/GlobalBitmap.h:12:
+C/C++: D:/takumi/Source/android/app/src/main/cpp/compat_include/Jpeglib.h:24:10: warning: non-portable path to file '"Jconfig.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "jconfig.h"            /* widely used configuration options */
+C/C++:          ^~~~~~~~~~~
+C/C++:          "Jconfig.h"
+C/C++: D:/takumi/Source/android/app/src/main/cpp/compat_include/Jpeglib.h:26:10: warning: non-portable path to file '"Jmorecfg.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "jmorecfg.h"           /* seldom changed options */
+C/C++:          ^~~~~~~~~~~~
+C/C++:          "Jmorecfg.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.cpp:6:
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.h:4:
+C/C++: D:/takumi/Source/5.Main/source/GlobalBitmap.h:18:15: warning: anonymous non-C-compatible type given name for linkage purposes by typedef declaration; add a tag name here [-Wnon-c-typedef-for-linkage]
+C/C++: typedef struct
+C/C++:               ^
+C/C++:                BITMAP_t
+C/C++: D:/takumi/Source/5.Main/source/GlobalBitmap.h:29:1: note: type is not C-compatible due to this member declaration
+C/C++: private:
+C/C++: ^~~~~~~~
+C/C++: D:/takumi/Source/5.Main/source/GlobalBitmap.h:32:3: note: type is given name 'BITMAP_t' for linkage purposes by this typedef declaration
+C/C++: } BITMAP_t;
+C/C++:   ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.cpp:8:
+C/C++: In file included from D:/takumi/Source/5.Main/source/WSclient.h:6:
+C/C++: In file included from D:/takumi/Source/5.Main/source/wsctlc.h:10:
+C/C++: In file included from D:/takumi/Source/5.Main/source/Protect.h:11:
+C/C++: D:/takumi/Source/5.Main/source/CustomCloak.h:4:10: warning: non-portable path to file '"ZzzInfomation.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzinfomation.h"
+C/C++:          ^~~~~~~~~~~~~~~~~
+C/C++:          "ZzzInfomation.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.cpp:8:
+C/C++: D:/takumi/Source/5.Main/source/WSclient.h:1996:15: warning: anonymous non-C-compatible type given name for linkage purposes by typedef declaration; add a tag name here [-Wnon-c-typedef-for-linkage]
+C/C++: typedef struct
+C/C++:               ^
+C/C++:                PMSG_MATCH_RESULT
+C/C++: D:/takumi/Source/5.Main/source/WSclient.h:1998:2: note: type is not C-compatible due to this member declaration
+C/C++:         void                    Clear()
+C/C++:         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C/C++: D:/takumi/Source/5.Main/source/WSclient.h:2017:2: note: type is given name 'PMSG_MATCH_RESULT' for linkage purposes by this typedef declaration
+C/C++: }PMSG_MATCH_RESULT, *LPPMSG_MATCH_RESULT;
+C/C++:  ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzTexture.cpp:101:28: warning: implicit conversion of NULL constant to 'char' [-Wnull-conversion]
+C/C++:         NewFileName[iTextcnt+1] = NULL;
+C/C++:                                 ~ ^~~~
+C/C++:                                   '\0'
+C/C++: D:/takumi/Source/5.Main/source/ZzzTexture.cpp:136:28: warning: implicit conversion of NULL constant to 'char' [-Wnull-conversion]
+C/C++:         NewFileName[iTextcnt+1] = NULL;
+C/C++:                                 ~ ^~~~
+C/C++:                                   '\0'
+C/C++: 18 warnings generated.
+
+> Task :app:configureCMakeRelWithDebInfo[x86]
+
+> Task :app:buildCMakeRelWithDebInfo[x86]
+C/C++: ninja: Entering directory `D:\takumi\Source\android\app\.cxx\RelWithDebInfo\3t373u5g\x86'
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.cpp:4:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:108:
+C/C++: D:/takumi/Source/5.Main/source/_define.h:320:9: warning: 'IME_CONVERSIONMODE' macro redefined [-Wmacro-redefined]
+C/C++: #define IME_CONVERSIONMODE  1
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/Platform/PlatformDefs.h:750:9: note: previous definition is here
+C/C++: #define IME_CONVERSIONMODE     0x0001
+C/C++:         ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.cpp:4:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:108:
+C/C++: D:/takumi/Source/5.Main/source/_define.h:321:9: warning: 'IME_SENTENCEMODE' macro redefined [-Wmacro-redefined]
+C/C++: #define IME_SENTENCEMODE    2
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/Platform/PlatformDefs.h:753:9: note: previous definition is here
+C/C++: #define IME_SENTENCEMODE       0x0002
+C/C++:         ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.cpp:4:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:111:
+C/C++: In file included from D:/takumi/Source/5.Main/source/_struct.h:10:
+C/C++: D:/takumi/Source/5.Main/source/w_CharacterInfo.h:114:15: warning: anonymous non-C-compatible type given name for linkage purposes by typedef declaration; add a tag name here [-Wnon-c-typedef-for-linkage]
+C/C++: typedef struct
+C/C++:               ^
+C/C++:                NEW_HEALTH_BAR
+C/C++: D:/takumi/Source/5.Main/source/w_CharacterInfo.h:122:2: note: type is not C-compatible due to this member declaration
+C/C++:         void Clear()
+C/C++:         ^~~~~~~~~~~~
+C/C++: D:/takumi/Source/5.Main/source/w_CharacterInfo.h:131:3: note: type is given name 'NEW_HEALTH_BAR' for linkage purposes by this typedef declaration
+C/C++: } NEW_HEALTH_BAR;
+C/C++:   ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.cpp:4:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:111:
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:481:3: warning: 'memset' will set 0 bytes; maybe the arguments got flipped? [-Wuser-defined-warnings]
+C/C++:                 FillMemory(ViewDamageTable,0,sizeof(ViewDamageTable));
+C/C++:                 ^
+C/C++: D:/takumi/Source/5.Main/source/Platform/PlatformDefs.h:240:56: note: expanded from macro 'FillMemory'
+C/C++: #define FillMemory(ptr,sz,val)  memset((ptr),(val),(sz))
+C/C++:                                                        ^
+C/C++: C:/Users/thanh/AppData/Local/Android/Sdk/ndk/25.1.8937393/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/bits/fortify/string.h:144:9: note: from 'diagnose_if' attribute on 'memset':
+C/C++:         __clang_warning_if(c && !n, "'memset' will set 0 bytes; maybe the arguments got flipped?") {
+C/C++:         ^                  ~~~~~~~
+C/C++: C:/Users/thanh/AppData/Local/Android/Sdk/ndk/25.1.8937393/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/sys/cdefs.h:139:54: note: expanded from macro '__clang_warning_if'
+C/C++: #define __clang_warning_if(cond, msg) __attribute__((diagnose_if(cond, msg, "warning")))
+C/C++:                                                      ^           ~~~~
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.cpp:4:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:111:
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:392:15: warning: anonymous non-C-compatible type given name for linkage purposes by typedef declaration; add a tag name here [-Wnon-c-typedef-for-linkage]
+C/C++: typedef struct
+C/C++:               ^
+C/C++:                PRINT_PLAYER_S6
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:463:2: note: type is not C-compatible due to this member declaration
+C/C++:         void Clear()
+C/C++:         ^~~~~~~~~~~~
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:535:3: note: type is given name 'PRINT_PLAYER_S6' for linkage purposes by this typedef declaration
+C/C++: } PRINT_PLAYER_S6;
+C/C++:   ^
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:999:3: warning: array index 2 is past the end of the array (which contains 2 elements) [-Warray-bounds]
+C/C++:                 ReBuff[2] = 0;
+C/C++:                 ^      ~
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:977:2: note: array 'ReBuff' declared here
+C/C++:         bool ReBuff[2];
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:1089:8: warning: extra tokens at end of #endif directive [-Wextra-tokens]
+C/C++: #endif ___STRUCT_H__
+C/C++:        ^
+C/C++:        //
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.cpp:4:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:113:
+C/C++: In file included from D:/takumi/Source/5.Main/source/_GlobalFunctions.h:4:
+C/C++: D:/takumi/Source/5.Main/source/ZzzScene.h:2:10: warning: non-portable path to file '"ZzzInfomation.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzinfomation.h"
+C/C++:          ^~~~~~~~~~~~~~~~~
+C/C++:          "ZzzInfomation.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.cpp:6:
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.h:4:
+C/C++: In file included from D:/takumi/Source/5.Main/source/GlobalBitmap.h:12:
+C/C++: D:/takumi/Source/android/app/src/main/cpp/compat_include/Jpeglib.h:24:10: warning: non-portable path to file '"Jconfig.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "jconfig.h"            /* widely used configuration options */
+C/C++:          ^~~~~~~~~~~
+C/C++:          "Jconfig.h"
+C/C++: D:/takumi/Source/android/app/src/main/cpp/compat_include/Jpeglib.h:26:10: warning: non-portable path to file '"Jmorecfg.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "jmorecfg.h"           /* seldom changed options */
+C/C++:          ^~~~~~~~~~~~
+C/C++:          "Jmorecfg.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.cpp:6:
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.h:4:
+C/C++: D:/takumi/Source/5.Main/source/GlobalBitmap.h:18:15: warning: anonymous non-C-compatible type given name for linkage purposes by typedef declaration; add a tag name here [-Wnon-c-typedef-for-linkage]
+C/C++: typedef struct
+C/C++:               ^
+C/C++:                BITMAP_t
+C/C++: D:/takumi/Source/5.Main/source/GlobalBitmap.h:29:1: note: type is not C-compatible due to this member declaration
+C/C++: private:
+C/C++: ^~~~~~~~
+C/C++: D:/takumi/Source/5.Main/source/GlobalBitmap.h:32:3: note: type is given name 'BITMAP_t' for linkage purposes by this typedef declaration
+C/C++: } BITMAP_t;
+C/C++:   ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.cpp:8:
+C/C++: In file included from D:/takumi/Source/5.Main/source/WSclient.h:6:
+C/C++: In file included from D:/takumi/Source/5.Main/source/wsctlc.h:10:
+C/C++: In file included from D:/takumi/Source/5.Main/source/Protect.h:11:
+C/C++: D:/takumi/Source/5.Main/source/CustomCloak.h:4:10: warning: non-portable path to file '"ZzzInfomation.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzinfomation.h"
+C/C++:          ^~~~~~~~~~~~~~~~~
+C/C++:          "ZzzInfomation.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.cpp:8:
+C/C++: D:/takumi/Source/5.Main/source/WSclient.h:1996:15: warning: anonymous non-C-compatible type given name for linkage purposes by typedef declaration; add a tag name here [-Wnon-c-typedef-for-linkage]
+C/C++: typedef struct
+C/C++:               ^
+C/C++:                PMSG_MATCH_RESULT
+C/C++: D:/takumi/Source/5.Main/source/WSclient.h:1998:2: note: type is not C-compatible due to this member declaration
+C/C++:         void                    Clear()
+C/C++:         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C/C++: D:/takumi/Source/5.Main/source/WSclient.h:2017:2: note: type is given name 'PMSG_MATCH_RESULT' for linkage purposes by this typedef declaration
+C/C++: }PMSG_MATCH_RESULT, *LPPMSG_MATCH_RESULT;
+C/C++:  ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzTexture.cpp:101:28: warning: implicit conversion of NULL constant to 'char' [-Wnull-conversion]
+C/C++:         NewFileName[iTextcnt+1] = NULL;
+C/C++:                                 ~ ^~~~
+C/C++:                                   '\0'
+C/C++: D:/takumi/Source/5.Main/source/ZzzTexture.cpp:136:28: warning: implicit conversion of NULL constant to 'char' [-Wnull-conversion]
+C/C++:         NewFileName[iTextcnt+1] = NULL;
+C/C++:                                 ~ ^~~~
+C/C++:                                   '\0'
+C/C++: 15 warnings generated.
+
+> Task :app:configureCMakeRelWithDebInfo[x86_64]
+
+> Task :app:buildCMakeRelWithDebInfo[x86_64]
+C/C++: ninja: Entering directory `D:\takumi\Source\android\app\.cxx\RelWithDebInfo\3t373u5g\x86_64'
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.cpp:4:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:94:
+C/C++: D:/takumi/Source/5.Main/source/Platform/PlatformDefs.h:678:14: warning: '__stdcall' calling convention is not supported for this target [-Wignored-attributes]
+C/C++:     unsigned(__stdcall* fn)(void*);
+C/C++:              ^
+C/C++: D:/takumi/Source/5.Main/source/Platform/PlatformDefs.h:2330:59: warning: '__stdcall' calling convention is not supported for this target [-Wignored-attributes]
+C/C++: inline uintptr_t _beginthreadex(void*, unsigned, unsigned(__stdcall* fn)(void*), void* arg, unsigned, unsigned* pThreadId) {
+C/C++:                                                           ^
+C/C++: D:/takumi/Source/5.Main/source/Platform/PlatformDefs.h:2606:201: warning: '__stdcall' calling convention is not supported for this target [-Wignored-attributes]
+C/C++: inline HANDLE CreateThread(void*, SIZE_T, LPTHREAD_START_ROUTINE start, void* param, DWORD, DWORD* threadId) { unsigned id = 0; uintptr_t handle = _beginthreadex(nullptr, 0, reinterpret_cast<unsigned(__stdcall*)(void*)>(start), param, 0, &id); if (threadId) *threadId = id; return reinterpret_cast<HANDLE>(handle); }
+C/C++:                                                                                                                                                                                                         ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.cpp:4:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:108:
+C/C++: D:/takumi/Source/5.Main/source/_define.h:320:9: warning: 'IME_CONVERSIONMODE' macro redefined [-Wmacro-redefined]
+C/C++: #define IME_CONVERSIONMODE  1
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/Platform/PlatformDefs.h:750:9: note: previous definition is here
+C/C++: #define IME_CONVERSIONMODE     0x0001
+C/C++:         ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.cpp:4:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:108:
+C/C++: D:/takumi/Source/5.Main/source/_define.h:321:9: warning: 'IME_SENTENCEMODE' macro redefined [-Wmacro-redefined]
+C/C++: #define IME_SENTENCEMODE    2
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/Platform/PlatformDefs.h:753:9: note: previous definition is here
+C/C++: #define IME_SENTENCEMODE       0x0002
+C/C++:         ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.cpp:4:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:111:
+C/C++: In file included from D:/takumi/Source/5.Main/source/_struct.h:10:
+C/C++: D:/takumi/Source/5.Main/source/w_CharacterInfo.h:114:15: warning: anonymous non-C-compatible type given name for linkage purposes by typedef declaration; add a tag name here [-Wnon-c-typedef-for-linkage]
+C/C++: typedef struct
+C/C++:               ^
+C/C++:                NEW_HEALTH_BAR
+C/C++: D:/takumi/Source/5.Main/source/w_CharacterInfo.h:122:2: note: type is not C-compatible due to this member declaration
+C/C++:         void Clear()
+C/C++:         ^~~~~~~~~~~~
+C/C++: D:/takumi/Source/5.Main/source/w_CharacterInfo.h:131:3: note: type is given name 'NEW_HEALTH_BAR' for linkage purposes by this typedef declaration
+C/C++: } NEW_HEALTH_BAR;
+C/C++:   ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.cpp:4:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:111:
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:481:3: warning: 'memset' will set 0 bytes; maybe the arguments got flipped? [-Wuser-defined-warnings]
+C/C++:                 FillMemory(ViewDamageTable,0,sizeof(ViewDamageTable));
+C/C++:                 ^
+C/C++: D:/takumi/Source/5.Main/source/Platform/PlatformDefs.h:240:56: note: expanded from macro 'FillMemory'
+C/C++: #define FillMemory(ptr,sz,val)  memset((ptr),(val),(sz))
+C/C++:                                                        ^
+C/C++: C:/Users/thanh/AppData/Local/Android/Sdk/ndk/25.1.8937393/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/bits/fortify/string.h:144:9: note: from 'diagnose_if' attribute on 'memset':
+C/C++:         __clang_warning_if(c && !n, "'memset' will set 0 bytes; maybe the arguments got flipped?") {
+C/C++:         ^                  ~~~~~~~
+C/C++: C:/Users/thanh/AppData/Local/Android/Sdk/ndk/25.1.8937393/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/sys/cdefs.h:139:54: note: expanded from macro '__clang_warning_if'
+C/C++: #define __clang_warning_if(cond, msg) __attribute__((diagnose_if(cond, msg, "warning")))
+C/C++:                                                      ^           ~~~~
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.cpp:4:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:111:
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:392:15: warning: anonymous non-C-compatible type given name for linkage purposes by typedef declaration; add a tag name here [-Wnon-c-typedef-for-linkage]
+C/C++: typedef struct
+C/C++:               ^
+C/C++:                PRINT_PLAYER_S6
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:463:2: note: type is not C-compatible due to this member declaration
+C/C++:         void Clear()
+C/C++:         ^~~~~~~~~~~~
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:535:3: note: type is given name 'PRINT_PLAYER_S6' for linkage purposes by this typedef declaration
+C/C++: } PRINT_PLAYER_S6;
+C/C++:   ^
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:999:3: warning: array index 2 is past the end of the array (which contains 2 elements) [-Warray-bounds]
+C/C++:                 ReBuff[2] = 0;
+C/C++:                 ^      ~
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:977:2: note: array 'ReBuff' declared here
+C/C++:         bool ReBuff[2];
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:1089:8: warning: extra tokens at end of #endif directive [-Wextra-tokens]
+C/C++: #endif ___STRUCT_H__
+C/C++:        ^
+C/C++:        //
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.cpp:4:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:113:
+C/C++: In file included from D:/takumi/Source/5.Main/source/_GlobalFunctions.h:4:
+C/C++: D:/takumi/Source/5.Main/source/ZzzScene.h:2:10: warning: non-portable path to file '"ZzzInfomation.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzinfomation.h"
+C/C++:          ^~~~~~~~~~~~~~~~~
+C/C++:          "ZzzInfomation.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.cpp:6:
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.h:4:
+C/C++: In file included from D:/takumi/Source/5.Main/source/GlobalBitmap.h:12:
+C/C++: D:/takumi/Source/android/app/src/main/cpp/compat_include/Jpeglib.h:24:10: warning: non-portable path to file '"Jconfig.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "jconfig.h"            /* widely used configuration options */
+C/C++:          ^~~~~~~~~~~
+C/C++:          "Jconfig.h"
+C/C++: D:/takumi/Source/android/app/src/main/cpp/compat_include/Jpeglib.h:26:10: warning: non-portable path to file '"Jmorecfg.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "jmorecfg.h"           /* seldom changed options */
+C/C++:          ^~~~~~~~~~~~
+C/C++:          "Jmorecfg.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.cpp:6:
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.h:4:
+C/C++: D:/takumi/Source/5.Main/source/GlobalBitmap.h:18:15: warning: anonymous non-C-compatible type given name for linkage purposes by typedef declaration; add a tag name here [-Wnon-c-typedef-for-linkage]
+C/C++: typedef struct
+C/C++:               ^
+C/C++:                BITMAP_t
+C/C++: D:/takumi/Source/5.Main/source/GlobalBitmap.h:29:1: note: type is not C-compatible due to this member declaration
+C/C++: private:
+C/C++: ^~~~~~~~
+C/C++: D:/takumi/Source/5.Main/source/GlobalBitmap.h:32:3: note: type is given name 'BITMAP_t' for linkage purposes by this typedef declaration
+C/C++: } BITMAP_t;
+C/C++:   ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.cpp:8:
+C/C++: In file included from D:/takumi/Source/5.Main/source/WSclient.h:6:
+C/C++: In file included from D:/takumi/Source/5.Main/source/wsctlc.h:10:
+C/C++: In file included from D:/takumi/Source/5.Main/source/Protect.h:11:
+C/C++: D:/takumi/Source/5.Main/source/CustomCloak.h:4:10: warning: non-portable path to file '"ZzzInfomation.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzinfomation.h"
+C/C++:          ^~~~~~~~~~~~~~~~~
+C/C++:          "ZzzInfomation.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.cpp:8:
+C/C++: D:/takumi/Source/5.Main/source/WSclient.h:2000:29: warning: implicit conversion of NULL constant to 'int' [-Wnull-conversion]
+C/C++:                 memset(&m_MatchTeamName1, NULL, MAX_ID_SIZE); 
+C/C++:                 ~~~~~~                    ^~~~
+C/C++:                                           0
+C/C++: D:/takumi/Source/5.Main/source/WSclient.h:2001:29: warning: implicit conversion of NULL constant to 'int' [-Wnull-conversion]
+C/C++:                 memset(&m_MatchTeamName2, NULL, MAX_ID_SIZE);
+C/C++:                 ~~~~~~                    ^~~~
+C/C++:                                           0
+C/C++: D:/takumi/Source/5.Main/source/WSclient.h:1996:15: warning: anonymous non-C-compatible type given name for linkage purposes by typedef declaration; add a tag name here [-Wnon-c-typedef-for-linkage]
+C/C++: typedef struct
+C/C++:               ^
+C/C++:                PMSG_MATCH_RESULT
+C/C++: D:/takumi/Source/5.Main/source/WSclient.h:1998:2: note: type is not C-compatible due to this member declaration
+C/C++:         void                    Clear()
+C/C++:         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C/C++: D:/takumi/Source/5.Main/source/WSclient.h:2017:2: note: type is given name 'PMSG_MATCH_RESULT' for linkage purposes by this typedef declaration
+C/C++: }PMSG_MATCH_RESULT, *LPPMSG_MATCH_RESULT;
+C/C++:  ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzTexture.cpp:101:28: warning: implicit conversion of NULL constant to 'char' [-Wnull-conversion]
+C/C++:         NewFileName[iTextcnt+1] = NULL;
+C/C++:                                 ~ ^~~~
+C/C++:                                   '\0'
+C/C++: D:/takumi/Source/5.Main/source/ZzzTexture.cpp:136:28: warning: implicit conversion of NULL constant to 'char' [-Wnull-conversion]
+C/C++:         NewFileName[iTextcnt+1] = NULL;
+C/C++:                                 ~ ^~~~
+C/C++:                                   '\0'
+C/C++: 20 warnings generated.
+
+> Task :app:mergeUniversalReleaseJniLibFolders UP-TO-DATE
+> Task :app:checkUniversalReleaseDuplicateClasses UP-TO-DATE
+> Task :app:dexBuilderUniversalRelease UP-TO-DATE
+> Task :app:desugarUniversalReleaseFileDependencies UP-TO-DATE
+> Task :app:mergeExtDexUniversalRelease UP-TO-DATE
+> Task :app:mergeDexUniversalRelease UP-TO-DATE
+> Task :app:mergeUniversalReleaseArtProfile UP-TO-DATE
+> Task :app:mergeUniversalReleaseGlobalSynthetics UP-TO-DATE
+> Task :app:compileUniversalReleaseArtProfile UP-TO-DATE
+> Task :app:mergeUniversalReleaseShaders UP-TO-DATE
+> Task :app:compileUniversalReleaseShaders NO-SOURCE
+> Task :app:generateUniversalReleaseAssets UP-TO-DATE
+> Task :app:mergeUniversalReleaseAssets UP-TO-DATE
+> Task :app:compressUniversalReleaseAssets UP-TO-DATE
+> Task :app:processUniversalReleaseJavaRes NO-SOURCE
+> Task :app:mergeUniversalReleaseJavaResource UP-TO-DATE
+> Task :app:optimizeUniversalReleaseResources UP-TO-DATE
+> Task :app:collectUniversalReleaseDependencies UP-TO-DATE
+> Task :app:sdkUniversalReleaseDependencyData UP-TO-DATE
+> Task :app:validateSigningUniversalRelease UP-TO-DATE
+> Task :app:writeUniversalReleaseAppMetadata UP-TO-DATE
+> Task :app:writeUniversalReleaseSigningConfigVersions UP-TO-DATE
+> Task :app:mergeUniversalReleaseNativeLibs
+> Task :app:stripUniversalReleaseDebugSymbols
+> Task :app:extractUniversalReleaseNativeSymbolTables
+> Task :app:mergeUniversalReleaseNativeDebugMetadata NO-SOURCE
+> Task :app:packageUniversalRelease
+> Task :app:createUniversalReleaseApkListingFileRedirect UP-TO-DATE
+> Task :app:assembleUniversalRelease
+
+BUILD SUCCESSFUL in 17s
+53 actionable tasks: 14 executed, 39 up-to-date

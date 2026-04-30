@@ -1,0 +1,6 @@
+00:06:10 [General][test1234][qweqwe] - (Message: /addstr 5000)
+00:06:14 [General][test1234][qweqwe] - (Message: /addagi 5000)
+00:06:19 [General][test1234][qweqwe] - (Message: /addvit 5000)
+00:06:23 [General][test1234][qweqwe] - (Message: /addene 5000)
+08:43:07 [General][test1234][qweqwe] - (Message: /nv2)
+09:01:18 [General][test1234][qweqwe] - (Message: /nv2)

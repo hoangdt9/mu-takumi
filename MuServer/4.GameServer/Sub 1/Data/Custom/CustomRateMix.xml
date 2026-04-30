@@ -1,0 +1,10 @@
+<!-- Lưu ý : chức năng này chỉ bổ sung hiển thị tỷ lệ Rate mix ở Client nó không có tác dụng lên rate mix thật 
+	có thể dùng để Fake hiển thị rate ở client , vd CodeMix 39 (là mix wing 3 ) RateShow = 100 thì ở client sẻ hiển thị rate 100% (Rate ảo), nhưng khi mix thì vẫn lấy Rate từ config ở Wing3MixRate
+-->
+
+
+<CustomRateMix Enable="0" >
+	<Mix 
+	CodeMix="6"	RateShow="10" 
+	/>
+</CustomRateMix>

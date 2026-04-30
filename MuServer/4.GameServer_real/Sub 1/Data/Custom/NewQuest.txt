@@ -1,0 +1,16 @@
+0
+//Class	Map	X	Y		Dir
+
+end
+
+//42 - Rồng đỏ, 43- ròng vàng con, 44- ròng vàng
+1
+//Level		Name						Monster1	Count1		Monster2	Count2		Monster3	Count3		Monster4	Count4		Monster5	Count5		Map		ReqLevel	Bless	Soul	Life	Chaos	Cre		Point
+
+end	 
+
+//phần thưởng
+2
+//Level		Section   Type	  Level		  Skill   Luck   Option   Excellent 	Set		Duration	Count 
+
+end

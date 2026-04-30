@@ -1,0 +1,59 @@
+0
+//EventName              DropZen    ItemDropRate   ItemDropCount   SetItemDropRate   ItemDropType   Fireworks	
+"Box Item Tim Bac"	 	  1000	   		100		  		5		  		0		   		 0		   		0
+end
+1
+//Section	Type	MinLevel   MaxLevel   Skill   Luck   Option   Excellent
+//Đồ Item Custom Tim Bạc
+
+0           82		0          0          0       0      0        1		100	//Mũ Tim Bạc
+0           83		0          0          0       0      0        1		100	//Mũ Tim Bạc
+0           84		0          0          0       0      0        1		100	//Mũ Tim Bạc
+2           42		0          0          0       0      0        1		100	//Mũ Tim Bạc
+4           42		0          0          0       0      0        1		100	//Mũ Tim Bạc
+5           65		0          0          0       0      0        1		100	//Mũ Tim Bạc
+5           64		0          0          0       0      0        1		100	//Mũ Tim Bạc
+6           35		0          0          0       0      0        1		100	//Mũ Tim Bạc
+
+7           189		0          0          0       0      0        1		100	//Mũ Tim Bạc
+7           190		0          0          0       0      0        1		100	//Mũ Tim Bạc
+7           191		0          0          0       0      0        1		100	//Mũ Tim Bạc
+7           192		0          0          0       0      0        1		100	//Mũ Tim Bạc
+7           194		0          0          0       0      0        1		100	//Mũ Tim Bạc
+7           195		0          0          0       0      0        1		100	//Mũ Tim Bạc
+																			
+8           189		0          0          0       0      0        1		100	//Áo Tim Bạc
+8           190		0          0          0       0      0        1		100	//Áo Tim Bạc
+8           191		0          0          0       0      0        1		100	//Áo Tim Bạc
+8           192		0          0          0       0      0        1		100	//Áo Tim Bạc
+8           193		0          0          0       0      0        1		100	//Áo Tim Bạc
+8           194		0          0          0       0      0        1		100	//Áo Tim Bạc
+8           195		0          0          0       0      0        1		100	//Áo Tim Bạc
+																			
+9           189		0          0          0       0      0        1		100	//Quần Tim Bạc
+9           190		0          0          0       0      0        1		100	//Quần Tim Bạc
+9           191		0          0          0       0      0        1		100	//Quần Tim Bạc
+9           192		0          0          0       0      0        1		100	//Quần Tim Bạc
+9           193		0          0          0       0      0        1		100	//Quần Tim Bạc
+9           194		0          0          0       0      0        1		100	//Quần Tim Bạc
+9           195		0          0          0       0      0        1		100	//Quần Tim Bạc
+																			
+10          189		0          0          0       0      0        1		100	//Găng Tim Bạc
+10          190		0          0          0       0      0        1		100	//Găng Tim Bạc
+10          191		0          0          0       0      0        1		100	//Găng Tim Bạc
+10          192		0          0          0       0      0        1		100	//Găng Tim Bạc
+10          193		0          0          0       0      0        1		100	//Găng Tim Bạc
+10          194		0          0          0       0      0        1		100	//Găng Tim Bạc
+10          195		0          0          0       0      0        1		100	//Găng Tim Bạc
+																			
+11          189		0          0          0       0      0        1		100	//Giầy Tim Bạc
+11          190		0          0          0       0      0        1		100	//Giầy Tim Bạc
+11          191		0          0          0       0      0        1		100	//Giầy Tim Bạc
+11          192		0          0          0       0      0        1		100	//Giầy Tim Bạc
+11          193		0          0          0       0      0        1		100	//Giầy Tim Bạc
+11          194		0          0          0       0      0        1		100	//Giầy Tim Bạc
+11          195		0          0          0       0      0        1		100	//Giầy Tim Bạc
+
+
+
+end

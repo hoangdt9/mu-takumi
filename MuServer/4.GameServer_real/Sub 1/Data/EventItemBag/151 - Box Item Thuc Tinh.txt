@@ -1,0 +1,58 @@
+0
+//EventName              DropZen    ItemDropRate   ItemDropCount   SetItemDropRate   ItemDropType   Fireworks	
+"Box Item Thuc Tinh"	 1000	   		100		  		5		  		0		   		 1		   		0
+end
+1
+//Section	Type	MinLevel   MaxLevel   Skill   Luck   Option   Excellent
+//Đồ Item Custom Thức Tỉnh
+
+0           62		0          0          0       1      1        1		100	//Mũ Thức Tỉnh
+0           63		0          0          0       1      1        1		100	//Mũ Thức Tỉnh
+0           64		0          0          0       1      1        1		100	//Mũ Thức Tỉnh
+2           36		0          0          0       1      1        1		100	//Mũ Thức Tỉnh
+4           38		0          0          0       1      1        1		100	//Mũ Thức Tỉnh
+5           55		0          0          0       1      1        1		100	//Mũ Thức Tỉnh
+5           56		0          0          0       1      1        1		100	//Mũ Thức Tỉnh
+
+7           150		0          0          0       1      1        1		100	//Mũ Thức Tỉnh
+7           151		0          0          0       1      1        1		100	//Mũ Thức Tỉnh
+7           152		0          0          0       1      1        1		100	//Mũ Thức Tỉnh
+7           153		0          0          0       1      1        1		100	//Mũ Thức Tỉnh
+7           154		0          0          0       1      1        1		100	//Mũ Thức Tỉnh
+7           155		0          0          0       1      1        1		100	//Mũ Thức Tỉnh
+7           156		0          0          0       1      1        1		100	//Mũ Thức Tỉnh
+	                                                     
+8           150		0          0          0       1      1        1		100	//Áo Thức Tỉnh
+8           151		0          0          0       1      1        1		100	//Áo Thức Tỉnh
+8           152		0          0          0       1      1        1		100	//Áo Thức Tỉnh
+8           153		0          0          0       1      1        1		100	//Áo Thức Tỉnh
+8           154		0          0          0       1      1        1		100	//Áo Thức Tỉnh
+8           155		0          0          0       1      1        1		100	//Áo Thức Tỉnh
+8           156		0          0          0       1      1        1		100	//Áo Thức Tỉnh
+	                                                     
+9           150		0          0          0       1      1        1		100	//Quần Thức Tỉnh
+9           151		0          0          0       1      1        1		100	//Quần Thức Tỉnh
+9           152		0          0          0       1      1        1		100	//Quần Thức Tỉnh
+9           153		0          0          0       1      1        1		100	//Quần Thức Tỉnh
+9           154		0          0          0       1      1        1		100	//Quần Thức Tỉnh
+9           155		0          0          0       1      1        1		100	//Quần Thức Tỉnh
+9           156		0          0          0       1      1        1		100	//Quần Thức Tỉnh
+	                                                     
+10          150		0          0          0       1      1        1		100	//Găng Thức Tỉnh
+10          151		0          0          0       1      1        1		100	//Găng Thức Tỉnh
+10          152		0          0          0       1      1        1		100	//Găng Thức Tỉnh
+10          153		0          0          0       1      1        1		100	//Găng Thức Tỉnh
+10          154		0          0          0       1      1        1		100	//Găng Thức Tỉnh
+10          155		0          0          0       1      1        1		100	//Găng Thức Tỉnh
+10          156		0          0          0       1      1        1		100	//Găng Thức Tỉnh
+	                                                     
+11          150		0          0          0       1      1        1		100	//Giầy Thức Tỉnh
+11          151		0          0          0       1      1        1		100	//Giầy Thức Tỉnh
+11          152		0          0          0       1      1        1		100	//Giầy Thức Tỉnh
+11          153		0          0          0       1      1        1		100	//Giầy Thức Tỉnh
+11          154		0          0          0       1      1        1		100	//Giầy Thức Tỉnh
+11          155		0          0          0       1      1        1		100	//Giầy Thức Tỉnh
+11          156		0          0          0       1      1        1		100	//Giầy Thức Tỉnh
+
+
+end

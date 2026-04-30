@@ -1,0 +1,59 @@
+0
+//EventName              DropZen    ItemDropRate   ItemDropCount   SetItemDropRate   ItemDropType   Fireworks	
+"Box Item Hac Than"	 	  1000	   		100		  		5		  		0		   		 1		   		0
+end
+1
+//Section	Type	MinLevel   MaxLevel   Skill   Luck   Option   Excellent
+//Đồ Item Custom Hắc Thần
+
+
+0           54		0          0          0       1      1        1		100		//Mũ Hắc Thần
+0           55		0          0          0       1      1        1		100		//Mũ Hắc Thần
+0           56		0          0          0       1      1        1		100		//Mũ Hắc Thần
+2           26		0          0          0       1      1        1		100		//Mũ Hắc Thần
+4           31		0          0          0       1      1        1		100		//Mũ Hắc Thần
+5           51		0          0          0       1      1        1		100		//Mũ Hắc Thần
+5           52		0          0          0       1      1        1		100		//Mũ Hắc Thần
+
+7           106		0          0          0       1      1        1		100		//Mũ Hắc Thần
+7           107		0          0          0       1      1        1		100		//Mũ Hắc Thần
+7           108		0          0          0       1      1        1		100		//Mũ Hắc Thần
+7           109		0          0          0       1      1        1		100		//Mũ Hắc Thần
+7           110		0          0          0       1      1        1		100		//Mũ Hắc Thần
+7           111		0          0          0       1      1        1		100		//Mũ Hắc Thần
+7           112		0          0          0       1      1        1		100		//Mũ Hắc Thần
+		                                                
+8           106		0          0          0       1      1        1		100		//Áo Hắc Thần
+8           107		0          0          0       1      1        1		100		//Áo Hắc Thần
+8           108		0          0          0       1      1        1		100		//Áo Hắc Thần
+8           109		0          0          0       1      1        1		100		//Áo Hắc Thần
+8           110		0          0          0       1      1        1		100		//Áo Hắc Thần
+8           111		0          0          0       1      1        1		100		//Áo Hắc Thần
+8           112		0          0          0       1      1        1		100		//Áo Hắc Thần
+	                                                    
+9           106		0          0          0       1      1        1		100		//Quần Hắc Thần
+9           107		0          0          0       1      1        1		100		//Quần Hắc Thần
+9           108		0          0          0       1      1        1		100		//Quần Hắc Thần
+9           109		0          0          0       1      1        1		100		//Quần Hắc Thần
+9           110		0          0          0       1      1        1		100		//Quần Hắc Thần
+9           111		0          0          0       1      1        1		100		//Quần Hắc Thần
+9           112		0          0          0       1      1        1		100		//Quần Hắc Thần
+                                                        
+10          106		0          0          0       1      1        1		100		//Găng Hắc Thần
+10          107		0          0          0       1      1        1		100		//Găng Hắc Thần
+10          108		0          0          0       1      1        1		100		//Găng Hắc Thần
+10          109		0          0          0       1      1        1		100		//Găng Hắc Thần
+10          110		0          0          0       1      1        1		100		//Găng Hắc Thần
+10          111		0          0          0       1      1        1		100		//Găng Hắc Thần
+10          112		0          0          0       1      1        1		100		//Găng Hắc Thần
+	                                                    
+11          106		0          0          0       1      1        1		100		//Giầy Hắc Thần
+11          107		0          0          0       1      1        1		100		//Giầy Hắc Thần
+11          108		0          0          0       1      1        1		100		//Giầy Hắc Thần
+11          109		0          0          0       1      1        1		100		//Giầy Hắc Thần
+11          110		0          0          0       1      1        1		100		//Giầy Hắc Thần
+11          111		0          0          0       1      1        1		100		//Giầy Hắc Thần
+11          112		0          0          0       1      1        1		100		//Giầy Hắc Thần
+
+
+end

@@ -1,0 +1,74 @@
+//=================================================
+// Config : DUY ĐẠT
+// Zalo: DUY ĐẠT - 0961.87.37.67
+//=================================================
+0
+//EventName     DropZen    ItemDropRate   ItemDropCount   SetItemDropRate   ItemDropType   Fireworks	
+"Selupan"		1000	   	100		  	   1		  	   0		   		 0		   		0
+end
+
+1
+//Section   Type   	MinLevel   	MaxLevel   	Skill   Luck   	Option	Excellent	Rate
+0			33		0			0			1		1		1		1			40		//Nắm Đấm Bạch Hổ
+0			25		0			0			1		1		1		1			40		//Hỏa Tinh Kiếm
+0			24		0			0			1		1		1		1			40		//Ỷ Thiên Kiếm
+2			15		0			0			1		1		1		1			40		//Trượng Tối Cao
+4			16		0			0			1		1		1		1			40		//No Thanh
+5			18		0			0			1		1		1		1			40		//Khuyển Xích Quỷ
+5			11		0			0			1		1		1		1			40		//Gậy Kundun	
+5			22		0			0			1		1		1		1			40		//Sách Quỷ Kiếm		
+6			11		0			0			1		1		1		1			40		//Khiên Chông
+6			14		0			0			1		1		1		1			40		//Khiên Ma Thuật
+
+7			16		0			0			0		1		1		1			100		//Mũ Hắc Long
+8			16		0			0			0		1		1		1			100		//Áo Hắc Long
+9			16		0			0			0		1		1		1			100		//Quần Hắc Long
+10			16		0			0			0		1		1		1			100		//Tay Hắc Long
+11			16		0			0			0		1		1		1			100		//Giày Hắc Long
+
+7			35		0			0			0		1		1		1			100		//Mũ Ánh Trăng
+8			35		0			0			0		1		1		1			100		//Áo Ánh Trăng
+9			35		0			0			0		1		1		1			100		//Quần Ánh Trăng
+10			35		0			0			0		1		1		1			100		//Tay Ánh Trăng
+11			35		0			0			0		1		1		1			100		//Giày Ánh Trăng
+
+8			37		0			0			0		1		1		1			100		//Áo Hỏa Thần
+9			37		0			0			0		1		1		1			100		//Quần Hỏa Thần
+10			37		0			0			0		1		1		1			100		//Tay Hỏa Thần
+11			37		0			0			0		1		1		1			100		//Giày Hỏa Thần
+
+7			36		0			0			0		1		1		1			100		//Mũ Nữ Thần
+8			36		0			0			0		1		1		1			100		//Áo Nữ Thần
+9			36		0			0			0		1		1		1			100		//Quần Nữ Thần
+10			36		0			0			0		1		1		1			100		//Tay Nữ Thần
+11			36		0			0			0		1		1		1			100		//Giày Nữ Thần
+
+7			27		0			0			0		1		1		1			100		//Mũ Hắc Vương
+8			27		0			0			0		1		1		1			100		//Áo Hắc Vương
+9			27		0			0			0		1		1		1			100		//Quần Hắc Vương
+10			27		0			0			0		1		1		1			100		//Tay Hắc Vương
+11			27		0			0			0		1		1		1			100		//Giày Hắc Vương
+
+7			40		0			0			0		1		1		1			100		//Mũ Hỏa Thiên
+8			40		0			0			0		1		1		1			100		//Áo Hỏa Thiên
+9			40		0			0			0		1		1		1			100		//Quần Hỏa Thiên
+10			40		0			0			0		1		1		1			100		//Tay Hỏa Thiên
+11			40		0			0			0		1		1		1			100		//Giày Hỏa Thiên
+
+7			59		0			0			0		1		1		1			100		//Mũ Địa Long
+8			59		0			0			0		1		1		1			100		//Áo Địa Long
+9			59		0			0			0		1		1		1			100		//Quần Địa Long
+11			59		0			0			0		1		1		1			100		//Giày Địa Long
+
+13           08     0          0            0       0       1       1			20      //nhẫn băng
+13           09     0          0            0       0       1       1			20      //nhẫn độc
+13           21     0          0            0       0       1       1			20      //nhẫn lửa
+13           22     0          0            0       0       1       1			20      //nhẫn đất
+13           23     0          0            0       0       1       1			20      //nhẫn gió
+13           24     0          0            0       0       1       1			20      //nhẫn phép thuật
+13           25     0          0            0       0       1       1			20      //dây chuyền băng
+13           26     0          0            0       0       1       1			20      // dây chuyền gió
+13           27     0          0            0       0       1       1			20      // dây chuyền nước
+13           28     0          0            0       0       1       1			20      //dây duyền kỹ năng
+14           261     0          0           0       0       1       1			10      //dây duyền kỹ năng
+end

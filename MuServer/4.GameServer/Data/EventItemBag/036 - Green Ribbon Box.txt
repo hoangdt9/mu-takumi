@@ -1,0 +1,23 @@
+//=================================================
+// Config : DUY ĐẠT
+// Zalo: DUY ĐẠT - 0961.87.37.67
+//=================================================
+0
+//EventName              DropZen   ItemDropRate   ItemDropCount   SetItemDropRate   ItemDropType   Fireworks	
+"Green Ribbon Box"	 	1000	   100		  		1		  		0		    		0		   0
+end
+
+1
+//Section   Type   MinLevel   MaxLevel   Skill   Luck   Option   Excellent	Rate
+13           08     0          0          0       0      1        1			100 //Nhẫn băng
+13           09     0          0          0       0      1        1			100 //Nhẫn độc
+13           21     0          0          0       0      1        1			100 //Nhẫn lửa
+13           22     0          0          0       0      1        1			100 //Nhẫn đất
+13           23     0          0          0       0      1        1			100 //Nhẫn gió
+13           24     0          0          0       0      1        1			100 //Nhẫn phép thuật
+13           25     0          0          0       0      1        1			100 //Dây Chuyền băng
+13           26     0          0          0       0      1        1			100 //Dây Chuyền gió
+13           27     0          0          0       0      1        1			100 //Dây Chuyền nước
+13           28     0          0          0       0      1        1			100 //Dây Chuyền kỹ năng
+
+end

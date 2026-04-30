@@ -1,0 +1,441 @@
+# Snapshot (migration checklist pass #1): 2026-04-30
+# Git SHA: cập nhật tay khi có
+# ---
+# Relative paths under MuServer/4.GameServer/Data (all files)
+CashShop/CashShopPackage.txt
+CashShop/CashShopProduct.txt
+Character/DefaultClassInfo.txt
+Command.txt
+Custom/BotSystem/BotBuffer___.txt
+Custom/BotSystem/BotBuffer.txt
+Custom/BotSystem/BotTrader.xml
+Custom/BotSystem/ThuMuaDoExc.xml
+Custom/ChangeClass.ini
+Custom/ChangeItem.xml
+Custom/CustomArena.txt
+Custom/CustomBuyVip.txt
+Custom/CustomChoTroi.xml
+Custom/CustomCombo.txt
+Custom/CustomCommandDescription.txt
+Custom/CustomCongHuong.xml
+Custom/CustomDeathMessage.txt
+Custom/CustomEventDrop.txt
+Custom/CustomEventTime.xml
+Custom/CustomItemBank.xml
+Custom/CustomJewel.xml
+Custom/CustomMarlonTeleport.txt
+Custom/CustomMix.txt
+Custom/CustomMocNap.xml
+Custom/CustomMonster.txt
+Custom/CustomMonsterSkill.txt
+Custom/CustomMonterPoint.xml
+Custom/CustomMove.txt
+Custom/CustomNoticeItem.txt
+Custom/CustomNpcCollector.txt
+Custom/CustomNpcCommand.txt
+Custom/CustomNpcMove.txt
+Custom/CustomNpcQuest.txt
+Custom/CustomOnlineLottery.txt
+Custom/CustomPet.txt
+Custom/CustomPick.txt
+Custom/CustomQuest.txt
+Custom/CustomQuiz.txt
+Custom/CustomRanking.txt
+Custom/CustomRankUser.txt
+Custom/CustomRateMix.xml
+Custom/CustomSkinModel.xml
+Custom/CustomStartItem.txt
+Custom/CustomTop.txt
+Custom/CustomVIPChar.xml
+Custom/CustomVongQuay.xml
+Custom/CustomWing.txt
+Custom/CustomWingMix.txt
+Custom/CustomZonaPK.txt
+Custom/DanhHieu.txt
+Custom/FixTele.xml
+Custom/HuyDongExc.xml
+Custom/NewQuest.txt
+Custom/ZenDrop.xml
+Effect.txt
+Event/BloodCastle.dat
+Event/BonusManager.dat
+Event/BossGuild/BossGuild.xml
+Event/BossGuild/GuildWin.ini
+Event/CastleDeepEvent.dat
+Event/ChaosCastle.dat
+Event/Crywolf.dat
+Event/CTCMini/CongThanhChien.xml
+Event/CTCMini/GuildWin.ini
+Event/DevilSquare.dat
+Event/DoubleGoer.dat
+Event/IllusionTemple.dat
+Event/ImperialGuardian.dat
+Event/InvasionManager.dat
+Event/Kanturu.dat
+Event/LoanChien.dat
+Event/MossMerchant.dat
+Event/MuCastleData.dat
+Event/Raklion.dat
+Event/ReiDoMU.dat
+Event/SummonScroll.dat
+Event/TvTEvent.dat
+EventItemBag/000 - Hop May Man.txt
+EventItemBag/001 - Vua Quy Xuong.txt
+EventItemBag/002 - Rong Do.txt
+EventItemBag/003 - Ngoi Sao May Man.txt
+EventItemBag/004 - Trai Tim Tinh Yeu.txt
+EventItemBag/005 - Huy Chuong Bac.txt
+EventItemBag/006 - Huy Chuong Vang.txt
+EventItemBag/007 - Box of Kundun 1.txt
+EventItemBag/008 - Box of Kundun 2.txt
+EventItemBag/009 - Box of Kundun 3.txt
+EventItemBag/010 - Box of Kundun 4.txt
+EventItemBag/011 - Box of Kundun 5.txt
+EventItemBag/012 - Blood Castle 1.txt
+EventItemBag/013 - Blood Castle 2.txt
+EventItemBag/014 - Blood Castle 3.txt
+EventItemBag/015 - Blood Castle 4.txt
+EventItemBag/016 - Blood Castle 5.txt
+EventItemBag/017 - Blood Castle 6.txt
+EventItemBag/018 - Blood Castle 7.txt
+EventItemBag/019 - Blood Castle 8.txt
+EventItemBag/020 - Chaos Castle 1.txt
+EventItemBag/021 - Chaos Castle 2.txt
+EventItemBag/022 - Chaos Castle 3.txt
+EventItemBag/023 - Chaos Castle 4.txt
+EventItemBag/024 - Chaos Castle 5.txt
+EventItemBag/025 - Chaos Castle 6.txt
+EventItemBag/026 - Chaos Castle 7.txt
+EventItemBag/027 - White Wizard.txt
+EventItemBag/028 - Starter Ring 40.txt
+EventItemBag/029 - Starter Ring 80.txt
+EventItemBag/030 - Hop Cua Vua.txt
+EventItemBag/031 - Blue Heart.txt
+EventItemBag/032 - Kundun.txt
+EventItemBag/033 - Erohim.txt
+EventItemBag/034 - Senior Mix.txt
+EventItemBag/035 - VuKhiRong.txt
+EventItemBag/036 - Green Ribbon Box.txt
+EventItemBag/037 - Blue Ribbon Box.txt
+EventItemBag/038 - Pink Chocolate Box.txt
+EventItemBag/039 - Red Chocolate Box.txt
+EventItemBag/040 - Blue Chocolate Box.txt
+EventItemBag/041 - Purple Candy Box.txt
+EventItemBag/042 - Red Candy Box.txt
+EventItemBag/043 - Blue Candy Box.txt
+EventItemBag/044 - Dark Elf.txt
+EventItemBag/045 - Balgass.txt
+EventItemBag/046 - Maya Hand Left.txt
+EventItemBag/047 - Maya Hand Right.txt
+EventItemBag/048 - Nightmare.txt
+EventItemBag/049 - Halloween Pumpkin.txt
+EventItemBag/050 - Fortune Pouch.txt
+EventItemBag/051 - Game Master Box.txt
+EventItemBag/052 - Hop Chaos Xanh.txt
+EventItemBag/053 - Hop Chaos Do.txt
+EventItemBag/054 - Hop Chaos Tim.txt
+EventItemBag/055 - War Guild.txt
+EventItemBag/056 - Illusion Temple 1.txt
+EventItemBag/057 - Illusion Temple 2.txt
+EventItemBag/058 - Illusion Temple 3.txt
+EventItemBag/059 - Illusion Temple 4.txt
+EventItemBag/060 - Illusion Temple 5.txt
+EventItemBag/061 - Illusion Temple 6.txt
+EventItemBag/062 - Tho Trang.txt
+EventItemBag/063 - Hop Qua Tet.txt
+EventItemBag/064 - Hoa Dao Trang Mix 1.txt
+EventItemBag/065 - Hoa Dao Hong Mix 2.txt
+EventItemBag/066 - Hoa Dao Vang Mix 3.txt
+EventItemBag/067 - Selupan.txt
+EventItemBag/068 - Fire Flame Ghost.txt
+EventItemBag/069 - Santa Claus.txt
+EventItemBag/070 - Lucky Coin 1.txt
+EventItemBag/071 - Lucky Coin 2.txt
+EventItemBag/072 - Lucky Coin 3.txt
+EventItemBag/073 - Chaos Card Mix 1 .txt
+EventItemBag/074 - Chaos Card Mix 2.txt
+EventItemBag/075 - Chaos Card Mix 3.txt
+EventItemBag/076 - Chaos Card Mix 4.txt
+EventItemBag/077 - Chaos Card Mix 5.txt
+EventItemBag/078 - Double Goer Silver Chest 1.txt
+EventItemBag/079 - Double Goer Silver Chest 2.txt
+EventItemBag/080 - Double Goer Silver Chest 3.txt
+EventItemBag/081 - Double Goer Silver Chest 4.txt
+EventItemBag/082 - Double Goer Silver Chest 5.txt
+EventItemBag/083 - Double Goer Golden Chest 1.txt
+EventItemBag/084 - Double Goer Golden Chest 2.txt
+EventItemBag/085 - Double Goer Golden Chest 3.txt
+EventItemBag/086 - Double Goer Golden Chest 4.txt
+EventItemBag/087 - Double Goer Golden Chest 5.txt
+EventItemBag/088 - Imperial Guardian Side Boss 1.txt
+EventItemBag/089 - Imperial Guardian Side Boss 2.txt
+EventItemBag/090 - Imperial Guardian Side Boss 3.txt
+EventItemBag/091 - Imperial Guardian Side Boss 4.txt
+EventItemBag/092 - Imperial Guardian Side Boss 5.txt
+EventItemBag/093 - Imperial Guardian Main Boss 1.txt
+EventItemBag/094 - Imperial Guardian Main Boss 2.txt
+EventItemBag/095 - Imperial Guardian Main Boss 3.txt
+EventItemBag/096 - Imperial Guardian Main Boss 4.txt
+EventItemBag/097 - Imperial Guardian Main Boss 5.txt
+EventItemBag/098 - Blue Luck Pouch.txt
+EventItemBag/099 - Red Luck Pouch.txt
+EventItemBag/100 - Golden Box.txt
+EventItemBag/101 - Hop Qua Bac.txt
+EventItemBag/102 - Shining Jewelry Case.txt
+EventItemBag/103 - Elegant Jewelry Case.txt
+EventItemBag/104 - Steel Jewelry Case.txt
+EventItemBag/105 - Old Jewelry Case.txt
+EventItemBag/106 - Medusa.txt
+EventItemBag/107 - Crywolf.txt
+EventItemBag/108 - Rong Vang Con.txt
+EventItemBag/109 - Kim Tieu Quy.txt
+EventItemBag/110 - Chien Binh Vang.txt
+EventItemBag/111 - Nguoi May Vang.txt
+EventItemBag/112 - Kim Thiet Vuong.txt
+EventItemBag/113 - Kim Ngu Vuong.txt
+EventItemBag/114 - Kim Ngu Tinh.txt
+EventItemBag/115 - Kim Sat Thu.txt
+EventItemBag/116 - Kim Xa Vuong.txt
+EventItemBag/117 - Tho Hoang Kim Giap.txt
+EventItemBag/118 - Ky Sy Hoang Kim Giap.txt
+EventItemBag/119 - Ac Quy Hoang Kim Giap.txt
+EventItemBag/120 - Quy Da Hoang Kim GIap.txt
+EventItemBag/121 - Hoang Kim Giap Binh.txt
+EventItemBag/122 - Hoang Kim Moc Giap.txt
+EventItemBag/123 - Xich Quy Hoang Kim.txt
+EventItemBag/124 - Chien Binh Hoang Kim.txt
+EventItemBag/125 - Hoa Diem Hoang Kim.txt
+EventItemBag/126 - Kim Long.txt
+EventItemBag/127 - Kim LongVIP.txt
+EventItemBag/128 - Gift System.txt
+EventItemBag/129 - Blood VIP.txt
+EventItemBag/130 - Devil VIP.txt
+EventItemBag/131 - TimGM.txt
+EventItemBag/132 - Quy Vuong.txt
+EventItemBag/134 - Boss Class 700.txt
+EventItemBag/135 - Boss Class 701.txt
+EventItemBag/136 - Boss Class 702.txt
+EventItemBag/137 - Boss Class 703.txt
+EventItemBag/138 - Boss Class 704.txt
+EventItemBag/139 - Boss Class 705.txt
+EventItemBag/140 - Boss Class 706.txt
+EventItemBag/141 - Boss HellMain Gold.txt
+EventItemBag/142 - Boss Kundun Gold.txt
+EventItemBag/143 - Boss Selupan Gold.txt
+EventItemBag/144 - Boss Medusa Gold.txt
+EventItemBag/145 - LoanChienDrop.txt
+EventItemBag/146 - LoanChienWin.txt
+EventItemBag/147 - PetEgg.txt
+EventItemBag/148 - CuaKyCuc.txt
+EventItemBag/149 - RuongKhoBau.txt
+EventItemBag/150 - Box Item Huyet Than.txt
+EventItemBag/151 - Box Item Thuc Tinh.txt
+EventItemBag/152 - Box Item Hac Than.txt
+EventItemBag/153 - Box Item Thanh Than.txt
+EventItemBag/154 - Box Item Mat Xanh.txt
+EventItemBag/155 - Box Item Tim Bac.txt
+EventItemBag/156 - Box Item Cap 2.txt
+EventItemBag/157 - Box Item VIP.txt
+EventItemBag/158 - Box Item Canh.txt
+EventItemBag/159 - Box PET.txt
+EventItemBag/160 - KiemVuong.txt
+EventItemBag/161 - RongThieng.txt
+EventItemBag/162 - KySyHacAm.txt
+EventItemBag/163 - TrieuTuLong.txt
+EventItemBag/164 - ThanRung.txt
+EventItemBag/165 - MaSoi.txt
+EventItemBag/166 - ChienThan.txt
+EventItemBag/167 - ThanAiCap.txt
+EventItemBag/168 - DeQuan.txt
+EventItemBag/169 - Lord Darkness.txt
+EventItemBag/170 - MaThan.txt
+EventItemBagManager.txt
+Hack/Dec1.dat
+Hack/Enc2.dat
+Hack/Hack.zip
+Hack/HackPacketCheck.txt
+Hack/HackSkillCheck.txt
+Item/380ItemOption.txt
+Item/380ItemType.txt
+Item/GetItemIndex V4.exe
+Item/GetItemIndex V4.pdb
+Item/Item.txt
+Item/ItemDrop.txt
+Item/ItemLevel.txt
+Item/ItemMove.txt
+Item/ItemOption.txt
+Item/ItemOptionBEx.xml
+Item/ItemOptionRate.txt
+Item/ItemStack.txt
+Item/ItemValue.txt
+Item/ItemValueTrade.txt
+Item/JewelOfHarmonyOption.txt
+Item/JewelOfHarmonyType.txt
+Item/LuckyItem.txt
+Item/SetItemOption.txt
+Item/SetItemType.txt
+Item/SocketItemOption.txt
+Item/SocketItemType.txt
+MapManager.txt
+MapServerInfo.dat
+Message.txt
+MiniMap.txt
+Monster/KanturuMonsterSetBase.txt
+Monster/Monster.txt
+Monster/MonsterAIAutomata.txt
+Monster/MonsterAIElement.txt
+Monster/MonsterAIGroup.txt
+Monster/MonsterAIRule.txt
+Monster/MonsterAIUnit.txt
+Monster/MonsterSetBase.txt
+Monster/MonsterSetBaseCS.txt
+Monster/MonsterSkill.txt
+Monster/MonsterSkillElement.txt
+Monster/MonsterSkillUnit.txt
+Monster/MovePath/MovePath_35.dat
+Move/Gate.txt
+Move/Move.txt
+Move/MoveSummon.txt
+Move/RespawnLocation.txt
+Quest/Quest.txt
+Quest/QuestObjective.txt
+Quest/QuestReward.txt
+QuestWorld/origi/QuestWorld.txt
+QuestWorld/origi/QuestWorldObjective.txt
+QuestWorld/origi/QuestWorldReward.txt
+QuestWorld/QuestWorld.txt
+QuestWorld/QuestWorldObjective.txt
+QuestWorld/QuestWorldReward.txt
+QuestWorld/xteam/QuestWorld.txt
+QuestWorld/xteam/QuestWorldObjective.txt
+QuestWorld/xteam/QuestWorldReward.txt
+Ruud/DropReward.txt
+Ruud/ShopRuud.txt
+Shop/000 - Hanzo the Blacksmith.txt
+Shop/001 - Liaman the Barmaid.txt
+Shop/002 - Pasi the Wizard.txt
+Shop/003 - Harold the Wandering Merchant.txt
+Shop/004 - Martin the Wandering Merchant.txt
+Shop/005 - Amy the Potion Girl.txt
+Shop/006 - Lumen the Barmaid.txt
+Shop/007 - Isabel the Wizard.txt
+Shop/008 - MG Zien.txt
+Shop/008 - Zienna the Weapon Merchant.txt
+Shop/009 - Eo the Craftsman.txt
+Shop/010 - Elf Lala.txt
+Shop/011 - Alex the Wandering Merchant.txt
+Shop/012 - Thompson Kenel.txt
+Shop/013 - Drink Seller Hillary.txt
+Shop/014 - Drink Seller Lindsay.txt
+Shop/015 - Fireworks Girl.txt
+Shop/016 - Sivia.txt
+Shop/017 - Leah.txt
+Shop/018 - Marseille.txt
+Shop/019 - Moss Merchant.txt
+Shop/020 - Christine.txt
+Shop/021 - Stadium Guard.txt
+Shop/022 - Priestess Reira.txt
+Shop/023 - Leina.txt
+Shop/024 - Bolo.txt
+ShopManager.txt
+Skill/MasterSkillTree - Copy.txt
+Skill/MasterSkillTree.txt
+Skill/Skill.txt
+Skill/SkillElect.hit
+Terrain/Lorencia.att
+Terrain/null.att
+Terrain/Terrain.att
+Terrain/Terrain1 - Copy.att
+Terrain/Terrain1.att
+Terrain/Terrain10.att
+Terrain/Terrain100.att
+Terrain/Terrain106.att
+Terrain/Terrain107.att
+Terrain/Terrain11.att
+Terrain/Terrain12.att
+Terrain/Terrain19.att
+Terrain/Terrain2.att
+Terrain/Terrain25.att
+Terrain/Terrain3.att
+Terrain/Terrain31.att
+Terrain/Terrain32.att
+Terrain/Terrain33.att
+Terrain/Terrain34_Close.att
+Terrain/Terrain34.att
+Terrain/Terrain35_OCCUPIED.att
+Terrain/Terrain35_PEACE.att
+Terrain/Terrain35_WAR.att
+Terrain/Terrain35.att
+Terrain/Terrain36.att
+Terrain/Terrain37.att
+Terrain/Terrain38.att
+Terrain/Terrain39.att
+Terrain/Terrain4.att
+Terrain/Terrain40_CLOSE.att
+Terrain/Terrain40_OPEN.att
+Terrain/Terrain40.att
+Terrain/Terrain41.att
+Terrain/Terrain42.att
+Terrain/Terrain43.att
+Terrain/Terrain44.att
+Terrain/Terrain46.att
+Terrain/Terrain47.att
+Terrain/Terrain5.att
+Terrain/Terrain51.att
+Terrain/Terrain52.att
+Terrain/Terrain53.att
+Terrain/Terrain54.att
+Terrain/Terrain57.att
+Terrain/Terrain58.att
+Terrain/Terrain59.att
+Terrain/Terrain6.att
+Terrain/Terrain61.att
+Terrain/Terrain62.att
+Terrain/Terrain63.att
+Terrain/Terrain64.att
+Terrain/Terrain65.att
+Terrain/Terrain66.att
+Terrain/Terrain67.att
+Terrain/Terrain68.att
+Terrain/Terrain69.att
+Terrain/Terrain7.att
+Terrain/Terrain70.att
+Terrain/Terrain71.att
+Terrain/Terrain72.att
+Terrain/Terrain73.att
+Terrain/Terrain74_1.att
+Terrain/Terrain74.att
+Terrain/Terrain75.att
+Terrain/Terrain78.att
+Terrain/Terrain79.att
+Terrain/Terrain8.att
+Terrain/Terrain80.att
+Terrain/Terrain81.att
+Terrain/Terrain82.att
+Terrain/Terrain83.att
+Terrain/Terrain84.att
+Terrain/Terrain85.att
+Terrain/Terrain86.att
+Terrain/Terrain87.att
+Terrain/Terrain88.att
+Terrain/Terrain89.att
+Terrain/Terrain9.att
+Terrain/Terrain90.att
+Terrain/Terrain91.att
+Terrain/Terrain92.att
+Terrain/Terrain93 - Copy.att
+Terrain/Terrain93.att
+Terrain/Terrain94.att
+Terrain/Terrain95.att
+Terrain/Terrain96.att
+Terrain/Terrain97.att
+Terrain/Terrain98.att
+Terrain/Terrain99.att
+Util/ExperienceTable.txt
+Util/Filter.txt
+Util/FilterRename.txt
+Util/GameMaster.txt
+Util/Notice.txt
+Util/ResetTable.xml
+Util/ResetTableVIP.xml
+Util/RewardTable.txt

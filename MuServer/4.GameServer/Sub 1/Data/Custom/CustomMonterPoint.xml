@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+	Config Điểm cho quái , dùng để tính bxh săn boss trong custom ranking type 9
+	điểm sẽ add vào DiemMonter ở Character , nên xóa định kỳ sau khi tổng kết top
+-->
+<CustomMonterPoint Enable="1" Notice="1" Text="Bạn vừa được cộng %d điểm KillBoss !" >
+	<Monter ClassMin="43 " ClassMax="43"  PointAdd="1" />
+	<Monter ClassMin="53 " ClassMax="44"  PointAdd="5" />
+	<Monter ClassMin="54 " ClassMax="53"  PointAdd="1" />
+	<Monter ClassMin="78 " ClassMax="54"  PointAdd="1" />
+	<Monter ClassMin="79 " ClassMax="78"  PointAdd="1" />
+	<Monter ClassMin="80 " ClassMax="79"  PointAdd="1" />
+	<Monter ClassMin="81 " ClassMax="80"  PointAdd="1" />
+	<Monter ClassMin="82 " ClassMax="81"  PointAdd="1" />
+	<Monter ClassMin="83 " ClassMax="82"  PointAdd="1" />
+	<Monter ClassMin="501" ClassMax="83"  PointAdd="1" />
+	<Monter ClassMin="501" ClassMax="493"  PointAdd="1" />
+	<Monter ClassMin="501" ClassMax="494"  PointAdd="1" />
+	<Monter ClassMin="501" ClassMax="495"  PointAdd="1" />
+	<Monter ClassMin="501" ClassMax="496"  PointAdd="1" />
+	<Monter ClassMin="501" ClassMax="497"  PointAdd="1" />
+	<Monter ClassMin="501" ClassMax="498"  PointAdd="1" />
+	<Monter ClassMin="501" ClassMax="499"  PointAdd="3" />
+	<Monter ClassMin="501" ClassMax="500"  PointAdd="3" />
+	<Monter ClassMin="501" ClassMax="501"  PointAdd="5" />
+	<Monter ClassMin="501" ClassMax="502"  PointAdd="1" />
+
+	
+	<Monter ClassMin="42"  ClassMax="42"   PointAdd="5" />
+	<Monter ClassMin="55"  ClassMax="55"   PointAdd="5" />
+	<Monter ClassMin="135" ClassMax="135"  PointAdd="5" />
+	<Monter ClassMin="275" ClassMax="275"  PointAdd="15" />
+	<Monter ClassMin="295" ClassMax="295"  PointAdd="15" />
+	<Monter ClassMin="309" ClassMax="309"  PointAdd="15" />
+	<Monter ClassMin="561" ClassMax="309"  PointAdd="15" />
+	<Monter ClassMin="905" ClassMax="309"  PointAdd="20" />
+
+</CustomMonterPoint>

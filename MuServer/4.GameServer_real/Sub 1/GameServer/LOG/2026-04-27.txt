@@ -1,0 +1,97 @@
+00:00:01 GHRS Hôm nay là 50 Reset
+14:03:12 AddClient - IP: 192.168.99.1
+14:03:18 AddAccount [test1234] Login!
+14:03:20 [9002] LogInCharacter (qweqwe)
+14:04:19 [9002] LogOutCharacter (qweqwe)
+14:04:19 DelAccount [test1234] LogOut!
+14:04:19 DelClient IP: 192.168.99.1
+14:04:19 Game response error causes conclusion [9002][][][192.168.99.1]
+14:31:07 AddClient - IP: 192.168.99.1
+14:31:14 AddAccount [test1234] Login!
+14:31:14 DelAccount [test1234] LogOut!
+14:31:14 DelClient IP: 192.168.99.1
+14:31:28 AddClient - IP: 192.168.99.1
+14:31:35 AddAccount [test1234] Login!
+14:31:35 DelAccount [test1234] LogOut!
+14:31:35 DelClient IP: 192.168.99.1
+14:35:49 AddClient - IP: 192.168.99.1
+14:35:58 AddAccount [test1234] Login!
+14:35:58 DelAccount [test1234] LogOut!
+14:35:58 DelClient IP: 192.168.99.1
+15:01:40 AddClient - IP: 192.168.99.1
+15:01:49 AddAccount [test1234] Login!
+15:01:49 DelAccount [test1234] LogOut!
+15:01:49 DelClient IP: 192.168.99.1
+15:47:45 AddClient - IP: 192.168.99.1
+15:47:53 AddAccount [test1234] Login!
+15:47:55 [9001] LogInCharacter (wqewq)
+16:08:11 [9001] LogOutCharacter (wqewq)
+16:08:11 DelAccount [test1234] LogOut!
+16:08:11 DelClient IP: 192.168.99.1
+16:23:18 AddClient - IP: 192.168.99.1
+16:23:27 AddAccount [test1234] Login!
+16:23:29 [9002] LogInCharacter (wqewq)
+16:43:13 [9002] LogOutCharacter (wqewq)
+16:43:13 DelAccount [test1234] LogOut!
+16:43:13 DelClient IP: 192.168.99.1
+20:14:29 AddClient - IP: 192.168.99.1
+20:14:35 AddAccount [test1234] Login!
+20:14:41 [9000] LogInCharacter (wqewq)
+20:41:59 [9000] LogOutCharacter (wqewq)
+20:41:59 DelAccount [test1234] LogOut!
+20:41:59 DelClient IP: 192.168.99.1
+20:43:18 AddClient - IP: 192.168.99.1
+20:43:34 AddAccount [test1234] Login!
+20:44:39 DelAccount [test1234] LogOut!
+20:44:39 DelClient IP: 192.168.99.1
+20:56:16 AddClient - IP: 192.168.99.1
+20:57:11 AddAccount [test1234] Login!
+20:57:36 [9002] LogInCharacter (qweqwe)
+21:46:04 [9002] LogOutCharacter (qweqwe)
+21:46:04 DelAccount [test1234] LogOut!
+21:46:04 DelClient IP: 192.168.99.1
+21:56:44 AddClient - IP: 192.168.99.1
+21:56:51 AddAccount [test1234] Login!
+21:56:53 [9000] LogInCharacter (qweqwe)
+22:21:30 [9000] LogOutCharacter (qweqwe)
+22:21:30 DelAccount [test1234] LogOut!
+22:21:30 DelClient IP: 192.168.99.1
+22:21:59 AddClient - IP: 192.168.99.1
+22:22:17 AddAccount [test1234] Login!
+22:22:20 [9001] LogInCharacter (wqewq)
+22:34:46 [9001] LogOutCharacter (wqewq)
+22:34:46 DelAccount [test1234] LogOut!
+22:34:46 DelClient IP: 192.168.99.1
+22:40:19 AddClient - IP: 192.168.99.1
+22:40:31 AddAccount [test1234] Login!
+22:40:34 [9002] LogInCharacter (wqewq)
+22:52:23 [9002] LogOutCharacter (wqewq)
+22:52:23 DelAccount [test1234] LogOut!
+22:52:23 DelClient IP: 192.168.99.1
+22:54:51 AddClient - IP: 192.168.99.1
+22:54:58 AddAccount [test1234] Login!
+22:55:00 [9000] LogInCharacter (qweqwe)
+23:03:26 [9000] LogOutCharacter (qweqwe)
+23:03:26 DelAccount [test1234] LogOut!
+23:03:26 DelClient IP: 192.168.99.1
+23:08:42 AddClient - IP: 192.168.99.1
+23:08:49 AddAccount [test1234] Login!
+23:08:51 [9001] LogInCharacter (qweqwe)
+23:20:58 [9001] LogOutCharacter (qweqwe)
+23:20:58 DelAccount [test1234] LogOut!
+23:20:58 DelClient IP: 192.168.99.1
+23:22:17 AddClient - IP: 192.168.99.1
+23:22:25 AddAccount [test1234] Login!
+23:22:26 [9002] LogInCharacter (qweqwe)
+23:42:50 [9002] LogOutCharacter (qweqwe)
+23:42:50 DelAccount [test1234] LogOut!
+23:42:50 DelClient IP: 192.168.99.1
+23:49:52 AddClient - IP: 192.168.99.1
+23:50:12 AddAccount [test1234] Login!
+23:50:18 [9000] LogInCharacter (wqewq)
+23:54:18 [9000] LogOutCharacter (wqewq)
+23:54:18 DelAccount [test1234] LogOut!
+23:54:18 DelClient IP: 192.168.99.1
+23:55:52 AddClient - IP: 192.168.99.1
+23:56:07 AddAccount [test1234] Login!
+23:56:09 [9001] LogInCharacter (wqewq)

@@ -1,0 +1,13 @@
+Lưu Ý :
+	- 1 số main khi vào game sẽ bị Anti chặn kích khỏi Game (Xung đột Offset)
+	- Khách khắc phục mở Log/HACK_LOG/ mở lên xem Anti báo gì
+	- Nếu báo Memory thì vào Data/Memory.List.db mở lên tìm ngay dòng có Offset đó và xoá đi
+	- Làm lại các bước trên đến khi vào Game Ổn định
+	
+	- Antih XShield có 2 Port (Xem trong Config.ini)
+	*AntihackPort  <<-- là port giữ Client và AntiSv Connect (Mở Online)
+	*XShieldGSPort  <<-- là POrt kết nối giữa GameServer và AntiSV (Không cần mở Online)
+	ở GameServer thì config Port trong file xml (2 port trùng nhau mới kết nối với nhau được)
+	Tác dụng XShieldGSPort là chống Bypass nếu CLient không có Anti thì GS sẽ kích
+	
+	*FIle Config.ini nhớ Save bằng Encoding UTF-8 ( nếu UTF-8 Bom sẽ lỗi)

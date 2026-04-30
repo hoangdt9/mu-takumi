@@ -1,0 +1,97 @@
+//=================================================
+// Config : DUY ĐẠT
+// Zalo: DUY ĐẠT - 0961.87.37.67
+//=================================================
+0
+//EventName              DropZen   ItemDropRate   ItemDropCount   SetItemDropRate   ItemDropType   Fireworks	
+"Box of Kundun 1"	 	1000	   100		  		1		  			0		    0		   		0
+end
+
+
+1
+//Section	Type	MinLevel	MaxLevel	Skill	Luck	Option	Excellent	Rate	NameItem
+0			1		0			0			1		1		1		1			100		//Đoản Đao
+0			2		0			0			1		1		1		1			100		//Trường Kiếm
+0			3		0			0			1		1		1		1			100		//Kiếm Nhật
+0			4		0			0			1		1		1		1			100		//Đao Sát Thủ
+0			5		0			0			1		1		1		1			100		//Khoái Đao
+0			6		0			0			1		1		1		1			100		//Kiếm La Mã
+0			7		0			0			1		1		1		1			100		//Mã Tấu
+0			8		0			0			1		1		1		1			100		//Xà Đao
+0			9		0			0			1		1		1		1			100		//Kiếm Rồng Lửa
+0			10		0			0			1		1		1		1			100		//Kiếm Ánh Sáng
+0			11		0			0			1		1		1		1			100		//Kiếm Ma Thuật
+0			12		0			0			1		1		1		1			100		//Thái Dương Kiếm
+0			13		0			0			1		1		1		1			100		//Hỏa Đao
+0			14		0			0			1		1		1		1			100		//Kiếm Điện
+1			2		0			0			1		1		1		1			100		//Rìu Lưỡi Hái
+1			3		0			0			1		1		1		1			100		//Rìu Thợ Săn
+1			4		0			0			1		1		1		1			100		//Rìu Tiên Nữ
+1			5		0			0			1		1		1		1			100		//Rìu Chiến
+2			1		0			0			1		1		1		1			100		//Chùy Gai
+2			2		0			0			1		1		1		1			100		//Chùy Dây
+2			3		0			0			1		1		1		1			100		//Bùa Chiến
+2			8		0			0			1		1		1		1			100		//Trượng Chiến
+2			9		0			0			1		1		1		1			100		//Trượng Thép
+4			0		0			0			1		1		1		1			100		//Cung Nhỏ
+4			1		0			0			1		1		1		1			100		//Cung
+4			9		0			0			1		1		1		1			100		//Nỏ Vàng
+4			13		0			0			1		1		1		1			100		//Nỏ Thiên Thanh
+4			14		0			0			1		1		1		1			100		//Nỏ Kim Ngân
+5			0		0			0			1		1		1		1			100		//Gậy Xương
+5			1		0			0			1		1		1		1			100		//Gậy Tiên
+5			2		0			0			1		1		1		1			100		//Gậy Rắn
+5			3		0			0			1		1		1		1			100		//Gậy Sét
+5			4		0			0			1		1		1		1			100		//Gậy Đầu Lâu
+5			5		0			0			1		1		1		1			100		//Gậy Ma Thuật
+5			6		0			0			1		1		1		1			100		//Gậy Phục Sinh
+5			14		0			0			1		1		1		1			100		//Gậy Phép Thuật
+5			15		0			0			1		1		1		1			100		//Gậy Gió
+5			16		0			0			1		1		1		1			100		//Gậy Triệu Hồi
+6			0		0			0			1		1		1		1			100		//Khiên Tròn
+6			1		0			0			1		1		1		1			100		//Khiên Sừng
+6			2		0			0			1		1		1		1			100		//Khiên Diều
+6			3		0			0			1		1		1		1			100		//Khiên Tiên Nữ
+7			9		0			0			0		1		1		1			100		//Mũ Thiết Phiến
+8			9		0			0			0		1		1		1			100		//Áo Thiết Phiến
+9			9		0			0			0		1		1		1			100		//Quần Thiết Phiến
+10			9		0			0			0		1		1		1			100		//Tay Thiết Phiến
+11			9		0			0			0		1		1		1			100		//Giày Thiết Phiến
+7			8		0			0			0		1		1		1			100		//Mũ Thiên Kim
+8			8		0			0			0		1		1		1			100		//Áo Thiên Kim
+9			8		0			0			0		1		1		1			100		//Quần Thiên Kim
+10			8		0			0			0		1		1		1			100		//Tay Thiên Kim
+11			8		0			0			0		1		1		1			100		//Giày Thiên Kim
+7			4		0			0			0		1		1		1			100		//Mũ Xương
+8			4		0			0			0		1		1		1			100		//Áo Xương
+9			4		0			0			0		1		1		1			100		//Quần Xương
+10			4		0			0			0		1		1		1			100		//Tay Xương
+11			4		0			0			0		1		1		1			100		//Giày Xương
+7			2		0			0			0		1		1		1			100		//Mũ Vải Thô
+8			2		0			0			0		1		1		1			100		//Áo Vải Thô
+9			2		0			0			0		1		1		1			100		//Quần Vải Thô
+10			2		0			0			0		1		1		1			100		//Tay Vải Thô
+11			2		0			0			0		1		1		1			100		//Giày Vải Thô
+7			10		0			0			0		1		1		1			100		//Mũ Trinh Nữ
+8			10		0			0			0		1		1		1			100		//Áo Trinh Nữ
+9			10		0			0			0		1		1		1			100		//Quần Trinh Nữ
+10			10		0			0			0		1		1		1			100		//Tay Trinh Nữ
+11			10		0			0			0		1		1		1			100		//Giày Trinh Nữ
+7			11		0			0			0		1		1		1			100		//Mũ Lụa
+8			11		0			0			0		1		1		1			100		//Áo Lụa
+9			11		0			0			0		1		1		1			100		//Quần Lụa
+10			11		0			0			0		1		1		1			100		//Tay Lụa
+11			11		0			0			0		1		1		1			100		//Giày Lụa
+7			12		0			0			0		1		1		1			100		//Mũ Thiên Thanh
+8			12		0			0			0		1		1		1			100		//Áo Thiên Thanh
+9			12		0			0			0		1		1		1			100		//Quần Thiên Thanh
+10			12		0			0			0		1		1		1			100		//Tay Thiên Thanh
+11			12		0			0			0		1		1		1			100		//Giày Thiên Thanh
+7			25		0			0			0		1		1		1			100		//Mũ Thiết Ma
+8			25		0			0			0		1		1		1			100		//Áo Thiết Ma
+9			25		0			0			0		1		1		1			100		//Quần Thiết Ma
+10			25		0			0			0		1		1		1			100		//Tay Thiết Ma
+11			25		0			0			0		1		1		1			100		//Giày Thiết Ma
+
+end
+

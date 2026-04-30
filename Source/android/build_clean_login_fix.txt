@@ -1,0 +1,62 @@
+
+> Configure project :app
+TakumiMu native ABIs: x86_64
+
+> Task :app:patchSourceJniLibs16k
+> Task :app:preBuild
+> Task :app:preUniversalReleaseBuild
+> Task :app:generateUniversalReleaseBuildConfig FROM-CACHE
+> Task :app:javaPreCompileUniversalRelease FROM-CACHE
+> Task :app:generateUniversalReleaseResValues FROM-CACHE
+> Task :app:checkUniversalReleaseAarMetadata
+> Task :app:mapUniversalReleaseSourceSetPaths
+> Task :app:generateUniversalReleaseResources UP-TO-DATE
+> Task :app:mergeUniversalReleaseResources FROM-CACHE
+> Task :app:packageUniversalReleaseResources FROM-CACHE
+> Task :app:parseUniversalReleaseLocalResources FROM-CACHE
+> Task :app:createUniversalReleaseCompatibleScreenManifests
+> Task :app:extractDeepLinksUniversalRelease FROM-CACHE
+> Task :app:processUniversalReleaseMainManifest FROM-CACHE
+> Task :app:processUniversalReleaseManifest FROM-CACHE
+> Task :app:processUniversalReleaseManifestForPackage FROM-CACHE
+> Task :app:processUniversalReleaseResources FROM-CACHE
+> Task :app:compileUniversalReleaseJavaWithJavac FROM-CACHE
+> Task :app:extractProguardFiles
+> Task :app:generateUniversalReleaseLintVitalReportModel
+> Task :app:lintVitalAnalyzeUniversalRelease FROM-CACHE
+> Task :app:configureCMakeRelWithDebInfo[x86_64]
+> Task :app:buildCMakeRelWithDebInfo[x86_64]
+> Task :app:mergeUniversalReleaseJniLibFolders FROM-CACHE
+> Task :app:checkUniversalReleaseDuplicateClasses
+> Task :app:dexBuilderUniversalRelease FROM-CACHE
+> Task :app:desugarUniversalReleaseFileDependencies FROM-CACHE
+> Task :app:lintVitalReportUniversalRelease
+> Task :app:mergeExtDexUniversalRelease FROM-CACHE
+> Task :app:lintVitalUniversalRelease
+> Task :app:mergeDexUniversalRelease FROM-CACHE
+> Task :app:mergeUniversalReleaseArtProfile
+> Task :app:mergeUniversalReleaseGlobalSynthetics FROM-CACHE
+> Task :app:compileUniversalReleaseArtProfile FROM-CACHE
+> Task :app:mergeUniversalReleaseShaders FROM-CACHE
+> Task :app:compileUniversalReleaseShaders NO-SOURCE
+> Task :app:generateUniversalReleaseAssets UP-TO-DATE
+> Task :app:mergeUniversalReleaseAssets FROM-CACHE
+> Task :app:compressUniversalReleaseAssets FROM-CACHE
+> Task :app:processUniversalReleaseJavaRes NO-SOURCE
+> Task :app:optimizeUniversalReleaseResources FROM-CACHE
+> Task :app:collectUniversalReleaseDependencies
+> Task :app:sdkUniversalReleaseDependencyData
+> Task :app:validateSigningUniversalRelease
+> Task :app:writeUniversalReleaseAppMetadata
+> Task :app:writeUniversalReleaseSigningConfigVersions
+> Task :app:mergeUniversalReleaseJavaResource
+> Task :app:mergeUniversalReleaseNativeLibs
+> Task :app:stripUniversalReleaseDebugSymbols
+> Task :app:extractUniversalReleaseNativeSymbolTables FROM-CACHE
+> Task :app:mergeUniversalReleaseNativeDebugMetadata NO-SOURCE
+> Task :app:packageUniversalRelease
+> Task :app:createUniversalReleaseApkListingFileRedirect
+> Task :app:assembleUniversalRelease
+
+BUILD SUCCESSFUL in 8s
+47 actionable tasks: 22 executed, 25 from cache

@@ -1,0 +1,12 @@
+//Index	ItemIndex   AddHP	AddMP	DamageRate   AttackSpeed   DoubleDmgRate	TripleDmgRate	AddExp	ResistDoubleDmg	ResistIgnoreDefense	ResistIgnoreSD	ResistCriticalDMG	ResistExceDMG	BlockStuck	ReflectRate	PetRecovery	Commnet
+1	 	6856	    2000	500  	10	     		50	     	       0			0				100			0				0			0					0						0			0			0			1		//Pet38
+2	 	6857	    5000	500  	35	     		50	     	       0			0				100			0				0			0					0						0			0			0			1		//Pet38
+3	 	6858	    5000	500  	35	     		50	     	       0			0				100			0				0			0					0						0			0			0			1		//Pet38
+4	 	6859	    5000	500  	35	     		50	     	       0			0				100			0				0			0					0						0			0			0			1		//Pet38
+5	 	6911	    10000	500  	50	     		100	     	       0			1				100			0				15			0					0						0			0			0			1		//Pet38
+6	 	6912	    10000	500  	50	     		100	     	       0			1				100			0				15			0					0						0			0			0			1		//Pet38
+7	 	6913	    20000	500  	80	     		150	     	       4			3				100			0				25			0					0						0			0			0			1		//Pet38
+8	 	6914	    20000	500  	80	     		150	     	       4			3				100			0				25			0					0						0			0			0			1		//Pet38
+
+
+end

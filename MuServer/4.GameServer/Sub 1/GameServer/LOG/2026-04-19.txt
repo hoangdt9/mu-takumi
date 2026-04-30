@@ -1,0 +1,272 @@
+07:19:52 [ServerInfo] CashShop loaded successfully
+07:19:52 [ServerInfo] ChaosMix loaded successfully
+07:19:52 [ServerInfo] Character loaded successfully
+07:19:52 [VongQuay] [1] Size 1 
+07:19:52 [DoiItem] Load OK Enable = 0, Size 37
+07:19:52 [CustomMonterPoint] Data Size 28
+07:19:52 [HuyExc] On: 1 TypeMixCount : 6
+07:19:52 [VIPChar] Enable 1, Date ItemPoint 17, Data LevelVip 20
+07:19:52 [CustomJewel] Load OK !!!!!!!!!!
+07:19:52 [CustomChoTroi] Load VAT 11, Load ItemBlock 2
+07:19:52 [CustomItemBank] (1) Load 26 Item In List
+07:19:52 [LoadMocNap] [1] Size 3 
+07:19:52 [ServerInfo] Custom loaded successfully
+07:19:52 [ServerInfo] Command loaded successfully
+07:19:52 [ServerInfo] Common loaded successfully
+07:19:52 [ Crywolf ] State (0) -> NONE
+07:19:52 [ Crywolf ] SetState - StateInfo : Occupation/0, State/0
+07:19:52 [ServerInfo] Event loaded successfully
+07:19:52 [ServerInfo] EventItemBag loaded successfully
+07:19:52 [ServerInfo] Hack loaded successfully
+07:19:52 [ServerInfo] Item loaded successfully
+07:19:52 [ServerInfo] Monster loaded successfully
+07:19:52 [ServerInfo] Move loaded successfully
+07:19:52 [ServerInfo] Quest loaded successfully
+07:19:52 [ServerInfo] Shop loaded successfully
+07:19:52 [ServerInfo] Skill loaded successfully
+07:19:52 [ResetTable]Enable (1) Load Config  1
+07:19:52 [ResetTableVIP]Enable (1) Load Config  1
+07:19:52 [ServerInfo] Util loaded successfully
+07:19:52 [BotThuMua]Bot: 1 DoiItem: 1  DoiItemList:2
+07:19:52 [BotTrade] Load COnffig OK Enable 1
+07:19:52 [ReadBotInfo] BotSystem loaded successfully
+07:19:53 [AutoNap] Enable 1, Tyle 100, MinNap 10000
+07:19:55 GHRS Hôm nay là 280 Reset
+07:55:07 AddClient - IP: 192.168.1.6
+07:55:08 AddAccount [admin] Login!
+07:55:10 [9000] LogInCharacter (Admin)
+08:00:07 [9000] LogOutCharacter (Admin)
+08:00:14 DelAccount [admin] LogOut!
+08:00:14 DelClient IP: 192.168.1.6
+08:07:04 AddClient - IP: 192.168.1.6
+08:07:06 AddAccount [admin] Login!
+08:07:07 [9000] LogInCharacter (Admin)
+08:07:11 [9000] LogOutCharacter (Admin)
+08:07:16 DelAccount [admin] LogOut!
+08:07:16 DelClient IP: 192.168.1.6
+08:07:19 AddClient - IP: 192.168.1.6
+08:07:20 AddAccount [admin] Login!
+08:07:21 [9001] LogInCharacter (Admin)
+08:07:25 [9001] LogOutCharacter (Admin)
+08:07:25 DelAccount [admin] LogOut!
+08:07:25 DelClient IP: 192.168.1.6
+08:13:35 AddClient - IP: 192.168.1.6
+08:13:35 AddAccount [admin] Login!
+08:13:37 [9000] LogInCharacter (Admin)
+08:13:44 [9000] LogOutCharacter (Admin)
+08:13:46 [9000] LogInCharacter (Admin)
+08:13:49 [9000] LogOutCharacter (Admin)
+08:13:49 DelAccount [admin] LogOut!
+08:13:49 DelClient IP: 192.168.1.6
+08:13:51 AddClient - IP: 192.168.1.6
+08:13:52 AddAccount [admin] Login!
+08:13:54 [9001] LogInCharacter (Admin)
+08:19:04 [9001] LogOutCharacter (Admin)
+08:19:04 DelAccount [admin] LogOut!
+08:19:04 DelClient IP: 192.168.1.6
+08:22:03 AddClient - IP: 192.168.1.6
+08:22:04 AddAccount [admin] Login!
+08:22:05 [9000] LogInCharacter (Admin)
+08:30:26 [9000] LogOutCharacter (Admin)
+08:30:26 DelAccount [admin] LogOut!
+08:30:26 DelClient IP: 192.168.1.6
+08:31:24 AddClient - IP: 192.168.1.6
+08:31:25 AddAccount [admin] Login!
+08:31:26 [9001] LogInCharacter (Admin)
+08:34:42 [9001] LogOutCharacter (Admin)
+08:34:42 DelAccount [admin] LogOut!
+08:34:42 DelClient IP: 192.168.1.6
+08:35:29 AddClient - IP: 192.168.1.6
+08:35:30 AddAccount [admin] Login!
+08:35:32 [9000] LogInCharacter (Admin)
+08:39:16 [9000] LogOutCharacter (Admin)
+08:39:16 DelAccount [admin] LogOut!
+08:39:16 DelClient IP: 192.168.1.6
+08:41:58 AddClient - IP: 192.168.1.6
+08:41:59 AddAccount [admin] Login!
+08:42:01 [9001] LogInCharacter (Admin)
+08:45:52 [9001] LogOutCharacter (Admin)
+08:45:52 DelAccount [admin] LogOut!
+08:45:52 DelClient IP: 192.168.1.6
+08:47:34 AddClient - IP: 192.168.1.6
+08:47:35 AddAccount [admin] Login!
+08:47:36 [9000] LogInCharacter (Admin)
+08:47:40 [9000] LogOutCharacter (Admin)
+08:47:47 [9000] LogInCharacter (ChienBinh)
+08:50:07 [9000] LogOutCharacter (ChienBinh)
+08:50:07 DelAccount [admin] LogOut!
+08:50:07 DelClient IP: 192.168.1.6
+08:58:48 AddClient - IP: 192.168.1.6
+08:58:49 AddAccount [admin] Login!
+08:58:50 [9001] LogInCharacter (Admin)
+08:59:07 [9001] LogOutCharacter (Admin)
+08:59:07 DelAccount [admin] LogOut!
+08:59:07 DelClient IP: 192.168.1.6
+09:00:41 AddClient - IP: 192.168.1.6
+09:00:42 AddAccount [admin] Login!
+09:00:44 [9000] LogInCharacter (Admin)
+09:11:34 [9000] LogOutCharacter (Admin)
+09:11:34 DelAccount [admin] LogOut!
+09:11:34 DelClient IP: 192.168.1.6
+09:12:34 AddClient - IP: 192.168.1.6
+09:12:35 AddAccount [admin] Login!
+09:12:36 [9001] LogInCharacter (Admin)
+09:22:46 [9001] LogOutCharacter (Admin)
+09:22:46 DelAccount [admin] LogOut!
+09:22:46 DelClient IP: 192.168.1.6
+09:23:37 AddClient - IP: 192.168.1.6
+09:23:38 AddAccount [admin] Login!
+09:23:39 [9000] LogInCharacter (ChienBinh)
+09:26:59 [9000] LogOutCharacter (ChienBinh)
+09:26:59 DelAccount [admin] LogOut!
+09:26:59 DelClient IP: 192.168.1.6
+09:27:20 AddClient - IP: 192.168.1.6
+09:27:21 AddAccount [admin] Login!
+09:27:23 [9001] LogInCharacter (ChienBinh)
+09:28:02 [9001] LogOutCharacter (ChienBinh)
+09:28:04 [9001] LogInCharacter (Admin)
+09:31:45 [9001] LogOutCharacter (Admin)
+09:31:45 DelAccount [admin] LogOut!
+09:31:45 DelClient IP: 192.168.1.6
+10:00:18 AddClient - IP: 192.168.1.6
+10:00:18 AddAccount [admin] Login!
+10:00:19 [9000] LogInCharacter (Admin)
+10:02:29 [9000] LogOutCharacter (Admin)
+10:02:29 DelAccount [admin] LogOut!
+10:02:29 DelClient IP: 192.168.1.6
+10:03:44 AddClient - IP: 192.168.1.6
+10:03:45 AddAccount [admin] Login!
+10:03:46 [9001] LogInCharacter (Admin)
+10:04:12 [9001] LogOutCharacter (Admin)
+10:04:12 DelAccount [admin] LogOut!
+10:04:12 DelClient IP: 192.168.1.6
+11:29:35 [ServerInfo] CashShop loaded successfully
+11:29:35 [ServerInfo] ChaosMix loaded successfully
+11:29:35 [ServerInfo] Character loaded successfully
+11:29:35 [VongQuay] [1] Size 1 
+11:29:35 [DoiItem] Load OK Enable = 0, Size 37
+11:29:35 [CustomMonterPoint] Data Size 28
+11:29:35 [HuyExc] On: 1 TypeMixCount : 6
+11:29:35 [VIPChar] Enable 1, Date ItemPoint 17, Data LevelVip 20
+11:29:35 [CustomJewel] Load OK !!!!!!!!!!
+11:29:35 [CustomChoTroi] Load VAT 11, Load ItemBlock 2
+11:29:35 [CustomItemBank] (1) Load 26 Item In List
+11:29:35 [LoadMocNap] [1] Size 3 
+11:29:35 [ServerInfo] Custom loaded successfully
+11:29:35 [ServerInfo] Command loaded successfully
+11:29:35 [ServerInfo] Common loaded successfully
+11:29:35 [ Crywolf ] State (0) -> NONE
+11:29:35 [ Crywolf ] SetState - StateInfo : Occupation/0, State/0
+11:29:35 [ServerInfo] Event loaded successfully
+11:29:35 [ServerInfo] EventItemBag loaded successfully
+11:29:35 [ServerInfo] Hack loaded successfully
+11:29:35 [ServerInfo] Item loaded successfully
+11:29:35 [ServerInfo] Monster loaded successfully
+11:29:35 [ServerInfo] Move loaded successfully
+11:29:35 [ServerInfo] Quest loaded successfully
+11:29:35 [ServerInfo] Shop loaded successfully
+11:29:35 [ServerInfo] Skill loaded successfully
+11:29:35 [ResetTable]Enable (1) Load Config  1
+11:29:35 [ResetTableVIP]Enable (1) Load Config  1
+11:29:35 [ServerInfo] Util loaded successfully
+11:29:35 [BotThuMua]Bot: 1 DoiItem: 1  DoiItemList:2
+11:29:35 [BotTrade] Load COnffig OK Enable 1
+11:29:35 [ReadBotInfo] BotSystem loaded successfully
+11:29:35 [AutoNap] Enable 1, Tyle 100, MinNap 10000
+11:31:48 AddClient - IP: 14.178.14.59
+11:32:03 GJSendRegOrLostPass Type : 1 [admin] [1] [1234567] [0982666888]
+11:32:03 JGRegAccountKQ 1
+11:32:06 AddAccount [admin] Login!
+11:32:11 [9000] LogInCharacter (Admin)
+11:32:17 [9000] LogOutCharacter (Admin)
+11:32:26 [9000] LogInCharacter (TocDo)
+11:32:55 [9000] LogOutCharacter (TocDo)
+11:32:55 DelAccount [admin] LogOut!
+11:32:55 DelClient IP: 14.178.14.59
+11:35:09 AddClient - IP: 14.178.14.59
+11:35:10 AddAccount [admin] Login!
+11:35:15 [9000] LogInCharacter (TocDo)
+11:38:46 [9000] LogOutCharacter (TocDo)
+11:38:46 DelAccount [admin] LogOut!
+11:38:46 DelClient IP: 14.178.14.59
+16:26:37 AddClient - IP: 14.178.14.59
+16:26:38 AddAccount [admin] Login!
+16:26:39 [9000] LogInCharacter (TocDo)
+16:32:42 Send List Phan Thuong Moc Nap TocDo
+16:37:57 [9000] LogOutCharacter (TocDo)
+16:37:57 DelAccount [admin] LogOut!
+16:37:57 DelClient IP: 14.178.14.59
+16:39:04 AddClient - IP: 14.178.14.59
+16:39:05 AddAccount [admin] Login!
+16:39:06 [9000] LogInCharacter (TocDo)
+16:40:51 [ServerInfo] Command loaded successfully
+16:48:27 Send List Phan Thuong Moc Nap TocDo
+16:49:15 [9000] LogOutCharacter (TocDo)
+16:49:15 DelAccount [admin] LogOut!
+16:49:15 DelClient IP: 14.178.14.59
+16:50:41 AddClient - IP: 14.178.14.59
+16:50:42 AddAccount [admin] Login!
+16:50:43 [9000] LogInCharacter (Admin)
+16:54:50 AddClient - IP: 14.178.14.59
+16:54:57 DelClient IP: 14.178.14.59
+16:55:00 [9000] LogOutCharacter (Admin)
+16:55:00 DelAccount [admin] LogOut!
+16:55:00 DelClient IP: 14.178.14.59
+16:55:46 AddClient - IP: 14.178.14.59
+16:55:47 AddAccount [admin] Login!
+16:55:48 [9001] LogInCharacter (Admin)
+17:07:56 [ResetTable]Enable (1) Load Config  1
+17:07:56 [ResetTableVIP]Enable (1) Load Config  1
+17:07:56 [ServerInfo] Util loaded successfully
+17:11:50 [9001] LogOutCharacter (Admin)
+17:11:50 DelAccount [admin] LogOut!
+17:11:50 DelClient IP: 14.178.14.59
+17:12:52 AddClient - IP: 14.178.14.59
+17:12:53 AddAccount [admin] Login!
+17:12:54 [9000] LogInCharacter (Admin)
+17:14:15 [9000] LogOutCharacter (Admin)
+17:14:23 [9000] LogInCharacter (Admin)
+17:39:34 [9000] LogOutCharacter (Admin)
+17:39:34 DelAccount [admin] LogOut!
+17:39:34 DelClient IP: 14.178.14.59
+17:40:11 AddClient - IP: 14.178.14.59
+17:40:12 AddAccount [admin] Login!
+17:40:13 [9001] LogInCharacter (Admin)
+17:40:35 [9001] LogOutCharacter (Admin)
+17:40:37 [9001] LogInCharacter (TocDo)
+21:00:00 [BossGuild] Start Boss Pháp Sư
+21:00:00 [BossGuild] Bat Dau Event Boss Guild
+21:30:00 [BossGuild] Finish 2
+21:30:00 [BossGuild] Xoa Monster Boss Guild
+22:00:00 [CTC Mini] Bắt Đầu Event Công Thành Chiến Mini
+22:30:00 [CTC Mini] Finish 2
+22:44:32 AddClient - IP: 222.252.214.159
+22:44:33 [9001] LogOutCharacter (TocDo)
+22:44:33 DelAccount [admin] LogOut!
+22:44:33 DelClient IP: 14.178.14.59
+22:44:33 AddAccount [admin] Login!
+22:44:38 [9000] LogInCharacter (Admin)
+22:49:43 [ResetTable]Enable (1) Load Config  1
+22:49:43 [ResetTableVIP]Enable (1) Load Config  1
+22:49:43 [ServerInfo] Util loaded successfully
+22:51:18 [9000] LogOutCharacter (Admin)
+22:51:20 [9000] LogInCharacter (Admin)
+22:52:26 [admin][Admin] BuyVip (Level: 3)
+22:52:26 [admin][Admin] WZ_SetCoin(BuyVip) WC: -100000, WP: 0, WG: 0
+22:52:29 [admin][Admin] BuyVip (Level: 3)
+22:52:29 [admin][Admin] WZ_SetCoin(BuyVip) WC: -100000, WP: 0, WG: 0
+22:52:45 [admin][Admin] WZ_SetCoin(Danh Hieu) WC: -50000000, WP: 0, WG: 0
+22:53:34 [admin][Admin] WZ_SetCoin(TruCoinResetVIP) WC: -5000, WP: 0, WG: 0
+22:54:11 [9000] LogOutCharacter (Admin)
+22:54:13 [9000] LogInCharacter (TocDo)
+22:56:03 [admin][TocDo] WZ_SetCoin(TruCoinResetVIP) WC: -5000, WP: 0, WG: 0
+22:59:31 [admin][TocDo] WZ_SetCoin(TruCoinResetVIP) WC: -5000, WP: 0, WG: 0
+23:02:59 [admin][TocDo] WZ_SetCoin(TruCoinResetVIP) WC: -5000, WP: 0, WG: 0
+23:06:27 [admin][TocDo] WZ_SetCoin(TruCoinResetVIP) WC: -5000, WP: 0, WG: 0
+23:09:55 [admin][TocDo] WZ_SetCoin(TruCoinResetVIP) WC: -5000, WP: 0, WG: 0
+23:13:23 [admin][TocDo] WZ_SetCoin(TruCoinResetVIP) WC: -5000, WP: 0, WG: 0
+23:16:51 [admin][TocDo] WZ_SetCoin(TruCoinResetVIP) WC: -5000, WP: 0, WG: 0
+23:20:19 [admin][TocDo] WZ_SetCoin(TruCoinResetVIP) WC: -5000, WP: 0, WG: 0
+23:24:47 AddClient - IP: 222.252.214.159
+23:39:47 DelClient IP: 222.252.214.159
+23:39:47 Response error after connection causes conclusion [9001][][][222.252.214.159]

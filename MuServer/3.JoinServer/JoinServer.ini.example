@@ -1,0 +1,8 @@
+[JoinServerInfo]
+JoinServerODBC = MuOnlineJoin
+JoinServerPort = 63003
+ConnectServerAddress = 127.0.0.1
+ConnectServerPort = 63001
+CaseSensitive = 0
+MD5Encryption = 0
+GlobalPassword = CHANGE_ME

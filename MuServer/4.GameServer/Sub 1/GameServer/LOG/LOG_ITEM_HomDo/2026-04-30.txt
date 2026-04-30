@@ -1,0 +1,2 @@
+12:29:15 [CHECKITEMWAREHOUSE] Đóng Hòm đồ Account:[test1234]- Name[wqewq]
+12:29:15 [CHECKITEMWAREHOUSE]Đóng Hòm đồ [test1234][wqewq] 

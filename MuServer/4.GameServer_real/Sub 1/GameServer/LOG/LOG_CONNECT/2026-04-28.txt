@@ -1,0 +1,5 @@
+16:49:51 [SocketManager] Server started at port [55901]
+16:49:52 [JoinServer] connecting to 127.0.0.1:63003
+16:49:52 [JoinServer] connected to 127.0.0.1:63003
+16:49:52 [DataServer] connecting to 127.0.0.1:63002
+16:49:52 [DataServer] connected to 127.0.0.1:63002

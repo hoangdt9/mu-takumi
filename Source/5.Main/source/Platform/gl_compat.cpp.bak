@@ -1,0 +1,1644 @@
+// =============================================================================
+// Platform/gl_compat.cpp
+// OpenGL fixed-function emulation on GLES 3.2 for Android.
+// Implements immediate mode, matrix stack, and basic shaders.
+// =============================================================================
+
+#ifdef __ANDROID__
+
+#include "gl_compat.h"
+#include <GLES3/gl32.h>
+#include <android/log.h>
+
+// Legacy client-state enums not present in GLES2 headers
+#ifndef GL_VERTEX_ARRAY
+#  define GL_VERTEX_ARRAY        0x8074
+#endif
+#ifndef GL_TEXTURE_COORD_ARRAY
+#  define GL_TEXTURE_COORD_ARRAY 0x8078
+#endif
+#ifndef GL_COLOR_ARRAY
+#  define GL_COLOR_ARRAY         0x8076
+#endif
+#ifndef GL_NORMAL_ARRAY
+#  define GL_NORMAL_ARRAY        0x8075
+#endif
+#include <cmath>
+#include <cstring>
+#include <cstdio>
+#include <vector>
+#include <algorithm>
+
+#define LOG_TAG "GL_Compat"
+#if defined(MU_ANDROID_DISABLE_LOG)
+#define LOGI(...) ((void)0)
+#define LOGE(...) ((void)0)
+#else
+#define LOGI(...) __android_log_print(ANDROID_LOG_INFO,  LOG_TAG, __VA_ARGS__)
+#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
+#endif
+
+// =============================================================================
+// Matrix math (column-major, same as OpenGL)
+// =============================================================================
+typedef float Mat4[16];
+
+static void mat4_identity(Mat4 m) {
+    memset(m, 0, sizeof(Mat4));
+    m[0] = m[5] = m[10] = m[15] = 1.0f;
+}
+
+static void mat4_copy(Mat4 dst, const Mat4 src) {
+    memcpy(dst, src, sizeof(Mat4));
+}
+
+static void mat4_multiply(Mat4 out, const Mat4 a, const Mat4 b) {
+    Mat4 tmp;
+    for (int r = 0; r < 4; ++r)
+        for (int c = 0; c < 4; ++c) {
+            float s = 0;
+            for (int k = 0; k < 4; ++k) s += a[k*4+r] * b[c*4+k];
+            tmp[c*4+r] = s;
+        }
+    mat4_copy(out, tmp);
+}
+
+// =============================================================================
+// Matrix stacks
+// =============================================================================
+static const int MAX_STACK = 32;
+
+static Mat4  s_mvStack[MAX_STACK];
+static int   s_mvDepth = 0;
+static Mat4  s_projStack[8];
+static int   s_projDepth = 0;
+
+static int   s_matrixMode = 0x1700; // GL_MODELVIEW
+
+static Mat4* CurrentStack()  { return s_matrixMode == 0x1701 ? s_projStack : s_mvStack; }
+static int&  CurrentDepth()  { return s_matrixMode == 0x1701 ? s_projDepth : s_mvDepth; }
+
+// Combined MVP = Proj * Modelview
+static void GetMVP(Mat4 mvp) {
+    mat4_multiply(mvp, s_projStack[s_projDepth], s_mvStack[s_mvDepth]);
+}
+
+// =============================================================================
+// Vertex format
+// =============================================================================
+struct IMVertex {
+    float x, y, z;
+    float r, g, b, a;
+    float u, v;
+};
+
+// =============================================================================
+// Immediate mode state
+// =============================================================================
+static std::vector<IMVertex> s_verts;
+static std::vector<IMVertex> s_expandedVerts;
+static std::vector<IMVertex> s_arrayVerts;
+static std::vector<IMVertex> s_batchVerts;
+static std::vector<IMVertex> s_batchConvertedVerts;
+static IMVertex s_cur;
+static GLenum   s_primMode;
+static bool     s_inBegin = false;
+static bool     s_hasBatch = false;
+static GLenum   s_batchPrimMode = 0;
+static const size_t kMaxBatchVerts = 120000;
+static constexpr bool kBakeModelViewForImmediate = true;
+// When false, legacy glDrawArrays always goes through the converted batch path.
+// This reduces driver draw-call pressure on Android emulators at the cost of
+// some CPU-side vertex conversion work.
+// Disabled: Mali GLES 3.x DMA reads client pointers asynchronously, causing SEGV_ACCERR
+// when the pointer sits at a page boundary. Force all draws through VBO upload instead.
+static constexpr bool kPreferDirectVertexArrays = false;
+static constexpr GLenum kCompatModelViewMode = 0x1700;  // GL_MODELVIEW
+static constexpr GLenum kCompatProjectionMode = 0x1701; // GL_PROJECTION
+
+// =============================================================================
+// Shader programs
+// =============================================================================
+static GLuint s_prog    = 0;   // main textured+colored shader
+static GLuint s_vbo     = 0;
+static GLuint s_ebo     = 0;
+
+// Attribute locations
+static GLint  s_aPos    = -1;
+static GLint  s_aColor  = -1;
+static GLint  s_aUV     = -1;
+
+// Uniform locations
+static GLint  s_uMVP        = -1;
+static GLint  s_uSampler    = -1;
+static GLint  s_uUseTexture = -1;
+static GLint  s_uAlphaTest  = -1;
+static GLint  s_uAlphaRef   = -1;
+
+// Debug counters
+static int    s_drawCallCount = 0;
+static int    s_totalVertices = 0;
+static int    s_imDrawCalls = 0;
+static int    s_vaDirectDrawCalls = 0;
+static int    s_vaConvertedDrawCalls = 0;
+static int    s_quadIndexedDrawCalls = 0;
+static int    s_quadExpandedDrawCalls = 0;
+
+// State flags
+static bool   s_texture2DEnabled = true;
+static bool   s_alphaTestEnabled = false;
+static float  s_alphaRef         = 0.0f;
+static GLenum s_alphaFunc        = 0x0207; // GL_ALWAYS
+
+// ── Current bound texture (to detect whether we need texture sampling) ──────
+// We rely on the game calling glBindTexture to set this, which is a real GLES2
+// call. We only need to know if ANY texture is bound.
+static GLuint s_boundTexture = 0;
+static GLsizeiptr s_vboCapacity = 0;
+static bool   s_samplerUniformInitialized = false;
+static bool   s_hasLastMvp = false;
+static Mat4   s_lastMvp = { 0 };
+static bool   s_mvpDirty = true;
+static Mat4   s_cachedMvp = { 0 };
+static int    s_lastUseTex = -1;
+static int    s_lastAlphaTest = -1;
+static float  s_lastAlphaRef = -1.0f;
+// ── Bitfield cap state cache (replaces unordered_map for zero-alloc perf) ──
+enum CapBit : uint32_t {
+    CAP_DEPTH_TEST   = 1u << 0,
+    CAP_BLEND        = 1u << 1,
+    CAP_CULL_FACE    = 1u << 2,
+    CAP_SCISSOR_TEST = 1u << 3,
+    CAP_STENCIL_TEST = 1u << 4,
+    CAP_DITHER       = 1u << 5,
+    CAP_POLYGON_OFFSET_FILL = 1u << 6,
+    CAP_SAMPLE_ALPHA_TO_COVERAGE = 1u << 7,
+    CAP_SAMPLE_COVERAGE = 1u << 8,
+};
+static uint32_t s_capBits = 0;
+static uint32_t s_capBitsKnown = 0;  // tracks which bits have been set at least once
+
+static inline uint32_t CapToMask(GLenum cap) {
+    switch (cap) {
+        case GL_DEPTH_TEST:   return CAP_DEPTH_TEST;
+        case GL_BLEND:        return CAP_BLEND;
+        case GL_CULL_FACE:    return CAP_CULL_FACE;
+        case GL_SCISSOR_TEST: return CAP_SCISSOR_TEST;
+        case GL_STENCIL_TEST: return CAP_STENCIL_TEST;
+        case GL_DITHER:       return CAP_DITHER;
+        case GL_POLYGON_OFFSET_FILL: return CAP_POLYGON_OFFSET_FILL;
+        case GL_SAMPLE_ALPHA_TO_COVERAGE: return CAP_SAMPLE_ALPHA_TO_COVERAGE;
+        case GL_SAMPLE_COVERAGE: return CAP_SAMPLE_COVERAGE;
+        default: return 0;
+    }
+}
+static GLenum s_lastBlendSrc = 0xFFFFFFFFu;
+static GLenum s_lastBlendDst = 0xFFFFFFFFu;
+static GLenum s_lastDepthFunc = 0xFFFFFFFFu;
+static GLboolean s_lastDepthMask = 2;
+static GLboolean s_lastColorMaskR = 2;
+static GLboolean s_lastColorMaskG = 2;
+static GLboolean s_lastColorMaskB = 2;
+static GLboolean s_lastColorMaskA = 2;
+static bool s_hasClearColor = false;
+static float s_lastClearR = 0.0f;
+static float s_lastClearG = 0.0f;
+static float s_lastClearB = 0.0f;
+static float s_lastClearA = 0.0f;
+static GLuint s_boundArrayBuffer = 0;
+static GLuint s_boundElementArrayBuffer = 0;
+static GLuint s_currentProgram = 0;
+static bool s_imAttribValid = false;
+static std::vector<uint16_t> s_quadIndices;
+static size_t s_quadIndexCapacityQuads = 0;
+
+static void DrawVertexList(const std::vector<IMVertex>& inputVerts, GLenum primMode, bool modelViewBaked);
+static void FlushPendingImmediateBatch();
+
+static inline bool IsProjectionMatrixActive() {
+    return s_matrixMode == static_cast<int>(kCompatProjectionMode);
+}
+
+static inline bool MatrixMutationRequiresImmediateFlush() {
+    return !kBakeModelViewForImmediate || IsProjectionMatrixActive();
+}
+
+static inline void TransformByCurrentModelView(float x, float y, float z, float& outX, float& outY, float& outZ) {
+    if (!kBakeModelViewForImmediate) {
+        outX = x;
+        outY = y;
+        outZ = z;
+        return;
+    }
+
+    const Mat4& mv = s_mvStack[s_mvDepth];
+    const float tx = mv[0] * x + mv[4] * y + mv[8]  * z + mv[12];
+    const float ty = mv[1] * x + mv[5] * y + mv[9]  * z + mv[13];
+    const float tz = mv[2] * x + mv[6] * y + mv[10] * z + mv[14];
+    const float tw = mv[3] * x + mv[7] * y + mv[11] * z + mv[15];
+
+    if (fabsf(tw) > 1e-6f && fabsf(tw - 1.0f) > 1e-6f) {
+        const float invW = 1.0f / tw;
+        outX = tx * invW;
+        outY = ty * invW;
+        outZ = tz * invW;
+    } else {
+        outX = tx;
+        outY = ty;
+        outZ = tz;
+    }
+}
+
+static bool IsBatchableImmediateMode(GLenum mode) {
+    return mode == GL_TRIANGLES ||
+           mode == GL_LINES ||
+           mode == GL_POINTS ||
+           mode == 0x0007 /* GL_QUADS */;
+}
+
+static bool ConvertPrimitiveForBatching(const std::vector<IMVertex>& inputVerts,
+                                        GLenum inMode,
+                                        const IMVertex*& outVerts,
+                                        size_t& outCount,
+                                        GLenum& outMode) {
+    outVerts = inputVerts.data();
+    outCount = inputVerts.size();
+    outMode = inMode;
+    s_batchConvertedVerts.clear();
+
+    switch (inMode) {
+    case GL_TRIANGLES:
+    case GL_LINES:
+    case GL_POINTS:
+    case 0x0007: /* GL_QUADS */
+        return outCount > 0;
+
+    case GL_TRIANGLE_FAN:
+    case 0x0009: /* GL_POLYGON */ {
+        if (inputVerts.size() < 3u) {
+            return false;
+        }
+        const size_t triCount = inputVerts.size() - 2u;
+        s_batchConvertedVerts.reserve(triCount * 3u);
+        const IMVertex& v0 = inputVerts[0u];
+        for (size_t i = 1u; i + 1u < inputVerts.size(); ++i) {
+            s_batchConvertedVerts.push_back(v0);
+            s_batchConvertedVerts.push_back(inputVerts[i]);
+            s_batchConvertedVerts.push_back(inputVerts[i + 1u]);
+        }
+        outVerts = s_batchConvertedVerts.data();
+        outCount = s_batchConvertedVerts.size();
+        outMode = GL_TRIANGLES;
+        return outCount > 0;
+    }
+
+    case GL_TRIANGLE_STRIP: {
+        if (inputVerts.size() < 3u) {
+            return false;
+        }
+        const size_t triCount = inputVerts.size() - 2u;
+        s_batchConvertedVerts.reserve(triCount * 3u);
+        for (size_t i = 0u; i + 2u < inputVerts.size(); ++i) {
+            if ((i & 1u) == 0u) {
+                s_batchConvertedVerts.push_back(inputVerts[i + 0u]);
+                s_batchConvertedVerts.push_back(inputVerts[i + 1u]);
+                s_batchConvertedVerts.push_back(inputVerts[i + 2u]);
+            } else {
+                // Keep winding consistent with strip parity.
+                s_batchConvertedVerts.push_back(inputVerts[i + 1u]);
+                s_batchConvertedVerts.push_back(inputVerts[i + 0u]);
+                s_batchConvertedVerts.push_back(inputVerts[i + 2u]);
+            }
+        }
+        outVerts = s_batchConvertedVerts.data();
+        outCount = s_batchConvertedVerts.size();
+        outMode = GL_TRIANGLES;
+        return outCount > 0;
+    }
+
+    case GL_LINE_STRIP: {
+        if (inputVerts.size() < 2u) {
+            return false;
+        }
+        s_batchConvertedVerts.reserve((inputVerts.size() - 1u) * 2u);
+        for (size_t i = 0u; i + 1u < inputVerts.size(); ++i) {
+            s_batchConvertedVerts.push_back(inputVerts[i]);
+            s_batchConvertedVerts.push_back(inputVerts[i + 1u]);
+        }
+        outVerts = s_batchConvertedVerts.data();
+        outCount = s_batchConvertedVerts.size();
+        outMode = GL_LINES;
+        return outCount > 0;
+    }
+
+    case GL_LINE_LOOP: {
+        if (inputVerts.size() < 2u) {
+            return false;
+        }
+        s_batchConvertedVerts.reserve(inputVerts.size() * 2u);
+        for (size_t i = 0u; i + 1u < inputVerts.size(); ++i) {
+            s_batchConvertedVerts.push_back(inputVerts[i]);
+            s_batchConvertedVerts.push_back(inputVerts[i + 1u]);
+        }
+        s_batchConvertedVerts.push_back(inputVerts.back());
+        s_batchConvertedVerts.push_back(inputVerts.front());
+        outVerts = s_batchConvertedVerts.data();
+        outCount = s_batchConvertedVerts.size();
+        outMode = GL_LINES;
+        return outCount > 0;
+    }
+
+    default:
+        return false;
+    }
+}
+
+static size_t MaxBatchVertsForMode(GLenum mode) {
+    if (mode == 0x0007 /* GL_QUADS */) {
+        // uint16 index buffer: max 65535 indices => 16383 full quads (4 verts each).
+        return 16383u * 4u;
+    }
+    return kMaxBatchVerts;
+}
+
+// Intercept glBindTexture to track current texture
+// (We override via a #define in PlatformGL.h after this header is included)
+void GL_TrackBindTexture(GLenum target, GLuint tex) {
+    if (target == GL_TEXTURE_2D) {
+        if (s_boundTexture == tex) {
+            return;
+        }
+        FlushPendingImmediateBatch();
+        s_boundTexture = tex;
+    }
+    glBindTexture(target, tex);
+}
+
+void GL_BlendFunc_Compat(GLenum sfactor, GLenum dfactor) {
+    if (s_lastBlendSrc == sfactor && s_lastBlendDst == dfactor) {
+        return;
+    }
+    FlushPendingImmediateBatch();
+    glBlendFunc(sfactor, dfactor);
+    s_lastBlendSrc = sfactor;
+    s_lastBlendDst = dfactor;
+}
+
+void GL_DepthFunc_Compat(GLenum func) {
+    if (s_lastDepthFunc == func) {
+        return;
+    }
+    FlushPendingImmediateBatch();
+    glDepthFunc(func);
+    s_lastDepthFunc = func;
+}
+
+void GL_DepthMask_Compat(GLboolean flag) {
+    if (s_lastDepthMask == flag) {
+        return;
+    }
+    FlushPendingImmediateBatch();
+    glDepthMask(flag);
+    s_lastDepthMask = flag;
+}
+
+void GL_ColorMask_Compat(GLboolean red, GLboolean green, GLboolean blue, GLboolean alpha) {
+    if (s_lastColorMaskR == red &&
+        s_lastColorMaskG == green &&
+        s_lastColorMaskB == blue &&
+        s_lastColorMaskA == alpha) {
+        return;
+    }
+    FlushPendingImmediateBatch();
+    glColorMask(red, green, blue, alpha);
+    s_lastColorMaskR = red;
+    s_lastColorMaskG = green;
+    s_lastColorMaskB = blue;
+    s_lastColorMaskA = alpha;
+}
+
+void GL_ClearColor_Compat(float red, float green, float blue, float alpha) {
+    if (s_hasClearColor &&
+        s_lastClearR == red &&
+        s_lastClearG == green &&
+        s_lastClearB == blue &&
+        s_lastClearA == alpha) {
+        return;
+    }
+    glClearColor(red, green, blue, alpha);
+    s_lastClearR = red;
+    s_lastClearG = green;
+    s_lastClearB = blue;
+    s_lastClearA = alpha;
+    s_hasClearColor = true;
+}
+
+void GL_Clear_Compat(GLbitfield mask) {
+    FlushPendingImmediateBatch();
+    glClear(mask);
+}
+
+static inline void BindArrayBufferCached(GLuint buffer) {
+    if (s_boundArrayBuffer != buffer) {
+        glBindBuffer(GL_ARRAY_BUFFER, buffer);
+        s_boundArrayBuffer = buffer;
+    }
+}
+
+static inline void BindElementArrayBufferCached(GLuint buffer) {
+    if (s_boundElementArrayBuffer != buffer) {
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer);
+        s_boundElementArrayBuffer = buffer;
+    }
+}
+
+static inline void UseProgramCached(GLuint program) {
+    if (s_currentProgram != program) {
+        glUseProgram(program);
+        s_currentProgram = program;
+    }
+}
+
+static bool EnsureQuadIndexCapacity(size_t quadCount) {
+    if (quadCount == 0 || s_ebo == 0) {
+        return false;
+    }
+
+    static constexpr size_t kMaxQuads = 65535u / 4u;
+    if (quadCount > kMaxQuads) {
+        return false;
+    }
+
+    if (quadCount <= s_quadIndexCapacityQuads) {
+        return true;
+    }
+
+    size_t newCap = (s_quadIndexCapacityQuads > 0) ? s_quadIndexCapacityQuads : 256u;
+    while (newCap < quadCount && newCap < kMaxQuads) {
+        newCap <<= 1;
+    }
+    if (newCap > kMaxQuads) {
+        newCap = kMaxQuads;
+    }
+    if (newCap < quadCount) {
+        return false;
+    }
+
+    s_quadIndices.resize(newCap * 6u);
+    for (size_t q = 0; q < newCap; ++q) {
+        const uint16_t base = static_cast<uint16_t>(q * 4u);
+        const size_t i = q * 6u;
+        s_quadIndices[i + 0u] = base + 0u;
+        s_quadIndices[i + 1u] = base + 1u;
+        s_quadIndices[i + 2u] = base + 2u;
+        s_quadIndices[i + 3u] = base + 0u;
+        s_quadIndices[i + 4u] = base + 2u;
+        s_quadIndices[i + 5u] = base + 3u;
+    }
+
+    BindElementArrayBufferCached(s_ebo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+                 static_cast<GLsizeiptr>(s_quadIndices.size() * sizeof(uint16_t)),
+                 s_quadIndices.data(),
+                 GL_STATIC_DRAW);
+    s_quadIndexCapacityQuads = newCap;
+    return true;
+}
+
+// =============================================================================
+// Shader helpers
+// =============================================================================
+static GLuint CompileShader(GLenum type, const char* src) {
+    GLuint s = glCreateShader(type);
+    glShaderSource(s, 1, &src, nullptr);
+    glCompileShader(s);
+    GLint ok = 0; glGetShaderiv(s, GL_COMPILE_STATUS, &ok);
+    if (!ok) {
+        char buf[512]; glGetShaderInfoLog(s, 512, nullptr, buf);
+        LOGE("Shader compile error: %s", buf);
+        glDeleteShader(s); return 0;
+    }
+    return s;
+}
+
+static GLuint LinkProgram(GLuint vs, GLuint fs) {
+    GLuint p = glCreateProgram();
+    glAttachShader(p, vs); glAttachShader(p, fs);
+    glLinkProgram(p);
+    GLint ok = 0; glGetProgramiv(p, GL_LINK_STATUS, &ok);
+    if (!ok) {
+        char buf[512]; glGetProgramInfoLog(p, 512, nullptr, buf);
+        LOGE("Program link error: %s", buf);
+        glDeleteProgram(p); return 0;
+    }
+    return p;
+}
+
+// =============================================================================
+// Shaders source
+// =============================================================================
+
+// Vertex shader: transforms by MVP, passes color + texcoord through
+static const char* s_vertSrc = R"(#version 310 es
+in vec4 a_pos;
+in vec4 a_color;
+in vec2 a_uv;
+uniform mat4 u_mvp;
+out vec4 v_color;
+out vec2 v_uv;
+void main() {
+    gl_Position = u_mvp * a_pos;
+    v_color = a_color;
+    v_uv = a_uv;
+}
+)";
+
+// Fragment shader: texture * color, with optional alpha test
+static const char* s_fragSrc = R"(#version 310 es
+precision highp float;
+uniform sampler2D u_sampler;
+uniform int u_useTex;
+uniform int u_alphaTest;
+uniform float u_alphaRef;
+in vec4 v_color;
+in vec2 v_uv;
+out vec4 outFragColor;
+void main() {
+    vec4 c;
+    if (u_useTex == 1) {
+        c = texture(u_sampler, v_uv) * v_color;
+    } else {
+        c = v_color;
+    }
+    if (u_alphaTest == 1 && c.a < u_alphaRef) {
+        discard;
+    }
+    outFragColor = c;
+}
+)";
+
+// =============================================================================
+// Init / Shutdown
+// =============================================================================
+void GL_Compat_Init() {
+    // Init matrix stacks with identity
+    for (int i = 0; i < MAX_STACK; ++i) mat4_identity(s_mvStack[i]);
+    for (int i = 0; i < 8;         ++i) mat4_identity(s_projStack[i]);
+    s_mvDepth   = 0;
+    s_projDepth = 0;
+    s_matrixMode = 0x1700; // GL_MODELVIEW
+
+    // Init current vertex
+    s_cur = {0,0,0, 1,1,1,1, 0,0};
+    s_inBegin = false;
+    s_verts.reserve(8192);
+    s_expandedVerts.reserve(12288);
+    s_arrayVerts.reserve(8192);
+    s_batchVerts.reserve(32768);
+    s_hasBatch = false;
+    s_batchPrimMode = 0;
+    s_vboCapacity = 0;
+    s_samplerUniformInitialized = false;
+    s_hasLastMvp = false;
+    s_mvpDirty = true;
+    s_lastUseTex = -1;
+    s_lastAlphaTest = -1;
+    s_lastAlphaRef = -1.0f;
+    s_capBits = 0;
+    s_capBitsKnown = 0;
+    s_lastBlendSrc = 0xFFFFFFFFu;
+    s_lastBlendDst = 0xFFFFFFFFu;
+    s_lastDepthFunc = 0xFFFFFFFFu;
+    s_lastDepthMask = 2;
+    s_lastColorMaskR = 2;
+    s_lastColorMaskG = 2;
+    s_lastColorMaskB = 2;
+    s_lastColorMaskA = 2;
+    s_hasClearColor = false;
+    s_boundArrayBuffer = 0;
+    s_boundElementArrayBuffer = 0;
+    s_currentProgram = 0;
+    s_imAttribValid = false;
+    s_quadIndices.clear();
+    s_quadIndexCapacityQuads = 0;
+
+    // Compile shaders
+    GLuint vs = CompileShader(GL_VERTEX_SHADER,   s_vertSrc);
+    GLuint fs = CompileShader(GL_FRAGMENT_SHADER, s_fragSrc);
+    if (!vs || !fs) { LOGE("GL_Compat_Init: shader compile failed"); return; }
+    s_prog = LinkProgram(vs, fs);
+    glDeleteShader(vs); glDeleteShader(fs);
+    if (!s_prog) { LOGE("GL_Compat_Init: link failed"); return; }
+
+    s_aPos    = glGetAttribLocation(s_prog,  "a_pos");
+    s_aColor  = glGetAttribLocation(s_prog,  "a_color");
+    s_aUV     = glGetAttribLocation(s_prog,  "a_uv");
+    s_uMVP    = glGetUniformLocation(s_prog, "u_mvp");
+    s_uSampler    = glGetUniformLocation(s_prog, "u_sampler");
+    s_uUseTexture = glGetUniformLocation(s_prog, "u_useTex");
+    s_uAlphaTest  = glGetUniformLocation(s_prog, "u_alphaTest");
+    s_uAlphaRef   = glGetUniformLocation(s_prog, "u_alphaRef");
+
+    // Create VBO
+    glGenBuffers(1, &s_vbo);
+    glGenBuffers(1, &s_ebo);
+
+    // Sampler uniform is constant (texture unit 0).
+    UseProgramCached(s_prog);
+    glUniform1i(s_uSampler, 0);
+    UseProgramCached(0);
+    s_samplerUniformInitialized = true;
+
+    LOGI("GL_Compat_Init: OK (prog=%u, vbo=%u, ebo=%u)", s_prog, s_vbo, s_ebo);
+}
+
+void GL_GetDrawStats(int* drawCalls, int* vertices) {
+    FlushPendingImmediateBatch();
+    if (drawCalls) *drawCalls = s_drawCallCount;
+    if (vertices)  *vertices  = s_totalVertices;
+}
+void GL_ResetDrawStats() {
+    s_drawCallCount = 0;
+    s_totalVertices = 0;
+    s_imDrawCalls = 0;
+    s_vaDirectDrawCalls = 0;
+    s_vaConvertedDrawCalls = 0;
+    s_quadIndexedDrawCalls = 0;
+    s_quadExpandedDrawCalls = 0;
+}
+
+void GL_GetDrawPathStats(int* imDrawCalls,
+                         int* vaDirectDrawCalls,
+                         int* vaConvertedDrawCalls,
+                         int* quadIndexedDrawCalls,
+                         int* quadExpandedDrawCalls) {
+    if (imDrawCalls) *imDrawCalls = s_imDrawCalls;
+    if (vaDirectDrawCalls) *vaDirectDrawCalls = s_vaDirectDrawCalls;
+    if (vaConvertedDrawCalls) *vaConvertedDrawCalls = s_vaConvertedDrawCalls;
+    if (quadIndexedDrawCalls) *quadIndexedDrawCalls = s_quadIndexedDrawCalls;
+    if (quadExpandedDrawCalls) *quadExpandedDrawCalls = s_quadExpandedDrawCalls;
+}
+
+void GL_Compat_Shutdown() {
+    FlushPendingImmediateBatch();
+    if (s_prog) { glDeleteProgram(s_prog); s_prog = 0; }
+    if (s_vbo)  { glDeleteBuffers(1, &s_vbo); s_vbo = 0; }
+    if (s_ebo)  { glDeleteBuffers(1, &s_ebo); s_ebo = 0; }
+    s_verts.clear();
+    s_expandedVerts.clear();
+    s_arrayVerts.clear();
+    s_batchVerts.clear();
+    s_hasBatch = false;
+    s_batchPrimMode = 0;
+    s_vboCapacity = 0;
+    s_samplerUniformInitialized = false;
+    s_hasLastMvp = false;
+    s_mvpDirty = true;
+    s_lastUseTex = -1;
+    s_lastAlphaTest = -1;
+    s_lastAlphaRef = -1.0f;
+    s_capBits = 0;
+    s_capBitsKnown = 0;
+    s_lastBlendSrc = 0xFFFFFFFFu;
+    s_lastBlendDst = 0xFFFFFFFFu;
+    s_lastDepthFunc = 0xFFFFFFFFu;
+    s_lastDepthMask = 2;
+    s_lastColorMaskR = 2;
+    s_lastColorMaskG = 2;
+    s_lastColorMaskB = 2;
+    s_lastColorMaskA = 2;
+    s_hasClearColor = false;
+    s_boundArrayBuffer = 0;
+    s_boundElementArrayBuffer = 0;
+    s_currentProgram = 0;
+    s_imAttribValid = false;
+    s_quadIndices.clear();
+    s_quadIndexCapacityQuads = 0;
+}
+
+// =============================================================================
+// Internal: flush immediate mode vertices
+// Handles GL_QUADS (not in GLES2) by converting each quad to 2 triangles.
+// =============================================================================
+static inline void ApplyShaderStateCommon(bool modelViewBaked) {
+    UseProgramCached(s_prog);
+    if (!s_samplerUniformInitialized) {
+        glUniform1i(s_uSampler, 0);
+        s_samplerUniformInitialized = true;
+    }
+
+    Mat4 desiredMvp;
+    if (modelViewBaked) {
+        mat4_copy(desiredMvp, s_projStack[s_projDepth]);
+    } else {
+        if (s_mvpDirty) {
+            GetMVP(s_cachedMvp);
+            s_mvpDirty = false;
+        }
+        mat4_copy(desiredMvp, s_cachedMvp);
+    }
+
+    if (!s_hasLastMvp || memcmp(s_lastMvp, desiredMvp, sizeof(Mat4)) != 0) {
+        glUniformMatrix4fv(s_uMVP, 1, GL_FALSE, desiredMvp);
+        memcpy(s_lastMvp, desiredMvp, sizeof(Mat4));
+        s_hasLastMvp = true;
+    }
+
+    const int useTex = (s_texture2DEnabled && s_boundTexture != 0) ? 1 : 0;
+    if (useTex != s_lastUseTex) {
+        glUniform1i(s_uUseTexture, useTex);
+        s_lastUseTex = useTex;
+    }
+
+    const int alphaTest = s_alphaTestEnabled ? 1 : 0;
+    if (alphaTest != s_lastAlphaTest) {
+        glUniform1i(s_uAlphaTest, alphaTest);
+        s_lastAlphaTest = alphaTest;
+    }
+    if (s_alphaRef != s_lastAlphaRef) {
+        glUniform1f(s_uAlphaRef, s_alphaRef);
+        s_lastAlphaRef = s_alphaRef;
+    }
+}
+
+static void DrawPreparedVerts(const IMVertex* verts, size_t vertCount, GLenum drawMode, bool modelViewBaked) {
+    if (!verts || vertCount == 0 || !s_prog || !s_vbo) {
+        return;
+    }
+
+    const GLsizeiptr drawBytes = static_cast<GLsizeiptr>(vertCount * sizeof(IMVertex));
+
+    BindArrayBufferCached(s_vbo);
+    if (drawBytes > s_vboCapacity) {
+        GLsizeiptr newCapacity = std::max<GLsizeiptr>(65536, s_vboCapacity);
+        while (newCapacity < drawBytes) {
+            newCapacity <<= 1;
+        }
+        s_vboCapacity = newCapacity;
+    }
+    // Buffer orphaning: glBufferData(nullptr) trước để driver cấp buffer mới,
+    // tránh GPU pipeline stall khi overwrite buffer đang dùng (critical trên Adreno/Mali).
+    glBufferData(GL_ARRAY_BUFFER, s_vboCapacity, nullptr, GL_STREAM_DRAW);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, drawBytes, verts);
+
+    ApplyShaderStateCommon(modelViewBaked);
+
+    if (!s_imAttribValid) {
+        const int stride = sizeof(IMVertex);
+        glEnableVertexAttribArray(s_aPos);
+        glVertexAttribPointer(s_aPos, 3, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(IMVertex, x));
+        glEnableVertexAttribArray(s_aColor);
+        glVertexAttribPointer(s_aColor, 4, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(IMVertex, r));
+        glEnableVertexAttribArray(s_aUV);
+        glVertexAttribPointer(s_aUV, 2, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(IMVertex, u));
+        s_imAttribValid = true;
+    }
+
+    BindElementArrayBufferCached(0);
+
+    glDrawArrays(drawMode, 0, (GLsizei)vertCount);
+    ++s_drawCallCount;
+    s_totalVertices += (int)vertCount;
+}
+
+static bool DrawPreparedQuadsIndexed(const IMVertex* verts, size_t vertCount, bool modelViewBaked) {
+    const size_t quadCount = vertCount / 4u;
+    if (quadCount == 0u) {
+        return false;
+    }
+    if (!EnsureQuadIndexCapacity(quadCount)) {
+        return false;
+    }
+
+    const GLsizeiptr drawBytes = static_cast<GLsizeiptr>(vertCount * sizeof(IMVertex));
+
+    BindArrayBufferCached(s_vbo);
+    if (drawBytes > s_vboCapacity) {
+        GLsizeiptr newCapacity = std::max<GLsizeiptr>(65536, s_vboCapacity);
+        while (newCapacity < drawBytes) {
+            newCapacity <<= 1;
+        }
+        s_vboCapacity = newCapacity;
+    }
+    // Buffer orphaning: tránh GPU stall khi overwrite quad VBO (same as DrawPreparedVerts)
+    glBufferData(GL_ARRAY_BUFFER, s_vboCapacity, nullptr, GL_STREAM_DRAW);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, drawBytes, verts);
+
+    ApplyShaderStateCommon(modelViewBaked);
+
+    if (!s_imAttribValid) {
+        const int stride = sizeof(IMVertex);
+        glEnableVertexAttribArray(s_aPos);
+        glVertexAttribPointer(s_aPos, 3, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(IMVertex, x));
+        glEnableVertexAttribArray(s_aColor);
+        glVertexAttribPointer(s_aColor, 4, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(IMVertex, r));
+        glEnableVertexAttribArray(s_aUV);
+        glVertexAttribPointer(s_aUV, 2, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(IMVertex, u));
+        s_imAttribValid = true;
+    }
+
+    BindElementArrayBufferCached(s_ebo);
+    glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(quadCount * 6u), GL_UNSIGNED_SHORT, 0);
+    ++s_drawCallCount;
+    s_totalVertices += (int)(quadCount * 6u);
+    ++s_quadIndexedDrawCalls;
+    return true;
+}
+
+static void DrawVertexList(const std::vector<IMVertex>& inputVerts, GLenum primMode, bool modelViewBaked) {
+    if (inputVerts.empty()) {
+        return;
+    }
+
+    const IMVertex* drawData = inputVerts.data();
+    size_t drawCount = inputVerts.size();
+    GLenum drawMode = primMode;
+
+    // GLES2 has no GL_QUADS / GL_POLYGON, expand to triangles.
+    s_expandedVerts.clear();
+    if (primMode == 0x0007 /* GL_QUADS */) {
+        const size_t usableVerts = (inputVerts.size() / 4u) * 4u;
+        if (usableVerts == 0u) {
+            return;
+        }
+
+        if (DrawPreparedQuadsIndexed(inputVerts.data(), usableVerts, modelViewBaked)) {
+            return;
+        }
+
+        // Fallback: expand quads if index-buffer path is unavailable.
+        const size_t quadCount = usableVerts / 4u;
+        s_expandedVerts.reserve(quadCount * 6u);
+        for (size_t i = 0; i + 3 < usableVerts; i += 4u) {
+            const IMVertex& v0 = inputVerts[i + 0u];
+            const IMVertex& v1 = inputVerts[i + 1u];
+            const IMVertex& v2 = inputVerts[i + 2u];
+            const IMVertex& v3 = inputVerts[i + 3u];
+            s_expandedVerts.push_back(v0);
+            s_expandedVerts.push_back(v1);
+            s_expandedVerts.push_back(v2);
+            s_expandedVerts.push_back(v0);
+            s_expandedVerts.push_back(v2);
+            s_expandedVerts.push_back(v3);
+        }
+        drawData = s_expandedVerts.data();
+        drawCount = s_expandedVerts.size();
+        drawMode = GL_TRIANGLES;
+        ++s_quadExpandedDrawCalls;
+    } else if (primMode == 0x0009 /* GL_POLYGON */) {
+        if (inputVerts.size() >= 3) {
+            const size_t triCount = inputVerts.size() - 2;
+            s_expandedVerts.reserve(triCount * 3);
+            const IMVertex& v0 = inputVerts[0];
+            for (size_t i = 1; i + 1 < inputVerts.size(); ++i) {
+                s_expandedVerts.push_back(v0);
+                s_expandedVerts.push_back(inputVerts[i]);
+                s_expandedVerts.push_back(inputVerts[i + 1]);
+            }
+            drawData = s_expandedVerts.data();
+            drawCount = s_expandedVerts.size();
+            drawMode = GL_TRIANGLES;
+        } else {
+            drawCount = 0;
+        }
+    }
+
+    if (drawCount == 0) {
+        return;
+    }
+
+    DrawPreparedVerts(drawData, drawCount, drawMode, modelViewBaked);
+}
+
+static void AppendVertsToPendingImmediateBatch(const std::vector<IMVertex>& inputVerts, GLenum primMode) {
+    if (inputVerts.empty() || !s_prog) {
+        return;
+    }
+
+    // Chỉ batch các primitive mode tương thích: TRIANGLES, QUADS, LINES, POINTS.
+    // TRIANGLE_FAN/STRIP/POLYGON cần flush ngay vì topology không thể merge.
+    const bool canBatch = IsBatchableImmediateMode(primMode);
+    if (!canBatch) {
+        if (s_hasBatch) {
+            DrawVertexList(s_batchVerts, s_batchPrimMode, true);
+            s_batchVerts.clear();
+            s_hasBatch = false;
+            s_batchPrimMode = 0;
+        }
+        DrawVertexList(inputVerts, primMode, kBakeModelViewForImmediate);
+        return;
+    }
+
+    // Primitive mode khác → flush batch hiện tại trước
+    if (s_hasBatch && s_batchPrimMode != primMode) {
+        DrawVertexList(s_batchVerts, s_batchPrimMode, true);
+        s_batchVerts.clear();
+        s_hasBatch = false;
+        s_batchPrimMode = 0;
+    }
+
+    // Batch đầy → flush rồi bắt đầu batch mới
+    const size_t limit = MaxBatchVertsForMode(primMode);
+    if (s_batchVerts.size() + inputVerts.size() > limit) {
+        if (s_hasBatch) {
+            DrawVertexList(s_batchVerts, s_batchPrimMode, true);
+            s_batchVerts.clear();
+            s_hasBatch = false;
+            s_batchPrimMode = 0;
+        }
+    }
+
+    // Append vào batch (MV đã baked vào vertex positions, batch an toàn)
+    s_batchVerts.insert(s_batchVerts.end(), inputVerts.begin(), inputVerts.end());
+    s_hasBatch = true;
+    s_batchPrimMode = primMode;
+}
+
+static void FlushIM() {
+    if (s_verts.empty() || !s_prog) {
+        return;
+    }
+    AppendVertsToPendingImmediateBatch(s_verts, s_primMode);
+    s_verts.clear();
+}
+
+static void FlushPendingImmediateBatch() {
+    if (!s_hasBatch || s_batchVerts.empty()) {
+        return;
+    }
+    // Draw toàn bộ batch tích lũy bằng 1 draw call (modelViewBaked=true vì MV đã baked vào verts)
+    DrawVertexList(s_batchVerts, s_batchPrimMode, true);
+    s_batchVerts.clear();
+    s_hasBatch = false;
+    s_batchPrimMode = 0;
+}
+
+void GL_FlushPending() {
+    FlushPendingImmediateBatch();
+}
+
+// =============================================================================
+// Matrix operations
+// =============================================================================
+void GL_MatrixMode(GLenum mode) {
+    if (s_matrixMode != (int)mode) {
+        const bool touchesProjection =
+            s_matrixMode == static_cast<int>(kCompatProjectionMode) ||
+            mode == kCompatProjectionMode;
+        if (!kBakeModelViewForImmediate || touchesProjection) {
+            FlushPendingImmediateBatch();
+        }
+        s_matrixMode = (int)mode;
+    }
+}
+
+void GL_LoadIdentity() {
+    if (MatrixMutationRequiresImmediateFlush()) {
+        FlushPendingImmediateBatch();
+    }
+    mat4_identity(CurrentStack()[CurrentDepth()]);
+    s_mvpDirty = true;
+}
+
+void GL_Ortho(double l, double r, double b, double t, double n, double f) {
+    if (MatrixMutationRequiresImmediateFlush()) {
+        FlushPendingImmediateBatch();
+    }
+    float rl = (float)(r - l), tb = (float)(t - b), fn = (float)(f - n);
+    Mat4 m = {
+        2.0f/rl, 0, 0, 0,
+        0, 2.0f/tb, 0, 0,
+        0, 0, -2.0f/fn, 0,
+        -(float)(r+l)/rl, -(float)(t+b)/tb, -(float)(f+n)/fn, 1
+    };
+    Mat4 res;
+    mat4_multiply(res, CurrentStack()[CurrentDepth()], m);
+    mat4_copy(CurrentStack()[CurrentDepth()], res);
+    s_mvpDirty = true;
+}
+
+void GL_gluOrtho2D(double l, double r, double b, double t) {
+    GL_Ortho(l, r, b, t, -1.0, 1.0);
+}
+
+void GL_Frustum(double l, double r, double b, double t, double n, double f) {
+    if (MatrixMutationRequiresImmediateFlush()) {
+        FlushPendingImmediateBatch();
+    }
+    float rl = (float)(r-l), tb = (float)(t-b), fn = (float)(f-n);
+    float n2 = 2.0f*(float)n;
+    Mat4 m = {
+        n2/rl, 0, 0, 0,
+        0, n2/tb, 0, 0,
+        (float)(r+l)/rl, (float)(t+b)/tb, -(float)(f+n)/fn, -1,
+        0, 0, -2.0f*(float)f*(float)n/fn, 0
+    };
+    Mat4 res;
+    mat4_multiply(res, CurrentStack()[CurrentDepth()], m);
+    mat4_copy(CurrentStack()[CurrentDepth()], res);
+    s_mvpDirty = true;
+}
+
+void GL_gluPerspective(double fovy, double aspect, double zNear, double zFar) {
+    if (MatrixMutationRequiresImmediateFlush()) {
+        FlushPendingImmediateBatch();
+    }
+    double f = 1.0 / tan(fovy * 3.14159265358979323846 / 360.0);
+    double fn = zNear - zFar;
+    int& d = CurrentDepth();
+    mat4_identity(CurrentStack()[d]);
+    CurrentStack()[d][0]  = (float)(f / aspect);
+    CurrentStack()[d][5]  = (float)f;
+    CurrentStack()[d][10] = (float)((zFar + zNear) / fn);
+    CurrentStack()[d][11] = -1.0f;
+    CurrentStack()[d][14] = (float)(2.0 * zFar * zNear / fn);
+    CurrentStack()[d][15] = 0.0f;
+    s_mvpDirty = true;
+}
+
+void GL_gluLookAt(double ex,double ey,double ez,
+                  double cx,double cy,double cz,
+                  double ux,double uy,double uz) {
+    if (MatrixMutationRequiresImmediateFlush()) {
+        FlushPendingImmediateBatch();
+    }
+    double fx=cx-ex, fy=cy-ey, fz=cz-ez;
+    double fl=sqrt(fx*fx+fy*fy+fz*fz); fx/=fl; fy/=fl; fz/=fl;
+    double sx=fy*uz-fz*uy, sy=fz*ux-fx*uz, sz=fx*uy-fy*ux;
+    double sl=sqrt(sx*sx+sy*sy+sz*sz); sx/=sl; sy/=sl; sz/=sl;
+    double vx=sy*fz-sz*fy, vy=sz*fx-sx*fz, vz=sx*fy-sy*fx;
+    Mat4 m = {
+        (float)sx,(float)vx,-(float)fx,0,
+        (float)sy,(float)vy,-(float)fy,0,
+        (float)sz,(float)vz,-(float)fz,0,
+        (float)-(sx*ex+sy*ey+sz*ez),(float)-(vx*ex+vy*ey+vz*ez),(float)(fx*ex+fy*ey+fz*ez),1
+    };
+    Mat4 res;
+    mat4_multiply(res, CurrentStack()[CurrentDepth()], m);
+    mat4_copy(CurrentStack()[CurrentDepth()], res);
+    s_mvpDirty = true;
+}
+
+void GL_PushMatrix() {
+    if (MatrixMutationRequiresImmediateFlush()) {
+        FlushPendingImmediateBatch();
+    }
+    int& d = CurrentDepth();
+    if (d < MAX_STACK-1) {
+        mat4_copy(CurrentStack()[d+1], CurrentStack()[d]);
+        ++d;
+        s_mvpDirty = true;
+    }
+}
+void GL_PopMatrix() {
+    if (MatrixMutationRequiresImmediateFlush()) {
+        FlushPendingImmediateBatch();
+    }
+    int& d = CurrentDepth();
+    if (d > 0) {
+        --d;
+        s_mvpDirty = true;
+    }
+}
+void GL_LoadMatrixf(const float* m) {
+    if (MatrixMutationRequiresImmediateFlush()) {
+        FlushPendingImmediateBatch();
+    }
+    memcpy(CurrentStack()[CurrentDepth()], m, sizeof(Mat4));
+    s_mvpDirty = true;
+}
+void GL_MultMatrixf(const float* m) {
+    if (MatrixMutationRequiresImmediateFlush()) {
+        FlushPendingImmediateBatch();
+    }
+    Mat4 res;
+    mat4_multiply(res, CurrentStack()[CurrentDepth()], *(const Mat4*)m);
+    mat4_copy(CurrentStack()[CurrentDepth()], res);
+    s_mvpDirty = true;
+}
+void GL_Translatef(float x, float y, float z) {
+    if (MatrixMutationRequiresImmediateFlush()) {
+        FlushPendingImmediateBatch();
+    }
+    Mat4 m; mat4_identity(m);
+    m[12]=x; m[13]=y; m[14]=z;
+    Mat4 res;
+    mat4_multiply(res, CurrentStack()[CurrentDepth()], m);
+    mat4_copy(CurrentStack()[CurrentDepth()], res);
+    s_mvpDirty = true;
+}
+void GL_Rotatef(float angle, float x, float y, float z) {
+    if (MatrixMutationRequiresImmediateFlush()) {
+        FlushPendingImmediateBatch();
+    }
+    float a = angle * (float)(3.14159265358979323846 / 180.0);
+    float c = cosf(a), s = sinf(a);
+    float len = sqrtf(x*x+y*y+z*z);
+    if (len > 0) { x/=len; y/=len; z/=len; }
+    Mat4 m = {
+        c+x*x*(1-c),   y*x*(1-c)+z*s, z*x*(1-c)-y*s, 0,
+        x*y*(1-c)-z*s, c+y*y*(1-c),   z*y*(1-c)+x*s, 0,
+        x*z*(1-c)+y*s, y*z*(1-c)-x*s, c+z*z*(1-c),   0,
+        0,             0,             0,              1
+    };
+    Mat4 res;
+    mat4_multiply(res, CurrentStack()[CurrentDepth()], m);
+    mat4_copy(CurrentStack()[CurrentDepth()], res);
+    s_mvpDirty = true;
+}
+void GL_Scalef(float x, float y, float z) {
+    if (MatrixMutationRequiresImmediateFlush()) {
+        FlushPendingImmediateBatch();
+    }
+    Mat4 m; mat4_identity(m);
+    m[0]=x; m[5]=y; m[10]=z;
+    Mat4 res;
+    mat4_multiply(res, CurrentStack()[CurrentDepth()], m);
+    mat4_copy(CurrentStack()[CurrentDepth()], res);
+    s_mvpDirty = true;
+}
+void GL_GetFloatv(GLenum pname, float* params) {
+    if (!params) return;
+    if (pname == 0x0BA6 /*GL_MODELVIEW_MATRIX*/)  { memcpy(params, s_mvStack[s_mvDepth],   sizeof(Mat4)); return; }
+    if (pname == 0x0BA7 /*GL_PROJECTION_MATRIX*/) { memcpy(params, s_projStack[s_projDepth], sizeof(Mat4)); return; }
+    glGetFloatv(pname, params);  // fall through to real GL for other params
+}
+
+// =============================================================================
+// Immediate mode
+// =============================================================================
+void GL_Begin(GLenum mode) {
+    s_primMode = mode;
+    s_verts.clear();
+    s_inBegin = true;
+}
+void GL_End() {
+    s_inBegin = false;
+    if (!s_verts.empty()) {
+        ++s_imDrawCalls;
+    }
+    FlushIM();
+}
+void GL_Vertex2f(float x, float y)           {
+    float tx = x;
+    float ty = y;
+    float tz = 0.0f;
+    TransformByCurrentModelView(x, y, 0.0f, tx, ty, tz);
+    s_cur.x = tx;
+    s_cur.y = ty;
+    s_cur.z = tz;
+    s_verts.push_back(s_cur);
+}
+void GL_Vertex2i(int x, int y)               { GL_Vertex2f((float)x,(float)y); }
+void GL_Vertex3f(float x, float y, float z)  {
+    float tx = x;
+    float ty = y;
+    float tz = z;
+    TransformByCurrentModelView(x, y, z, tx, ty, tz);
+    s_cur.x = tx;
+    s_cur.y = ty;
+    s_cur.z = tz;
+    s_verts.push_back(s_cur);
+}
+void GL_Vertex3fv(const float* v)            { GL_Vertex3f(v[0],v[1],v[2]); }
+void GL_TexCoord2f(float s, float t)         { s_cur.u=s; s_cur.v=t; }
+void GL_TexCoord2fv(const float* v)          { GL_TexCoord2f(v[0],v[1]); }
+void GL_Color3f(float r, float g, float b)   { s_cur.r=r; s_cur.g=g; s_cur.b=b; s_cur.a=1.0f; }
+void GL_Color3fv(const float* v)             { GL_Color3f(v[0],v[1],v[2]); }
+void GL_Color3ub(uint8_t r, uint8_t g, uint8_t b) { GL_Color3f(r/255.0f, g/255.0f, b/255.0f); }
+void GL_Color4f(float r, float g, float b, float a) { s_cur.r=r; s_cur.g=g; s_cur.b=b; s_cur.a=a; }
+void GL_Color4ub(uint8_t r, uint8_t g, uint8_t b, uint8_t a) { GL_Color4f(r/255.0f, g/255.0f, b/255.0f, a/255.0f); }
+void GL_Normal3f(float, float, float)        {}  // ignored in basic shader
+void GL_Normal3fv(const float*)              {}
+
+// =============================================================================
+// Enable / Disable
+// =============================================================================
+void GL_Enable_Compat(GLenum cap) {
+    switch (cap) {
+    case 0x0DE1: // GL_TEXTURE_2D — not a real GLES2 state but we track it
+        if (!s_texture2DEnabled) {
+            FlushPendingImmediateBatch();
+            s_texture2DEnabled = true;
+        }
+        break;
+    case 0x0BC0: // GL_ALPHA_TEST
+        if (!s_alphaTestEnabled) {
+            FlushPendingImmediateBatch();
+            s_alphaTestEnabled = true;
+        }
+        break;
+    case 0x0B60: // GL_FOG — ignore
+    case 0x0B50: // GL_LIGHTING — ignore
+        break;
+    default:
+    {
+        const uint32_t mask = CapToMask(cap);
+        if (mask != 0) {
+            if (!(s_capBitsKnown & mask) || !(s_capBits & mask)) {
+                FlushPendingImmediateBatch();
+                glEnable(cap);
+                s_capBits |= mask;
+                s_capBitsKnown |= mask;
+            }
+        } else {
+            FlushPendingImmediateBatch();
+            glEnable(cap);
+        }
+        break;
+    }
+    }
+}
+void GL_Disable_Compat(GLenum cap) {
+    switch (cap) {
+    case 0x0DE1: // GL_TEXTURE_2D
+        if (s_texture2DEnabled) {
+            FlushPendingImmediateBatch();
+            s_texture2DEnabled = false;
+        }
+        break;
+    case 0x0BC0: // GL_ALPHA_TEST
+        if (s_alphaTestEnabled) {
+            FlushPendingImmediateBatch();
+            s_alphaTestEnabled = false;
+        }
+        break;
+    case 0x0B60: // GL_FOG
+    case 0x0B50: // GL_LIGHTING
+        break;
+    default:
+    {
+        const uint32_t mask = CapToMask(cap);
+        if (mask != 0) {
+            if (!(s_capBitsKnown & mask) || (s_capBits & mask)) {
+                FlushPendingImmediateBatch();
+                glDisable(cap);
+                s_capBits &= ~mask;
+                s_capBitsKnown |= mask;
+            }
+        } else {
+            FlushPendingImmediateBatch();
+            glDisable(cap);
+        }
+        break;
+    }
+    }
+}
+
+// =============================================================================
+// Alpha test
+// =============================================================================
+void GL_AlphaFunc(GLenum func, float ref) {
+    if (s_alphaFunc != func || s_alphaRef != ref) {
+        FlushPendingImmediateBatch();
+    }
+    s_alphaFunc = func;
+    s_alphaRef  = ref;
+}
+
+// =============================================================================
+// Fog (stub — complex implementation would need shader uniforms)
+// =============================================================================
+void GL_Fogf(GLenum, float)        {}
+void GL_Fogi(GLenum, int)          {}
+void GL_Fogfv(GLenum, const float*) {}
+
+// =============================================================================
+// Lighting (stub)
+// =============================================================================
+void GL_Lightfv(GLenum, GLenum, const float*) {}
+
+// =============================================================================
+// Legacy vertex arrays — proper emulation via our shader
+// =============================================================================
+
+struct VAState {
+    const void* ptr    = nullptr;
+    int         size   = 3;          // components
+    GLenum      type   = GL_FLOAT;
+    int         stride = 0;          // byte stride (0 = tightly packed)
+    bool        enabled = false;
+};
+
+static VAState s_vaVertex;
+static VAState s_vaTexCoord;
+static VAState s_vaColor;
+
+// Extract one float component from raw pointer with type conversion
+static float VA_ReadFloat(const void* base, GLenum type) {
+    switch (type) {
+        case GL_FLOAT:         return *(const float*)base;
+        case GL_UNSIGNED_BYTE: return *(const GLubyte*)base / 255.0f;
+        case GL_BYTE:          return (*(const GLbyte*)base + 0.5f) / 127.5f;
+        case GL_SHORT:         return *(const GLshort*)base / 32767.0f;
+        case GL_UNSIGNED_SHORT:return *(const GLushort*)base / 65535.0f;
+        default:               return 0.0f;
+    }
+}
+
+static int VA_TypeSize(GLenum type) {
+    switch (type) {
+        case GL_FLOAT:         return 4;
+        case GL_UNSIGNED_BYTE:
+        case GL_BYTE:          return 1;
+        case GL_SHORT:
+        case GL_UNSIGNED_SHORT:return 2;
+        default:               return 4;
+    }
+}
+
+// Read one vertex from a VA pointer at element index
+static void VA_ReadVertex(const VAState& va, int index, float* out, int maxComp) {
+    int ts = VA_TypeSize(va.type);
+    int stride = va.stride ? va.stride : va.size * ts;
+    const uint8_t* p = (const uint8_t*)va.ptr + (size_t)index * stride;
+    for (int c = 0; c < maxComp && c < va.size; ++c)
+        out[c] = VA_ReadFloat(p + c * ts, va.type);
+    for (int c = va.size; c < maxComp; ++c)
+        out[c] = (c < 3) ? 0.0f : 1.0f;   // z=0, a=1
+}
+
+static bool TryDrawArraysDirect(GLenum mode, int first, int count) {
+    if (count <= 0 || !s_prog || !s_vaVertex.enabled || !s_vaVertex.ptr) {
+        return false;
+    }
+
+    // Unsupported in GLES2 without expansion.
+    if (mode == 0x0007 /* GL_QUADS */ || mode == 0x0009 /* GL_POLYGON */) {
+        return false;
+    }
+
+    if (s_vaVertex.type != GL_FLOAT || s_vaVertex.size < 2) {
+        return false;
+    }
+
+    const bool hasTex = s_vaTexCoord.enabled && s_vaTexCoord.ptr;
+    const bool hasColor = s_vaColor.enabled && s_vaColor.ptr;
+
+    if (hasTex && (s_vaTexCoord.type != GL_FLOAT || s_vaTexCoord.size < 2)) {
+        return false;
+    }
+    if (hasColor && (s_vaColor.type != GL_FLOAT || s_vaColor.size < 3)) {
+        return false;
+    }
+
+    // Keep draw order deterministic when immediate-mode batches are pending.
+    FlushPendingImmediateBatch();
+
+    ApplyShaderStateCommon(false);
+    BindArrayBufferCached(0);
+    BindElementArrayBufferCached(0);
+    s_imAttribValid = false;
+
+    const int posComps = std::min(3, s_vaVertex.size);
+    const int posStride = s_vaVertex.stride ? s_vaVertex.stride : (s_vaVertex.size * (int)sizeof(float));
+    const uint8_t* posPtr = (const uint8_t*)s_vaVertex.ptr + (size_t)first * posStride;
+    glEnableVertexAttribArray(s_aPos);
+    glVertexAttribPointer(s_aPos, posComps, GL_FLOAT, GL_FALSE, posStride, posPtr);
+
+    if (hasColor) {
+        const int colorComps = std::min(4, s_vaColor.size);
+        const int colorStride = s_vaColor.stride ? s_vaColor.stride : (s_vaColor.size * (int)sizeof(float));
+        const uint8_t* colorPtr = (const uint8_t*)s_vaColor.ptr + (size_t)first * colorStride;
+        glEnableVertexAttribArray(s_aColor);
+        glVertexAttribPointer(s_aColor, colorComps, GL_FLOAT, GL_FALSE, colorStride, colorPtr);
+    } else {
+        glDisableVertexAttribArray(s_aColor);
+        glVertexAttrib4f(s_aColor, s_cur.r, s_cur.g, s_cur.b, s_cur.a);
+    }
+
+    if (hasTex) {
+        const int texStride = s_vaTexCoord.stride ? s_vaTexCoord.stride : (s_vaTexCoord.size * (int)sizeof(float));
+        const uint8_t* texPtr = (const uint8_t*)s_vaTexCoord.ptr + (size_t)first * texStride;
+        glEnableVertexAttribArray(s_aUV);
+        glVertexAttribPointer(s_aUV, 2, GL_FLOAT, GL_FALSE, texStride, texPtr);
+    } else {
+        glDisableVertexAttribArray(s_aUV);
+        glVertexAttrib2f(s_aUV, 0.0f, 0.0f);
+    }
+
+    glDrawArrays(mode, 0, count);
+    ++s_drawCallCount;
+    s_totalVertices += count;
+    ++s_vaDirectDrawCalls;
+    return true;
+}
+
+void GL_EnableClientState(GLenum cap) {
+    if      (cap == GL_VERTEX_ARRAY)        s_vaVertex.enabled   = true;
+    else if (cap == GL_TEXTURE_COORD_ARRAY) s_vaTexCoord.enabled = true;
+    else if (cap == GL_COLOR_ARRAY)         s_vaColor.enabled    = true;
+}
+void GL_DisableClientState(GLenum cap) {
+    if      (cap == GL_VERTEX_ARRAY)        s_vaVertex.enabled   = false;
+    else if (cap == GL_TEXTURE_COORD_ARRAY) s_vaTexCoord.enabled = false;
+    else if (cap == GL_COLOR_ARRAY)         s_vaColor.enabled    = false;
+}
+void GL_VertexPointer(int size, GLenum type, int stride, const void* ptr) {
+    s_vaVertex = {ptr, size, type, stride, true};
+}
+void GL_TexCoordPointer(int size, GLenum type, int stride, const void* ptr) {
+    s_vaTexCoord = {ptr, size, type, stride, true};
+}
+void GL_ColorPointer(int size, GLenum type, int stride, const void* ptr) {
+    s_vaColor = {ptr, size, type, stride, true};
+}
+void GL_NormalPointer(GLenum, int, const void*) {}  // normals not used by shader
+
+// Draw from legacy vertex arrays via our shader (mirrors FlushIM)
+void GL_DrawArrays_Compat(GLenum mode, int first, int count) {
+    if (!s_vaVertex.enabled || !s_vaVertex.ptr || count <= 0 || !s_prog) {
+        FlushPendingImmediateBatch();
+        // fallback: attempt raw draw (likely won't show but won't crash)
+        glDrawArrays(mode, first, count);
+        return;
+    }
+
+    if (kPreferDirectVertexArrays && TryDrawArraysDirect(mode, first, count)) {
+        return;
+    }
+
+    s_arrayVerts.clear();
+    s_arrayVerts.reserve((size_t)count);
+
+    const bool hasTex = s_vaTexCoord.enabled && s_vaTexCoord.ptr;
+    const bool hasColor = s_vaColor.enabled && s_vaColor.ptr;
+    const bool fastPos =
+        (s_vaVertex.type == GL_FLOAT) &&
+        (s_vaVertex.size >= 3);
+    const bool fastTex =
+        !hasTex ||
+        ((s_vaTexCoord.type == GL_FLOAT) && (s_vaTexCoord.size >= 2));
+    const bool fastColor =
+        !hasColor ||
+        ((s_vaColor.type == GL_FLOAT) && (s_vaColor.size >= 3));
+
+    if (fastPos && fastTex && fastColor) {
+        const int posStride = s_vaVertex.stride ? s_vaVertex.stride : (s_vaVertex.size * (int)sizeof(float));
+        const int texStride = hasTex ? (s_vaTexCoord.stride ? s_vaTexCoord.stride : (s_vaTexCoord.size * (int)sizeof(float))) : 0;
+        const int colStride = hasColor ? (s_vaColor.stride ? s_vaColor.stride : (s_vaColor.size * (int)sizeof(float))) : 0;
+
+        const uint8_t* posBase = (const uint8_t*)s_vaVertex.ptr + (size_t)first * posStride;
+        const uint8_t* texBase = hasTex ? ((const uint8_t*)s_vaTexCoord.ptr + (size_t)first * texStride) : nullptr;
+        const uint8_t* colBase = hasColor ? ((const uint8_t*)s_vaColor.ptr + (size_t)first * colStride) : nullptr;
+
+        for (int i = 0; i < count; ++i) {
+            IMVertex v;
+            const float* p = (const float*)(posBase + (size_t)i * posStride);
+            if (kBakeModelViewForImmediate) {
+                TransformByCurrentModelView(p[0], p[1], p[2], v.x, v.y, v.z);
+            } else {
+                v.x = p[0];
+                v.y = p[1];
+                v.z = p[2];
+            }
+
+            if (hasTex) {
+                const float* t = (const float*)(texBase + (size_t)i * texStride);
+                v.u = t[0];
+                v.v = t[1];
+            } else {
+                v.u = 0.0f;
+                v.v = 0.0f;
+            }
+
+            if (hasColor) {
+                const float* c = (const float*)(colBase + (size_t)i * colStride);
+                v.r = c[0];
+                v.g = c[1];
+                v.b = c[2];
+                v.a = (s_vaColor.size >= 4) ? c[3] : 1.0f;
+            } else {
+                v.r = s_cur.r;
+                v.g = s_cur.g;
+                v.b = s_cur.b;
+                v.a = s_cur.a;
+            }
+
+            s_arrayVerts.push_back(v);
+        }
+    } else {
+        // Generic conversion path for uncommon VA formats.
+        for (int i = 0; i < count; ++i) {
+            IMVertex v;
+            float tmp[4];
+
+            VA_ReadVertex(s_vaVertex, first + i, tmp, 3);
+            if (kBakeModelViewForImmediate) {
+                TransformByCurrentModelView(tmp[0], tmp[1], tmp[2], v.x, v.y, v.z);
+            } else {
+                v.x = tmp[0];
+                v.y = tmp[1];
+                v.z = tmp[2];
+            }
+
+            if (hasTex) {
+                VA_ReadVertex(s_vaTexCoord, first + i, tmp, 2);
+                v.u = tmp[0];
+                v.v = tmp[1];
+            } else {
+                v.u = 0.0f;
+                v.v = 0.0f;
+            }
+
+            if (hasColor) {
+                VA_ReadVertex(s_vaColor, first + i, tmp, 4);
+                v.r = tmp[0];
+                v.g = tmp[1];
+                v.b = tmp[2];
+                v.a = tmp[3];
+            } else {
+                v.r = s_cur.r;
+                v.g = s_cur.g;
+                v.b = s_cur.b;
+                v.a = s_cur.a;
+            }
+
+            s_arrayVerts.push_back(v);
+        }
+    }
+
+    if (kBakeModelViewForImmediate) {
+        AppendVertsToPendingImmediateBatch(s_arrayVerts, mode);
+    } else {
+        DrawVertexList(s_arrayVerts, mode, false);
+    }
+    ++s_vaConvertedDrawCalls;
+}
+
+// =============================================================================
+// Bulk draw — bypasses immediate mode entirely for maximum throughput.
+// Vertex layout: x,y,z, r,g,b,a, u,v  (9 floats = sizeof(IMVertex))
+// =============================================================================
+void GL_DrawQuadsBulk(const float* vertexData, int quadCount) {
+    if (!vertexData || quadCount <= 0 || !s_prog || !s_vbo) return;
+
+    FlushPendingImmediateBatch();
+
+    if (!EnsureQuadIndexCapacity((size_t)quadCount)) return;
+
+    const GLsizei vertCount = quadCount * 4;
+    const GLsizeiptr dataBytes = (GLsizeiptr)(vertCount * sizeof(IMVertex));
+
+    BindArrayBufferCached(s_vbo);
+    if (dataBytes > s_vboCapacity) {
+        GLsizeiptr newCap = std::max<GLsizeiptr>(65536, s_vboCapacity);
+        while (newCap < dataBytes) newCap <<= 1;
+        s_vboCapacity = newCap;
+    }
+    glBufferData(GL_ARRAY_BUFFER, s_vboCapacity, nullptr, GL_STREAM_DRAW);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, dataBytes, vertexData);
+
+    ApplyShaderStateCommon(false);  // use full MVP (not baked)
+
+    const int stride = sizeof(IMVertex);
+    glEnableVertexAttribArray(s_aPos);
+    glVertexAttribPointer(s_aPos, 3, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(IMVertex, x));
+    glEnableVertexAttribArray(s_aColor);
+    glVertexAttribPointer(s_aColor, 4, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(IMVertex, r));
+    glEnableVertexAttribArray(s_aUV);
+    glVertexAttribPointer(s_aUV, 2, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(IMVertex, u));
+    s_imAttribValid = true;
+
+    BindElementArrayBufferCached(s_ebo);
+    const GLsizei indexCount = quadCount * 6;
+    glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_SHORT, 0);
+    ++s_drawCallCount;
+    s_totalVertices += indexCount;
+}
+
+void GL_DrawTrisBulk(const float* vertexData, int triCount) {
+    if (!vertexData || triCount <= 0 || !s_prog || !s_vbo) return;
+
+    FlushPendingImmediateBatch();
+
+    const GLsizei vertCount = triCount * 3;
+    const GLsizeiptr dataBytes = (GLsizeiptr)(vertCount * sizeof(IMVertex));
+
+    BindArrayBufferCached(s_vbo);
+    if (dataBytes > s_vboCapacity) {
+        GLsizeiptr newCap = std::max<GLsizeiptr>(65536, s_vboCapacity);
+        while (newCap < dataBytes) newCap <<= 1;
+        s_vboCapacity = newCap;
+    }
+    glBufferData(GL_ARRAY_BUFFER, s_vboCapacity, nullptr, GL_STREAM_DRAW);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, dataBytes, vertexData);
+
+    ApplyShaderStateCommon(false);
+
+    const int stride = sizeof(IMVertex);
+    glEnableVertexAttribArray(s_aPos);
+    glVertexAttribPointer(s_aPos, 3, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(IMVertex, x));
+    glEnableVertexAttribArray(s_aColor);
+    glVertexAttribPointer(s_aColor, 4, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(IMVertex, r));
+    glEnableVertexAttribArray(s_aUV);
+    glVertexAttribPointer(s_aUV, 2, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(IMVertex, u));
+    s_imAttribValid = true;
+
+    BindElementArrayBufferCached(0);
+    glDrawArrays(GL_TRIANGLES, 0, vertCount);
+    ++s_drawCallCount;
+    s_totalVertices += vertCount;
+}
+
+#endif // __ANDROID__

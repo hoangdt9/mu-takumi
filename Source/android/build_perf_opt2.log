@@ -1,0 +1,1225 @@
+
+> Configure project :app
+TakumiMu native ABIs: armeabi-v7a, arm64-v8a, x86, x86_64
+
+> Task :app:patchSourceJniLibs16k
+> Task :app:preBuild
+> Task :app:preEmulatorReleaseBuild
+> Task :app:generateEmulatorReleaseBuildConfig UP-TO-DATE
+> Task :app:javaPreCompileEmulatorRelease UP-TO-DATE
+> Task :app:checkEmulatorReleaseAarMetadata UP-TO-DATE
+> Task :app:generateEmulatorReleaseResValues UP-TO-DATE
+> Task :app:mapEmulatorReleaseSourceSetPaths UP-TO-DATE
+> Task :app:generateEmulatorReleaseResources UP-TO-DATE
+> Task :app:mergeEmulatorReleaseResources UP-TO-DATE
+> Task :app:packageEmulatorReleaseResources UP-TO-DATE
+> Task :app:parseEmulatorReleaseLocalResources UP-TO-DATE
+> Task :app:createEmulatorReleaseCompatibleScreenManifests UP-TO-DATE
+> Task :app:extractDeepLinksEmulatorRelease UP-TO-DATE
+> Task :app:processEmulatorReleaseMainManifest UP-TO-DATE
+> Task :app:processEmulatorReleaseManifest UP-TO-DATE
+> Task :app:processEmulatorReleaseManifestForPackage UP-TO-DATE
+> Task :app:processEmulatorReleaseResources UP-TO-DATE
+> Task :app:compileEmulatorReleaseJavaWithJavac UP-TO-DATE
+> Task :app:extractProguardFiles UP-TO-DATE
+> Task :app:generateEmulatorReleaseLintVitalReportModel UP-TO-DATE
+> Task :app:lintVitalAnalyzeEmulatorRelease UP-TO-DATE
+> Task :app:lintVitalReportEmulatorRelease UP-TO-DATE
+> Task :app:lintVitalEmulatorRelease
+> Task :app:preUniversalReleaseBuild
+> Task :app:configureCMakeRelWithDebInfo[x86]
+
+> Task :app:buildCMakeRelWithDebInfo[x86]
+C/C++: ninja: Entering directory `D:\takumi\Source\android\app\.cxx\RelWithDebInfo\6l6a2z4v\x86'
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzObject.cpp:3:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:108:
+C/C++: D:/takumi/Source/5.Main/source/_define.h:320:9: warning: 'IME_CONVERSIONMODE' macro redefined [-Wmacro-redefined]
+C/C++: #define IME_CONVERSIONMODE  1
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/Platform/PlatformDefs.h:750:9: note: previous definition is here
+C/C++: #define IME_CONVERSIONMODE     0x0001
+C/C++:         ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzObject.cpp:3:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:108:
+C/C++: D:/takumi/Source/5.Main/source/_define.h:321:9: warning: 'IME_SENTENCEMODE' macro redefined [-Wmacro-redefined]
+C/C++: #define IME_SENTENCEMODE    2
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/Platform/PlatformDefs.h:753:9: note: previous definition is here
+C/C++: #define IME_SENTENCEMODE       0x0002
+C/C++:         ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzObject.cpp:3:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:111:
+C/C++: In file included from D:/takumi/Source/5.Main/source/_struct.h:10:
+C/C++: D:/takumi/Source/5.Main/source/w_CharacterInfo.h:114:15: warning: anonymous non-C-compatible type given name for linkage purposes by typedef declaration; add a tag name here [-Wnon-c-typedef-for-linkage]
+C/C++: typedef struct
+C/C++:               ^
+C/C++:                NEW_HEALTH_BAR
+C/C++: D:/takumi/Source/5.Main/source/w_CharacterInfo.h:122:2: note: type is not C-compatible due to this member declaration
+C/C++:         void Clear()
+C/C++:         ^~~~~~~~~~~~
+C/C++: D:/takumi/Source/5.Main/source/w_CharacterInfo.h:131:3: note: type is given name 'NEW_HEALTH_BAR' for linkage purposes by this typedef declaration
+C/C++: } NEW_HEALTH_BAR;
+C/C++:   ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzObject.cpp:3:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:111:
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:481:3: warning: 'memset' will set 0 bytes; maybe the arguments got flipped? [-Wuser-defined-warnings]
+C/C++:                 FillMemory(ViewDamageTable,0,sizeof(ViewDamageTable));
+C/C++:                 ^
+C/C++: D:/takumi/Source/5.Main/source/Platform/PlatformDefs.h:240:56: note: expanded from macro 'FillMemory'
+C/C++: #define FillMemory(ptr,sz,val)  memset((ptr),(val),(sz))
+C/C++:                                                        ^
+C/C++: C:/Users/thanh/AppData/Local/Android/Sdk/ndk/25.1.8937393/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/bits/fortify/string.h:144:9: note: from 'diagnose_if' attribute on 'memset':
+C/C++:         __clang_warning_if(c && !n, "'memset' will set 0 bytes; maybe the arguments got flipped?") {
+C/C++:         ^                  ~~~~~~~
+C/C++: C:/Users/thanh/AppData/Local/Android/Sdk/ndk/25.1.8937393/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/sys/cdefs.h:139:54: note: expanded from macro '__clang_warning_if'
+C/C++: #define __clang_warning_if(cond, msg) __attribute__((diagnose_if(cond, msg, "warning")))
+C/C++:                                                      ^           ~~~~
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzObject.cpp:3:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:111:
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:392:15: warning: anonymous non-C-compatible type given name for linkage purposes by typedef declaration; add a tag name here [-Wnon-c-typedef-for-linkage]
+C/C++: typedef struct
+C/C++:               ^
+C/C++:                PRINT_PLAYER_S6
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:463:2: note: type is not C-compatible due to this member declaration
+C/C++:         void Clear()
+C/C++:         ^~~~~~~~~~~~
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:535:3: note: type is given name 'PRINT_PLAYER_S6' for linkage purposes by this typedef declaration
+C/C++: } PRINT_PLAYER_S6;
+C/C++:   ^
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:999:3: warning: array index 2 is past the end of the array (which contains 2 elements) [-Warray-bounds]
+C/C++:                 ReBuff[2] = 0;
+C/C++:                 ^      ~
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:977:2: note: array 'ReBuff' declared here
+C/C++:         bool ReBuff[2];
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:1089:8: warning: extra tokens at end of #endif directive [-Wextra-tokens]
+C/C++: #endif ___STRUCT_H__
+C/C++:        ^
+C/C++:        //
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzObject.cpp:3:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:113:
+C/C++: In file included from D:/takumi/Source/5.Main/source/_GlobalFunctions.h:4:
+C/C++: D:/takumi/Source/5.Main/source/ZzzScene.h:2:10: warning: non-portable path to file '"ZzzInfomation.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzinfomation.h"
+C/C++:          ^~~~~~~~~~~~~~~~~
+C/C++:          "ZzzInfomation.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzObject.cpp:10:
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.h:4:
+C/C++: In file included from D:/takumi/Source/5.Main/source/GlobalBitmap.h:12:
+C/C++: D:/takumi/Source/android/app/src/main/cpp/compat_include/Jpeglib.h:24:10: warning: non-portable path to file '"Jconfig.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "jconfig.h"            /* widely used configuration options */
+C/C++:          ^~~~~~~~~~~
+C/C++:          "Jconfig.h"
+C/C++: D:/takumi/Source/android/app/src/main/cpp/compat_include/Jpeglib.h:26:10: warning: non-portable path to file '"Jmorecfg.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "jmorecfg.h"           /* seldom changed options */
+C/C++:          ^~~~~~~~~~~~
+C/C++:          "Jmorecfg.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzObject.cpp:10:
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.h:4:
+C/C++: D:/takumi/Source/5.Main/source/GlobalBitmap.h:18:15: warning: anonymous non-C-compatible type given name for linkage purposes by typedef declaration; add a tag name here [-Wnon-c-typedef-for-linkage]
+C/C++: typedef struct
+C/C++:               ^
+C/C++:                BITMAP_t
+C/C++: D:/takumi/Source/5.Main/source/GlobalBitmap.h:29:1: note: type is not C-compatible due to this member declaration
+C/C++: private:
+C/C++: ^~~~~~~~
+C/C++: D:/takumi/Source/5.Main/source/GlobalBitmap.h:32:3: note: type is given name 'BITMAP_t' for linkage purposes by this typedef declaration
+C/C++: } BITMAP_t;
+C/C++:   ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzObject.cpp:13:
+C/C++: D:/takumi/Source/5.Main/source/ZzzInventory.h:4:1: warning: 'const' is not permitted on a declaration of a type [-Wmissing-declarations]
+C/C++: const enum _COLUMN_TYPE
+C/C++: ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzInventory.h:25:1: warning: 'const' is not permitted on a declaration of a type [-Wmissing-declarations]
+C/C++: const enum ITEMSETOPTION
+C/C++: ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzInventory.h:42:1: warning: 'const' is not permitted on a declaration of a type [-Wmissing-declarations]
+C/C++: const enum SKILL_TOOLTIP_RENDER_POINT
+C/C++: ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzObject.cpp:18:
+C/C++: D:/takumi/Source/5.Main/source/wsclientinline.h:3:10: warning: non-portable path to file '"DSPlaySound.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "dsplaysound.h"
+C/C++:          ^~~~~~~~~~~~~~~
+C/C++:          "DSPlaySound.h"
+C/C++: D:/takumi/Source/5.Main/source/wsclientinline.h:4:10: warning: non-portable path to file '"ZzzScene.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzscene.h"
+C/C++:          ^~~~~~~~~~~~
+C/C++:          "ZzzScene.h"
+C/C++: D:/takumi/Source/5.Main/source/wsclientinline.h:5:10: warning: non-portable path to file '"ZzzInterface.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzinterface.h"
+C/C++:          ^~~~~~~~~~~~~~~~
+C/C++:          "ZzzInterface.h"
+C/C++: D:/takumi/Source/5.Main/source/wsclientinline.h:6:10: warning: non-portable path to file '"ZzzInventory.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzinventory.h"
+C/C++:          ^~~~~~~~~~~~~~~~
+C/C++:          "ZzzInventory.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzObject.cpp:18:
+C/C++: In file included from D:/takumi/Source/5.Main/source/wsclientinline.h:9:
+C/C++: In file included from D:/takumi/Source/5.Main/source/WSclient.h:6:
+C/C++: In file included from D:/takumi/Source/5.Main/source/wsctlc.h:10:
+C/C++: In file included from D:/takumi/Source/5.Main/source/Protect.h:11:
+C/C++: D:/takumi/Source/5.Main/source/CustomCloak.h:4:10: warning: non-portable path to file '"ZzzInfomation.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzinfomation.h"
+C/C++:          ^~~~~~~~~~~~~~~~~
+C/C++:          "ZzzInfomation.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzObject.cpp:18:
+C/C++: In file included from D:/takumi/Source/5.Main/source/wsclientinline.h:9:
+C/C++: D:/takumi/Source/5.Main/source/WSclient.h:1996:15: warning: anonymous non-C-compatible type given name for linkage purposes by typedef declaration; add a tag name here [-Wnon-c-typedef-for-linkage]
+C/C++: typedef struct
+C/C++:               ^
+C/C++:                PMSG_MATCH_RESULT
+C/C++: D:/takumi/Source/5.Main/source/WSclient.h:1998:2: note: type is not C-compatible due to this member declaration
+C/C++:         void                    Clear()
+C/C++:         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C/C++: D:/takumi/Source/5.Main/source/WSclient.h:2017:2: note: type is given name 'PMSG_MATCH_RESULT' for linkage purposes by this typedef declaration
+C/C++: }PMSG_MATCH_RESULT, *LPPMSG_MATCH_RESULT;
+C/C++:  ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzObject.cpp:18:
+C/C++: D:/takumi/Source/5.Main/source/wsclientinline.h:17:10: warning: non-portable path to file '"./ExternalObject/Leaf/stdleaf.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "./ExternalObject/leaf/stdleaf.h"
+C/C++:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C/C++:          "./ExternalObject/Leaf/stdleaf.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzObject.cpp:18:
+C/C++: In file included from D:/takumi/Source/5.Main/source/wsclientinline.h:19:
+C/C++: In file included from D:/takumi/Source/5.Main/source/NewUISystem.h:12:
+C/C++: In file included from D:/takumi/Source/5.Main/source/NewUISlideWindow.h:11:
+C/C++: D:/takumi/Source/5.Main/source/UIControls.h:5:10: warning: non-portable path to file '"ZzzInfomation.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzinfomation.h"
+C/C++:          ^~~~~~~~~~~~~~~~~
+C/C++:          "ZzzInfomation.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzObject.cpp:18:
+C/C++: In file included from D:/takumi/Source/5.Main/source/wsclientinline.h:19:
+C/C++: In file included from D:/takumi/Source/5.Main/source/NewUISystem.h:13:
+C/C++: In file included from D:/takumi/Source/5.Main/source/NewUIGuildMakeWindow.h:12:
+C/C++: D:/takumi/Source/5.Main/source/NewUIMessageBox.h:7:10: warning: non-portable path to file '"./ExternalObject/Leaf/xstreambuf.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "./ExternalObject/leaf/xstreambuf.h"
+C/C++:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C/C++:          "./ExternalObject/Leaf/xstreambuf.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzObject.cpp:18:
+C/C++: In file included from D:/takumi/Source/5.Main/source/wsclientinline.h:19:
+C/C++: In file included from D:/takumi/Source/5.Main/source/NewUISystem.h:20:
+C/C++: D:/takumi/Source/5.Main/source/NewUIPetInfoWindow.h:13:10: warning: non-portable path to file '"NewUIInventoryCtrl.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "NewUIInventoryctrl.h"
+C/C++:          ^~~~~~~~~~~~~~~~~~~~~~
+C/C++:          "NewUIInventoryCtrl.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzObject.cpp:18:
+C/C++: In file included from D:/takumi/Source/5.Main/source/wsclientinline.h:19:
+C/C++: In file included from D:/takumi/Source/5.Main/source/NewUISystem.h:62:
+C/C++: D:/takumi/Source/5.Main/source/NewUIMasterSkillTree.h:63:3: warning: expression result unused [-Wunused-value]
+C/C++:                 sizeof(_MASTER_SKILL_TOOLTIP);
+C/C++:                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzObject.cpp:18:
+C/C++: D:/takumi/Source/5.Main/source/wsclientinline.h:349:27: warning: comparison between NULL and non-pointer ('int' and NULL) [-Wnull-arithmetic]
+C/C++:                 if(strcmp(ChatText,Text)==NULL) return;
+C/C++:                    ~~~~~~~~~~~~~~~~~~~~~^ ~~~~
+C/C++: D:/takumi/Source/5.Main/source/wsclientinline.h:357:28: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:                 char *lspzCommand[2] = { "/", "!"};
+C/C++:                                          ^
+C/C++: D:/takumi/Source/5.Main/source/wsclientinline.h:357:33: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:                 char *lspzCommand[2] = { "/", "!"};
+C/C++:                                               ^
+C/C++: D:/takumi/Source/5.Main/source/wsclientinline.h:597:27: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:     if(FindText2(Hero->ID,"webzen")) return;
+C/C++:                           ^
+C/C++: D:/takumi/Source/5.Main/source/wsclientinline.h:651:27: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:     if(FindText2(Hero->ID,"webzen")) return;
+C/C++:                           ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzObject.cpp:19:
+C/C++: In file included from D:/takumi/Source/5.Main/source/SideHair.h:10:
+C/C++: D:/takumi/Source/5.Main/source/ShadowVolume.h:10:10: warning: non-portable path to file '"ZzzBMD.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "ZzzBmd.h"
+C/C++:          ^~~~~~~~~~
+C/C++:          "ZzzBMD.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzObject.cpp:20:
+C/C++: D:/takumi/Source/5.Main/source/PhysicsManager.h:9:10: warning: non-portable path to file '"ZzzBMD.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "ZzzBmd.h"
+C/C++:          ^~~~~~~~~~
+C/C++:          "ZzzBMD.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzObject.cpp:21:
+C/C++: D:/takumi/Source/5.Main/source/GOBoid.h:7:10: warning: non-portable path to file '"ZzzObject.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzObject.h"
+C/C++:          ^~~~~~~~~~~~~
+C/C++:          "ZzzObject.h"
+C/C++: D:/takumi/Source/5.Main/source/ZzzObject.cpp:22:10: warning: non-portable path to file '"CSParts.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "CSparts.h"
+C/C++:          ^~~~~~~~~~~
+C/C++:          "CSParts.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzObject.cpp:22:
+C/C++: D:/takumi/Source/5.Main/source/CSparts.h:7:10: warning: non-portable path to file '"ZzzBMD.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzBmd.h"
+C/C++:          ^~~~~~~~~~
+C/C++:          "ZzzBMD.h"
+C/C++: D:/takumi/Source/5.Main/source/CSparts.h:8:10: warning: non-portable path to file '"ZzzInfomation.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzinfomation.h"
+C/C++:          ^~~~~~~~~~~~~~~~~
+C/C++:          "ZzzInfomation.h"
+C/C++: D:/takumi/Source/5.Main/source/CSparts.h:9:10: warning: non-portable path to file '"ZzzObject.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzobject.h"
+C/C++:          ^~~~~~~~~~~~~
+C/C++:          "ZzzObject.h"
+C/C++: D:/takumi/Source/5.Main/source/CSparts.h:10:10: warning: non-portable path to file '"ZzzCharacter.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzcharacter.h"
+C/C++:          ^~~~~~~~~~~~~~~~
+C/C++:          "ZzzCharacter.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzObject.cpp:23:
+C/C++: D:/takumi/Source/5.Main/source/CSItemOption.h:7:10: warning: non-portable path to file '"ZzzInfomation.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzinfomation.h"
+C/C++:          ^~~~~~~~~~~~~~~~~
+C/C++:          "ZzzInfomation.h"
+C/C++: D:/takumi/Source/5.Main/source/ZzzObject.cpp:31:10: warning: non-portable path to file '"GMCrywolf1st.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "GMCryWolf1st.h"
+C/C++:          ^~~~~~~~~~~~~~~~
+C/C++:          "GMCrywolf1st.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzObject.cpp:36:
+C/C++: D:/takumi/Source/5.Main/source/CDirection.h:4:10: warning: non-portable path to file '<vector>'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include <VECTOR>
+C/C++:          ^~~~~~~~
+C/C++:          <vector>
+C/C++: D:/takumi/Source/5.Main/source/CDirection.h:70:8: warning: extra tokens at end of #endif directive [-Wextra-tokens]
+C/C++: #endif _DIRECTION_H_
+C/C++:        ^
+C/C++:        //
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzObject.cpp:39:
+C/C++: D:/takumi/Source/5.Main/source/BoneManager.h:7:10: warning: non-portable path to file '"ZzzInfomation.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzinfomation.h"
+C/C++:          ^~~~~~~~~~~~~~~~~
+C/C++:          "ZzzInfomation.h"
+C/C++: D:/takumi/Source/5.Main/source/ZzzObject.cpp:6532:46: warning: arithmetic between different enumeration types ('(unnamed enum at D:/takumi/Source/5.Main/source/_enum.h:908:1)' and 'E_WINGMIXCHAR_SEQUENCE') is deprecated [-Wdeprecated-anon-enum-enum-conversion]
+C/C++:         else if( o->Type >= MODEL_TYPE_CHARM_MIXWING+EWS_BEGIN && o->Type <= MODEL_TYPE_CHARM_MIXWING+EWS_END )
+C/C++:                             ~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~
+C/C++: D:/takumi/Source/5.Main/source/ZzzObject.cpp:6532:95: warning: arithmetic between different enumeration types ('(unnamed enum at D:/takumi/Source/5.Main/source/_enum.h:908:1)' and 'E_WINGMIXCHAR_SEQUENCE') is deprecated [-Wdeprecated-anon-enum-enum-conversion]
+C/C++:         else if( o->Type >= MODEL_TYPE_CHARM_MIXWING+EWS_BEGIN && o->Type <= MODEL_TYPE_CHARM_MIXWING+EWS_END )
+C/C++:                                                                              ~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~
+C/C++: D:/takumi/Source/5.Main/source/ZzzObject.cpp:7817:32: warning: implicit conversion from 'float' to 'int' changes value from 0.5 to 0 [-Wliteral-conversion]
+C/C++:                 b->RenderBody(RenderType,1.f,0.5f,sine,o->BlendMeshTexCoordU,o->BlendMeshTexCoordV,1);
+C/C++:                    ~~~~~~~~~~                ^~~~
+C/C++: D:/takumi/Source/5.Main/source/ZzzObject.cpp:9223:46: warning: arithmetic between different enumeration types ('(unnamed enum at D:/takumi/Source/5.Main/source/_enum.h:908:1)' and 'E_WINGMIXCHAR_SEQUENCE') is deprecated [-Wdeprecated-anon-enum-enum-conversion]
+C/C++:         else if( o->Type >= MODEL_TYPE_CHARM_MIXWING+EWS_BEGIN && o->Type <= MODEL_TYPE_CHARM_MIXWING+EWS_END )
+C/C++:                             ~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~
+C/C++: D:/takumi/Source/5.Main/source/ZzzObject.cpp:9223:95: warning: arithmetic between different enumeration types ('(unnamed enum at D:/takumi/Source/5.Main/source/_enum.h:908:1)' and 'E_WINGMIXCHAR_SEQUENCE') is deprecated [-Wdeprecated-anon-enum-enum-conversion]
+C/C++:         else if( o->Type >= MODEL_TYPE_CHARM_MIXWING+EWS_BEGIN && o->Type <= MODEL_TYPE_CHARM_MIXWING+EWS_END )
+C/C++:                                                                              ~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~
+C/C++: 48 warnings generated.
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:8:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:108:
+C/C++: D:/takumi/Source/5.Main/source/_define.h:320:9: warning: 'IME_CONVERSIONMODE' macro redefined [-Wmacro-redefined]
+C/C++: #define IME_CONVERSIONMODE  1
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/Platform/PlatformDefs.h:750:9: note: previous definition is here
+C/C++: #define IME_CONVERSIONMODE     0x0001
+C/C++:         ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:8:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:108:
+C/C++: D:/takumi/Source/5.Main/source/_define.h:321:9: warning: 'IME_SENTENCEMODE' macro redefined [-Wmacro-redefined]
+C/C++: #define IME_SENTENCEMODE    2
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/Platform/PlatformDefs.h:753:9: note: previous definition is here
+C/C++: #define IME_SENTENCEMODE       0x0002
+C/C++:         ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:8:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:111:
+C/C++: In file included from D:/takumi/Source/5.Main/source/_struct.h:10:
+C/C++: D:/takumi/Source/5.Main/source/w_CharacterInfo.h:114:15: warning: anonymous non-C-compatible type given name for linkage purposes by typedef declaration; add a tag name here [-Wnon-c-typedef-for-linkage]
+C/C++: typedef struct
+C/C++:               ^
+C/C++:                NEW_HEALTH_BAR
+C/C++: D:/takumi/Source/5.Main/source/w_CharacterInfo.h:122:2: note: type is not C-compatible due to this member declaration
+C/C++:         void Clear()
+C/C++:         ^~~~~~~~~~~~
+C/C++: D:/takumi/Source/5.Main/source/w_CharacterInfo.h:131:3: note: type is given name 'NEW_HEALTH_BAR' for linkage purposes by this typedef declaration
+C/C++: } NEW_HEALTH_BAR;
+C/C++:   ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:8:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:111:
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:481:3: warning: 'memset' will set 0 bytes; maybe the arguments got flipped? [-Wuser-defined-warnings]
+C/C++:                 FillMemory(ViewDamageTable,0,sizeof(ViewDamageTable));
+C/C++:                 ^
+C/C++: D:/takumi/Source/5.Main/source/Platform/PlatformDefs.h:240:56: note: expanded from macro 'FillMemory'
+C/C++: #define FillMemory(ptr,sz,val)  memset((ptr),(val),(sz))
+C/C++:                                                        ^
+C/C++: C:/Users/thanh/AppData/Local/Android/Sdk/ndk/25.1.8937393/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/bits/fortify/string.h:144:9: note: from 'diagnose_if' attribute on 'memset':
+C/C++:         __clang_warning_if(c && !n, "'memset' will set 0 bytes; maybe the arguments got flipped?") {
+C/C++:         ^                  ~~~~~~~
+C/C++: C:/Users/thanh/AppData/Local/Android/Sdk/ndk/25.1.8937393/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/sys/cdefs.h:139:54: note: expanded from macro '__clang_warning_if'
+C/C++: #define __clang_warning_if(cond, msg) __attribute__((diagnose_if(cond, msg, "warning")))
+C/C++:                                                      ^           ~~~~
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:8:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:111:
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:392:15: warning: anonymous non-C-compatible type given name for linkage purposes by typedef declaration; add a tag name here [-Wnon-c-typedef-for-linkage]
+C/C++: typedef struct
+C/C++:               ^
+C/C++:                PRINT_PLAYER_S6
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:463:2: note: type is not C-compatible due to this member declaration
+C/C++:         void Clear()
+C/C++:         ^~~~~~~~~~~~
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:535:3: note: type is given name 'PRINT_PLAYER_S6' for linkage purposes by this typedef declaration
+C/C++: } PRINT_PLAYER_S6;
+C/C++:   ^
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:999:3: warning: array index 2 is past the end of the array (which contains 2 elements) [-Warray-bounds]
+C/C++:                 ReBuff[2] = 0;
+C/C++:                 ^      ~
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:977:2: note: array 'ReBuff' declared here
+C/C++:         bool ReBuff[2];
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:1089:8: warning: extra tokens at end of #endif directive [-Wextra-tokens]
+C/C++: #endif ___STRUCT_H__
+C/C++:        ^
+C/C++:        //
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:8:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:113:
+C/C++: In file included from D:/takumi/Source/5.Main/source/_GlobalFunctions.h:4:
+C/C++: D:/takumi/Source/5.Main/source/ZzzScene.h:2:10: warning: non-portable path to file '"ZzzInfomation.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzinfomation.h"
+C/C++:          ^~~~~~~~~~~~~~~~~
+C/C++:          "ZzzInfomation.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:11:
+C/C++: In file included from D:/takumi/Source/5.Main/source/UIManager.h:10:
+C/C++: In file included from D:/takumi/Source/5.Main/source/UIGuildInfo.h:7:
+C/C++: In file included from D:/takumi/Source/5.Main/source/UIWindows.h:6:
+C/C++: D:/takumi/Source/5.Main/source/UIControls.h:5:10: warning: non-portable path to file '"ZzzInfomation.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzinfomation.h"
+C/C++:          ^~~~~~~~~~~~~~~~~
+C/C++:          "ZzzInfomation.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:11:
+C/C++: In file included from D:/takumi/Source/5.Main/source/UIManager.h:10:
+C/C++: In file included from D:/takumi/Source/5.Main/source/UIGuildInfo.h:7:
+C/C++: In file included from D:/takumi/Source/5.Main/source/UIWindows.h:6:
+C/C++: In file included from D:/takumi/Source/5.Main/source/UIControls.h:7:
+C/C++: In file included from D:/takumi/Source/5.Main/source/QuestMng.h:6:
+C/C++: In file included from D:/takumi/Source/5.Main/source/WSclient.h:6:
+C/C++: In file included from D:/takumi/Source/5.Main/source/wsctlc.h:10:
+C/C++: In file included from D:/takumi/Source/5.Main/source/Protect.h:11:
+C/C++: D:/takumi/Source/5.Main/source/CustomCloak.h:4:10: warning: non-portable path to file '"ZzzInfomation.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzinfomation.h"
+C/C++:          ^~~~~~~~~~~~~~~~~
+C/C++:          "ZzzInfomation.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:11:
+C/C++: In file included from D:/takumi/Source/5.Main/source/UIManager.h:10:
+C/C++: In file included from D:/takumi/Source/5.Main/source/UIGuildInfo.h:7:
+C/C++: In file included from D:/takumi/Source/5.Main/source/UIWindows.h:6:
+C/C++: In file included from D:/takumi/Source/5.Main/source/UIControls.h:7:
+C/C++: In file included from D:/takumi/Source/5.Main/source/QuestMng.h:6:
+C/C++: D:/takumi/Source/5.Main/source/WSclient.h:1996:15: warning: anonymous non-C-compatible type given name for linkage purposes by typedef declaration; add a tag name here [-Wnon-c-typedef-for-linkage]
+C/C++: typedef struct
+C/C++:               ^
+C/C++:                PMSG_MATCH_RESULT
+C/C++: D:/takumi/Source/5.Main/source/WSclient.h:1998:2: note: type is not C-compatible due to this member declaration
+C/C++:         void                    Clear()
+C/C++:         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C/C++: D:/takumi/Source/5.Main/source/WSclient.h:2017:2: note: type is given name 'PMSG_MATCH_RESULT' for linkage purposes by this typedef declaration
+C/C++: }PMSG_MATCH_RESULT, *LPPMSG_MATCH_RESULT;
+C/C++:  ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:19:
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.h:4:
+C/C++: In file included from D:/takumi/Source/5.Main/source/GlobalBitmap.h:12:
+C/C++: D:/takumi/Source/android/app/src/main/cpp/compat_include/Jpeglib.h:24:10: warning: non-portable path to file '"Jconfig.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "jconfig.h"            /* widely used configuration options */
+C/C++:          ^~~~~~~~~~~
+C/C++:          "Jconfig.h"
+C/C++: D:/takumi/Source/android/app/src/main/cpp/compat_include/Jpeglib.h:26:10: warning: non-portable path to file '"Jmorecfg.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "jmorecfg.h"           /* seldom changed options */
+C/C++:          ^~~~~~~~~~~~
+C/C++:          "Jmorecfg.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:19:
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.h:4:
+C/C++: D:/takumi/Source/5.Main/source/GlobalBitmap.h:18:15: warning: anonymous non-C-compatible type given name for linkage purposes by typedef declaration; add a tag name here [-Wnon-c-typedef-for-linkage]
+C/C++: typedef struct
+C/C++:               ^
+C/C++:                BITMAP_t
+C/C++: D:/takumi/Source/5.Main/source/GlobalBitmap.h:29:1: note: type is not C-compatible due to this member declaration
+C/C++: private:
+C/C++: ^~~~~~~~
+C/C++: D:/takumi/Source/5.Main/source/GlobalBitmap.h:32:3: note: type is given name 'BITMAP_t' for linkage purposes by this typedef declaration
+C/C++: } BITMAP_t;
+C/C++:   ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:22:
+C/C++: D:/takumi/Source/5.Main/source/ZzzInventory.h:4:1: warning: 'const' is not permitted on a declaration of a type [-Wmissing-declarations]
+C/C++: const enum _COLUMN_TYPE
+C/C++: ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzInventory.h:25:1: warning: 'const' is not permitted on a declaration of a type [-Wmissing-declarations]
+C/C++: const enum ITEMSETOPTION
+C/C++: ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzInventory.h:42:1: warning: 'const' is not permitted on a declaration of a type [-Wmissing-declarations]
+C/C++: const enum SKILL_TOOLTIP_RENDER_POINT
+C/C++: ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:27:
+C/C++: D:/takumi/Source/5.Main/source/wsclientinline.h:3:10: warning: non-portable path to file '"DSPlaySound.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "dsplaysound.h"
+C/C++:          ^~~~~~~~~~~~~~~
+C/C++:          "DSPlaySound.h"
+C/C++: D:/takumi/Source/5.Main/source/wsclientinline.h:4:10: warning: non-portable path to file '"ZzzScene.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzscene.h"
+C/C++:          ^~~~~~~~~~~~
+C/C++:          "ZzzScene.h"
+C/C++: D:/takumi/Source/5.Main/source/wsclientinline.h:5:10: warning: non-portable path to file '"ZzzInterface.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzinterface.h"
+C/C++:          ^~~~~~~~~~~~~~~~
+C/C++:          "ZzzInterface.h"
+C/C++: D:/takumi/Source/5.Main/source/wsclientinline.h:6:10: warning: non-portable path to file '"ZzzInventory.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzinventory.h"
+C/C++:          ^~~~~~~~~~~~~~~~
+C/C++:          "ZzzInventory.h"
+C/C++: D:/takumi/Source/5.Main/source/wsclientinline.h:17:10: warning: non-portable path to file '"./ExternalObject/Leaf/stdleaf.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "./ExternalObject/leaf/stdleaf.h"
+C/C++:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C/C++:          "./ExternalObject/Leaf/stdleaf.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:27:
+C/C++: In file included from D:/takumi/Source/5.Main/source/wsclientinline.h:19:
+C/C++: In file included from D:/takumi/Source/5.Main/source/NewUISystem.h:13:
+C/C++: In file included from D:/takumi/Source/5.Main/source/NewUIGuildMakeWindow.h:12:
+C/C++: D:/takumi/Source/5.Main/source/NewUIMessageBox.h:7:10: warning: non-portable path to file '"./ExternalObject/Leaf/xstreambuf.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "./ExternalObject/leaf/xstreambuf.h"
+C/C++:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C/C++:          "./ExternalObject/Leaf/xstreambuf.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:27:
+C/C++: In file included from D:/takumi/Source/5.Main/source/wsclientinline.h:19:
+C/C++: In file included from D:/takumi/Source/5.Main/source/NewUISystem.h:20:
+C/C++: D:/takumi/Source/5.Main/source/NewUIPetInfoWindow.h:13:10: warning: non-portable path to file '"NewUIInventoryCtrl.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "NewUIInventoryctrl.h"
+C/C++:          ^~~~~~~~~~~~~~~~~~~~~~
+C/C++:          "NewUIInventoryCtrl.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:27:
+C/C++: In file included from D:/takumi/Source/5.Main/source/wsclientinline.h:19:
+C/C++: In file included from D:/takumi/Source/5.Main/source/NewUISystem.h:62:
+C/C++: D:/takumi/Source/5.Main/source/NewUIMasterSkillTree.h:63:3: warning: expression result unused [-Wunused-value]
+C/C++:                 sizeof(_MASTER_SKILL_TOOLTIP);
+C/C++:                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:27:
+C/C++: D:/takumi/Source/5.Main/source/wsclientinline.h:349:27: warning: comparison between NULL and non-pointer ('int' and NULL) [-Wnull-arithmetic]
+C/C++:                 if(strcmp(ChatText,Text)==NULL) return;
+C/C++:                    ~~~~~~~~~~~~~~~~~~~~~^ ~~~~
+C/C++: D:/takumi/Source/5.Main/source/wsclientinline.h:357:28: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:                 char *lspzCommand[2] = { "/", "!"};
+C/C++:                                          ^
+C/C++: D:/takumi/Source/5.Main/source/wsclientinline.h:357:33: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:                 char *lspzCommand[2] = { "/", "!"};
+C/C++:                                               ^
+C/C++: D:/takumi/Source/5.Main/source/wsclientinline.h:597:27: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:     if(FindText2(Hero->ID,"webzen")) return;
+C/C++:                           ^
+C/C++: D:/takumi/Source/5.Main/source/wsclientinline.h:651:27: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:     if(FindText2(Hero->ID,"webzen")) return;
+C/C++:                           ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:28:
+C/C++: D:/takumi/Source/5.Main/source/PhysicsManager.h:9:10: warning: non-portable path to file '"ZzzBMD.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "ZzzBmd.h"
+C/C++:          ^~~~~~~~~~
+C/C++:          "ZzzBMD.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:29:
+C/C++: D:/takumi/Source/5.Main/source/GOBoid.h:7:10: warning: non-portable path to file '"ZzzObject.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzObject.h"
+C/C++:          ^~~~~~~~~~~~~
+C/C++:          "ZzzObject.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:30:
+C/C++: D:/takumi/Source/5.Main/source/CSItemOption.h:7:10: warning: non-portable path to file '"ZzzInfomation.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzinfomation.h"
+C/C++:          ^~~~~~~~~~~~~~~~~
+C/C++:          "ZzzInfomation.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:34:
+C/C++: D:/takumi/Source/5.Main/source/CSParts.h:7:10: warning: non-portable path to file '"ZzzBMD.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzBmd.h"
+C/C++:          ^~~~~~~~~~
+C/C++:          "ZzzBMD.h"
+C/C++: D:/takumi/Source/5.Main/source/CSParts.h:8:10: warning: non-portable path to file '"ZzzInfomation.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzinfomation.h"
+C/C++:          ^~~~~~~~~~~~~~~~~
+C/C++:          "ZzzInfomation.h"
+C/C++: D:/takumi/Source/5.Main/source/CSParts.h:9:10: warning: non-portable path to file '"ZzzObject.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzobject.h"
+C/C++:          ^~~~~~~~~~~~~
+C/C++:          "ZzzObject.h"
+C/C++: D:/takumi/Source/5.Main/source/CSParts.h:10:10: warning: non-portable path to file '"ZzzCharacter.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzcharacter.h"
+C/C++:          ^~~~~~~~~~~~~~~~
+C/C++:          "ZzzCharacter.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:38:
+C/C++: D:/takumi/Source/5.Main/source/BoneManager.h:7:10: warning: non-portable path to file '"ZzzInfomation.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzinfomation.h"
+C/C++:          ^~~~~~~~~~~~~~~~~
+C/C++:          "ZzzInfomation.h"
+C/C++: D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:40:10: warning: non-portable path to file '"GMCrywolf1st.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "GMCryWolf1st.h"
+C/C++:          ^~~~~~~~~~~~~~~~
+C/C++:          "GMCrywolf1st.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:44:
+C/C++: D:/takumi/Source/5.Main/source/CDirection.h:4:10: warning: non-portable path to file '<vector>'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include <VECTOR>
+C/C++:          ^~~~~~~~
+C/C++:          <vector>
+C/C++: D:/takumi/Source/5.Main/source/CDirection.h:70:8: warning: extra tokens at end of #endif directive [-Wextra-tokens]
+C/C++: #endif _DIRECTION_H_
+C/C++:        ^
+C/C++:        //
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:53:
+C/C++: D:/takumi/Source/5.Main/source/SummonSystem.h:9:10: warning: non-portable path to file '"ZzzInfomation.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzinfomation.h"
+C/C++:          ^~~~~~~~~~~~~~~~~
+C/C++:          "ZzzInfomation.h"
+C/C++: D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:10156:97: warning: comparison between NULL and non-pointer ('int' and NULL) [-Wnull-arithmetic]
+C/C++:                         if(strcmp(GuildMark[Hero->GuildMarkIndex].GuildName, GuildMark[c->GuildMarkIndex].GuildName) == NULL)
+C/C++:                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ^  ~~~~
+C/C++: D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:10168:66: warning: comparison between NULL and non-pointer ('int' and NULL) [-Wnull-arithmetic]
+C/C++:                         if(strcmp(GuildWarName,GuildMark[c->GuildMarkIndex].GuildName)==NULL)
+C/C++:                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^ ~~~~
+C/C++: D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:10183:71: warning: comparison between NULL and non-pointer ('int' and NULL) [-Wnull-arithmetic]
+C/C++:                         if(strcmp(SoccerTeamName[0],GuildMark[c->GuildMarkIndex].GuildName)==NULL)
+C/C++:                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^ ~~~~
+C/C++: D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:10188:71: warning: comparison between NULL and non-pointer ('int' and NULL) [-Wnull-arithmetic]
+C/C++:                         if(strcmp(SoccerTeamName[1],GuildMark[c->GuildMarkIndex].GuildName)==NULL)
+C/C++:                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^ ~~~~
+C/C++: D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:10753:63: warning: arithmetic between different enumeration types ('(unnamed enum at D:/takumi/Source/5.Main/source/_enum.h:908:1)' and 'CLASS_TYPE') is deprecated [-Wdeprecated-anon-enum-enum-conversion]
+C/C++:                                         if (c->BodyPart[BODYPART_ARMOR].Type == MODEL_BODY_ARMOR + CLASS_DARK_LORD)
+C/C++:                                                                                 ~~~~~~~~~~~~~~~~ ^ ~~~~~~~~~~~~~~~
+C/C++: D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:10858:71: warning: arithmetic between different enumeration types ('(unnamed enum at D:/takumi/Source/5.Main/source/_enum.h:908:1)' and 'CLASS_TYPE') is deprecated [-Wdeprecated-anon-enum-enum-conversion]
+C/C++:             if ( (c->BodyPart[BODYPART_ARMOR].Type != MODEL_BODY_ARMOR+CLASS_DARK_LORD
+C/C++:                                                       ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+C/C++: D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:10870:64: warning: arithmetic between different enumeration types ('(unnamed enum at D:/takumi/Source/5.Main/source/_enum.h:908:1)' and 'CLASS_TYPE') is deprecated [-Wdeprecated-anon-enum-enum-conversion]
+C/C++:                         else if ( c->BodyPart[BODYPART_ARMOR].Type==MODEL_BODY_ARMOR+CLASS_DARK_LORD && o->m_byNumCloth==3 )
+C/C++:                                                                     ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+C/C++: D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:10892:73: warning: arithmetic between different enumeration types ('(unnamed enum at D:/takumi/Source/5.Main/source/_enum.h:908:1)' and 'CLASS_TYPE') is deprecated [-Wdeprecated-anon-enum-enum-conversion]
+C/C++:             else if ( c->BodyPart[BODYPART_ARMOR].Type!=MODEL_BODY_ARMOR+CLASS_DARK_LORD && o->m_byNumCloth==6 )
+C/C++:                                                         ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+C/C++: D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:10901:73: warning: arithmetic between different enumeration types ('(unnamed enum at D:/takumi/Source/5.Main/source/_enum.h:908:1)' and 'CLASS_TYPE') is deprecated [-Wdeprecated-anon-enum-enum-conversion]
+C/C++:             else if ( c->BodyPart[BODYPART_ARMOR].Type==MODEL_BODY_ARMOR+CLASS_DARK_LORD && o->m_byNumCloth==6 )
+C/C++:                                                         ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+C/C++: D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:16245:3: warning: 'strcpy' will always overflow; destination buffer has size 32, but the source string has length 38 (including NUL byte) [-Wfortify-source]
+C/C++:                 strcpy(c->ID, "�������� �׸��þ�");
+C/C++:                 ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:16258:4: warning: 'strcpy' will always overflow; destination buffer has size 32, but the source string has length 34 (including NUL byte) [-Wfortify-source]
+C/C++:                         strcpy(c->ID, "�����̻��� ���̷�");
+C/C++:                         ^
+C/C++: 53 warnings generated.
+
+> Task :app:configureCMakeRelWithDebInfo[x86_64]
+
+> Task :app:buildCMakeRelWithDebInfo[x86_64]
+C/C++: ninja: Entering directory `D:\takumi\Source\android\app\.cxx\RelWithDebInfo\6l6a2z4v\x86_64'
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzObject.cpp:3:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:94:
+C/C++: D:/takumi/Source/5.Main/source/Platform/PlatformDefs.h:678:14: warning: '__stdcall' calling convention is not supported for this target [-Wignored-attributes]
+C/C++:     unsigned(__stdcall* fn)(void*);
+C/C++:              ^
+C/C++: D:/takumi/Source/5.Main/source/Platform/PlatformDefs.h:2366:59: warning: '__stdcall' calling convention is not supported for this target [-Wignored-attributes]
+C/C++: inline uintptr_t _beginthreadex(void*, unsigned, unsigned(__stdcall* fn)(void*), void* arg, unsigned, unsigned* pThreadId) {
+C/C++:                                                           ^
+C/C++: D:/takumi/Source/5.Main/source/Platform/PlatformDefs.h:2642:201: warning: '__stdcall' calling convention is not supported for this target [-Wignored-attributes]
+C/C++: inline HANDLE CreateThread(void*, SIZE_T, LPTHREAD_START_ROUTINE start, void* param, DWORD, DWORD* threadId) { unsigned id = 0; uintptr_t handle = _beginthreadex(nullptr, 0, reinterpret_cast<unsigned(__stdcall*)(void*)>(start), param, 0, &id); if (threadId) *threadId = id; return reinterpret_cast<HANDLE>(handle); }
+C/C++:                                                                                                                                                                                                         ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzObject.cpp:3:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:108:
+C/C++: D:/takumi/Source/5.Main/source/_define.h:320:9: warning: 'IME_CONVERSIONMODE' macro redefined [-Wmacro-redefined]
+C/C++: #define IME_CONVERSIONMODE  1
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/Platform/PlatformDefs.h:750:9: note: previous definition is here
+C/C++: #define IME_CONVERSIONMODE     0x0001
+C/C++:         ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzObject.cpp:3:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:108:
+C/C++: D:/takumi/Source/5.Main/source/_define.h:321:9: warning: 'IME_SENTENCEMODE' macro redefined [-Wmacro-redefined]
+C/C++: #define IME_SENTENCEMODE    2
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/Platform/PlatformDefs.h:753:9: note: previous definition is here
+C/C++: #define IME_SENTENCEMODE       0x0002
+C/C++:         ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzObject.cpp:3:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:111:
+C/C++: In file included from D:/takumi/Source/5.Main/source/_struct.h:10:
+C/C++: D:/takumi/Source/5.Main/source/w_CharacterInfo.h:114:15: warning: anonymous non-C-compatible type given name for linkage purposes by typedef declaration; add a tag name here [-Wnon-c-typedef-for-linkage]
+C/C++: typedef struct
+C/C++:               ^
+C/C++:                NEW_HEALTH_BAR
+C/C++: D:/takumi/Source/5.Main/source/w_CharacterInfo.h:122:2: note: type is not C-compatible due to this member declaration
+C/C++:         void Clear()
+C/C++:         ^~~~~~~~~~~~
+C/C++: D:/takumi/Source/5.Main/source/w_CharacterInfo.h:131:3: note: type is given name 'NEW_HEALTH_BAR' for linkage purposes by this typedef declaration
+C/C++: } NEW_HEALTH_BAR;
+C/C++:   ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzObject.cpp:3:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:111:
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:481:3: warning: 'memset' will set 0 bytes; maybe the arguments got flipped? [-Wuser-defined-warnings]
+C/C++:                 FillMemory(ViewDamageTable,0,sizeof(ViewDamageTable));
+C/C++:                 ^
+C/C++: D:/takumi/Source/5.Main/source/Platform/PlatformDefs.h:240:56: note: expanded from macro 'FillMemory'
+C/C++: #define FillMemory(ptr,sz,val)  memset((ptr),(val),(sz))
+C/C++:                                                        ^
+C/C++: C:/Users/thanh/AppData/Local/Android/Sdk/ndk/25.1.8937393/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/bits/fortify/string.h:144:9: note: from 'diagnose_if' attribute on 'memset':
+C/C++:         __clang_warning_if(c && !n, "'memset' will set 0 bytes; maybe the arguments got flipped?") {
+C/C++:         ^                  ~~~~~~~
+C/C++: C:/Users/thanh/AppData/Local/Android/Sdk/ndk/25.1.8937393/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/sys/cdefs.h:139:54: note: expanded from macro '__clang_warning_if'
+C/C++: #define __clang_warning_if(cond, msg) __attribute__((diagnose_if(cond, msg, "warning")))
+C/C++:                                                      ^           ~~~~
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzObject.cpp:3:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:111:
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:392:15: warning: anonymous non-C-compatible type given name for linkage purposes by typedef declaration; add a tag name here [-Wnon-c-typedef-for-linkage]
+C/C++: typedef struct
+C/C++:               ^
+C/C++:                PRINT_PLAYER_S6
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:463:2: note: type is not C-compatible due to this member declaration
+C/C++:         void Clear()
+C/C++:         ^~~~~~~~~~~~
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:535:3: note: type is given name 'PRINT_PLAYER_S6' for linkage purposes by this typedef declaration
+C/C++: } PRINT_PLAYER_S6;
+C/C++:   ^
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:999:3: warning: array index 2 is past the end of the array (which contains 2 elements) [-Warray-bounds]
+C/C++:                 ReBuff[2] = 0;
+C/C++:                 ^      ~
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:977:2: note: array 'ReBuff' declared here
+C/C++:         bool ReBuff[2];
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:1089:8: warning: extra tokens at end of #endif directive [-Wextra-tokens]
+C/C++: #endif ___STRUCT_H__
+C/C++:        ^
+C/C++:        //
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzObject.cpp:3:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:113:
+C/C++: In file included from D:/takumi/Source/5.Main/source/_GlobalFunctions.h:4:
+C/C++: D:/takumi/Source/5.Main/source/ZzzScene.h:2:10: warning: non-portable path to file '"ZzzInfomation.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzinfomation.h"
+C/C++:          ^~~~~~~~~~~~~~~~~
+C/C++:          "ZzzInfomation.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzObject.cpp:10:
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.h:4:
+C/C++: In file included from D:/takumi/Source/5.Main/source/GlobalBitmap.h:12:
+C/C++: D:/takumi/Source/android/app/src/main/cpp/compat_include/Jpeglib.h:24:10: warning: non-portable path to file '"Jconfig.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "jconfig.h"            /* widely used configuration options */
+C/C++:          ^~~~~~~~~~~
+C/C++:          "Jconfig.h"
+C/C++: D:/takumi/Source/android/app/src/main/cpp/compat_include/Jpeglib.h:26:10: warning: non-portable path to file '"Jmorecfg.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "jmorecfg.h"           /* seldom changed options */
+C/C++:          ^~~~~~~~~~~~
+C/C++:          "Jmorecfg.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzObject.cpp:10:
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.h:4:
+C/C++: D:/takumi/Source/5.Main/source/GlobalBitmap.h:18:15: warning: anonymous non-C-compatible type given name for linkage purposes by typedef declaration; add a tag name here [-Wnon-c-typedef-for-linkage]
+C/C++: typedef struct
+C/C++:               ^
+C/C++:                BITMAP_t
+C/C++: D:/takumi/Source/5.Main/source/GlobalBitmap.h:29:1: note: type is not C-compatible due to this member declaration
+C/C++: private:
+C/C++: ^~~~~~~~
+C/C++: D:/takumi/Source/5.Main/source/GlobalBitmap.h:32:3: note: type is given name 'BITMAP_t' for linkage purposes by this typedef declaration
+C/C++: } BITMAP_t;
+C/C++:   ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzObject.cpp:13:
+C/C++: D:/takumi/Source/5.Main/source/ZzzInventory.h:4:1: warning: 'const' is not permitted on a declaration of a type [-Wmissing-declarations]
+C/C++: const enum _COLUMN_TYPE
+C/C++: ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzInventory.h:25:1: warning: 'const' is not permitted on a declaration of a type [-Wmissing-declarations]
+C/C++: const enum ITEMSETOPTION
+C/C++: ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzInventory.h:42:1: warning: 'const' is not permitted on a declaration of a type [-Wmissing-declarations]
+C/C++: const enum SKILL_TOOLTIP_RENDER_POINT
+C/C++: ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzObject.cpp:18:
+C/C++: D:/takumi/Source/5.Main/source/wsclientinline.h:3:10: warning: non-portable path to file '"DSPlaySound.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "dsplaysound.h"
+C/C++:          ^~~~~~~~~~~~~~~
+C/C++:          "DSPlaySound.h"
+C/C++: D:/takumi/Source/5.Main/source/wsclientinline.h:4:10: warning: non-portable path to file '"ZzzScene.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzscene.h"
+C/C++:          ^~~~~~~~~~~~
+C/C++:          "ZzzScene.h"
+C/C++: D:/takumi/Source/5.Main/source/wsclientinline.h:5:10: warning: non-portable path to file '"ZzzInterface.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzinterface.h"
+C/C++:          ^~~~~~~~~~~~~~~~
+C/C++:          "ZzzInterface.h"
+C/C++: D:/takumi/Source/5.Main/source/wsclientinline.h:6:10: warning: non-portable path to file '"ZzzInventory.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzinventory.h"
+C/C++:          ^~~~~~~~~~~~~~~~
+C/C++:          "ZzzInventory.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzObject.cpp:18:
+C/C++: In file included from D:/takumi/Source/5.Main/source/wsclientinline.h:9:
+C/C++: In file included from D:/takumi/Source/5.Main/source/WSclient.h:6:
+C/C++: In file included from D:/takumi/Source/5.Main/source/wsctlc.h:10:
+C/C++: In file included from D:/takumi/Source/5.Main/source/Protect.h:11:
+C/C++: D:/takumi/Source/5.Main/source/CustomCloak.h:4:10: warning: non-portable path to file '"ZzzInfomation.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzinfomation.h"
+C/C++:          ^~~~~~~~~~~~~~~~~
+C/C++:          "ZzzInfomation.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzObject.cpp:18:
+C/C++: In file included from D:/takumi/Source/5.Main/source/wsclientinline.h:9:
+C/C++: D:/takumi/Source/5.Main/source/WSclient.h:2000:29: warning: implicit conversion of NULL constant to 'int' [-Wnull-conversion]
+C/C++:                 memset(&m_MatchTeamName1, NULL, MAX_ID_SIZE); 
+C/C++:                 ~~~~~~                    ^~~~
+C/C++:                                           0
+C/C++: D:/takumi/Source/5.Main/source/WSclient.h:2001:29: warning: implicit conversion of NULL constant to 'int' [-Wnull-conversion]
+C/C++:                 memset(&m_MatchTeamName2, NULL, MAX_ID_SIZE);
+C/C++:                 ~~~~~~                    ^~~~
+C/C++:                                           0
+C/C++: D:/takumi/Source/5.Main/source/WSclient.h:1996:15: warning: anonymous non-C-compatible type given name for linkage purposes by typedef declaration; add a tag name here [-Wnon-c-typedef-for-linkage]
+C/C++: typedef struct
+C/C++:               ^
+C/C++:                PMSG_MATCH_RESULT
+C/C++: D:/takumi/Source/5.Main/source/WSclient.h:1998:2: note: type is not C-compatible due to this member declaration
+C/C++:         void                    Clear()
+C/C++:         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C/C++: D:/takumi/Source/5.Main/source/WSclient.h:2017:2: note: type is given name 'PMSG_MATCH_RESULT' for linkage purposes by this typedef declaration
+C/C++: }PMSG_MATCH_RESULT, *LPPMSG_MATCH_RESULT;
+C/C++:  ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzObject.cpp:18:
+C/C++: D:/takumi/Source/5.Main/source/wsclientinline.h:17:10: warning: non-portable path to file '"./ExternalObject/Leaf/stdleaf.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "./ExternalObject/leaf/stdleaf.h"
+C/C++:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C/C++:          "./ExternalObject/Leaf/stdleaf.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzObject.cpp:18:
+C/C++: In file included from D:/takumi/Source/5.Main/source/wsclientinline.h:19:
+C/C++: In file included from D:/takumi/Source/5.Main/source/NewUISystem.h:12:
+C/C++: In file included from D:/takumi/Source/5.Main/source/NewUISlideWindow.h:11:
+C/C++: D:/takumi/Source/5.Main/source/UIControls.h:5:10: warning: non-portable path to file '"ZzzInfomation.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzinfomation.h"
+C/C++:          ^~~~~~~~~~~~~~~~~
+C/C++:          "ZzzInfomation.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzObject.cpp:18:
+C/C++: In file included from D:/takumi/Source/5.Main/source/wsclientinline.h:19:
+C/C++: In file included from D:/takumi/Source/5.Main/source/NewUISystem.h:13:
+C/C++: In file included from D:/takumi/Source/5.Main/source/NewUIGuildMakeWindow.h:12:
+C/C++: D:/takumi/Source/5.Main/source/NewUIMessageBox.h:7:10: warning: non-portable path to file '"./ExternalObject/Leaf/xstreambuf.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "./ExternalObject/leaf/xstreambuf.h"
+C/C++:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C/C++:          "./ExternalObject/Leaf/xstreambuf.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzObject.cpp:18:
+C/C++: In file included from D:/takumi/Source/5.Main/source/wsclientinline.h:19:
+C/C++: In file included from D:/takumi/Source/5.Main/source/NewUISystem.h:20:
+C/C++: D:/takumi/Source/5.Main/source/NewUIPetInfoWindow.h:13:10: warning: non-portable path to file '"NewUIInventoryCtrl.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "NewUIInventoryctrl.h"
+C/C++:          ^~~~~~~~~~~~~~~~~~~~~~
+C/C++:          "NewUIInventoryCtrl.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzObject.cpp:18:
+C/C++: In file included from D:/takumi/Source/5.Main/source/wsclientinline.h:19:
+C/C++: In file included from D:/takumi/Source/5.Main/source/NewUISystem.h:62:
+C/C++: D:/takumi/Source/5.Main/source/NewUIMasterSkillTree.h:63:3: warning: expression result unused [-Wunused-value]
+C/C++:                 sizeof(_MASTER_SKILL_TOOLTIP);
+C/C++:                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzObject.cpp:18:
+C/C++: D:/takumi/Source/5.Main/source/wsclientinline.h:349:27: warning: comparison between NULL and non-pointer ('int' and NULL) [-Wnull-arithmetic]
+C/C++:                 if(strcmp(ChatText,Text)==NULL) return;
+C/C++:                    ~~~~~~~~~~~~~~~~~~~~~^ ~~~~
+C/C++: D:/takumi/Source/5.Main/source/wsclientinline.h:357:28: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:                 char *lspzCommand[2] = { "/", "!"};
+C/C++:                                          ^
+C/C++: D:/takumi/Source/5.Main/source/wsclientinline.h:357:33: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:                 char *lspzCommand[2] = { "/", "!"};
+C/C++:                                               ^
+C/C++: D:/takumi/Source/5.Main/source/wsclientinline.h:597:27: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:     if(FindText2(Hero->ID,"webzen")) return;
+C/C++:                           ^
+C/C++: D:/takumi/Source/5.Main/source/wsclientinline.h:651:27: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:     if(FindText2(Hero->ID,"webzen")) return;
+C/C++:                           ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzObject.cpp:19:
+C/C++: In file included from D:/takumi/Source/5.Main/source/SideHair.h:10:
+C/C++: D:/takumi/Source/5.Main/source/ShadowVolume.h:10:10: warning: non-portable path to file '"ZzzBMD.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "ZzzBmd.h"
+C/C++:          ^~~~~~~~~~
+C/C++:          "ZzzBMD.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzObject.cpp:20:
+C/C++: D:/takumi/Source/5.Main/source/PhysicsManager.h:9:10: warning: non-portable path to file '"ZzzBMD.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "ZzzBmd.h"
+C/C++:          ^~~~~~~~~~
+C/C++:          "ZzzBMD.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzObject.cpp:21:
+C/C++: D:/takumi/Source/5.Main/source/GOBoid.h:7:10: warning: non-portable path to file '"ZzzObject.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzObject.h"
+C/C++:          ^~~~~~~~~~~~~
+C/C++:          "ZzzObject.h"
+C/C++: D:/takumi/Source/5.Main/source/ZzzObject.cpp:22:10: warning: non-portable path to file '"CSParts.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "CSparts.h"
+C/C++:          ^~~~~~~~~~~
+C/C++:          "CSParts.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzObject.cpp:22:
+C/C++: D:/takumi/Source/5.Main/source/CSparts.h:7:10: warning: non-portable path to file '"ZzzBMD.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzBmd.h"
+C/C++:          ^~~~~~~~~~
+C/C++:          "ZzzBMD.h"
+C/C++: D:/takumi/Source/5.Main/source/CSparts.h:8:10: warning: non-portable path to file '"ZzzInfomation.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzinfomation.h"
+C/C++:          ^~~~~~~~~~~~~~~~~
+C/C++:          "ZzzInfomation.h"
+C/C++: D:/takumi/Source/5.Main/source/CSparts.h:9:10: warning: non-portable path to file '"ZzzObject.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzobject.h"
+C/C++:          ^~~~~~~~~~~~~
+C/C++:          "ZzzObject.h"
+C/C++: D:/takumi/Source/5.Main/source/CSparts.h:10:10: warning: non-portable path to file '"ZzzCharacter.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzcharacter.h"
+C/C++:          ^~~~~~~~~~~~~~~~
+C/C++:          "ZzzCharacter.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzObject.cpp:23:
+C/C++: D:/takumi/Source/5.Main/source/CSItemOption.h:7:10: warning: non-portable path to file '"ZzzInfomation.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzinfomation.h"
+C/C++:          ^~~~~~~~~~~~~~~~~
+C/C++:          "ZzzInfomation.h"
+C/C++: D:/takumi/Source/5.Main/source/ZzzObject.cpp:31:10: warning: non-portable path to file '"GMCrywolf1st.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "GMCryWolf1st.h"
+C/C++:          ^~~~~~~~~~~~~~~~
+C/C++:          "GMCrywolf1st.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzObject.cpp:36:
+C/C++: D:/takumi/Source/5.Main/source/CDirection.h:4:10: warning: non-portable path to file '<vector>'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include <VECTOR>
+C/C++:          ^~~~~~~~
+C/C++:          <vector>
+C/C++: D:/takumi/Source/5.Main/source/CDirection.h:70:8: warning: extra tokens at end of #endif directive [-Wextra-tokens]
+C/C++: #endif _DIRECTION_H_
+C/C++:        ^
+C/C++:        //
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzObject.cpp:39:
+C/C++: D:/takumi/Source/5.Main/source/BoneManager.h:7:10: warning: non-portable path to file '"ZzzInfomation.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzinfomation.h"
+C/C++:          ^~~~~~~~~~~~~~~~~
+C/C++:          "ZzzInfomation.h"
+C/C++: D:/takumi/Source/5.Main/source/ZzzObject.cpp:6532:46: warning: arithmetic between different enumeration types ('(unnamed enum at D:/takumi/Source/5.Main/source/_enum.h:908:1)' and 'E_WINGMIXCHAR_SEQUENCE') is deprecated [-Wdeprecated-anon-enum-enum-conversion]
+C/C++:         else if( o->Type >= MODEL_TYPE_CHARM_MIXWING+EWS_BEGIN && o->Type <= MODEL_TYPE_CHARM_MIXWING+EWS_END )
+C/C++:                             ~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~
+C/C++: D:/takumi/Source/5.Main/source/ZzzObject.cpp:6532:95: warning: arithmetic between different enumeration types ('(unnamed enum at D:/takumi/Source/5.Main/source/_enum.h:908:1)' and 'E_WINGMIXCHAR_SEQUENCE') is deprecated [-Wdeprecated-anon-enum-enum-conversion]
+C/C++:         else if( o->Type >= MODEL_TYPE_CHARM_MIXWING+EWS_BEGIN && o->Type <= MODEL_TYPE_CHARM_MIXWING+EWS_END )
+C/C++:                                                                              ~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~
+C/C++: D:/takumi/Source/5.Main/source/ZzzObject.cpp:7817:32: warning: implicit conversion from 'float' to 'int' changes value from 0.5 to 0 [-Wliteral-conversion]
+C/C++:                 b->RenderBody(RenderType,1.f,0.5f,sine,o->BlendMeshTexCoordU,o->BlendMeshTexCoordV,1);
+C/C++:                    ~~~~~~~~~~                ^~~~
+C/C++: D:/takumi/Source/5.Main/source/ZzzObject.cpp:9223:46: warning: arithmetic between different enumeration types ('(unnamed enum at D:/takumi/Source/5.Main/source/_enum.h:908:1)' and 'E_WINGMIXCHAR_SEQUENCE') is deprecated [-Wdeprecated-anon-enum-enum-conversion]
+C/C++:         else if( o->Type >= MODEL_TYPE_CHARM_MIXWING+EWS_BEGIN && o->Type <= MODEL_TYPE_CHARM_MIXWING+EWS_END )
+C/C++:                             ~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~
+C/C++: D:/takumi/Source/5.Main/source/ZzzObject.cpp:9223:95: warning: arithmetic between different enumeration types ('(unnamed enum at D:/takumi/Source/5.Main/source/_enum.h:908:1)' and 'E_WINGMIXCHAR_SEQUENCE') is deprecated [-Wdeprecated-anon-enum-enum-conversion]
+C/C++:         else if( o->Type >= MODEL_TYPE_CHARM_MIXWING+EWS_BEGIN && o->Type <= MODEL_TYPE_CHARM_MIXWING+EWS_END )
+C/C++:                                                                              ~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~
+C/C++: 53 warnings generated.
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:8:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:94:
+C/C++: D:/takumi/Source/5.Main/source/Platform/PlatformDefs.h:678:14: warning: '__stdcall' calling convention is not supported for this target [-Wignored-attributes]
+C/C++:     unsigned(__stdcall* fn)(void*);
+C/C++:              ^
+C/C++: D:/takumi/Source/5.Main/source/Platform/PlatformDefs.h:2366:59: warning: '__stdcall' calling convention is not supported for this target [-Wignored-attributes]
+C/C++: inline uintptr_t _beginthreadex(void*, unsigned, unsigned(__stdcall* fn)(void*), void* arg, unsigned, unsigned* pThreadId) {
+C/C++:                                                           ^
+C/C++: D:/takumi/Source/5.Main/source/Platform/PlatformDefs.h:2642:201: warning: '__stdcall' calling convention is not supported for this target [-Wignored-attributes]
+C/C++: inline HANDLE CreateThread(void*, SIZE_T, LPTHREAD_START_ROUTINE start, void* param, DWORD, DWORD* threadId) { unsigned id = 0; uintptr_t handle = _beginthreadex(nullptr, 0, reinterpret_cast<unsigned(__stdcall*)(void*)>(start), param, 0, &id); if (threadId) *threadId = id; return reinterpret_cast<HANDLE>(handle); }
+C/C++:                                                                                                                                                                                                         ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:8:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:108:
+C/C++: D:/takumi/Source/5.Main/source/_define.h:320:9: warning: 'IME_CONVERSIONMODE' macro redefined [-Wmacro-redefined]
+C/C++: #define IME_CONVERSIONMODE  1
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/Platform/PlatformDefs.h:750:9: note: previous definition is here
+C/C++: #define IME_CONVERSIONMODE     0x0001
+C/C++:         ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:8:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:108:
+C/C++: D:/takumi/Source/5.Main/source/_define.h:321:9: warning: 'IME_SENTENCEMODE' macro redefined [-Wmacro-redefined]
+C/C++: #define IME_SENTENCEMODE    2
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/Platform/PlatformDefs.h:753:9: note: previous definition is here
+C/C++: #define IME_SENTENCEMODE       0x0002
+C/C++:         ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:8:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:111:
+C/C++: In file included from D:/takumi/Source/5.Main/source/_struct.h:10:
+C/C++: D:/takumi/Source/5.Main/source/w_CharacterInfo.h:114:15: warning: anonymous non-C-compatible type given name for linkage purposes by typedef declaration; add a tag name here [-Wnon-c-typedef-for-linkage]
+C/C++: typedef struct
+C/C++:               ^
+C/C++:                NEW_HEALTH_BAR
+C/C++: D:/takumi/Source/5.Main/source/w_CharacterInfo.h:122:2: note: type is not C-compatible due to this member declaration
+C/C++:         void Clear()
+C/C++:         ^~~~~~~~~~~~
+C/C++: D:/takumi/Source/5.Main/source/w_CharacterInfo.h:131:3: note: type is given name 'NEW_HEALTH_BAR' for linkage purposes by this typedef declaration
+C/C++: } NEW_HEALTH_BAR;
+C/C++:   ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:8:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:111:
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:481:3: warning: 'memset' will set 0 bytes; maybe the arguments got flipped? [-Wuser-defined-warnings]
+C/C++:                 FillMemory(ViewDamageTable,0,sizeof(ViewDamageTable));
+C/C++:                 ^
+C/C++: D:/takumi/Source/5.Main/source/Platform/PlatformDefs.h:240:56: note: expanded from macro 'FillMemory'
+C/C++: #define FillMemory(ptr,sz,val)  memset((ptr),(val),(sz))
+C/C++:                                                        ^
+C/C++: C:/Users/thanh/AppData/Local/Android/Sdk/ndk/25.1.8937393/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/bits/fortify/string.h:144:9: note: from 'diagnose_if' attribute on 'memset':
+C/C++:         __clang_warning_if(c && !n, "'memset' will set 0 bytes; maybe the arguments got flipped?") {
+C/C++:         ^                  ~~~~~~~
+C/C++: C:/Users/thanh/AppData/Local/Android/Sdk/ndk/25.1.8937393/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/sys/cdefs.h:139:54: note: expanded from macro '__clang_warning_if'
+C/C++: #define __clang_warning_if(cond, msg) __attribute__((diagnose_if(cond, msg, "warning")))
+C/C++:                                                      ^           ~~~~
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:8:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:111:
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:392:15: warning: anonymous non-C-compatible type given name for linkage purposes by typedef declaration; add a tag name here [-Wnon-c-typedef-for-linkage]
+C/C++: typedef struct
+C/C++:               ^
+C/C++:                PRINT_PLAYER_S6
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:463:2: note: type is not C-compatible due to this member declaration
+C/C++:         void Clear()
+C/C++:         ^~~~~~~~~~~~
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:535:3: note: type is given name 'PRINT_PLAYER_S6' for linkage purposes by this typedef declaration
+C/C++: } PRINT_PLAYER_S6;
+C/C++:   ^
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:999:3: warning: array index 2 is past the end of the array (which contains 2 elements) [-Warray-bounds]
+C/C++:                 ReBuff[2] = 0;
+C/C++:                 ^      ~
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:977:2: note: array 'ReBuff' declared here
+C/C++:         bool ReBuff[2];
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:1089:8: warning: extra tokens at end of #endif directive [-Wextra-tokens]
+C/C++: #endif ___STRUCT_H__
+C/C++:        ^
+C/C++:        //
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:8:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:113:
+C/C++: In file included from D:/takumi/Source/5.Main/source/_GlobalFunctions.h:4:
+C/C++: D:/takumi/Source/5.Main/source/ZzzScene.h:2:10: warning: non-portable path to file '"ZzzInfomation.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzinfomation.h"
+C/C++:          ^~~~~~~~~~~~~~~~~
+C/C++:          "ZzzInfomation.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:11:
+C/C++: In file included from D:/takumi/Source/5.Main/source/UIManager.h:10:
+C/C++: In file included from D:/takumi/Source/5.Main/source/UIGuildInfo.h:7:
+C/C++: In file included from D:/takumi/Source/5.Main/source/UIWindows.h:6:
+C/C++: D:/takumi/Source/5.Main/source/UIControls.h:5:10: warning: non-portable path to file '"ZzzInfomation.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzinfomation.h"
+C/C++:          ^~~~~~~~~~~~~~~~~
+C/C++:          "ZzzInfomation.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:11:
+C/C++: In file included from D:/takumi/Source/5.Main/source/UIManager.h:10:
+C/C++: In file included from D:/takumi/Source/5.Main/source/UIGuildInfo.h:7:
+C/C++: In file included from D:/takumi/Source/5.Main/source/UIWindows.h:6:
+C/C++: In file included from D:/takumi/Source/5.Main/source/UIControls.h:7:
+C/C++: In file included from D:/takumi/Source/5.Main/source/QuestMng.h:6:
+C/C++: In file included from D:/takumi/Source/5.Main/source/WSclient.h:6:
+C/C++: In file included from D:/takumi/Source/5.Main/source/wsctlc.h:10:
+C/C++: In file included from D:/takumi/Source/5.Main/source/Protect.h:11:
+C/C++: D:/takumi/Source/5.Main/source/CustomCloak.h:4:10: warning: non-portable path to file '"ZzzInfomation.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzinfomation.h"
+C/C++:          ^~~~~~~~~~~~~~~~~
+C/C++:          "ZzzInfomation.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:11:
+C/C++: In file included from D:/takumi/Source/5.Main/source/UIManager.h:10:
+C/C++: In file included from D:/takumi/Source/5.Main/source/UIGuildInfo.h:7:
+C/C++: In file included from D:/takumi/Source/5.Main/source/UIWindows.h:6:
+C/C++: In file included from D:/takumi/Source/5.Main/source/UIControls.h:7:
+C/C++: In file included from D:/takumi/Source/5.Main/source/QuestMng.h:6:
+C/C++: D:/takumi/Source/5.Main/source/WSclient.h:2000:29: warning: implicit conversion of NULL constant to 'int' [-Wnull-conversion]
+C/C++:                 memset(&m_MatchTeamName1, NULL, MAX_ID_SIZE); 
+C/C++:                 ~~~~~~                    ^~~~
+C/C++:                                           0
+C/C++: D:/takumi/Source/5.Main/source/WSclient.h:2001:29: warning: implicit conversion of NULL constant to 'int' [-Wnull-conversion]
+C/C++:                 memset(&m_MatchTeamName2, NULL, MAX_ID_SIZE);
+C/C++:                 ~~~~~~                    ^~~~
+C/C++:                                           0
+C/C++: D:/takumi/Source/5.Main/source/WSclient.h:1996:15: warning: anonymous non-C-compatible type given name for linkage purposes by typedef declaration; add a tag name here [-Wnon-c-typedef-for-linkage]
+C/C++: typedef struct
+C/C++:               ^
+C/C++:                PMSG_MATCH_RESULT
+C/C++: D:/takumi/Source/5.Main/source/WSclient.h:1998:2: note: type is not C-compatible due to this member declaration
+C/C++:         void                    Clear()
+C/C++:         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C/C++: D:/takumi/Source/5.Main/source/WSclient.h:2017:2: note: type is given name 'PMSG_MATCH_RESULT' for linkage purposes by this typedef declaration
+C/C++: }PMSG_MATCH_RESULT, *LPPMSG_MATCH_RESULT;
+C/C++:  ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:19:
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.h:4:
+C/C++: In file included from D:/takumi/Source/5.Main/source/GlobalBitmap.h:12:
+C/C++: D:/takumi/Source/android/app/src/main/cpp/compat_include/Jpeglib.h:24:10: warning: non-portable path to file '"Jconfig.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "jconfig.h"            /* widely used configuration options */
+C/C++:          ^~~~~~~~~~~
+C/C++:          "Jconfig.h"
+C/C++: D:/takumi/Source/android/app/src/main/cpp/compat_include/Jpeglib.h:26:10: warning: non-portable path to file '"Jmorecfg.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "jmorecfg.h"           /* seldom changed options */
+C/C++:          ^~~~~~~~~~~~
+C/C++:          "Jmorecfg.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:19:
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.h:4:
+C/C++: D:/takumi/Source/5.Main/source/GlobalBitmap.h:18:15: warning: anonymous non-C-compatible type given name for linkage purposes by typedef declaration; add a tag name here [-Wnon-c-typedef-for-linkage]
+C/C++: typedef struct
+C/C++:               ^
+C/C++:                BITMAP_t
+C/C++: D:/takumi/Source/5.Main/source/GlobalBitmap.h:29:1: note: type is not C-compatible due to this member declaration
+C/C++: private:
+C/C++: ^~~~~~~~
+C/C++: D:/takumi/Source/5.Main/source/GlobalBitmap.h:32:3: note: type is given name 'BITMAP_t' for linkage purposes by this typedef declaration
+C/C++: } BITMAP_t;
+C/C++:   ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:22:
+C/C++: D:/takumi/Source/5.Main/source/ZzzInventory.h:4:1: warning: 'const' is not permitted on a declaration of a type [-Wmissing-declarations]
+C/C++: const enum _COLUMN_TYPE
+C/C++: ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzInventory.h:25:1: warning: 'const' is not permitted on a declaration of a type [-Wmissing-declarations]
+C/C++: const enum ITEMSETOPTION
+C/C++: ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzInventory.h:42:1: warning: 'const' is not permitted on a declaration of a type [-Wmissing-declarations]
+C/C++: const enum SKILL_TOOLTIP_RENDER_POINT
+C/C++: ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:27:
+C/C++: D:/takumi/Source/5.Main/source/wsclientinline.h:3:10: warning: non-portable path to file '"DSPlaySound.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "dsplaysound.h"
+C/C++:          ^~~~~~~~~~~~~~~
+C/C++:          "DSPlaySound.h"
+C/C++: D:/takumi/Source/5.Main/source/wsclientinline.h:4:10: warning: non-portable path to file '"ZzzScene.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzscene.h"
+C/C++:          ^~~~~~~~~~~~
+C/C++:          "ZzzScene.h"
+C/C++: D:/takumi/Source/5.Main/source/wsclientinline.h:5:10: warning: non-portable path to file '"ZzzInterface.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzinterface.h"
+C/C++:          ^~~~~~~~~~~~~~~~
+C/C++:          "ZzzInterface.h"
+C/C++: D:/takumi/Source/5.Main/source/wsclientinline.h:6:10: warning: non-portable path to file '"ZzzInventory.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzinventory.h"
+C/C++:          ^~~~~~~~~~~~~~~~
+C/C++:          "ZzzInventory.h"
+C/C++: D:/takumi/Source/5.Main/source/wsclientinline.h:17:10: warning: non-portable path to file '"./ExternalObject/Leaf/stdleaf.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "./ExternalObject/leaf/stdleaf.h"
+C/C++:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C/C++:          "./ExternalObject/Leaf/stdleaf.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:27:
+C/C++: In file included from D:/takumi/Source/5.Main/source/wsclientinline.h:19:
+C/C++: In file included from D:/takumi/Source/5.Main/source/NewUISystem.h:13:
+C/C++: In file included from D:/takumi/Source/5.Main/source/NewUIGuildMakeWindow.h:12:
+C/C++: D:/takumi/Source/5.Main/source/NewUIMessageBox.h:7:10: warning: non-portable path to file '"./ExternalObject/Leaf/xstreambuf.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "./ExternalObject/leaf/xstreambuf.h"
+C/C++:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C/C++:          "./ExternalObject/Leaf/xstreambuf.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:27:
+C/C++: In file included from D:/takumi/Source/5.Main/source/wsclientinline.h:19:
+C/C++: In file included from D:/takumi/Source/5.Main/source/NewUISystem.h:20:
+C/C++: D:/takumi/Source/5.Main/source/NewUIPetInfoWindow.h:13:10: warning: non-portable path to file '"NewUIInventoryCtrl.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "NewUIInventoryctrl.h"
+C/C++:          ^~~~~~~~~~~~~~~~~~~~~~
+C/C++:          "NewUIInventoryCtrl.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:27:
+C/C++: In file included from D:/takumi/Source/5.Main/source/wsclientinline.h:19:
+C/C++: In file included from D:/takumi/Source/5.Main/source/NewUISystem.h:62:
+C/C++: D:/takumi/Source/5.Main/source/NewUIMasterSkillTree.h:63:3: warning: expression result unused [-Wunused-value]
+C/C++:                 sizeof(_MASTER_SKILL_TOOLTIP);
+C/C++:                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:27:
+C/C++: D:/takumi/Source/5.Main/source/wsclientinline.h:349:27: warning: comparison between NULL and non-pointer ('int' and NULL) [-Wnull-arithmetic]
+C/C++:                 if(strcmp(ChatText,Text)==NULL) return;
+C/C++:                    ~~~~~~~~~~~~~~~~~~~~~^ ~~~~
+C/C++: D:/takumi/Source/5.Main/source/wsclientinline.h:357:28: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:                 char *lspzCommand[2] = { "/", "!"};
+C/C++:                                          ^
+C/C++: D:/takumi/Source/5.Main/source/wsclientinline.h:357:33: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:                 char *lspzCommand[2] = { "/", "!"};
+C/C++:                                               ^
+C/C++: D:/takumi/Source/5.Main/source/wsclientinline.h:597:27: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:     if(FindText2(Hero->ID,"webzen")) return;
+C/C++:                           ^
+C/C++: D:/takumi/Source/5.Main/source/wsclientinline.h:651:27: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:     if(FindText2(Hero->ID,"webzen")) return;
+C/C++:                           ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:28:
+C/C++: D:/takumi/Source/5.Main/source/PhysicsManager.h:9:10: warning: non-portable path to file '"ZzzBMD.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "ZzzBmd.h"
+C/C++:          ^~~~~~~~~~
+C/C++:          "ZzzBMD.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:29:
+C/C++: D:/takumi/Source/5.Main/source/GOBoid.h:7:10: warning: non-portable path to file '"ZzzObject.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzObject.h"
+C/C++:          ^~~~~~~~~~~~~
+C/C++:          "ZzzObject.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:30:
+C/C++: D:/takumi/Source/5.Main/source/CSItemOption.h:7:10: warning: non-portable path to file '"ZzzInfomation.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzinfomation.h"
+C/C++:          ^~~~~~~~~~~~~~~~~
+C/C++:          "ZzzInfomation.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:34:
+C/C++: D:/takumi/Source/5.Main/source/CSParts.h:7:10: warning: non-portable path to file '"ZzzBMD.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzBmd.h"
+C/C++:          ^~~~~~~~~~
+C/C++:          "ZzzBMD.h"
+C/C++: D:/takumi/Source/5.Main/source/CSParts.h:8:10: warning: non-portable path to file '"ZzzInfomation.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzinfomation.h"
+C/C++:          ^~~~~~~~~~~~~~~~~
+C/C++:          "ZzzInfomation.h"
+C/C++: D:/takumi/Source/5.Main/source/CSParts.h:9:10: warning: non-portable path to file '"ZzzObject.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzobject.h"
+C/C++:          ^~~~~~~~~~~~~
+C/C++:          "ZzzObject.h"
+C/C++: D:/takumi/Source/5.Main/source/CSParts.h:10:10: warning: non-portable path to file '"ZzzCharacter.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzcharacter.h"
+C/C++:          ^~~~~~~~~~~~~~~~
+C/C++:          "ZzzCharacter.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:38:
+C/C++: D:/takumi/Source/5.Main/source/BoneManager.h:7:10: warning: non-portable path to file '"ZzzInfomation.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzinfomation.h"
+C/C++:          ^~~~~~~~~~~~~~~~~
+C/C++:          "ZzzInfomation.h"
+C/C++: D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:40:10: warning: non-portable path to file '"GMCrywolf1st.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "GMCryWolf1st.h"
+C/C++:          ^~~~~~~~~~~~~~~~
+C/C++:          "GMCrywolf1st.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:44:
+C/C++: D:/takumi/Source/5.Main/source/CDirection.h:4:10: warning: non-portable path to file '<vector>'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include <VECTOR>
+C/C++:          ^~~~~~~~
+C/C++:          <vector>
+C/C++: D:/takumi/Source/5.Main/source/CDirection.h:70:8: warning: extra tokens at end of #endif directive [-Wextra-tokens]
+C/C++: #endif _DIRECTION_H_
+C/C++:        ^
+C/C++:        //
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:53:
+C/C++: D:/takumi/Source/5.Main/source/SummonSystem.h:9:10: warning: non-portable path to file '"ZzzInfomation.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzinfomation.h"
+C/C++:          ^~~~~~~~~~~~~~~~~
+C/C++:          "ZzzInfomation.h"
+C/C++: D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:10156:97: warning: comparison between NULL and non-pointer ('int' and NULL) [-Wnull-arithmetic]
+C/C++:                         if(strcmp(GuildMark[Hero->GuildMarkIndex].GuildName, GuildMark[c->GuildMarkIndex].GuildName) == NULL)
+C/C++:                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ^  ~~~~
+C/C++: D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:10168:66: warning: comparison between NULL and non-pointer ('int' and NULL) [-Wnull-arithmetic]
+C/C++:                         if(strcmp(GuildWarName,GuildMark[c->GuildMarkIndex].GuildName)==NULL)
+C/C++:                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^ ~~~~
+C/C++: D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:10183:71: warning: comparison between NULL and non-pointer ('int' and NULL) [-Wnull-arithmetic]
+C/C++:                         if(strcmp(SoccerTeamName[0],GuildMark[c->GuildMarkIndex].GuildName)==NULL)
+C/C++:                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^ ~~~~
+C/C++: D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:10188:71: warning: comparison between NULL and non-pointer ('int' and NULL) [-Wnull-arithmetic]
+C/C++:                         if(strcmp(SoccerTeamName[1],GuildMark[c->GuildMarkIndex].GuildName)==NULL)
+C/C++:                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^ ~~~~
+C/C++: D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:10753:63: warning: arithmetic between different enumeration types ('(unnamed enum at D:/takumi/Source/5.Main/source/_enum.h:908:1)' and 'CLASS_TYPE') is deprecated [-Wdeprecated-anon-enum-enum-conversion]
+C/C++:                                         if (c->BodyPart[BODYPART_ARMOR].Type == MODEL_BODY_ARMOR + CLASS_DARK_LORD)
+C/C++:                                                                                 ~~~~~~~~~~~~~~~~ ^ ~~~~~~~~~~~~~~~
+C/C++: D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:10858:71: warning: arithmetic between different enumeration types ('(unnamed enum at D:/takumi/Source/5.Main/source/_enum.h:908:1)' and 'CLASS_TYPE') is deprecated [-Wdeprecated-anon-enum-enum-conversion]
+C/C++:             if ( (c->BodyPart[BODYPART_ARMOR].Type != MODEL_BODY_ARMOR+CLASS_DARK_LORD
+C/C++:                                                       ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+C/C++: D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:10870:64: warning: arithmetic between different enumeration types ('(unnamed enum at D:/takumi/Source/5.Main/source/_enum.h:908:1)' and 'CLASS_TYPE') is deprecated [-Wdeprecated-anon-enum-enum-conversion]
+C/C++:                         else if ( c->BodyPart[BODYPART_ARMOR].Type==MODEL_BODY_ARMOR+CLASS_DARK_LORD && o->m_byNumCloth==3 )
+C/C++:                                                                     ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+C/C++: D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:10892:73: warning: arithmetic between different enumeration types ('(unnamed enum at D:/takumi/Source/5.Main/source/_enum.h:908:1)' and 'CLASS_TYPE') is deprecated [-Wdeprecated-anon-enum-enum-conversion]
+C/C++:             else if ( c->BodyPart[BODYPART_ARMOR].Type!=MODEL_BODY_ARMOR+CLASS_DARK_LORD && o->m_byNumCloth==6 )
+C/C++:                                                         ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+C/C++: D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:10901:73: warning: arithmetic between different enumeration types ('(unnamed enum at D:/takumi/Source/5.Main/source/_enum.h:908:1)' and 'CLASS_TYPE') is deprecated [-Wdeprecated-anon-enum-enum-conversion]
+C/C++:             else if ( c->BodyPart[BODYPART_ARMOR].Type==MODEL_BODY_ARMOR+CLASS_DARK_LORD && o->m_byNumCloth==6 )
+C/C++:                                                         ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+C/C++: D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:16245:3: warning: 'strcpy' will always overflow; destination buffer has size 32, but the source string has length 38 (including NUL byte) [-Wfortify-source]
+C/C++:                 strcpy(c->ID, "�������� �׸��þ�");
+C/C++:                 ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzCharacter.cpp:16258:4: warning: 'strcpy' will always overflow; destination buffer has size 32, but the source string has length 34 (including NUL byte) [-Wfortify-source]
+C/C++:                         strcpy(c->ID, "�����̻��� ���̷�");
+C/C++:                         ^
+C/C++: 58 warnings generated.
+
+> Task :app:mergeEmulatorReleaseJniLibFolders UP-TO-DATE
+> Task :app:checkEmulatorReleaseDuplicateClasses UP-TO-DATE
+> Task :app:dexBuilderEmulatorRelease UP-TO-DATE
+> Task :app:desugarEmulatorReleaseFileDependencies UP-TO-DATE
+> Task :app:mergeExtDexEmulatorRelease UP-TO-DATE
+> Task :app:mergeDexEmulatorRelease UP-TO-DATE
+> Task :app:mergeEmulatorReleaseArtProfile UP-TO-DATE
+> Task :app:mergeEmulatorReleaseGlobalSynthetics UP-TO-DATE
+> Task :app:compileEmulatorReleaseArtProfile UP-TO-DATE
+> Task :app:mergeEmulatorReleaseShaders UP-TO-DATE
+> Task :app:compileEmulatorReleaseShaders NO-SOURCE
+> Task :app:generateEmulatorReleaseAssets UP-TO-DATE
+> Task :app:mergeEmulatorReleaseAssets UP-TO-DATE
+> Task :app:compressEmulatorReleaseAssets UP-TO-DATE
+> Task :app:processEmulatorReleaseJavaRes NO-SOURCE
+> Task :app:mergeEmulatorReleaseJavaResource UP-TO-DATE
+> Task :app:optimizeEmulatorReleaseResources UP-TO-DATE
+> Task :app:collectEmulatorReleaseDependencies UP-TO-DATE
+> Task :app:sdkEmulatorReleaseDependencyData UP-TO-DATE
+> Task :app:validateSigningEmulatorRelease UP-TO-DATE
+> Task :app:writeEmulatorReleaseAppMetadata UP-TO-DATE
+> Task :app:writeEmulatorReleaseSigningConfigVersions UP-TO-DATE
+> Task :app:mergeEmulatorReleaseNativeLibs
+> Task :app:stripEmulatorReleaseDebugSymbols
+> Task :app:extractEmulatorReleaseNativeSymbolTables
+> Task :app:mergeEmulatorReleaseNativeDebugMetadata NO-SOURCE
+> Task :app:packageEmulatorRelease
+> Task :app:createEmulatorReleaseApkListingFileRedirect UP-TO-DATE
+> Task :app:assembleEmulatorRelease
+
+BUILD SUCCESSFUL in 18s
+49 actionable tasks: 10 executed, 39 up-to-date

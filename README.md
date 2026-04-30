@@ -1,0 +1,41 @@
+# MU Takumi — server toolkit & OpenMU migration
+
+Private/dev fork of the Takumi MU stack focused on:
+
+- Migration path to **OpenMU** (.NET, Linux/macOS/Docker) — see `docs/TAKUMI-MIGRATION-OPENMU-CHECKLIST.md`.
+- Baseline manifests and protocol/network notes — `docs/`, `docs/takumi-manifests/`.
+
+Repository: https://github.com/hoangdt9/mu-takumi  
+
+## Sau khi clone
+
+1. **ODBC configs (không commit secret):**
+
+   ```bash
+   cp MuServer/2.DataServer/DataServer.ini.example MuServer/2.DataServer/DataServer.ini
+   cp MuServer/3.JoinServer/JoinServer.ini.example MuServer/3.JoinServer/JoinServer.ini
+   ```
+
+   Điền `CHANGE_ME` (SQL user/password, `GlobalPassword`). File thật bị `.gitignore`.
+
+2. **Chạy server Windows:** cần bản **`.exe`/`.dll` build sẵn** (không có trong repo) — đặt vào các thư `MuServer/...` như máy dev.
+
+3. **Docker (SQL/dev):** `docker/.env.example` → `docker/.env`; xem `docker/README.md`.
+
+4. **Client PC prebuilt:** thư `ClientBuild_*` bị ignore (dung lượng). Giữ offline hoặc pipeline release riêng.
+
+5. **Android:** không commit `app/build/` / `.gradle` — chỉnh `local.properties` (SDK path) máy dev.
+
+## Cấu trúc đáng chú ý
+
+| Path | Mô tả |
+|------|--------|
+| `Source/1.ConnectServer` … `4.GameServer` | Mã nguồn MSVC server |
+| `Source/6.GetMainInfo` | Tool patch client |
+| `Source/android` | Client Android |
+| `MuServer/` | Layout deploy + Data (txt/dat) |
+| `docs/` | Checklist migrate OpenMU + protocol baseline |
+
+## Bảo mật
+
+Đừng force-add `DataServer.ini` / `JoinServer.ini` chứa mật khẩu thật lên GitHub công khai. Nếu đã lộ, đổi pass SQL và `GlobalPassword`.

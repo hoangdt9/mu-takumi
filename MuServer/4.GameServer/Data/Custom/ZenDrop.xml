@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ZenDropSystem Enable="1">
+	<Map Number="0"  MinMoneyCount="20000" MaxMoneyCount="200000" /> <!-- Lorencia -->
+	<Map Number="1"  MinMoneyCount="20000" MaxMoneyCount="100000" /> <!-- Dungeon (1 ~ 3) -->
+	<Map Number="2"  MinMoneyCount="30000" MaxMoneyCount="200000" /> <!-- Devias -->
+	<Map Number="3"  MinMoneyCount="40000" MaxMoneyCount="200000" /> <!-- Noria -->
+	<Map Number="4"  MinMoneyCount="50000" MaxMoneyCount="300000" /> <!-- Lost Tower (1 ~ 7) -->
+	<Map Number="5"  MinMoneyCount="60000" MaxMoneyCount="400000" /> <!-- Exile - does not exist by default in newer game versions -->
+	<Map Number="6"  MinMoneyCount="70000" MaxMoneyCount="100000" /> <!-- Arena -->
+	<Map Number="7"  MinMoneyCount="80000" MaxMoneyCount="300000" /> <!-- Atlans (1 ~ 3) -->
+	<Map Number="8"  MinMoneyCount="90000" MaxMoneyCount="400000" /> <!-- Tarkan (1 ~ 2) -->
+	<Map Number="9"  MinMoneyCount="10000" MaxMoneyCount="500000" /> <!-- Devil Square (1 ~ 4) -->
+	<Map Number="10" MinMoneyCount="11000" MaxMoneyCount="200000" /> <!-- Icarus -->
+	<Map Number="11" MinMoneyCount="11000" MaxMoneyCount="200000" /> <!-- Blood Castle 1 -->
+	<Map Number="12" MinMoneyCount="11000" MaxMoneyCount="200000" /> <!-- Blood Castle 2 -->
+	<Map Number="13" MinMoneyCount="11000" MaxMoneyCount="200000" /> <!-- Blood Castle 3 -->
+	<Map Number="14" MinMoneyCount="11000" MaxMoneyCount="200000" /> <!-- Blood Castle 4 -->
+	<Map Number="15" MinMoneyCount="11000" MaxMoneyCount="200000" /> <!-- Blood Castle 5 -->
+	<Map Number="16" MinMoneyCount="11000" MaxMoneyCount="200000" /> <!-- Blood Castle 6 -->
+	<Map Number="17" MinMoneyCount="11000" MaxMoneyCount="200000" /> <!-- Blood Castle 7 -->
+	<Map Number="18" MinMoneyCount="11000" MaxMoneyCount="200000" /> <!-- Chaos Castle 1 -->
+	<Map Number="19" MinMoneyCount="11000" MaxMoneyCount="200000" /> <!-- Chaos Castle 2 -->
+	<Map Number="20" MinMoneyCount="11000" MaxMoneyCount="200000" /> <!-- Chaos Castle 3 -->
+	<Map Number="21" MinMoneyCount="11000" MaxMoneyCount="200000" /> <!-- Chaos Castle 4 -->
+	<Map Number="22" MinMoneyCount="11000" MaxMoneyCount="200000" /> <!-- Chaos Castle 5 -->
+	<Map Number="23" MinMoneyCount="11000" MaxMoneyCount="200000" /> <!-- Chaos Castle 6 -->
+	<Map Number="24" MinMoneyCount="11000" MaxMoneyCount="200000" /> <!-- Kalima 1 -->
+	<Map Number="25" MinMoneyCount="11000" MaxMoneyCount="200000" /> <!-- Kalima 2 -->
+	<Map Number="26" MinMoneyCount="11000" MaxMoneyCount="200000" /> <!-- Kalima 3 -->
+	<Map Number="27" MinMoneyCount="11000" MaxMoneyCount="200000" /> <!-- Kalima 4 -->
+	<Map Number="28" MinMoneyCount="11000" MaxMoneyCount="200000" /> <!-- Kalima 5 -->
+	<Map Number="29" MinMoneyCount="11000" MaxMoneyCount="200000" /> <!-- Kalima 6 -->
+	<Map Number="30" MinMoneyCount="11000" MaxMoneyCount="200000" /> <!-- Valley of Loren -->
+	<Map Number="31" MinMoneyCount="11000" MaxMoneyCount="200000" /> <!-- Land of Trials -->
+	<Map Number="32" MinMoneyCount="11000" MaxMoneyCount="200000" /> <!-- Devil Square (5 ~ 7) -->
+	<Map Number="33" MinMoneyCount="11000" MaxMoneyCount="200000" /> <!-- Aida (1 ~ 2) -->
+	<Map Number="34" MinMoneyCount="11000" MaxMoneyCount="200000" /> <!-- Crywolf Fortress (First Zone) -->
+	<Map Number="35" MinMoneyCount="11000" MaxMoneyCount="200000" /> <!-- Crywolf (Second Zone) -->
+	<Map Number="36" MinMoneyCount="11000" MaxMoneyCount="200000" /> <!-- Kalima 7 (Lost) -->
+	<Map Number="37" MinMoneyCount="11000" MaxMoneyCount="200000" /> <!-- Kanturu Ruins -->
+	<Map Number="38" MinMoneyCount="11000" MaxMoneyCount="200000" /> <!-- Kanturu 1 (Remain) -->
+	<Map Number="39" MinMoneyCount="11000" MaxMoneyCount="200000" /> <!-- Kanturu 2 (Refinery Tower) -->
+	<Map Number="40" MinMoneyCount="11000" MaxMoneyCount="200000" /> <!-- Silent Map -->
+	<Map Number="41" MinMoneyCount="10000" MaxMoneyCount="5000000" /> <!-- Barracks of Balgass -->
+	<Map Number="42" MinMoneyCount="20000" MaxMoneyCount="5000000" /> <!-- Balgass Refuge -->
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+	<Map Number="45" MinMoneyCount="80000" MaxMoneyCount="2000000" /> <!-- Illusion Temple (Classic/Renewal) 1 -->
+	<Map Number="46" MinMoneyCount="80000" MaxMoneyCount="2000000" /> <!-- Illusion Temple (Classic/Renewal) 2 -->
+	<Map Number="47" MinMoneyCount="80000" MaxMoneyCount="2000000" /> <!-- Illusion Temple (Classic/Renewal) 3 -->
+	<Map Number="48" MinMoneyCount="80000" MaxMoneyCount="2000000" /> <!-- Illusion Temple (Classic/Renewal) 4 -->
+	<Map Number="49" MinMoneyCount="80000" MaxMoneyCount="2000000" /> <!-- Illusion Temple (Classic/Renewal) 5 -->
+	<Map Number="50" MinMoneyCount="80000" MaxMoneyCount="2000000" /> <!-- Illusion Temple (Classic/Renewal) 6 -->
+	<Map Number="51" MinMoneyCount="80000"  MaxMoneyCount="100000" /> <!-- Elbeland -->
+	<Map Number="52" MinMoneyCount="80000" MaxMoneyCount="1000000" /> <!-- Blood Castle 8 -->
+	<Map Number="53" MinMoneyCount="80000" MaxMoneyCount="1000000" /> <!-- Chaos Castle 7 -->
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+	<Map Number="56" MinMoneyCount="80000" MaxMoneyCount="3000000" /> <!-- Swamp of Calmness -->
+	<Map Number="57" MinMoneyCount="80000" MaxMoneyCount="3000000" /> <!-- Raklion -->
+	<Map Number="58" MinMoneyCount="80000" MaxMoneyCount="3000000" /> <!-- Hatchery (Raklion Boss) -->
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+	<Map Number="62" MinMoneyCount="0" MaxMoneyCount="" /> <!-- Santa Village -->
+	<Map Number="63" MinMoneyCount="0" MaxMoneyCount="" /> <!-- Vulcanus -->
+	<Map Number="64" MinMoneyCount="0"	MaxMoneyCount="" /> <!-- Duel Arena -->
+	<Map Number="65" MinMoneyCount="0" MaxMoneyCount="" /> <!-- Dopple Ganger Snow -->
+	<Map Number="66" MinMoneyCount="0" MaxMoneyCount="" /> <!-- Dopple Ganger Volcan -->
+	<Map Number="67" MinMoneyCount="0" MaxMoneyCount="" /> <!-- Dopple Ganger Sea -->
+	<Map Number="68" MinMoneyCount="0" MaxMoneyCount="" /> <!-- Dopple Ganger Crystals -->
+	<Map Number="69" MinMoneyCount="0" MaxMoneyCount="" /> <!-- Imperial Fortress 1 -->
+	<Map Number="70" MinMoneyCount="0" MaxMoneyCount="" /> <!-- Imperial Fortress 2 -->
+	<Map Number="71" MinMoneyCount="0" MaxMoneyCount="" /> <!-- Imperial Fortress 3 -->
+	<Map Number="72" MinMoneyCount="0" MaxMoneyCount="" /> <!-- Imperial Fortress 4 -->
+	<Map Number="79" MinMoneyCount="0" MaxMoneyCount="" /> <!-- Loren Market -->
+	<Map Number="80" MinMoneyCount="100000" MaxMoneyCount="3000000" /> <!-- Karutan 1 -->
+	<Map Number="81" MinMoneyCount="100000" MaxMoneyCount="3000000" /> <!-- Karutan 2 -->
+	<Map Number="83" MinMoneyCount="100000" MaxMoneyCount="3000000" /> <!-- Map Vip -->
+	<Map Number="85" MinMoneyCount="100000" MaxMoneyCount="3000000" /> <!-- Noobmap -->
+</ZenDropSystem>

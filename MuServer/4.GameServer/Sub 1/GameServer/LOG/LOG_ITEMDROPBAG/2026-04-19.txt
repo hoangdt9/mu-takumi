@@ -1,0 +1,38 @@
+16:47:08 [OK][ItemDrop] NV[TocDo] Map ([52](14/95) )Drop Item: [Gậy Thiên Sứ], Serial: 00000019, level: 2, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+17:16:50 [OK][ItemDrop] NV[Admin] Map ([6](97/112) )Drop Item: [Ngọc Hỗn Nguyên], Serial: 0000001C, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+18:29:19 [OK][ItemDrop] NV[TocDo] Map ([6](51/113) )Drop Item: [Ngọc Tâm Linh], Serial: 0000001D, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+18:57:55 [OK][ItemDrop] NV[TocDo] Map ([6](51/113) )Drop Item: [Ngọc Tâm Linh], Serial: 0000001E, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+18:59:52 [OK][ItemDrop] NV[TocDo] Map ([6](51/113) )Drop Item: [Ngọc Tâm Linh], Serial: 0000001F, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+19:14:10 [OK][ItemDrop] NV[TocDo] Map ([6](51/113) )Drop Item: [Ngọc Sinh Mệnh], Serial: 00000020, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+19:19:35 [OK][ItemDrop] NV[TocDo] Map ([6](51/113) )Drop Item: [Ngọc Sáng Tạo], Serial: 00000021, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+19:41:02 [OK][ItemDrop] NV[TocDo] Map ([6](51/113) )Drop Item: [Ngọc Hỗn Nguyên], Serial: 00000022, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+21:20:16 [OK][ItemDrop] NV[TocDo] Map ([6](51/113) )Drop Item: [Ngọc Sáng Tạo], Serial: 00000023, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+21:24:49 [OK][ItemDrop] NV[TocDo] Map ([6](51/113) )Drop Item: [Ngọc Sáng Tạo], Serial: 00000024, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+21:40:51 [OK][ItemDrop] NV[TocDo] Map ([6](51/113) )Drop Item: [Ngọc Sáng Tạo], Serial: 00000025, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+22:17:54 [OK][ItemDrop] NV[TocDo] Map ([6](51/113) )Drop Item: [Ngọc Ước Nguyện], Serial: 00000026, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+22:26:08 [OK][ItemDrop] NV[TocDo] Map ([6](51/113) )Drop Item: [Ngọc Sáng Tạo], Serial: 00000027, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+22:28:57 [OK][ItemDrop] NV[TocDo] Map ([6](51/113) )Drop Item: [Ngọc Ước Nguyện], Serial: 00000028, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+22:58:11 [OK][ItemDrop] NV[TocDo] Map ([6](29/76) )Drop Item: [Ngọc Hỗn Nguyên], Serial: 00000029, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+23:01:38 [OK][ItemDrop] NV[TocDo] Map ([6](29/75) )Drop Item: [Ngọc Hỗn Nguyên], Serial: 0000002A, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+23:13:08 [OK][ItemDrop] NV[TocDo] Map ([6](29/75) )Drop Item: [Ngọc Sinh Mệnh], Serial: 0000002B, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+23:21:06 [OK][ItemDrop] NV[TocDo] Map ([6](29/75) )Drop Item: [Ngọc Tâm Linh], Serial: 0000002C, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+23:43:12 [OK][ItemDrop] NV[TocDo] Map ([6](29/75) )Drop Item: [Ngọc Hỗn Nguyên], Serial: 0000002D, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================

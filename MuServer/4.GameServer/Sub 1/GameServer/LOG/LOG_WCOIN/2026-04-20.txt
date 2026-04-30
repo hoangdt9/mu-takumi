@@ -1,0 +1,12 @@
+00:18:02 CustomMonterAddCoin - storm/WizFire | WC: 1,000 | Trước: 10,000,000 | Sau: 10,001,000 WC
+00:20:53 CustomMonterAddCoin - storm/WizFire | WC: 5,000 | Trước: 10,001,000 | Sau: 10,006,000 WC
+01:23:34 CustomMonterAddCoin - admin/Admin | WC: 100,000 | Trước: 10,000,000 | Sau: 10,100,000 WC
+17:23:54 TruCoinResetVIP - admin/Admin | WC: -5,000 | Trước: 10,100,000 | Sau: 10,095,000 WC
+17:27:54 TruCoinResetVIP - admin/Admin | WC: -5,000 | Trước: 10,095,000 | Sau: 10,090,000 WC
+17:32:01 TruCoinResetVIP - admin/Admin | WC: -5,000 | Trước: 10,090,000 | Sau: 10,085,000 WC
+17:36:08 TruCoinResetVIP - admin/Admin | WC: -5,000 | Trước: 10,085,000 | Sau: 10,080,000 WC
+17:40:15 TruCoinResetVIP - admin/Admin | WC: -5,000 | Trước: 10,080,000 | Sau: 10,075,000 WC
+17:43:59 TruCoinResetVIP - admin/Admin | WC: -5,000 | Trước: 10,075,000 | Sau: 10,070,000 WC
+17:47:29 TruCoinResetVIP - admin/Admin | WC: -5,000 | Trước: 10,070,000 | Sau: 10,065,000 WC
+17:50:57 TruCoinResetVIP - admin/Admin | WC: -5,000 | Trước: 10,065,000 | Sau: 10,060,000 WC
+17:54:25 TruCoinResetVIP - admin/Admin | WC: -5,000 | Trước: 10,060,000 | Sau: 10,055,000 WC

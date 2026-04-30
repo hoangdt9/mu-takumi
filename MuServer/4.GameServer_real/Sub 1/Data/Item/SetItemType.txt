@@ -1,0 +1,567 @@
+//Section	Type	StatType	OptionIndex1	OptionIndex2	Name
+0			2		3			21				0           //Trường Kiếm
+0			14		3			11				0           //Kiếm Điện
+0			17		3			57				0           //Thiên Ma Kiếm
+0			31		3			60				0           //Ảo Ảnh Đao
+0			32		3			37				38          //Nắm đấm Địa Long
+0			33		3			56				0           //Nắm đấm Bạch Hổ
+0			34		3			63				0           //Nắm đấm Quyền Lực
+2			1		3			1				0           //Chùy Gai
+2			11		3			61				0           //Trượng Kim Cương
+4			5		3			29				0           //Cung Bạc
+4			9		3			23				0           //Nỏ Vàng
+4			17		3			59				0           //Cung Thiên Mệnh
+5			0		3			13				0           //Gậy Xương
+5			8		3			51				0           //Gậy Hủy Diệt
+5			9		3			0				47          //Gậy Triệu Hồn
+5			18		3			0				51          //Khuyển Xích Quỷ
+6			0		3			0				2           //Khiên Tròn
+6			6		3			17				0           //Khiên Xương
+6			9		3			5				0           //Khiên Gia Huy
+6			12		3			50				0           //Khiên Ngưu Vương
+7			0		3			4				0           //Mũ Đồng
+7			1		3			11				12          //Mũ Hỏa Long
+7			2		3			13				14          //Mũ Vải Thô
+7			3		3			19				20          //Mũ Ma Thuật
+7			4		3			0				16          //Mũ Xương
+7			5		3			1				2           //Mũ Da
+7			6		3			5				6           //Mũ Trâu Xanh
+7			7		3			17				0           //Mũ Nhân Sư
+7			8		3			8				0           //Mũ Thiên Kim
+7			9		3			10				9           //Mũ Thiết Phiến
+7			10		3			21				22          //Mũ Trinh Nữ
+7			11		3			23				0           //Mũ Lụa
+7			12		3			25				0           //Mũ Thiên Thanh
+7			13		3			0				28          //Mũ Ngọc Bích
+7			14		3			0				30          //Mũ Kim Ngân
+7			17		3			57				0           //Mũ Phượng Hoàng
+7			21		3			64				0           //Mũ Thần Long
+7			22		3			65				0           //Mũ Ma Vương
+7			24		3			66				0           //Mũ Thánh Nữ
+7			26		3			33				0           //Mũ Huyền Thiết
+7			28		3			68				0           //Mũ Chí Tôn
+7			29		3			71				0           //Mũ Quyền Năng
+7			30		3			72				0           //Mũ Thần Ma
+7			31		3			73				0           //Mũ Thái Bình
+7			33		3			75				0           //Mũ Thái Dương
+7			36		3			52				0           //Mũ Nữ Thần
+7			40		3			35				36          //Mũ Hỏa Thiên
+7			42		3			69				0           //Mũ Phục Ma
+7			43		3			76				0           //Mũ Bão Điện
+7			45		3			78				0           //Mũ Titan
+7			46		3			79				0           //Mũ Hoàng Long
+7			49		3			82				0           //Mũ Thiên Vũ
+7			50		3			83				0           //Mũ Anh Vũ
+7			51		3			84				0           //Mũ Đế Vương
+7			52		3			85				0           //Mũ Quỷ Vương
+7			53		3			86				0           //Mũ Chiêm Tinh
+7			59		3			37				0           //Mũ Địa Long
+7			61		3			70				0           //Mũ Quyền Lực
+7			62		3			39				0           //Mũ Trâu Xanh
+7			63		3			40				0           //Mũ Lụa
+7			64		3			41				0           //Mũ Nhân Sư
+7			65		3			42				0           //Mũ Thuật Sĩ
+7			66		3			43				0           //Mũ Huyền Thiết
+7			67		3			44				0           //Mũ Hỏa Long
+7			68		3			45				0           //Mũ Kim Ngân
+7			69		3			46				0           //Mũ Ma Thuật
+7			70		3			47				0           //Mũ Hỏa Thiên
+7			72		3			49				0           //Mũ Bạch Hổ
+7			73		3			77				0           //Mũ Bạch Long
+7			77		3			87				0           //Mũ Huyết Long
+//----------------------------------------------------------------------------
+7			98		3			88				0           //Mũ Huyết Thần DK	
+7			99		3			89				0           //Mũ Huyết Thần DW	
+7			100		3			90				0           //Mũ Huyết Thần Elf	
+7			101		3			92				0           //Mũ Huyết Thần SUM	
+7			103		3			93				0           //Mũ Huyết Thần DL	
+7			104		3			94				0           //Mũ Huyết Thần RF	
+//------------------------------------------------------------
+7			106		3			95				0           //Mũ Hắc Thần DK	
+7			107		3			96				0           //Mũ Hắc Thần DW	
+7			108		3			97				0           //Mũ Hắc Thần Elf	
+7			109		3			99				0           //Mũ Hắc Thần SUM	
+7			111		3			100				0           //Mũ Hắc Thần DL	
+7			112		3			101				0           //Mũ Hắc Thần RF	
+//------------------------------------------------------------
+7			138		3			102				0           //Mũ Thánh Thần DK	
+7			139		3			103				0           //Mũ Thánh Thần DW	
+7			140		3			104				0           //Mũ Thánh Thần Elf	
+7			141		3			106				0           //Mũ Thánh Thần SUM	
+7			143		3			107				0           //Mũ Thánh Thần DL	
+7			144		3			108				0           //Mũ Thánh Thần RF	
+//------------------------------------------------------------
+7			150		3			109				0           //Mũ Thức Tỉnh DK	
+7			151		3			110				0           //Mũ Thức Tỉnh DW	
+7			152		3			111				0           //Mũ Thức Tỉnh Elf	
+7			153		3			113				0           //Mũ Thức Tỉnh SUM	
+7			155		3			114				0           //Mũ Thức Tỉnh DL	
+7			156		3			115				0           //Mũ Thức Tỉnh RF	
+//------------------------------------------------------------
+7			164		3			116				0           //Mũ Mắt Xanh DK	
+7			165		3			117				0           //Mũ Mắt Xanh DW	
+7			166		3			118				0           //Mũ Mắt Xanh Elf	
+7			167		3			120				0           //Mũ Mắt Xanh SUM	
+7			169		3			121				0           //Mũ Mắt Xanh DL	
+7			170		3			122				0           //Mũ Mắt Xanh RF	
+//------------------------------------------------------------
+7			189		3			123				0           //Mũ Tim Bạc DK		
+7			190		3			124				0           //Mũ Tim Bạc DW		
+7			191		3			125				0           //Mũ Tim Bạc Elf	
+7			192		3			127				0           //Mũ Tim Bạc SUM	
+7			194		3			128				0           //Mũ Tim Bạc DL		
+7			195		3			129				0           //Mũ Tim Bạc RF		
+//----------------------------------------------------------------------------
+8			0		3			3				0	        //Áo Đồng
+8			1		3			0				12	        //Áo Hỏa Long
+8			2		3			13				0	        //Áo Vải Thô
+8			3		3			19				20	        //Áo Ma Thuật
+8			4		3			15				16	        //Áo Xương
+8			5		3			1				0	        //Áo Da
+8			6		3			5				6	        //Áo Trâu Xanh
+8			7		3			17				18	        //Áo Nhân Sư
+8			8		3			7				0	        //Áo Thiên Kim
+8			9		3			10				9	        //Áo Thiết Phiến
+8			10		3			22				0	        //Áo Trinh Nữ
+8			11		3			23				0	        //Áo Lụa
+8			12		3			25				0	        //Áo Thiên Thanh
+8			13		3			27				0	        //Áo Ngọc Bích
+8			14		3			29				30	        //Áo Kim Ngân
+8			15		3			31				32	        //Áo Phong Vũ
+8			17		3			57				0	        //Áo Phượng Hoàng
+8			18		3			58				0	        //Áo Triệu Hồn
+8			19		3			59				0	        //Áo Giai Nhân
+8			21		3			64				0	        //Áo Thần Long
+8			22		3			65				0	        //Áo Ma Vương
+8			23		3			67				0	        //Áo Cuồng Phong
+8			24		3			66				0	        //Áo Thánh Nữ
+8			26		3			33				0	        //Áo Huyền Thiết
+8			28		3			68				0	        //Áo Chí Tôn
+8			29		3			71				0	        //Áo Quyền Năng
+8			30		3			72				0	        //Áo Thần Ma
+8			31		3			73				0	        //Áo Thái Bình
+8			32		3			74				0	        //Áo Hồng Long
+8			33		3			75				0	        //Áo Thái Dương
+8			40		3			0				36	        //Áo Hỏa Thiên
+8			41		3			55				0	        //Áo Ma Pháp
+8			42		3			69				0	        //Áo Phục Ma
+8			43		3			76				0	        //Áo Bão Điện
+8			45		3			78				0	        //Áo Titan
+8			46		3			79				0	        //Áo Hoàng Long
+8			47		3			80				0	        //Áo Bóng Ma
+8			48		3			81				0	        //Áo Hủy Diệt
+8			49		3			82				0	        //Áo Thiên Vũ
+8			50		3			83				0	        //Áo Anh Vũ
+8			51		3			84				0	        //Áo Đế Vương
+8			52		3			85				0	        //Áo Quỷ Vương
+8			53		3			86				0	        //Áo Chiêm Tinh
+8			59		3			37				38	        //Áo Địa Long
+8			61		3			70				0	        //Áo Quyền Lực
+8			62		3			39				0	        //Áo Trâu Xanh
+8			63		3			40				0	        //Áo Lụa
+8			64		3			41				0	        //Áo Nhân Sư
+8			65		3			42				0	        //Áo Thuật Sĩ
+8			66		3			43				0	        //Áo Huyền Thiết
+8			67		3			44				0	        //Áo Hỏa Long
+8			68		3			45				0	        //Áo Kim Ngân
+8			69		3			46				0	        //Áo Ma Thuật
+8			70		3			47				0	        //Áo Hỏa Thiên
+8			71		3			48				0	        //Áo Phong Vũ
+8			72		3			49				0	        //Áo Bạch Hổ
+8			73		3			77				0	        //Áo Bạch Long
+8			77		3			87				0	        //Áo Huyết Long
+//----------------------------------------------------------------------------
+8			98 		3			88				0           //Áo Huyết Thần DK		
+8			99 		3			89				0           //Áo Huyết Thần DW		
+8			100		3			90				0           //Áo Huyết Thần Elf		
+8			101		3			91				0           //Áo Huyết Thần SUM		
+8			102		3			92				0           //Áo Huyết Thần MG		
+8			103		3			93				0           //Áo Huyết Thần DL		
+8			104		3			94				0           //Áo Huyết Thần RF		
+//------------------------------------------------------------
+8			106		3			95				0           //Áo Hắc Thần DK		
+8			107		3			96				0           //Áo Hắc Thần DW		
+8			108		3			97				0           //Áo Hắc Thần Elf		
+8			109		3			98				0           //Áo Hắc Thần SUM		
+8			110		3			99				0           //Áo Hắc Thần MG		
+8			111		3			100				0           //Áo Hắc Thần DL		
+8			112		3			101				0           //Áo Hắc Thần RF		
+//------------------------------------------------------------
+8			138		3			102				0           //Áo Thánh Thần DK		
+8			139		3			103				0           //Áo Thánh Thần DW		
+8			140		3			104				0           //Áo Thánh Thần Elf		
+8			141		3			105				0           //Áo Thánh Thần SUM		
+8			142		3			106				0           //Áo Thánh Thần MG		
+8			143		3			107				0           //Áo Thánh Thần DL		
+8			144		3			108				0           //Áo Thánh Thần RF		
+//------------------------------------------------------------	
+8			150		3			109				0           //Áo Thức Tỉnh DK	
+8			151		3			110				0           //Áo Thức Tỉnh DW		
+8			152		3			111				0           //Áo Thức Tỉnh Elf		
+8			153		3			112				0           //Áo Thức Tỉnh SUM		
+8			154		3			113				0           //Áo Thức Tỉnh MG		
+8			155		3			114				0           //Áo Thức Tỉnh DL		
+8			156		3			115				0           //Áo Thức Tỉnh RF		
+//------------------------------------------------------------
+8			164		3			116				0           //Áo Mắt Xanh DK		
+8			165		3			117				0           //Áo Mắt Xanh DW		
+8			166		3			118				0           //Áo Mắt Xanh Elf		
+8			167		3			119				0           //Áo Mắt Xanh SUM		
+8			168		3			120				0           //Áo Mắt Xanh MG		
+8			169		3			121				0           //Áo Mắt Xanh DL		
+8			170		3			122				0           //Áo Mắt Xanh RF		
+//------------------------------------------------------------
+8			189		3			123				0           //Áo Tim Bạc DK			
+8			190		3			124				0           //Áo Tim Bạc DW			
+8			191		3			125				0           //Áo Tim Bạc Elf		
+8			192		3			126				0           //Áo Tim Bạc SUM		
+8			193		3			127				0           //Áo Tim Bạc MG			
+8			194		3			128				0           //Áo Tim Bạc DL			
+8			195		3			129				0           //Áo Tim Bạc RF			
+//----------------------------------------------------------------------------
+9			0		3			3				4	        //Quần Đồng
+9			1		3			0				12	        //Quần Hỏa Long
+9			2		3			13				14	        //Quần Vải Thô
+9			3		3			0				20	        //Quần Ma Thuật
+9			4		3			15				0	        //Quần Xương
+9			5		3			1				2	        //Quần Da
+9			6		3			5				6	        //Quần Trâu Xanh
+9			7		3			17				18	        //Quần Nhân Sư
+9			8		3			7				8	        //Quần Thiên Kim
+9			9		3			10				0	        //Quần Thiết Phiến
+9			10		3			21				22	        //Quần Trinh Nữ
+9			11		3			23				24	        //Quần Lụa
+9			12		3			25				26	        //Quần Thiên Thanh
+9			13		3			27				28	        //Quần Ngọc Bích
+9			14		3			0				30	        //Quần Kim Ngân
+9			15		3			31				32	        //Quần Phong Vũ
+9			16		3			50				0	        //Quần Hắc Long
+9			17		3			57				0	        //Quần Phượng Hoàng
+9			19		3			59				0	        //Quần Giai Nhân
+9			20		3			60				0	        //Quần Lôi Phong
+9			21		3			64				0	        //Quần Thần Long
+9			22		3			65				0	        //Quần Ma Vương
+9			23		3			67				0           //Găng Cuồng Phong
+9			24		3			66				0	        //Quần Thánh Nữ
+9			26		3			33				34	        //Quần Huyền Thiết
+9			28		3			68				0	        //Quần Chí Tôn
+9			29		3			71				0	        //Quần Quyền Năng
+9			30		3			72				0	        //Quần Thần Ma
+9			31		3			73				0	        //Quần Thái Bình
+9			32		3			74				0	        //Quần Hồng Long
+9			33		3			75				0	        //Quần Thái Dương
+9			35		3			51				0	        //Quần Ánh Trăng
+9			36		3			52				0	        //Quần Nữ Thần
+9			40		3			35				0	        //Quần Hỏa Thiên
+9			42		3			69				0	        //Quần Phục Ma
+9			43		3			76				0	        //Quần Bão Điện
+9			45		3			78				0	        //Quần Titan
+9			46		3			79				0	        //Quần Hoàng Long
+9			47		3			80				0	        //Quần Bóng Ma
+9			48		3			81				0	        //Quần Hủy Diệt
+9			49		3			82				0	        //Quần Thiên Vũ
+9			50		3			83				0	        //Quần Anh Vũ
+9			51		3			84				0	        //Quần Đế Vương
+9			52		3			85				0	        //Quần Quỷ Vương
+9			53		3			86				0	        //Quần Chiêm Tinh
+9			59		3			37				38	        //Quần Địa Long
+9			61		3			70				0	        //Quần Quyền Lực
+9			62		3			39				0	        //Quần Trâu Xanh
+9			63		3			40				0	        //Quần Lụa
+9			64		3			41				0	        //Quần Nhân Sư
+9			65		3			42				0	        //Quần Thuật Sĩ
+9			66		3			43				0	        //Quần Huyền Thiết
+9			67		3			44				0	        //Quần Hỏa Long
+9			68		3			45				0	        //Quần Kim Ngân
+9			69		3			46				0	        //Quần Ma Thuật
+9			70		3			47				0	        //Quần Hỏa Thiên
+9			71		3			48				0	        //Quần Phong Vũ
+9			72		3			49				0	        //Quần Bạch Hổ
+9			73		3			77				0	        //Quần Bạch Long
+9			77		3			87				0	        //Quần Huyết Long
+//----------------------------------------------------------------------------
+9			98		3			88				0           //Quần Huyết Thần DK	
+9			99		3			89				0           //Quần Huyết Thần DW	
+9			100		3			90				0           //Quần Huyết Thần Elf	
+9			101		3			91				0           //Quần Huyết Thần SUM	
+9			102		3			92				0           //Quần Huyết Thần MG	
+9			103		3			93				0           //Quần Huyết Thần DL	
+9			104		3			94				0           //Quần Huyết Thần RF	
+//------------------------------------------------------------
+9			106		3			95				0           //Quần Hắc Thần DK		
+9			107		3			96				0           //Quần Hắc Thần DW		
+9			108		3			97				0           //Quần Hắc Thần Elf		
+9			109		3			98				0           //Quần Hắc Thần SUM		
+9			110		3			99				0           //Quần Hắc Thần MG		
+9			111		3			100				0           //Quần Hắc Thần DL		
+9			112		3			101				0           //Quần Hắc Thần RF		
+//------------------------------------------------------------
+9			138		3			102				0           //Quần Thánh Thần DK	
+9			139		3			103				0           //Quần Thánh Thần DW	
+9			140		3			104				0           //Quần Thánh Thần Elf	
+9			141		3			105				0           //Quần Thánh Thần SUM	
+9			142		3			106				0           //Quần Thánh Thần MG	
+9			143		3			107				0           //Quần Thánh Thần DL	
+9			144		3			108				0           //Quần Thánh Thần RF	
+//------------------------------------------------------------
+9			150		3			109				0           //Quần Thức Tỉnh DK		
+9			151		3			110				0           //Quần Thức Tỉnh DW		
+9			152		3			111				0           //Quần Thức Tỉnh Elf	
+9			153		3			112				0           //Quần Thức Tỉnh SUM	
+9			154		3			113				0           //Quần Thức Tỉnh MG		
+9			155		3			114				0           //Quần Thức Tỉnh DL		
+9			156		3			115				0           //Quần Thức Tỉnh RF		
+//------------------------------------------------------------
+9			164		3			116				0           //Quần Mắt Xanh DK		
+9			165		3			117				0           //Quần Mắt Xanh DW		
+9			166		3			118				0           //Quần Mắt Xanh Elf		
+9			167		3			119				0           //Quần Mắt Xanh SUM		
+9			168		3			120				0           //Quần Mắt Xanh MG		
+9			169		3			121				0           //Quần Mắt Xanh DL		
+9			170		3			122				0           //Quần Mắt Xanh RF		
+//------------------------------------------------------------
+9			189		3			123				0           //Quần Tim Bạc DK		
+9			190		3			124				0           //Quần Tim Bạc DW		
+9			191		3			125				0           //Quần Tim Bạc Elf		
+9			192		3			126				0           //Quần Tim Bạc SUM		
+9			193		3			127				0           //Quần Tim Bạc MG		
+9			194		3			128				0           //Quần Tim Bạc DL		
+9			195		3			129				0           //Quần Tim Bạc RF		
+
+//----------------------------------------------------------------------------
+10			0		3			4				0           //Găng Đồng
+10			1		3			11				0           //Găng Hỏa Long
+10			2		3			13				0           //Găng Vải Thô
+10			3		3			19				0           //Găng Ma Thuật
+10			4		3			0				16          //Găng Xương
+10			5		3			1				0           //Găng Da
+10			6		3			0				6           //Găng Trâu Xanh
+10			7		3			17				0           //Găng Nhân Sư
+10			8		3			7				0           //Găng Thiên Kim
+10			9		3			0				9           //Găng Thiết Phiến
+10			10		3			21				0           //Găng Trinh Nữ
+10			11		3			23				24          //Găng Lụa
+10			12		3			25				0           //Găng Thiên Thanh
+10			13		3			27				0           //Găng Ngọc Bích
+10			14		3			29				0           //Găng Kim Ngân
+10			15		3			0				32          //Găng Phong Vũ
+10			18		3			58				0           //Găng Triệu Hồn
+10			20		3			60				0           //Găng Lôi Phong
+10			21		3			64				0           //Găng Thần Long
+10			22		3			65				0           //Găng Ma Vương
+10			23		3			67				0           //Găng Cuồng Phong
+10			24		3			66				0           //Găng Cuồng Phong
+10			26		3			0				34          //Găng Huyền Thiết
+10			27		3			54				0           //Găng Hắc Vương
+10			28		3			68				0           //Găng Chí Tôn
+10			29		3			71				0           //Găng Quyền Năng
+10			30		3			72				0           //Găng Thần Ma
+10			31		3			73				0           //Găng Thái Bình
+10			32		3			74				0           //Găng Hồng Long
+10			33		3			75				0           //Găng Thái Dương
+10			40		3			35				36          //Găng Hỏa Thiên
+10			42		3			69				0           //Găng Phục Ma
+10			43		3			76				0           //Găng Bão Điện
+10			45		3			78				0           //Găng Titan
+10			46		3			79				0           //Găng Hoàng Long
+10			47		3			80				0           //Găng Bóng Ma
+10			48		3			81				0           //Găng Hủy Diệt
+10			49		3			82				0           //Găng Thiên Vũ
+10			50		3			83				0           //Găng Anh Vũ
+10			51		3			84				0           //Găng Đề Vương
+10			52		3			85				0           //Găng Quỷ Vương
+10			53		3			86				0           //Găng Chiêm Tinh
+10			62		3			39				0           //Găng Trâu Xanh
+10			63		3			40				0           //Găng Lụa
+10			64		3			41				0           //Găng Nhân Sư
+10			65		3			42				0           //Găng Thuật Sĩ
+10			66		3			43				0           //Găng Huyền Thiết
+10			67		3			44				0           //Găng Hỏa Long
+10			68		3			45				0           //Găng Kim Ngân
+10			69		3			46				0           //Găng Ma Thuật
+10			70		3			47				0           //Găng Hỏa Thiên
+10			71		3			48				0           //Găng Phong Vũ
+//----------------------------------------------------------------------------
+10			98 		3			88				0           //Găng Huyết Thần DK	
+10			99 		3			89				0           //Găng Huyết Thần DW	
+10			100		3			90				0           //Găng Huyết Thần Elf	
+10			101		3			91				0           //Găng Huyết Thần SUM	
+10			102		3			92				0           //Găng Huyết Thần MG	
+10			103		3			93				0           //Găng Huyết Thần DL	
+//------------------------------------------------------------
+10			106		3			95				0           //Găng Hắc Thần DK		
+10			107		3			96				0           //Găng Hắc Thần DW		
+10			108		3			97				0           //Găng Hắc Thần Elf		
+10			109		3			98				0           //Găng Hắc Thần SUM		
+10			110		3			99				0           //Găng Hắc Thần MG		
+10			111		3			100				0           //Găng Hắc Thần DL		
+//------------------------------------------------------------
+10			138		3			102				0           //Găng Thánh Thần DK	
+10			139		3			103				0           //Găng Thánh Thần DW	
+10			140		3			104				0           //Găng Thánh Thần Elf	
+10			141		3			105				0           //Găng Thánh Thần SUM	
+10			142		3			106				0           //Găng Thánh Thần MG	
+10			143		3			107				0           //Găng Thánh Thần DL	
+//------------------------------------------------------------
+10			150		3			109				0           //Găng Thức Tỉnh DK		
+10			151		3			110				0           //Găng Thức Tỉnh DW		
+10			152		3			111				0           //Găng Thức Tỉnh Elf	
+10			153		3			112				0           //Găng Thức Tỉnh SUM	
+10			154		3			113				0           //Găng Thức Tỉnh MG		
+10			155		3			114				0           //Găng Thức Tỉnh DL		
+//------------------------------------------------------------
+10			164		3			116				0           //Găng Mắt Xanh DK		
+10			165		3			117				0           //Găng Mắt Xanh DW		
+10			166		3			118				0           //Găng Mắt Xanh Elf		
+10			167		3			119				0           //Găng Mắt Xanh SUM		
+10			168		3			120				0           //Găng Mắt Xanh MG		
+10			169		3			121				0           //Găng Mắt Xanh DL		
+//------------------------------------------------------------
+10			189		3			123				0           //Găng Tim Bạc DK		
+10			190		3			124				0           //Găng Tim Bạc DW		
+10			191		3			125				0           //Găng Tim Bạc Elf		
+10			192		3			126				0           //Găng Tim Bạc SUM		
+10			193		3			127				0           //Găng Tim Bạc MG		
+10			194		3			128				0           //Găng Tim Bạc DL		
+//----------------------------------------------------------------------------
+11			0		3			3				0           //Giầy Đồng
+11			1		3			11				0           //Giầy Hỏa Long
+11			2		3			14				0           //Giầy Vải Thô
+11			3		3			0				20          //Giầy Ma Thuật
+11			4		3			15				16          //Giầy Xương
+11			5		3			1				2           //Giầy Da
+11			6		3			0				6           //Giầy Trâu Xanh
+11			7		3			17				18          //Giầy Nhân Sư
+11			8		3			7				0           //Giầy Thiên Kim
+11			9		3			0				9           //Giầy Thiết Phiến
+11			10		3			21				22          //Giầy Trinh Nữ
+11			11		3			0				24          //Giầy Lụa
+11			12		3			25				26          //Giầy Thiên Thanh
+11			13		3			0				28          //Giầy Ngọc Bích
+11			14		3			29				30          //Giầy Kim Ngân
+11			15		3			31				0           //Giầy Phong Vũ
+11			17		3			57				0           //Giầy Phượng Hoàng
+11			18		3			58				0           //Giầy Triệu Hồn
+11			19		3			59				0           //Giầy Giai Nhân
+11			20		3			60				0           //Giầy Lôi Phong
+11			21		3			64				0           //Giầy Thần Long
+11			22		3			65				0           //Giầy Ma Vương
+11			24		3			66				0           //Giầy Thánh Nữ
+11			23		3			67				0           //Giầy Cuồng Phong
+11			26		3			0				34          //Giầy Huyền Thiết
+11			27		3			54				0           //Giầy Hắc Vương
+11			28		3			68				0           //Giầy Chí Tôn
+11			29		3			71				0           //Giầy Quyền Năng
+11			30		3			72				0           //Giầy Thần Ma
+11			31		3			73				0           //Giầy Thái Bình
+11			32		3			74				0           //Giầy Hồng Long
+11			33		3			75				0           //Giầy Thái Dương
+11			40		3			0				36          //Giầy Hỏa Thiên
+11			41		3			55				0           //Giầy Ma Pháp
+11			42		3			69				0           //Giầy Phục Ma
+11			43		3			76				0           //Giầy Bão Điện
+11			45		3			78				0           //Giầy Titan
+11			46		3			79				0           //Giầy Hoàng Long
+11			47		3			80				0           //Giầy Bóng Ma
+11			48		3			81				0           //Giầy Hủy Diệt
+11			49		3			82				0           //Giầy Thiên Vũ
+11			50		3			83				0           //Giầy Anh Vũ
+11			51		3			84				0           //Giầy Đế Vương
+11			52		3			85				0           //Giầy Quỷ Vương
+11			53		3			86				0           //Giầy Chiêm Tinh
+11			59		3			0				38          //Giầy Địa Long
+11			61		3			70				0           //Giầy Quyền Lực
+11			62		3			39				0           //Giầy Trâu Xanh
+11			63		3			40				0           //Giầy Lụa
+11			64		3			41				0           //Giầy Nhân Sư
+11			65		3			42				0           //Giầy Thuật Sĩ
+11			66		3			43				0           //Giầy Huyền Thiết
+11			67		3			44				0           //Giầy Hỏa Long
+11			68		3			45				0           //Giầy Kim Ngân
+11			69		3			46				0           //Giầy Ma Thuật
+11			70		3			47				0           //Giầy Hỏa Thiên
+11			71		3			48				0           //Giầy Phong Vũ
+11			72		3			49				0           //Giầy Bạch Hổ
+11			73		3			77				0           //Giầy Bạch Long
+11			77		3			87				0           //Giầy Huyết Long
+//----------------------------------------------------------------------------
+11			98		3			88				0           //Giầy Huyết Thần DK	
+11			99		3			89				0           //Giầy Huyết Thần DW	
+11			100		3			90				0           //Giầy Huyết Thần Elf	
+11			101		3			91				0           //Giầy Huyết Thần SUM	
+11			102		3			92				0           //Giầy Huyết Thần MG	
+11			103		3			93				0           //Giầy Huyết Thần DL	
+11			104		3			94				0           //Giầy Huyết Thần RF	
+//------------------------------------------------------------
+11			106		3			95				0           //Giầy Hắc Thần DK		
+11			107		3			96				0           //Giầy Hắc Thần DW		
+11			108		3			97				0           //Giầy Hắc Thần Elf		
+11			109		3			98				0           //Giầy Hắc Thần SUM		
+11			110		3			99				0           //Giầy Hắc Thần MG		
+11			111		3			100				0           //Giầy Hắc Thần DL		
+11			112		3			101				0           //Giầy Hắc Thần RF		
+//------------------------------------------------------------
+11			138		3			102				0           //Giầy Thánh Thần DK	
+11			139		3			103				0           //Giầy Thánh Thần DW	
+11			140		3			104				0           //Giầy Thánh Thần Elf	
+11			141		3			105				0           //Giầy Thánh Thần SUM	
+11			142		3			106				0           //Giầy Thánh Thần MG	
+11			143		3			107				0           //Giầy Thánh Thần DL	
+11			144		3			108				0           //Giầy Thánh Thần RF	
+//------------------------------------------------------------
+11			150		3			109				0           //Giầy Thức Tỉnh DK		
+11			151		3			110				0           //Giầy Thức Tỉnh DW		
+11			152		3			111				0           //Giầy Thức Tỉnh Elf	
+11			153		3			112				0           //Giầy Thức Tỉnh SUM	
+11			154		3			113				0           //Giầy Thức Tỉnh MG		
+11			155		3			114				0           //Giầy Thức Tỉnh DL		
+11			156		3			115				0           //Giầy Thức Tỉnh RF		
+//------------------------------------------------------------
+11			164		3			116				0           //Giầy Mắt Xanh DK		
+11			165		3			117				0           //Giầy Mắt Xanh DW		
+11			166		3			118				0           //Giầy Mắt Xanh Elf		
+11			167		3			119				0           //Giầy Mắt Xanh SUM		
+11			168		3			120				0           //Giầy Mắt Xanh MG		
+11			169		3			121				0           //Giầy Mắt Xanh DL		
+11			170		3			122				0           //Giầy Mắt Xanh RF		
+//------------------------------------------------------------
+11			189		3			123				0           //Giầy Tim Bạc DK		
+11			190		3			124				0           //Giầy Tim Bạc DW		
+11			191		3			125				0           //Giầy Tim Bạc Elf		
+11			192		3			126				0           //Giầy Tim Bạc SUM		
+11			193		3			127				0           //Giầy Tim Bạc MG		
+11			194		3			128				0           //Giầy Tim Bạc DL		
+11			195		3			129				0           //Giầy Tim Bạc RF		
+//----------------------------------------------------------------------------
+13			8		1			1				130	        //Nhẫn Băng
+13			9		1			9				131	        //Nhẫn Độc
+13			12		2			5				60	        //Dây Chuyền Sét
+13			13		0			7				53	        //Dây Chuyền Lửa
+13			21		2			19				131	        //Nhẫn Lửa
+13			22		0			21				12	        //Nhẫn Đất
+13			23		1			9				130	        //Nhẫn Gió
+13			24		2			13				35	        //Nhẫn Phép Thuật
+13			25		0			13				131	        //Dây Chuyền Băng
+13			26		1			15				130	        //Dây Chuyền Gió
+13			27		3			31				58	        //Dây Chuyền Nước
+13			28		1			29				56	        //Dây Chuyền Kỹ Năng
+13			176		1			132				0           //Nhẫn Huyết Thần (A)	
+13			177		1			132				0           //Nhẫn Huyết Thần (B)	
+13			178		1			132				0           //Dây Chuyền Huyết Thần	
+13			179		1			133				0           //Nhẫn Hắc Thần (A)		
+13			180		1			133				0           //Nhẫn Hắc Thần (B)		
+13			181		1			133				0           //Dây Chuyền Hắc Thần	
+13			182		1			134				0           //Nhẫn Thánh Thần (A)	
+13			183		1			134				0           //Nhẫn Thánh Thần (B)	
+13			184		1			134				0           //Dây Chuyền Thánh Thần	
+13			185		1			135				0           //Nhẫn Thức Tỉnh (A)	
+13			186		1			135				0           //Nhẫn Thức Tỉnh (B)	
+13			187		1			135				0           //Dây Chuyền Thức Tỉnh	
+13			188		1			136				0           //Nhẫn Mắt Xanh (A)		
+13			189		1			136				0           //Nhẫn Mắt Xanh (B)		
+13			190		1			136				0           //Dây Chuyền Mắt Xanh	
+13			191		1			137				0           //Nhẫn Tim Bạc (A)	
+13			192		1			137				0           //Nhẫn Tim Bạc (B)	
+13			193		1			137				0           //Dây Chuyền Tim Bạc	
+
+end

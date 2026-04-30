@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+	OnWC = 1 cho phép bán item lên chợ bằng WC
+	OnWP = 1 cho phép bán item lên chợ bằng WC
+	OnGP = 1 cho phép bán item lên chợ bằng WC
+	TypeHSD = 1 Xoá Item hết hạn
+	TypeHSD = 2 Giữ Lại Item hết hạn ( nhưng sẽ không hiện cho người khác mua)	
+-->
+<CustomChoTroi Enable="2" TypeHSD="2" OnWC="1" OnWP="0" OnGP="1" OnB="1" OnS="1" OnC="1">
+		<MessageInfo>
+			<Message Index="0"	Text="Không khả dụng !!" />
+			<Message Index="1" 	Text="[ChoTroi] Vật phẩm bạn chọn không còn tồn tại trên hệ thống !" />
+			<Message Index="2" 	Text="Bạn cần có %d [%s] để mua Item này" />
+			<Message Index="3" 	Text="[ChoTroi] Vui lòng lấy Item cũ trước !" />
+			<Message Index="4" 	Text="Item này không được phép rao bán" />
+			<Message Index="5" 	Text="Thao tác quá nhanh vui lòng chậm lại !!" />
+			<Message Index="6" 	Text="Không đủ chô trống để mua Item !" />
+			<Message Index="7" 	Text="Bạn đã mua thành công Item %s !" />
+			<Message Index="8" 	Text="Bạn vừa thu hồi Item %s !" />
+			<Message Index="9" 	Text="Bạn vừa rao bán %s với giá %d (%s)" />
+			<Message Index="10" Text="[Chợ Trời] Bán Item" />
+			<Message Index="11" Text="[Chợ Trời] Tiền tệ bạn chọn không khả dụng !!" />
+			<Message Index="12" Text="[Chợ Trời] [%s] Vừa Rao Bán [%s] +[%d] !!" />
+		</MessageInfo>	
+	
+		<!--Cấu hình thu thuế , thu phí người bán
+		TypeItem = 0 Item còn lại không thuộc bên dưới
+		TypeItem = 1 Vũ Khí, Khiên
+		TypeItem = 2 Mũ
+		TypeItem = 3 Áo
+		TypeItem = 4 Quần
+		TypeItem = 5 Tay
+		TypeItem = 6 Chân
+		TypeItem = 7 Cánh
+		TypeItem = 8 Pet,sói, thú cưỡi
+		TypeItem = 9 Dây Chuyền
+		TypeItem = 10 Nhẫn
+		
+		WCRate,WPRate,GPRate = Tỷ lệ thuế trừ vào phần Coin của người bán khi bán thành công (Giá trị là %)
+		-->
+		<ConfigVAT>
+			<Type TypeItem="0"   WCRate="5"  WPRate="10" GPRate="10" BRate="10" SRate="10" CRate="10"	/>
+			<Type TypeItem="1"   WCRate="10" WPRate="10" GPRate="10" BRate="5" SRate="7" CRate="10"	/>
+			<Type TypeItem="2"   WCRate="10" WPRate="10" GPRate="10" BRate="10" SRate="10" CRate="10"	/>
+			<Type TypeItem="3"   WCRate="10" WPRate="10" GPRate="10" BRate="10" SRate="10" CRate="10"	/>
+			<Type TypeItem="4"   WCRate="10" WPRate="10" GPRate="10" BRate="10" SRate="10" CRate="10"	/>
+			<Type TypeItem="5"   WCRate="10" WPRate="10" GPRate="10" BRate="5"  SRate="7"  CRate="10"	/>
+			<Type TypeItem="6"   WCRate="10" WPRate="10" GPRate="10" BRate="10" SRate="10" CRate="10"	/>
+			<Type TypeItem="7"   WCRate="15" WPRate="10" GPRate="10" BRate="10" SRate="10" CRate="10"	/>
+			<Type TypeItem="8"   WCRate="10" WPRate="10" GPRate="10" BRate="10" SRate="10" CRate="10"	/>
+			<Type TypeItem="9"   WCRate="10" WPRate="10" GPRate="10" BRate="10" SRate="10" CRate="10"	/>
+			<Type TypeItem="10"  WCRate="10" WPRate="10" GPRate="10" BRate="10" SRate="10" CRate="10"	/>
+		</ConfigVAT>
+		<!--Cấu hình item không được phép rao bán lên chợ
+			IndexMin ~ IndexMax : ID Item 
+			LvMin ~ LvMin : _Lv giới hạn không rao bán
+			Luck : check Luck
+			Skill : check skill
+			Opt : check Opt
+			Opt : check Opt
+			ExcOpt : Check ExcOpt
+		-->
+		<ConfigItemBlock>
+				<Item IndexMin="0"  IndexMax="512" LvMin="-1" LvMin="-1" Skill="-1" Luck="-1" Opt="-1" ExcOpt="0"/>
+				<Item IndexMin="0"  IndexMax="512" LvMin="-1" LvMin="-1" Skill="-1" Luck="-1" Opt="-1" ExcOpt="32"/>
+		</ConfigItemBlock>
+</CustomChoTroi>

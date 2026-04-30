@@ -1,0 +1,176 @@
+00:00:00 GHRS Hôm nay là 50 Reset
+00:17:23 [9000] LogOutCharacter (qweqwe)
+00:17:23 DelAccount [test1234] LogOut!
+00:17:23 DelClient IP: 192.168.99.1
+00:22:36 AddClient - IP: 192.168.99.1
+00:22:45 AddAccount [test1234] Login!
+00:22:50 [9000] LogInCharacter (qweqwe)
+00:30:07 [9000] LogOutCharacter (qweqwe)
+00:30:07 DelAccount [test1234] LogOut!
+00:30:07 DelClient IP: 192.168.99.1
+00:34:44 AddClient - IP: 192.168.99.1
+00:34:51 AddAccount [test1234] Login!
+00:34:52 [9000] LogInCharacter (qweqwe)
+00:46:32 [9000] LogOutCharacter (qweqwe)
+00:46:32 DelAccount [test1234] LogOut!
+00:46:32 DelClient IP: 192.168.99.1
+00:50:43 AddClient - IP: 192.168.99.1
+00:50:54 AddAccount [test1234] Login!
+00:51:02 [9000] LogInCharacter (qweqwe)
+01:23:59 [ServerInfo] CashShop loaded successfully
+01:23:59 [ServerInfo] ChaosMix loaded successfully
+01:23:59 [ServerInfo] Character loaded successfully
+01:23:59 [VongQuay] [1] Size 1 
+01:23:59 [DoiItem] Load OK Enable = 0, Size 37
+01:23:59 [CustomMonterPoint] Data Size 28
+01:23:59 [HuyExc] On: 1 TypeMixCount : 6
+01:23:59 [VIPChar] Enable 1, Date ItemPoint 17, Data LevelVip 20
+01:23:59 [CustomJewel] Load OK !!!!!!!!!!
+01:23:59 [CustomChoTroi] Load VAT 11, Load ItemBlock 2
+01:23:59 [CustomItemBank] (1) Load 26 Item In List
+01:23:59 [LoadMocNap] [1] Size 3 
+01:23:59 [ServerInfo] Custom loaded successfully
+01:23:59 [ServerInfo] Command loaded successfully
+01:23:59 [ServerInfo] Common loaded successfully
+01:23:59 [ Crywolf ] State (0) -> NONE
+01:23:59 [ Crywolf ] SetState - StateInfo : Occupation/0, State/0
+01:23:59 [ServerInfo] Event loaded successfully
+01:23:59 [ServerInfo] EventItemBag loaded successfully
+01:23:59 [ServerInfo] Hack loaded successfully
+01:23:59 [ServerInfo] Item loaded successfully
+01:23:59 [ServerInfo] Monster loaded successfully
+01:23:59 [ServerInfo] Move loaded successfully
+01:23:59 [ServerInfo] Quest loaded successfully
+01:23:59 [ServerInfo] Shop loaded successfully
+01:23:59 [ServerInfo] Skill loaded successfully
+01:23:59 [ResetTable]Enable (1) Load Config  1
+01:23:59 [ResetTableVIP]Enable (1) Load Config  1
+01:23:59 [ServerInfo] Util loaded successfully
+01:23:59 [BotThuMua]Bot: 1 DoiItem: 1  DoiItemList:2
+01:23:59 [BotTrade] Load COnffig OK Enable 1
+01:23:59 [ReadBotInfo] BotSystem loaded successfully
+01:24:00 [ CRYWOLF ] SYNC Occupation: 0, State: 0
+01:24:48 AddClient - IP: 192.168.99.1
+01:24:56 AddAccount [test1234] Login!
+01:24:59 [9000] LogInCharacter (qweqwe)
+01:30:31 AddClient - IP: 192.168.99.1
+01:30:40 [9000] LogOutCharacter (qweqwe)
+01:30:40 DelAccount [test1234] LogOut!
+01:30:40 DelClient IP: 192.168.99.1
+01:30:57 AddClient - IP: 192.168.99.1
+01:31:33 DelClient IP: 192.168.99.1
+01:31:33 DelClient IP: 192.168.99.1
+01:31:52 AddClient - IP: 192.168.99.1
+01:32:06 AddAccount [test1234] Login!
+01:32:19 [9000] LogInCharacter (qweqwe)
+01:37:21 [9000] LogOutCharacter (qweqwe)
+01:37:21 DelAccount [test1234] LogOut!
+01:37:21 DelClient IP: 192.168.99.1
+01:37:56 AddClient - IP: 192.168.99.1
+01:38:20 AddAccount [test1234] Login!
+01:38:25 [9001] LogInCharacter (qweqwe)
+01:41:38 [9001] LogOutCharacter (qweqwe)
+01:41:38 DelAccount [test1234] LogOut!
+01:41:38 DelClient IP: 192.168.99.1
+01:42:01 AddClient - IP: 192.168.99.1
+01:42:19 AddAccount [test1234] Login!
+01:42:21 [9000] LogInCharacter (qweqwe)
+01:49:22 [9000] LogOutCharacter (qweqwe)
+01:49:22 DelAccount [test1234] LogOut!
+01:49:22 DelClient IP: 192.168.99.1
+01:50:13 AddClient - IP: 192.168.99.1
+01:50:25 AddAccount [test1234] Login!
+01:50:27 [9001] LogInCharacter (qweqwe)
+01:51:54 [9001] LogOutCharacter (qweqwe)
+01:51:54 DelAccount [test1234] LogOut!
+01:51:54 DelClient IP: 192.168.99.1
+01:54:20 AddClient - IP: 192.168.99.1
+01:54:30 AddAccount [test1234] Login!
+01:54:34 [9000] LogInCharacter (qweqwe)
+01:55:59 [9000] LogOutCharacter (qweqwe)
+01:55:59 DelAccount [test1234] LogOut!
+01:55:59 DelClient IP: 192.168.99.1
+01:55:59 Game response error causes conclusion [9000][][][192.168.99.1]
+01:58:03 AddClient - IP: 192.168.99.1
+01:58:16 AddAccount [test1234] Login!
+01:58:18 [9001] LogInCharacter (qweqwe)
+02:11:27 [9001] LogOutCharacter (qweqwe)
+02:11:27 DelAccount [test1234] LogOut!
+02:11:27 DelClient IP: 192.168.99.1
+02:35:13 AddClient - IP: 192.168.99.1
+02:35:39 AddAccount [test1234] Login!
+02:35:42 [9000] LogInCharacter (qweqwe)
+02:47:46 [9000] LogOutCharacter (qweqwe)
+02:47:46 DelAccount [test1234] LogOut!
+02:47:46 DelClient IP: 192.168.99.1
+03:12:40 AddClient - IP: 192.168.99.1
+03:27:41 DelClient IP: 192.168.99.1
+03:27:41 Response error after connection causes conclusion [9001][][][192.168.99.1]
+04:13:17 AddClient - IP: 192.168.99.1
+04:13:19 AddAccount [TEST123] Login!
+04:13:35 DelAccount [TEST123] LogOut!
+04:13:35 DelClient IP: 192.168.99.1
+10:11:05 AddClient - IP: 192.168.99.1
+10:11:14 AddAccount [test1234] Login!
+10:11:17 [9001] LogInCharacter (qweqwe)
+10:20:36 [9001] LogOutCharacter (qweqwe)
+10:20:36 DelAccount [test1234] LogOut!
+10:20:36 DelClient IP: 192.168.99.1
+10:35:29 AddClient - IP: 192.168.99.1
+10:35:37 AddAccount [test1234] Login!
+10:35:38 [9000] LogInCharacter (qweqwe)
+10:42:14 AddClient - IP: 192.168.99.1
+10:42:20 [9000] LogOutCharacter (qweqwe)
+10:42:20 DelAccount [test1234] LogOut!
+10:42:20 DelClient IP: 192.168.99.1
+10:42:29 AddAccount [test1234] Login!
+10:42:33 [9001] LogInCharacter (qweqwe)
+10:57:23 [9001] LogOutCharacter (qweqwe)
+10:57:23 DelAccount [test1234] LogOut!
+10:57:23 DelClient IP: 192.168.99.1
+10:59:42 AddClient - IP: 192.168.99.1
+10:59:50 DelClient IP: 192.168.99.1
+11:04:36 AddClient - IP: 192.168.99.1
+11:04:38 DelClient IP: 192.168.99.1
+11:05:23 AddClient - IP: 192.168.99.1
+11:05:37 DelClient IP: 192.168.99.1
+11:05:53 AddClient - IP: 192.168.99.1
+11:06:12 DelClient IP: 192.168.99.1
+11:11:27 AddClient - IP: 192.168.99.1
+11:11:31 AddClient - IP: 192.168.99.1
+11:11:45 AddClient - IP: 192.168.99.1
+11:11:50 AddClient - IP: 192.168.99.1
+11:11:59 AddClient - IP: 192.168.99.1
+11:12:09 DelClient IP: 192.168.99.1
+11:12:09 DelClient IP: 192.168.99.1
+11:12:09 DelClient IP: 192.168.99.1
+11:12:09 DelClient IP: 192.168.99.1
+11:12:09 DelClient IP: 192.168.99.1
+11:12:28 AddClient - IP: 192.168.99.1
+11:12:30 DelClient IP: 192.168.99.1
+11:12:44 AddClient - IP: 192.168.99.1
+11:12:49 DelClient IP: 192.168.99.1
+11:13:09 AddClient - IP: 192.168.99.1
+11:13:10 DelClient IP: 192.168.99.1
+11:19:16 AddClient - IP: 192.168.99.1
+11:19:42 AddAccount [test1234] Login!
+11:19:43 [9004] LogInCharacter (qweqwe)
+11:22:29 [9004] LogOutCharacter (qweqwe)
+11:22:29 DelAccount [test1234] LogOut!
+11:22:29 DelClient IP: 192.168.99.1
+11:23:38 AddClient - IP: 192.168.99.1
+11:28:25 AddClient - IP: 192.168.99.1
+11:30:44 AddAccount [test1234] Login!
+11:30:56 [9001] LogInCharacter (qweqwe)
+11:32:09 DelClient IP: 192.168.99.1
+11:32:29 AddClient - IP: 192.168.99.1
+11:32:40 [9001] LogOutCharacter (qweqwe)
+11:32:40 DelAccount [test1234] LogOut!
+11:32:40 DelClient IP: 192.168.99.1
+11:32:47 DelClient IP: 192.168.99.1
+12:27:40 AddClient - IP: 192.168.99.1
+12:27:58 AddAccount [test1234] Login!
+12:28:11 [9003] LogInCharacter (wqewq)
+12:32:34 [9003] LogOutCharacter (wqewq)
+12:32:34 DelAccount [test1234] LogOut!
+12:32:34 DelClient IP: 192.168.99.1

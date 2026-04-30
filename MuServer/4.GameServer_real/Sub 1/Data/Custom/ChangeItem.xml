@@ -1,0 +1,364 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+	Enable
+-->
+<DoiItem Enable="0" >
+	<Message>
+	<!-- Mess-->
+		<Msg Index="0"	Text="" />
+		<Msg Index="1"	Text="[Đổi Item] Item không đủ điều kiện!" />
+		<Msg Index="2"	Text="Bạn Không Có Đủ Wcoin" />
+		<Msg Index="3"	Text="Ô Này Không Có Item !" />
+		<Msg Index="4"	Text="Chúc Mừng [%s] Đổi Thành Công %s Sang Món Khác !" />
+	</Message>
+
+	<!-- Config NPC
+	- Khong Can Them vao Montersetbase
+	-->
+	<NPC NPCClass="243" NPCMap="3" NPCX="171" NPCY = "109" NPCDir="3"/>	
+	<!--
+	List Nhóm Dung Luyện
+	
+	Coppy Toàn bộ  <GroupDungLuyen> .... </GroupDungLuyen> để tạo theo nhóm
+	TypeFail = 1 Khi thất bại mất toàn bộ
+			   0 Trả lại item chính mất hết item phụ
+			   
+	;Notice = Hiện thống báo in game
+	0: Không Hiện
+	1: Thông báo trong sub	
+	2: Thông báo Liên sub 			   
+	-->
+	<GroupDoiItem Notice="1" Name="Trượng Vip 1" Wcoin="100000">
+		<!--
+		 Level : Item có LV cao hơn mới được đung luyện
+		 Skill,Luck,Option,Exc = 1 thì bắt buộc phải có skill luck option exc
+		-->
+		<ItemChinh IndexItem="1068" Level="9" Skill = "0" Luck="0" Option="0" Exc="1"/>	
+		<ItemKetQua IndexItem="2092" IndexItem1="2626" IndexItem2="3128" IndexItem3="180" IndexItem4="181" IndexItem5="-1"/>	
+	</GroupDoiItem>
+	
+	<GroupDoiItem Notice="1" Name="Cung Vip 1" Wcoin="100000">
+		<!--
+		 Level : Item có LV cao hơn mới được đung luyện
+		 Skill,Luck,Option,Exc = 1 thì bắt buộc phải có skill luck option exc
+		-->
+		<ItemChinh IndexItem="2092" Level="9" Skill = "0" Luck="0" Option="0" Exc="1"/>	
+		<ItemKetQua IndexItem="1068" IndexItem1="2626" IndexItem2="3128" IndexItem3="180" IndexItem4="181" IndexItem5="-1"/>	
+	</GroupDoiItem>
+	
+	<GroupDoiItem Notice="1" Name="Gậy VIP 1" Wcoin="100000">
+		<!--
+		 Level : Item có LV cao hơn mới được đung luyện
+		 Skill,Luck,Option,Exc = 1 thì bắt buộc phải có skill luck option exc
+		-->
+		<ItemChinh IndexItem="2626" Level="9" Skill = "0" Luck="0" Option="0" Exc="1"/>	
+		<ItemKetQua IndexItem="1068" IndexItem1="2092" IndexItem2="3128" IndexItem3="180" IndexItem4="181" IndexItem5="-1"/>	
+	</GroupDoiItem>
+	
+	<GroupDoiItem Notice="1" Name="Khiên VIP 1" Wcoin="100000">
+		<!--
+		 Level : Item có LV cao hơn mới được đung luyện
+		 Skill,Luck,Option,Exc = 1 thì bắt buộc phải có skill luck option exc
+		-->
+		<ItemChinh IndexItem="3128" Level="9" Skill = "0" Luck="0" Option="0" Exc="1"/>	
+		<ItemKetQua IndexItem="1068" IndexItem1="2092" IndexItem2="2626" IndexItem3="180" IndexItem4="181" IndexItem5="-1"/>	
+	</GroupDoiItem>
+	
+	<GroupDoiItem Notice="3" Name="Vuốt V1" Wcoin="100000">
+		<!--
+		 Level : Item có LV cao hơn mới được đung luyện
+		 Skill,Luck,Option,Exc = 1 thì bắt buộc phải có skill luck option exc
+		-->
+		<ItemChinh IndexItem="180" Level="9" Skill = "0" Luck="0" Option="0" Exc="1"/>	
+		<ItemKetQua IndexItem="1068" IndexItem1="2092" IndexItem2="2626" IndexItem3="3128" IndexItem4="181" IndexItem5="-1"/>	
+	</GroupDoiItem>
+	
+	<GroupDoiItem Notice="1" Name="Kiếm V1" Wcoin="100000">
+		<!--
+		 Level : Item có LV cao hơn mới được đung luyện
+		 Skill,Luck,Option,Exc = 1 thì bắt buộc phải có skill luck option exc
+		-->
+		<ItemChinh IndexItem="181" Level="9" Skill = "0" Luck="0" Option="0" Exc="1"/>	
+		<ItemKetQua IndexItem="1068" IndexItem1="2092" IndexItem2="2626" IndexItem3="3128" IndexItem4="180" IndexItem5="-1"/>	
+	</GroupDoiItem>
+	
+	<GroupDoiItem Notice="1" Name="Trượng Vip 2" Wcoin="100000">
+		<!--
+		 Level : Item có LV cao hơn mới được đung luyện
+		 Skill,Luck,Option,Exc = 1 thì bắt buộc phải có skill luck option exc
+		-->
+		<ItemChinh IndexItem="1069" Level="9" Skill = "0" Luck="0" Option="0" Exc="1"/>	
+		<ItemKetQua IndexItem="2094" IndexItem1="2627" IndexItem2="3129" IndexItem3="182" IndexItem4="183" IndexItem5="-1"/>	
+	</GroupDoiItem>
+	
+	<GroupDoiItem Notice="1" Name="Trượng Vip 2" Wcoin="100000">
+		<!--
+		 Level : Item có LV cao hơn mới được đung luyện
+		 Skill,Luck,Option,Exc = 1 thì bắt buộc phải có skill luck option exc
+		-->
+		<ItemChinh IndexItem="2094" Level="9" Skill = "0" Luck="0" Option="0" Exc="1"/>	
+		<ItemKetQua IndexItem="1069" IndexItem1="2627" IndexItem2="3129" IndexItem3="182" IndexItem4="183" IndexItem5="-1"/>	
+	</GroupDoiItem>
+	
+	<GroupDoiItem Notice="1" Name="Trượng Vip 2" Wcoin="100000">
+		<!--
+		 Level : Item có LV cao hơn mới được đung luyện
+		 Skill,Luck,Option,Exc = 1 thì bắt buộc phải có skill luck option exc
+		-->
+		<ItemChinh IndexItem="2627" Level="9" Skill = "0" Luck="0" Option="0" Exc="1"/>	
+		<ItemKetQua IndexItem="1069" IndexItem1="2094" IndexItem2="3129" IndexItem3="182" IndexItem4="183" IndexItem5="-1"/>	
+	</GroupDoiItem>
+	
+	<GroupDoiItem Notice="1" Name="Trượng Vip 2" Wcoin="100000">
+		<!--
+		 Level : Item có LV cao hơn mới được đung luyện
+		 Skill,Luck,Option,Exc = 1 thì bắt buộc phải có skill luck option exc
+		-->
+		<ItemChinh IndexItem="3129" Level="9" Skill = "0" Luck="0" Option="0" Exc="1"/>	
+		<ItemKetQua IndexItem="1069" IndexItem1="2094" IndexItem2="2627" IndexItem3="182" IndexItem4="183" IndexItem5="-1"/>	
+	</GroupDoiItem>
+	
+	<GroupDoiItem Notice="1" Name="Trượng Vip 2" Wcoin="100000">
+		<!--
+		 Level : Item có LV cao hơn mới được đung luyện
+		 Skill,Luck,Option,Exc = 1 thì bắt buộc phải có skill luck option exc
+		-->
+		<ItemChinh IndexItem="182" Level="9" Skill = "0" Luck="0" Option="0" Exc="1"/>	
+		<ItemKetQua IndexItem="1069" IndexItem1="2094" IndexItem2="2627" IndexItem3="3129" IndexItem4="183" IndexItem5="-1"/>	
+	</GroupDoiItem>
+	
+	<GroupDoiItem Notice="1" Name="Trượng Vip 2" Wcoin="100000">
+		<!--
+		 Level : Item có LV cao hơn mới được đung luyện
+		 Skill,Luck,Option,Exc = 1 thì bắt buộc phải có skill luck option exc
+		-->
+		<ItemChinh IndexItem="183" Level="9" Skill = "0" Luck="0" Option="0" Exc="1"/>	
+		<ItemKetQua IndexItem="1069" IndexItem1="2094" IndexItem2="2627" IndexItem3="3129" IndexItem4="182" IndexItem5="-1"/>	
+	</GroupDoiItem>
+	
+	
+	<GroupDoiItem Notice="1" Name="Vip 3" Wcoin="100000">
+		<!--
+		 Level : Item có LV cao hơn mới được đung luyện
+		 Skill,Luck,Option,Exc = 1 thì bắt buộc phải có skill luck option exc
+		-->
+		<ItemChinh IndexItem="1070" Level="9" Skill = "0" Luck="0" Option="0" Exc="1"/>	
+		<ItemKetQua IndexItem="2096" IndexItem1="2628" IndexItem2="3130" IndexItem3="100" IndexItem4="101" IndexItem5="-1"/>	
+	</GroupDoiItem>
+	
+	<GroupDoiItem Notice="1" Name="Vip 3" Wcoin="100000">
+		<!--
+		 Level : Item có LV cao hơn mới được đung luyện
+		 Skill,Luck,Option,Exc = 1 thì bắt buộc phải có skill luck option exc
+		-->
+		<ItemChinh IndexItem="2096" Level="9" Skill = "0" Luck="0" Option="0" Exc="1"/>	
+		<ItemKetQua IndexItem="1070" IndexItem1="2628" IndexItem2="3130" IndexItem3="100" IndexItem4="101" IndexItem5="-1"/>	
+	</GroupDoiItem>
+	
+	<GroupDoiItem Notice="1" Name="Vip 3" Wcoin="100000">
+		<!--
+		 Level : Item có LV cao hơn mới được đung luyện
+		 Skill,Luck,Option,Exc = 1 thì bắt buộc phải có skill luck option exc
+		-->
+		<ItemChinh IndexItem="2628" Level="9" Skill = "0" Luck="0" Option="0" Exc="1"/>	
+		<ItemKetQua IndexItem="1070" IndexItem1="2096" IndexItem2="3130" IndexItem3="100" IndexItem4="101" IndexItem5="-1"/>	
+	</GroupDoiItem>
+	
+	<GroupDoiItem Notice="1" Name="Vip 3" Wcoin="100000">
+		<!--
+		 Level : Item có LV cao hơn mới được đung luyện
+		 Skill,Luck,Option,Exc = 1 thì bắt buộc phải có skill luck option exc
+		-->
+		<ItemChinh IndexItem="3130" Level="9" Skill = "0" Luck="0" Option="0" Exc="1"/>	
+		<ItemKetQua IndexItem="1070" IndexItem1="2096" IndexItem2="2628" IndexItem3="100" IndexItem4="101" IndexItem5="-1"/>	
+	</GroupDoiItem>
+	
+	<GroupDoiItem Notice="1" Name="Vip 3" Wcoin="100000">
+		<!--
+		 Level : Item có LV cao hơn mới được đung luyện
+		 Skill,Luck,Option,Exc = 1 thì bắt buộc phải có skill luck option exc
+		-->
+		<ItemChinh IndexItem="100" Level="9" Skill = "0" Luck="0" Option="0" Exc="1"/>	
+		<ItemKetQua IndexItem="1070" IndexItem1="2096" IndexItem2="2628" IndexItem3="3130" IndexItem4="101" IndexItem5="-1"/>	
+	</GroupDoiItem>
+	
+	<GroupDoiItem Notice="1" Name="Vip 3" Wcoin="100000">
+		<!--
+		 Level : Item có LV cao hơn mới được đung luyện
+		 Skill,Luck,Option,Exc = 1 thì bắt buộc phải có skill luck option exc
+		-->
+		<ItemChinh IndexItem="101" Level="9" Skill = "0" Luck="0" Option="0" Exc="1"/>	
+		<ItemKetQua IndexItem="1070" IndexItem1="2096" IndexItem2="2628" IndexItem3="3130" IndexItem4="100" IndexItem5="-1"/>	
+	</GroupDoiItem>
+	
+	<GroupDoiItem Notice="1" Name="Vip 4" Wcoin="100000">
+		<!--
+		 Level : Item có LV cao hơn mới được đung luyện
+		 Skill,Luck,Option,Exc = 1 thì bắt buộc phải có skill luck option exc
+		-->
+		<ItemChinh IndexItem="1071" Level="9" Skill = "0" Luck="0" Option="0" Exc="1"/>	
+		<ItemKetQua IndexItem="2098" IndexItem1="2629" IndexItem2="3131" IndexItem3="102" IndexItem4="103" IndexItem5="-1"/>	
+	</GroupDoiItem>
+	
+	<GroupDoiItem Notice="1" Name="Vip 4" Wcoin="100000">
+		<!--
+		 Level : Item có LV cao hơn mới được đung luyện
+		 Skill,Luck,Option,Exc = 1 thì bắt buộc phải có skill luck option exc
+		-->
+		<ItemChinh IndexItem="2098" Level="9" Skill = "0" Luck="0" Option="0" Exc="1"/>	
+		<ItemKetQua IndexItem="1071" IndexItem1="2629" IndexItem2="3131" IndexItem3="102" IndexItem4="103" IndexItem5="-1"/>	
+	</GroupDoiItem>
+	
+	<GroupDoiItem Notice="1" Name="Vip 4" Wcoin="100000">
+		<!--
+		 Level : Item có LV cao hơn mới được đung luyện
+		 Skill,Luck,Option,Exc = 1 thì bắt buộc phải có skill luck option exc
+		-->
+		<ItemChinh IndexItem="2629" Level="9" Skill = "0" Luck="0" Option="0" Exc="1"/>	
+		<ItemKetQua IndexItem="1071" IndexItem1="2098" IndexItem2="3131" IndexItem3="102" IndexItem4="103" IndexItem5="-1"/>	
+	</GroupDoiItem>
+	
+	<GroupDoiItem Notice="1" Name="Vip 4" Wcoin="100000">
+		<!--
+		 Level : Item có LV cao hơn mới được đung luyện
+		 Skill,Luck,Option,Exc = 1 thì bắt buộc phải có skill luck option exc
+		-->
+		<ItemChinh IndexItem="3131" Level="9" Skill = "0" Luck="0" Option="0" Exc="1"/>	
+		<ItemKetQua IndexItem="1071" IndexItem1="2098" IndexItem2="2629" IndexItem3="102" IndexItem4="103" IndexItem5="-1"/>	
+	</GroupDoiItem>
+	
+	<GroupDoiItem Notice="1" Name="Vip 4" Wcoin="100000">
+		<!--
+		 Level : Item có LV cao hơn mới được đung luyện
+		 Skill,Luck,Option,Exc = 1 thì bắt buộc phải có skill luck option exc
+		-->
+		<ItemChinh IndexItem="102" Level="9" Skill = "0" Luck="0" Option="0" Exc="1"/>	
+		<ItemKetQua IndexItem="1071" IndexItem1="2098" IndexItem2="2629" IndexItem3="3131" IndexItem4="103" IndexItem5="-1"/>	
+	</GroupDoiItem>
+	
+	<GroupDoiItem Notice="1" Name="Vip 4" Wcoin="100000">
+		<!--
+		 Level : Item có LV cao hơn mới được đung luyện
+		 Skill,Luck,Option,Exc = 1 thì bắt buộc phải có skill luck option exc
+		-->
+		<ItemChinh IndexItem="103" Level="9" Skill = "0" Luck="0" Option="0" Exc="1"/>	
+		<ItemKetQua IndexItem="1071" IndexItem1="2098" IndexItem2="2629" IndexItem3="3131" IndexItem4="102" IndexItem5="-1"/>	
+	</GroupDoiItem>
+	
+	<GroupDoiItem Notice="1" Name="Vip 5" Wcoin="100000">
+		<!--
+		 Level : Item có LV cao hơn mới được đung luyện
+		 Skill,Luck,Option,Exc = 1 thì bắt buộc phải có skill luck option exc
+		-->
+		<ItemChinh IndexItem="1072" Level="9" Skill = "0" Luck="0" Option="0" Exc="1"/>	
+		<ItemKetQua IndexItem="2100" IndexItem1="2630" IndexItem2="3132" IndexItem3="104" IndexItem4="105" IndexItem5="-1"/>	
+	</GroupDoiItem>
+	
+	<GroupDoiItem Notice="1" Name="Vip 5" Wcoin="100000">
+		<!--
+		 Level : Item có LV cao hơn mới được đung luyện
+		 Skill,Luck,Option,Exc = 1 thì bắt buộc phải có skill luck option exc
+		-->
+		<ItemChinh IndexItem="2100" Level="9" Skill = "0" Luck="0" Option="0" Exc="1"/>	
+		<ItemKetQua IndexItem="1072" IndexItem1="2630" IndexItem2="3132" IndexItem3="104" IndexItem4="105" IndexItem5="-1"/>	
+	</GroupDoiItem>
+	
+	<GroupDoiItem Notice="1" Name="Vip 5" Wcoin="100000">
+		<!--
+		 Level : Item có LV cao hơn mới được đung luyện
+		 Skill,Luck,Option,Exc = 1 thì bắt buộc phải có skill luck option exc
+		-->
+		<ItemChinh IndexItem="2630" Level="9" Skill = "0" Luck="0" Option="0" Exc="1"/>	
+		<ItemKetQua IndexItem="1072" IndexItem1="2100" IndexItem2="3132" IndexItem3="104" IndexItem4="105" IndexItem5="-1"/>	
+	</GroupDoiItem>
+	
+	<GroupDoiItem Notice="1" Name="Vip 5" Wcoin="100000">
+		<!--
+		 Level : Item có LV cao hơn mới được đung luyện
+		 Skill,Luck,Option,Exc = 1 thì bắt buộc phải có skill luck option exc
+		-->
+		<ItemChinh IndexItem="3132" Level="9" Skill = "0" Luck="0" Option="0" Exc="1"/>	
+		<ItemKetQua IndexItem="1072" IndexItem1="2100" IndexItem2="2630" IndexItem3="104" IndexItem4="105" IndexItem5="-1"/>	
+	</GroupDoiItem>
+	
+	<GroupDoiItem Notice="1" Name="Vip 5" Wcoin="100000">
+		<!--
+		 Level : Item có LV cao hơn mới được đung luyện
+		 Skill,Luck,Option,Exc = 1 thì bắt buộc phải có skill luck option exc
+		-->
+		<ItemChinh IndexItem="104" Level="9" Skill = "0" Luck="0" Option="0" Exc="1"/>	
+		<ItemKetQua IndexItem="1072" IndexItem1="2100" IndexItem2="2630" IndexItem3="3132" IndexItem4="105" IndexItem5="-1"/>	
+	</GroupDoiItem>
+	
+	<GroupDoiItem Notice="1" Name="Vip 5" Wcoin="100000">
+		<!--
+		 Level : Item có LV cao hơn mới được đung luyện
+		 Skill,Luck,Option,Exc = 1 thì bắt buộc phải có skill luck option exc
+		-->
+		<ItemChinh IndexItem="105" Level="9" Skill = "0" Luck="0" Option="0" Exc="1"/>	
+		<ItemKetQua IndexItem="1072" IndexItem1="2100" IndexItem2="2630" IndexItem3="3132" IndexItem4="104" IndexItem5="-1"/>	
+	</GroupDoiItem>
+	
+	<GroupDoiItem Notice="1" Name="Apolo" Wcoin="100000">
+		<ItemChinh IndexItem="197" Level="9" Skill = "0" Luck="0" Option="0" Exc="1"/>	
+		<ItemKetQua IndexItem="198" IndexItem1="3257" IndexItem2="2670" IndexItem3="2671" IndexItem4="1131" IndexItem5="199"/>	
+	</GroupDoiItem>
+	
+	<GroupDoiItem Notice="1" Name="Apolo" Wcoin="100000">
+		<!--
+		 Level : Item có LV cao hơn mới được đung luyện
+		 Skill,Luck,Option,Exc = 1 thì bắt buộc phải có skill luck option exc
+		-->
+		<ItemChinh IndexItem="198" Level="9" Skill = "0" Luck="0" Option="0" Exc="1"/>	
+		<ItemKetQua IndexItem="197" IndexItem1="3257" IndexItem2="2670" IndexItem3="2671" IndexItem4="1131" IndexItem5="199"/>	
+	</GroupDoiItem>
+	
+	<GroupDoiItem Notice="1" Name="Apolo" Wcoin="100000">
+		<!--
+		 Level : Item có LV cao hơn mới được đung luyện
+		 Skill,Luck,Option,Exc = 1 thì bắt buộc phải có skill luck option exc
+		-->
+		<ItemChinh IndexItem="3257" Level="9" Skill = "0" Luck="0" Option="0" Exc="1"/>	
+		<ItemKetQua IndexItem="197" IndexItem1="198" IndexItem2="2670" IndexItem3="2671" IndexItem4="1131" IndexItem5="199"/>	
+	</GroupDoiItem>
+	
+	<GroupDoiItem Notice="1" Name="Apolo" Wcoin="100000">
+		<!--
+		 Level : Item có LV cao hơn mới được đung luyện
+		 Skill,Luck,Option,Exc = 1 thì bắt buộc phải có skill luck option exc
+		-->
+		<ItemChinh IndexItem="2670" Level="9" Skill = "0" Luck="0" Option="0" Exc="1"/>	
+		<ItemKetQua IndexItem="197" IndexItem1="198" IndexItem2="3257" IndexItem3="2671" IndexItem4="1131" IndexItem5="199"/>	
+	</GroupDoiItem>
+	
+	<GroupDoiItem Notice="1" Name="Apolo" Wcoin="100000">
+		<!--
+		 Level : Item có LV cao hơn mới được đung luyện
+		 Skill,Luck,Option,Exc = 1 thì bắt buộc phải có skill luck option exc
+		-->
+		<ItemChinh IndexItem="2671" Level="9" Skill = "0" Luck="0" Option="0" Exc="1"/>	
+		<ItemKetQua IndexItem="197" IndexItem1="198" IndexItem2="3257" IndexItem3="2670" IndexItem4="1131" IndexItem5="199"/>	
+	</GroupDoiItem>
+	
+	<GroupDoiItem Notice="1" Name="Apolo" Wcoin="100000">
+		<!--
+		 Level : Item có LV cao hơn mới được đung luyện
+		 Skill,Luck,Option,Exc = 1 thì bắt buộc phải có skill luck option exc
+		-->
+		<ItemChinh IndexItem="1131" Level="9" Skill = "0" Luck="0" Option="0" Exc="1"/>	
+		<ItemKetQua IndexItem="197" IndexItem1="198" IndexItem2="3257" IndexItem3="2670" IndexItem4="2671" IndexItem5="199"/>	
+	</GroupDoiItem>
+	
+	<GroupDoiItem Notice="1" Name="Apolo" Wcoin="100000">
+		<!--
+		 Level : Item có LV cao hơn mới được đung luyện
+		 Skill,Luck,Option,Exc = 1 thì bắt buộc phải có skill luck option exc
+		-->
+		<ItemChinh IndexItem="199" Level="9" Skill = "0" Luck="0" Option="0" Exc="1"/>	
+		<ItemKetQua IndexItem="197" IndexItem1="198" IndexItem2="3257" IndexItem3="2670" IndexItem4="2671" IndexItem5="1131"/>	
+	</GroupDoiItem>
+	
+	
+	
+	
+</DoiItem>

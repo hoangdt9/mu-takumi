@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+	;Notice = Hiện thống báo in game
+	1: Thông báo trong sub		([%s] nâng Danh Hiệu lên cấp %d)
+	2: Thông báo All Toàn sub ([%s] nâng Danh Hiệu lên cấp %d
+	3: Thông báo All Toàn sub ([Sv-1][%s] nâng Danh Hiệu lên cấp %d ([Sv-1] = ServerName GS-Common)
+-->
+<CustomSkinModel Enable="1" Firework="1" Notice="3" Msg="[%s] Đã Mua Trang Phục '%s' !">
+	<MessageInfo>
+		<Message Index="0"	Text="Không khả dụng !!" />
+		<Message Index="1" 	Text="[SkinModel] Cần có [%d WP]" />
+	</MessageInfo>	
+	
+	<SkinModel>
+		<List SkinIndex="2000" WcoinP="21"	ValueOp1="5000" ValueOp2="5000"    ValueOp3="5000"  ValueOp4="5000"	 NameSkin="Skin 1"/> <!--Chaos-->
+		<List SkinIndex="2001" WcoinP="22"	ValueOp1="5000" ValueOp2="5000"    ValueOp3="5000"  ValueOp4="5000"	 NameSkin="Skin 2"/> <!--Chaos-->
+		<List SkinIndex="2002" WcoinP="23"	ValueOp1="5000" ValueOp2="5000"    ValueOp3="5000"  ValueOp4="5000"	 NameSkin="Skin 3"/> <!--Chaos-->
+		<List SkinIndex="2003" WcoinP="24"	ValueOp1="5000" ValueOp2="5000"    ValueOp3="5000"  ValueOp4="5000"	 NameSkin="Skin 4"/> <!--Chaos-->
+		<List SkinIndex="2004" WcoinP="25"	ValueOp1="5000" ValueOp2="5000"    ValueOp3="5000"  ValueOp4="5000"	 NameSkin="Skin 5"/> <!--Chaos-->
+		<List SkinIndex="2005" WcoinP="26"	ValueOp1="5000" ValueOp2="500000"  ValueOp3="5000"  ValueOp4="5000"	 NameSkin="Luffy"/> <!--Chaos-->
+	</SkinModel>
+</CustomSkinModel>

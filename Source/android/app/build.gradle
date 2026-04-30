@@ -1,0 +1,410 @@
+plugins {
+    id 'com.android.application'
+}
+
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
+import java.util.Locale
+
+def requiredNativeLibs = [
+    "libSDL2.so",
+    "libSDL2_image.so",
+    "libSDL2_mixer.so",
+    "libSDL2_ttf.so",
+    "libSDL_net.so",
+    "libbotan.so",
+    "libmpg123.so",
+]
+
+def preferredAbis = ["armeabi-v7a", "arm64-v8a", "x86", "x86_64"]
+
+def abiPresence = preferredAbis.collectEntries { abi ->
+    def abiDir = file("src/main/jniLibs/${abi}")
+    def missingLibs = requiredNativeLibs.findAll { libName ->
+        !file("src/main/jniLibs/${abi}/${libName}").exists()
+    }
+
+    [abi, [
+        hasAllRequiredLibs: abiDir.exists() && abiDir.isDirectory() && missingLibs.isEmpty(),
+        missingLibs: missingLibs,
+    ]]
+}
+
+def detectedJniAbis = preferredAbis.findAll { abi -> abiPresence[abi].hasAllRequiredLibs }
+
+def requestedRequiredAbis = (project.findProperty("muRequiredAbis") ?: "")
+    .toString()
+    .split(",")
+    .collect { it.trim() }
+    .findAll { !it.isEmpty() }
+
+def requestedRealDeviceAbis = (project.findProperty("muRealDeviceAbis") ?: "")
+    .toString()
+    .split(",")
+    .collect { it.trim() }
+    .findAll { !it.isEmpty() }
+
+def requestedEmulatorAbis = (project.findProperty("muEmulatorAbis") ?: "")
+    .toString()
+    .split(",")
+    .collect { it.trim() }
+    .findAll { !it.isEmpty() }
+
+def requestedUniversalAbis = (project.findProperty("muUniversalAbis") ?: "")
+    .toString()
+    .split(",")
+    .collect { it.trim() }
+    .findAll { !it.isEmpty() }
+
+def failOnMissingRequiredAbis = (project.findProperty("muFailOnMissingRequiredAbis") ?: "false")
+    .toString()
+    .toBoolean()
+
+def muEnableLogs = (project.findProperty("muEnableLogs") ?: "false")
+    .toString()
+    .toBoolean()
+
+def muPerfLogs = (project.findProperty("muPerfLogs") ?: "false")
+    .toString()
+    .toBoolean()
+
+def muEnableBgfx = (project.findProperty("muEnableBgfx") ?: "false")
+    .toString()
+    .toBoolean()
+
+def muNativeCppFlags = "-std=c++20 -D__ANDROID__ -DANDROID " +
+                       "-DNDEBUG " +
+                       "-Wno-error -Wno-unknown-pragmas " +
+                       "-fexceptions -frtti" +
+                       (muEnableLogs ? " -DMU_ANDROID_VERBOSE_NET_LOG" : " -DMU_ANDROID_DISABLE_LOG") +
+                       (muPerfLogs ? " -DMU_ANDROID_PERF_LOG" : "")
+
+def missingRequestedAbis = requestedRequiredAbis.findAll { abi ->
+    !abiPresence.containsKey(abi) || !abiPresence[abi].hasAllRequiredLibs
+}
+
+if (!requestedRequiredAbis.isEmpty()) {
+    def requestedDetectedAbis = requestedRequiredAbis.findAll { abi ->
+        abiPresence.containsKey(abi) && abiPresence[abi].hasAllRequiredLibs
+    }
+    if (!requestedDetectedAbis.isEmpty()) {
+        detectedJniAbis = requestedDetectedAbis
+    }
+}
+
+if (detectedJniAbis.isEmpty()) {
+    detectedJniAbis = ["armeabi-v7a"]
+}
+
+if (!missingRequestedAbis.isEmpty()) {
+    println("TakumiMu missing native ABIs: ${missingRequestedAbis.join(', ')}")
+    missingRequestedAbis.each { abi ->
+        def missing = abiPresence.containsKey(abi) ? abiPresence[abi].missingLibs : requiredNativeLibs
+        println("  - ${abi}: missing ${missing.join(', ')}")
+    }
+
+    if (failOnMissingRequiredAbis) {
+        throw new GradleException(
+            "Missing required ABIs (${missingRequestedAbis.join(', ')}). " +
+            "Populate src/main/jniLibs/<abi>/ with: ${requiredNativeLibs.join(', ')}")
+    }
+}
+
+println("TakumiMu native ABIs: ${detectedJniAbis.join(', ')}")
+
+def defaultRealDeviceAbis = ["armeabi-v7a", "arm64-v8a"]
+def defaultEmulatorAbis = ["x86", "x86_64"]
+def realDeviceAbis = requestedRealDeviceAbis.isEmpty() ? defaultRealDeviceAbis : requestedRealDeviceAbis
+def emulatorAbis = requestedEmulatorAbis.isEmpty() ? defaultEmulatorAbis : requestedEmulatorAbis
+def universalAbis = requestedUniversalAbis.isEmpty() ? detectedJniAbis : requestedUniversalAbis
+
+println("TakumiMu real-device ABIs: ${realDeviceAbis.join(', ')}")
+println("TakumiMu emulator ABIs: ${emulatorAbis.join(', ')}")
+println("TakumiMu universal ABIs: ${universalAbis.join(', ')}")
+
+def toVariantDirName = { String variant ->
+    if (variant == null || variant.isEmpty()) {
+        return variant
+    }
+    return variant.substring(0, 1).toLowerCase(Locale.ROOT) + variant.substring(1)
+}
+
+def patchElfLoadAlignment16k = { File soFile ->
+    byte[] data = soFile.bytes
+    if (data.length < 64) {
+        return false
+    }
+
+    if (!(data[0] == (byte) 0x7f && data[1] == (byte) 0x45 && data[2] == (byte) 0x4c && data[3] == (byte) 0x46)) {
+        return false
+    }
+
+    final int eiClass = data[4] & 0xFF
+    final int eiData = data[5] & 0xFF
+    if (eiClass != 1 && eiClass != 2) {
+        return false
+    }
+
+    final ByteBuffer buffer = ByteBuffer.wrap(data)
+    buffer.order(eiData == 2 ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN)
+
+    def readU16 = { int offset ->
+        buffer.getShort(offset) & 0xFFFF
+    }
+    def readU32 = { int offset ->
+        buffer.getInt(offset) & 0xFFFFFFFFL
+    }
+    def readU64 = { int offset ->
+        buffer.getLong(offset)
+    }
+    def writeU32 = { int offset, long value ->
+        buffer.putInt(offset, (int) (value & 0xFFFFFFFFL))
+    }
+    def writeU64 = { int offset, long value ->
+        buffer.putLong(offset, value)
+    }
+
+    final long targetAlign = 16384L
+    final long ePhOff
+    final int ePhEntSize
+    final int ePhNum
+    final int pAlignOffset
+    final int pOffsetOffset
+    final int pVaddrOffset
+
+    if (eiClass == 2) {
+        ePhOff = readU64(32)
+        ePhEntSize = readU16(54)
+        ePhNum = readU16(56)
+        pAlignOffset = 48
+        pOffsetOffset = 8
+        pVaddrOffset = 16
+    } else {
+        ePhOff = readU32(28)
+        ePhEntSize = readU16(42)
+        ePhNum = readU16(44)
+        pAlignOffset = 28
+        pOffsetOffset = 4
+        pVaddrOffset = 8
+    }
+
+    if (ePhOff <= 0 || ePhEntSize <= 0 || ePhNum <= 0) {
+        return false
+    }
+
+    boolean patched = false
+    for (int i = 0; i < ePhNum; i++) {
+        long phdrOffLong = ePhOff + ((long) i * ePhEntSize)
+        if (phdrOffLong < 0 || phdrOffLong + ePhEntSize > data.length) {
+            break
+        }
+
+        int phdrOff = (int) phdrOffLong
+        long pType = readU32(phdrOff)
+        if (pType != 1L) {
+            continue
+        }
+
+        long pOffset = eiClass == 2 ? readU64(phdrOff + pOffsetOffset) : readU32(phdrOff + pOffsetOffset)
+        long pVaddr = eiClass == 2 ? readU64(phdrOff + pVaddrOffset) : readU32(phdrOff + pVaddrOffset)
+        int alignOff = phdrOff + pAlignOffset
+        long pAlign = eiClass == 2 ? readU64(alignOff) : readU32(alignOff)
+
+        if (pAlign >= targetAlign) {
+            if (pAlign != 0 && (pOffset % pAlign) != (pVaddr % pAlign)) {
+                throw new GradleException(
+                    "Invalid native alignment in ${soFile}: PT_LOAD #${i} has " +
+                    "p_offset=0x${Long.toHexString(pOffset)}, " +
+                    "p_vaddr=0x${Long.toHexString(pVaddr)}, " +
+                    "p_align=0x${Long.toHexString(pAlign)}")
+            }
+            continue
+        }
+
+        if ((pOffset % targetAlign) != (pVaddr % targetAlign)) {
+            throw new GradleException(
+                "Unsafe 16KB patch for ${soFile}: PT_LOAD #${i} has " +
+                "p_offset=0x${Long.toHexString(pOffset)}, " +
+                "p_vaddr=0x${Long.toHexString(pVaddr)}. " +
+                "Rebuild this library with -Wl,-z,max-page-size=16384 instead of header patching.")
+        }
+
+        if (eiClass == 2) {
+            writeU64(alignOff, targetAlign)
+        } else {
+            writeU32(alignOff, targetAlign)
+        }
+        patched = true
+    }
+
+    if (patched) {
+        soFile.bytes = data
+    }
+    return patched
+}
+
+def patchNativeDirTo16k = { File dir, String label ->
+    if (!dir.exists()) {
+        return
+    }
+
+    int scanned = 0
+    int patched = 0
+    fileTree(dir) {
+        include '**/*.so'
+    }.files.each { File soFile ->
+        def abiName = soFile.parentFile?.name
+        if (!(abiName in ['arm64-v8a', 'x86_64'])) {
+            return
+        }
+        scanned++
+        if (patchElfLoadAlignment16k(soFile)) {
+            patched++
+        }
+    }
+
+    if (patched > 0) {
+        println("TakumiMu 16KB patch: ${patched}/${scanned} file(s) in ${label}")
+    }
+}
+
+android {
+    namespace 'com.muonline.client'
+    compileSdk 34
+
+    flavorDimensions 'target'
+
+    defaultConfig {
+        applicationId "com.muonline.client"
+        minSdk 21          // Android 5.0 - covers Sony SO-02L (API 28)
+        targetSdk 34
+        versionCode 1
+        versionName "1.0"
+
+        externalNativeBuild {
+            cmake {
+                // C++20, Android platform defines, disable editor/dotnet
+                cppFlags muNativeCppFlags
+                arguments "-DANDROID_STL=c++_static",
+                          "-DANDROID_PLATFORM=android-21",
+                          "-DMU_ENABLE_BGFX=" + (muEnableBgfx ? "ON" : "OFF")
+            }
+        }
+
+        // ABI filters are selected by product flavor below.
+    }
+
+    productFlavors {
+        realDevice {
+            dimension 'target'
+            ndk {
+                abiFilters(*realDeviceAbis)
+            }
+            buildConfigField "String", "TARGET_PROFILE", '"realDevice"'
+        }
+
+        emulator {
+            dimension 'target'
+            ndk {
+                abiFilters(*emulatorAbis)
+            }
+            buildConfigField "String", "TARGET_PROFILE", '"emulator"'
+        }
+
+        universal {
+            dimension 'target'
+            ndk {
+                abiFilters(*universalAbis)
+            }
+            buildConfigField "String", "TARGET_PROFILE", '"universal"'
+        }
+    }
+
+    externalNativeBuild {
+        cmake {
+            path "src/main/cpp/CMakeLists.txt"
+            version "3.22.1"
+        }
+    }
+
+    buildFeatures {
+        buildConfig true
+    }
+
+    buildTypes {
+        debug {
+            debuggable true
+            jniDebuggable true
+            buildConfigField "boolean", "ENABLE_LOGS", muEnableLogs ? "true" : "false"
+        }
+        release {
+            minifyEnabled false
+            debuggable false
+            signingConfig signingConfigs.debug
+            buildConfigField "boolean", "ENABLE_LOGS", muEnableLogs ? "true" : "false"
+        }
+    }
+
+    sourceSets {
+        main {
+            // prebuilt .so libraries from APK reference
+            jniLibs.srcDirs = ['src/main/jniLibs']
+            // Game assets (Data folder)
+            assets.srcDirs = ['src/main/assets']
+        }
+    }
+
+    packagingOptions {
+        // Don't strip debug symbols during development
+        jniLibs.keepDebugSymbols += ['**/*.so']
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+}
+
+tasks.matching { it.name ==~ /merge.+NativeLibs/ }.configureEach { Task task ->
+    task.doLast {
+        def matcher = (task.name =~ /merge(.+)NativeLibs/)
+        if (!matcher.matches()) {
+            return
+        }
+        String variantName = toVariantDirName(matcher.group(1))
+        patchNativeDirTo16k(
+            file("${buildDir}/intermediates/merged_native_libs/${variantName}/out/lib"),
+            "merged_native_libs/${variantName}/out/lib")
+    }
+}
+
+tasks.matching { it.name ==~ /strip.+DebugSymbols/ }.configureEach { Task task ->
+    task.doLast {
+        def matcher = (task.name =~ /strip(.+)DebugSymbols/)
+        if (!matcher.matches()) {
+            return
+        }
+        String variantName = toVariantDirName(matcher.group(1))
+        patchNativeDirTo16k(
+            file("${buildDir}/intermediates/stripped_native_libs/${variantName}/out/lib"),
+            "stripped_native_libs/${variantName}/out/lib")
+    }
+}
+
+tasks.register('patchSourceJniLibs16k') {
+    doLast {
+        patchNativeDirTo16k(
+            file('src/main/jniLibs'),
+            'src/main/jniLibs')
+    }
+}
+
+tasks.matching { it.name == 'preBuild' }.configureEach { Task task ->
+    task.dependsOn('patchSourceJniLibs16k')
+}
+
+

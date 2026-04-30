@@ -1,0 +1,5 @@
+20:00:56 [CommandAddPoint][admin][Admin] - (Type: 0, Amount: 500)
+20:01:00 [CommandAddPoint][admin][Admin] - (Type: 1, Amount: 30000)
+20:01:06 [CommandAddPoint][admin][Admin] - (Type: 3, Amount: 34500)
+20:01:26 [CommandChange][admin][Admin] - (ChangeUp: 0)
+20:01:29 [CommandChange][admin][Admin] - (ChangeUp: 1)

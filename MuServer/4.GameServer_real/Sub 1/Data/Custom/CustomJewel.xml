@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+// ### CustomJewel 
+* Develop by GoldMU.Net 
+
+** Lưu ý: Tối đa 25 loại custom Jewel
+-->
+
+<CustomJewel>
+	<JewelInfo>
+	<Jewel Index="0"	ItemIndex="7412"	MinItemLevel="0"	MaxItemLevel="10"	MaxItemOption1="-1"	MaxItemOption2="-1"	MinItemOption3="-1"	MaxItemOption3="-1"	MinItemNewOption="-1"	MaxItemNewOption="-1"	MaxItemSetOption="-1"	MinItemSocketOption="-1"	MaxItemSocketOption="-1"	EnableSlotWeapon="-1"	EnableSlotArmor="-1"	EnableSlotWing="-1"	SuccessRate_AL0="10"	SuccessRate_AL1="10"	SuccessRate_AL2="10"	SuccessRate_AL3="10"	SalePrice="100"	ModelName="Jewel180"	/>	<!--Jewel Of Level-->
+	<Jewel Index="1"	ItemIndex="7413"	MinItemLevel="0"	MaxItemLevel="15"	MaxItemOption1="0"	MaxItemOption2="-1"	MinItemOption3="-1"	MaxItemOption3="-1"	MinItemNewOption="-1"	MaxItemNewOption="-1"	MaxItemSetOption="-1"	MinItemSocketOption="-1"	MaxItemSocketOption="-1"	EnableSlotWeapon="-1"	EnableSlotArmor="-1"	EnableSlotWing="-1"	SuccessRate_AL0="100"	SuccessRate_AL1="100"	SuccessRate_AL2="100"	SuccessRate_AL3="100"	SalePrice="100"	ModelName="Jewel181"	/>	<!--Jewel Of Skill-->
+	<Jewel Index="2"	ItemIndex="7414"	MinItemLevel="0"	MaxItemLevel="15"	MaxItemOption1="-1"	MaxItemOption2="0"	MinItemOption3="-1"	MaxItemOption3="-1"	MinItemNewOption="-1"	MaxItemNewOption="-1"	MaxItemSetOption="-1"	MinItemSocketOption="-1"	MaxItemSocketOption="-1"	EnableSlotWeapon="-1"	EnableSlotArmor="-1"	EnableSlotWing="-1"	SuccessRate_AL0="100"	SuccessRate_AL1="100"	SuccessRate_AL2="100"	SuccessRate_AL3="100"	SalePrice="100"	ModelName="Jewel182"	/>	<!--Jewel Of Luck-->
+	<Jewel Index="3"	ItemIndex="7415"	MinItemLevel="0"	MaxItemLevel="15"	MaxItemOption1="-1"	MaxItemOption2="-1"	MinItemOption3="0"	MaxItemOption3="6"	MinItemNewOption="-1"	MaxItemNewOption="-1"	MaxItemSetOption="-1"	MinItemSocketOption="-1"	MaxItemSocketOption="-1"	EnableSlotWeapon="-1"	EnableSlotArmor="-1"	EnableSlotWing="-1"	SuccessRate_AL0="100"	SuccessRate_AL1="100"	SuccessRate_AL2="100"	SuccessRate_AL3="100"	SalePrice="100"	ModelName="Jewel183"	/>	<!--Jewel Of Adicional-->
+	<Jewel Index="4"	ItemIndex="7416"	MinItemLevel="0"	MaxItemLevel="15"	MaxItemOption1="-1"	MaxItemOption2="-1"	MinItemOption3="-1"	MaxItemOption3="-1"	MinItemNewOption="0"	MaxItemNewOption="5"	MaxItemSetOption="-1"	MinItemSocketOption="-1"	MaxItemSocketOption="-1"	EnableSlotWeapon="-1"	EnableSlotArmor="-1"	EnableSlotWing="-1"	SuccessRate_AL0="20"	SuccessRate_AL1="20"	SuccessRate_AL2="20"	SuccessRate_AL3="20"	SalePrice="100"	ModelName="Jewel184"	/>	<!--Jewel Of Excelentt-->
+	<Jewel Index="5"	ItemIndex="7417"	MinItemLevel="0"	MaxItemLevel="15"	MaxItemOption1="-1"	MaxItemOption2="-1"	MinItemOption3="-1"	MaxItemOption3="-1"	MinItemNewOption="-1"	MaxItemNewOption="-1"	MaxItemSetOption="-1"	MinItemSocketOption="0"		MaxItemSocketOption="5"		EnableSlotWeapon="-1"	EnableSlotArmor="-1"	EnableSlotWing="-1"	SuccessRate_AL0="100"	SuccessRate_AL1="100"	SuccessRate_AL2="100"	SuccessRate_AL3="100"	SalePrice="100"	ModelName="Jewel185"	/>	<!--Jewel Of Socket-->
+	<Jewel Index="6"	ItemIndex="7418"	MinItemLevel="0"	MaxItemLevel="15"	MaxItemOption1="-1"	MaxItemOption2="-1"	MinItemOption3="-1"	MaxItemOption3="-1"	MinItemNewOption="-1"	MaxItemNewOption="-1"	MaxItemSetOption="1"	MinItemSocketOption="-1"	MaxItemSocketOption="-1"	EnableSlotWeapon="-1"	EnableSlotArmor="-1"	EnableSlotWing="-1"	SuccessRate_AL0="100"	SuccessRate_AL1="100"	SuccessRate_AL2="100"	SuccessRate_AL3="100"	SalePrice="100"	ModelName="Jewel187"	/>	<!--Jewel Of Ancient 1-->
+	<Jewel Index="7"	ItemIndex="7419"	MinItemLevel="0"	MaxItemLevel="15"	MaxItemOption1="-1"	MaxItemOption2="-1"	MinItemOption3="-1"	MaxItemOption3="-1"	MinItemNewOption="-1"	MaxItemNewOption="-1"	MaxItemSetOption="2"	MinItemSocketOption="-1"	MaxItemSocketOption="-1"	EnableSlotWeapon="-1"	EnableSlotArmor="-1"	EnableSlotWing="-1"	SuccessRate_AL0="100"	SuccessRate_AL1="100"	SuccessRate_AL2="100"	SuccessRate_AL3="100"	SalePrice="100"	ModelName="Jewel188"	/>	<!--Jewel Of Ancient 2-->
+	<Jewel Index="8"	ItemIndex="7420"	MinItemLevel="0"	MaxItemLevel="15"	MaxItemOption1="-1"	MaxItemOption2="-1"	MinItemOption3="-1"	MaxItemOption3="-1"	MinItemNewOption="-1"	MaxItemNewOption="-1"	MaxItemSetOption="-1"	MinItemSocketOption="-1"	MaxItemSocketOption="-1"	EnableSlotWeapon="-1"	EnableSlotArmor="-1"	EnableSlotWing="-1"	SuccessRate_AL0="100"	SuccessRate_AL1="100"	SuccessRate_AL2="100"	SuccessRate_AL3="100"	SalePrice="100"	ModelName="Jewel186"	/>	<!--Jewel Of Full-->
+	<Jewel Index="9"	ItemIndex="7429"	MinItemLevel="0"	MaxItemLevel="5"	MaxItemOption1="-1"	MaxItemOption2="-1"	MinItemOption3="-1"	MaxItemOption3="-1"	MinItemNewOption="-1"	MaxItemNewOption="-1"	MaxItemSetOption="-1"	MinItemSocketOption="-1"	MaxItemSocketOption="-1"	EnableSlotWeapon="-1"	EnableSlotArmor="-1"	EnableSlotWing="-1"	SuccessRate_AL0="05"	SuccessRate_AL1="05"	SuccessRate_AL2="05"	SuccessRate_AL3="05"	SalePrice="100"	ModelName="Jewel192"	/>	<!--Jewel Of Ring-->
+	<Jewel Index="10"	ItemIndex="7378"	MinItemLevel="10"	MaxItemLevel="11"	MaxItemOption1="-1"	MaxItemOption2="-1"	MinItemOption3="-1"	MaxItemOption3="-1"	MinItemNewOption="-1"	MaxItemNewOption="-1"	MaxItemSetOption="-1"	MinItemSocketOption="-1"	MaxItemSocketOption="-1"	EnableSlotWeapon="-1"	EnableSlotArmor="-1"	EnableSlotWing="-1"	SuccessRate_AL0="100"	SuccessRate_AL1="100"	SuccessRate_AL2="100"	SuccessRate_AL3="100"	SalePrice="100"	ModelName="segongseok11" />	<!--Ngọc Level 11-->
+	<Jewel Index="11"	ItemIndex="7379"	MinItemLevel="11"	MaxItemLevel="12"	MaxItemOption1="-1"	MaxItemOption2="-1"	MinItemOption3="-1"	MaxItemOption3="-1"	MinItemNewOption="-1"	MaxItemNewOption="-1"	MaxItemSetOption="-1"	MinItemSocketOption="-1"	MaxItemSocketOption="-1"	EnableSlotWeapon="-1"	EnableSlotArmor="-1"	EnableSlotWing="-1"	SuccessRate_AL0="100"	SuccessRate_AL1="100"	SuccessRate_AL2="100"	SuccessRate_AL3="100"	SalePrice="100"	ModelName="segongseok12" />	<!--Ngọc Level 12-->
+	<Jewel Index="12" 	ItemIndex="7380"	MinItemLevel="0"	MaxItemLevel="15"	MaxItemOption1="-1"	MaxItemOption2="-1" MinItemOption3="-1" MaxItemOption3="-1" MinItemNewOption="-1" MaxItemNewOption="-1" MaxItemSetOption="-1" MinItemSocketOption="-1" MaxItemSocketOption="-1" EnableSlotWeapon="-1" EnableSlotArmor="-1" EnableSlotWing="-1" SuccessRate_AL0="100" SuccessRate_AL1="100" SuccessRate_AL2="100" SuccessRate_AL3="100" SalePrice="100" ModelName="Jewel180"/>
+	<Jewel Index="13"	ItemIndex="7381"	MinItemLevel="13"	MaxItemLevel="14"	MaxItemOption1="-1"	MaxItemOption2="-1"	MinItemOption3="-1"	MaxItemOption3="-1"	MinItemNewOption="-1"	MaxItemNewOption="-1"	MaxItemSetOption="-1"	MinItemSocketOption="-1"	MaxItemSocketOption="-1"	EnableSlotWeapon="-1"	EnableSlotArmor="-1"	EnableSlotWing="-1"	SuccessRate_AL0="100"	SuccessRate_AL1="100"	SuccessRate_AL2="100"	SuccessRate_AL3="100"	SalePrice="100"	ModelName="segongseok14" />	<!--Ngọc Level 14-->
+	<Jewel Index="14"	ItemIndex="7382"	MinItemLevel="14"	MaxItemLevel="15"	MaxItemOption1="-1"	MaxItemOption2="-1"	MinItemOption3="-1"	MaxItemOption3="-1"	MinItemNewOption="-1"	MaxItemNewOption="-1"	MaxItemSetOption="-1"	MinItemSocketOption="-1"	MaxItemSocketOption="-1"	EnableSlotWeapon="-1"	EnableSlotArmor="-1"	EnableSlotWing="-1"	SuccessRate_AL0="100"	SuccessRate_AL1="100"	SuccessRate_AL2="100"	SuccessRate_AL3="100"	SalePrice="100"	ModelName="segongseok15" />	<!--Ngọc Level 15-->
+	<Jewel Index="15"	ItemIndex="7421"	MinItemLevel="0"	MaxItemLevel="15"	MaxItemOption1="-1"	MaxItemOption2="-1"	MinItemOption3="-1"	MaxItemOption3="-1"	MinItemNewOption="-1"	MaxItemNewOption="-1"	MaxItemSetOption="-1"	MinItemSocketOption="-1"	MaxItemSocketOption="-1"	EnableSlotWeapon="-1"	EnableSlotArmor="-1"	EnableSlotWing="-1"	SuccessRate_AL0="100"	SuccessRate_AL1="100"	SuccessRate_AL2="100"	SuccessRate_AL3="100"	SalePrice="100"	ModelName="segongseok15" />	<!--Ngọc Level 15-->
+
+	</JewelInfo>
+	
+	<!--Tăng option khi thành công-->
+	<SuccessInfo>
+	<Jewel Index="0"	Level="1"	Option1="0"	Option2="0"	Option3="0"	NewOption="0"	SetOption="0"	SocketOption="0"	/>	<!--Jewel Of Level-->
+	<Jewel Index="1"	Level="0"	Option1="1"	Option2="0"	Option3="0"	NewOption="0"	SetOption="0"	SocketOption="0"	/>	<!--Jewel Of Skill-->
+	<Jewel Index="2"	Level="0"	Option1="0"	Option2="1"	Option3="0"	NewOption="0"	SetOption="0"	SocketOption="0"	/>	<!--Jewel Of Luck-->
+	<Jewel Index="3"	Level="0"	Option1="0"	Option2="0"	Option3="1"	NewOption="0"	SetOption="0"	SocketOption="0"	/>	<!--Jewel Of Adicional-->
+	<Jewel Index="4"	Level="0"	Option1="0"	Option2="0"	Option3="0"	NewOption="1"	SetOption="0"	SocketOption="0"	/>	<!--Jewel Of Excelentt-->
+	<Jewel Index="5"	Level="0"	Option1="0"	Option2="0"	Option3="0"	NewOption="0"	SetOption="0"	SocketOption="1"	/>	<!--Jewel Of Socket-->
+	<Jewel Index="6"	Level="0"	Option1="0"	Option2="0"	Option3="0"	NewOption="0"	SetOption="5"	SocketOption="0"	/>	<!--Jewel Of Ancient 1-->
+	<Jewel Index="7"	Level="0"	Option1="0"	Option2="0"	Option3="0"	NewOption="0"	SetOption="6"	SocketOption="0"	/>	<!--Jewel Of Ancient 2-->
+	<Jewel Index="8"	Level="15"	Option1="1"	Option2="1"	Option3="7"	NewOption="6"	SetOption="0"	SocketOption="0"	/>	<!--Jewel Of Full-->
+	<Jewel Index="9"	Level="1"	Option1="0"	Option2="0"	Option3="0"	NewOption="0"	SetOption="0"	SocketOption="0"	/>	<!--Jewel Of Ring-->
+	
+	<Jewel Index="10"	Level="1"	Option1="0"	Option2="0"	Option3="0"	NewOption="0"	SetOption="0"	SocketOption="0"	/>  <!--Ngọc Level 11-->
+	<Jewel Index="11"	Level="1"	Option1="0"	Option2="0"	Option3="0"	NewOption="0"	SetOption="0"	SocketOption="0"	/>  <!--Ngọc Level 12-->
+	<Jewel Index="12" 	Level="0" Option1="0" Option2="0" Option3="0" NewOption="0" SetOption="0" SocketOption="0"/>
+	<Jewel Index="13"	Level="1"	Option1="0"	Option2="0"	Option3="0"	NewOption="0"	SetOption="0"	SocketOption="0"	/>	<!--Ngọc Level 14-->		
+	<Jewel Index="14"	Level="1"	Option1="0"	Option2="0"	Option3="0"	NewOption="0"	SetOption="0"	SocketOption="0"	/>	<!--Ngọc Level 15-->		
+	</SuccessInfo>
+	
+	<!--Giảm option khi thất bại-->
+	<FailInfo>
+	<Jewel Index="0"	Level="0"	Option1="0"	Option2="0"	Option3="0"	NewOption="0"	SetOption="0"	SocketOption="0"	/>
+	<Jewel Index="1"	Level="0"	Option1="0"	Option2="0"	Option3="0"	NewOption="0"	SetOption="0"	SocketOption="0"	/>
+	<Jewel Index="2"	Level="0"	Option1="0"	Option2="0"	Option3="0"	NewOption="0"	SetOption="0"	SocketOption="0"	/>
+	<Jewel Index="3"	Level="0"	Option1="0"	Option2="0"	Option3="0"	NewOption="0"	SetOption="0"	SocketOption="0"	/>
+	<Jewel Index="4"	Level="0"	Option1="0"	Option2="0"	Option3="0"	NewOption="0"	SetOption="0"	SocketOption="0"	/>
+	<Jewel Index="5"	Level="0"	Option1="0"	Option2="0"	Option3="0"	NewOption="0"	SetOption="0"	SocketOption="0"	/>
+	<Jewel Index="6"	Level="0"	Option1="0"	Option2="0"	Option3="0"	NewOption="0"	SetOption="0"	SocketOption="0"	/>
+	<Jewel Index="7"	Level="0"	Option1="0"	Option2="0"	Option3="0"	NewOption="0"	SetOption="0"	SocketOption="0"	/>
+	<Jewel Index="8"	Level="0"	Option1="0"	Option2="0"	Option3="0"	NewOption="0"	SetOption="0"	SocketOption="0"	/>
+	<Jewel Index="9"	Level="0"	Option1="0"	Option2="0"	Option3="0"	NewOption="0"	SetOption="0"	SocketOption="0"	/>
+	<Jewel Index="10"	Level="0"	Option1="0"	Option2="0"	Option3="0"	NewOption="0"	SetOption="0"	SocketOption="0"	/>
+	<Jewel Index="11"	Level="0"	Option1="0"	Option2="0"	Option3="0"	NewOption="0"	SetOption="0"	SocketOption="0"	/>
+	<Jewel Index="12"	Level="0"	Option1="0"	Option2="0"	Option3="0"	NewOption="0"	SetOption="0"	SocketOption="0"	/>
+	<Jewel Index="13"	Level="0"	Option1="0"	Option2="0"	Option3="0"	NewOption="0"	SetOption="0"	SocketOption="0"	/>
+	<Jewel Index="14"	Level="0"	Option1="0"	Option2="0"	Option3="0"	NewOption="0"	SetOption="0"	SocketOption="0"	/>
+	</FailInfo>
+	
+	<!--Update sang item mới khi đập thành công-->
+	<UpdateInfo>
+	<Jewel Index="0"	ItemOld="1"	ItemNew="2"	/>
+	<Jewel Index="0"	ItemOld="2"	ItemNew="3"	/>
+	<Jewel Index="0"	ItemOld="3"	ItemNew="4"	/>
+	<Jewel Index="0"	ItemOld="4"	ItemNew="5"	/>
+	<!--Ngọc Tien Cap 5 242-->
+		<!--  Kiếm Hủy Diệt 	-	Thiên Ma Kiếm -->
+		<Jewel Index="12"	ItemOld="16"		ItemNew="17"  /> 
+		<!-- Lôi Phong Đao 	-		Ảo Ảnh Đao -->		
+		<Jewel Index="12"	ItemOld="18"		ItemNew="31"  /> 
+		<!-- Gậy Lôi Phong 	-	Gậy Triệu Hồn -->
+		<Jewel Index="12"	ItemOld="2567"		ItemNew="2569"  /> 
+		<!-- Gậy Hủy Diệt 	-	Gậy Triệu Hồn -->
+		<Jewel Index="12"	ItemOld="2568"		ItemNew="2569"  /> 		
+		<!-- Q.T Bóng Tối 	-	Trượng Kim Cương -->		
+		<Jewel Index="12"	ItemOld="1034"		ItemNew="1035"  /> 		
+		<!-- Nỏ Thánh 	-		Cung Thiên Mệnh -->		
+		<Jewel Index="12"	ItemOld="2064"		ItemNew="2065"  /> 
+		<!-- Kiếm Băng 	-		Đại Long Đao -->		
+		<Jewel Index="12"	ItemOld="1029"		ItemNew="1546"  /> 
+		<!-- Rìu Hỏa Long 	-	Đại Long Đao -->		
+		<Jewel Index="12"	ItemOld="1030"		ItemNew="1546"  /> 				
+		<!-- Khiên Xương	- 		Khiên Ma Thuật -->		
+		<Jewel Index="12"	ItemOld="3078"		ItemNew="3086"  /> 	
+		<!-- Khiên Chông	- 		Khi Ngưu Vương -->			
+		<Jewel Index="12"	ItemOld="3079"		ItemNew="3084"  /> 	
+		<!-- Khiên Kim Long	- 		Khi Ngưu Vương -->			
+		<Jewel Index="12"	ItemOld="3077"		ItemNew="3084"  /> 			
+		<!-- Khiên Xà	- 		Khiên Trụ -->			
+		<Jewel Index="12"	ItemOld="3083"		ItemNew="3080"  /> 	
+		<!-- Ma Thuật		-		Ánh Trăng-->		
+		<Jewel Index="12"	ItemOld="3587"		ItemNew="3619"  /> 			
+		<Jewel Index="12"	ItemOld="4099"		ItemNew="4131"  /> 			
+		<Jewel Index="12"	ItemOld="4611"		ItemNew="4643"  /> 			
+		<Jewel Index="12"	ItemOld="5123"		ItemNew="5155"  /> 			
+		<Jewel Index="12"	ItemOld="5635"		ItemNew="5667"  /> 			
+						<!-- Hỏa Long	- 		Hắc Long -->		
+		<Jewel Index="12"	ItemOld="3585"		ItemNew="3600"  /> 			
+		<Jewel Index="12"	ItemOld="4097"		ItemNew="4112"  /> 			
+		<Jewel Index="12"	ItemOld="4609"		ItemNew="4624"  /> 			
+		<Jewel Index="12"	ItemOld="5121"		ItemNew="5136"  /> 			
+		<Jewel Index="12"	ItemOld="5633"		ItemNew="5648"  /> 	
+						<!-- Kim Ngân 	- 		Nữ Thần -->		
+		<Jewel Index="12"	ItemOld="3598"		ItemNew="3620"  /> 			
+		<Jewel Index="12"	ItemOld="4110"		ItemNew="4132"  /> 			
+		<Jewel Index="12"	ItemOld="4622"		ItemNew="4644"  /> 			
+		<Jewel Index="12"	ItemOld="5134"		ItemNew="5156"  /> 			
+		<Jewel Index="12"	ItemOld="5646"		ItemNew="5668"  /> 	
+						<!-- Phong Vũ 	- 		Hỏa Thần -->					
+		<Jewel Index="12"	ItemOld="4111"		ItemNew="4133"  /> 			
+		<Jewel Index="12"	ItemOld="4623"		ItemNew="4645"  /> 			
+		<Jewel Index="12"	ItemOld="5135"		ItemNew="5157"  /> 			
+		<Jewel Index="12"	ItemOld="5647"		ItemNew="5669"  /> 			
+						<!-- Huyền Thiết 	- 		Hắc Vương -->		
+		<Jewel Index="12"	ItemOld="3610"		ItemNew="3611"  /> 			
+		<Jewel Index="12"	ItemOld="4122"		ItemNew="4123"  /> 			
+		<Jewel Index="12"	ItemOld="4634"		ItemNew="4635"  /> 			
+		<Jewel Index="12"	ItemOld="5146"		ItemNew="5147"  /> 			
+		<Jewel Index="12"	ItemOld="5658"		ItemNew="5659"  /> 			
+	
+<!--Ngọc Tien Cap 6 243-->
+						<!-- Gậy Triệu Hồn 	-	Gậy KunDun -->
+		<Jewel Index="13"	ItemOld="2569"		ItemNew="2571"  /> 
+					<!-- Cung Thiên Mệnh 	- Cung Thiên Thần -->
+		<Jewel Index="13"	ItemOld="2065"		ItemNew="2070"  /> 
+					<!-- Thiên Ma Kiếm 	- 	Ỷ Thiên Đao -->		
+		<Jewel Index="13"	ItemOld="17"		ItemNew="24"  /> 				
+					<!-- Đại Long Đao 	- 	Ỷ Thiên Đao -->		
+		<Jewel Index="13"	ItemOld="1546"		ItemNew="24"  /> 	
+					<!-- Ảo Ảnh Đao 	- 	Hỏa Tinh Kiếm -->		
+		<Jewel Index="13"	ItemOld="31"		ItemNew="25"  /> 	
+					<!-- Trượng Kim Cương 	- 	Trượng Tối Cao -->		
+		<Jewel Index="13"	ItemOld="1035"		ItemNew="1039"  /> 	
+		
+						<!-- Ánh Trăng 	- 		Triệu Hồn -->		
+		<Jewel Index="13"	ItemOld="3619"		ItemNew="3602"  /> 			
+		<Jewel Index="13"	ItemOld="4131"		ItemNew="4114"  /> 			
+		<Jewel Index="13"	ItemOld="4643"		ItemNew="4626"  /> 			
+		<Jewel Index="13"	ItemOld="5155"		ItemNew="5138"  /> 			
+		<Jewel Index="13"	ItemOld="5667"		ItemNew="5650"  /> 			
+						<!-- Hắc Long 	- 		Phượng Hoàng -->		
+		<Jewel Index="13"	ItemOld="3600"		ItemNew="3601"  /> 			
+		<Jewel Index="13"	ItemOld="4112"		ItemNew="4113"  /> 			
+		<Jewel Index="13"	ItemOld="4624"		ItemNew="4625"  /> 			
+		<Jewel Index="13"	ItemOld="5136"		ItemNew="5137"  /> 			
+		<Jewel Index="13"	ItemOld="5648"		ItemNew="5649"  /> 	
+						<!-- Hắc Điểu 	- 		Phượng Hoàng -->		
+		<Jewel Index="13"	ItemOld="3618"		ItemNew="3601"  /> 			
+		<Jewel Index="13"	ItemOld="4130"		ItemNew="4113"  /> 			
+		<Jewel Index="13"	ItemOld="4642"		ItemNew="4625"  /> 			
+		<Jewel Index="13"	ItemOld="5154"		ItemNew="5137"  /> 			
+		<Jewel Index="13"	ItemOld="5666"		ItemNew="5649"  /> 	
+						<!-- Nữ Thần 	- 		Giai Nhân -->		
+		<Jewel Index="13"	ItemOld="3620"		ItemNew="3603"  /> 			
+		<Jewel Index="13"	ItemOld="4132"		ItemNew="4115"  /> 			
+		<Jewel Index="13"	ItemOld="4644"		ItemNew="4627"  /> 			
+		<Jewel Index="13"	ItemOld="5156"		ItemNew="5139"  /> 			
+		<Jewel Index="13"	ItemOld="5668"		ItemNew="5651"  /> 	
+						<!-- Hỏa Thần 	- 		Lôi Phong -->					
+		<Jewel Index="13"	ItemOld="4133"		ItemNew="4116"  /> 			
+		<Jewel Index="13"	ItemOld="4645"		ItemNew="4628"  /> 			
+		<Jewel Index="13"	ItemOld="5157"		ItemNew="5140"  /> 			
+		<Jewel Index="13"	ItemOld="5669"		ItemNew="5652"  /> 			
+						<!-- Hắc Vương 	- 		Hoàng Kim -->		
+		<Jewel Index="13"	ItemOld="3611"		ItemNew="3622"  /> 			
+		<Jewel Index="13"	ItemOld="4123"		ItemNew="4134"  /> 			
+		<Jewel Index="13"	ItemOld="4635"		ItemNew="4646"  /> 			
+		<Jewel Index="13"	ItemOld="5147"		ItemNew="5158"  /> 			
+		<Jewel Index="13"	ItemOld="5659"		ItemNew="5670"  /> 			
+
+		
+							<!-- Khiên Ma Thuật	- 		Khiên Triệu Hồn -->		
+		<Jewel Index="13"	ItemOld="3086"		ItemNew="3087"  /> 	
+							<!-- Khi Ngưu Vương	- 		Khiên Hỏa Long -->			
+		<Jewel Index="13"	ItemOld="3084"		ItemNew="3085"  /> 	
+							<!-- Khiên Trụ	- 		Khiên Thập Tự -->			
+		<Jewel Index="13"	ItemOld="3080"		ItemNew="3093"  /> 	
+							<!-- Khiên Tiên Nữ	- 		Khiên Thánh Nữ -->			
+		<Jewel Index="13"	ItemOld="3075"		ItemNew="3088"  /> 			
+
+	
+						<!-- Phượng Hoàng 	- 		Thần Long -->		
+		<Jewel Index="14"	ItemOld="3601"		ItemNew="3605"  /> 			
+		<Jewel Index="14"	ItemOld="4113"		ItemNew="4117"  /> 			
+		<Jewel Index="14"	ItemOld="4625"		ItemNew="4629"  /> 			
+		<Jewel Index="14"	ItemOld="5137"		ItemNew="5141"  /> 			
+		<Jewel Index="14"	ItemOld="5649"		ItemNew="5653"  /> 
+						<!-- Triệu Hồn 	- 		Ma Vương -->		
+		<Jewel Index="14"	ItemOld="3602"		ItemNew="3606"  /> 			
+		<Jewel Index="14"	ItemOld="4114"		ItemNew="4118"  /> 			
+		<Jewel Index="14"	ItemOld="4626"		ItemNew="4630"  /> 			
+		<Jewel Index="14"	ItemOld="5138"		ItemNew="5142"  /> 			
+		<Jewel Index="14"	ItemOld="5650"		ItemNew="5654"  /> 
+						<!-- Giai Nhân 	- 		Thánh Nữ -->		
+		<Jewel Index="14"	ItemOld="3603"		ItemNew="3608"  /> 			
+		<Jewel Index="14"	ItemOld="4115"		ItemNew="4120"  /> 			
+		<Jewel Index="14"	ItemOld="4627"		ItemNew="4632"  /> 			
+		<Jewel Index="14"	ItemOld="5139"		ItemNew="5144"  /> 			
+		<Jewel Index="14"	ItemOld="5651"		ItemNew="5656"  /> 
+						<!-- Lôi Phong 	- 		Cuồng Phong -->		
+		<Jewel Index="14"	ItemOld="4116"		ItemNew="4119"  /> 			
+		<Jewel Index="14"	ItemOld="4628"		ItemNew="4631"  /> 			
+		<Jewel Index="14"	ItemOld="5140"		ItemNew="5143"  /> 			
+		<Jewel Index="14"	ItemOld="5652"		ItemNew="5655"  /> 			
+						<!-- Hoàng Kim 	- 		Chí Tôn -->		
+		<Jewel Index="14"	ItemOld="3622"		ItemNew="3612"  /> 			
+		<Jewel Index="14"	ItemOld="4134"		ItemNew="4124"  /> 			
+		<Jewel Index="14"	ItemOld="4646"		ItemNew="4636"  /> 			
+		<Jewel Index="14"	ItemOld="5158"		ItemNew="5148"  /> 			
+		<Jewel Index="14"	ItemOld="5670"		ItemNew="5660"  /> 
+
+		
+	<!--Ngọc Tien Cap 7 -->
+						<!-- Gậy KunDun 	-	Gậy Thiên Sứ -->
+		<Jewel Index="14"	ItemOld="2571"		ItemNew="2573"  /> 
+					<!-- Cung Thiên Thần 	- Nỏ Thánh Nữ -->
+		<Jewel Index="14"	ItemOld="2070"		ItemNew="2067"  /> 
+					<!-- Ỷ Thiên Đao 	- 	[Cấp7] Hỏa Long Kiếm -->		
+		<Jewel Index="14"	ItemOld="24"		ItemNew="91"  /> 					
+					<!-- Hỏa Tinh Kiếm 	- 	[Cấp7] Hỏa Long Kiếm -->	
+		<Jewel Index="14"	ItemOld="25"		ItemNew="91"  /> 	
+					<!-- Trượng Tối Cao 	- 	Q.T Đại Vương -->		
+		<Jewel Index="14"	ItemOld="1039"		ItemNew="1036"  /> 	
+	</UpdateInfo>
+	
+</CustomJewel>

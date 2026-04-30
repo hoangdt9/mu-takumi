@@ -1,0 +1,67 @@
+# MU Takumi — (1) SQL Server Linux (profile db)  (2) MuServer qua Wine (profile wine)
+#
+# Mac Apple Silicon: Wine (muserver) thường crash (wine mmap + QEMU). SQL container (amd64) thường chạy được.
+#
+# Chỉ database:
+#   docker compose --profile db up -d
+# Chỉ Wine server (x86 Linux / Intel Mac ổn định hơn):
+#   env -u DOCKER_DEFAULT_PLATFORM docker compose --profile wine up --build -d
+# Cả hai:
+#   env -u DOCKER_DEFAULT_PLATFORM docker compose --profile db --profile wine up --build -d
+#
+# Restore .bak: copy docker/.env.example → .env, set MSSQL_SA_PASSWORD, rồi ./sql/restore-muonline.sh
+#
+services:
+  sqlserver:
+    profiles: ["db"]
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    platform: linux/amd64
+    container_name: takumi-mssql
+    restart: unless-stopped
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD:-Takumi_Sql_Dev_2026!}"
+    ports:
+      - "${MSSQL_PUBLISH_PORT:-1433}:1433"
+    volumes:
+      - takumi_mssql_data:/var/opt/mssql
+      - sql_backup:/backup
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -C -Q \"SELECT 1\" || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 45s
+
+  muserver:
+    profiles: ["wine"]
+    platform: linux/amd64
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: takumi-muserver
+    restart: unless-stopped
+    # Wine cần shared memory đủ lớn; thiếu shm hay crash khi load nhiều process
+    shm_size: "1g"
+    environment:
+      DISPLAY: ":99"
+      WINEARCH: "win32"
+      WINEDEBUG: "${WINEDEBUG:--all}"
+      # Bật antihack trong container (thường không cần để test): START_XSHIELD=1
+      START_XSHIELD: "${START_XSHIELD:-0}"
+      START_SECOND_GAMESERVER: "${START_SECOND_GAMESERVER:-1}"
+      START_DELAY_SECONDS: "${START_DELAY_SECONDS:-3}"
+      # GAME_SERVER_EXE_OVERRIDE / GAME_SERVER_DIR_OVERRIDE nếu đường exe khác mặc định
+    volumes:
+      - ${MU_SERVER_HOST_PATH:-../MuServer}:/MuServer
+    ports:
+      - "44405:44405/tcp"
+      - "55901:55901/tcp"
+      # Thêm/đổi UDP/TCP theo đúng CommonServer / Join — ví dụ một số build dùng UDP game:
+      # - "55902:55902/udp"
+      - "55960:55960/tcp"
+      - "55557:55557/tcp"
+
+volumes:
+  takumi_mssql_data:
+  sql_backup:

@@ -1,0 +1,59 @@
+0
+//EventName              DropZen    ItemDropRate   ItemDropCount   SetItemDropRate   ItemDropType   Fireworks	
+"Box Item Huyet Than"	 1000	   	100			   5		  	   0		   		 1		   		0
+end
+1
+//Section	Type	MinLevel   MaxLevel   Skill   Luck   Option   Excellent
+
+
+//Đồ Item Custom Huyết Thần
+
+0           42		0          0          0       1      1        1		100	//Mũ Huyết Thần
+0           44		0          0          0       1      1        1		100	//Mũ Huyết Thần
+0           46		0          0          0       1      1        1		100	//Mũ Huyết Thần
+2           22		0          0          0       1      1        1		100	//Mũ Huyết Thần
+4           28		0          0          0       1      1        1		100	//Mũ Huyết Thần
+5           41		0          0          0       1      1        1		100	//Mũ Huyết Thần
+5           43		0          0          0       1      1        1		100	//Mũ Huyết Thần
+
+7           98		0          0          0       1      1        1		100	//Mũ Huyết Thần
+7           99		0          0          0       1      1        1		100	//Mũ Huyết Thần
+7           100		0          0          0       1      1        1		100	//Mũ Huyết Thần
+7           101		0          0          0       1      1        1		100	//Mũ Huyết Thần
+7           103		0          0          0       1      1        1		100	//Mũ Huyết Thần
+7           104		0          0          0       1      1        1		100	//Mũ Huyết Thần
+
+8           98		0          0          0       1      1        1		100	//Áo Huyết Thần
+8           99		0          0          0       1      1        1		100	//Áo Huyết Thần
+8           100		0          0          0       1      1        1		100	//Áo Huyết Thần
+8           101		0          0          0       1      1        1		100	//Áo Huyết Thần
+8           102		0          0          0       1      1        1		100	//Áo Huyết Thần
+8           103		0          0          0       1      1        1		100	//Áo Huyết Thần
+8           104		0          0          0       1      1        1		100	//Áo Huyết Thần
+
+9           98		0          0          0       1      1        1		100	//Quần Huyết Thần
+9           99		0          0          0       1      1        1		100	//Quần Huyết Thần
+9           100		0          0          0       1      1        1		100	//Quần Huyết Thần
+9           101		0          0          0       1      1        1		100	//Quần Huyết Thần
+9           102		0          0          0       1      1        1		100	//Quần Huyết Thần
+9           103		0          0          0       1      1        1		100	//Quần Huyết Thần
+9           104		0          0          0       1      1        1		100	//Quần Huyết Thần
+
+10          98		0          0          0       1      1        1		100	//Găng Huyết Thần
+10          99		0          0          0       1      1        1		100	//Găng Huyết Thần
+10          100		0          0          0       1      1        1		100	//Găng Huyết Thần
+10          101		0          0          0       1      1        1		100	//Găng Huyết Thần
+10          102		0          0          0       1      1        1		100	//Găng Huyết Thần
+10          103		0          0          0       1      1        1		100	//Găng Huyết Thần
+10          104		0          0          0       1      1        1		100	//Găng Huyết Thần
+
+11          98		0          0          0       1      1        1		100	//Giầy Huyết Thần
+11          99		0          0          0       1      1        1		100	//Giầy Huyết Thần
+11          100		0          0          0       1      1        1		100	//Giầy Huyết Thần
+11          101		0          0          0       1      1        1		100	//Giầy Huyết Thần
+11          102		0          0          0       1      1        1		100	//Giầy Huyết Thần
+11          103		0          0          0       1      1        1		100	//Giầy Huyết Thần
+11          104		0          0          0       1      1        1		100	//Giầy Huyết Thần
+
+
+end

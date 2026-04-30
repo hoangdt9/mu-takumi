@@ -1,0 +1,776 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+**Hệ Thống BOT TRADE - Bot đổi đồ, Mix đồ
+***
+-->
+
+<BotTrade Enabled="1">
+	<CreateBot>
+		<NewBot	IndexBot="0"	Class="33"	Enabled="1"		OnlyVip="0"		BotName="NangCap"	MapID="0"	CoordX="130"	CoordY="129"	Dir="3"	CustomShowInfo="1" />
+		<NewBot	IndexBot="1"	Class="33"	Enabled="1"		OnlyVip="0"		BotName="DoiNgoc"	MapID="0"	CoordX="130"	CoordY="127"	Dir="3"	CustomShowInfo="1" />
+		<NewBot	IndexBot="2"	Class="33"	Enabled="1"		OnlyVip="0"		BotName="TienCap"	MapID="0"	CoordX="130"	CoordY="125"	Dir="3"	CustomShowInfo="1" />
+		<NewBot	IndexBot="3"	Class="33"	Enabled="0"		OnlyVip="0"		BotName="WingMini"	MapID="0"	CoordX="130"	CoordY="125"	Dir="3"	CustomShowInfo="1" />
+		<NewBot	IndexBot="4"	Class="33"	Enabled="1"		OnlyVip="0"		BotName="HoaTien"	MapID="99"	CoordX="171"	CoordY="119"	Dir="3"	CustomShowInfo="1" />
+	
+	</CreateBot>
+	
+	<!--
+	** Đồ Bot mặc
+	SlotItem:
+		0 = Sword	1 = Shield	2 = Helm	3 = Armor	
+		4 = Pants	5 = Gloves	6 = Boots	7 = Wings	8 = Pet
+		TypeItem = Category
+		IndexItem = ItemID.		[EX: (TypeItem, IndexItem) = (12, 200)]
+	-->
+	<ItemsBot>
+		<Items	IndexBot="0"	SlotItem="2"	TypeItem="7"	IndexItem="13"	LevelItem="13"	OptionItem="1"	/>
+		<Items	IndexBot="0"	SlotItem="3"	TypeItem="8"	IndexItem="13"	LevelItem="13"	OptionItem="1"	/>
+		<Items	IndexBot="0"	SlotItem="4"	TypeItem="9"	IndexItem="13"	LevelItem="13"	OptionItem="1"	/>
+		<Items	IndexBot="0"	SlotItem="5"	TypeItem="10"	IndexItem="13"	LevelItem="13"	OptionItem="1"	/>
+		<Items	IndexBot="0"	SlotItem="6"	TypeItem="11"	IndexItem="13"	LevelItem="13"	OptionItem="1"	/>
+		
+		<Items	IndexBot="1"	SlotItem="2"	TypeItem="7"	IndexItem="1"	LevelItem="13"	OptionItem="1"	/>
+		<Items	IndexBot="1"	SlotItem="3"	TypeItem="8"	IndexItem="1"	LevelItem="13"	OptionItem="1"	/>
+		<Items	IndexBot="1"	SlotItem="4"	TypeItem="9"	IndexItem="1"	LevelItem="13"	OptionItem="1"	/>
+		<Items	IndexBot="1"	SlotItem="5"	TypeItem="10"	IndexItem="1"	LevelItem="13"	OptionItem="1"	/>
+		<Items	IndexBot="1"	SlotItem="6"	TypeItem="11"	IndexItem="1"	LevelItem="13"	OptionItem="1"	/>
+		
+		<Items	IndexBot="2"	SlotItem="2"	TypeItem="7"	IndexItem="1"	LevelItem="13"	OptionItem="1"	/>
+		<Items	IndexBot="2"	SlotItem="3"	TypeItem="8"	IndexItem="1"	LevelItem="13"	OptionItem="1"	/>
+		<Items	IndexBot="2"	SlotItem="4"	TypeItem="9"	IndexItem="1"	LevelItem="13"	OptionItem="1"	/>
+		<Items	IndexBot="2"	SlotItem="5"	TypeItem="10"	IndexItem="1"	LevelItem="13"	OptionItem="1"	/>
+		<Items	IndexBot="2"	SlotItem="6"	TypeItem="11"	IndexItem="1"	LevelItem="13"	OptionItem="1"	/>
+		
+		<Items	IndexBot="3"	SlotItem="2"	TypeItem="7"	IndexItem="13"	LevelItem="13"	OptionItem="1"	/>
+		<Items	IndexBot="3"	SlotItem="3"	TypeItem="8"	IndexItem="13"	LevelItem="13"	OptionItem="1"	/>
+		<Items	IndexBot="3"	SlotItem="4"	TypeItem="9"	IndexItem="13"	LevelItem="13"	OptionItem="1"	/>
+		<Items	IndexBot="3"	SlotItem="5"	TypeItem="10"	IndexItem="13"	LevelItem="13"	OptionItem="1"	/>
+		<Items	IndexBot="3"	SlotItem="6"	TypeItem="11"	IndexItem="13"	LevelItem="13"	OptionItem="1"	/>
+
+		<Items	IndexBot="4"	SlotItem="2"	TypeItem="7"	IndexItem="13"	LevelItem="13"	OptionItem="1"	/>
+		<Items	IndexBot="4"	SlotItem="3"	TypeItem="8"	IndexItem="13"	LevelItem="13"	OptionItem="1"	/>
+		<Items	IndexBot="4"	SlotItem="4"	TypeItem="9"	IndexItem="13"	LevelItem="13"	OptionItem="1"	/>
+		<Items	IndexBot="4"	SlotItem="5"	TypeItem="10"	IndexItem="13"	LevelItem="13"	OptionItem="1"	/>
+		<Items	IndexBot="4"	SlotItem="6"	TypeItem="11"	IndexItem="13"	LevelItem="13"	OptionItem="1"	/>
+		
+	</ItemsBot>
+	
+	<!--
+	**MixData
+		MixName: Tên của Mix
+		SuccessRate: Tỉ lệ thành công (100%)
+		PriceType: 0 - Zen; 1 - WcoinC; 2 - WcoinP; 3 -  GoblinPoint
+		PriceCount: Số lượng tiền tệ cần
+		FailMes, SuccessMes: tin nhắn toàn server (lấy index ở phần MessageInfo)
+	-->
+	<MixData>
+	
+	<!-- +10 -->                                                              
+		<Mix	MixIndex="0"	MixName="Nhẫn Băng +10"			 SuccessRate="100"	PriceType="1"	PriceCount="1000000"	FailMes="11"	SuccessMes="12"	/>
+		<Mix	MixIndex="1"	MixName="Nhẫn Độc +10"			 SuccessRate="100"	PriceType="0"	PriceCount="1000000"	FailMes="11"	SuccessMes="12"	/>
+		<Mix	MixIndex="2"	MixName="Nhẫn Lửa +10"			 SuccessRate="100"	PriceType="0"	PriceCount="1000000"	FailMes="11"	SuccessMes="12"	/>
+		<Mix	MixIndex="3"	MixName="Nhẫn Đất +10"			 SuccessRate="100"	PriceType="0"	PriceCount="1000000"	FailMes="11"	SuccessMes="12"	/>
+		<Mix	MixIndex="4"	MixName="Nhẫn Gió +10"			 SuccessRate="100"	PriceType="0"	PriceCount="1000000"	FailMes="11"	SuccessMes="12"	/>
+		<Mix	MixIndex="5"	MixName="Nhẫn Phép Thuật +10"	 SuccessRate="100"	PriceType="0"	PriceCount="1000000"	FailMes="11"	SuccessMes="12"	/>
+		<Mix	MixIndex="6"	MixName="Dây Chuyền Sét +10"	 SuccessRate="100"	PriceType="0"	PriceCount="1000000"	FailMes="11"	SuccessMes="12"	/>
+		<Mix	MixIndex="7"	MixName="Dây Chuyền Lửa +10"	 SuccessRate="100"	PriceType="0"	PriceCount="1000000"	FailMes="11"	SuccessMes="12"	/>
+		<Mix	MixIndex="8"	MixName="Dây Chuyền Băng +10"	 SuccessRate="100"	PriceType="0"	PriceCount="1000000"	FailMes="11"	SuccessMes="12"	/>
+		<Mix	MixIndex="9"	MixName="Dây Chuyền Gió +10"	 SuccessRate="100"	PriceType="0"	PriceCount="1000000"	FailMes="11"	SuccessMes="12"	/>
+		<Mix	MixIndex="10"	MixName="Dây Chuyền Nước +10"	 SuccessRate="100"	PriceType="0"	PriceCount="1000000"	FailMes="11"	SuccessMes="12"	/>
+		<Mix	MixIndex="11"	MixName="Dây Chuyền Kỹ Năng +10" SuccessRate="100"	PriceType="0"	PriceCount="1000000"	FailMes="11"	SuccessMes="12"	/>
+	<!-- +11 -->	
+		<Mix	MixIndex="12"	MixName="Nhẫn Băng +11"			 SuccessRate="100"	PriceType="0"	PriceCount="1000000"	FailMes="11"	SuccessMes="12"	/>
+		<Mix	MixIndex="13"	MixName="Nhẫn Độc +11"			 SuccessRate="100"	PriceType="0"	PriceCount="1000000"	FailMes="11"	SuccessMes="12"	/>
+		<Mix	MixIndex="14"	MixName="Nhẫn Lửa +11"			 SuccessRate="100"	PriceType="0"	PriceCount="1000000"	FailMes="11"	SuccessMes="12"	/>
+		<Mix	MixIndex="15"	MixName="Nhẫn Đất +11"			 SuccessRate="100"	PriceType="0"	PriceCount="1000000"	FailMes="11"	SuccessMes="12"	/>
+		<Mix	MixIndex="16"	MixName="Nhẫn Gió +11"			 SuccessRate="100"	PriceType="0"	PriceCount="1000000"	FailMes="11"	SuccessMes="12"	/>
+		<Mix	MixIndex="17"	MixName="Nhẫn Phép Thuật +11"	 SuccessRate="100"	PriceType="0"	PriceCount="1000000"	FailMes="11"	SuccessMes="12"	/>
+		<Mix	MixIndex="18"	MixName="Dây Chuyền Sét +11"	 SuccessRate="100"	PriceType="0"	PriceCount="1000000"	FailMes="11"	SuccessMes="12"	/>
+		<Mix	MixIndex="19"	MixName="Dây Chuyền Lửa +11"	 SuccessRate="100"	PriceType="0"	PriceCount="1000000"	FailMes="11"	SuccessMes="12"	/>
+		<Mix	MixIndex="20"	MixName="Dây Chuyền Băng +11"	 SuccessRate="100"	PriceType="0"	PriceCount="1000000"	FailMes="11"	SuccessMes="12"	/>
+		<Mix	MixIndex="21"	MixName="Dây Chuyền Gió +11"	 SuccessRate="100"	PriceType="0"	PriceCount="1000000"	FailMes="11"	SuccessMes="12"	/>
+		<Mix	MixIndex="22"	MixName="Dây Chuyền Nước +11"	 SuccessRate="100"	PriceType="0"	PriceCount="1000000"	FailMes="11"	SuccessMes="12"	/>
+		<Mix	MixIndex="23"	MixName="Dây Chuyền Kỹ Năng +11" SuccessRate="100"	PriceType="0"	PriceCount="1000000"	FailMes="11"	SuccessMes="12"	/>
+	<!-- +12 -->	
+		<Mix	MixIndex="24"	MixName="Nhẫn Băng +12"			 SuccessRate="100"	PriceType="0"	PriceCount="1000000"	FailMes="11"	SuccessMes="12"	/>
+		<Mix	MixIndex="25"	MixName="Nhẫn Độc +12"			 SuccessRate="100"	PriceType="0"	PriceCount="1000000"	FailMes="11"	SuccessMes="12"	/>
+		<Mix	MixIndex="26"	MixName="Nhẫn Lửa +12"			 SuccessRate="100"	PriceType="0"	PriceCount="1000000"	FailMes="11"	SuccessMes="12"	/>
+		<Mix	MixIndex="27"	MixName="Nhẫn Đất +12"			 SuccessRate="100"	PriceType="0"	PriceCount="1000000"	FailMes="11"	SuccessMes="12"	/>
+		<Mix	MixIndex="28"	MixName="Nhẫn Gió +12"			 SuccessRate="100"	PriceType="0"	PriceCount="1000000"	FailMes="11"	SuccessMes="12"	/>
+		<Mix	MixIndex="29"	MixName="Nhẫn Phép Thuật +12"	 SuccessRate="100"	PriceType="0"	PriceCount="1000000"	FailMes="11"	SuccessMes="12"	/>
+		<Mix	MixIndex="30"	MixName="Dây Chuyền Sét +12"	 SuccessRate="100"	PriceType="0"	PriceCount="1000000"	FailMes="11"	SuccessMes="12"	/>
+		<Mix	MixIndex="31"	MixName="Dây Chuyền Lửa +12"	 SuccessRate="100"	PriceType="0"	PriceCount="1000000"	FailMes="11"	SuccessMes="12"	/>
+		<Mix	MixIndex="32"	MixName="Dây Chuyền Băng +12"	 SuccessRate="100"	PriceType="0"	PriceCount="1000000"	FailMes="11"	SuccessMes="12"	/>
+		<Mix	MixIndex="33"	MixName="Dây Chuyền Gió +12"	 SuccessRate="100"	PriceType="0"	PriceCount="1000000"	FailMes="11"	SuccessMes="12"	/>
+		<Mix	MixIndex="34"	MixName="Dây Chuyền Nước +12"	 SuccessRate="100"	PriceType="0"	PriceCount="1000000"	FailMes="11"	SuccessMes="12"	/>
+		<Mix	MixIndex="35"	MixName="Dây Chuyền Kỹ Năng +12" SuccessRate="100"	PriceType="0"	PriceCount="1000000"	FailMes="11"	SuccessMes="12"	/>
+	<!-- +13 -->	                                                          
+		<Mix	MixIndex="36"	MixName="Nhẫn Băng +13"			 SuccessRate="100"	PriceType="0"	PriceCount="1000000"	FailMes="11"	SuccessMes="12"	/>
+		<Mix	MixIndex="37"	MixName="Nhẫn Độc +13"			 SuccessRate="100"	PriceType="0"	PriceCount="1000000"	FailMes="11"	SuccessMes="12"	/>
+		<Mix	MixIndex="38"	MixName="Nhẫn Lửa +13"			 SuccessRate="100"	PriceType="0"	PriceCount="1000000"	FailMes="11"	SuccessMes="12"	/>
+		<Mix	MixIndex="39"	MixName="Nhẫn Đất +13"			 SuccessRate="100"	PriceType="0"	PriceCount="1000000"	FailMes="11"	SuccessMes="12"	/>
+		<Mix	MixIndex="40"	MixName="Nhẫn Gió +13"			 SuccessRate="100"	PriceType="0"	PriceCount="1000000"	FailMes="11"	SuccessMes="12"	/>
+		<Mix	MixIndex="41"	MixName="Nhẫn Phép Thuật +13"	 SuccessRate="100"	PriceType="0"	PriceCount="1000000"	FailMes="11"	SuccessMes="12"	/>
+		<Mix	MixIndex="42"	MixName="Dây Chuyền Sét +13"	 SuccessRate="100"	PriceType="0"	PriceCount="1000000"	FailMes="11"	SuccessMes="12"	/>
+		<Mix	MixIndex="43"	MixName="Dây Chuyền Lửa +13"	 SuccessRate="100"	PriceType="0"	PriceCount="1000000"	FailMes="11"	SuccessMes="12"	/>
+		<Mix	MixIndex="44"	MixName="Dây Chuyền Băng +13"	 SuccessRate="100"	PriceType="0"	PriceCount="1000000"	FailMes="11"	SuccessMes="12"	/>
+		<Mix	MixIndex="45"	MixName="Dây Chuyền Gió +13"	 SuccessRate="100"	PriceType="0"	PriceCount="1000000"	FailMes="11"	SuccessMes="12"	/>
+		<Mix	MixIndex="46"	MixName="Dây Chuyền Nước +13"	 SuccessRate="100"	PriceType="0"	PriceCount="1000000"	FailMes="11"	SuccessMes="12"	/>
+		<Mix	MixIndex="47"	MixName="Dây Chuyền Kỹ Năng +13" SuccessRate="100"	PriceType="0"	PriceCount="1000000"	FailMes="11"	SuccessMes="12"	/>
+		
+	<!-- Doi Ngọc-->
+		<Mix	MixIndex="48"	MixName="10 Chaos = 1 Bless" 	SuccessRate="100"	PriceType="0"	PriceCount="1000000"	FailMes="11"	SuccessMes="13"	/>
+		<Mix	MixIndex="49"	MixName="10 Chaos = 1 Bless" 	SuccessRate="100"	PriceType="0"	PriceCount="1000000"	FailMes="11"	SuccessMes="13"	/>		
+		<Mix	MixIndex="50"	MixName="5 Chaos = 1 Soul" 		SuccessRate="100"	PriceType="0"	PriceCount="1000000"	FailMes="11"	SuccessMes="13"	/>		
+		<Mix	MixIndex="51"	MixName="15 Life = 1 Bless" 	SuccessRate="100"	PriceType="0"	PriceCount="1000000"	FailMes="11"	SuccessMes="13"	/>
+		<Mix	MixIndex="52"	MixName="15 Life = 1 Bless" 	SuccessRate="100"	PriceType="0"	PriceCount="1000000"	FailMes="11"	SuccessMes="13"	/>
+		<Mix	MixIndex="53"	MixName="10 Life = 1 Soul" 		SuccessRate="100"	PriceType="0"	PriceCount="1000000"	FailMes="11"	SuccessMes="13"	/>
+		<Mix	MixIndex="54"	MixName="10 Life = 1 Soul" 		SuccessRate="100"	PriceType="0"	PriceCount="1000000"	FailMes="11"	SuccessMes="13"	/>
+		<Mix	MixIndex="55"	MixName="50 Chaos = 1 Đá Nguyên Thủy" SuccessRate="100"	PriceType="0"	PriceCount="1000000"	FailMes="11"	SuccessMes="13"	/>
+		<Mix	MixIndex="56"	MixName="50 Cre = 1 Đá Nguyên Thủy" SuccessRate="100"	PriceType="0"	PriceCount="1000000"	FailMes="11"	SuccessMes="13"	/>
+			
+		<Mix	MixIndex="57"	MixName="Ngọc Tiến Cấp 5" SuccessRate="100"	PriceType="1"	PriceCount="100000"	FailMes="11"	SuccessMes="13"	/>
+		<Mix	MixIndex="58"	MixName="Ngọc Tiến Cấp 6" SuccessRate="100"	PriceType="1"	PriceCount="100000"	FailMes="11"	SuccessMes="13"	/>
+		<Mix	MixIndex="59"	MixName="Ngọc Tiến Cấp 7" SuccessRate="100"	PriceType="1"	PriceCount="100000"	FailMes="11"	SuccessMes="13"	/>
+	
+		<Mix	MixIndex="60"	MixName="Áo Choàng Nhỏ DL"		SuccessRate="100"	PriceType="0"	PriceCount="1000000"	FailMes="9"		SuccessMes="13"	/>
+		<Mix	MixIndex="61"	MixName="Cánh Tiên Nữ Nhỏ"		SuccessRate="100"	PriceType="0"	PriceCount="1000000"	FailMes="9"		SuccessMes="13"	/>
+		<Mix	MixIndex="62"	MixName="Cánh Thiên Đàng Nhỏ"	SuccessRate="100"	PriceType="0"	PriceCount="1000000"	FailMes="9"		SuccessMes="13"	/>
+		<Mix	MixIndex="63"	MixName="Cánh Quỷ Nhỏ"			SuccessRate="100"	PriceType="0"	PriceCount="1000000"	FailMes="9"		SuccessMes="13"	/>
+
+		<Mix	MixIndex="64"	MixName="50 Hoa Mai Vàng Lấy Qùa"			SuccessRate="100"	PriceType="0"	PriceCount="1000000"	FailMes="9"		SuccessMes="13"	/>
+	
+	
+	</MixData>
+	
+	<!--
+	**Item cần để trade
+	KeepLevel, KeepOption giữ lại exl, option của đồ (1 Mix chỉ config giữ option và level 1 món đồ)
+	-->
+	<NeedItem>
+		
+		<Mix MixIndex="0"	Type="13"	Index="8"	MinLevel="9"	MaxLevel="9"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="1"	KeepItemMixFail="1"	/>	<!--Nhẫn Băng +9-->
+		<Mix MixIndex="0"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="0"	MinOpt="0"	MaxOpt="0"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>	<!--Ngọc Ước Nguyện-->
+		<Mix MixIndex="0"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="0"	MinOpt="0"	MaxOpt="0"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>	<!--Ngọc Tâm Linh-->
+		<Mix MixIndex="0"	Type="12"	Index="15"	MinLevel="0"	MaxLevel="0"	MinOpt="0"	MaxOpt="0"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>	<!--Chaos-->
+		<Mix MixIndex="0"	Type="14"	Index="96"	MinLevel="0"	MaxLevel="0"	MinOpt="0"	MaxOpt="0"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>	<!--Bùa Kết Hợp Chaos-->
+
+		<Mix MixIndex="1"	Type="13"	Index="9"	MinLevel="9"	MaxLevel="9"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="1"	KeepItemMixFail="1"	/>	<!--Nhẫn Độc +9-->
+		<Mix MixIndex="1"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>  <!--Ngọc Ước Nguyện-->
+		<Mix MixIndex="1"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>  <!--Ngọc Tâm Linh-->
+		<Mix MixIndex="1"	Type="14"	Index="96"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>  <!--Bùa Kết Hợp Chaos-->
+
+		<Mix MixIndex="2"	Type="13"	Index="21"	MinLevel="9"	MaxLevel="9"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="1"	KeepItemMixFail="1"	/>  <!--Nhẫn Lửa +9-->
+		<Mix MixIndex="2"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>  <!--Ngọc Ước Nguyện-->
+		<Mix MixIndex="2"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>  <!--Ngọc Tâm Linh-->
+		<Mix MixIndex="2"	Type="14"	Index="96"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>  <!--Bùa Kết Hợp Chaos-->
+		<!--Nhẫn Đất +9-->
+		<Mix MixIndex="3"	Type="13"	Index="22"	MinLevel="9"	MaxLevel="9"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="1"	KeepItemMixFail="1"	/>
+		<Mix MixIndex="3"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="3"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="3"	Type="14"	Index="96"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<!--Nhẫn Gió +9-->
+		<Mix MixIndex="4"	Type="13"	Index="23"	MinLevel="9"	MaxLevel="9"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="1"	KeepItemMixFail="1"	/>
+		<Mix MixIndex="4"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="4"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="4"	Type="14"	Index="96"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>	
+		<!--Nhẫn Phép Thuật +9-->
+		<Mix MixIndex="5"	Type="13"	Index="24"	MinLevel="9"	MaxLevel="9"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="1"	KeepItemMixFail="1"	/>
+		<Mix MixIndex="5"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="5"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="5"	Type="14"	Index="96"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<!--Dây Chuyền Sét +9-->
+		<Mix MixIndex="6"	Type="13"	Index="12"	MinLevel="9"	MaxLevel="9"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="1"	KeepItemMixFail="1"	/>
+		<Mix MixIndex="6"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="6"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="6"	Type="14"	Index="96"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<!--Dây Chuyền Lửa +9-->
+		<Mix MixIndex="7"	Type="13"	Index="13"	MinLevel="9"	MaxLevel="9"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="1"	KeepItemMixFail="1"	/>
+		<Mix MixIndex="7"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="7"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="7"	Type="14"	Index="96"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<!--Dây Chuyền Băng +9-->
+		<Mix MixIndex="8"	Type="13"	Index="25"	MinLevel="9"	MaxLevel="9"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="1"	KeepItemMixFail="1"	/>
+		<Mix MixIndex="8"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="8"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="8"	Type="14"	Index="96"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<!--Dây Chuyền Gió +9-->
+		<Mix MixIndex="9"	Type="13"	Index="26"	MinLevel="9"	MaxLevel="9"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="1"	KeepItemMixFail="1"	/>
+		<Mix MixIndex="9"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="9"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="9"	Type="14"	Index="96"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<!--Dây Chuyền Nước +9-->
+		<Mix MixIndex="10"	Type="13"	Index="27"	MinLevel="9"	MaxLevel="9"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="1"	KeepItemMixFail="1"	/>
+		<Mix MixIndex="10"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="10"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="10"	Type="14"	Index="96"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<!--Dây Chuyền Kỹ Năng +9-->
+		<Mix MixIndex="11"	Type="13"	Index="28"	MinLevel="9"	MaxLevel="9"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="1"	KeepItemMixFail="1"	/>
+		<Mix MixIndex="11"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="11"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="11"	Type="14"	Index="96"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+
+		
+		<!--Nhẫn Băng +10-->
+		<Mix MixIndex="12"	Type="13"	Index="8"	MinLevel="10"	MaxLevel="10"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="1"	KeepItemMixFail="1"	/>
+		<Mix MixIndex="12"	Type="14"	Index="244"	MinLevel="0"	MaxLevel="0"	MinOpt="0"	MaxOpt="0"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<!--Nhẫn Độc +10-->
+		<Mix MixIndex="13"	Type="13"	Index="9"	MinLevel="10"	MaxLevel="10"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="1"	KeepItemMixFail="1"	/>
+		<Mix MixIndex="13"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="13"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="13"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="13"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="13"	Type="14"	Index="96"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<!--Nhẫn Lửa +10-->
+		<Mix MixIndex="14"	Type="13"	Index="21"	MinLevel="10"	MaxLevel="10"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="1"	KeepItemMixFail="1"	/>
+		<Mix MixIndex="14"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="14"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="14"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="14"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="14"	Type="14"	Index="96"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<!--Nhẫn Đất +10-->
+		<Mix MixIndex="15"	Type="13"	Index="22"	MinLevel="10"	MaxLevel="10"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="1"	KeepItemMixFail="1"	/>
+		<Mix MixIndex="15"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="15"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="15"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="15"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="15"	Type="14"	Index="96"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<!--Nhẫn Gió +10-->
+		<Mix MixIndex="16"	Type="13"	Index="23"	MinLevel="10"	MaxLevel="10"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="1"	KeepItemMixFail="1"	/>
+		<Mix MixIndex="16"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="16"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="16"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="16"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="16"	Type="14"	Index="96"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>	
+		<!--Nhẫn Phép Thuật +10-->
+		<Mix MixIndex="17"	Type="13"	Index="24"	MinLevel="10"	MaxLevel="10"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="1"	KeepItemMixFail="1"	/>
+		<Mix MixIndex="17"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="17"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="17"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="17"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="17"	Type="14"	Index="96"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<!--Dây Chuyền Sét +10-->
+		<Mix MixIndex="18"	Type="13"	Index="12"	MinLevel="10"	MaxLevel="10"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="1"	KeepItemMixFail="1"	/>
+		<Mix MixIndex="18"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="18"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="18"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="18"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="18"	Type="14"	Index="96"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<!--Dây Chuyền Lửa +10-->
+		<Mix MixIndex="19"	Type="13"	Index="13"	MinLevel="10"	MaxLevel="10"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="1"	KeepItemMixFail="1"	/>
+		<Mix MixIndex="19"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="19"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="19"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="19"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="19"	Type="14"	Index="96"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<!--Dây Chuyền Băng +10-->
+		<Mix MixIndex="20"	Type="13"	Index="25"	MinLevel="10"	MaxLevel="10"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="1"	KeepItemMixFail="1"	/>
+		<Mix MixIndex="20"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="20"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="20"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="20"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="20"	Type="14"	Index="96"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<!--Dây Chuyền Gió +10-->
+		<Mix MixIndex="21"	Type="13"	Index="26"	MinLevel="10"	MaxLevel="10"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="1"	KeepItemMixFail="1"	/>
+		<Mix MixIndex="21"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="21"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="21"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="21"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="21"	Type="14"	Index="96"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<!--Dây Chuyền Nước +10-->
+		<Mix MixIndex="22"	Type="13"	Index="27"	MinLevel="10"	MaxLevel="10"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="1"	KeepItemMixFail="1"	/>
+		<Mix MixIndex="22"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="22"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="22"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="22"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="22"	Type="14"	Index="96"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<!--Dây Chuyền Kỹ Năng +10-->
+		<Mix MixIndex="23"	Type="13"	Index="28"	MinLevel="10"	MaxLevel="10"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="1"	KeepItemMixFail="1"	/>
+		<Mix MixIndex="23"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="23"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="23"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="23"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="23"	Type="14"	Index="96"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+
+		
+		<!--Nhẫn Băng +11-->
+		<Mix MixIndex="24"	Type="13"	Index="8"	MinLevel="11"	MaxLevel="11"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="1"	KeepItemMixFail="1"	/>
+		<Mix MixIndex="24"	Type="14"	Index="96"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<!--Nhẫn Độc +11-->
+		<Mix MixIndex="25"	Type="13"	Index="9"	MinLevel="11"	MaxLevel="11"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="1"	KeepItemMixFail="1"	/>
+		<Mix MixIndex="25"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="25"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="25"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="25"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="25"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="25"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="25"	Type="14"	Index="96"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<!--Nhẫn Lửa +11-->
+		<Mix MixIndex="26"	Type="13"	Index="21"	MinLevel="11"	MaxLevel="11"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="1"	KeepItemMixFail="1"	/>
+		<Mix MixIndex="26"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="26"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="26"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="26"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="26"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="26"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="26"	Type="14"	Index="96"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<!--Nhẫn Đất +11-->
+		<Mix MixIndex="27"	Type="13"	Index="22"	MinLevel="11"	MaxLevel="11"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="1"	KeepItemMixFail="1"	/>
+		<Mix MixIndex="27"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="27"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="27"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="27"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="27"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="27"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="27"	Type="14"	Index="96"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<!--Nhẫn Gió +11-->
+		<Mix MixIndex="28"	Type="13"	Index="23"	MinLevel="11"	MaxLevel="11"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="1"	KeepItemMixFail="1"	/>
+		<Mix MixIndex="28"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="28"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="28"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="28"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="28"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="28"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="28"	Type="14"	Index="96"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>	
+		<!--Nhẫn Phép Thuật +11-->
+		<Mix MixIndex="29"	Type="13"	Index="24"	MinLevel="11"	MaxLevel="11"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="1"	KeepItemMixFail="1"	/>
+		<Mix MixIndex="29"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="29"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="29"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="29"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="29"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="29"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="29"	Type="14"	Index="96"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<!--Dây Chuyền Sét +11-->
+		<Mix MixIndex="30"	Type="13"	Index="12"	MinLevel="11"	MaxLevel="11"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="1"	KeepItemMixFail="1"	/>
+		<Mix MixIndex="30"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="30"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="30"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="30"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="30"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="30"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="30"	Type="14"	Index="96"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<!--Dây Chuyền Lửa +11-->
+		<Mix MixIndex="31"	Type="13"	Index="13"	MinLevel="11"	MaxLevel="11"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="1"	KeepItemMixFail="1"	/>
+		<Mix MixIndex="31"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="31"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="31"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="31"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="31"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="31"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="31"	Type="14"	Index="96"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<!--Dây Chuyền Băng +11-->
+		<Mix MixIndex="32"	Type="13"	Index="25"	MinLevel="11"	MaxLevel="11"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="1"	KeepItemMixFail="1"	/>
+		<Mix MixIndex="32"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="32"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="32"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="32"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="32"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="32"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="32"	Type="14"	Index="96"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<!--Dây Chuyền Gió +11-->
+		<Mix MixIndex="33"	Type="13"	Index="26"	MinLevel="11"	MaxLevel="11"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="1"	KeepItemMixFail="1"	/>
+		<Mix MixIndex="33"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="33"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="33"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="33"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="33"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="33"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="33"	Type="14"	Index="96"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<!--Dây Chuyền Nước +11-->
+		<Mix MixIndex="34"	Type="13"	Index="27"	MinLevel="11"	MaxLevel="11"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="1"	KeepItemMixFail="1"	/>
+		<Mix MixIndex="34"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="34"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="34"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="34"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="34"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="34"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="34"	Type="14"	Index="96"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<!--Dây Chuyền Kỹ Năng +11-->
+		<Mix MixIndex="35"	Type="13"	Index="28"	MinLevel="11"	MaxLevel="11"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="1"	KeepItemMixFail="1"	/>
+		<Mix MixIndex="35"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="35"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="35"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="35"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="35"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="35"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="35"	Type="14"	Index="96"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+	
+		<!--Nhẫn Băng +12-->
+		<Mix MixIndex="36"	Type="13"	Index="8"	MinLevel="12"	MaxLevel="12"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="1"	KeepItemMixFail="1"	/>
+		<Mix MixIndex="36"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="36"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="36"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="36"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="36"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="36"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="36"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="36"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="36"	Type="14"	Index="96"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<!--Nhẫn Độc +12-->
+		<Mix MixIndex="37"	Type="13"	Index="9"	MinLevel="12"	MaxLevel="12"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="1"	KeepItemMixFail="1"	/>
+		<Mix MixIndex="37"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="37"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="37"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="37"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="37"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="37"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="37"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="37"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="37"	Type="14"	Index="96"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<!--Nhẫn Lửa +12-->
+		<Mix MixIndex="38"	Type="13"	Index="21"	MinLevel="12"	MaxLevel="12"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="1"	KeepItemMixFail="1"	/>
+		<Mix MixIndex="38"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="38"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="38"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="38"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="38"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="38"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="38"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="38"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="38"	Type="14"	Index="96"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<!--Nhẫn Đất +12-->
+		<Mix MixIndex="39"	Type="13"	Index="22"	MinLevel="12"	MaxLevel="12"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="1"	KeepItemMixFail="1"	/>
+		<Mix MixIndex="39"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="39"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="39"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="39"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="39"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="39"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="39"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="39"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="39"	Type="14"	Index="96"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<!--Nhẫn Gió +12-->
+		<Mix MixIndex="40"	Type="13"	Index="23"	MinLevel="12"	MaxLevel="12"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="1"	KeepItemMixFail="1"	/>
+		<Mix MixIndex="40"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="40"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="40"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="40"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="40"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="40"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="40"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="40"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="40"	Type="14"	Index="96"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>	
+		<!--Nhẫn Phép Thuật +12-->
+		<Mix MixIndex="41"	Type="13"	Index="24"	MinLevel="12"	MaxLevel="12"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="1"	KeepItemMixFail="1"	/>
+		<Mix MixIndex="41"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="41"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="41"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="41"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="41"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="41"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="41"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="41"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="41"	Type="14"	Index="96"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<!--Dây Chuyền Sét +12-->
+		<Mix MixIndex="42"	Type="13"	Index="12"	MinLevel="12"	MaxLevel="12"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="1"	KeepItemMixFail="1"	/>
+		<Mix MixIndex="42"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="42"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="42"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="42"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="42"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="42"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="42"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="42"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="42"	Type="14"	Index="96"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<!--Dây Chuyền Lửa +12-->
+		<Mix MixIndex="43"	Type="13"	Index="13"	MinLevel="12"	MaxLevel="12"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="1"	KeepItemMixFail="1"	/>
+		<Mix MixIndex="43"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="43"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="43"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="43"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="43"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="43"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="43"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="43"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="43"	Type="14"	Index="96"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<!--Dây Chuyền Băng +12-->
+		<Mix MixIndex="44"	Type="13"	Index="25"	MinLevel="12"	MaxLevel="12"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="1"	KeepItemMixFail="1"	/>
+		<Mix MixIndex="44"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="44"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="44"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="44"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="44"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="44"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="44"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="44"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="44"	Type="14"	Index="96"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<!--Dây Chuyền Gió +12-->
+		<Mix MixIndex="45"	Type="13"	Index="26"	MinLevel="12"	MaxLevel="12"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="1"	KeepItemMixFail="1"	/>
+		<Mix MixIndex="45"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="45"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="45"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="45"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="45"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="45"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="45"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="45"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="45"	Type="14"	Index="96"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<!--Dây Chuyền Nước +12-->
+		<Mix MixIndex="46"	Type="13"	Index="27"	MinLevel="12"	MaxLevel="12"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="1"	KeepItemMixFail="1"	/>
+		<Mix MixIndex="46"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="46"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="46"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="46"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="46"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="46"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="46"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="46"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="46"	Type="14"	Index="96"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<!--Dây Chuyền Kỹ Năng +12-->
+		<Mix MixIndex="47"	Type="13"	Index="28"	MinLevel="12"	MaxLevel="12"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="1"	KeepItemMixFail="1"	/>
+		<Mix MixIndex="47"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="47"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="47"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="47"	Type="14"	Index="13"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="47"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="47"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="47"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="47"	Type="14"	Index="14"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="47"	Type="14"	Index="96"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+
+	<!-- Doi Ngọc-->
+		<Mix MixIndex="48"	Type="12"	Index="15"	MinLevel="0"	MaxLevel="0"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="48"	Type="12"	Index="15"	MinLevel="0"	MaxLevel="0"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="48"	Type="12"	Index="15"	MinLevel="0"	MaxLevel="0"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="48"	Type="12"	Index="15"	MinLevel="0"	MaxLevel="0"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="48"	Type="12"	Index="15"	MinLevel="0"	MaxLevel="0"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="48"	Type="12"	Index="15"	MinLevel="0"	MaxLevel="0"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="48"	Type="12"	Index="15"	MinLevel="0"	MaxLevel="0"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="48"	Type="12"	Index="15"	MinLevel="0"	MaxLevel="0"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="48"	Type="12"	Index="15"	MinLevel="0"	MaxLevel="0"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="48"	Type="12"	Index="15"	MinLevel="0"	MaxLevel="0"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		
+		<Mix MixIndex="49"	Type="12"	Index="141"	MinLevel="0"	MaxLevel="0"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+<!--	5 Chaos = 1 Soul -->
+		<Mix MixIndex="50"	Type="12"	Index="15"	MinLevel="0"	MaxLevel="0"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="50"	Type="12"	Index="15"	MinLevel="0"	MaxLevel="0"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="50"	Type="12"	Index="15"	MinLevel="0"	MaxLevel="0"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="50"	Type="12"	Index="15"	MinLevel="0"	MaxLevel="0"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="50"	Type="12"	Index="15"	MinLevel="0"	MaxLevel="0"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+<!--	15 Life = 1 Bless -->
+		<Mix MixIndex="51"	Type="14"	Index="16"	MinLevel="0"	MaxLevel="0"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="51"	Type="14"	Index="16"	MinLevel="0"	MaxLevel="0"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="51"	Type="14"	Index="16"	MinLevel="0"	MaxLevel="0"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="51"	Type="14"	Index="16"	MinLevel="0"	MaxLevel="0"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="51"	Type="14"	Index="16"	MinLevel="0"	MaxLevel="0"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="51"	Type="14"	Index="16"	MinLevel="0"	MaxLevel="0"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="51"	Type="14"	Index="16"	MinLevel="0"	MaxLevel="0"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="51"	Type="14"	Index="16"	MinLevel="0"	MaxLevel="0"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="51"	Type="14"	Index="16"	MinLevel="0"	MaxLevel="0"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="51"	Type="14"	Index="16"	MinLevel="0"	MaxLevel="0"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="51"	Type="14"	Index="16"	MinLevel="0"	MaxLevel="0"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="51"	Type="14"	Index="16"	MinLevel="0"	MaxLevel="0"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="51"	Type="14"	Index="16"	MinLevel="0"	MaxLevel="0"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="51"	Type="14"	Index="16"	MinLevel="0"	MaxLevel="0"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="51"	Type="14"	Index="16"	MinLevel="0"	MaxLevel="0"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+<!--	15 Life = 1 Bless -->
+		<Mix MixIndex="52"	Type="12"	Index="136"	MinLevel="0"	MaxLevel="0"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="52"	Type="14"	Index="16"	MinLevel="0"	MaxLevel="0"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="52"	Type="14"	Index="16"	MinLevel="0"	MaxLevel="0"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="52"	Type="14"	Index="16"	MinLevel="0"	MaxLevel="0"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="52"	Type="14"	Index="16"	MinLevel="0"	MaxLevel="0"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="52"	Type="14"	Index="16"	MinLevel="0"	MaxLevel="0"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+<!--	10 Life = 1 S -->
+		<Mix MixIndex="53"	Type="12"	Index="136"	MinLevel="0"	MaxLevel="0"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+<!--	10 Life = 1 S -->
+		<Mix MixIndex="54"	Type="14"	Index="16"	MinLevel="0"	MaxLevel="0"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="54"	Type="14"	Index="16"	MinLevel="0"	MaxLevel="0"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="54"	Type="14"	Index="16"	MinLevel="0"	MaxLevel="0"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="54"	Type="14"	Index="16"	MinLevel="0"	MaxLevel="0"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="54"	Type="14"	Index="16"	MinLevel="0"	MaxLevel="0"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="54"	Type="14"	Index="16"	MinLevel="0"	MaxLevel="0"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="54"	Type="14"	Index="16"	MinLevel="0"	MaxLevel="0"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="54"	Type="14"	Index="16"	MinLevel="0"	MaxLevel="0"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="54"	Type="14"	Index="16"	MinLevel="0"	MaxLevel="0"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="54"	Type="14"	Index="16"	MinLevel="0"	MaxLevel="0"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+<!--	50 Chao = 1 Đá Nguyên Thủy-->
+		<Mix MixIndex="55"	Type="12"	Index="141"	MinLevel="0"	MaxLevel="0"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="55"	Type="12"	Index="141"	MinLevel="0"	MaxLevel="0"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="55"	Type="12"	Index="141"	MinLevel="0"	MaxLevel="0"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="55"	Type="12"	Index="141"	MinLevel="0"	MaxLevel="0"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="55"	Type="12"	Index="141"	MinLevel="0"	MaxLevel="0"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+<!--	50 Cre = 1 Đá Nguyên Thủy-->
+		<Mix MixIndex="56"	Type="12"	Index="137"	MinLevel="0"	MaxLevel="0"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="56"	Type="12"	Index="137"	MinLevel="0"	MaxLevel="0"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="56"	Type="12"	Index="137"	MinLevel="0"	MaxLevel="0"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="56"	Type="12"	Index="137"	MinLevel="0"	MaxLevel="0"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="56"	Type="12"	Index="137"	MinLevel="0"	MaxLevel="0"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+				
+<!-- Doi ngoc tien cap 5 -->
+		<Mix MixIndex="57"	Type="12"	Index="30"	MinLevel="1"	MaxLevel="1"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="57"	Type="12"	Index="31"	MinLevel="1"	MaxLevel="1"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="57"	Type="12"	Index="136"	MinLevel="1"	MaxLevel="1"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="57"	Type="12"	Index="137"	MinLevel="1"	MaxLevel="1"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="57"	Type="12"	Index="141"	MinLevel="1"	MaxLevel="1"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+<!-- Doi ngoc tien cap 6 -->
+		<Mix MixIndex="58"	Type="12"	Index="30"	MinLevel="2"	MaxLevel="2"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="58"	Type="12"	Index="31"	MinLevel="2"	MaxLevel="2"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="58"	Type="12"	Index="136"	MinLevel="2"	MaxLevel="2"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="58"	Type="12"	Index="137"	MinLevel="2"	MaxLevel="2"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="58"	Type="12"	Index="141"	MinLevel="2"	MaxLevel="2"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+<!-- Doi ngoc tien cap 7 -->
+		<Mix MixIndex="59"	Type="12"	Index="30"	MinLevel="1"	MaxLevel="1"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="59"	Type="12"	Index="30"	MinLevel="1"	MaxLevel="1"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		
+		<Mix MixIndex="59"	Type="12"	Index="31"	MinLevel="1"	MaxLevel="1"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="59"	Type="12"	Index="31"	MinLevel="1"	MaxLevel="1"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		
+		<Mix MixIndex="59"	Type="12"	Index="136"	MinLevel="1"	MaxLevel="1"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="59"	Type="12"	Index="136"	MinLevel="1"	MaxLevel="1"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		
+		<Mix MixIndex="59"	Type="12"	Index="137"	MinLevel="1"	MaxLevel="1"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="59"	Type="12"	Index="137"	MinLevel="1"	MaxLevel="1"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		
+		<Mix MixIndex="59"	Type="12"	Index="141"	MinLevel="1"	MaxLevel="1"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="59"	Type="12"	Index="141"	MinLevel="1"	MaxLevel="1"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+	
+
+<!-- Cánh mini-->	
+		<Mix MixIndex="60"	Type="12"	Index="0"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="61"	Type="12"	Index="1"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="62"	Type="12"	Index="2"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="63"	Type="12"	Index="3"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="0"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+
+<!-- 50 Hoa Anh Đào Vàng-->		
+		<Mix MixIndex="64"	Type="14"	Index="90"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="10"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="64"	Type="14"	Index="90"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="10"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="64"	Type="14"	Index="90"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="10"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="64"	Type="14"	Index="90"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="10"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+		<Mix MixIndex="64"	Type="14"	Index="90"	MinLevel="0"	MaxLevel="15"	MinOpt="0"	MaxOpt="7"	Luck="0"	Skill="0"	NeedExc="0"	Durability="10"	KeepLevel="0"	KeepOption="0"	KeepItemMixFail="0"	/>
+
+	
+	</NeedItem>
+	
+	<!--
+		Item nhận được khi thành công
+		Luck and Skills là tỉ lệ (0 -> 100)
+		Exc: số dòng hoàn hảo nhận được
+	-->
+	<DataResult>
+		
+		<!--Ngọc Ước Nguyện-->
+		<!--Ngọc Tâm Linh-->
+		
+		<!-- +10 -->
+		<ItemResult MixIndex="0"	Type="13"	Index="8"	LevelMin="10"	LevelMax="10"	OptMin="0"	OptMax="0"	Luck="0"	Skill="0"	Exc="0"	Durability="0" />
+		<ItemResult MixIndex="1"	Type="13"	Index="9"	LevelMin="10"	LevelMax="10"	OptMin="0"	OptMax="0"	Luck="0"	Skill="0"	Exc="1"	Durability="0" />
+		<ItemResult MixIndex="2"	Type="13"	Index="21"	LevelMin="10"	LevelMax="10"	OptMin="0"	OptMax="0"	Luck="0"	Skill="0"	Exc="1"	Durability="0" />
+		<ItemResult MixIndex="3"	Type="13"	Index="22"	LevelMin="10"	LevelMax="10"	OptMin="0"	OptMax="0"	Luck="0"	Skill="0"	Exc="1"	Durability="0" />
+		<ItemResult MixIndex="4"	Type="13"	Index="23"	LevelMin="10"	LevelMax="10"	OptMin="0"	OptMax="0"	Luck="0"	Skill="0"	Exc="1"	Durability="0" />
+		<ItemResult MixIndex="5"	Type="13"	Index="24"	LevelMin="10"	LevelMax="10"	OptMin="0"	OptMax="0"	Luck="0"	Skill="0"	Exc="1"	Durability="0" />
+		<ItemResult MixIndex="6"	Type="13"	Index="12"	LevelMin="10"	LevelMax="10"	OptMin="0"	OptMax="0"	Luck="0"	Skill="0"	Exc="1"	Durability="0" />
+		<ItemResult MixIndex="7"	Type="13"	Index="13"	LevelMin="10"	LevelMax="10"	OptMin="0"	OptMax="0"	Luck="0"	Skill="0"	Exc="1"	Durability="0" />
+		<ItemResult MixIndex="8"	Type="13"	Index="25"	LevelMin="10"	LevelMax="10"	OptMin="0"	OptMax="0"	Luck="0"	Skill="0"	Exc="1"	Durability="0" />
+		<ItemResult MixIndex="9"	Type="13"	Index="26"	LevelMin="10"	LevelMax="10"	OptMin="0"	OptMax="0"	Luck="0"	Skill="0"	Exc="1"	Durability="0" />
+		<ItemResult MixIndex="10"	Type="13"	Index="27"	LevelMin="10"	LevelMax="10"	OptMin="0"	OptMax="0"	Luck="0"	Skill="0"	Exc="1"	Durability="0" />
+		<ItemResult MixIndex="11"	Type="13"	Index="28"	LevelMin="10"	LevelMax="10"	OptMin="0"	OptMax="0"	Luck="0"	Skill="0"	Exc="1"	Durability="0" />
+		<!-- +11 -->
+		<ItemResult MixIndex="12"	Type="13"	Index="8"	LevelMin="11"	LevelMax="11"	OptMin="0"	OptMax="0"	Luck="0"	Skill="0"	Exc="1"	Durability="0" />
+		<ItemResult MixIndex="13"	Type="13"	Index="9"	LevelMin="11"	LevelMax="11"	OptMin="0"	OptMax="0"	Luck="0"	Skill="0"	Exc="1"	Durability="0" />
+		<ItemResult MixIndex="14"	Type="13"	Index="21"	LevelMin="11"	LevelMax="11"	OptMin="0"	OptMax="0"	Luck="0"	Skill="0"	Exc="1"	Durability="0" />
+		<ItemResult MixIndex="15"	Type="13"	Index="22"	LevelMin="11"	LevelMax="11"	OptMin="0"	OptMax="0"	Luck="0"	Skill="0"	Exc="1"	Durability="0" />
+		<ItemResult MixIndex="16"	Type="13"	Index="23"	LevelMin="11"	LevelMax="11"	OptMin="0"	OptMax="0"	Luck="0"	Skill="0"	Exc="1"	Durability="0" />
+		<ItemResult MixIndex="17"	Type="13"	Index="24"	LevelMin="11"	LevelMax="11"	OptMin="0"	OptMax="0"	Luck="0"	Skill="0"	Exc="1"	Durability="0" />
+		<ItemResult MixIndex="18"	Type="13"	Index="12"	LevelMin="11"	LevelMax="11"	OptMin="0"	OptMax="0"	Luck="0"	Skill="0"	Exc="1"	Durability="0" />
+		<ItemResult MixIndex="19"	Type="13"	Index="13"	LevelMin="11"	LevelMax="11"	OptMin="0"	OptMax="0"	Luck="0"	Skill="0"	Exc="1"	Durability="0" />
+		<ItemResult MixIndex="20"	Type="13"	Index="25"	LevelMin="11"	LevelMax="11"	OptMin="0"	OptMax="0"	Luck="0"	Skill="0"	Exc="1"	Durability="0" />
+		<ItemResult MixIndex="21"	Type="13"	Index="26"	LevelMin="11"	LevelMax="11"	OptMin="0"	OptMax="0"	Luck="0"	Skill="0"	Exc="1"	Durability="0" />
+		<ItemResult MixIndex="22"	Type="13"	Index="27"	LevelMin="11"	LevelMax="11"	OptMin="0"	OptMax="0"	Luck="0"	Skill="0"	Exc="1"	Durability="0" />
+		<ItemResult MixIndex="23"	Type="13"	Index="28"	LevelMin="11"	LevelMax="11"	OptMin="0"	OptMax="0"	Luck="0"	Skill="0"	Exc="1"	Durability="0" />
+		<!-- +12 -->
+		<ItemResult MixIndex="24"	Type="13"	Index="8"	LevelMin="12"	LevelMax="12"	OptMin="0"	OptMax="0"	Luck="0"	Skill="0"	Exc="1"	Durability="0" />
+		<ItemResult MixIndex="25"	Type="13"	Index="9"	LevelMin="12"	LevelMax="12"	OptMin="0"	OptMax="0"	Luck="0"	Skill="0"	Exc="1"	Durability="0" />
+		<ItemResult MixIndex="26"	Type="13"	Index="21"	LevelMin="12"	LevelMax="12"	OptMin="0"	OptMax="0"	Luck="0"	Skill="0"	Exc="1"	Durability="0" />
+		<ItemResult MixIndex="27"	Type="13"	Index="22"	LevelMin="12"	LevelMax="12"	OptMin="0"	OptMax="0"	Luck="0"	Skill="0"	Exc="1"	Durability="0" />
+		<ItemResult MixIndex="28"	Type="13"	Index="23"	LevelMin="12"	LevelMax="12"	OptMin="0"	OptMax="0"	Luck="0"	Skill="0"	Exc="1"	Durability="0" />
+		<ItemResult MixIndex="29"	Type="13"	Index="24"	LevelMin="12"	LevelMax="12"	OptMin="0"	OptMax="0"	Luck="0"	Skill="0"	Exc="1"	Durability="0" />
+		<ItemResult MixIndex="30"	Type="13"	Index="12"	LevelMin="12"	LevelMax="12"	OptMin="0"	OptMax="0"	Luck="0"	Skill="0"	Exc="1"	Durability="0" />
+		<ItemResult MixIndex="31"	Type="13"	Index="13"	LevelMin="12"	LevelMax="12"	OptMin="0"	OptMax="0"	Luck="0"	Skill="0"	Exc="1"	Durability="0" />
+		<ItemResult MixIndex="32"	Type="13"	Index="25"	LevelMin="12"	LevelMax="12"	OptMin="0"	OptMax="0"	Luck="0"	Skill="0"	Exc="1"	Durability="0" />
+		<ItemResult MixIndex="33"	Type="13"	Index="26"	LevelMin="12"	LevelMax="12"	OptMin="0"	OptMax="0"	Luck="0"	Skill="0"	Exc="1"	Durability="0" />
+		<ItemResult MixIndex="34"	Type="13"	Index="27"	LevelMin="12"	LevelMax="12"	OptMin="0"	OptMax="0"	Luck="0"	Skill="0"	Exc="1"	Durability="0" />
+		<ItemResult MixIndex="35"	Type="13"	Index="28"	LevelMin="12"	LevelMax="12"	OptMin="0"	OptMax="0"	Luck="0"	Skill="0"	Exc="1"	Durability="0" />
+		<!-- +13 -->
+		<ItemResult MixIndex="36"	Type="13"	Index="8"	LevelMin="13"	LevelMax="13"	OptMin="0"	OptMax="0"	Luck="0"	Skill="0"	Exc="1"	Durability="0" />
+		<ItemResult MixIndex="37"	Type="13"	Index="9"	LevelMin="13"	LevelMax="13"	OptMin="0"	OptMax="0"	Luck="0"	Skill="0"	Exc="1"	Durability="0" />
+		<ItemResult MixIndex="38"	Type="13"	Index="21"	LevelMin="13"	LevelMax="13"	OptMin="0"	OptMax="0"	Luck="0"	Skill="0"	Exc="1"	Durability="0" />
+		<ItemResult MixIndex="39"	Type="13"	Index="22"	LevelMin="13"	LevelMax="13"	OptMin="0"	OptMax="0"	Luck="0"	Skill="0"	Exc="1"	Durability="0" />
+		<ItemResult MixIndex="40"	Type="13"	Index="23"	LevelMin="13"	LevelMax="13"	OptMin="0"	OptMax="0"	Luck="0"	Skill="0"	Exc="1"	Durability="0" />
+		<ItemResult MixIndex="41"	Type="13"	Index="24"	LevelMin="13"	LevelMax="13"	OptMin="0"	OptMax="0"	Luck="0"	Skill="0"	Exc="1"	Durability="0" />
+		<ItemResult MixIndex="42"	Type="13"	Index="12"	LevelMin="13"	LevelMax="13"	OptMin="0"	OptMax="0"	Luck="0"	Skill="0"	Exc="1"	Durability="0" />
+		<ItemResult MixIndex="43"	Type="13"	Index="13"	LevelMin="13"	LevelMax="13"	OptMin="0"	OptMax="0"	Luck="0"	Skill="0"	Exc="1"	Durability="0" />
+		<ItemResult MixIndex="44"	Type="13"	Index="25"	LevelMin="13"	LevelMax="13"	OptMin="0"	OptMax="0"	Luck="0"	Skill="0"	Exc="1"	Durability="0" />
+		<ItemResult MixIndex="45"	Type="13"	Index="26"	LevelMin="13"	LevelMax="13"	OptMin="0"	OptMax="0"	Luck="0"	Skill="0"	Exc="1"	Durability="0" />
+		<ItemResult MixIndex="46"	Type="13"	Index="27"	LevelMin="13"	LevelMax="13"	OptMin="0"	OptMax="0"	Luck="0"	Skill="0"	Exc="1"	Durability="0" />
+		<ItemResult MixIndex="47"	Type="13"	Index="28"	LevelMin="13"	LevelMax="13"	OptMin="0"	OptMax="0"	Luck="0"	Skill="0"	Exc="1"	Durability="0" />
+		
+		
+		
+		<ItemResult MixIndex="48"	Type="14"	Index="13"	LevelMin="0"	LevelMax="0"	OptMin="0"	OptMax="0"	Luck="0"	Skill="0"	Exc="0"	Durability="0" />
+		<ItemResult MixIndex="49"	Type="14"	Index="13"	LevelMin="0"	LevelMax="0"	OptMin="0"	OptMax="0"	Luck="0"	Skill="0"	Exc="0"	Durability="0" />
+		<ItemResult MixIndex="50"	Type="14"	Index="14"	LevelMin="0"	LevelMax="0"	OptMin="0"	OptMax="0"	Luck="0"	Skill="0"	Exc="0"	Durability="0" />
+		<ItemResult MixIndex="51"	Type="14"	Index="13"	LevelMin="0"	LevelMax="0"	OptMin="0"	OptMax="0"	Luck="0"	Skill="0"	Exc="0"	Durability="0" />
+		<ItemResult MixIndex="52"	Type="14"	Index="13"	LevelMin="0"	LevelMax="0"	OptMin="0"	OptMax="0"	Luck="0"	Skill="0"	Exc="0"	Durability="0" />
+		<ItemResult MixIndex="53"	Type="14"	Index="14"	LevelMin="0"	LevelMax="0"	OptMin="0"	OptMax="0"	Luck="0"	Skill="0"	Exc="0"	Durability="0" />
+		<ItemResult MixIndex="54"	Type="14"	Index="14"	LevelMin="0"	LevelMax="0"	OptMin="0"	OptMax="0"	Luck="0"	Skill="0"	Exc="0"	Durability="0" />
+		<ItemResult MixIndex="55"	Type="14"	Index="41"	LevelMin="0"	LevelMax="0"	OptMin="0"	OptMax="0"	Luck="0"	Skill="0"	Exc="0"	Durability="0" />
+		<ItemResult MixIndex="56"	Type="14"	Index="41"	LevelMin="0"	LevelMax="0"	OptMin="0"	OptMax="0"	Luck="0"	Skill="0"	Exc="0"	Durability="0" />
+		
+<!-- Doi ngoc tien cap 5 -->		
+		<ItemResult MixIndex="57"	Type="14"	Index="242"	LevelMin="0"	LevelMax="0"	OptMin="0"	OptMax="0"	Luck="0"	Skill="0"	Exc="0"	Durability="0" />
+		<ItemResult MixIndex="58"	Type="14"	Index="243"	LevelMin="0"	LevelMax="0"	OptMin="0"	OptMax="0"	Luck="0"	Skill="0"	Exc="0"	Durability="0" />
+		<ItemResult MixIndex="59"	Type="14"	Index="238"	LevelMin="0"	LevelMax="0"	OptMin="0"	OptMax="0"	Luck="0"	Skill="0"	Exc="0"	Durability="0" />
+		
+<!-- wing mini -->
+		<ItemResult MixIndex="60"	Type="12"	Index="36"	LevelMin="0"	LevelMax="0"	OptMin="0"	OptMax="0"	Luck="0"	Skill="0"	Exc="0"	Durability="0" />
+		<ItemResult MixIndex="61"	Type="12"	Index="37"	LevelMin="0"	LevelMax="0"	OptMin="0"	OptMax="0"	Luck="0"	Skill="0"	Exc="0"	Durability="0" />
+		<ItemResult MixIndex="62"	Type="12"	Index="38"	LevelMin="0"	LevelMax="0"	OptMin="0"	OptMax="0"	Luck="0"	Skill="0"	Exc="0"	Durability="0" />
+		<ItemResult MixIndex="63"	Type="12"	Index="39"	LevelMin="0"	LevelMax="0"	OptMin="0"	OptMax="0"	Luck="0"	Skill="0"	Exc="0"	Durability="0" />
+		
+<!--Dong Xu 200k Wcoin-->	
+		<ItemResult MixIndex="64"	Type="14"	Index="220"	LevelMin="0"	LevelMax="0"	OptMin="0"	OptMax="0"	Luck="0"	Skill="0"	Exc="0"	Durability="0" />
+		
+		
+	</DataResult>
+	
+	<!--
+		BOT được Mix những Index
+		MixIndexMin, MixIndexMax: trong khoảng (0 -> 500)
+		***Lưu ý; 1 con BOT max có 500 Mix, nhiều hơn thì tạo thêm BOT
+	-->
+	<BotAsociation>
+	
+		<Bot	IndexBot="0"	MixIndexMin="0"	MixIndexMax="47" />
+	
+		<Bot	IndexBot="1"	MixIndexMin="48"	MixIndexMax="56" />
+		<Bot	IndexBot="2"	MixIndexMin="57"	MixIndexMax="59" />
+		<Bot	IndexBot="3"	MixIndexMin="60"	MixIndexMax="63" />
+		<Bot	IndexBot="4"	MixIndexMin="64"	MixIndexMax="64" />		
+		
+	</BotAsociation>
+	
+	<!--
+		Tin nhắn...
+	-->
+	<MessageInfo>
+		<Message	Index="0"	Text="Tôi đã sẵn sàng!" />
+		<Message	Index="1"	Text="Hãy nâng cấp Vip rồi quay lại gặp tôi!" />
+		<Message	Index="2"	Text="Bạn cần đặt đúng item!" />
+		<Message	Index="3"	Text="Cần %d Zen" />
+		<Message	Index="4"	Text="Cần %d WcoinC" />
+		<Message	Index="5"	Text="Cần %d WcoinP" />
+		<Message	Index="6"	Text="Cần %d GobinCoin" />
+		<Message	Index="7"	Text="Chúc mừng! Bạn đã Thành Công" />
+		<Message	Index="8"	Text="Thật tiếc! Bạn đã Thất bại" />	
+		<Message	Index="9"	Text="[%s] vừa TradeMix [%s] thất bại!" />
+		<Message	Index="10"	Text="[%s] vừa TradeMix [%s] thành công!" />	
+		<Message	Index="11"	Text="[%s] vừa nâng cấp [%s] thất bại!" />
+		<Message	Index="12"	Text="[%s] vừa nâng cấp [%s] thành công!" />				
+		<Message	Index="13"	Text="[%s] vừa Đổi [%s] thành công!" />
+		
+	</MessageInfo>
+</BotTrade>
+
+

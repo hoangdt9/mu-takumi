@@ -1,0 +1,18 @@
+19:57:14 [SocketManager] Server started at port [55858]
+19:57:14 Version Build: [12:15:07 08/10/2025]
+19:57:14 [ServerInfo] Config loaded successfully
+19:57:14 [ServerInfo] AntiFlood: ON
+19:57:14 [ServerInfo] AutoAddDumpList: ON
+19:57:14 [ServerInfo] Memory Protect loaded [429] successfully
+19:57:14 [ServerInfo] Memory Encode OK
+19:57:14 [ServerInfo] Memory CheckRead OK
+19:57:14 [ServerInfo] Memory CheckHook OK
+19:57:14 [ServerInfo] DumpList loaded [534] successfully
+19:57:14 [ServerInfo] DumpWhiteList loaded [11] successfully
+19:57:14 [ServerInfo] ChecksumList loaded [0] successfully
+19:57:14 [ServerInfo] InternalList loaded [18] successfully
+19:57:14 [ServerInfo] WindowList loaded [102] successfully
+19:57:14 [ServerInfo] Bad Words loaded [13] successfully
+19:57:14 [ServerInfo] BlackList loaded successfully
+19:57:14 [ServerInfo] WatchList loaded successfully
+19:57:14 [SocketManagerGS] Server started at port [50112]

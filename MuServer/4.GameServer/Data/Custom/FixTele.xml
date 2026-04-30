@@ -1,0 +1,47 @@
+<BCustomEdit>
+    <!-- Fix Tele & Skill
+	Ghi Chú : mặc định khi DW Tele sẽ không được sử dụng Skill 
+	Có thể thêm Skill cho phép sử dụng vào bên dưới !
+	-->
+	<SkillSuDungKhiTele>
+        <Skill IDSkill="3" />
+        <!--  <Skill IDSkill="1"/>
+        <Skill IDSkill="9"/>
+       <Skill IDSkill="39"/>
+        <Skill IDSkill="13"/> -->
+  
+	</SkillSuDungKhiTele>
+<!-- 
+Fix Giật Lui Skill
+Config tỷ lệ xuất hiện đẩy lùi khi dùng skill
+IDSkill = Index Skill
+Rate = Tỷ lệ xuất hiện giật lùi (Max 100)
+Type = Loại khựng
+
+ChainLightning = Sét liên hoàn (Sum)
+Cyclone = Chém Xoáy Ngang(DK,MG)
+ChainDriver = Vật Ngã (RF)
+-->
+	<SkillBackSpring>
+	<!--Đẩy Lùi-->
+        <Skill IDSkill="215" Rate="1" Type="1"/>     <!--Sét Liên Hoàn Sum-->
+        <Skill IDSkill="237" Rate="1" Type="1"/>     <!--Bão Điện MG-->
+		<Skill IDSkill="262" Rate="50" Type="1"/>    <!--Vật Ngã RF-->
+		<Skill IDSkill="22"  Rate="1" Type="1"/>   <!--Tăng Cường Chém Xoáy Ngang DK-->
+
+	</SkillBackSpring>
+	
+	<!--Choáng-->
+	<SkillChoang>
+		<Skill IDSkill="61" Rate="1" Delay="2"/>     <!--Hỏa Xích Long DL-->
+		<Skill IDSkill="43" Rate="1" Delay="2"/>     <!--Đâm Gió DK-->
+
+	</SkillChoang>
+	
+	<!--Đóng Băng-->
+	<SkillCham>
+		<Skill IDSkill="51" Rate="1" Delay="2"/>     <!--Mũi Tên Băng ELF-->
+
+	</SkillCham>	
+	
+</BCustomEdit>

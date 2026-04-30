@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<MessageInfo>
+	<Message Index="0" Text="[Reset]Bạn không đủ %d (%s) để Reset" />
+	<Message Index="1" Text="[Reset]Cần có x%d (%s) để thực hiện Reset!" />
+	<Message Index="2" Text="Bạn cần sử dụng Code Reset để Reset lần %d!" />
+    <Message Index="3" Text="Nhân vật [%s] vừa Reset Thường lần %d thành công!" />
+</MessageInfo>	
+
+
+<!--Test
+	Lưu ý: Item yêu cầu cần để trong thùng đồ nhân vật!
+	
+	SL = XX (Thấp nhất 1)
+	IndexItem = Item
+	Level = -1 thì không check
+	ExlOp1 = -1 thì không check
+-->
+<ResetTable Enable="1" Notice="3"> 
+	<!--CommandResetType
+		; 0 = Giữ poin không cộng PointReset
+		; 1 = Reset theo Table TẨY Poin đã cộng +PointReset*Reset
+		; 2 = Reset theo Table GIỮ Poin đã cộng	+PointReset
+	-->
+	<Reset MinReset="1"	MaxReset="400" > <!-- Moc Reset-->
+		<LevelReset Level_AL0="300"   Level_AL1="300"   Level_AL2="300"   Level_AL3="300"/> <!--- Level Yeu Cau Khi Reset THeo Type VIP-->
+		<PointReset Point_AL0="300"	  Point_AL1="300"    Point_AL2="300"	  Point_AL3="300"/> <!--- Point Nhận được theo Mốc Reset-->
+		<NguyenLieu Zen="500000" WC="0" WP ="0" GP="0"> <!--Item Nguyen Lieu Toi da 5 Item-->
+			<!--<<Item SL="0"  IndexItem="0"  Level="0"  ExlOp="-0" /> <!--Thien Tu kiem Level 0 Exl 0-->
+		</NguyenLieu>		
+	</Reset>
+	
+
+</ResetTable>

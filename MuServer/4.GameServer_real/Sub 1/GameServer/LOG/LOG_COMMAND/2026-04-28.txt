@@ -1,0 +1,6 @@
+00:06:10 [CommandAddPoint][test1234][qweqwe] - (Type: 0, Amount: 5000)
+00:06:14 [CommandAddPoint][test1234][qweqwe] - (Type: 1, Amount: 5000)
+00:06:19 [CommandAddPoint][test1234][qweqwe] - (Type: 2, Amount: 5000)
+00:06:23 [CommandAddPoint][test1234][qweqwe] - (Type: 3, Amount: 5000)
+08:43:07 [CommandChange][test1234][qweqwe] - (ChangeUp: 0)
+09:01:18 [CommandChange][test1234][qweqwe] - (ChangeUp: 1)

@@ -1,0 +1,6 @@
+20:00:56 [General][admin][Admin] - (Message: /addstr 500)
+20:01:00 [General][admin][Admin] - (Message: /addagi 30000)
+20:01:06 [General][admin][Admin] - (Message: /addene 34500)
+20:01:23 [General][admin][Admin] - (Message: /nv2)
+20:01:26 [General][admin][Admin] - (Message: /nv3)
+20:01:29 [General][admin][Admin] - (Message: /nv3)

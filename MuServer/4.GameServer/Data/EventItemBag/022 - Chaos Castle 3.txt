@@ -1,0 +1,13 @@
+//=================================================
+// Config : DUY ĐẠT
+// Zalo: DUY ĐẠT - 0961.87.37.67
+//=================================================
+0
+//EventName         DropZen    ItemDropRate   ItemDropCount   SetItemDropRate   ItemDropType   Fireworks	
+"Chaos Castle 3"	1000	   	100		  	  1		  	   	  100		   		0		   	   0
+end
+
+1
+//Section   Type   	MinLevel   	MaxLevel   	Skill   Luck   	Option	Excellent	Rate
+12			15		0			0			0		0		0		0			100
+end

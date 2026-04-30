@@ -1,0 +1,7 @@
+//Message	Type   Count   Opacity   Delay   Red   Green   Blue   Speed   RepeatTime
+"Chào Mừng Bạn Đến Với MUSS6"	0      0       0         0       0     0       0      0       60
+"Bạn Chỉ Có Thể Treo Cửa Hàng Tại LorenMarket"	0      0       0         0       0     0       0      0       300
+"Nhấn F5 Để Xem Các Tính Năng Trong Game, Nhấn H Để Xem Các Sự Kiện"               0      1       1         0      0     0       0      5       50
+"Chúc anh em chơi game có những giờ phút giải trí vui vẻ "            	           0      1       1         0      0     0       0      5       60
+"Hãy Tỉnh Táo Khi PK với con Đỹ Gobin nhé anh em ! "	   			               0      1       1         0      0     0       0      5       70
+end

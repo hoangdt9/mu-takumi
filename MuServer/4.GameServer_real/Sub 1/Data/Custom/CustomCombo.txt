@@ -1,0 +1,42 @@
+//=================================================================================================================
+//-- Combo to all Class System
+//-- Defina EnableComboToAllSwitch = 1 no common.dat para utilizar
+//-- Set EnableComboToAllSwitch = 1 in common.dat to enable
+//=================================================================================================================
+//-- Primary Skills
+//=================================================================================================================
+//	#SkillID - Veja no Skill.txt o ID da skill
+//=================================================================================================================
+0
+//Skill		EnableCombo1Skill
+	17		0				//Energy Ball
+	19		0				//Falling Slash
+	20		0				//Lunge
+	21		0				//Uppercut
+	22		0				//Cyclone
+	23		0				//Slash
+	6		0				//Teleport
+	45		0				//Mana Glaive
+	55		0				//chem lua
+	236  	1				//quét lua
+	237  	1				//quét lua
+	214		0				//Drain Life
+end
+//=================================================================================================================
+//-- Secundary and thirty Skills
+//=================================================================================================================
+//	#SkillID - See Skill.txt to get Skill ID
+//=================================================================================================================
+1
+//Skill		EnableCombo2Skill
+	3		0				//Lightning
+	7		0				//Ice
+	12		0				//Aqua Beam
+	14		0				//Inferno
+	41		0				//Twisting Slash
+	42		0				//Rageful Blow
+	43		0				//Death Stab
+	232		0				//Frozen Stab S6+
+	215		0				//Chain Lightning
+	230		0				//Red Storm
+end

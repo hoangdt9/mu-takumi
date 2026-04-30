@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MessageInfo>
+	<Message Index="9" Text="Xui cho bạn vì mất tiền ngu !" />
+	<Message Index="10" Text="[Huỷ Exc]Item sử dụng không phù hợp!" />
+	<Message Index="11" Text="[Huỷ Exc]Trạng thái không hợp lệ, hãy thao tác lại!" />
+	<Message Index="12" Text="[Huỷ Exc]Yêu Cầu: " />
+	<Message Index="13" Text="[Huỷ Exc]Bạn cần có %d WCoin để sử thực hiện" />
+	<Message Index="14" Text="[Huỷ Exc]Bạn cần có %d WCoinP để sử thực hiện" />
+	<Message Index="15" Text="[Huỷ Exc]Bạn cần có %d GobinP để sử thực hiện" />	
+</MessageInfo>	
+
+<HuyExc>
+	<Config  Enabled="1"/>
+	<!-- Chú Thích
+		- HExcRS : cần đạt RS mới có thể sử dụng chức năng này
+		- HExcLvMin ~ HExcLvMax : (Level+) của Item có thể sử dụng huỷ item
+		- HExcSkill : -1 (Không Check) , 1 (Có Skill mới đc huỷ exc) , 0 (là item không có skill mới dùng đc huỷ exc)
+		- HExcLuck : Tương tự skill ở trên
+		
+		Type Config giá tiền tương ứng dòng Exc muốn huỷ
+		//========================================================================//
+		//========================================================================//
+		- ExcOpt="0" (Gồm Các Dòng Dưới)
+		"Tăng lượng Zen rơi ra +30%%"
+		"Phục hồi Mana khi giết quái vật +Mana/8"	
+		//=============================
+		//=============================
+		- ExcOpt="1" (Gồm Các Dòng Dưới)
+		"Khả năng tránh đòn +10%%"
+		"Phục hồi HP khi giết quái vật +HP/8"	
+		//=============================
+		//=============================
+		- ExcOpt="2" 4 (Gồm Các Dòng Dưới)
+		"Phản hồi +5%% lực tấn công"
+		"Gia tăng tốc độ tấn công +%d"	
+		//=============================		
+		//=============================		
+		- ExcOpt="3 8 (Gồm Các Dòng Dưới)
+		"Giảm sức sát thương +4%%"
+		"Gia tăng sức sát thương +%d%%"
+		"Sức sát thương phép thuật +%d%%"		
+		//=============================		
+		//=============================		
+		- ExcOpt="4" 16(Gồm Các Dòng Dưới)
+		"Gia tăng Lượng Mana lên +4%%"
+		"Gia tăng sức tấn công +cấp độ/20"
+		"Gia tăng phép thuật +cấp độ/20"		
+		//=============================
+		//=============================
+		- ExcOpt="5" 32(Gồm Các Dòng Dưới)
+		"Gia tăng Lượng HP lên +4%%"
+		"Tăng tỉ lệ sát thương hoàn hảo +10%%"		
+		//========================================================================//
+		//========================================================================//		
+	-->
+	<HuyExcConfig HExcRS="-1" HExcLvMin="0" HExcLvMax="15" HExcSkill="-1" HExcLuck="-1">
+		<Type ExcOpt="0" 	WC="500000" 	WCP="0" GBP="0" Rate="100" />
+		<Type ExcOpt="1" 	WC="500000" 	WCP="0" GBP="0" Rate="100" />
+		<Type ExcOpt="2" 	WC="100000" 	WCP="0" GBP="0" Rate="100" />
+		<Type ExcOpt="3"	WC="100000" 	WCP="0" GBP="0" Rate="100" />
+		<Type ExcOpt="4"	WC="500000" 	WCP="0" GBP="0" Rate="100" />
+		<Type ExcOpt="5"	WC="100000" 	WCP="0" GBP="0" Rate="100" />
+	</HuyExcConfig>
+</HuyExc>

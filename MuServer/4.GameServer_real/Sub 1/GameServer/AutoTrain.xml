@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<MSGThongBao IndexMesMin="0" IndexMesMax="0"/>
+<!--- Ghi Chu
+	SkillID = Skill De Train, PK
+	UseBuffs = Skill Dung De Buff TOi Da  3 Skill
+	GateNumber = Index Gate de Move Map , MapX, MapY : Toa do X,Y
+	PhamViTrain = Pham Vi Danh QUai Max (6)
+	MoveRange = La Pham Vi Di Chuyen TU Do Trong Map Luu Y : neu cho phep di Ranage thi can set TimeReturn cao lên
+	TimeReturn = Thoi gian quay lai Toa vi tri cu (MapX,MapY) Tính bằng Phút
+	PVPMode  = 1 (Tự động đánh trả khi bị đánh), 2 (Kill tât cả người chơi trong phạm vi, tự động xóa tội nếu PK 10), 0 Là tắt
+	PartyMode =  1 (Tự động chấp nhận yêu cầu Party), 2 (Tự động Party người chơi xung quanh), 0 là tắt không Party, 3 (Chỉ Gửi Yêu Cầu party nếu là Fake Online)
+	PostKhiDie =  1 (Tự động Chat Post khi bị giết)
+-->
+<FakeOnlineData>
+	<Info Account="storm"  Password="1"  Name="WizFire"	SkillID="39"	UseBuffs_0="16"	UseBuffs_1="0"	UseBuffs_2="0"	GateNumber="50"	MapX="51"	MapY="113"	PhamViTrain="6"	MoveRange="6"	TimeReturn="10"	TuNhatItem="0"	TuDongReset="0"	PartyMode = "1"	PVPMode="1"	PostKhiDie = "0"/>
+	<Info Account="zane1"  Password="1"  Name="DarkZen"	SkillID="41"	UseBuffs_0="0"	UseBuffs_1="0"	UseBuffs_2="0"	GateNumber="50"	MapX="23"	MapY="113"	PhamViTrain="6"	MoveRange="6"	TimeReturn="10"	TuNhatItem="0"	TuDongReset="0"	PartyMode = "1"	PVPMode="1"	PostKhiDie = "0"/>
+	<Info Account="lumi"  Password="1"  Name="ElfLumi"	SkillID="235"	UseBuffs_0="0"	UseBuffs_1="0"	UseBuffs_2="0"	GateNumber="50"	MapX="75"	MapY="113"	PhamViTrain="6"	MoveRange="6"	TimeReturn="10"	TuNhatItem="0"	TuDongReset="0"	PartyMode = "1"	PVPMode="1"	PostKhiDie = "0"/>
+	<Info Account="rexar"  Password="1"  Name="BladeRex"	SkillID="41"	UseBuffs_0="0"	UseBuffs_1="0"	UseBuffs_2="0"	GateNumber="50"	MapX="95"	MapY="113"	PhamViTrain="6"	MoveRange="6"	TimeReturn="10"	TuNhatItem="0"	TuDongReset="0"	PartyMode = "1"	PVPMode="1"	PostKhiDie = "0"/>
+	<Info Account="rage"  Password="1"  Name="RageFist"	SkillID="236"	UseBuffs_0="0"	UseBuffs_1="0"	UseBuffs_2="0"	GateNumber="50"	MapX="96"	MapY="68"	PhamViTrain="6"	MoveRange="6"	TimeReturn="10"	TuNhatItem="0"	TuDongReset="0"	PartyMode = "1"	PVPMode="1"	PostKhiDie = "0"/>
+	<Info Account="drax"  Password="1"  Name="DraxLord"	SkillID="78"	UseBuffs_0="0"	UseBuffs_1="0"	UseBuffs_2="0"	GateNumber="50"	MapX="95"	MapY="90"	PhamViTrain="6"	MoveRange="6"	TimeReturn="10"	TuNhatItem="0"	TuDongReset="0"	PartyMode = "1"	PVPMode="1"	PostKhiDie = "0"/>
+</FakeOnlineData>
+
+
+
+
+    <!-- 
+        * Hướng dẫn tham số:
+        Account: Tài khoản (phải tồn tại trên server để fake login)
+        Password: Mật khẩu
+        Name: Tên nhân vật
+        SkillID: ID của skill để auto đánh (vd: Quẩy rồng = 9, Chém xoáy = 41...)
+        UseBuffs_0, UseBuffs_1, UseBuffs_2: ID của các skill buff tự động (vd: Buff máu, mns... điền 0 nếu không xài)
+        GateNumber: ID của Cổng (Gate) để đăng nhập và move vào vị trí (vd: Lorencia = 17, Devias = 22)
+        MapX, MapY: Tọa độ X và Y đứng farm trên map
+        PhamViTrain: Tầm đánh (khoảng cách mục tiêu)
+        MoveRange: Khoảng cách di chuyển quanh tọa độ gốc
+        TimeReturn: Thời gian quay về tọa độ gốc (nếu lệch xa)
+        TuNhatItem: 1 = Chọn Tự động nhặt đồ, 0 = Tắt
+        TuDongReset: 1 = Tự động reset, 0 = Tắt
+        PartyMode: 1 = Cho phép Auto party, 0 = Tắt
+        PVPMode: 1 = Cho phép PVP/PK, 0 = Đánh quái
+        PostKhiDie: 1 = Hiện thông báo Chat Post khi bị chết, 0 = Tắt
+    -->

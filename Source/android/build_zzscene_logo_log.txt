@@ -1,0 +1,483 @@
+
+> Configure project :app
+TakumiMu native ABIs: x86_64
+
+> Task :app:patchSourceJniLibs16k
+> Task :app:preBuild
+> Task :app:preUniversalReleaseBuild
+> Task :app:generateUniversalReleaseBuildConfig UP-TO-DATE
+> Task :app:javaPreCompileUniversalRelease UP-TO-DATE
+> Task :app:checkUniversalReleaseAarMetadata UP-TO-DATE
+> Task :app:generateUniversalReleaseResValues UP-TO-DATE
+> Task :app:mapUniversalReleaseSourceSetPaths UP-TO-DATE
+> Task :app:generateUniversalReleaseResources UP-TO-DATE
+> Task :app:mergeUniversalReleaseResources UP-TO-DATE
+> Task :app:packageUniversalReleaseResources UP-TO-DATE
+> Task :app:parseUniversalReleaseLocalResources UP-TO-DATE
+> Task :app:createUniversalReleaseCompatibleScreenManifests UP-TO-DATE
+> Task :app:extractDeepLinksUniversalRelease UP-TO-DATE
+> Task :app:processUniversalReleaseMainManifest UP-TO-DATE
+> Task :app:processUniversalReleaseManifest UP-TO-DATE
+> Task :app:processUniversalReleaseManifestForPackage UP-TO-DATE
+> Task :app:processUniversalReleaseResources UP-TO-DATE
+> Task :app:compileUniversalReleaseJavaWithJavac UP-TO-DATE
+> Task :app:extractProguardFiles UP-TO-DATE
+> Task :app:generateUniversalReleaseLintVitalReportModel UP-TO-DATE
+> Task :app:lintVitalAnalyzeUniversalRelease UP-TO-DATE
+> Task :app:lintVitalReportUniversalRelease UP-TO-DATE
+> Task :app:lintVitalUniversalRelease
+> Task :app:configureCMakeRelWithDebInfo[x86_64]
+
+> Task :app:buildCMakeRelWithDebInfo[x86_64]
+C/C++: ninja: Entering directory `D:\takumi\Source\android\app\.cxx\RelWithDebInfo\3t373u5g\x86_64'
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzScene.cpp:4:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:94:
+C/C++: D:/takumi/Source/5.Main/source/Platform/PlatformDefs.h:678:14: warning: '__stdcall' calling convention is not supported for this target [-Wignored-attributes]
+C/C++:     unsigned(__stdcall* fn)(void*);
+C/C++:              ^
+C/C++: D:/takumi/Source/5.Main/source/Platform/PlatformDefs.h:2330:59: warning: '__stdcall' calling convention is not supported for this target [-Wignored-attributes]
+C/C++: inline uintptr_t _beginthreadex(void*, unsigned, unsigned(__stdcall* fn)(void*), void* arg, unsigned, unsigned* pThreadId) {
+C/C++:                                                           ^
+C/C++: D:/takumi/Source/5.Main/source/Platform/PlatformDefs.h:2606:201: warning: '__stdcall' calling convention is not supported for this target [-Wignored-attributes]
+C/C++: inline HANDLE CreateThread(void*, SIZE_T, LPTHREAD_START_ROUTINE start, void* param, DWORD, DWORD* threadId) { unsigned id = 0; uintptr_t handle = _beginthreadex(nullptr, 0, reinterpret_cast<unsigned(__stdcall*)(void*)>(start), param, 0, &id); if (threadId) *threadId = id; return reinterpret_cast<HANDLE>(handle); }
+C/C++:                                                                                                                                                                                                         ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzScene.cpp:4:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:108:
+C/C++: D:/takumi/Source/5.Main/source/_define.h:320:9: warning: 'IME_CONVERSIONMODE' macro redefined [-Wmacro-redefined]
+C/C++: #define IME_CONVERSIONMODE  1
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/Platform/PlatformDefs.h:750:9: note: previous definition is here
+C/C++: #define IME_CONVERSIONMODE     0x0001
+C/C++:         ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzScene.cpp:4:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:108:
+C/C++: D:/takumi/Source/5.Main/source/_define.h:321:9: warning: 'IME_SENTENCEMODE' macro redefined [-Wmacro-redefined]
+C/C++: #define IME_SENTENCEMODE    2
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/Platform/PlatformDefs.h:753:9: note: previous definition is here
+C/C++: #define IME_SENTENCEMODE       0x0002
+C/C++:         ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzScene.cpp:4:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:111:
+C/C++: In file included from D:/takumi/Source/5.Main/source/_struct.h:10:
+C/C++: D:/takumi/Source/5.Main/source/w_CharacterInfo.h:114:15: warning: anonymous non-C-compatible type given name for linkage purposes by typedef declaration; add a tag name here [-Wnon-c-typedef-for-linkage]
+C/C++: typedef struct
+C/C++:               ^
+C/C++:                NEW_HEALTH_BAR
+C/C++: D:/takumi/Source/5.Main/source/w_CharacterInfo.h:122:2: note: type is not C-compatible due to this member declaration
+C/C++:         void Clear()
+C/C++:         ^~~~~~~~~~~~
+C/C++: D:/takumi/Source/5.Main/source/w_CharacterInfo.h:131:3: note: type is given name 'NEW_HEALTH_BAR' for linkage purposes by this typedef declaration
+C/C++: } NEW_HEALTH_BAR;
+C/C++:   ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzScene.cpp:4:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:111:
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:481:3: warning: 'memset' will set 0 bytes; maybe the arguments got flipped? [-Wuser-defined-warnings]
+C/C++:                 FillMemory(ViewDamageTable,0,sizeof(ViewDamageTable));
+C/C++:                 ^
+C/C++: D:/takumi/Source/5.Main/source/Platform/PlatformDefs.h:240:56: note: expanded from macro 'FillMemory'
+C/C++: #define FillMemory(ptr,sz,val)  memset((ptr),(val),(sz))
+C/C++:                                                        ^
+C/C++: C:/Users/thanh/AppData/Local/Android/Sdk/ndk/25.1.8937393/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/bits/fortify/string.h:144:9: note: from 'diagnose_if' attribute on 'memset':
+C/C++:         __clang_warning_if(c && !n, "'memset' will set 0 bytes; maybe the arguments got flipped?") {
+C/C++:         ^                  ~~~~~~~
+C/C++: C:/Users/thanh/AppData/Local/Android/Sdk/ndk/25.1.8937393/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/sys/cdefs.h:139:54: note: expanded from macro '__clang_warning_if'
+C/C++: #define __clang_warning_if(cond, msg) __attribute__((diagnose_if(cond, msg, "warning")))
+C/C++:                                                      ^           ~~~~
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzScene.cpp:4:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:111:
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:392:15: warning: anonymous non-C-compatible type given name for linkage purposes by typedef declaration; add a tag name here [-Wnon-c-typedef-for-linkage]
+C/C++: typedef struct
+C/C++:               ^
+C/C++:                PRINT_PLAYER_S6
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:463:2: note: type is not C-compatible due to this member declaration
+C/C++:         void Clear()
+C/C++:         ^~~~~~~~~~~~
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:535:3: note: type is given name 'PRINT_PLAYER_S6' for linkage purposes by this typedef declaration
+C/C++: } PRINT_PLAYER_S6;
+C/C++:   ^
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:999:3: warning: array index 2 is past the end of the array (which contains 2 elements) [-Warray-bounds]
+C/C++:                 ReBuff[2] = 0;
+C/C++:                 ^      ~
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:977:2: note: array 'ReBuff' declared here
+C/C++:         bool ReBuff[2];
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/_struct.h:1089:8: warning: extra tokens at end of #endif directive [-Wextra-tokens]
+C/C++: #endif ___STRUCT_H__
+C/C++:        ^
+C/C++:        //
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzScene.cpp:4:
+C/C++: In file included from D:/takumi/Source/5.Main/source/stdafx.h:113:
+C/C++: In file included from D:/takumi/Source/5.Main/source/_GlobalFunctions.h:4:
+C/C++: D:/takumi/Source/5.Main/source/ZzzScene.h:2:10: warning: non-portable path to file '"ZzzInfomation.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzinfomation.h"
+C/C++:          ^~~~~~~~~~~~~~~~~
+C/C++:          "ZzzInfomation.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzScene.cpp:5:
+C/C++: In file included from D:/takumi/Source/5.Main/source/UIManager.h:10:
+C/C++: In file included from D:/takumi/Source/5.Main/source/UIGuildInfo.h:7:
+C/C++: In file included from D:/takumi/Source/5.Main/source/UIWindows.h:6:
+C/C++: D:/takumi/Source/5.Main/source/UIControls.h:5:10: warning: non-portable path to file '"ZzzInfomation.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzinfomation.h"
+C/C++:          ^~~~~~~~~~~~~~~~~
+C/C++:          "ZzzInfomation.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzScene.cpp:5:
+C/C++: In file included from D:/takumi/Source/5.Main/source/UIManager.h:10:
+C/C++: In file included from D:/takumi/Source/5.Main/source/UIGuildInfo.h:7:
+C/C++: In file included from D:/takumi/Source/5.Main/source/UIWindows.h:6:
+C/C++: In file included from D:/takumi/Source/5.Main/source/UIControls.h:7:
+C/C++: In file included from D:/takumi/Source/5.Main/source/QuestMng.h:6:
+C/C++: In file included from D:/takumi/Source/5.Main/source/WSclient.h:6:
+C/C++: In file included from D:/takumi/Source/5.Main/source/wsctlc.h:10:
+C/C++: In file included from D:/takumi/Source/5.Main/source/Protect.h:11:
+C/C++: D:/takumi/Source/5.Main/source/CustomCloak.h:4:10: warning: non-portable path to file '"ZzzInfomation.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzinfomation.h"
+C/C++:          ^~~~~~~~~~~~~~~~~
+C/C++:          "ZzzInfomation.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzScene.cpp:5:
+C/C++: In file included from D:/takumi/Source/5.Main/source/UIManager.h:10:
+C/C++: In file included from D:/takumi/Source/5.Main/source/UIGuildInfo.h:7:
+C/C++: In file included from D:/takumi/Source/5.Main/source/UIWindows.h:6:
+C/C++: In file included from D:/takumi/Source/5.Main/source/UIControls.h:7:
+C/C++: In file included from D:/takumi/Source/5.Main/source/QuestMng.h:6:
+C/C++: D:/takumi/Source/5.Main/source/WSclient.h:2000:29: warning: implicit conversion of NULL constant to 'int' [-Wnull-conversion]
+C/C++:                 memset(&m_MatchTeamName1, NULL, MAX_ID_SIZE); 
+C/C++:                 ~~~~~~                    ^~~~
+C/C++:                                           0
+C/C++: D:/takumi/Source/5.Main/source/WSclient.h:2001:29: warning: implicit conversion of NULL constant to 'int' [-Wnull-conversion]
+C/C++:                 memset(&m_MatchTeamName2, NULL, MAX_ID_SIZE);
+C/C++:                 ~~~~~~                    ^~~~
+C/C++:                                           0
+C/C++: D:/takumi/Source/5.Main/source/WSclient.h:1996:15: warning: anonymous non-C-compatible type given name for linkage purposes by typedef declaration; add a tag name here [-Wnon-c-typedef-for-linkage]
+C/C++: typedef struct
+C/C++:               ^
+C/C++:                PMSG_MATCH_RESULT
+C/C++: D:/takumi/Source/5.Main/source/WSclient.h:1998:2: note: type is not C-compatible due to this member declaration
+C/C++:         void                    Clear()
+C/C++:         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C/C++: D:/takumi/Source/5.Main/source/WSclient.h:2017:2: note: type is given name 'PMSG_MATCH_RESULT' for linkage purposes by this typedef declaration
+C/C++: }PMSG_MATCH_RESULT, *LPPMSG_MATCH_RESULT;
+C/C++:  ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzScene.cpp:14:
+C/C++: D:/takumi/Source/5.Main/source/ZzzInventory.h:4:1: warning: 'const' is not permitted on a declaration of a type [-Wmissing-declarations]
+C/C++: const enum _COLUMN_TYPE
+C/C++: ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzInventory.h:25:1: warning: 'const' is not permitted on a declaration of a type [-Wmissing-declarations]
+C/C++: const enum ITEMSETOPTION
+C/C++: ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzInventory.h:42:1: warning: 'const' is not permitted on a declaration of a type [-Wmissing-declarations]
+C/C++: const enum SKILL_TOOLTIP_RENDER_POINT
+C/C++: ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzScene.cpp:15:
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.h:4:
+C/C++: In file included from D:/takumi/Source/5.Main/source/GlobalBitmap.h:12:
+C/C++: D:/takumi/Source/android/app/src/main/cpp/compat_include/Jpeglib.h:24:10: warning: non-portable path to file '"Jconfig.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "jconfig.h"            /* widely used configuration options */
+C/C++:          ^~~~~~~~~~~
+C/C++:          "Jconfig.h"
+C/C++: D:/takumi/Source/android/app/src/main/cpp/compat_include/Jpeglib.h:26:10: warning: non-portable path to file '"Jmorecfg.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "jmorecfg.h"           /* seldom changed options */
+C/C++:          ^~~~~~~~~~~~
+C/C++:          "Jmorecfg.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzScene.cpp:15:
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzTexture.h:4:
+C/C++: D:/takumi/Source/5.Main/source/GlobalBitmap.h:18:15: warning: anonymous non-C-compatible type given name for linkage purposes by typedef declaration; add a tag name here [-Wnon-c-typedef-for-linkage]
+C/C++: typedef struct
+C/C++:               ^
+C/C++:                BITMAP_t
+C/C++: D:/takumi/Source/5.Main/source/GlobalBitmap.h:29:1: note: type is not C-compatible due to this member declaration
+C/C++: private:
+C/C++: ^~~~~~~~
+C/C++: D:/takumi/Source/5.Main/source/GlobalBitmap.h:32:3: note: type is given name 'BITMAP_t' for linkage purposes by this typedef declaration
+C/C++: } BITMAP_t;
+C/C++:   ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzScene.cpp:24:
+C/C++: D:/takumi/Source/5.Main/source/wsclientinline.h:3:10: warning: non-portable path to file '"DSPlaySound.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "dsplaysound.h"
+C/C++:          ^~~~~~~~~~~~~~~
+C/C++:          "DSPlaySound.h"
+C/C++: D:/takumi/Source/5.Main/source/wsclientinline.h:4:10: warning: non-portable path to file '"ZzzScene.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzscene.h"
+C/C++:          ^~~~~~~~~~~~
+C/C++:          "ZzzScene.h"
+C/C++: D:/takumi/Source/5.Main/source/wsclientinline.h:5:10: warning: non-portable path to file '"ZzzInterface.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzinterface.h"
+C/C++:          ^~~~~~~~~~~~~~~~
+C/C++:          "ZzzInterface.h"
+C/C++: D:/takumi/Source/5.Main/source/wsclientinline.h:6:10: warning: non-portable path to file '"ZzzInventory.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzinventory.h"
+C/C++:          ^~~~~~~~~~~~~~~~
+C/C++:          "ZzzInventory.h"
+C/C++: D:/takumi/Source/5.Main/source/wsclientinline.h:17:10: warning: non-portable path to file '"./ExternalObject/Leaf/stdleaf.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "./ExternalObject/leaf/stdleaf.h"
+C/C++:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C/C++:          "./ExternalObject/Leaf/stdleaf.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzScene.cpp:24:
+C/C++: In file included from D:/takumi/Source/5.Main/source/wsclientinline.h:19:
+C/C++: In file included from D:/takumi/Source/5.Main/source/NewUISystem.h:13:
+C/C++: In file included from D:/takumi/Source/5.Main/source/NewUIGuildMakeWindow.h:12:
+C/C++: D:/takumi/Source/5.Main/source/NewUIMessageBox.h:7:10: warning: non-portable path to file '"./ExternalObject/Leaf/xstreambuf.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "./ExternalObject/leaf/xstreambuf.h"
+C/C++:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C/C++:          "./ExternalObject/Leaf/xstreambuf.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzScene.cpp:24:
+C/C++: In file included from D:/takumi/Source/5.Main/source/wsclientinline.h:19:
+C/C++: In file included from D:/takumi/Source/5.Main/source/NewUISystem.h:20:
+C/C++: D:/takumi/Source/5.Main/source/NewUIPetInfoWindow.h:13:10: warning: non-portable path to file '"NewUIInventoryCtrl.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "NewUIInventoryctrl.h"
+C/C++:          ^~~~~~~~~~~~~~~~~~~~~~
+C/C++:          "NewUIInventoryCtrl.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzScene.cpp:24:
+C/C++: In file included from D:/takumi/Source/5.Main/source/wsclientinline.h:19:
+C/C++: In file included from D:/takumi/Source/5.Main/source/NewUISystem.h:62:
+C/C++: D:/takumi/Source/5.Main/source/NewUIMasterSkillTree.h:63:3: warning: expression result unused [-Wunused-value]
+C/C++:                 sizeof(_MASTER_SKILL_TOOLTIP);
+C/C++:                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzScene.cpp:24:
+C/C++: D:/takumi/Source/5.Main/source/wsclientinline.h:349:27: warning: comparison between NULL and non-pointer ('int' and NULL) [-Wnull-arithmetic]
+C/C++:                 if(strcmp(ChatText,Text)==NULL) return;
+C/C++:                    ~~~~~~~~~~~~~~~~~~~~~^ ~~~~
+C/C++: D:/takumi/Source/5.Main/source/wsclientinline.h:357:28: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:                 char *lspzCommand[2] = { "/", "!"};
+C/C++:                                          ^
+C/C++: D:/takumi/Source/5.Main/source/wsclientinline.h:357:33: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:                 char *lspzCommand[2] = { "/", "!"};
+C/C++:                                               ^
+C/C++: D:/takumi/Source/5.Main/source/wsclientinline.h:597:27: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:     if(FindText2(Hero->ID,"webzen")) return;
+C/C++:                           ^
+C/C++: D:/takumi/Source/5.Main/source/wsclientinline.h:651:27: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:     if(FindText2(Hero->ID,"webzen")) return;
+C/C++:                           ^
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzScene.cpp:27:
+C/C++: In file included from D:/takumi/Source/5.Main/source/MatchEvent.h:11:
+C/C++: D:/takumi/Source/5.Main/source/CSEventMatch.h:7:10: warning: non-portable path to file '"WSclient.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "wsclient.h"
+C/C++:          ^~~~~~~~~~~~
+C/C++:          "WSclient.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzScene.cpp:28:
+C/C++: D:/takumi/Source/5.Main/source/PhysicsManager.h:9:10: warning: non-portable path to file '"ZzzBMD.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "ZzzBmd.h"
+C/C++:          ^~~~~~~~~~
+C/C++:          "ZzzBMD.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzScene.cpp:31:
+C/C++: D:/takumi/Source/5.Main/source/PersonalShopTitleImp.h:6:10: warning: non-portable path to file '"ZzzInfomation.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzinfomation.h"
+C/C++:          ^~~~~~~~~~~~~~~~~
+C/C++:          "ZzzInfomation.h"
+C/C++: D:/takumi/Source/5.Main/source/ZzzScene.cpp:32:10: warning: non-portable path to file '"UIControls.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "uicontrols.h"
+C/C++:          ^~~~~~~~~~~~~~
+C/C++:          "UIControls.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzScene.cpp:33:
+C/C++: D:/takumi/Source/5.Main/source/GOBoid.h:7:10: warning: non-portable path to file '"ZzzObject.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzObject.h"
+C/C++:          ^~~~~~~~~~~~~
+C/C++:          "ZzzObject.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzScene.cpp:35:
+C/C++: D:/takumi/Source/5.Main/source/CSItemOption.h:7:10: warning: non-portable path to file '"ZzzInfomation.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include "zzzinfomation.h"
+C/C++:          ^~~~~~~~~~~~~~~~~
+C/C++:          "ZzzInfomation.h"
+C/C++: In file included from D:/takumi/Source/5.Main/source/ZzzScene.cpp:49:
+C/C++: D:/takumi/Source/5.Main/source/CDirection.h:4:10: warning: non-portable path to file '<vector>'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+C/C++: #include <VECTOR>
+C/C++:          ^~~~~~~~
+C/C++:          <vector>
+C/C++: D:/takumi/Source/5.Main/source/CDirection.h:70:8: warning: extra tokens at end of #endif directive [-Wextra-tokens]
+C/C++: #endif _DIRECTION_H_
+C/C++:        ^
+C/C++:        //
+C/C++: D:/takumi/Source/5.Main/source/ZzzScene.cpp:138:2: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:         "data\\music\\Pub.mp3",
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzScene.cpp:139:2: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:         "data\\music\\Mutheme.mp3",
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzScene.cpp:140:2: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:         "data\\music\\Church.mp3",
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzScene.cpp:141:2: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:         "data\\music\\Devias.mp3",
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzScene.cpp:142:2: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:         "data\\music\\Noria.mp3",
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzScene.cpp:143:2: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:         "data\\music\\Dungeon.mp3",
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzScene.cpp:144:2: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:         "data\\music\\atlans.mp3",
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzScene.cpp:145:2: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:         "data\\music\\icarus.mp3",
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzScene.cpp:146:2: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:         "data\\music\\tarkan.mp3",
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzScene.cpp:147:2: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:         "data\\music\\lost_tower_a.mp3",
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzScene.cpp:148:2: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:         "data\\music\\lost_tower_b.mp3",
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzScene.cpp:149:2: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:         "data\\music\\kalima.mp3",
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzScene.cpp:150:5: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:     "data\\music\\castle.mp3",
+C/C++:     ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzScene.cpp:151:5: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:     "data\\music\\charge.mp3",
+C/C++:     ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzScene.cpp:152:5: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:     "data\\music\\lastend.mp3",
+C/C++:     ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzScene.cpp:153:2: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:         "data\\music\\huntingground.mp3",
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzScene.cpp:154:2: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:         "data\\music\\Aida.mp3",
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzScene.cpp:155:2: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:         "data\\music\\crywolf1st.mp3",
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzScene.cpp:156:2: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:         "data\\music\\crywolf_ready-02.ogg",
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzScene.cpp:157:2: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:         "data\\music\\crywolf_before-01.ogg",
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzScene.cpp:158:2: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:         "data\\music\\crywolf_back-03.ogg",
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzScene.cpp:159:2: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:         "data\\music\\main_theme.mp3",
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzScene.cpp:160:2: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:         "data\\music\\kanturu_1st.mp3",
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzScene.cpp:161:2: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:         "data\\music\\kanturu_2nd.mp3",
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzScene.cpp:162:2: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:         "data\\music\\KanturuMayaBattle.mp3",
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzScene.cpp:163:2: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:         "data\\music\\KanturuNightmareBattle.mp3",
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzScene.cpp:164:2: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:         "data\\music\\KanturuTower.mp3",
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzScene.cpp:165:2: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:         "data\\music\\BalgasBarrack.mp3",
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzScene.cpp:166:2: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:         "data\\music\\BalgasRefuge.mp3",
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzScene.cpp:167:2: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:         "data\\music\\cursedtemplewait.mp3",
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzScene.cpp:168:2: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:         "data\\music\\cursedtempleplay.mp3",
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzScene.cpp:169:2: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:         "data\\music\\elbeland.mp3",
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzScene.cpp:170:2: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:         "data\\music\\login_theme.mp3",
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzScene.cpp:171:2: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:         "data\\music\\SwampOfCalmness.mp3",
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzScene.cpp:172:2: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:         "data\\music\\Raklion.mp3",
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzScene.cpp:173:2: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:         "data\\music\\Raklion_Hatchery.mp3",
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzScene.cpp:174:2: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:         "data\\music\\Santa_Village.mp3",
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzScene.cpp:175:2: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:         "data\\music\\DuelArena.mp3",
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzScene.cpp:176:2: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:         "data\\music\\PK_Field.mp3",
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzScene.cpp:177:2: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:         "data\\music\\ImperialGuardianFort.mp3",
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzScene.cpp:178:2: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:         "data\\music\\ImperialGuardianFort.mp3",
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzScene.cpp:179:2: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:         "data\\music\\ImperialGuardianFort.mp3",
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzScene.cpp:180:2: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:         "data\\music\\ImperialGuardianFort.mp3",
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzScene.cpp:181:2: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:         "data\\music\\iDoppelganger.mp3",
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzScene.cpp:182:2: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:         "data\\music\\iDoppelganger.mp3",
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzScene.cpp:184:2: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:         "data\\music\\Karutan_A.mp3",
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzScene.cpp:185:2: warning: ISO C++11 does not allow conversion from string literal to 'char *' [-Wwritable-strings]
+C/C++:         "data\\music\\Karutan_B.mp3",
+C/C++:         ^
+C/C++: D:/takumi/Source/5.Main/source/ZzzScene.cpp:445:21: warning: implicit conversion of NULL constant to 'int' [-Wnull-conversion]
+C/C++: int  ErrorMessage = NULL;
+C/C++:      ~~~~~~~~~~~~   ^~~~
+C/C++:                     0
+C/C++: D:/takumi/Source/5.Main/source/ZzzScene.cpp:446:25: warning: implicit conversion of NULL constant to 'int' [-Wnull-conversion]
+C/C++: int      ErrorMessageNext = NULL;
+C/C++:          ~~~~~~~~~~~~~~~~   ^~~~
+C/C++:                             0
+C/C++: D:/takumi/Source/5.Main/source/ZzzScene.cpp:913:17: warning: implicit conversion of NULL constant to 'int' [-Wnull-conversion]
+C/C++:         ErrorMessage = NULL;
+C/C++:                      ~ ^~~~
+C/C++:                        0
+C/C++: D:/takumi/Source/5.Main/source/ZzzScene.cpp:2143:21: warning: comparison between NULL and non-pointer ('int' and NULL) [-Wnull-arithmetic]
+C/C++:                         if (ErrorMessage != NULL)
+C/C++:                             ~~~~~~~~~~~~ ^  ~~~~
+C/C++: D:/takumi/Source/5.Main/source/ZzzScene.cpp:2194:18: warning: comparison between NULL and non-pointer ('int' and NULL) [-Wnull-arithmetic]
+C/C++:         if(ErrorMessage != NULL)
+C/C++:            ~~~~~~~~~~~~ ^  ~~~~
+C/C++: 95 warnings generated.
+
+> Task :app:mergeUniversalReleaseJniLibFolders UP-TO-DATE
+> Task :app:checkUniversalReleaseDuplicateClasses UP-TO-DATE
+> Task :app:dexBuilderUniversalRelease UP-TO-DATE
+> Task :app:desugarUniversalReleaseFileDependencies UP-TO-DATE
+> Task :app:mergeExtDexUniversalRelease UP-TO-DATE
+> Task :app:mergeDexUniversalRelease UP-TO-DATE
+> Task :app:mergeUniversalReleaseArtProfile UP-TO-DATE
+> Task :app:mergeUniversalReleaseGlobalSynthetics UP-TO-DATE
+> Task :app:compileUniversalReleaseArtProfile UP-TO-DATE
+> Task :app:mergeUniversalReleaseShaders UP-TO-DATE
+> Task :app:compileUniversalReleaseShaders NO-SOURCE
+> Task :app:generateUniversalReleaseAssets UP-TO-DATE
+> Task :app:mergeUniversalReleaseAssets UP-TO-DATE
+> Task :app:compressUniversalReleaseAssets UP-TO-DATE
+> Task :app:processUniversalReleaseJavaRes NO-SOURCE
+> Task :app:mergeUniversalReleaseJavaResource UP-TO-DATE
+> Task :app:optimizeUniversalReleaseResources UP-TO-DATE
+> Task :app:collectUniversalReleaseDependencies UP-TO-DATE
+> Task :app:sdkUniversalReleaseDependencyData UP-TO-DATE
+> Task :app:validateSigningUniversalRelease UP-TO-DATE
+> Task :app:writeUniversalReleaseAppMetadata UP-TO-DATE
+> Task :app:writeUniversalReleaseSigningConfigVersions UP-TO-DATE
+> Task :app:mergeUniversalReleaseNativeLibs
+> Task :app:stripUniversalReleaseDebugSymbols
+> Task :app:extractUniversalReleaseNativeSymbolTables
+> Task :app:mergeUniversalReleaseNativeDebugMetadata NO-SOURCE
+> Task :app:packageUniversalRelease
+> Task :app:createUniversalReleaseApkListingFileRedirect UP-TO-DATE
+> Task :app:assembleUniversalRelease
+
+BUILD SUCCESSFUL in 8s
+47 actionable tasks: 8 executed, 39 up-to-date

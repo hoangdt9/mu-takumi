@@ -1,0 +1,7 @@
+ [DataServerInfo]
+ DataServerODBC = MuOnline
+ DataServerUSER = sa
+ DataServerPASS = CHANGE_ME
+ DataServerPort = 63002
+ ShowLogProtocol = 1
+ ShowLogQuery = 1

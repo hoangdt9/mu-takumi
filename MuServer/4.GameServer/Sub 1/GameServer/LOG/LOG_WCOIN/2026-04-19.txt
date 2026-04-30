@@ -1,0 +1,21 @@
+22:51:37 [CashShop][admin/Admin]Co San: 90000000 WC- (Coin:- 50000, Item: Mở Rộng Túi Đồ, ItemDuration: 0)
+22:51:40 [CashShop][admin/Admin]Co San: 89950000 WC- (Coin:- 50000, Item: Mở Rộng Túi Đồ, ItemDuration: 0)
+22:51:48 [CashShop][admin/Admin]Co San: 89900000 WC- (Coin:- 100000, Item: Mở Rộng Thùng Đồ, ItemDuration: 0)
+22:51:57 [Cahsop][admin/Admin]Co San: 89800000 WC- (Coin:- 100000, Item: Bùa Tăng EXP, ItemDuration: 2592000)
+22:52:04 [Cahsop][admin/Admin]Co San: 89700000 WC- (Coin:- 250000, Item: Bùa Thiên Sứ, ItemDuration: 2592000)
+22:52:26 BuyVip - admin/Admin | WC: -100,000 | Trước: 89,450,000 | Sau: 89,350,000 WC
+22:52:29 BuyVip - admin/Admin | WC: -100,000 | Trước: 89,350,000 | Sau: 89,250,000 WC
+22:52:45 Danh Hieu - admin/Admin | WC: -50,000,000 | Trước: 89,250,000 | Sau: 39,250,000 WC
+22:53:34 TruCoinResetVIP - admin/Admin | WC: -5,000 | Trước: 39,250,000 | Sau: 39,245,000 WC
+22:54:29 [CashShop][admin/TocDo]Co San: 39245000 WC- (Coin:- 50000, Item: Mở Rộng Túi Đồ, ItemDuration: 0)
+22:54:32 [CashShop][admin/TocDo]Co San: 39195000 WC- (Coin:- 50000, Item: Mở Rộng Túi Đồ, ItemDuration: 0)
+22:54:43 [Cahsop][admin/TocDo]Co San: 39145000 WC- (Coin:- 250000, Item: Bùa Thiên Sứ, ItemDuration: 2592000)
+22:54:49 [Cahsop][admin/TocDo]Co San: 38895000 WC- (Coin:- 100000, Item: Bùa Tăng EXP, ItemDuration: 2592000)
+22:56:03 TruCoinResetVIP - admin/TocDo | WC: -5,000 | Trước: 38,795,000 | Sau: 38,790,000 WC
+22:59:31 TruCoinResetVIP - admin/TocDo | WC: -5,000 | Trước: 38,790,000 | Sau: 38,785,000 WC
+23:02:59 TruCoinResetVIP - admin/TocDo | WC: -5,000 | Trước: 38,785,000 | Sau: 38,780,000 WC
+23:06:27 TruCoinResetVIP - admin/TocDo | WC: -5,000 | Trước: 38,780,000 | Sau: 38,775,000 WC
+23:09:55 TruCoinResetVIP - admin/TocDo | WC: -5,000 | Trước: 38,775,000 | Sau: 38,770,000 WC
+23:13:23 TruCoinResetVIP - admin/TocDo | WC: -5,000 | Trước: 38,770,000 | Sau: 38,765,000 WC
+23:16:51 TruCoinResetVIP - admin/TocDo | WC: -5,000 | Trước: 38,765,000 | Sau: 38,760,000 WC
+23:20:19 TruCoinResetVIP - admin/TocDo | WC: -5,000 | Trước: 38,760,000 | Sau: 38,755,000 WC

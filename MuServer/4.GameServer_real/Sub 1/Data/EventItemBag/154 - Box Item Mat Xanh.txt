@@ -1,0 +1,57 @@
+0
+//EventName              DropZen    ItemDropRate   ItemDropCount   SetItemDropRate   ItemDropType   Fireworks	
+"Box Item Mat Xanh"	 	  1000	   		100		  		5		  		0		   		 1		   		0
+end
+1
+//Section	Type	MinLevel   MaxLevel   Skill   Luck   Option   Excellent
+//Đồ Item Custom Mắt Xanh
+
+0           78		0          0          0       1      1        1			100	//Mũ Mắt Xanh
+0           79		0          0          0       1      1        1			100	//Mũ Mắt Xanh
+0           80		0          0          0       1      1        1			100	//Mũ Mắt Xanh
+2           40		0          0          0       1      1        1			100	//Mũ Mắt Xanh
+4           40		0          0          0       1      1        1			100	//Mũ Mắt Xanh
+5           61		0          0          0       1      1        1			100	//Mũ Mắt Xanh
+5           62		0          0          0       1      1        1			100	//Mũ Mắt Xanh
+
+7           164		0          0          0       1      1        1			100	//Mũ Mắt Xanh
+7           165		0          0          0       1      1        1			100	//Mũ Mắt Xanh
+7           166		0          0          0       1      1        1			100	//Mũ Mắt Xanh
+7           167		0          0          0       1      1        1			100	//Mũ Mắt Xanh
+7           169		0          0          0       1      1        1			100	//Mũ Mắt Xanh
+7           170		0          0          0       1      1        1			100	//Mũ Mắt Xanh
+	                                                           
+8           164		0          0          0       1      1        1			100	//Áo Mắt Xanh
+8           165		0          0          0       1      1        1			100	//Áo Mắt Xanh
+8           166		0          0          0       1      1        1			100	//Áo Mắt Xanh
+8           167		0          0          0       1      1        1			100	//Áo Mắt Xanh
+8           168		0          0          0       1      1        1			100	//Áo Mắt Xanh
+8           169		0          0          0       1      1        1			100	//Áo Mắt Xanh
+8           170		0          0          0       1      1        1			100	//Áo Mắt Xanh
+	                                                               
+9           164		0          0          0       1      1        1			100	//Quần Mắt Xanh
+9           165		0          0          0       1      1        1			100	//Quần Mắt Xanh
+9           166		0          0          0       1      1        1			100	//Quần Mắt Xanh
+9           167		0          0          0       1      1        1			100	//Quần Mắt Xanh
+9           168		0          0          0       1      1        1			100	//Quần Mắt Xanh
+9           169		0          0          0       1      1        1			100	//Quần Mắt Xanh
+9           170		0          0          0       1      1        1			100	//Quần Mắt Xanh
+                                                        
+10          164		0          0          0       1      1        1			100	//Găng Mắt Xanh
+10          165		0          0          0       1      1        1			100	//Găng Mắt Xanh
+10          166		0          0          0       1      1        1			100	//Găng Mắt Xanh
+10          167		0          0          0       1      1        1			100	//Găng Mắt Xanh
+10          168		0          0          0       1      1        1			100	//Găng Mắt Xanh
+10          169		0          0          0       1      1        1			100	//Găng Mắt Xanh
+10          170		0          0          0       1      1        1			100	//Găng Mắt Xanh
+                                                        
+11          164		0          0          0       1      1        1			100	//Giầy Mắt Xanh
+11          165		0          0          0       1      1        1			100	//Giầy Mắt Xanh
+11          166		0          0          0       1      1        1			100	//Giầy Mắt Xanh
+11          167		0          0          0       1      1        1			100	//Giầy Mắt Xanh
+11          168		0          0          0       1      1        1			100	//Giầy Mắt Xanh
+11          169		0          0          0       1      1        1			100	//Giầy Mắt Xanh
+11          170		0          0          0       1      1        1			100	//Giầy Mắt Xanh
+
+
+end

@@ -1,0 +1,17 @@
+//=================================================
+// Config : DUY ĐẠT
+// Zalo: DUY ĐẠT - 0961.87.37.67
+//=================================================
+0
+//EventName                DropZen    ItemDropRate   ItemDropCount   SetItemDropRate   ItemDropType   Fireworks	
+"Lord Darkness"	 	  		   100		  100		  	 10		  		 0		   		   0		   	  0
+end
+1
+//Section	Type	MinLevel   MaxLevel   Skill   Luck   Option   Excellent
+14          11     12         12         0       0      0        0              100
+14          261    0          0          0       0      0        0              100
+14          244    0          0          0       0      0        0              100
+14			96	   0		  0			 0		 0		0		 0				100		
+14			53	   4		  4			 0		 0		0		 0				100	
+
+end

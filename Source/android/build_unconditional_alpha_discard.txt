@@ -1,0 +1,62 @@
+
+> Configure project :app
+TakumiMu native ABIs: x86_64
+
+> Task :app:patchSourceJniLibs16k
+> Task :app:preBuild
+> Task :app:preUniversalReleaseBuild
+> Task :app:generateUniversalReleaseBuildConfig UP-TO-DATE
+> Task :app:javaPreCompileUniversalRelease UP-TO-DATE
+> Task :app:checkUniversalReleaseAarMetadata UP-TO-DATE
+> Task :app:generateUniversalReleaseResValues UP-TO-DATE
+> Task :app:mapUniversalReleaseSourceSetPaths UP-TO-DATE
+> Task :app:generateUniversalReleaseResources UP-TO-DATE
+> Task :app:mergeUniversalReleaseResources UP-TO-DATE
+> Task :app:packageUniversalReleaseResources UP-TO-DATE
+> Task :app:parseUniversalReleaseLocalResources UP-TO-DATE
+> Task :app:createUniversalReleaseCompatibleScreenManifests UP-TO-DATE
+> Task :app:extractDeepLinksUniversalRelease UP-TO-DATE
+> Task :app:processUniversalReleaseMainManifest UP-TO-DATE
+> Task :app:processUniversalReleaseManifest UP-TO-DATE
+> Task :app:processUniversalReleaseManifestForPackage UP-TO-DATE
+> Task :app:processUniversalReleaseResources UP-TO-DATE
+> Task :app:compileUniversalReleaseJavaWithJavac UP-TO-DATE
+> Task :app:extractProguardFiles UP-TO-DATE
+> Task :app:generateUniversalReleaseLintVitalReportModel UP-TO-DATE
+> Task :app:lintVitalAnalyzeUniversalRelease UP-TO-DATE
+> Task :app:lintVitalReportUniversalRelease UP-TO-DATE
+> Task :app:lintVitalUniversalRelease
+> Task :app:configureCMakeRelWithDebInfo[x86_64]
+> Task :app:buildCMakeRelWithDebInfo[x86_64]
+> Task :app:mergeUniversalReleaseJniLibFolders UP-TO-DATE
+> Task :app:checkUniversalReleaseDuplicateClasses UP-TO-DATE
+> Task :app:dexBuilderUniversalRelease UP-TO-DATE
+> Task :app:desugarUniversalReleaseFileDependencies UP-TO-DATE
+> Task :app:mergeExtDexUniversalRelease UP-TO-DATE
+> Task :app:mergeDexUniversalRelease UP-TO-DATE
+> Task :app:mergeUniversalReleaseArtProfile UP-TO-DATE
+> Task :app:mergeUniversalReleaseGlobalSynthetics UP-TO-DATE
+> Task :app:compileUniversalReleaseArtProfile UP-TO-DATE
+> Task :app:mergeUniversalReleaseShaders UP-TO-DATE
+> Task :app:compileUniversalReleaseShaders NO-SOURCE
+> Task :app:generateUniversalReleaseAssets UP-TO-DATE
+> Task :app:mergeUniversalReleaseAssets UP-TO-DATE
+> Task :app:compressUniversalReleaseAssets UP-TO-DATE
+> Task :app:processUniversalReleaseJavaRes NO-SOURCE
+> Task :app:mergeUniversalReleaseJavaResource UP-TO-DATE
+> Task :app:optimizeUniversalReleaseResources UP-TO-DATE
+> Task :app:collectUniversalReleaseDependencies UP-TO-DATE
+> Task :app:sdkUniversalReleaseDependencyData UP-TO-DATE
+> Task :app:validateSigningUniversalRelease UP-TO-DATE
+> Task :app:writeUniversalReleaseAppMetadata UP-TO-DATE
+> Task :app:writeUniversalReleaseSigningConfigVersions UP-TO-DATE
+> Task :app:mergeUniversalReleaseNativeLibs
+> Task :app:stripUniversalReleaseDebugSymbols
+> Task :app:extractUniversalReleaseNativeSymbolTables
+> Task :app:mergeUniversalReleaseNativeDebugMetadata NO-SOURCE
+> Task :app:packageUniversalRelease
+> Task :app:createUniversalReleaseApkListingFileRedirect UP-TO-DATE
+> Task :app:assembleUniversalRelease
+
+BUILD SUCCESSFUL in 6s
+47 actionable tasks: 8 executed, 39 up-to-date

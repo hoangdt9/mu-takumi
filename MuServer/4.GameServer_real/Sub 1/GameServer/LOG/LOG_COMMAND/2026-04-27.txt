@@ -1,0 +1,2 @@
+23:52:40 [CommandAddPoint][test1234][wqewq] - (Type: 0, Amount: 5000)
+23:53:00 [CommandAddPoint][test1234][wqewq] - (Type: 1, Amount: 5000)

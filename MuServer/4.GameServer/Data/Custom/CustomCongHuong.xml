@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<NPC>
+	<!-- PREMIUM VERSION 	-->
+	<!-- Config 	-->
+	<SetNPC  NPCClass="601" NPCMap="0" NPCX="130" NPCY = "121" NPCDir="3"/>
+</NPC>
+
+<MessageInfo>
+	<Message Index="0" Text="[Cộng Hưởng] Bạn cần có %d WCoin để sử thực hiện" />
+	<Message Index="1" Text="[Cộng Hưởng] Bạn cần có %d WCoinP để sử thực hiện" />
+	<Message Index="2" Text="[Cộng Hưởng] Bạn cần có %d GobinP để sử thực hiện" />
+	<Message Index="3" Text="[Cộng Hưởng] Bạn cần lấy phôi ra trước" />
+	<Message Index="4" Text="[Cộng Hưởng] Item sử dụng không phù hợp" />
+	<Message Index="5" Text="[Cộng Hưởng] Vui lòng dùng phôi trong danh sách" />
+	<Message Index="6" Text="[Cộng Hưởng] Vui lòng bỏ thêm Phôi để Cộng Hưởng" />
+	<Message Index="7" Text="[Cộng Hưởng] Chúc mừng, bạn vừa cộng hưởng thành công" />
+	<Message Index="8" Text="[Cộng Hưởng] Ohh, tiếc quá bạn đã thất bại rồi!" />
+	<Message Index="9" Text="[Cộng Hưởng] Item của bạn đã đạt mức tối đa !" />
+</MessageInfo>	
+	
+<CongHuongItem>
+	<Config  Enabled = "1"/>
+	<!-- Cấu hình cộng hướng		
+		- CHReset : Resset > CHReset mới được CH
+		- CHLuck,CHSkill,CHLevel =  1 thì sẽ cho phép cộng hướng luck,skill,level của phôi sang Item chính
+		- CHCheckPhoiType 
+				= 0 không check item phôi miễn là exc và cùng loại (VD Kiếm vs Kiếm)
+				= 1 thì sẽ bắt buộc phôi cộng hưởng là item có cấp độ bằng hoặc cao hơn item chính (cấp độ item)
+				= 2 bắt buộc phôi phải là item giống item chính (VD "Kiếm Rồng" vs "Kiếm Rồng")
+
+		- Type là cấu hình tỷ lệ cộng hướng thành công, có thể thêm nhiều type để đặt điều kiện ở mỗi mốc lvl hoặc dòng exc
+		  VD : Item chính có + Lv > LvMin && < LvMax, Số dòng Exc > ExcMin && < ExcMax thì tỷ lệ thành công = CHRate,
+		- nếu cho phép CHLevel =1 thì CH thành công item sẽ cộng tối đa thêm CHLevelMax.. (VD item chính level 5 phôi 15, cộng hưởng thành công item sẽ lên level +8 (vì CHLevelMax = 3)
+		  CHLevelMax = 0 thì sẽ cộng hưởng +level của phôi sang
+		  WC= WCoin, WCP = WCoinP, GBP = GobinPoint
+		- CHKeepItem = 1 (Giữ lại item phôi sau khi cộng hưởng)
+		- CHAllowAnc = 1 Cho Phep cong huong item THan
+	-->
+	<CHConifg CHReset = "0" CHLuck= "1" CHSkill = "0" CHLevel="0" CHOptLife= "0"  CHCheckPhoiType= "1" CHKeepItem="1" CHAllowAnc="0" >
+	
+		<Type LvMin="0"  LvMax="15"  ExcMin="1" ExcMax="63" CHLevelMax = "1"  WC="10000" 	WCP="0" 	GBP="0" 	CHRate="30"/>
+
+		
+	</CHConifg>
+</CongHuongItem>

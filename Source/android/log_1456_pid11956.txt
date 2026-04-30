@@ -1,0 +1,113 @@
+04-26 14:56:02.870 11956 11960 I muonline.client: Background concurrent mark compact GC freed 704KB AllocSpace bytes, 30(4320KB) LOS objects, 48% free, 4745KB/9202KB, paused 2.823ms,6.371ms total 25.932ms
+04-26 14:56:11.851 11956 11960 I muonline.client: Background concurrent mark compact GC freed 1888KB AllocSpace bytes, 11(1584KB) LOS objects, 49% free, 4169KB/8338KB, paused 3.581ms,6.125ms total 34.335ms
+04-26 14:56:11.887 11956 11960 I muonline.client: Background young concurrent mark compact GC freed 1856KB AllocSpace bytes, 11(1584KB) LOS objects, 43% free, 4681KB/8338KB, paused 2.511ms,5.361ms total 17.216ms
+04-26 14:56:11.925 11956 11960 I muonline.client: Background concurrent mark compact GC freed 2304KB AllocSpace bytes, 16(2304KB) LOS objects, 49% free, 4585KB/9170KB, paused 2.495ms,5.416ms total 21.886ms
+04-26 14:56:33.804 11956 11960 I muonline.client: Background concurrent mark compact GC freed 928KB AllocSpace bytes, 14(2016KB) LOS objects, 49% free, 4169KB/8338KB, paused 1.326ms,5.121ms total 16.437ms
+04-26 14:56:38.304 11956 11956 I MuMain  : MuMainActivity onCreate
+04-26 14:56:38.307 11956 11956 I MuMain  : extractGameAssets -> /storage/emulated/0/Android/data/com.muonline.client/files
+04-26 14:56:38.317 11956 11956 V SDL     : Device: emu64xa16k
+04-26 14:56:38.317 11956 11956 V SDL     : Model: sdk_gphone16k_x86_64
+04-26 14:56:38.317 11956 11956 V SDL     : onCreate()
+04-26 14:56:38.318 11956 11956 D nativeloader: Load /data/app/~~-48fy60I3ZFx0M2R8pJBiA==/com.muonline.client-pIlxWQYpxDPEEE2hqrgx5A==/lib/x86_64/libmpg123.so using class loader ns clns-9 (caller=/data/app/~~-48fy60I3ZFx0M2R8pJBiA==/com.muonline.client-pIlxWQYpxDPEEE2hqrgx5A==/base.apk): ok
+04-26 14:56:38.324 11956 11956 D nativeloader: Load /data/app/~~-48fy60I3ZFx0M2R8pJBiA==/com.muonline.client-pIlxWQYpxDPEEE2hqrgx5A==/lib/x86_64/libSDL2.so using class loader ns clns-9 (caller=/data/app/~~-48fy60I3ZFx0M2R8pJBiA==/com.muonline.client-pIlxWQYpxDPEEE2hqrgx5A==/base.apk): ok
+04-26 14:56:38.326 11956 11956 D nativeloader: Load /data/app/~~-48fy60I3ZFx0M2R8pJBiA==/com.muonline.client-pIlxWQYpxDPEEE2hqrgx5A==/lib/x86_64/libSDL2_image.so using class loader ns clns-9 (caller=/data/app/~~-48fy60I3ZFx0M2R8pJBiA==/com.muonline.client-pIlxWQYpxDPEEE2hqrgx5A==/base.apk): ok
+04-26 14:56:38.329 11956 11956 D nativeloader: Load /data/app/~~-48fy60I3ZFx0M2R8pJBiA==/com.muonline.client-pIlxWQYpxDPEEE2hqrgx5A==/lib/x86_64/libSDL2_mixer.so using class loader ns clns-9 (caller=/data/app/~~-48fy60I3ZFx0M2R8pJBiA==/com.muonline.client-pIlxWQYpxDPEEE2hqrgx5A==/base.apk): ok
+04-26 14:56:38.331 11956 11956 D nativeloader: Load /data/app/~~-48fy60I3ZFx0M2R8pJBiA==/com.muonline.client-pIlxWQYpxDPEEE2hqrgx5A==/lib/x86_64/libSDL2_ttf.so using class loader ns clns-9 (caller=/data/app/~~-48fy60I3ZFx0M2R8pJBiA==/com.muonline.client-pIlxWQYpxDPEEE2hqrgx5A==/base.apk): ok
+04-26 14:56:38.332 11956 11956 D nativeloader: Load /data/app/~~-48fy60I3ZFx0M2R8pJBiA==/com.muonline.client-pIlxWQYpxDPEEE2hqrgx5A==/lib/x86_64/libSDL_net.so using class loader ns clns-9 (caller=/data/app/~~-48fy60I3ZFx0M2R8pJBiA==/com.muonline.client-pIlxWQYpxDPEEE2hqrgx5A==/base.apk): ok
+04-26 14:56:38.333 11956 11956 D nativeloader: Load /data/app/~~-48fy60I3ZFx0M2R8pJBiA==/com.muonline.client-pIlxWQYpxDPEEE2hqrgx5A==/lib/x86_64/libbotan.so using class loader ns clns-9 (caller=/data/app/~~-48fy60I3ZFx0M2R8pJBiA==/com.muonline.client-pIlxWQYpxDPEEE2hqrgx5A==/base.apk): ok
+04-26 14:56:38.337 11956 11956 I MuMain  : early chdir(/sdcard/.../files) = 0 (errno=88)
+04-26 14:56:38.353 11956 11956 D nativeloader: Load /data/app/~~-48fy60I3ZFx0M2R8pJBiA==/com.muonline.client-pIlxWQYpxDPEEE2hqrgx5A==/lib/x86_64/libmain.so using class loader ns clns-9 (caller=/data/app/~~-48fy60I3ZFx0M2R8pJBiA==/com.muonline.client-pIlxWQYpxDPEEE2hqrgx5A==/base.apk): ok
+04-26 14:56:38.353 11956 11956 V SDL     : nativeSetupJNI()
+04-26 14:56:38.354 11956 11956 V SDL     : AUDIO nativeSetupJNI()
+04-26 14:56:38.354 11956 11956 V SDL     : CONTROLLER nativeSetupJNI()
+04-26 14:56:38.355 11956 11956 D AudioSystem: onNewService: media.audio_policy service obtained 0x7415b3abe2d0
+04-26 14:56:38.357 11956 11956 D AudioSystem: getService: IAudioPolicyService retrieved: 0x7415b3abe2d0  cached: 0x7415b3abe2d0
+04-26 14:56:38.369 11956 11956 V SDL     : onStart()
+04-26 14:56:38.370 11956 11956 D MuMain  : onResume
+04-26 14:56:38.370 11956 11956 V SDL     : onResume()
+04-26 14:56:38.375 11956 11956 D InsetsController: Setting requestedVisibleTypes to 496 (was 503)
+04-26 14:56:38.390 11956 11956 D VRI[MuMainActivity]: WindowInsets changed: 2268x1080 mandatorySystemGestures:[0,74,0,84] 
+04-26 14:56:38.390 11956 11956 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): android.view.ViewRootImpl$$ExternalSyntheticLambda13@4d8184d
+04-26 14:56:38.394 11956 11956 I Surface : Creating surface for consumer unnamed-11956-1 with slotExpansion=1 for 64 slots
+04-26 14:56:38.395 11956 11956 I Surface : Creating surface for consumer VRI[MuMainActivity]#1(BLAST Consumer)1 with slotExpansion=1 for 64 slots
+04-26 14:56:38.398 11956 11956 I Surface : Creating surface for consumer unnamed-11956-2 with slotExpansion=1 for 64 slots
+04-26 14:56:38.398 11956 11956 I Surface : Creating surface for consumer 9acebe4 SurfaceView[com.muonline.client/com.muonline.client.MuMainActivity]#2(BLAST Consumer)2 with slotExpansion=1 for 64 slots
+04-26 14:56:38.398 11956 11956 V SDL     : surfaceCreated()
+04-26 14:56:38.398 11956 11956 V SDL     : surfaceChanged()
+04-26 14:56:38.398 11956 11956 V SDL     : Window size: 2268x1080
+04-26 14:56:38.398 11956 11956 V SDL     : Device size: 2400x1080
+04-26 14:56:38.403 11956 12100 V SDL     : Running main function SDL_main from library /data/app/~~-48fy60I3ZFx0M2R8pJBiA==/com.muonline.client-pIlxWQYpxDPEEE2hqrgx5A==/lib/x86_64/libmain.so
+04-26 14:56:38.403 11956 12100 V SDL     : nativeRunMain()
+04-26 14:56:38.404 11956 12100 I MuMain  : === MuMain Android v1.0 starting ===
+04-26 14:56:38.406 11956 12100 I MuMain  : Working dir set to: /storage/emulated/0/Android/data/com.muonline.client/files
+04-26 14:56:38.465 11956 12100 W libOpenSLES: class OutputMix interface 0 requested but unavailable MPH=43
+04-26 14:56:38.465 11956 12100 I MuMain  : SDL2 initialized
+04-26 14:56:38.465 11956 12100 I MuMain  : Render backend request env=(null) -> opengl
+04-26 14:56:38.467 11956 12100 V SDL     : setOrientation() requestedOrientation=6 width=2400 height=1080 resizable=false hint=
+04-26 14:56:38.487 11956 12100 I SDL/APP : pixel format wanted SDL_PIXELFORMAT_RGBX8888 (2), got SDL_PIXELFORMAT_RGBX8888 (2)
+04-26 14:56:38.497 11956 11956 I SDL/APP : Adding device with name 2, capture 1
+04-26 14:56:38.497 11956 11956 I SDL/APP : Adding device with name 5, capture 1
+04-26 14:56:38.497 11956 11956 I SDL/APP : Adding device with name 8, capture 0
+04-26 14:56:38.497 11956 11956 I SDL/APP : Adding device with name 10, capture 0
+04-26 14:56:38.497 11956 11956 I SDL/APP : Adding device with name 14, capture 0
+04-26 14:56:38.497 11956 11956 I SDL/APP : Adding device with name 12, capture 0
+04-26 14:56:38.505 11956 11956 D InsetsController: Setting requestedVisibleTypes to 503 (was 496)
+04-26 14:56:38.506 11956 11956 V SDL     : surfaceChanged()
+04-26 14:56:38.506 11956 11956 V SDL     : Window size: 2268x943
+04-26 14:56:38.506 11956 11956 V SDL     : Device size: 2400x1080
+04-26 14:56:38.523 11956 12100 I MuMain  : Screen size (drawable): 2268x1080 (scale: 3.54 x 2.25)
+04-26 14:56:38.535 11956 12100 I GL_Compat: GL_Compat_Init: OK (prog=3, vbo=1, ebo=2)
+04-26 14:56:38.535 11956 12100 I MuRender: OpenGLCompat initialized (drawable=2268x1080)
+04-26 14:56:38.535 11956 12100 I MuMain  : Render backend active: OpenGLCompat
+04-26 14:56:38.535 11956 12100 I GL_Compat: GL path switch: preferDirectVA=1
+04-26 14:56:38.535 11956 12100 I MuMain  : GL compat VA policy: preferDirect=1 (emulator=1)
+04-26 14:56:38.538 11956 12100 I AndroidGDI: SDL2_ttf initialized, defaultSize=15
+04-26 14:56:38.540 11956 12100 I AndroidGDI: Font OK: /system/fonts/DroidSans.ttf sz=15
+04-26 14:56:38.540 11956 12100 I AndroidGDI: Font OK: /system/fonts/DroidSans-Bold.ttf sz=15
+04-26 14:56:38.541 11956 12100 I AndroidGDI: Font OK: /system/fonts/DroidSans-Bold.ttf sz=30
+04-26 14:56:38.541 11956 12100 I AndroidGDI: Font OK: /system/fonts/DroidSans.ttf sz=14
+04-26 14:56:38.541 11956 12100 I MuMain  : GDI fonts created: size=15 big=30
+04-26 14:56:38.541 11956 12100 I MuMain  : Audio config: sound=1 music=1 rememberMe=0
+04-26 14:56:38.541 11956 12100 I MuMain  : 
+04-26 14:56:38.541 11956 12100 I MuMain  : Mix_Init requested=0x8 loaded=0x8
+04-26 14:56:38.543 11956 12100 D AudioSystem: onNewServiceWithAdapter: media.audio_flinger service obtained 0x7414b3ace950
+04-26 14:56:38.544   548  3002 W AudioFlinger: onStateChanged: pid:11956  uid:10230  state:unfrozen
+04-26 14:56:38.547 11956 12100 D AudioSystem: getService: IAudioFlingerService retrieved: 0x7415b3ac2420  IAudioFlinger cached: 0x7414b3ace950
+04-26 14:56:38.548 11956 12100 D muonline.client: PlayerBase::PlayerBase()
+04-26 14:56:38.548 11956 12100 D muonline.client: TrackPlayerBase::TrackPlayerBase()
+04-26 14:56:38.548 11956 12100 I libOpenSLES: Emulating old channel mask behavior (ignoring positional mask 0x3, using default mask 0x3 based on channel count of 2)
+04-26 14:56:38.551 11956 11956 D VRI[MuMainActivity]: WindowInsets changed: statusBars:[0,74,0,0] navigationBars:[0,0,0,63] 
+04-26 14:56:38.552 11956 11956 D InsetsController: Setting requestedVisibleTypes to 496 (was 503)
+04-26 14:56:38.553 11956 11956 D VRI[MuMainActivity]: WindowInsets changed: statusBars:null navigationBars:null 
+04-26 14:56:38.554 11956 11956 V SDL     : surfaceChanged()
+04-26 14:56:38.554 11956 11956 V SDL     : Window size: 2268x1080
+04-26 14:56:38.555 11956 11956 V SDL     : Device size: 2400x1080
+04-26 14:56:38.600 11956 11956 V SDL     : onWindowFocusChanged(): true
+04-26 14:56:38.600 11956 11956 V SDL     : nativeFocusChanged()
+04-26 14:56:38.602 11956 11956 D InsetsController: hide(ime())
+04-26 14:56:38.603 11956 11956 I ImeTracker: com.muonline.client:45cba250: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+04-26 14:56:38.635 11956 12104 D muonline.client: PlayerBase::stop() from IPlayer
+04-26 14:56:38.636 11956 12104 D AudioTrack: stop(16): called with 0 frames delivered
+04-26 14:56:38.636 11956 12100 I MuMain  : SDL_mixer initialized (32 channels)
+04-26 14:56:38.636 11956 12100 I MuMain  : INIT: srand
+04-26 14:56:38.636 11956 12100 I MuMain  : INIT: alloc GateAttribute
+04-26 14:56:38.636 11956 12100 I MuMain  : INIT: alloc SkillAttribute
+04-26 14:56:38.636 11956 12100 I MuMain  : INIT: alloc ItemAttRibute
+04-26 14:56:38.636 11956 12100 I MuMain  : INIT: alloc CharacterMemoryDump
+04-26 14:56:38.637 11956 12100 I MuMain  : INIT: alloc CharacterMachine
+04-26 14:56:38.638 11956 12100 I MuMain  : INIT: CharacterMachine->Init()
+04-26 14:56:38.638 11956 12100 I MuMain  : INIT: new UI objects
+04-26 14:56:38.640 11956 12100 I MuMain  : INIT: BuffStateSystem::Make()
+04-26 14:56:38.641 11956 12100 I MuMain  : INIT: MapProcess::Make()
+04-26 14:56:38.642 11956 12100 I MuMain  : INIT: PetProcess::Make()
+04-26 14:56:38.697 11956 11988 I muonline.client: Waiting for a blocking GC NativeAlloc
+04-26 14:56:38.714 11956 11988 I muonline.client: WaitForGcToComplete blocked NativeAlloc on NativeAlloc for 17.114ms
+04-26 14:56:38.981 11956 11956 D VRI[PreloadActivity]: visibilityChanged oldVisibility=true newVisibility=false
+04-26 14:56:39.000 11956 11956 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): null
+04-26 14:56:39.001 11956 11956 D ViewRootImpl: Skipping stats log for color mode
+04-26 14:56:40.344 11956 11956 D VRI[MuMainActivity]: WindowInsets changed: mandatorySystemGestures:[0,74,0,0] 
+04-26 14:56:41.760   347   347 I lowmemorykiller: Kill 'com.muonline.client' (11956), uid 10230, oom_score_adj 0 to free 2161204kB rss, 420532kB swap, 0kB dmabuf_pss, 0kB dmabuf_rss; reason: min watermark is breached even after kill
+04-26 14:56:42.001   742  2162 D SensorService: Unregistering client listener for PID 11956
+04-26 14:56:42.005   506   506 I Zygote  : Process 11956 exited due to signal 9 (Killed)
+04-26 14:56:42.005   742  2164 I ActivityManager: Process com.muonline.client (pid 11956) has died: fg  TOP 
+04-26 14:56:42.046   742   790 I libprocessgroup: Removed cgroup /sys/fs/cgroup/apps/uid_10230/pid_11956

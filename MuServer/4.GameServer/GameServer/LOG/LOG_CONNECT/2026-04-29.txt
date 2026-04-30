@@ -1,0 +1,10 @@
+07:29:40 [SocketManager] Server started at port [55920]
+07:29:40 [JoinServer] connecting to 192.168.99.200:63003
+07:29:40 [JoinServer] connected to 192.168.99.200:63003
+07:29:40 [DataServer] connecting to 192.168.99.200:63002
+07:29:40 [DataServer] connected to 192.168.99.200:63002
+20:03:49 [SocketManager] Server started at port [55920]
+20:03:49 [JoinServer] connecting to 192.168.99.200:63003
+20:03:49 [JoinServer] connected to 192.168.99.200:63003
+20:03:49 [DataServer] connecting to 192.168.99.200:63002
+20:03:49 [DataServer] connected to 192.168.99.200:63002

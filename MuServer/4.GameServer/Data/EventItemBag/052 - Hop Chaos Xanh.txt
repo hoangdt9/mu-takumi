@@ -1,0 +1,52 @@
+//=================================================
+// Config : DUY ĐẠT
+// Zalo: DUY ĐẠT - 0961.87.37.67
+//=================================================
+0
+//EventName              DropZen    ItemDropRate   ItemDropCount   SetItemDropRate   ItemDropType   Fireworks	
+"Box 380"	 	 		1000	   	100		  	   1		  	   0		   		 0		   		0
+end
+
+1
+//Section   Type   	MinLevel   	MaxLevel   	Skill   Luck   	Option	Excellent	Rate
+0			22		0			0			1		1		1		1			100		//Đao Quyền Năng
+0			23		0			0			1		1		1		1			100		//Đao Hồng Long
+0			35		0			0			1		1		1		1			100		//Vuốt Phượng Hoàng
+2			14		0			0			1		1		1		1			100		//Trượng Thái Dương
+4			21		0			0			1		1		1		1			100		//Cung Thái Bình
+5			12		0			0			0		1		1		1			100		//Gậy Thần Ma
+5			19		0			0			0		1		1		1			100		//Khuyển Bão Điện
+7			29		0			0			0		1		1		1			100		//Mũ Quyền Năng
+7			30		0			0			0		1		1		1			100		//Mũ Thần Ma
+7			31		0			0			0		1		1		1			100		//Mũ Thái Bình
+7			33		0			0			0		1		1		1			100		//Mũ Thái Dương
+7			43		0			0			0		1		1		1			100		//Mũ Bão Điện
+7			73		0			0			0		1		1		1			100		//Mũ Bạch Long
+8			29		0			0			0		1		1		1			100		//Áo Quyền Năng
+8			30		0			0			0		1		1		1			100		//Áo Thần Ma
+8			31		0			0			0		1		1		1			100		//Áo Thái Bình
+8			32		0			0			0		1		1		1			100		//Áo Hồng Long
+8			33		0			0			0		1		1		1			100		//Áo Thái Dương
+8			43		0			0			0		1		1		1			100		//Áo Bão Điện
+8			73		0			0			0		1		1		1			100		//Áo Bạch Long
+9			29		0			0			0		1		1		1			100		//Quần Quyền Năng
+9			30		0			0			0		1		1		1			100		//Quần Thần Ma
+9			31		0			0			0		1		1		1			100		//Quần Thái Bình
+9			32		0			0			0		1		1		1			100		//Quần Hồng Long
+9			33		0			0			0		1		1		1			100		//Quần Thái Dương
+9			43		0			0			0		1		1		1			100		//Quần Bão Điện
+9			73		0			0			0		1		1		1			100		//Quần Bạch Long
+10			29		0			0			0		1		1		1			100		//Tay Quyền Năng
+10			30		0			0			0		1		1		1			100		//Tay Thần Ma
+10			31		0			0			0		1		1		1			100		//Tay Thái Bình
+10			32		0			0			0		1		1		1			100		//Tay Hồng Long
+10			33		0			0			0		1		1		1			100		//Tay Thái Dương
+10			43		0			0			0		1		1		1			100		//Tay Bão Điện
+11			29		0			0			0		1		1		1			100		//Giày Quyền Năng
+11			30		0			0			0		1		1		1			100		//Giày Thần Ma
+11			31		0			0			0		1		1		1			100		//Giày Thái Bình
+11			32		0			0			0		1		1		1			100		//Giày Hồng Long
+11			33		0			0			0		1		1		1			100		//Giày Thái Dương
+11			43		0			0			0		1		1		1			100		//Giày Bão Điện
+11			73		0			0			0		1		1		1			100		//Giày Bạch Long
+end

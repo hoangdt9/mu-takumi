@@ -1,0 +1,67 @@
+//=================================================
+// Config : DUY ĐẠT
+// Zalo: DUY ĐẠT - 0961.87.37.67
+//=================================================
+0
+//EventName              DropZen   ItemDropRate   ItemDropCount   SetItemDropRate   ItemDropType   Fireworks	
+"Box of Kundun 2"	 		1000	   100		  	1		  			0		    	0		   0
+end
+
+
+1
+//Section	Type	MinLevel	MaxLevel	Skill	Luck	Option	Excellent	Rate	NameItem
+0			13		0			0			1		1		1		1			100		//Hỏa Đao
+0			14		0			0			1		1		1		1			100		//Kiếm Điện
+0			15		0			0			1		1		1		1			100		//Thiết Kiếm
+0			16		0			0			1		1		1		1			100		//Kiếm Hủy Diệt
+1			6		0			0			1		1		1		1			100		//Rìu Lưỡi Bạc
+1			7		0			0			1		1		1		1			100		//Rìu Lưỡi Vàng
+1			8		0			0			1		1		1		1			100		//Rìu Bán Nguyệt
+2			9		0			0			1		1		1		1			100		//Trượng Thép
+2			10		0			0			1		1		1		1			100		//Trượng Bóng Tối
+3			0		0			0			1		1		1		1			100		//Giáo Ánh Sáng
+4			14		0			0			1		1		1		1			100		//Nỏ Kim Ngân
+4			16		0			0			1		1		1		1			100		//Nỏ Thánh
+5			6		0			0			1		1		1		1			100		//Gậy Phục Sinh
+5			8		0			0			1		1		1		1			100		//Gậy Hủy Diệt
+5			16		0			0			1		1		1		1			100		//Gậy Triệu Hồi
+6			1		0			0			1		1		1		1			100		//Khiên Sừng
+6			2		0			0			1		1		1		1			100		//Khiên Diều
+6			3		0			0			1		1		1		1			100		//Khiên Tiên Nữ
+7			9		0			0			0		1		1		1			100		//Mũ Thiết Phiến
+8			9		0			0			0		1		1		1			100		//Áo Thiết Phiến
+9			9		0			0			0		1		1		1			100		//Quần Thiết Phiến
+10			9		0			0			0		1		1		1			100		//Tay Thiết Phiến
+11			9		0			0			0		1		1		1			100		//Giày Thiết Phiến
+7			1		0			0			0		1		1		1			100		//Mũ Hỏa Long
+8			1		0			0			0		1		1		1			100		//Áo Hỏa Long
+9			1		0			0			0		1		1		1			100		//Quần Hỏa Long
+10			1		0			0			0		1		1		1			100		//Tay Hỏa Long
+11			1		0			0			0		1		1		1			100		//Giày Hỏa Long
+7			7		0			0			0		1		1		1			100		//Mũ Nhân Sư
+8			7		0			0			0		1		1		1			100		//Áo Nhân Sư
+9			7		0			0			0		1		1		1			100		//Quần Nhân Sư
+10			7		0			0			0		1		1		1			100		//Tay Nhân Sư
+11			7		0			0			0		1		1		1			100		//Giày Nhân Sư
+7			4		0			0			0		1		1		1			100		//Mũ Xương
+8			4		0			0			0		1		1		1			100		//Áo Xương
+9			4		0			0			0		1		1		1			100		//Quần Xương
+10			4		0			0			0		1		1		1			100		//Tay Xương
+11			4		0			0			0		1		1		1			100		//Giày Xương
+7			12		0			0			0		1		1		1			100		//Mũ Thiên Thanh
+8			12		0			0			0		1		1		1			100		//Áo Thiên Thanh
+9			12		0			0			0		1		1		1			100		//Quần Thiên Thanh
+10			12		0			0			0		1		1		1			100		//Tay Thiên Thanh
+11			12		0			0			0		1		1		1			100		//Giày Thiên Thanh
+7			13		0			0			0		1		1		1			100		//Mũ Ngọc Bích
+8			13		0			0			0		1		1		1			100		//Áo Ngọc Bích
+9			13		0			0			0		1		1		1			100		//Quần Ngọc Bích
+10			13		0			0			0		1		1		1			100		//Tay Ngọc Bích
+11			13		0			0			0		1		1		1			100		//Giày Ngọc Bích
+7			25		0			0			0		1		1		1			100		//Mũ Thiết Ma
+8			25		0			0			0		1		1		1			100		//Áo Thiết Ma
+9			25		0			0			0		1		1		1			100		//Quần Thiết Ma
+10			25		0			0			0		1		1		1			100		//Tay Thiết Ma
+11			25		0			0			0		1		1		1			100		//Giày Thiết Ma
+
+end

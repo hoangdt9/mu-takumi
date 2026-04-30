@@ -1,0 +1,5 @@
+04:07:16 Mix OK [admin Admin] Nhẫn Độc +10 - (0) Item 6665 10 0 0 0 0 -1 63
+04:07:16 [LOG_TRADEBOT Ex] - [Nhẫn Độc +9] - [DB[79] TC[0] Luck[0] Op[7]] Exc[63] Set[0] oEx[1] Har[0] Socket[255,255,255,255,255][255] Seri[00000000]
+04:07:16 [LOG_TRADEBOT Ex] - [Ngọc Ước Nguyện +0] - [DB[1] TC[0] Luck[0] Op[0]] Exc[0] Set[0] oEx[0] Har[0] Socket[255,255,255,255,255][255] Seri[00000055]
+04:07:16 [LOG_TRADEBOT Ex] - [Ngọc Tâm Linh +0] - [DB[1] TC[0] Luck[0] Op[0]] Exc[0] Set[0] oEx[0] Har[0] Socket[255,255,255,255,255][255] Seri[00000056]
+04:07:16 [LOG_TRADEBOT Ex] - [Bùa Kết Hợp Chaos +0] - [DB[1] TC[0] Luck[0] Op[0]] Exc[0] Set[0] oEx[0] Har[0] Socket[255,255,255,255,255][255] Seri[00000058]

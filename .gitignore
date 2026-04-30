@@ -1,0 +1,65 @@
+# Secrets — dùng file `.example`; copy tay thành `DataServer.ini` / `JoinServer.ini`
+MuServer/2.DataServer/DataServer.ini
+MuServer/3.JoinServer/JoinServer.ini
+
+# Docker env local
+docker/.env
+.env
+.env.*
+
+# VMware / máy ảo cực lớn
+VMWare/
+
+# Client build nhị phân + assets (clone riêng hoặc release)
+ClientBuild*/
+
+# MSSQL backups
+**/7.DataBase/**/*.bak
+MuServer/**/*.bak
+
+# Crash dumps
+*.dmp
+
+# Server runtime binaries & native deps trong MuServer
+MuServer/**/*.exe
+MuServer/**/*.dll
+
+# Tiện ích antihack / GS — giữ chỉ ini/txt; exe đã gitignore glob phía trên
+MuServer/**/*.pdb
+
+# Log runtime
+**/7.Log/
+MuServer/**/*.log
+
+# MSVC / IDE
+**/Debug/
+**/Release/
+**/*.tlog/
+**/*.user
+**/.vs/
+
+# Android Gradle / CMake cache (source app vẫn track được)
+**/Source/android/app/build/
+**/Source/android/build/
+**/Source/android/.gradle/
+**/Source/android/local.properties
+**/Source/android/**/.cxx/
+**/Source/android/captures/
+**/Source/android/**/*.apk
+**/Source/android/**/*.aab
+
+# PC client deps nặng (tải lại boost/DX SDK khi cần build `5.Main`)
+Source/5.Main/boost_1_80_0/
+Source/5.Main/sdk-directx9/
+
+# Safety backup blobs
+Source/_safety_backup/
+
+# QA artefacts / screenshots / logcat
+Source/**/*.logcat*.txt
+Source/device_screen*.png
+Source/*.png
+
+# OS
+.DS_Store
+Thumbs.db

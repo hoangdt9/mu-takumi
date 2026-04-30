@@ -1,0 +1,1 @@
+update character set strength = 20, dexterity = 20, vitality = 20, energy = 20, leadership = 20 , leveluppoint = 65000 , Clevel = 400

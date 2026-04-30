@@ -1,0 +1,306 @@
+00:18:03 [OK][ItemDrop] NV[WizFire] Map ([0](142/126) )Drop Item: [Hộp May Mắn], Serial: 00000036, level: 8, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+00:20:53 [OK][ItemDrop] NV[WizFire] Map ([0](140/130) )Drop Item: [Hộp May Mắn], Serial: 00000037, level: 12, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+00:20:53 [OK][ItemDrop] NV[WizFire] Map ([0](140/129) )Drop Item: [Hộp May Mắn], Serial: 00000038, level: 12, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+00:20:53 [OK][ItemDrop] NV[WizFire] Map ([0](140/129) )Drop Item: [Hộp May Mắn], Serial: 00000039, level: 12, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+00:20:53 [OK][ItemDrop] NV[WizFire] Map ([0](139/128) )Drop Item: [Hộp May Mắn], Serial: 0000003A, level: 12, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+00:20:53 [OK][ItemDrop] NV[WizFire] Map ([0](141/131) )Drop Item: [Hộp May Mắn], Serial: 0000003B, level: 12, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+00:21:07 [OK][ItemDrop] NV[WizFire] Map ([0](141/129) )Drop Item: [Giầy Địa Long], Serial: 0000003C, level: 0, Skill: 0, Luck 0, Option3: 1, NewOption: 8, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+00:21:10 [OK][ItemDrop] NV[WizFire] Map ([0](142/129) )Drop Item: [Quần Ánh Trăng], Serial: 0000003D, level: 0, Skill: 0, Luck 1, Option3: 0, NewOption: 2, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+00:21:14 [OK][ItemDrop] NV[WizFire] Map ([0](142/128) )Drop Item: [Găng Ánh Trăng], Serial: 0000003E, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 16, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+00:21:17 [OK][ItemDrop] NV[WizFire] Map ([0](141/128) )Drop Item: [Quần Địa Long], Serial: 0000003F, level: 0, Skill: 0, Luck 1, Option3: 0, NewOption: 16, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+00:21:20 [OK][ItemDrop] NV[WizFire] Map ([0](139/129) )Drop Item: [Mũ Hắc Long], Serial: 00000040, level: 0, Skill: 0, Luck 1, Option3: 0, NewOption: 1, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+00:21:24 [OK][ItemDrop] NV[WizFire] Map ([0](139/128) )Drop Item: [Quần Thiên Kim], Serial: 00000041, level: 0, Skill: 0, Luck 1, Option3: 0, NewOption: 2, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+00:25:25 [OK][ItemDrop] NV[WizFire] Map ([0](124/132) )Drop Item: [Áo Địa Long], Serial: 00000042, level: 0, Skill: 0, Luck 1, Option3: 0, NewOption: 2, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+00:25:28 [OK][ItemDrop] NV[WizFire] Map ([0](126/131) )Drop Item: [Quần Địa Long], Serial: 00000043, level: 0, Skill: 0, Luck 1, Option3: 0, NewOption: 2, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+00:25:31 [OK][ItemDrop] NV[WizFire] Map ([0](129/132) )Drop Item: [Giầy Hỏa Thần], Serial: 00000044, level: 0, Skill: 0, Luck 0, Option3: 1, NewOption: 8, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+00:25:34 [OK][ItemDrop] NV[WizFire] Map ([0](127/132) )Drop Item: [Áo Hỏa Thiên], Serial: 00000045, level: 0, Skill: 0, Luck 1, Option3: 0, NewOption: 4, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+00:25:37 [OK][ItemDrop] NV[WizFire] Map ([0](130/131) )Drop Item: [Giầy Hỏa Thần], Serial: 00000046, level: 0, Skill: 0, Luck 1, Option3: 0, NewOption: 1, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+00:25:39 [OK][ItemDrop] NV[WizFire] Map ([0](132/132) )Drop Item: [Áo Hỏa Thiên], Serial: 00000047, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 8, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+00:25:42 [OK][ItemDrop] NV[WizFire] Map ([0](132/131) )Drop Item: [Mũ Ánh Trăng], Serial: 00000048, level: 0, Skill: 0, Luck 0, Option3: 1, NewOption: 16, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+00:26:03 [OK][ItemDrop] NV[WizFire] Map ([0](132/132) )Drop Item: [Áo Nữ Thần], Serial: 00000049, level: 0, Skill: 0, Luck 1, Option3: 0, NewOption: 1, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+00:26:06 [OK][ItemDrop] NV[WizFire] Map ([0](132/131) )Drop Item: [Mũ Hắc Long], Serial: 0000004A, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 16, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+00:26:16 [OK][ItemDrop] NV[WizFire] Map ([0](124/131) )Drop Item: [Quần Thái Bình], Serial: 0000004B, level: 0, Skill: 0, Luck 0, Option3: 1, NewOption: 2, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+00:26:19 [OK][ItemDrop] NV[WizFire] Map ([0](126/132) )Drop Item: [Giầy Thái Bình], Serial: 0000004C, level: 0, Skill: 0, Luck 1, Option3: 0, NewOption: 2, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+00:26:25 [OK][ItemDrop] NV[WizFire] Map ([0](132/130) )Drop Item: [Quần Thái Dương], Serial: 0000004D, level: 0, Skill: 0, Luck 1, Option3: 0, NewOption: 1, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+00:26:28 [OK][ItemDrop] NV[WizFire] Map ([0](133/128) )Drop Item: [Áo Hồng Long], Serial: 0000004E, level: 0, Skill: 0, Luck 1, Option3: 1, NewOption: 1, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+00:26:31 [OK][ItemDrop] NV[WizFire] Map ([0](131/133) )Drop Item: [Áo Hồng Long], Serial: 0000004F, level: 0, Skill: 0, Luck 1, Option3: 1, NewOption: 32, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+00:26:33 [OK][ItemDrop] NV[WizFire] Map ([0](133/131) )Drop Item: [Khuyển Bão Điện], Serial: 00000050, level: 0, Skill: 0, Luck 0, Option3: 1, NewOption: 4, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+00:26:36 [OK][ItemDrop] NV[WizFire] Map ([0](133/130) )Drop Item: [Quần Thái Dương], Serial: 00000051, level: 0, Skill: 0, Luck 0, Option3: 1, NewOption: 1, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+00:26:38 [OK][ItemDrop] NV[WizFire] Map ([0](134/130) )Drop Item: [Quần Thái Bình], Serial: 00000052, level: 0, Skill: 0, Luck 0, Option3: 1, NewOption: 1, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+00:26:42 [OK][ItemDrop] NV[WizFire] Map ([0](132/130) )Drop Item: [Quần Quyền Năng], Serial: 00000053, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 16, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+00:26:45 [OK][ItemDrop] NV[WizFire] Map ([0](135/129) )Drop Item: [Giầy Thái Dương], Serial: 00000054, level: 0, Skill: 0, Luck 1, Option3: 1, NewOption: 4, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+00:26:49 [OK][ItemDrop] NV[WizFire] Map ([0](135/128) )Drop Item: [Áo Thái Bình], Serial: 00000055, level: 0, Skill: 0, Luck 0, Option3: 1, NewOption: 1, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+00:27:03 [OK][ItemDrop] NV[WizFire] Map ([0](125/132) )Drop Item: [Lông Vũ], Serial: 00000056, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+00:27:06 [OK][ItemDrop] NV[WizFire] Map ([0](124/131) )Drop Item: [Dây Chuyền Băng], Serial: 00000057, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 2, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+00:27:09 [OK][ItemDrop] NV[WizFire] Map ([0](125/132) )Drop Item: [Thiên Tử Kiếm], Serial: 00000058, level: 1, Skill: 1, Luck 0, Option3: 0, NewOption: 2, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+00:27:33 [OK][ItemDrop] NV[WizFire] Map ([0](135/130) )Drop Item: [Kiếm Thiên Tử (MG)], Serial: 00000059, level: 0, Skill: 1, Luck 0, Option3: 1, NewOption: 2, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+00:27:36 [OK][ItemDrop] NV[WizFire] Map ([0](134/129) )Drop Item: [Gậy Hỏa Long], Serial: 0000005A, level: 1, Skill: 0, Luck 1, Option3: 0, NewOption: 4, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+00:27:41 [OK][ItemDrop] NV[WizFire] Map ([0](136/129) )Drop Item: [Vuốt Thiên Tử], Serial: 0000005B, level: 1, Skill: 1, Luck 1, Option3: 1, NewOption: 16, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+00:27:44 [OK][ItemDrop] NV[WizFire] Map ([0](137/130) )Drop Item: [Trượng Thiên Tử], Serial: 0000005C, level: 1, Skill: 0, Luck 1, Option3: 0, NewOption: 1, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+00:27:46 [OK][ItemDrop] NV[WizFire] Map ([0](135/129) )Drop Item: [Kiếm Thiên Tử (MG)], Serial: 0000005D, level: 1, Skill: 1, Luck 0, Option3: 0, NewOption: 2, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+00:27:48 [OK][ItemDrop] NV[WizFire] Map ([0](133/129) )Drop Item: [Trượng Thiên Tử], Serial: 0000005E, level: 1, Skill: 0, Luck 0, Option3: 1, NewOption: 4, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+00:27:50 [OK][ItemDrop] NV[WizFire] Map ([0](133/128) )Drop Item: [Nỏ Hỏa Long], Serial: 0000005F, level: 1, Skill: 1, Luck 0, Option3: 1, NewOption: 2, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+00:27:52 [OK][ItemDrop] NV[WizFire] Map ([0](134/128) )Drop Item: [Gậy Thiên Nữ], Serial: 00000060, level: 1, Skill: 0, Luck 0, Option3: 0, NewOption: 1, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+00:27:54 [OK][ItemDrop] NV[WizFire] Map ([0](135/128) )Drop Item: [Gậy Hỏa Long], Serial: 00000061, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 2, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+00:27:56 [OK][ItemDrop] NV[WizFire] Map ([0](136/128) )Drop Item: [Gậy Thiên Nữ], Serial: 00000062, level: 0, Skill: 0, Luck 1, Option3: 1, NewOption: 2, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+00:28:01 [OK][ItemDrop] NV[WizFire] Map ([0](137/127) )Drop Item: [Kiếm Thiên Tử (MG)], Serial: 00000063, level: 1, Skill: 1, Luck 1, Option3: 1, NewOption: 4, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+00:28:06 [OK][ItemDrop] NV[WizFire] Map ([0](140/130) )Drop Item: [Thiên Tử Kiếm], Serial: 00000064, level: 0, Skill: 1, Luck 0, Option3: 1, NewOption: 16, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+00:28:08 [OK][ItemDrop] NV[WizFire] Map ([0](139/129) )Drop Item: [Trượng Thiên Tử], Serial: 00000065, level: 0, Skill: 0, Luck 1, Option3: 0, NewOption: 4, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+00:28:10 [OK][ItemDrop] NV[WizFire] Map ([0](139/127) )Drop Item: [Giầy Hồng Long], Serial: 00000066, level: 0, Skill: 0, Luck 1, Option3: 0, NewOption: 1, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+00:28:13 [OK][ItemDrop] NV[WizFire] Map ([0](141/129) )Drop Item: [Mũ Thần Ma], Serial: 00000067, level: 0, Skill: 0, Luck 1, Option3: 0, NewOption: 32, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+00:28:21 [OK][ItemDrop] NV[WizFire] Map ([0](143/129) )Drop Item: [Đao Quyền Năng], Serial: 00000068, level: 0, Skill: 1, Luck 0, Option3: 0, NewOption: 1, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+00:28:23 [OK][ItemDrop] NV[WizFire] Map ([0](142/129) )Drop Item: [Gậy Thần Ma], Serial: 00000069, level: 0, Skill: 0, Luck 0, Option3: 1, NewOption: 32, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+00:28:42 [OK][ItemDrop] NV[WizFire] Map ([0](141/127) )Drop Item: [Vuốt Phượng Hoàng], Serial: 0000006A, level: 0, Skill: 1, Luck 1, Option3: 0, NewOption: 1, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+00:28:44 [OK][ItemDrop] NV[WizFire] Map ([0](142/128) )Drop Item: [Áo Thái Bình], Serial: 0000006B, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 32, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+00:28:46 [OK][ItemDrop] NV[WizFire] Map ([0](141/127) )Drop Item: [Găng Hồng Long], Serial: 0000006C, level: 0, Skill: 0, Luck 1, Option3: 0, NewOption: 16, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+00:28:48 [OK][ItemDrop] NV[WizFire] Map ([0](143/127) )Drop Item: [Quần Thái Bình], Serial: 0000006D, level: 0, Skill: 0, Luck 1, Option3: 0, NewOption: 16, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+00:28:50 [OK][ItemDrop] NV[WizFire] Map ([0](141/127) )Drop Item: [Áo Thái Bình], Serial: 0000006E, level: 0, Skill: 0, Luck 0, Option3: 1, NewOption: 2, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+00:28:52 [OK][ItemDrop] NV[WizFire] Map ([0](144/130) )Drop Item: [Giầy Thái Dương], Serial: 0000006F, level: 0, Skill: 0, Luck 1, Option3: 0, NewOption: 8, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+00:28:55 [OK][ItemDrop] NV[WizFire] Map ([0](141/131) )Drop Item: [Giầy Quyền Năng], Serial: 00000070, level: 0, Skill: 0, Luck 1, Option3: 0, NewOption: 2, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+00:28:56 [OK][ItemDrop] NV[WizFire] Map ([0](142/132) )Drop Item: [Quần Bão Điện], Serial: 00000071, level: 0, Skill: 0, Luck 1, Option3: 0, NewOption: 1, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+00:28:58 [OK][ItemDrop] NV[WizFire] Map ([0](142/131) )Drop Item: [Áo Thái Bình], Serial: 00000072, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 2, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+00:29:03 [OK][ItemDrop] NV[WizFire] Map ([0](144/129) )Drop Item: [Trượng Thái Dương], Serial: 00000073, level: 0, Skill: 1, Luck 0, Option3: 1, NewOption: 16, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+01:23:34 [OK][ItemDrop] NV[Admin] Map ([0](140/128) )Drop Item: [Hộp May Mắn], Serial: 00000038, level: 12, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+01:23:34 [OK][ItemDrop] NV[Admin] Map ([0](141/124) )Drop Item: [Bùa Kết Hợp Chaos], Serial: 00000039, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+01:23:34 [OK][ItemDrop] NV[Admin] Map ([0](143/125) )Drop Item: [Hộp May Mắn], Serial: 0000003A, level: 12, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+01:23:34 [OK][ItemDrop] NV[Admin] Map ([0](142/126) )Drop Item: [Hộp May Mắn], Serial: 0000003B, level: 12, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+01:23:34 [OK][ItemDrop] NV[Admin] Map ([0](140/124) )Drop Item: [Bùa Kết Hợp Chaos], Serial: 0000003C, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+01:23:34 [OK][ItemDrop] NV[Admin] Map ([0](140/128) )Drop Item: [Bùa Kết Hợp Chaos], Serial: 0000003D, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+01:23:34 [OK][ItemDrop] NV[Admin] Map ([0](143/126) )Drop Item: [Hộp May Mắn], Serial: 0000003E, level: 12, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+01:23:34 [OK][ItemDrop] NV[Admin] Map ([0](140/127) )Drop Item: [Hộp May Mắn], Serial: 0000003F, level: 12, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+01:23:34 [OK][ItemDrop] NV[Admin] Map ([0](143/126) )Drop Item: [Ngọc RingPen], Serial: 00000040, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 2, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+01:23:34 [OK][ItemDrop] NV[Admin] Map ([0](144/128) )Drop Item: [Ngọc Cấp Độ], Serial: 00000041, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 16, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+01:24:05 [OK][ItemDrop] NV[Admin] Map ([0](140/129) )Drop Item: [Nhẫn Gió], Serial: 00000042, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 16, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+01:24:11 [OK][ItemDrop] NV[Admin] Map ([0](140/129) )Drop Item: [Mũ Nữ Thần], Serial: 00000043, level: 0, Skill: 0, Luck 1, Option3: 0, NewOption: 2, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+01:24:16 [OK][ItemDrop] NV[Admin] Map ([0](142/128) )Drop Item: [Găng Ánh Trăng], Serial: 00000044, level: 0, Skill: 0, Luck 1, Option3: 1, NewOption: 1, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+01:24:21 [OK][ItemDrop] NV[Admin] Map ([0](141/129) )Drop Item: [Mũ Hỏa Thiên], Serial: 00000045, level: 0, Skill: 0, Luck 1, Option3: 1, NewOption: 1, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+01:24:28 [OK][ItemDrop] NV[Admin] Map ([0](141/129) )Drop Item: [Áo Hỏa Thần], Serial: 00000046, level: 0, Skill: 0, Luck 1, Option3: 0, NewOption: 8, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+11:25:19 [OK][ItemDrop] NV[DarkZen] Map ([6](23/114) )Drop Item: [Ngọc Tâm Linh], Serial: 0000006A, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+11:25:51 [OK][ItemDrop] NV[WizFire] Map ([6](49/112) )Drop Item: [Ngọc Hỗn Nguyên], Serial: 0000006B, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+12:26:00 [OK][ItemDrop] NV[WizFire] Map ([6](51/113) )Drop Item: [Ngọc Ước Nguyện], Serial: 00000081, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+12:29:21 [OK][ItemDrop] NV[DarkZen] Map ([6](23/113) )Drop Item: [Ngọc Ước Nguyện], Serial: 0000008A, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+12:32:06 [OK][ItemDrop] NV[DarkZen] Map ([6](28/112) )Drop Item: [Ngọc Sáng Tạo], Serial: 0000008D, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+12:40:20 [OK][ItemDrop] NV[RageFist] Map ([6](96/68) )Drop Item: [Ngọc Hỗn Nguyên], Serial: 0000008E, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+12:52:19 [OK][ItemDrop] NV[ElfLumi] Map ([6](75/113) )Drop Item: [Ngọc Sinh Mệnh], Serial: 0000008F, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+12:52:41 [OK][ItemDrop] NV[RageFist] Map ([6](96/68) )Drop Item: [Ngọc Sinh Mệnh], Serial: 00000090, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+12:57:05 [OK][ItemDrop] NV[RageFist] Map ([6](96/68) )Drop Item: [Ngọc Sinh Mệnh], Serial: 00000091, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+12:58:11 [OK][ItemDrop] NV[WizFire] Map ([6](51/113) )Drop Item: [Ngọc Sáng Tạo], Serial: 00000092, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+13:07:19 [OK][ItemDrop] NV[DraxLord] Map ([6](95/90) )Drop Item: [Ngọc Sáng Tạo], Serial: 00000093, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+13:08:05 [OK][ItemDrop] NV[ElfLumi] Map ([6](75/113) )Drop Item: [Ngọc Sáng Tạo], Serial: 00000094, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+13:09:51 [OK][ItemDrop] NV[ElfLumi] Map ([6](77/112) )Drop Item: [Ngọc Tâm Linh], Serial: 00000095, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+13:12:30 [OK][ItemDrop] NV[DraxLord] Map ([6](95/90) )Drop Item: [Ngọc Hỗn Nguyên], Serial: 00000096, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+13:18:19 [OK][ItemDrop] NV[ElfLumi] Map ([6](75/113) )Drop Item: [Ngọc Tâm Linh], Serial: 00000097, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+13:26:03 [OK][ItemDrop] NV[ElfLumi] Map ([6](75/113) )Drop Item: [Ngọc Tâm Linh], Serial: 00000098, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+13:28:47 [OK][ItemDrop] NV[DraxLord] Map ([6](95/90) )Drop Item: [Ngọc Sáng Tạo], Serial: 00000099, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+13:35:22 [OK][ItemDrop] NV[DraxLord] Map ([6](95/90) )Drop Item: [Ngọc Hỗn Nguyên], Serial: 0000009A, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+13:35:33 [OK][ItemDrop] NV[ElfLumi] Map ([6](75/113) )Drop Item: [Ngọc Hỗn Nguyên], Serial: 0000009B, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+13:35:38 [OK][ItemDrop] NV[RageFist] Map ([6](97/68) )Drop Item: [Ngọc Hỗn Nguyên], Serial: 0000009C, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+13:38:01 [OK][ItemDrop] NV[DraxLord] Map ([6](95/90) )Drop Item: [Ngọc Hỗn Nguyên], Serial: 0000009D, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+13:40:57 [OK][ItemDrop] NV[WizFire] Map ([6](51/113) )Drop Item: [Ngọc Hỗn Nguyên], Serial: 0000009E, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+13:42:52 [OK][ItemDrop] NV[WizFire] Map ([6](51/113) )Drop Item: [Ngọc Sinh Mệnh], Serial: 0000009F, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+13:49:14 [OK][ItemDrop] NV[ElfLumi] Map ([6](70/99) )Drop Item: [Ngọc Hỗn Nguyên], Serial: 000000A0, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+13:57:45 [OK][ItemDrop] NV[DarkZen] Map ([6](23/113) )Drop Item: [Ngọc Hỗn Nguyên], Serial: 000000A1, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+14:01:03 [OK][ItemDrop] NV[WizFire] Map ([6](51/113) )Drop Item: [Ngọc Hỗn Nguyên], Serial: 000000A2, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+14:01:03 [OK][ItemDrop] NV[WizFire] Map ([6](51/113) )Drop Item: [Ngọc Tâm Linh], Serial: 000000A3, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+14:01:48 [OK][ItemDrop] NV[RageFist] Map ([6](96/68) )Drop Item: [Ngọc Tâm Linh], Serial: 000000A4, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+14:11:29 [OK][ItemDrop] NV[DraxLord] Map ([6](95/90) )Drop Item: [Ngọc Sáng Tạo], Serial: 000000A5, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+14:17:55 [OK][ItemDrop] NV[DraxLord] Map ([6](94/91) )Drop Item: [Ngọc Ước Nguyện], Serial: 000000A6, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+14:21:36 [OK][ItemDrop] NV[ElfLumi] Map ([6](75/113) )Drop Item: [Ngọc Sáng Tạo], Serial: 000000A7, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+14:22:28 [OK][ItemDrop] NV[ElfLumi] Map ([6](75/113) )Drop Item: [Ngọc Hỗn Nguyên], Serial: 000000A8, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+14:28:54 [OK][ItemDrop] NV[RageFist] Map ([6](96/68) )Drop Item: [Ngọc Tâm Linh], Serial: 000000A9, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+14:31:48 [OK][ItemDrop] NV[DarkZen] Map ([6](23/113) )Drop Item: [Ngọc Sáng Tạo], Serial: 000000AA, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+14:40:01 [OK][ItemDrop] NV[DraxLord] Map ([6](95/90) )Drop Item: [Ngọc Tâm Linh], Serial: 000000AB, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+14:51:20 [OK][ItemDrop] NV[RageFist] Map ([6](96/68) )Drop Item: [Ngọc Sinh Mệnh], Serial: 000000AC, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+14:57:49 [OK][ItemDrop] NV[RageFist] Map ([6](96/68) )Drop Item: [Ngọc Ước Nguyện], Serial: 000000AD, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+15:01:47 [OK][ItemDrop] NV[BladeRex] Map ([6](91/117) )Drop Item: [Ngọc Hỗn Nguyên], Serial: 000000AE, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+15:02:12 [OK][ItemDrop] NV[ElfLumi] Map ([6](75/113) )Drop Item: [Ngọc Sinh Mệnh], Serial: 000000AF, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+15:02:49 [OK][ItemDrop] NV[DraxLord] Map ([6](96/89) )Drop Item: [Ngọc Ước Nguyện], Serial: 000000B0, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+15:03:21 [OK][ItemDrop] NV[ElfLumi] Map ([6](75/113) )Drop Item: [Ngọc Sáng Tạo], Serial: 000000B1, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+15:04:10 [OK][ItemDrop] NV[WizFire] Map ([6](51/113) )Drop Item: [Ngọc Ước Nguyện], Serial: 000000B2, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+15:11:07 [OK][ItemDrop] NV[ElfLumi] Map ([6](72/100) )Drop Item: [Ngọc Ước Nguyện], Serial: 000000B3, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+15:11:47 [OK][ItemDrop] NV[DarkZen] Map ([6](23/113) )Drop Item: [Ngọc Sáng Tạo], Serial: 000000B4, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+15:22:37 [OK][ItemDrop] NV[DarkZen] Map ([6](23/113) )Drop Item: [Ngọc Sinh Mệnh], Serial: 000000B5, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+15:26:15 [OK][ItemDrop] NV[ElfLumi] Map ([6](74/115) )Drop Item: [Ngọc Tâm Linh], Serial: 000000B6, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+15:30:55 [OK][ItemDrop] NV[WizFire] Map ([6](51/113) )Drop Item: [Ngọc Sinh Mệnh], Serial: 000000B7, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+15:31:19 [OK][ItemDrop] NV[ElfLumi] Map ([6](75/113) )Drop Item: [Ngọc Hỗn Nguyên], Serial: 000000B8, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+15:41:51 [OK][ItemDrop] NV[DraxLord] Map ([6](95/90) )Drop Item: [Ngọc Tâm Linh], Serial: 000000B9, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+15:41:52 [OK][ItemDrop] NV[RageFist] Map ([6](96/68) )Drop Item: [Ngọc Ước Nguyện], Serial: 000000BA, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+15:48:32 [OK][ItemDrop] NV[RageFist] Map ([6](96/68) )Drop Item: [Ngọc Sáng Tạo], Serial: 000000BB, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+15:56:00 [OK][ItemDrop] NV[RageFist] Map ([6](96/68) )Drop Item: [Ngọc Ước Nguyện], Serial: 000000BC, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+15:57:25 [OK][ItemDrop] NV[ElfLumi] Map ([6](74/113) )Drop Item: [Ngọc Ước Nguyện], Serial: 000000BD, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+16:00:22 [OK][ItemDrop] NV[BladeRex] Map ([6](95/113) )Drop Item: [Ngọc Hỗn Nguyên], Serial: 000000BE, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+16:05:19 [OK][ItemDrop] NV[DarkZen] Map ([6](23/113) )Drop Item: [Ngọc Sáng Tạo], Serial: 000000BF, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+16:14:18 [OK][ItemDrop] NV[DraxLord] Map ([6](94/89) )Drop Item: [Ngọc Sinh Mệnh], Serial: 000000C0, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+16:19:58 [OK][ItemDrop] NV[WizFire] Map ([6](49/113) )Drop Item: [Ngọc Tâm Linh], Serial: 000000C1, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+16:23:27 [OK][ItemDrop] NV[ElfLumi] Map ([6](77/114) )Drop Item: [Ngọc Tâm Linh], Serial: 000000C2, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+16:24:54 [OK][ItemDrop] NV[DraxLord] Map ([6](95/90) )Drop Item: [Ngọc Tâm Linh], Serial: 000000C3, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+16:31:12 [OK][ItemDrop] NV[WizFire] Map ([6](51/113) )Drop Item: [Ngọc Hỗn Nguyên], Serial: 000000C4, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+16:33:53 [OK][ItemDrop] NV[WizFire] Map ([6](52/112) )Drop Item: [Ngọc Tâm Linh], Serial: 000000C5, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+16:42:06 [OK][ItemDrop] NV[DraxLord] Map ([6](95/90) )Drop Item: [Ngọc Sáng Tạo], Serial: 000000C6, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+16:54:50 [OK][ItemDrop] NV[DraxLord] Map ([6](95/90) )Drop Item: [Ngọc Ước Nguyện], Serial: 000000C7, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+16:55:50 [OK][ItemDrop] NV[ElfLumi] Map ([6](68/100) )Drop Item: [Ngọc Hỗn Nguyên], Serial: 000000C8, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+17:11:17 [OK][ItemDrop] NV[RageFist] Map ([6](96/68) )Drop Item: [Ngọc Sinh Mệnh], Serial: 000000CF, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+17:12:27 [OK][ItemDrop] NV[WizFire] Map ([6](51/113) )Drop Item: [Ngọc Hỗn Nguyên], Serial: 000000D1, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+17:19:35 [OK][ItemDrop] NV[RageFist] Map ([6](96/68) )Drop Item: [Ngọc Sinh Mệnh], Serial: 000000D7, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+17:28:19 [OK][ItemDrop] NV[WizFire] Map ([6](51/113) )Drop Item: [Ngọc Sinh Mệnh], Serial: 000000E9, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+17:34:01 [OK][ItemDrop] NV[RageFist] Map ([6](96/68) )Drop Item: [Ngọc Ước Nguyện], Serial: 000000EA, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+17:36:48 [OK][ItemDrop] NV[RageFist] Map ([6](96/68) )Drop Item: [Ngọc Ước Nguyện], Serial: 000000EB, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+17:40:51 [OK][ItemDrop] NV[DraxLord] Map ([6](95/90) )Drop Item: [Ngọc Sinh Mệnh], Serial: 000000EC, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+17:41:10 [OK][ItemDrop] NV[Admin] Map ([6](48/83) )Drop Item: [Ngọc Hỗn Nguyên], Serial: 000000ED, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+17:49:51 [OK][ItemDrop] NV[RageFist] Map ([6](96/68) )Drop Item: [Ngọc Hỗn Nguyên], Serial: 000000EE, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+17:57:13 [OK][ItemDrop] NV[ElfLumi] Map ([6](75/113) )Drop Item: [Ngọc Hỗn Nguyên], Serial: 000000FA, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+18:01:34 [OK][ItemDrop] NV[Admin] Map ([6](47/82) )Drop Item: [Ngọc Tâm Linh], Serial: 000000FB, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================
+18:01:34 [OK][ItemDrop] NV[Admin] Map ([6](47/82) )Drop Item: [Ngọc Sinh Mệnh], Serial: 000000FC, level: 0, Skill: 0, Luck 0, Option3: 0, NewOption: 0, SetOption: 0, JOH: 0, OptionEx: 0, SocketOption:255,255,255,255,255 
+===============================

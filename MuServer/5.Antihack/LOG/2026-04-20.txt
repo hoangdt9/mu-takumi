@@ -1,0 +1,185 @@
+00:12:43 [SocketManager] Server started at port [55858]
+00:12:43 Version Build: [12:15:07 08/10/2025]
+00:12:43 [ServerInfo] Config loaded successfully
+00:12:43 [ServerInfo] AntiFlood: ON
+00:12:43 [ServerInfo] AutoAddDumpList: ON
+00:12:43 [ServerInfo] Memory Protect loaded [429] successfully
+00:12:43 [ServerInfo] Memory Encode OK
+00:12:43 [ServerInfo] Memory CheckRead OK
+00:12:43 [ServerInfo] Memory CheckHook OK
+00:12:43 [ServerInfo] DumpList loaded [534] successfully
+00:12:43 [ServerInfo] DumpWhiteList loaded [11] successfully
+00:12:43 [ServerInfo] ChecksumList loaded [0] successfully
+00:12:43 [ServerInfo] InternalList loaded [18] successfully
+00:12:43 [ServerInfo] WindowList loaded [102] successfully
+00:12:43 [ServerInfo] Bad Words loaded [13] successfully
+00:12:43 [ServerInfo] BlackList loaded successfully
+00:12:43 [ServerInfo] WatchList loaded successfully
+00:12:43 [SocketManagerGS] Server started at port [50112]
+00:50:22 [SocketManager] Server started at port [55858]
+00:50:22 Version Build: [12:15:07 08/10/2025]
+00:50:22 [ServerInfo] Config loaded successfully
+00:50:22 [ServerInfo] AntiFlood: ON
+00:50:22 [ServerInfo] AutoAddDumpList: ON
+00:50:22 [ServerInfo] Memory Protect loaded [429] successfully
+00:50:22 [ServerInfo] Memory Encode OK
+00:50:22 [ServerInfo] Memory CheckRead OK
+00:50:22 [ServerInfo] Memory CheckHook OK
+00:50:22 [ServerInfo] DumpList loaded [534] successfully
+00:50:22 [ServerInfo] DumpWhiteList loaded [11] successfully
+00:50:22 [ServerInfo] ChecksumList loaded [0] successfully
+00:50:22 [ServerInfo] InternalList loaded [18] successfully
+00:50:22 [ServerInfo] WindowList loaded [102] successfully
+00:50:22 [ServerInfo] Bad Words loaded [13] successfully
+00:50:22 [ServerInfo] BlackList loaded successfully
+00:50:22 [ServerInfo] WatchList loaded successfully
+00:50:22 [SocketManagerGS] Server started at port [50112]
+01:08:31 [SocketManager] Server started at port [55858]
+01:08:31 Version Build: [12:15:07 08/10/2025]
+01:08:31 [ServerInfo] Config loaded successfully
+01:08:31 [ServerInfo] AntiFlood: ON
+01:08:31 [ServerInfo] AutoAddDumpList: ON
+01:08:31 [ServerInfo] Memory Protect loaded [429] successfully
+01:08:31 [ServerInfo] Memory Encode OK
+01:08:31 [ServerInfo] Memory CheckRead OK
+01:08:31 [ServerInfo] Memory CheckHook OK
+01:08:31 [ServerInfo] DumpList loaded [534] successfully
+01:08:31 [ServerInfo] DumpWhiteList loaded [11] successfully
+01:08:31 [ServerInfo] ChecksumList loaded [0] successfully
+01:08:31 [ServerInfo] InternalList loaded [18] successfully
+01:08:31 [ServerInfo] WindowList loaded [102] successfully
+01:08:31 [ServerInfo] Bad Words loaded [13] successfully
+01:08:31 [ServerInfo] BlackList loaded successfully
+01:08:31 [ServerInfo] WatchList loaded successfully
+01:08:31 [SocketManagerGS] Server started at port [50112]
+01:29:19 [SocketManager] Server started at port [55858]
+01:29:19 Version Build: [12:15:07 08/10/2025]
+01:29:19 [ServerInfo] Config loaded successfully
+01:29:19 [ServerInfo] AntiFlood: ON
+01:29:19 [ServerInfo] AutoAddDumpList: ON
+01:29:19 [ServerInfo] Memory Protect loaded [429] successfully
+01:29:19 [ServerInfo] Memory Encode OK
+01:29:19 [ServerInfo] Memory CheckRead OK
+01:29:19 [ServerInfo] Memory CheckHook OK
+01:29:19 [ServerInfo] DumpList loaded [534] successfully
+01:29:19 [ServerInfo] DumpWhiteList loaded [11] successfully
+01:29:19 [ServerInfo] ChecksumList loaded [0] successfully
+01:29:19 [ServerInfo] InternalList loaded [18] successfully
+01:29:19 [ServerInfo] WindowList loaded [102] successfully
+01:29:19 [ServerInfo] Bad Words loaded [13] successfully
+01:29:19 [ServerInfo] BlackList loaded successfully
+01:29:19 [ServerInfo] WatchList loaded successfully
+01:29:19 [SocketManagerGS] Server started at port [50112]
+03:10:43 [SocketManager] Server started at port [55858]
+03:10:43 Version Build: [12:15:07 08/10/2025]
+03:10:43 [ServerInfo] Config loaded successfully
+03:10:43 [ServerInfo] AntiFlood: ON
+03:10:43 [ServerInfo] AutoAddDumpList: ON
+03:10:43 [ServerInfo] Memory Protect loaded [429] successfully
+03:10:43 [ServerInfo] Memory Encode OK
+03:10:43 [ServerInfo] Memory CheckRead OK
+03:10:43 [ServerInfo] Memory CheckHook OK
+03:10:43 [ServerInfo] DumpList loaded [534] successfully
+03:10:43 [ServerInfo] DumpWhiteList loaded [11] successfully
+03:10:43 [ServerInfo] ChecksumList loaded [0] successfully
+03:10:43 [ServerInfo] InternalList loaded [18] successfully
+03:10:43 [ServerInfo] WindowList loaded [102] successfully
+03:10:43 [ServerInfo] Bad Words loaded [13] successfully
+03:10:43 [ServerInfo] BlackList loaded successfully
+03:10:43 [ServerInfo] WatchList loaded successfully
+03:10:43 [SocketManagerGS] Server started at port [50112]
+09:53:08 [SocketManager] Server started at port [55858]
+09:53:08 Version Build: [12:15:07 08/10/2025]
+09:53:08 [ServerInfo] Config loaded successfully
+09:53:08 [ServerInfo] AntiFlood: ON
+09:53:08 [ServerInfo] AutoAddDumpList: ON
+09:53:08 [ServerInfo] Memory Protect loaded [429] successfully
+09:53:08 [ServerInfo] Memory Encode OK
+09:53:08 [ServerInfo] Memory CheckRead OK
+09:53:08 [ServerInfo] Memory CheckHook OK
+09:53:08 [ServerInfo] DumpList loaded [534] successfully
+09:53:08 [ServerInfo] DumpWhiteList loaded [11] successfully
+09:53:08 [ServerInfo] ChecksumList loaded [0] successfully
+09:53:08 [ServerInfo] InternalList loaded [18] successfully
+09:53:08 [ServerInfo] WindowList loaded [102] successfully
+09:53:08 [ServerInfo] Bad Words loaded [13] successfully
+09:53:08 [ServerInfo] BlackList loaded successfully
+09:53:08 [ServerInfo] WatchList loaded successfully
+09:53:08 [SocketManagerGS] Server started at port [50112]
+10:28:26 [SocketManager] Server started at port [55858]
+10:28:26 Version Build: [12:15:07 08/10/2025]
+10:28:26 [ServerInfo] Config loaded successfully
+10:28:26 [ServerInfo] AntiFlood: ON
+10:28:26 [ServerInfo] AutoAddDumpList: ON
+10:28:26 [ServerInfo] Memory Protect loaded [429] successfully
+10:28:26 [ServerInfo] Memory Encode OK
+10:28:26 [ServerInfo] Memory CheckRead OK
+10:28:26 [ServerInfo] Memory CheckHook OK
+10:28:26 [ServerInfo] DumpList loaded [534] successfully
+10:28:26 [ServerInfo] DumpWhiteList loaded [11] successfully
+10:28:26 [ServerInfo] ChecksumList loaded [0] successfully
+10:28:26 [ServerInfo] InternalList loaded [18] successfully
+10:28:26 [ServerInfo] WindowList loaded [102] successfully
+10:28:26 [ServerInfo] Bad Words loaded [13] successfully
+10:28:26 [ServerInfo] BlackList loaded successfully
+10:28:26 [ServerInfo] WatchList loaded successfully
+10:28:26 [SocketManagerGS] Server started at port [50112]
+10:48:43 [SocketManager] Server started at port [55858]
+10:48:43 Version Build: [12:15:07 08/10/2025]
+10:48:43 [ServerInfo] Config loaded successfully
+10:48:43 [ServerInfo] AntiFlood: ON
+10:48:43 [ServerInfo] AutoAddDumpList: ON
+10:48:43 [ServerInfo] Memory Protect loaded [429] successfully
+10:48:43 [ServerInfo] Memory Encode OK
+10:48:43 [ServerInfo] Memory CheckRead OK
+10:48:43 [ServerInfo] Memory CheckHook OK
+10:48:43 [ServerInfo] DumpList loaded [534] successfully
+10:48:43 [ServerInfo] DumpWhiteList loaded [11] successfully
+10:48:43 [ServerInfo] ChecksumList loaded [0] successfully
+10:48:43 [ServerInfo] InternalList loaded [18] successfully
+10:48:43 [ServerInfo] WindowList loaded [102] successfully
+10:48:43 [ServerInfo] Bad Words loaded [13] successfully
+10:48:43 [ServerInfo] BlackList loaded successfully
+10:48:43 [ServerInfo] WatchList loaded successfully
+10:48:43 [SocketManagerGS] Server started at port [50112]
+10:58:56 [SocketManager] Server started at port [55858]
+10:58:56 Version Build: [12:15:07 08/10/2025]
+10:58:56 [ServerInfo] Config loaded successfully
+10:58:56 [ServerInfo] AntiFlood: ON
+10:58:56 [ServerInfo] AutoAddDumpList: ON
+10:58:56 [ServerInfo] Memory Protect loaded [429] successfully
+10:58:56 [ServerInfo] Memory Encode OK
+10:58:56 [ServerInfo] Memory CheckRead OK
+10:58:56 [ServerInfo] Memory CheckHook OK
+10:58:56 [ServerInfo] DumpList loaded [534] successfully
+10:58:56 [ServerInfo] DumpWhiteList loaded [11] successfully
+10:58:56 [ServerInfo] ChecksumList loaded [0] successfully
+10:58:56 [ServerInfo] InternalList loaded [18] successfully
+10:58:56 [ServerInfo] WindowList loaded [102] successfully
+10:58:56 [ServerInfo] Bad Words loaded [13] successfully
+10:58:56 [ServerInfo] BlackList loaded successfully
+10:58:56 [ServerInfo] WatchList loaded successfully
+10:58:56 [SocketManagerGS] Server started at port [50112]
+12:02:55 [SocketManager] Server started at port [55858]
+12:02:55 Version Build: [12:15:07 08/10/2025]
+12:02:55 [ServerInfo] Config loaded successfully
+12:02:55 [ServerInfo] AntiFlood: ON
+12:02:55 [ServerInfo] AutoAddDumpList: ON
+12:02:55 [ServerInfo] Memory Protect loaded [429] successfully
+12:02:55 [ServerInfo] Memory Encode OK
+12:02:55 [ServerInfo] Memory CheckRead OK
+12:02:55 [ServerInfo] Memory CheckHook OK
+12:02:55 [ServerInfo] DumpList loaded [534] successfully
+12:02:55 [ServerInfo] DumpWhiteList loaded [11] successfully
+12:02:55 [ServerInfo] ChecksumList loaded [0] successfully
+12:02:55 [ServerInfo] InternalList loaded [18] successfully
+12:02:55 [ServerInfo] WindowList loaded [102] successfully
+12:02:55 [ServerInfo] Bad Words loaded [13] successfully
+12:02:55 [ServerInfo] BlackList loaded successfully
+12:02:55 [ServerInfo] WatchList loaded successfully
+12:02:55 [SocketManagerGS] Server started at port [50112]
+15:59:42 [SocketManagerGS] WSAAccept() failed with error: 10061
+17:37:59 [SocketManagerGS] WSAAccept() failed with error: 10061
+17:38:04 [ClientManager][0] AddClient (64.23.191.105)
+17:38:04 [SocketManagerClient] Protocol header error (Index: 0, Header: 47)
+17:38:04 [ClientManager][0] DelClient (64.23.191.105)

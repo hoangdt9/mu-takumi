@@ -1,0 +1,37 @@
+07:19:54 [SocketManager] Server started at port [55858]
+07:19:54 Version Build: [12:15:07 08/10/2025]
+07:19:54 [ServerInfo] Config loaded successfully
+07:19:54 [ServerInfo] AntiFlood: ON
+07:19:54 [ServerInfo] AutoAddDumpList: ON
+07:19:54 [ServerInfo] Memory Protect loaded [429] successfully
+07:19:54 [ServerInfo] Memory Encode OK
+07:19:54 [ServerInfo] Memory CheckRead OK
+07:19:54 [ServerInfo] Memory CheckHook OK
+07:19:54 [ServerInfo] DumpList loaded [534] successfully
+07:19:54 [ServerInfo] DumpWhiteList loaded [11] successfully
+07:19:54 [ServerInfo] ChecksumList loaded [0] successfully
+07:19:54 [ServerInfo] InternalList loaded [18] successfully
+07:19:54 [ServerInfo] WindowList loaded [102] successfully
+07:19:54 [ServerInfo] Bad Words loaded [13] successfully
+07:19:54 [ServerInfo] BlackList loaded successfully
+07:19:54 [ServerInfo] WatchList loaded successfully
+07:19:54 [SocketManagerGS] Server started at port [50112]
+11:29:36 [SocketManager] Server started at port [55858]
+11:29:36 Version Build: [12:15:07 08/10/2025]
+11:29:36 [ServerInfo] Config loaded successfully
+11:29:36 [ServerInfo] AntiFlood: ON
+11:29:36 [ServerInfo] AutoAddDumpList: ON
+11:29:36 [ServerInfo] Memory Protect loaded [429] successfully
+11:29:36 [ServerInfo] Memory Encode OK
+11:29:36 [ServerInfo] Memory CheckRead OK
+11:29:36 [ServerInfo] Memory CheckHook OK
+11:29:36 [ServerInfo] DumpList loaded [534] successfully
+11:29:36 [ServerInfo] DumpWhiteList loaded [11] successfully
+11:29:36 [ServerInfo] ChecksumList loaded [0] successfully
+11:29:36 [ServerInfo] InternalList loaded [18] successfully
+11:29:36 [ServerInfo] WindowList loaded [102] successfully
+11:29:36 [ServerInfo] Bad Words loaded [13] successfully
+11:29:36 [ServerInfo] BlackList loaded successfully
+11:29:36 [ServerInfo] WatchList loaded successfully
+11:29:36 [SocketManagerGS] Server started at port [50112]
+20:47:53 [SocketManagerGS] WSAAccept() failed with error: 10061

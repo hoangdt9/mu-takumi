@@ -1,0 +1,46 @@
+19:57:13 [ServerInfo] CashShop loaded successfully
+19:57:13 [ServerInfo] ChaosMix loaded successfully
+19:57:13 [ServerInfo] Character loaded successfully
+19:57:13 [VongQuay] [1] Size 1 
+19:57:13 [DoiItem] Load OK Enable = 0, Size 37
+19:57:13 [CustomMonterPoint] Data Size 28
+19:57:13 [HuyExc] On: 1 TypeMixCount : 6
+19:57:13 [VIPChar] Enable 1, Date ItemPoint 17, Data LevelVip 20
+19:57:13 [CustomJewel] Load OK !!!!!!!!!!
+19:57:13 [CustomChoTroi] Load VAT 11, Load ItemBlock 2
+19:57:13 [CustomItemBank] (1) Load 26 Item In List
+19:57:13 [LoadMocNap] [1] Size 3 
+19:57:13 [ServerInfo] Custom loaded successfully
+19:57:13 [ServerInfo] Command loaded successfully
+19:57:13 [ServerInfo] Common loaded successfully
+19:57:13 [ Crywolf ] State (0) -> NONE
+19:57:13 [ Crywolf ] SetState - StateInfo : Occupation/0, State/0
+19:57:13 [ServerInfo] Event loaded successfully
+19:57:13 [ServerInfo] EventItemBag loaded successfully
+19:57:13 [ServerInfo] Hack loaded successfully
+19:57:13 [ServerInfo] Item loaded successfully
+19:57:13 [ServerInfo] Monster loaded successfully
+19:57:13 [ServerInfo] Move loaded successfully
+19:57:13 [ServerInfo] Quest loaded successfully
+19:57:13 [ServerInfo] Shop loaded successfully
+19:57:13 [ServerInfo] Skill loaded successfully
+19:57:13 [ResetTable]Enable (1) Load Config  1
+19:57:13 [ResetTableVIP]Enable (1) Load Config  1
+19:57:13 [ServerInfo] Util loaded successfully
+19:57:13 [BotThuMua]Bot: 1 DoiItem: 1  DoiItemList:2
+19:57:13 [BotTrade] Load COnffig OK Enable 1
+19:57:13 [ReadBotInfo] BotSystem loaded successfully
+19:57:13 [AutoNap] Enable 1, Tyle 100, MinNap 10000
+19:57:15 GHRS Hôm nay là 270 Reset
+19:57:48 AddClient - IP: 192.168.1.6
+19:58:01 GJSendRegOrLostPass Type : 1 [admin] [1] [1234567] [0982666888]
+19:58:01 JGRegAccountKQ 1
+19:58:04 AddAccount [admin] Login!
+19:58:10 [9000] LogInCharacter (Admin)
+19:58:23 [9000] LogOutCharacter (Admin)
+19:58:24 [9000] LogInCharacter (Admin)
+20:05:25 [BotTrade] (admin)(Admin) OPEN Type[1],State[1], Use[1]
+20:05:33 [BotTrade] (admin)(Admin) OPEN Type[1],State[1], Use[1]
+20:30:04 [9000] LogOutCharacter (Admin)
+20:30:04 DelAccount [admin] LogOut!
+20:30:04 DelClient IP: 192.168.1.6

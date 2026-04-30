@@ -1,0 +1,66 @@
+0
+//////////////////
+// FILE MAPPING
+///////////
+
+"CHEATENGINE"
+
+"CEHYPERSCANSETTINGS"
+
+"KUHYPERSETTING"
+
+"YPERSCANSETTINGS"
+
+"CE_HYPER_SCAN_SETTING"
+
+"CEKEYS"
+
+"CETIMERHOOKDATA"
+
+end
+
+
+
+1
+//////////////////////////////////////////
+// PROCCESS LIBRARY
+//////////////////////////////////////////
+
+"luaclient-i386.dll"
+
+"luaclient-x86_64.dll"
+
+"speedhack-i386.dll"
+
+"speedhack-x86_64.dll"
+
+"lua5.1-32.dll"
+
+"lua5.1-64.dll"
+
+"lua53-32.dll"
+
+"lua53-64.dll"
+
+end
+
+
+
+2
+//////////////////////////////////////////
+
+// REGISTRY KEY [HKEY_LOCAL_MACHINE]
+
+//////////////////////////////////////////
+"Software\\Cheat Engine"
+"Software\\Usnet Engine"
+end
+
+3
+//////////////////////////////////////////
+
+// REGISTRY KEY [HKEY_CURRENT_USER]
+
+//////////////////////////////////////////
+"Software\\ch34t eng1ne"
+end

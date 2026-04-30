@@ -1,0 +1,29 @@
+<BCustomEdit>
+    <!-- Fix Tele & Skill
+	Ghi Chú : mặc định khi DW Tele sẽ không được sử dụng Skill 
+	Có thể thêm Skill cho phép sử dụng vào bên dưới !
+	-->
+	<SkillSuDungKhiTele>
+        <Skill IDSkill="3" />
+        <Skill IDSkill="1"/>
+	</SkillSuDungKhiTele>
+<!-- 
+Fix Giật Lui Skill
+Config tỷ lệ xuất hiện đẩy lùi khi dùng skill
+IDSkill = Index Skill
+Rate = Tỷ lệ xuất hiện giật lùi (Max 100)
+Type = Loại khựng
+
+ChainLightning = Sét liên hoàn (Sum)
+Cyclone = Chém Xoáy Ngang(DK,MG)
+ChainDriver = Vật Ngã (RF)
+-->
+	<SkillBackSpring>
+        <Skill IDSkill="216" Rate="30" Type="1"/> <!--ChainLightning-->
+        <Skill IDSkill="215" Rate="10" Type="15"/> <!--ChainLightning-->
+        <Skill IDSkill="22" Rate="25" Type="1"/> <!--Cyclone-->
+        <Skill IDSkill="262" Rate="25" Type="1"/><!--ChainDriver-->
+
+	</SkillBackSpring>
+
+</BCustomEdit>

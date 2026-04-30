@@ -1,0 +1,1 @@
+20:21:10 [SECURITY][GameServer] State anomaly (Index: 3500, Account: test1234, Name: qweqwe, Ip: 192.168.99.1, Phase: character_info_invalid_state, Connected: 3, Head: 0xF3, Sub: 0x03, Count: 1)

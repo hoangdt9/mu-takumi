@@ -1,0 +1,102 @@
+17:56:20 [ServerInfo] CashShop loaded successfully
+17:56:21 [ServerInfo] ChaosMix loaded successfully
+17:56:21 [ServerInfo] Character loaded successfully
+17:56:21 [VongQuay] [1] Size 1 
+17:56:21 [DoiItem] Load OK Enable = 0, Size 37
+17:56:21 [CustomMonterPoint] Data Size 28
+17:56:21 [HuyExc] On: 1 TypeMixCount : 6
+17:56:21 [VIPChar] Enable 1, Date ItemPoint 17, Data LevelVip 20
+17:56:21 [CustomJewel] Load OK !!!!!!!!!!
+17:56:21 [CustomChoTroi] Load VAT 11, Load ItemBlock 2
+17:56:21 [CustomItemBank] (1) Load 26 Item In List
+17:56:21 [LoadMocNap] [1] Size 3 
+17:56:21 [ServerInfo] Custom loaded successfully
+17:56:21 [ServerInfo] Command loaded successfully
+17:56:21 [ServerInfo] Common loaded successfully
+17:56:21 [ Crywolf ] State (0) -> NONE
+17:56:21 [ Crywolf ] SetState - StateInfo : Occupation/0, State/0
+17:56:21 [ServerInfo] Event loaded successfully
+17:56:21 [ServerInfo] EventItemBag loaded successfully
+17:56:21 [ServerInfo] Hack loaded successfully
+17:56:21 [ServerInfo] Item loaded successfully
+17:56:22 [ServerInfo] Monster loaded successfully
+17:56:22 [ServerInfo] Move loaded successfully
+17:56:22 [ServerInfo] Quest loaded successfully
+17:56:22 [ServerInfo] Shop loaded successfully
+17:56:22 [ServerInfo] Skill loaded successfully
+17:56:22 [ResetTable]Enable (1) Load Config  1
+17:56:22 [ResetTableVIP]Enable (1) Load Config  1
+17:56:22 [ServerInfo] Util loaded successfully
+17:56:22 [BotThuMua]Bot: 1 DoiItem: 1  DoiItemList:2
+17:56:22 [BotTrade] Load COnffig OK Enable 1
+17:56:22 [ReadBotInfo] BotSystem loaded successfully
+17:56:23 [ CRYWOLF ] SYNC Occupation: 0, State: 0
+17:56:25 GHRS Hôm nay là 30 Reset
+17:58:22 AddClient - IP: 192.168.99.1
+17:58:28 AddAccount [test1234] Login!
+17:58:31 [9000] LogInCharacter (qweqwe)
+19:34:05 [9000] LogOutCharacter (qweqwe)
+19:34:05 DelAccount [test1234] LogOut!
+19:34:05 DelClient IP: 192.168.99.1
+20:05:27 AddClient - IP: 192.168.99.1
+20:05:33 AddAccount [test1234] Login!
+20:05:36 [9000] LogInCharacter (qweqwe)
+20:05:37 [9000] LogOutCharacter (qweqwe)
+20:05:37 DelAccount [test1234] LogOut!
+20:05:37 DelClient IP: 192.168.99.1
+20:13:36 AddClient - IP: 192.168.99.1
+20:13:45 AddAccount [test1234] Login!
+20:13:47 [9000] LogInCharacter (qweqwe)
+20:13:51 [9000] LogOutCharacter (qweqwe)
+20:13:51 DelAccount [test1234] LogOut!
+20:13:51 DelClient IP: 192.168.99.1
+20:21:00 AddClient - IP: 192.168.99.1
+20:21:08 AddAccount [test1234] Login!
+20:21:09 [9000] LogOutCharacter (qweqwe)
+20:21:09 DelAccount [test1234] LogOut!
+20:21:09 DelClient IP: 192.168.99.1
+20:57:37 AddClient - IP: 192.168.99.1
+20:58:28 DelClient IP: 192.168.99.1
+21:00:00 [BossGuild] Start Boss Pháp Sư
+21:00:00 [BossGuild] Bat Dau Event Boss Guild
+21:21:01 AddClient - IP: 192.168.99.1
+21:21:08 AddAccount [test1234] Login!
+21:21:10 [9000] LogInCharacter (qweqwe)
+21:26:08 [9000] LogOutCharacter (qweqwe)
+21:26:08 DelAccount [test1234] LogOut!
+21:26:08 DelClient IP: 192.168.99.1
+21:30:00 [BossGuild] Finish 2
+21:30:00 [BossGuild] Xoa Monster Boss Guild
+21:39:15 AddClient - IP: 192.168.99.1
+21:39:24 AddAccount [test1234] Login!
+21:39:26 [9000] LogInCharacter (qweqwe)
+21:51:52 [9000] LogOutCharacter (qweqwe)
+21:51:52 DelAccount [test1234] LogOut!
+21:51:52 DelClient IP: 192.168.99.1
+21:54:35 AddClient - IP: 192.168.99.1
+21:54:54 AddAccount [test1234] Login!
+21:54:56 [9000] LogInCharacter (qweqwe)
+22:00:38 [9000] LogOutCharacter (qweqwe)
+22:00:38 DelAccount [test1234] LogOut!
+22:00:38 DelClient IP: 192.168.99.1
+22:03:08 AddClient - IP: 192.168.99.1
+22:03:16 AddAccount [test1234] Login!
+22:03:18 [9000] LogInCharacter (qweqwe)
+22:08:33 [9000] LogOutCharacter (qweqwe)
+22:08:33 DelAccount [test1234] LogOut!
+22:08:33 DelClient IP: 192.168.99.1
+22:13:34 AddClient - IP: 192.168.99.1
+22:13:41 AddAccount [test1234] Login!
+22:13:44 [9000] LogInCharacter (qweqwe)
+22:37:53 [9000] LogOutCharacter (qweqwe)
+22:37:53 DelAccount [test1234] LogOut!
+22:37:53 DelClient IP: 192.168.99.1
+23:30:51 AddClient - IP: 192.168.99.1
+23:30:58 AddAccount [test1234] Login!
+23:30:59 [9000] LogInCharacter (qweqwe)
+23:38:36 [9000] LogOutCharacter (qweqwe)
+23:38:36 DelAccount [test1234] LogOut!
+23:38:36 DelClient IP: 192.168.99.1
+23:41:13 AddClient - IP: 192.168.99.1
+23:41:20 AddAccount [test1234] Login!
+23:41:22 [9000] LogInCharacter (qweqwe)

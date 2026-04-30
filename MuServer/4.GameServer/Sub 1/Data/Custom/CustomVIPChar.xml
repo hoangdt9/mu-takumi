@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<CustomVIPChar Enable="1" Firework="1" Notice="1" Msg="[%s] Vừa Nâng Cấp VIP Char - Level [%d]">
+<MessageInfo>
+	<Message Index="0" Text="Chức năng hiện đang tạm khóa!" />
+	<Message Index="1" Text="Vật phẩm bạn chọn không thể quy đổi!" />
+	<Message Index="2" Text="Bạn vừa quy đổi được [%d] PointVIP!" />
+	<Message Index="3" Text="Thăng cấp VIP thành công!" />
+	<Message Index="4" Text="Chưa đủ điểm yêu cầu!" />
+	<Message Index="5" Text="Thao tác quá nhanh!" />
+	<Message Index="6" Text="Bạn đã đạt MAX giới hạn!" />	
+</MessageInfo>	
+
+<!--Cấu hình vật phẩm quy đổi
+		80	"- Sát Thương Vật Lý +100"
+	81	"- Sát Thương Phép +100"
+	82	"- Phòng Thủ Thành Công +100%%"
+	83	"- Phòng thủ : +100"
+	84	"- Sát thương Bạo Kích : +100"
+	85	"- Hồi Phục HP : +100"
+	86	"- Tỷ lệ drop Zen : +100"
+	87	"- Tỷ lệ phòng thủ thành công : +100"
+	88	"- Phản hồi sát thương : +100"
+	89	"- Giảm sát thương (Nhận vào) : +100"
+	90	"- Nội Lực (MP) +100%%"
+	91	"- Máu (HP)  +100%%"
+	92	"- Sát Thương Hoàn Hảo +100%%"
+	93	"- Sát thương vật lý theo cấp độ : +100"
+	94	"- Sát thương vật lý : +100"
+	95	"- Sát thương phép theo cấp : +100"
+	96	"- Sát thương  phép thuật : +100"
+	97	"- Tốc độ Tấn Công : +100"
+	98	"- Hồi Máu Khi Giết Quái +100"
+	99	"- Hồi Nội Lực Khi Giết Quái +100"
+	100	"- Thêm HP của cánh cấp 2 : 100"
+	101	"- Thêm MP của cánh cấp 2 : 100"
+	102	"- Loại bỏ phòng thủ +100%%"
+	103	"- Thêm Mana tím : 100"
+	104	"- Tăng tỷ lệ Mana tím : 100%%"
+	105	"- Thêm mệnh lệnh của áo choàng DL : 100"
+	106	"- Thêm Option của Sói Tấn Công : 100"
+	107	"- Thêm Option của Sói Phòng Thủ : 100"
+	108	"- Thêm Option của Sói Hoàng Kim : 100"
+	109	"- Thêm tỷ lệ phản xạ sát thương hoàn toàn : 100%%"
+	110	"- Thêm tỷ lệ khôi phục HP đầy đủ phòng thủ : 100%%"
+	111	"- Thêm tỷ lệ khôi phục MP đầy đủ phòng thủ : 100%%"
+	112	"- Thêm Option của quái điểu : 100"
+	113	"- Thêm sát thương lời nguyền : 100"
+	114	"- Thêm sát thương lời nguyền theo cấp độ : 100"
+	115	"- Tăng tỷ lệ sát thương Nguyền Rủa : 100%%"
+	116	"- Thêm tỷ lệ sát thương x2 : 100%%"
+	117	"- Thêm kinh nghiệm : 100"
+	118	"- Thêm Combo kinh nghiệm : 100"
+	119	"- Thêm HP : 100"
+	120	"- Thêm MP : 100"
+	121	"- Thêm HP theo cấp độ : 100"
+	122	"- Thêm MP theo cấp độ : 100"
+	123	"- Thêm sát thương : 100"
+	124	"- Thêm sát thương theo cấp độ : 100"
+	125	"- Gia tăng sức sát thương cả phép thuật và vật lý : 100"
+	126	"- Thêm phòng thủ theo cấp độ : 100"
+	127	"- Tăng tỷ lệ phòng thủ : 100%%"
+	
+	128 = + 100 SD
+	129 = + 100%% SD
+	
+	Point = số point nhận được khi quy đổi item
+-->
+<ItemPoint>
+	<Item IndexItem="6159"  Level="-1"  ExlOp="-1" PointVIP="50" /> <!--Chaos-->
+	<Item IndexItem="7190"  Level="-1"  ExlOp="-1" PointVIP="50" /> <!--Cre-->
+	<Item IndexItem="7184"  Level="-1"  ExlOp="-1" PointVIP="50" /> <!--nguyen lieu tang quan ham-->
+	<Item IndexItem="7182"  Level="-1"  ExlOp="-1" PointVIP="100" /> <!--Soul-->
+	<Item IndexItem="7181"  Level="-1"  ExlOp="-1" PointVIP="300" /> <!--Bless-->
+	
+	<Item IndexItem="6693"  Level="-1"  ExlOp="1" PointVIP="500" /> <!--Chaos-->
+	<Item IndexItem="6693"  Level="-1"  ExlOp="2" PointVIP="500" /> <!--Chaos-->
+	<Item IndexItem="6693"  Level="-1"  ExlOp="4" PointVIP="500" /> <!--Chaos-->
+	
+	<Item IndexItem="6285"  Level="-1"  ExlOp="-1" PointVIP="500" /> <!--Chaos-->
+	<Item IndexItem="6280"  Level="-1"  ExlOp="-1" PointVIP="500" /> <!--Cre-->
+	<Item IndexItem="6281"  Level="-1"  ExlOp="-1" PointVIP="500" /> <!--nguyen lieu tang quan ham-->
+	<Item IndexItem="6175"  Level="0"  ExlOp="-1"  PointVIP="1000" /> <!--Soul-->
+	<Item IndexItem="6175"  Level="1"  ExlOp="-1"  PointVIP="2000" /> <!--Soul-->
+	<Item IndexItem="6175"  Level="2"  ExlOp="-1"  PointVIP="3000" /> <!--Soul-->
+	<Item IndexItem="6174"  Level="0"  ExlOp="-1"  PointVIP="3000" /> <!--Bless-->
+	<Item IndexItem="6174"  Level="1"  ExlOp="-1"  PointVIP="6000" /> <!--Bless-->
+	<Item IndexItem="6174"  Level="2"  ExlOp="-1"  PointVIP="9000" /> <!--Bless-->
+
+
+</ItemPoint>
+<LevelUpVip>
+	<Config LevelVIP="1"    PointVIP="0"   WC="0"            WP="0"          GP="0"     TypeOp1="80"     ValueOp1="100"	    TypeOp2="81" 	ValueOp2="100"	 TypeOp3="82" ValueOp3="100"   TypeOp4="83" ValueOp4="100"     TypeOp5="84" ValueOp5="100"	  TypeOp6="119" ValueOp6="5000"/>
+	<Config LevelVIP="2"    PointVIP="0"   WC="0"            WP="0"          GP="0"     TypeOp1="80"     ValueOp1="200"  	TypeOp2="81" 	ValueOp2="200"   TypeOp3="82" ValueOp3="150"   TypeOp4="83" ValueOp4="150"     TypeOp5="84" ValueOp5="200"    TypeOp6="119" ValueOp6="10000"/>
+	<Config LevelVIP="3"    PointVIP="0"   WC="0"            WP="0"          GP="0"     TypeOp1="80"     ValueOp1="300"  	TypeOp2="81" 	ValueOp2="300"   TypeOp3="82" ValueOp3="200"   TypeOp4="83" ValueOp4="200"     TypeOp5="84" ValueOp5="300"    TypeOp6="119" ValueOp6="15000"/>
+	<Config LevelVIP="4"    PointVIP="0"   WC="1000000"      WP="0"          GP="0"     TypeOp1="80"     ValueOp1="400"  	TypeOp2="81" 	ValueOp2="400"   TypeOp3="82" ValueOp3="250"   TypeOp4="83" ValueOp4="250"     TypeOp5="84" ValueOp5="400"    TypeOp6="119" ValueOp6="20000"/>
+	<Config LevelVIP="5"    PointVIP="0"   WC="3000000"      WP="0"          GP="0"     TypeOp1="80"     ValueOp1="500"  	TypeOp2="81" 	ValueOp2="500"   TypeOp3="82" ValueOp3="300"   TypeOp4="83" ValueOp4="300"     TypeOp5="84" ValueOp5="500"    TypeOp6="119" ValueOp6="25000"/>
+	<Config LevelVIP="6"    PointVIP="0"   WC="5000000"      WP="0"          GP="0"     TypeOp1="80"     ValueOp1="600"  	TypeOp2="81" 	ValueOp2="600"   TypeOp3="82" ValueOp3="350"   TypeOp4="83" ValueOp4="350"     TypeOp5="84" ValueOp5="600"    TypeOp6="119" ValueOp6="30000"/>
+	<Config LevelVIP="7"    PointVIP="0"   WC="7000000"      WP="0"          GP="0"     TypeOp1="80"     ValueOp1="700"  	TypeOp2="81" 	ValueOp2="700"   TypeOp3="82" ValueOp3="400"   TypeOp4="83" ValueOp4="400"     TypeOp5="84" ValueOp5="700"    TypeOp6="119" ValueOp6="35000"/>
+	<Config LevelVIP="8"    PointVIP="0"   WC="10000000"     WP="0"          GP="0"     TypeOp1="80"     ValueOp1="900"  	TypeOp2="81" 	ValueOp2="900"   TypeOp3="82" ValueOp3="500"   TypeOp4="83" ValueOp4="500"     TypeOp5="84" ValueOp5="900"    TypeOp6="119" ValueOp6="40000"/>
+	<Config LevelVIP="9"    PointVIP="0"   WC="20000000"     WP="0"          GP="0"     TypeOp1="80"     ValueOp1="1100"  	TypeOp2="81" 	ValueOp2="1100"  TypeOp3="82" ValueOp3="600"   TypeOp4="83" ValueOp4="600"     TypeOp5="84" ValueOp5="1100"   TypeOp6="119" ValueOp6="45000"/>
+	<Config LevelVIP="10"   PointVIP="0"   WC="40000000"     WP="0"          GP="0"     TypeOp1="80"     ValueOp1="1300" 	TypeOp2="81" 	ValueOp2="1300"  TypeOp3="82" ValueOp3="700"   TypeOp4="83" ValueOp4="700"     TypeOp5="84" ValueOp5="1300"   TypeOp6="119" ValueOp6="50000"/>
+	<Config LevelVIP="11"   PointVIP="0"   WC="200000000"    WP="0"          GP="0"     TypeOp1="80"     ValueOp1="2000" 	TypeOp2="81" 	ValueOp2="2000"  TypeOp3="82" ValueOp3="900"   TypeOp4="83" ValueOp4="900"     TypeOp5="84" ValueOp5="2000"   TypeOp6="119" ValueOp6="100000"/>
+	<Config LevelVIP="12"   PointVIP="0"   WC="99999999"     WP="9999999"    GP="0"     TypeOp1="80"     ValueOp1="3500" 	TypeOp2="81" 	ValueOp2="3500"  TypeOp3="82" ValueOp3="1100"  TypeOp4="83" ValueOp4="1100"    TypeOp5="84" ValueOp5="3500"   TypeOp6="119" ValueOp6="150000"/>
+	<Config LevelVIP="13"   PointVIP="0"   WC="99999999"     WP="9999999"    GP="0"     TypeOp1="80"     ValueOp1="1000" 	TypeOp2="81" 	ValueOp2="1000"  TypeOp3="82" ValueOp3="100"   TypeOp4="83" ValueOp4="100"     TypeOp5="84" ValueOp5="1000"   TypeOp6="119" ValueOp6="100"/>
+	<Config LevelVIP="14"   PointVIP="0"   WC="99999999"     WP="9999999"    GP="0"     TypeOp1="80"     ValueOp1="1000" 	TypeOp2="81" 	ValueOp2="1000"  TypeOp3="82" ValueOp3="100"   TypeOp4="83" ValueOp4="100"     TypeOp5="84" ValueOp5="1000"   TypeOp6="119" ValueOp6="100"/>
+	<Config LevelVIP="15"   PointVIP="0"   WC="99999999"     WP="9999999"    GP="0"     TypeOp1="80"     ValueOp1="1000" 	TypeOp2="81" 	ValueOp2="1000"  TypeOp3="82" ValueOp3="100"   TypeOp4="83" ValueOp4="100"     TypeOp5="84" ValueOp5="1000"   TypeOp6="119" ValueOp6="100"/>
+	<Config LevelVIP="16"   PointVIP="0"   WC="99999999"     WP="9999999"    GP="0"     TypeOp1="80"     ValueOp1="1000" 	TypeOp2="81" 	ValueOp2="1000"  TypeOp3="82" ValueOp3="100"   TypeOp4="83" ValueOp4="100"     TypeOp5="84" ValueOp5="1000"   TypeOp6="119" ValueOp6="100"/>
+	<Config LevelVIP="17"   PointVIP="0"   WC="99999999"     WP="9999999"    GP="0"     TypeOp1="80"     ValueOp1="1000" 	TypeOp2="81" 	ValueOp2="1000"  TypeOp3="82" ValueOp3="100"   TypeOp4="83" ValueOp4="100"     TypeOp5="84" ValueOp5="1000"   TypeOp6="119" ValueOp6="100"/>
+	<Config LevelVIP="18"   PointVIP="0"   WC="99999999"     WP="9999999"    GP="0"     TypeOp1="80"     ValueOp1="1000" 	TypeOp2="81" 	ValueOp2="1000"  TypeOp3="82" ValueOp3="100"   TypeOp4="83" ValueOp4="100"     TypeOp5="84" ValueOp5="1000"   TypeOp6="119" ValueOp6="100"/>
+	<Config LevelVIP="19"   PointVIP="0"   WC="99999999"     WP="9999999"    GP="0"     TypeOp1="80"     ValueOp1="1000" 	TypeOp2="81" 	ValueOp2="1000"  TypeOp3="82" ValueOp3="100"   TypeOp4="83" ValueOp4="100"     TypeOp5="84" ValueOp5="1000"   TypeOp6="119" ValueOp6="100"/>
+	<Config LevelVIP="20"   PointVIP="0"   WC="99999999"     WP="9999999"    GP="0"     TypeOp1="80"     ValueOp1="1000" 	TypeOp2="81" 	ValueOp2="1000"  TypeOp3="82" ValueOp3="100"   TypeOp4="83" ValueOp4="100"     TypeOp5="84" ValueOp5="1000"   TypeOp6="119" ValueOp6="100"/>
+</LevelUpVip>
+</CustomVIPChar>

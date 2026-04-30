@@ -1,0 +1,7 @@
+03:16:44  admin | Admin |Phi Shop:Index: 2569: Item Gậy Triệu Hồn + 7, Skill: 0, Luck: 1, Tính Năng: 4, Hoàn Hảo: 63,Thần: 0, Hamorny: 000, Item 380: 000, Socket: 255, 255, 255, 255, 255, Serial: 00000035)
+03:16:46  admin | Admin |Phi Shop:Index: 4131: Item Áo Ánh Trăng + 7, Skill: 0, Luck: 1, Tính Năng: 4, Hoàn Hảo: 63,Thần: 0, Hamorny: 000, Item 380: 000, Socket: 255, 255, 255, 255, 255, Serial: 00000031)
+03:16:47  admin | Admin |Phi Shop:Index: 3619: Item Mũ Ánh Trăng + 7, Skill: 0, Luck: 1, Tính Năng: 4, Hoàn Hảo: 63,Thần: 0, Hamorny: 000, Item 380: 000, Socket: 255, 255, 255, 255, 255, Serial: 00000030)
+03:16:49  admin | Admin |Phi Shop:Index: 5155: Item Găng Ánh Trăng + 7, Skill: 0, Luck: 1, Tính Năng: 4, Hoàn Hảo: 63,Thần: 0, Hamorny: 000, Item 380: 000, Socket: 255, 255, 255, 255, 255, Serial: 00000033)
+03:16:50  admin | Admin |Phi Shop:Index: 4643: Item Quần Ánh Trăng + 7, Skill: 0, Luck: 1, Tính Năng: 4, Hoàn Hảo: 63,Thần: 0, Hamorny: 000, Item 380: 000, Socket: 255, 255, 255, 255, 255, Serial: 00000032)
+03:16:51  admin | Admin |Phi Shop:Index: 5667: Item Giầy Ánh Trăng + 7, Skill: 0, Luck: 1, Tính Năng: 4, Hoàn Hảo: 63,Thần: 0, Hamorny: 000, Item 380: 000, Socket: 255, 255, 255, 255, 255, Serial: 00000034)
+03:16:52  admin | Admin |Phi Shop:Index: 3086: Item Khiên Ma Thuật + 7, Skill: 0, Luck: 1, Tính Năng: 4, Hoàn Hảo: 63,Thần: 0, Hamorny: 000, Item 380: 000, Socket: 255, 255, 255, 255, 255, Serial: 00000036)

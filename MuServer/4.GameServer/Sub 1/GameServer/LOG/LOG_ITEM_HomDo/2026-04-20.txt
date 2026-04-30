@@ -1,0 +1,4 @@
+01:15:30 [CHECKITEMWAREHOUSE] Đóng Hòm đồ Account:[admin]- Name[ThanhNu]
+01:15:30 [CHECKITEMWAREHOUSE]Đóng Hòm đồ [admin][ThanhNu] 
+01:15:33 [CHECKITEMWAREHOUSE] Đóng Hòm đồ Account:[admin]- Name[ThanhNu]
+01:15:33 [CHECKITEMWAREHOUSE]Đóng Hòm đồ [admin][ThanhNu] 

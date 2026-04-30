@@ -1,0 +1,1019 @@
+--------- beginning of main
+04-26 20:34:14.976  1203  1203 D CarrierSvcBindHelper: No carrier app for: 0
+04-26 20:34:14.979  1219  1270 W LauncherActivityCachingLogic: loadIcon: Default app icon returned from PackageManager. component=ComponentInfo{com.muonline.client/com.muonline.client.PreloadActivity}, user=UserHandle{0}
+04-26 20:34:14.979  1219  1270 W LauncherActivityCachingLogic: java.lang.Exception
+04-26 20:34:14.979  1219  1270 W LauncherActivityCachingLogic: 	at com.android.launcher3.icons.cache.LauncherActivityCachingLogic.loadIcon(go/retraceme 7226a759aa2bb3787a79806f85d80eaad84f1f1e15acd6db988f2df789d1680d:62)
+04-26 20:34:14.979  1219  1270 W LauncherActivityCachingLogic: 	at com.android.launcher3.icons.cache.BaseIconCache.addIconToDBAndMemCache(go/retraceme 7226a759aa2bb3787a79806f85d80eaad84f1f1e15acd6db988f2df789d1680d:22)
+04-26 20:34:14.979  1219  1270 W LauncherActivityCachingLogic: 	at com.android.launcher3.model.tasks.PackageUpdatedTask.execute(go/retraceme 7226a759aa2bb3787a79806f85d80eaad84f1f1e15acd6db988f2df789d1680d:177)
+04-26 20:34:14.979  1219  1270 W LauncherActivityCachingLogic: 	at com.android.launcher3.LauncherModel$enqueueModelUpdateTask$1.run(go/retraceme 7226a759aa2bb3787a79806f85d80eaad84f1f1e15acd6db988f2df789d1680d:27)
+04-26 20:34:14.979  1219  1270 W LauncherActivityCachingLogic: 	at com.android.launcher3.util.LooperExecutor.execute(go/retraceme 7226a759aa2bb3787a79806f85d80eaad84f1f1e15acd6db988f2df789d1680d:16)
+04-26 20:34:14.979  1219  1270 W LauncherActivityCachingLogic: 	at com.android.launcher3.LauncherModel.enqueueModelUpdateTask(go/retraceme 7226a759aa2bb3787a79806f85d80eaad84f1f1e15acd6db988f2df789d1680d:19)
+04-26 20:34:14.979  1219  1270 W LauncherActivityCachingLogic: 	at com.android.launcher3.LauncherModel$newModelCallbacks$1.accept(go/retraceme 7226a759aa2bb3787a79806f85d80eaad84f1f1e15acd6db988f2df789d1680d:4)
+04-26 20:34:14.979  1219  1270 W LauncherActivityCachingLogic: 	at com.android.launcher3.model.ModelLauncherCallbacks.onPackageChanged(go/retraceme 7226a759aa2bb3787a79806f85d80eaad84f1f1e15acd6db988f2df789d1680d:12)
+04-26 20:34:14.979  1219  1270 W LauncherActivityCachingLogic: 	at android.content.pm.LauncherApps$CallbackMessageHandler.handleMessage(LauncherApps.java:2329)
+04-26 20:34:14.979  1219  1270 W LauncherActivityCachingLogic: 	at android.os.Handler.dispatchMessageImpl(Handler.java:142)
+04-26 20:34:14.979  1219  1270 W LauncherActivityCachingLogic: 	at android.os.Handler.dispatchMessage(Handler.java:125)
+04-26 20:34:14.979  1219  1270 W LauncherActivityCachingLogic: 	at android.os.Looper.loopOnce(Looper.java:292)
+04-26 20:34:14.979  1219  1270 W LauncherActivityCachingLogic: 	at android.os.Looper.loop(Looper.java:393)
+04-26 20:34:14.979  1219  1270 W LauncherActivityCachingLogic: 	at android.os.HandlerThread.run(HandlerThread.java:139)
+04-26 20:34:14.979   736  5314 W SignedPackage: Package doesn't have required signing certificate: com.google.android.apps.work.clouddpc
+04-26 20:34:14.984  1219  1270 W LauncherActivityCachingLogic: loadIcon: Default app icon returned from PackageManager. component=ComponentInfo{com.muonline.client/com.muonline.client.PreloadActivity}, user=UserHandle{0}
+04-26 20:34:14.984  1219  1270 W LauncherActivityCachingLogic: java.lang.Exception
+04-26 20:34:14.984  1219  1270 W LauncherActivityCachingLogic: 	at com.android.launcher3.icons.cache.LauncherActivityCachingLogic.loadIcon(go/retraceme 7226a759aa2bb3787a79806f85d80eaad84f1f1e15acd6db988f2df789d1680d:62)
+04-26 20:34:14.984  1219  1270 W LauncherActivityCachingLogic: 	at com.android.launcher3.icons.cache.BaseIconCache.loadFallbackIcon(go/retraceme 7226a759aa2bb3787a79806f85d80eaad84f1f1e15acd6db988f2df789d1680d:8)
+04-26 20:34:14.984  1219  1270 W LauncherActivityCachingLogic: 	at com.android.launcher3.icons.cache.BaseIconCache.cacheLocked(go/retraceme 7226a759aa2bb3787a79806f85d80eaad84f1f1e15acd6db988f2df789d1680d:99)
+04-26 20:34:14.984  1219  1270 W LauncherActivityCachingLogic: 	at com.android.launcher3.icons.IconCache.getTitleAndIcon(go/retraceme 7226a759aa2bb3787a79806f85d80eaad84f1f1e15acd6db988f2df789d1680d:233)
+04-26 20:34:14.984  1219  1270 W LauncherActivityCachingLogic: 	at com.android.launcher3.icons.IconCache.getTitleAndIcon(go/retraceme 7226a759aa2bb3787a79806f85d80eaad84f1f1e15acd6db988f2df789d1680d:230)
+04-26 20:34:14.984  1219  1270 W LauncherActivityCachingLogic: 	at com.android.launcher3.model.tasks.PackageUpdatedTask.execute(go/retraceme 7226a759aa2bb3787a79806f85d80eaad84f1f1e15acd6db988f2df789d1680d:371)
+04-26 20:34:14.984  1219  1270 W LauncherActivityCachingLogic: 	at com.android.launcher3.LauncherModel$enqueueModelUpdateTask$1.run(go/retraceme 7226a759aa2bb3787a79806f85d80eaad84f1f1e15acd6db988f2df789d1680d:27)
+04-26 20:34:14.984  1219  1270 W LauncherActivityCachingLogic: 	at com.android.launcher3.util.LooperExecutor.execute(go/retraceme 7226a759aa2bb3787a79806f85d80eaad84f1f1e15acd6db988f2df789d1680d:16)
+04-26 20:34:14.984  1219  1270 W LauncherActivityCachingLogic: 	at com.android.launcher3.LauncherModel.enqueueModelUpdateTask(go/retraceme 7226a759aa2bb3787a79806f85d80eaad84f1f1e15acd6db988f2df789d1680d:19)
+04-26 20:34:14.984  1219  1270 W LauncherActivityCachingLogic: 	at com.android.launcher3.LauncherModel$newModelCallbacks$1.accept(go/retraceme 7226a759aa2bb3787a79806f85d80eaad84f1f1e15acd6db988f2df789d1680d:4)
+04-26 20:34:14.984  1219  1270 W LauncherActivityCachingLogic: 	at com.android.launcher3.model.ModelLauncherCallbacks.onPackageChanged(go/retraceme 7226a759aa2bb3787a79806f85d80eaad84f1f1e15acd6db988f2df789d1680d:12)
+04-26 20:34:14.984  1219  1270 W LauncherActivityCachingLogic: 	at android.content.pm.LauncherApps$CallbackMessageHandler.handleMessage(LauncherApps.java:2329)
+04-26 20:34:14.984  1219  1270 W LauncherActivityCachingLogic: 	at android.os.Handler.dispatchMessageImpl(Handler.java:142)
+04-26 20:34:14.984  1219  1270 W LauncherActivityCachingLogic: 	at android.os.Handler.dispatchMessage(Handler.java:125)
+04-26 20:34:14.984  1219  1270 W LauncherActivityCachingLogic: 	at android.os.Looper.loopOnce(Looper.java:292)
+04-26 20:34:14.984  1219  1270 W LauncherActivityCachingLogic: 	at android.os.Looper.loop(Looper.java:393)
+04-26 20:34:14.984  1219  1270 W LauncherActivityCachingLogic: 	at android.os.HandlerThread.run(HandlerThread.java:139)
+04-26 20:34:14.985  1219  1270 D AlphabeticIndexCompat: computeSectionName: cs: MU Online sectionName: M
+04-26 20:34:14.986  1219  1219 V BaseDepthController: Applying blur: 0 to Surface(name=VRI-com.google.android.apps.nexuslauncher/com.google.android.apps.nexuslauncher.NexusLauncherActivity#1590)/@0xd45637f applyImmediately: false
+04-26 20:34:14.986  1219  1219 D BaseDepthController: shouldBlurWorkspace: false targetState: Normal currentStableState: Normal mCurrentBlur: 0 mLauncher.getDepthBlurTargets(): [com.android.launcher3.Workspace{573bc60 V.ED..... ........ 0,0-1080,2400 #7f0a047d app:id/workspace}, com.android.launcher3.Hotseat{7eca519 V.ED..... ........ 0,1905-1080,2400 #7f0a01f1 app:id/hotseat}]
+04-26 20:34:14.990  1219  1219 D AllAppsStore: setApps: apps.length=21
+04-26 20:34:14.990  1219  1219 D AllAppsStore: notifyUpdate: notifying listeners
+04-26 20:34:14.990  1219  1219 D ActivityAllAppsContainerView: onAppsUpdated; number of apps: 21
+04-26 20:34:14.990  1219  1219 D ActivityAllAppsContainerView: rebindAdapters: force: false
+04-26 20:34:14.990  1219  1219 D ActivityAllAppsContainerView: rebindAdapters: Not needed.
+04-26 20:34:14.990  1219  1219 D StatsLog: LAUNCHER_ALLAPPS_COUNT
+04-26 20:34:14.991  1219  1219 D AlphabeticalAppsList: Clearing FastScrollerSections.
+04-26 20:34:14.991  1219  1219 D AlphabeticalAppsList: Adding apps with sections. HasPrivateApps: false
+04-26 20:34:14.991  1219  1219 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: C with appInfoTitle: Calendar
+04-26 20:34:14.991  1219  1219 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: D with appInfoTitle: Drive
+04-26 20:34:14.991  1219  1219 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: F with appInfoTitle: Files
+04-26 20:34:14.991  1219  1219 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: G with appInfoTitle: Glasses
+04-26 20:34:14.991  1219  1219 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: M with appInfoTitle: Maps
+04-26 20:34:14.991  1219  1219 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: P with appInfoTitle: Phone
+04-26 20:34:14.991  1219  1219 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: S with appInfoTitle: Safety
+04-26 20:34:14.991  1219  1219 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: T with appInfoTitle: TMoble
+04-26 20:34:14.991  1219  1219 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: Y with appInfoTitle: YouTube
+04-26 20:34:14.991  1219  1219 D AlphabeticalAppsList: Adding FastScrollSection duplicate to scroll to the bottom.
+04-26 20:34:14.991  1219  1219 D AlphabeticalAppsList: Clearing FastScrollerSections.
+04-26 20:34:14.991  1219  1219 D AlphabeticalAppsList: Adding apps with sections. HasPrivateApps: false
+04-26 20:34:14.991  1219  1219 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: C with appInfoTitle: Calendar
+04-26 20:34:14.991  1219  1219 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: D with appInfoTitle: Drive
+04-26 20:34:14.991  1219  1219 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: F with appInfoTitle: Files
+04-26 20:34:14.991  1219  1219 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: G with appInfoTitle: Glasses
+04-26 20:34:14.991  1219  1219 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: M with appInfoTitle: Maps
+04-26 20:34:14.991  1219  1219 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: P with appInfoTitle: Phone
+04-26 20:34:14.991  1219  1219 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: S with appInfoTitle: Safety
+04-26 20:34:14.991  1219  1219 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: T with appInfoTitle: TMoble
+04-26 20:34:14.991  1219  1219 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: Y with appInfoTitle: YouTube
+04-26 20:34:14.991  1219  1219 D AlphabeticalAppsList: Adding FastScrollSection duplicate to scroll to the bottom.
+04-26 20:34:14.991  1219  1219 D AllAppsStore: setApps: apps.length=21
+04-26 20:34:14.991  1219  1219 D AllAppsStore: notifyUpdate: notifying listeners
+04-26 20:34:14.997  1219  1219 D b/387844520: getOutlineOffsetX: measured width = 173, mNormalizedIconSize = 159, last updated width = 173
+--------- beginning of system
+04-26 20:34:14.997 14925 14925 D ActivityThread: Package [com.muonline.client] reported as REPLACED, but missing application info. Assuming REMOVED.
+04-26 20:34:14.998 14925 14925 D ActivityThread: Package [com.muonline.client] reported as REPLACED, but missing application info. Assuming REMOVED.
+04-26 20:34:14.998  4164  4164 I Finsky  : [2] ajjp - Received: android.intent.action.PACKAGE_ADDED, [n076RJLEETmEZ61FBJHrGFwh-0szukPG_iaeB-mhrwQ]
+04-26 20:34:14.998   736  1954 D ActivityManager: sync unfroze 14925 com.google.android.gms for 6
+04-26 20:34:15.003  1219  1219 V BaseDepthController: Applying blur: 0 to Surface(name=VRI-com.google.android.apps.nexuslauncher/com.google.android.apps.nexuslauncher.NexusLauncherActivity#1590)/@0xd45637f applyImmediately: false
+04-26 20:34:15.003  1219  1219 D BaseDepthController: shouldBlurWorkspace: false targetState: Normal currentStableState: Normal mCurrentBlur: 0 mLauncher.getDepthBlurTargets(): [com.android.launcher3.Workspace{573bc60 V.ED..... ......ID 0,0-1080,2400 #7f0a047d app:id/workspace}, com.android.launcher3.Hotseat{7eca519 V.ED..... .......D 0,1905-1080,2400 #7f0a01f1 app:id/hotseat}]
+04-26 20:34:15.011   736   736 W Looper  : Slow dispatch took 109ms main app=system_server main=true group=FOREGROUND h=android.app.ActivityThread$H c=android.app.LoadedApk$ReceiverDispatcher$Args$$ExternalSyntheticLambda0@b836f7a m=0
+04-26 20:34:15.017   736   736 D AS.AudioService: received android.intent.action.PACKAGE_REPLACED replacing: true archival: false for package com.muonline.client with uid 10230
+04-26 20:34:15.018  4276  4276 I Finsky:background: [2] Memory trim requested to level 40
+04-26 20:34:15.021  1219  1219 V BaseDepthController: Applying blur: 0 to Surface(name=VRI-com.google.android.apps.nexuslauncher/com.google.android.apps.nexuslauncher.NexusLauncherActivity#1590)/@0xd45637f applyImmediately: false
+04-26 20:34:15.021  1219  1219 D BaseDepthController: shouldBlurWorkspace: false targetState: Normal currentStableState: Normal mCurrentBlur: 0 mLauncher.getDepthBlurTargets(): [com.android.launcher3.Workspace{573bc60 V.ED..... ........ 0,0-1080,2400 #7f0a047d app:id/workspace}, com.android.launcher3.Hotseat{7eca519 V.ED..... ........ 0,1905-1080,2400 #7f0a01f1 app:id/hotseat}]
+04-26 20:34:15.026   736   736 D AppSearchAppsIndexerManagerS: userid in package receiver: 10230
+04-26 20:34:15.030   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:15.030   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:15.036  1219  1219 V BaseDepthController: Applying blur: 0 to Surface(name=VRI-com.google.android.apps.nexuslauncher/com.google.android.apps.nexuslauncher.NexusLauncherActivity#1590)/@0xd45637f applyImmediately: false
+04-26 20:34:15.037  1219  1219 D BaseDepthController: shouldBlurWorkspace: false targetState: Normal currentStableState: Normal mCurrentBlur: 0 mLauncher.getDepthBlurTargets(): [com.android.launcher3.Workspace{573bc60 V.ED..... ........ 0,0-1080,2400 #7f0a047d app:id/workspace}, com.android.launcher3.Hotseat{7eca519 V.ED..... ........ 0,1905-1080,2400 #7f0a01f1 app:id/hotseat}]
+04-26 20:34:15.037  4276 19256 I Finsky:background: [222] Wrote row to frosting DB: 3225
+04-26 20:34:15.047 14925 14925 D BoundBrokerSvc: onUnbind: Intent { act=com.google.android.gms.common.BIND_SHARED_PREFS xflg=0x4 pkg=com.google.android.gms }
+04-26 20:34:15.050   736   736 W AlarmManager: Package com.muonline.client, uid 10230 lost permission to set exact alarms!
+04-26 20:34:15.054  1219  1219 V BaseDepthController: Applying blur: 0 to Surface(name=VRI-com.google.android.apps.nexuslauncher/com.google.android.apps.nexuslauncher.NexusLauncherActivity#1590)/@0xd45637f applyImmediately: false
+04-26 20:34:15.054  1219  1219 D BaseDepthController: shouldBlurWorkspace: false targetState: Normal currentStableState: Normal mCurrentBlur: 0 mLauncher.getDepthBlurTargets(): [com.android.launcher3.Workspace{573bc60 V.ED..... ........ 0,0-1080,2400 #7f0a047d app:id/workspace}, com.android.launcher3.Hotseat{7eca519 V.ED..... ........ 0,1905-1080,2400 #7f0a01f1 app:id/hotseat}]
+04-26 20:34:15.064  4276 19256 I Finsky:background: [222] Wrote row to frosting DB: 3226
+04-26 20:34:15.070  1219  1219 V BaseDepthController: Applying blur: 0 to Surface(name=VRI-com.google.android.apps.nexuslauncher/com.google.android.apps.nexuslauncher.NexusLauncherActivity#1590)/@0xd45637f applyImmediately: false
+04-26 20:34:15.071  1219  1219 D BaseDepthController: shouldBlurWorkspace: false targetState: Normal currentStableState: Normal mCurrentBlur: 0 mLauncher.getDepthBlurTargets(): [com.android.launcher3.Workspace{573bc60 V.ED..... ........ 0,0-1080,2400 #7f0a047d app:id/workspace}, com.android.launcher3.Hotseat{7eca519 V.ED..... ........ 0,1905-1080,2400 #7f0a01f1 app:id/hotseat}]
+04-26 20:34:15.086  1219  1219 V BaseDepthController: Applying blur: 0 to Surface(name=VRI-com.google.android.apps.nexuslauncher/com.google.android.apps.nexuslauncher.NexusLauncherActivity#1590)/@0xd45637f applyImmediately: false
+04-26 20:34:15.087  1219  1219 D BaseDepthController: shouldBlurWorkspace: false targetState: Normal currentStableState: Normal mCurrentBlur: 0 mLauncher.getDepthBlurTargets(): [com.android.launcher3.Workspace{573bc60 V.ED..... ........ 0,0-1080,2400 #7f0a047d app:id/workspace}, com.android.launcher3.Hotseat{7eca519 V.ED..... ........ 0,1905-1080,2400 #7f0a01f1 app:id/hotseat}]
+04-26 20:34:15.088   736  1958 I ImeTracker: system_server:b829fd2e: onRequestHide at ORIGIN_SERVER reason IME_REQUESTED_CHANGED_LISTENER fromUser false displayId 0
+04-26 20:34:15.090   736   762 I ImeTracker: system_server:b829fd2e: onCancelled at PHASE_SERVER_SHOULD_HIDE
+04-26 20:34:15.090  4164 19257 I Finsky  : [453] SCH: Received scheduling request: Id: 12-1, Constraints: [{ L: 15000, D: 86400000, C: CHARGING_NONE, I: IDLE_NONE, N: NET_ANY, B: BATTERY_ANY }]
+04-26 20:34:15.093   736  1076 D IntervalStats: Unable to parse usage stats packages: [266, 267, 268, 269, 270, 271, 272, 273]
+04-26 20:34:15.096   736  1076 D IntervalStats: Unable to parse usage stats packages: [273]
+04-26 20:34:15.103  1219  1219 V BaseDepthController: Applying blur: 0 to Surface(name=VRI-com.google.android.apps.nexuslauncher/com.google.android.apps.nexuslauncher.NexusLauncherActivity#1590)/@0xd45637f applyImmediately: false
+04-26 20:34:15.103  1219  1219 D BaseDepthController: shouldBlurWorkspace: false targetState: Normal currentStableState: Normal mCurrentBlur: 0 mLauncher.getDepthBlurTargets(): [com.android.launcher3.Workspace{573bc60 V.ED..... ........ 0,0-1080,2400 #7f0a047d app:id/workspace}, com.android.launcher3.Hotseat{7eca519 V.ED..... ........ 0,1905-1080,2400 #7f0a01f1 app:id/hotseat}]
+04-26 20:34:15.105   736  1076 D IntervalStats: Unable to parse usage stats packages: [273]
+04-26 20:34:15.105  4276 19256 I Finsky:background: [222] Wrote row to frosting DB: 3227
+04-26 20:34:15.108   736  1076 D IntervalStats: Unable to parse usage stats packages: [273]
+04-26 20:34:15.113   736  1076 D IntervalStats: Unable to parse usage stats packages: [273, 276, 277, 278]
+04-26 20:34:15.113   736  1076 D IntervalStats: Unable to parse usage stats packages: [278, 280, 281, 282, 283]
+04-26 20:34:15.114   736  1076 D IntervalStats: Unable to parse usage stats packages: [283]
+04-26 20:34:15.117   736  1076 D IntervalStats: Unable to parse usage stats packages: [283]
+04-26 20:34:15.118   736  1076 D IntervalStats: Unable to parse usage stats packages: [283, 284]
+04-26 20:34:15.121  1366 19273 I Fitness : (REDACTED) FitCleanupIntentOperation received Intent %s
+04-26 20:34:15.125  1219  1219 V BaseDepthController: Applying blur: 0 to Surface(name=VRI-com.google.android.apps.nexuslauncher/com.google.android.apps.nexuslauncher.NexusLauncherActivity#1590)/@0xd45637f applyImmediately: false
+04-26 20:34:15.125  1219  1219 D BaseDepthController: shouldBlurWorkspace: false targetState: Normal currentStableState: Normal mCurrentBlur: 0 mLauncher.getDepthBlurTargets(): [com.android.launcher3.Workspace{573bc60 V.ED..... ........ 0,0-1080,2400 #7f0a047d app:id/workspace}, com.android.launcher3.Hotseat{7eca519 V.ED..... ........ 0,1905-1080,2400 #7f0a01f1 app:id/hotseat}]
+04-26 20:34:15.130   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:15.130   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:15.139  1219  1219 V BaseDepthController: Applying blur: 0 to Surface(name=VRI-com.google.android.apps.nexuslauncher/com.google.android.apps.nexuslauncher.NexusLauncherActivity#1590)/@0xd45637f applyImmediately: false
+04-26 20:34:15.139  1219  1219 D BaseDepthController: shouldBlurWorkspace: false targetState: Normal currentStableState: Normal mCurrentBlur: 0 mLauncher.getDepthBlurTargets(): [com.android.launcher3.Workspace{573bc60 V.ED..... ........ 0,0-1080,2400 #7f0a047d app:id/workspace}, com.android.launcher3.Hotseat{7eca519 V.ED..... ........ 0,1905-1080,2400 #7f0a01f1 app:id/hotseat}]
+04-26 20:34:15.151  4276 19256 I Finsky:background: [222] Wrote row to frosting DB: 3228
+04-26 20:34:15.151   736  2220 W ActivityTaskManager: callingPackage for (uid=2000, pid=19281) has no WPC
+04-26 20:34:15.153   736  2220 V GrammaticalInflectionUtils: AttributionSource: android.content.AttributionSource@d322a4fb does not have READ_SYSTEM_GRAMMATICAL_GENDER permission.
+04-26 20:34:15.155  1219  1219 V BaseDepthController: Applying blur: 0 to Surface(name=VRI-com.google.android.apps.nexuslauncher/com.google.android.apps.nexuslauncher.NexusLauncherActivity#1590)/@0xd45637f applyImmediately: false
+04-26 20:34:15.156  1219  1219 D BaseDepthController: shouldBlurWorkspace: false targetState: Normal currentStableState: Normal mCurrentBlur: 0 mLauncher.getDepthBlurTargets(): [com.android.launcher3.Workspace{573bc60 V.ED..... ........ 0,0-1080,2400 #7f0a047d app:id/workspace}, com.android.launcher3.Hotseat{7eca519 V.ED..... ........ 0,1905-1080,2400 #7f0a01f1 app:id/hotseat}]
+04-26 20:34:15.175  1219  1219 V BaseDepthController: Applying blur: 0 to Surface(name=VRI-com.google.android.apps.nexuslauncher/com.google.android.apps.nexuslauncher.NexusLauncherActivity#1590)/@0xd45637f applyImmediately: false
+04-26 20:34:15.176  1219  1219 D BaseDepthController: shouldBlurWorkspace: false targetState: Normal currentStableState: Normal mCurrentBlur: 0 mLauncher.getDepthBlurTargets(): [com.android.launcher3.Workspace{573bc60 V.ED..... ........ 0,0-1080,2400 #7f0a047d app:id/workspace}, com.android.launcher3.Hotseat{7eca519 V.ED..... ........ 0,1905-1080,2400 #7f0a01f1 app:id/hotseat}]
+04-26 20:34:15.181  4276 19256 I Finsky:background: [222] Wrote row to frosting DB: 3229
+04-26 20:34:15.183   736   736 W Looper  : Drained
+04-26 20:34:15.184   736   886 V AccessibilityUserState: updateShortcutTargets: type:accessibility_shortcut_target_service, current:{}, new:{}
+04-26 20:34:15.184   736   886 V AccessibilityUserState: updateShortcutTargets: type:accessibility_qs_targets, current:{}, new:{}
+04-26 20:34:15.184   736   886 V AccessibilityUserState: updateShortcutTargets: type:accessibility_button_targets, current:{}, new:{}
+04-26 20:34:15.184   736   886 V AccessibilityUserState: updateShortcutTargets: type:accessibility_gesture_targets, current:{}, new:{}
+04-26 20:34:15.184   736   886 V AccessibilityUserState: updateShortcutTargets: type:accessibility_key_gesture_targets, current:{}, new:{}
+04-26 20:34:15.185   736   886 V AccessibilityUserState: updateShortcutTargets: type:accessibility_top_row_key_targets, current:{}, new:{}
+04-26 20:34:15.185   736   886 V AccessibilityUserState: updateShortcutTargets: type:accessibility_quick_access_targets, current:{}, new:{}
+04-26 20:34:15.185   736   886 V AccessibilityManagerService: onUserStateChangedLocked for userId: 0, forceUpdate: false
+04-26 20:34:15.188  1219  1219 V BaseDepthController: Applying blur: 0 to Surface(name=VRI-com.google.android.apps.nexuslauncher/com.google.android.apps.nexuslauncher.NexusLauncherActivity#1590)/@0xd45637f applyImmediately: false
+04-26 20:34:15.188  1219  1219 D BaseDepthController: shouldBlurWorkspace: false targetState: Normal currentStableState: Normal mCurrentBlur: 0 mLauncher.getDepthBlurTargets(): [com.android.launcher3.Workspace{573bc60 V.ED..... ........ 0,0-1080,2400 #7f0a047d app:id/workspace}, com.android.launcher3.Hotseat{7eca519 V.ED..... ........ 0,1905-1080,2400 #7f0a01f1 app:id/hotseat}]
+04-26 20:34:15.194  1219  1219 D RecentsView: onTaskDisplayChanged: 117, new displayId = 0
+04-26 20:34:15.200   566   599 I libbinder.BpBinder: onLastStrongRef automatically unlinking death recipients for binder (0x7eaa3606e480) with descriptor: '(not cached)'
+04-26 20:34:15.203  1219  1219 V BaseDepthController: Applying blur: 0 to Surface(name=VRI-com.google.android.apps.nexuslauncher/com.google.android.apps.nexuslauncher.NexusLauncherActivity#1590)/@0xd45637f applyImmediately: false
+04-26 20:34:15.203  1219  1219 D BaseDepthController: shouldBlurWorkspace: false targetState: Normal currentStableState: Normal mCurrentBlur: 0 mLauncher.getDepthBlurTargets(): [com.android.launcher3.Workspace{573bc60 V.ED..... ........ 0,0-1080,2400 #7f0a047d app:id/workspace}, com.android.launcher3.Hotseat{7eca519 V.ED..... ........ 0,1905-1080,2400 #7f0a01f1 app:id/hotseat}]
+04-26 20:34:15.215  4164  4164 I Finsky  : [2] DTU: Received onPackageAdded, replacing: true
+04-26 20:34:15.216  4164 19257 I Finsky  : [453] SCH: Received scheduling request: Id: 12-1, Constraints: [{ L: 15000, D: 86400000, C: CHARGING_NONE, I: IDLE_NONE, N: NET_ANY, B: BATTERY_ANY }]
+04-26 20:34:15.218   736  5314 I Role    : com.google.android.gms not qualified for android.app.role.SYSTEM_DEPENDENCY_INSTALLER due to missing RequiredComponent{mFlags='0', mIntentFilterData=IntentFilterData{mAction='android.content.pm.action.INSTALL_DEPENDENCY', mCategories='[]', mDataScheme='null', mDataType='null'}, mMetaData=[], mPermission='android.permission.BIND_DEPENDENCY_INSTALLER', mQueryFlags=0} Requirement{mFeatureFlag=null, mMinTargetSdkVersion=1}
+04-26 20:34:15.218   736  5314 E RoleControllerServiceImpl: Default/fallback role holder package doesn't qualify for the role, package: com.google.android.gms, role: android.app.role.SYSTEM_DEPENDENCY_INSTALLER, user: 0
+04-26 20:34:15.229 14925 19285 I AppBackupPkgRemovedIO: Backup state cleanup on uninstall is disabled. [CONTEXT service_id=229 ]
+04-26 20:34:15.231   736  2220 I ActivityTaskManager: Add Task{1a2548 #116 type=standard A=10230:com.muonline.client} to hidden list because adding Task{8681873 #117 type=standard A=10230:com.muonline.client}
+04-26 20:34:15.235  4164  4164 I Finsky  : [2] ajjp - Received: android.intent.action.PACKAGE_ADDED, [n076RJLEETmEZ61FBJHrGFwh-0szukPG_iaeB-mhrwQ]
+04-26 20:34:15.236 14925 19288 I PackageInstalledIntentO: Test flag v2 is disabled [CONTEXT service_id=469 ]
+04-26 20:34:15.237  1219  1219 V BaseDepthController: Applying blur: 0 to Surface(name=VRI-com.google.android.apps.nexuslauncher/com.google.android.apps.nexuslauncher.NexusLauncherActivity#1590)/@0xd45637f applyImmediately: false
+04-26 20:34:15.238  1219  1219 D BaseDepthController: shouldBlurWorkspace: false targetState: Normal currentStableState: Normal mCurrentBlur: 0 mLauncher.getDepthBlurTargets(): [com.android.launcher3.Workspace{573bc60 V.ED..... ........ 0,0-1080,2400 #7f0a047d app:id/workspace}, com.android.launcher3.Hotseat{7eca519 V.ED..... ........ 0,1905-1080,2400 #7f0a01f1 app:id/hotseat}]
+04-26 20:34:15.251   736  2220 V ActivityTaskManager: TaskLaunchParamsModifier: phase=3 task=Task{8681873 #117 type=standard A=10230:com.muonline.client} activity=ActivityRecord{230885002 u0 com.muonline.client/.PreloadActivity t-1} display-from-task=0 display-id=0 task-display-area-windowing-mode=1 suggested-display-area=DefaultTaskDisplayArea@125646128 inherit-from-task=fullscreen non-freeform-task-display-area display-area=DefaultTaskDisplayArea@125646128 skip-bounds-fullscreen
+04-26 20:34:15.252  1219  1219 V BaseDepthController: Applying blur: 0 to Surface(name=VRI-com.google.android.apps.nexuslauncher/com.google.android.apps.nexuslauncher.NexusLauncherActivity#1590)/@0xd45637f applyImmediately: false
+04-26 20:34:15.252  1219  1219 D BaseDepthController: shouldBlurWorkspace: false targetState: Normal currentStableState: Normal mCurrentBlur: 0 mLauncher.getDepthBlurTargets(): [com.android.launcher3.Workspace{573bc60 V.ED..... ........ 0,0-1080,2400 #7f0a047d app:id/workspace}, com.android.launcher3.Hotseat{7eca519 V.ED..... ........ 0,1905-1080,2400 #7f0a01f1 app:id/hotseat}]
+04-26 20:34:15.255  4164  4164 I Finsky  : [2] ajjp - Deduping intent android.intent.action.PACKAGE_ADDED
+04-26 20:34:15.256  1036  1091 V WindowManagerShell: Transition requested (#145): android.os.BinderProxy@567143f TransitionRequestInfo { type = OPEN, triggerTask = TaskInfo{userId=0 taskId=117 effectiveUid=10230 displayId=0 isRunning=true baseIntent=Intent { flg=0x10000000 cmp=com.muonline.client/.PreloadActivity } baseActivity=ComponentInfo{com.muonline.client/com.muonline.client.PreloadActivity} topActivity=ComponentInfo{com.muonline.client/com.muonline.client.PreloadActivity} origActivity=null realActivity=ComponentInfo{com.muonline.client/com.muonline.client.PreloadActivity} realActivityIsAppLockEnabled=false numActivities=1 lastActiveTime=18229840 supportsMultiWindow=true supportsMultiWindowWithoutConstraints=true resizeMode=1 isResizeable=true minWidth=-1 minHeight=-1 defaultMinSize=220 token=WCT{android.os.BinderProxy@cc9010c} topActivityType=1 pictureInPictureParams=null shouldDockBigOverlays=false launchIntoPipHostTaskId=-1 lastParentTaskIdBeforePip=-1 displayCutoutSafeInsets=Rect(132, 0 - 0, 0) topActivityInfo=ActivityInfo{b2f4a55 com.muonline.client.PreloadActivity} launchCookies=[] positionInParent=Point(0, 0) parentTaskId=-1 isFocused=false isInteractive=false isVisible=false isVisibleRequested=false isTopActivityNoDisplay=false isSleeping=false locusId=null displayAreaFeatureId=1 isTopActivityTransparent=false isActivityStackTransparent=false lastNonFullscreenBounds=null leafTaskBoundsFromOptions= false capturedLink=null capturedLinkTimestamp=0 requestedVisibleTypes=503 topActivityRequestOpenInBrowserEducationTimestamp=0 appCompatTaskInfo=AppCompatTaskInfo { topActivityInSizeCompat=false isLeafTask= true eligibleForLetterboxEducation= false isLetterboxEducationEnabled= true isLetterboxDoubleTapEnabled= false eligibleForUserAspectRatioButton= false topActivityBoundsLetterboxed= false isFromLetterboxDoubleTap= false topActivityLetterboxVerticalPosition= -1 topActivityLetterboxHorizontalPosition= -1 topActivityLetterboxWidth=-1 topActivityLetterboxHeight=-1 topActivityAppBounds=Rect(132, 0 - 2400, 1017) isUserFullscreenOverrideEnabled=false isSystemFullscreenOverrideEnabled=false hasMinAspectRatioOverride=false topActivityLetterboxBounds=null topNonResizableActivityAspectRatio=-1.0} topActivityMainWindowFrame=null isAppBubble=false}, pipChange = null, remoteTransitionInfo = null, displayChange = null, requestedLocation = null, userChange = null, windowingLayerChange = null, fullscreenRequestChange = null, flags = 0, debugId = 145 }
+04-26 20:34:15.256  1036  1091 W DisconnectHandler: No disconnect change found in the transition, not handling request.
+04-26 20:34:15.256  1036  1091 V ShellDesktopMode: DesktopTasksController: skipping handleRequest reason=triggerTask's display doesn't support desktop mode
+04-26 20:34:15.257  1036  1091 D ShellSplitScreen: logExit: no-op, mLoggerSessionId is null
+04-26 20:34:15.257   736  2220 I ActivityTaskManager: START u0 {flg=0x10000000 xflg=0x5 cmp=com.muonline.client/.PreloadActivity} with LAUNCH_SINGLE_TASK from uid 2000 (com.android.shell) (BAL_ALLOW_PERMISSION) result code=0
+04-26 20:34:15.265  1219  1219 D BaseActivity: Launcher flags updated: [state_started|state_resumed|state_deferred_resumed|state_window_focused|state_user_active] -[]
+04-26 20:34:15.268   736   886 V AccessibilityUserState: updateShortcutTargets: type:accessibility_shortcut_target_service, current:{}, new:{}
+04-26 20:34:15.268   736   886 V AccessibilityUserState: updateShortcutTargets: type:accessibility_button_targets, current:{}, new:{}
+04-26 20:34:15.268   736   886 V AccessibilityUserState: updateShortcutTargets: type:accessibility_gesture_targets, current:{}, new:{}
+04-26 20:34:15.268   736   886 V AccessibilityUserState: updateShortcutTargets: type:accessibility_qs_targets, current:{}, new:{}
+04-26 20:34:15.268   736   886 V AccessibilityUserState: updateShortcutTargets: type:accessibility_key_gesture_targets, current:{}, new:{}
+04-26 20:34:15.268   736   886 V AccessibilityUserState: updateShortcutTargets: type:accessibility_top_row_key_targets, current:{}, new:{}
+04-26 20:34:15.268   736   886 V AccessibilityUserState: updateShortcutTargets: type:accessibility_quick_access_targets, current:{}, new:{}
+04-26 20:34:15.268   736   886 W MagnificationConnectionManager: requestConnection duplicated request: connect=false, mConnectionState=DISCONNECTED
+04-26 20:34:15.268   736   886 V AccessibilityUserState: updateShortcutTargets: type:accessibility_button_targets, current:{}, new:{}
+04-26 20:34:15.268   736   886 V AccessibilityUserState: updateShortcutTargets: type:accessibility_qs_targets, current:{}, new:{}
+04-26 20:34:15.269   736   736 V AccessibilityManagerService: onUserStateChangedLocked for userId: 0, forceUpdate: false
+04-26 20:34:15.271  4164  4164 I Finsky  : [2] ajjp - Received: android.intent.action.PACKAGE_ADDED, [n076RJLEETmEZ61FBJHrGFwh-0szukPG_iaeB-mhrwQ]
+04-26 20:34:15.272   736  1958 W InputChannel-JNI: Channel already disposed.
+04-26 20:34:15.276  1036  1132 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): android.view.ViewRootImpl$$ExternalSyntheticLambda13@e6736d1
+04-26 20:34:15.276   736  1602 D CoreBackPreview: Window{c0d7442 u0 Splash Screen com.muonline.client}: Setting back callback OnBackInvokedCallbackInfo{mCallback=android.window.IOnBackInvokedCallback$Stub$Proxy@7326566, mPriority=0, mIsAnimationCallback=false, mOverrideBehavior=0}
+04-26 20:34:15.278   736  1953 D WindowManager: setClientSurface Surface(name=VRI-Splash Screen com.muonline.client#1602)/@0xe3e70a7 for c0d7442 Splash Screen com.muonline.client
+04-26 20:34:15.281  1366 19275 I ProximityAuth: [RecentAppsMediator] Package added: (user=UserHandle{0}) com.muonline.client
+04-26 20:34:15.284  1036  1132 I Surface : Creating surface for consumer unnamed-1036-33 with slotExpansion=1 for 64 slots
+04-26 20:34:15.285  1036  1132 I Surface : Creating surface for consumer VRI[client]#33(BLAST Consumer)33 with slotExpansion=1 for 64 slots
+04-26 20:34:15.286  1219  1219 D BaseActivity: Launcher flags updated: [state_started|state_resumed|state_deferred_resumed|state_window_focused] -[state_user_active]
+04-26 20:34:15.287  1219  1219 D BaseActivity: Launcher flags updated: [state_started|state_window_focused] -[state_resumed|state_deferred_resumed]
+04-26 20:34:15.287  1219  1219 W SplitSelectStateCtor: Missing session instanceIds
+04-26 20:34:15.287  1219  1219 D StatsLog: LAUNCHER_SPLIT_SELECTION_EXIT_INTERRUPTED
+04-26 20:34:15.288   736   762 V GrammaticalInflectionUtils: AttributionSource: android.content.AttributionSource@d322a4fb does not have READ_SYSTEM_GRAMMATICAL_GENDER permission.
+04-26 20:34:15.290  1036  1091 D WindowManagerShell: setLauncherKeepClearAreaHeight: visible=false, height=495
+04-26 20:34:15.296  1036  1091 V RecentTasksController: Notify recent tasks changed
+04-26 20:34:15.296  1036  1091 D ShellDesktopMode: DesktopRepository(0): Removes freeform task: taskId=116
+04-26 20:34:15.296  1036  1091 W ShellDesktopMode: DesktopRepository(0): No display id found for task: taskId=116
+04-26 20:34:15.296  1036  1091 V RecentTasksController: Notify recent tasks changed
+04-26 20:34:15.304   736  1848 V WindowManager: Defer transition id=145 for TaskFragmentTransaction=android.os.Binder@3febb3e
+04-26 20:34:15.304  4164  4164 I Finsky  : [2] ajjp - Deduping intent android.intent.action.PACKAGE_ADDED
+04-26 20:34:15.305  4164  4164 D ActivityThread: Package [com.muonline.client] reported as REPLACED, but missing application info. Assuming REMOVED.
+04-26 20:34:15.305   736  1620 V SafetySourceDataValidat: Package: com.android.vending has expected signature
+04-26 20:34:15.307  4164  4164 D ActivityThread: Package [com.muonline.client] reported as REPLACED, but missing application info. Assuming REMOVED.
+04-26 20:34:15.308  1219  1219 V BaseDepthController: Applying blur: 0 to Surface(name=VRI-com.google.android.apps.nexuslauncher/com.google.android.apps.nexuslauncher.NexusLauncherActivity#1590)/@0xd45637f applyImmediately: false
+04-26 20:34:15.308  1219  1219 D BaseDepthController: shouldBlurWorkspace: false targetState: Normal currentStableState: Normal mCurrentBlur: 0 mLauncher.getDepthBlurTargets(): [com.android.launcher3.Workspace{573bc60 V.ED..... ........ 0,0-1080,2400 #7f0a047d app:id/workspace}, com.android.launcher3.Hotseat{7eca519 V.ED..... ........ 0,1905-1080,2400 #7f0a01f1 app:id/hotseat}]
+04-26 20:34:15.313  1219  1219 D RecentTasksList: invalidateLoadedTasks - previous requestLoadId: -1
+04-26 20:34:15.313  1219  1219 D RecentTasksList: invalidateLoadedTasks - previous requestLoadId: -1
+04-26 20:34:15.324   736  1953 V WindowManager: Continue transition id=145 for TaskFragmentTransaction=android.os.Binder@3febb3e
+04-26 20:34:15.327  4164  4205 I Finsky  : [41] RECEIVER_PACKAGE_MONITOR#logWorkEndAndFinishGoAsync: SUCCESS
+04-26 20:34:15.329  1219  1219 V BaseDepthController: Applying blur: 0 to Surface(name=VRI-com.google.android.apps.nexuslauncher/com.google.android.apps.nexuslauncher.NexusLauncherActivity#1590)/@0xd45637f applyImmediately: false
+04-26 20:34:15.329  1219  1219 D BaseDepthController: shouldBlurWorkspace: false targetState: Normal currentStableState: Normal mCurrentBlur: 0 mLauncher.getDepthBlurTargets(): [com.android.launcher3.Workspace{573bc60 V.ED..... ........ 0,0-1080,2400 #7f0a047d app:id/workspace}, com.android.launcher3.Hotseat{7eca519 V.ED..... ........ 0,1905-1080,2400 #7f0a01f1 app:id/hotseat}]
+04-26 20:34:15.337   736   736 V AccessibilityUserState: updateShortcutTargets: type:accessibility_shortcut_target_service, current:{}, new:{}
+04-26 20:34:15.337   736   736 V AccessibilityUserState: updateShortcutTargets: type:accessibility_button_targets, current:{}, new:{}
+04-26 20:34:15.337   736   736 V AccessibilityUserState: updateShortcutTargets: type:accessibility_gesture_targets, current:{}, new:{}
+04-26 20:34:15.337   736   736 V AccessibilityUserState: updateShortcutTargets: type:accessibility_qs_targets, current:{}, new:{}
+04-26 20:34:15.337   736   736 V AccessibilityUserState: updateShortcutTargets: type:accessibility_key_gesture_targets, current:{}, new:{}
+04-26 20:34:15.337   736   736 V AccessibilityUserState: updateShortcutTargets: type:accessibility_top_row_key_targets, current:{}, new:{}
+04-26 20:34:15.337   736   736 V AccessibilityUserState: updateShortcutTargets: type:accessibility_quick_access_targets, current:{}, new:{}
+04-26 20:34:15.337   736   736 W MagnificationConnectionManager: requestConnection duplicated request: connect=false, mConnectionState=DISCONNECTED
+04-26 20:34:15.337   736   736 W Looper  : Slow dispatch took 140ms main app=system_server main=true group=FOREGROUND h=com.android.server.accessibility.AccessibilityManagerService$MainHandler c=com.android.server.accessibility.AccessibilityManagerService$$ExternalSyntheticLambda35@204a4bb m=0
+04-26 20:34:15.343   736   886 V AccessibilityUserState: updateShortcutTargets: type:accessibility_shortcut_target_service, current:{}, new:{}
+04-26 20:34:15.343   736   886 V AccessibilityUserState: updateShortcutTargets: type:accessibility_qs_targets, current:{}, new:{}
+04-26 20:34:15.343   736   886 V AccessibilityUserState: updateShortcutTargets: type:accessibility_button_targets, current:{}, new:{}
+04-26 20:34:15.343   736   886 V AccessibilityUserState: updateShortcutTargets: type:accessibility_gesture_targets, current:{}, new:{}
+04-26 20:34:15.343   736   886 V AccessibilityUserState: updateShortcutTargets: type:accessibility_key_gesture_targets, current:{}, new:{}
+04-26 20:34:15.343   736   886 V AccessibilityUserState: updateShortcutTargets: type:accessibility_top_row_key_targets, current:{}, new:{}
+04-26 20:34:15.343   736   886 V AccessibilityUserState: updateShortcutTargets: type:accessibility_quick_access_targets, current:{}, new:{}
+04-26 20:34:15.343   736   886 V AccessibilityManagerService: onUserStateChangedLocked for userId: 0, forceUpdate: false
+04-26 20:34:15.358  1036  8570 V WindowManagerShell: onTransitionReady(transaction=3161095945236)
+04-26 20:34:15.359  1036  1091 V WindowManagerShell: onTransitionReady (#145) android.os.BinderProxy@567143f: {id=145 t=OPEN f=0x0 trk=0 r=[0@Point(0, 0)] c=[
+04-26 20:34:15.359  1036  1091 V WindowManagerShell:         {m=OPEN f=MOVE_TO_TOP leash=Surface(name=Task=117#1599)/@0xde8b50e sb=Rect(0, 0 - 2400, 1080) eb=Rect(0, 0 - 2400, 1080) epz=Point(2400, 1080) d=0 taskParent=-1 winMode=1 userId=0},
+04-26 20:34:15.359  1036  1091 V WindowManagerShell:         {m=TO_BACK f=SHOW_WALLPAPER leash=Surface(name=Task=1#34)/@0xa138b2f sb=Rect(0, 0 - 2400, 1080) eb=Rect(0, 0 - 2400, 1080) epz=Point(2400, 1080) d=0 taskParent=-1 winMode=1 userId=0},
+04-26 20:34:15.359  1036  1091 V WindowManagerShell:         {m=TO_BACK f=IS_WALLPAPER leash=Surface(name=Surface(name=WallpaperWindowToken{3bea6dd}#54)/@0x4e520e1 - rotation-leash#1594)/@0x414c53c sb=Rect(0, 0 - 1080, 2400) eb=Rect(0, 0 - 2400, 1080) epz=Point(2400, 1080) d=0 r=0->1:-1}
+04-26 20:34:15.359  1036  1091 V WindowManagerShell:     ]}
+04-26 20:34:15.365  1219  1219 V BaseDepthController: Applying blur: 0 to Surface(name=VRI-com.google.android.apps.nexuslauncher/com.google.android.apps.nexuslauncher.NexusLauncherActivity#1590)/@0xd45637f applyImmediately: false
+04-26 20:34:15.365  1219  1219 D BaseDepthController: shouldBlurWorkspace: false targetState: Normal currentStableState: Normal mCurrentBlur: 0 mLauncher.getDepthBlurTargets(): [com.android.launcher3.Workspace{573bc60 V.ED..... ........ 0,0-1080,2400 #7f0a047d app:id/workspace}, com.android.launcher3.Hotseat{7eca519 V.ED..... ........ 0,1905-1080,2400 #7f0a01f1 app:id/hotseat}]
+04-26 20:34:15.365   736   759 V WindowManager: Sent Transition (#145) createdAt=04-26 20:34:15.158 via request=TransitionRequestInfo { type = OPEN, triggerTask = TaskInfo{userId=0 taskId=117 effectiveUid=10230 displayId=0 isRunning=true baseIntent=Intent { flg=0x10000000 cmp=com.muonline.client/.PreloadActivity } baseActivity=ComponentInfo{com.muonline.client/com.muonline.client.PreloadActivity} topActivity=ComponentInfo{com.muonline.client/com.muonline.client.PreloadActivity} origActivity=null realActivity=ComponentInfo{com.muonline.client/com.muonline.client.PreloadActivity} realActivityIsAppLockEnabled=false numActivities=1 lastActiveTime=18229840 supportsMultiWindow=true supportsMultiWindowWithoutConstraints=true resizeMode=1 isResizeable=true minWidth=-1 minHeight=-1 defaultMinSize=220 token=WCT{RemoteToken{de43ba2 Task{8681873 #117 type=standard A=10230:com.muonline.client}}} topActivityType=1 pictureInPictureParams=null shouldDockBigOverlays=false launchIntoPipHostTaskId=-1 lastParentTaskIdBeforePip=-1 displayCutoutSafeInsets=Rect(132, 0 - 0, 0) topActivityInfo=ActivityInfo{5a4f033 com.muonline.client.PreloadActivity} launchCookies=[] positionInParent=Point(0, 0) parentTaskId=-1 isFocused=false isInteractive=false isVisible=false isVisibleRequested=false isTopActivityNoDisplay=false isSleeping=false locusId=null displayAreaFeatureId=1 isTopActivityTransparent=false isActivityStackTransparent=false lastNonFullscreenBounds=null leafTaskBoundsFromOptions= false capturedLink=null capturedLinkTimestamp=0 requestedVisibleTypes=503 topActivityRequestOpenInBrowserEducationTimestamp=0 appCompatTaskInfo=AppCompatTaskInfo { topActivityInSizeCompat=false isLeafTask= true eligibleForLetterboxEducation= false isLetterboxEducationEnabled= true isLetterboxDoubleTapEnabled= false eligibleForUserAspectRatioButton= false topActivityBoundsLetterboxed= false isFromLetterboxDoubleTap= false topActivityLetterboxVerticalPosition= -1 topActivityLetterboxHorizontalPosition= -1 topActivityLetterboxWidth=-1 topActivityLetterboxHeight=-1 topActivityAppBounds=Rect(132, 0 - 2400, 1017) isUserFullscreenOverrideEnabled=false isSystemFullscreenOverrideEnabled=false hasMinAspectRatioOverride=false topActivityLetterboxBounds=null topNonResizableActivityAspectRatio=-1.0} topActivityMainWindowFrame=null isAppBubble=false}, pipChange = null, remoteTransitionInfo = null, displayChange = null, requestedLocation = null, userChange = null, windowingLayerChange = null, fullscreenRequestChange = null, flags = 0, debugId = 145 }
+04-26 20:34:15.365   736   759 V WindowManager:     startWCT=WindowContainerTransaction { changes= {} hops= [] flags= 0 errorCallbackToken=null taskFragmentOrganizer=null }
+04-26 20:34:15.365   736   759 V WindowManager:     info={id=145 t=OPEN f=0x0 trk=0 r=[0@Point(0, 0)] c=[
+04-26 20:34:15.365   736   759 V WindowManager:         {WCT{RemoteToken{de43ba2 Task{8681873 #117 type=standard A=10230:com.muonline.client}}} m=OPEN f=MOVE_TO_TOP leash=Surface(name=Task=117#1599)/@0x7322531 sb=Rect(0, 0 - 2400, 1080) eb=Rect(0, 0 - 2400, 1080) epz=Point(2400, 1080) d=0 taskParent=-1 winMode=1 userId=0},
+04-26 20:34:15.365   736   759 V WindowManager:         {WCT{RemoteToken{4853fd5 Task{13e540b #1 type=home}}} m=TO_BACK f=SHOW_WALLPAPER leash=Surface(name=Task=1#34)/@0x499be06 sb=Rect(0, 0 - 2400, 1080) eb=Rect(0, 0 - 2400, 1080) epz=Point(2400, 1080) d=0 taskParent=-1 winMode=1 userId=0},
+04-26 20:34:15.365   736   759 V WindowManager:         {m=TO_BACK f=IS_WALLPAPER leash=Surface(name=Surface(name=WallpaperWindowToken{3bea6dd}#54)/@0x4e520e1 - rotation-leash#1594)/@0x2049bc4 sb=Rect(0, 0 - 1080, 2400) eb=Rect(0, 0 - 2400, 1080) epz=Point(2400, 1080) d=0 r=0->1:-1}
+04-26 20:34:15.365   736   759 V WindowManager:     ]}
+04-26 20:34:15.369   499   499 D Zygote  : Forked child process 19303
+04-26 20:34:15.374   736   769 W ActivityManager: Slow operation: 85ms so far, now at startProcess: returned from zygote!
+04-26 20:34:15.385   736   769 W ActivityManager: Slow operation: 97ms so far, now at startProcess: done updating battery stats
+04-26 20:34:15.385   736   769 W ActivityManager: Slow operation: 97ms so far, now at startProcess: building log message
+04-26 20:34:15.389   736   769 I ActivityManager: Start proc 19303:com.muonline.client/u0a230 for next-top-activity {com.muonline.client/com.muonline.client.PreloadActivity}
+04-26 20:34:15.389 19303 19303 I Zygote  : Process 19303 created for com.muonline.client
+04-26 20:34:15.389 19303 19303 I muonline.client: Using generational CollectorTypeCMC GC.
+04-26 20:34:15.390 19303 19303 W muonline.client: Unexpected CPU variant for x86: x86_64.
+04-26 20:34:15.390 19303 19303 W muonline.client: Known variants: atom, sandybridge, silvermont, goldmont, goldmont-plus, goldmont-without-sha-xsaves, tremont, kabylake, alderlake, lunarlake, default
+04-26 20:34:15.391   736   769 W ActivityManager: Slow operation: 101ms so far, now at startProcess: starting to update pids map
+04-26 20:34:15.398  1366 19274 I FontLog : (REDACTED) Package %s has no metadata
+04-26 20:34:15.404   736   769 W ActivityManager: Slow operation: 116ms so far, now at startProcess: done updating pids map
+04-26 20:34:15.406   736  1958 W InputChannel-JNI: Channel already disposed.
+04-26 20:34:15.407 19303 19303 D nativeloader: Load libframework-connectivity-tiramisu-jni.so using APEX ns com_android_tethering for caller /apex/com.android.tethering/javalib/framework-connectivity-t.jar: ok
+04-26 20:34:15.408  1036  1091 V WindowManagerShell: Transition (#145) android.os.BinderProxy@567143f@0 ready while (#144) android.os.BinderProxy@262a468@0 is still animating. Notify the animating transition in case they can be merged
+04-26 20:34:15.409  1036  1091 V WindowManagerShell:    Requesting merge (#145) into remote: RemoteTransition { remoteTransition = android.window.IRemoteTransition$Stub$Proxy@fea59eb, appThread = android.app.IApplicationThread$Stub$Proxy@4f01348, debugName = QuickstepLaunchHome, filter = {types=[] flags=0x0 notFlags=0x100 checks=[{atype=home independent=true modes=[OPEN,TO_FRONT] flags=NONE mustBeTask=false order=ANY topActivity=ComponentInfo{com.google.android.apps.nexuslauncher/com.google.android.apps.nexuslauncher.NexusLauncherActivity} launchCookie=null windowingMode=undefined isCrossDisplayMove=false},{atype=standard independent=true modes=[CLOSE,TO_BACK] flags=NONE mustBeTask=false order=ANY topActivity=null launchCookie=null windowingMode=undefined isCrossDisplayMove=false},{NOT atype=undefined independent=true modes=[] flags=NONE mustBeTask=true order=ANY topActivity=null launchCookie=null customAnim=true windowingMode=undefined isCrossDisplayMove=false}]} }
+04-26 20:34:15.409  1036  1091 V ShellTaskOrganizer: Task appeared taskId=117 listener=FullscreenTaskListener
+04-26 20:34:15.409  1036  1091 V ShellTaskOrganizer: Fullscreen Task Appeared: #117
+04-26 20:34:15.409  1036  1091 V RecentTasksController: Notify recent tasks changed
+04-26 20:34:15.410  1036  1091 V RecentTasksController: Notify recent tasks changed
+04-26 20:34:15.417  1036  8570 V WindowManagerShell: Received remote transition finished callback for (#144)
+04-26 20:34:15.417  1036  1091 V WindowManagerShell: Transition animation finished (aborted=false), notifying core (#144) android.os.BinderProxy@262a468@0
+04-26 20:34:15.422   736   759 V WindowManager: Finish Transition (#144): created at 04-26 20:34:14.336 collect-started=0.108ms request-sent=0.737ms started=14.505ms ready=22.987ms sent=182.469ms commit=51.536ms finished=1083.398ms
+04-26 20:34:15.424   736  1958 E libbinder.IPCThreadState: Binder transaction failure. id: 3713003, cmd: BR_DEAD_REPLY (29189), error: -22 (Invalid argument)
+04-26 20:34:15.424   736  1958 W ActivityManager: pid 736 system sent binder code 7 with flags 1 and got error -32
+04-26 20:34:15.426   736  1958 W WindowManager: Exception thrown during dispatchAppVisibility Window{22c9fd7 u0 com.muonline.client/com.muonline.client.MuMainActivity EXITING}
+04-26 20:34:15.426   736  1958 W WindowManager: android.os.DeadObjectException
+04-26 20:34:15.426   736  1958 W WindowManager: 	at android.os.BinderProxy.transactNative(Native Method)
+04-26 20:34:15.426   736  1958 W WindowManager: 	at android.os.BinderProxy.transact(BinderProxy.java:617)
+04-26 20:34:15.426   736  1958 W WindowManager: 	at android.view.IWindow$Stub$Proxy.dispatchAppVisibility(IWindow.java:596)
+04-26 20:34:15.426   736  1958 W WindowManager: 	at com.android.server.wm.WindowState.sendAppVisibilityToClients(WindowState.java:3335)
+04-26 20:34:15.426   736  1958 W WindowManager: 	at com.android.server.wm.WindowContainer.sendAppVisibilityToClients(WindowContainer.java:1245)
+04-26 20:34:15.426   736  1958 W WindowManager: 	at com.android.server.wm.WindowToken.setClientVisible(WindowToken.java:392)
+04-26 20:34:15.426   736  1958 W WindowManager: 	at com.android.server.wm.ActivityRecord.commitVisibility(ActivityRecord.java:5599)
+04-26 20:34:15.426   736  1958 W WindowManager: 	at com.android.server.wm.Transition.finishTransition(Transition.java:1570)
+04-26 20:34:15.426   736  1958 W WindowManager: 	at com.android.server.wm.TransitionController.finishTransition(TransitionController.java:1205)
+04-26 20:34:15.426   736  1958 W WindowManager: 	at com.android.server.wm.WindowOrganizerController.finishTransition(WindowOrganizerController.java:533)
+04-26 20:34:15.426   736  1958 W WindowManager: 	at android.window.IWindowOrganizerController$Stub.onTransact(IWindowOrganizerController.java:265)
+04-26 20:34:15.426   736  1958 W WindowManager: 	at com.android.server.wm.WindowOrganizerController.onTransact(WindowOrganizerController.java:239)
+04-26 20:34:15.426   736  1958 W WindowManager: 	at android.os.Binder.execTransactInternal(Binder.java:1466)
+04-26 20:34:15.426   736  1958 W WindowManager: 	at android.os.Binder.execTransact(Binder.java:1411)
+04-26 20:34:15.426   736  1958 W Process : Unable to open /proc/19096/status
+04-26 20:34:15.432 14925 19294 I Auth    : (REDACTED) [SupervisedAccountIntentOperation] onHandleIntent: %s
+04-26 20:34:15.440 14925 19314 I PackageInstalledIntentO: Test flag v2 is disabled [CONTEXT service_id=469 ]
+04-26 20:34:15.440   736  5314 E RoleControllerServiceImpl: Default/fallback role holder package doesn't qualify for the role, package: com.google.android.gms, role: android.app.role.WALLET, user: 0
+04-26 20:34:15.441   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:15.441   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:15.449  1036  1091 V WindowManagerShell: Playing animation for (#145) android.os.BinderProxy@567143f@0
+04-26 20:34:15.449  1036  1091 D ShellSplitScreen: startAnimation: transition=145 isSplitActive=false
+04-26 20:34:15.451  1036  1091 V ShellRecents: RecentsTransitionHandler.startAnimation: no controller found
+04-26 20:34:15.451  1036  1091 V ShellDesktopMode: DesktopMixedTransitionHandler: No pending desktop transition
+04-26 20:34:15.451  1036  1091 V WindowManagerShell: Transition doesn't have explicit remote, search filters for match for {id=145 t=OPEN f=0x0 trk=0 r=[0@Point(0, 0)] c=[{m=OPEN f=MOVE_TO_TOP leash=Surface(name=Task=117#1599)/@0xde8b50e sb=Rect(0, 0 - 2400, 1080) eb=Rect(0, 0 - 2400, 1080) epz=Point(2400, 1080) d=0 taskParent=-1 winMode=1 userId=0},{m=TO_BACK f=SHOW_WALLPAPER leash=Surface(name=Task=1#34)/@0xa138b2f sb=Rect(0, 0 - 2400, 1080) eb=Rect(0, 0 - 2400, 1080) epz=Point(2400, 1080) d=0 taskParent=-1 winMode=1 userId=0},{m=TO_BACK f=IS_WALLPAPER leash=Surface(name=Surface(name=WallpaperWindowToken{3bea6dd}#54)/@0x4e520e1 - rotation-leash#1594)/@0x414c53c sb=Rect(0, 0 - 1080, 2400) eb=Rect(0, 0 - 2400, 1080) epz=Point(2400, 1080) d=0 r=0->1:-1}]}
+04-26 20:34:15.451  1036  1091 V WindowManagerShell:  Checking filter Pair{{types=[] flags=0x0 notFlags=0x0 checks=[{atype=undefined independent=true modes=[CLOSE,TO_BACK] flags=IN_TASK_WITH_EMBEDDED_ACTIVITY mustBeTask=false order=ANY topActivity=null launchCookie=null taskFragmentToken=android.os.BinderProxy@e90ae30 windowingMode=undefined isCrossDisplayMove=false}]} RemoteTransition { remoteTransition = android.window.IRemoteTransition$Stub$Proxy@1ccfaa9, appThread = android.app.IApplicationThread$Stub$Proxy@5c682e, debugName = overlayBackTransition, filter = {types=[] flags=0x0 notFlags=0x0 checks=[{atype=undefined independent=true modes=[CLOSE,TO_BACK] flags=IN_TASK_WITH_EMBEDDED_ACTIVITY mustBeTask=false order=ANY topActivity=null launchCookie=null taskFragmentToken=android.os.BinderProxy@e90ae30 windowingMode=undefined isCrossDisplayMove=false}]} }}
+04-26 20:34:15.453   736   886 V AccessibilityUserState: updateShortcutTargets: type:accessibility_shortcut_target_service, current:{}, new:{}
+04-26 20:34:15.453   736   886 V AccessibilityUserState: updateShortcutTargets: type:accessibility_button_targets, current:{}, new:{}
+04-26 20:34:15.453   736   886 V AccessibilityUserState: updateShortcutTargets: type:accessibility_gesture_targets, current:{}, new:{}
+04-26 20:34:15.453   736   886 V AccessibilityUserState: updateShortcutTargets: type:accessibility_qs_targets, current:{}, new:{}
+04-26 20:34:15.453   736   886 V AccessibilityUserState: updateShortcutTargets: type:accessibility_key_gesture_targets, current:{}, new:{}
+04-26 20:34:15.453   736   886 V AccessibilityUserState: updateShortcutTargets: type:accessibility_top_row_key_targets, current:{}, new:{}
+04-26 20:34:15.453   736   886 V AccessibilityUserState: updateShortcutTargets: type:accessibility_quick_access_targets, current:{}, new:{}
+04-26 20:34:15.454   736   886 W MagnificationConnectionManager: requestConnection duplicated request: connect=false, mConnectionState=DISCONNECTED
+04-26 20:34:15.451  1036  1091 V WindowManagerShell:  Checking filter Pair{{types=[] flags=0x0 notFlags=0x0 checks=[{atype=dream independent=true modes=[OPEN,TO_FRONT] flags=NONE mustBeTask=false order=ANY topActivity=null launchCookie=null windowingMode=undefined isCrossDisplayMove=false},{atype=home independent=true modes=[CLOSE,TO_BACK] flags=NONE mustBeTask=false order=ANY topActivity=null launchCookie=null windowingMode=undefined isCrossDisplayMove=false}]} RemoteTransition { remoteTransition = android.window.IRemoteTransition$Stub$Proxy@aa8fcf, appThread = android.app.IApplicationThread$Stub$Proxy@98a7d5c, debugName = LauncherToDream, filter = {types=[] flags=0x0 notFlags=0x0 checks=[{atype=dream independent=true modes=[OPEN,TO_FRONT] flags=NONE mustBeTask=false order=ANY topActivity=null launchCookie=null windowingMode=undefined isCrossDisplayMove=false},{atype=home independent=true modes=[CLOSE,TO_BACK] flags=NONE mustBeTask=false order=ANY topActivity=null launchCookie=null windowingMode=undefined isCrossDisplayMove=false}]} }}
+04-26 20:34:15.454  1036  1091 V WindowManagerShell:  Checking filter Pair{{types=[] flags=0x0 notFlags=0x0 checks=[{atype=standard independent=false modes=[CHANGE] flags=NONE mustBeTask=true order=ANY topActivity=null launchCookie=null windowingMode=undefined isCrossDisplayMove=true}]} RemoteTransition { remoteTransition = android.window.IRemoteTransition$Stub$Proxy@3519865, appThread = android.app.IApplicationThread$Stub$Proxy@94ad93a, debugName = QuickstepDisplayMove, filter = {types=[] flags=0x0 notFlags=0x0 checks=[{atype=standard independent=false modes=[CHANGE] flags=NONE mustBeTask=true order=ANY topActivity=null launchCookie=null windowingMode=undefined isCrossDisplayMove=true}]} }}
+04-26 20:34:15.454  1036  1091 V WindowManagerShell:  Checking filter Pair{{types=[] flags=0x0 notFlags=0x100 checks=[{atype=home independent=true modes=[OPEN,TO_FRONT] flags=NONE mustBeTask=false order=ANY topActivity=ComponentInfo{com.google.android.apps.nexuslauncher/com.google.android.apps.nexuslauncher.NexusLauncherActivity} launchCookie=null windowingMode=undefined isCrossDisplayMove=false},{atype=standard independent=true modes=[CLOSE,TO_BACK] flags=NONE mustBeTask=false order=ANY topActivity=null launchCookie=null windowingMode=undefined isCrossDisplayMove=false},{NOT atype=undefined independent=true modes=[] flags=NONE mustBeTask=true order=ANY topActivity=null launchCookie=null customAnim=true windowingMode=undefined isCrossDisplayMove=false}]} RemoteTransition { remoteTransition = android.window.IRemoteTransition$Stub$Proxy@fea59eb, appThread = android.app.IApplicationThread$Stub$Proxy@4f01348, debugName = QuickstepLaunchHome, filter = {types=[] flags=0x0 notFlags=0x100 checks=[{atype=home independent=true modes=[OPEN,TO_FRONT] flags=NONE mustBeTask=false order=ANY topActivity=ComponentInfo{com.google.android.apps.nexuslauncher/com.google.android.apps.nexuslauncher.NexusLauncherActivity} launchCookie=null windowingMode=undefined isCrossDisplayMove=false},{atype=standard independent=true modes=[CLOSE,TO_BACK] flags=NONE mustBeTask=false order=ANY topActivity=null launchCookie=null windowingMode=undefined isCrossDisplayMove=false},{NOT atype=undefined independent=true modes=[] flags=NONE mustBeTask=true order=ANY topActivity=null launchCookie=null customAnim=true windowingMode=undefined isCrossDisplayMove=false}]} }}
+04-26 20:34:15.455  1036  1091 V WindowManagerShell:  Checking filter Pair{{types=[OPEN,TO_FRONT] flags=0x0 notFlags=0x0 checks=[{atype=standard independent=true modes=[OPEN,TO_FRONT] flags=NONE mustBeTask=true order=ANY topActivity=null launchCookie=null windowingMode=freeform isCrossDisplayMove=false}]} RemoteTransition { remoteTransition = android.window.IRemoteTransition$Stub$Proxy@5987ffe, appThread = null, debugName = DesktopWindowLimitUnminimize, filter = {types=[OPEN,TO_FRONT] flags=0x0 notFlags=0x0 checks=[{atype=standard independent=true modes=[OPEN,TO_FRONT] flags=NONE mustBeTask=true order=ANY topActivity=null launchCookie=null windowingMode=freeform isCrossDisplayMove=false}]} }}
+04-26 20:34:15.455  1036  1091 V WindowManagerShell:  Delegate animation for (#145) to null
+04-26 20:34:15.456  1036  1091 V WindowManagerShell: start default transition animation, info = {id=145 t=OPEN f=0x0 trk=0 r=[0@Point(0, 0)] c=[{m=OPEN f=MOVE_TO_TOP leash=Surface(name=Task=117#1599)/@0xde8b50e sb=Rect(0, 0 - 2400, 1080) eb=Rect(0, 0 - 2400, 1080) epz=Point(2400, 1080) d=0 taskParent=-1 winMode=1 userId=0},{m=TO_BACK f=SHOW_WALLPAPER leash=Surface(name=Task=1#34)/@0xa138b2f sb=Rect(0, 0 - 2400, 1080) eb=Rect(0, 0 - 2400, 1080) epz=Point(2400, 1080) d=0 taskParent=-1 winMode=1 userId=0},{m=TO_BACK f=IS_WALLPAPER leash=Surface(name=Surface(name=WallpaperWindowToken{3bea6dd}#54)/@0x4e520e1 - rotation-leash#1594)/@0x414c53c sb=Rect(0, 0 - 1080, 2400) eb=Rect(0, 0 - 2400, 1080) epz=Point(2400, 1080) d=0 r=0->1:-1}]}
+04-26 20:34:15.456  1036  1091 V WindowManagerShell: loadAnimation: anim=android.view.animation.AnimationSet@cea57e6 animAttr=0x13 type=OPEN isEntrance=false
+04-26 20:34:15.457  1036  1091 V WindowManagerShell: loadAnimation: anim=android.view.animation.AnimationSet@c8f357d animAttr=0x12 type=OPEN isEntrance=true
+04-26 20:34:15.460   736  5314 W SignedPackage: Cannot get ApplicationInfo for package: com.google.android.devicelockcontroller
+04-26 20:34:15.462 14925 14925 D BoundBrokerSvc: onBind: Intent { act=com.google.android.gms.common.BIND_SHARED_PREFS xflg=0x4 pkg=com.google.android.gms }
+04-26 20:34:15.462 14925 14925 D BoundBrokerSvc: Loading bound service for intent: Intent { act=com.google.android.gms.common.BIND_SHARED_PREFS xflg=0x4 pkg=com.google.android.gms }
+04-26 20:34:15.468  1219  1219 D BaseActivity: Launcher flags updated: [state_started] -[state_window_focused]
+04-26 20:34:15.468 14925 19288 W SQLiteLog: (28) double-quoted string literal: "com.muonline.client"
+04-26 20:34:15.469  1219  1219 V BaseDepthController: Applying blur: 0 to Surface(name=VRI-com.google.android.apps.nexuslauncher/com.google.android.apps.nexuslauncher.NexusLauncherActivity#1590)/@0xd45637f applyImmediately: false
+04-26 20:34:15.470  1219  1219 D BaseDepthController: setEarlyWakeup: false
+04-26 20:34:15.470  1219  1219 D BaseDepthController: shouldBlurWorkspace: false targetState: Normal currentStableState: Normal mCurrentBlur: 0 mLauncher.getDepthBlurTargets(): [com.android.launcher3.Workspace{573bc60 V.ED..... ........ 0,0-1080,2400 #7f0a047d app:id/workspace}, com.android.launcher3.Hotseat{7eca519 V.ED..... .......D 0,1905-1080,2400 #7f0a01f1 app:id/hotseat}]
+04-26 20:34:15.470   566   566 E BpTransactionCompletedListener: Failed to transact (-32)
+04-26 20:34:15.470   566   566 E BpTransactionCompletedListener: Failed to transact (-32)
+04-26 20:34:15.472   736   736 W Looper  : Slow dispatch took 108ms main app=system_server main=true group=FOREGROUND h=com.android.server.accessibility.AccessibilityManagerService$MainHandler c=<recycled PooledLambda@5a84044> m=0
+04-26 20:34:15.472   736   736 W Looper  : Slow delivery took 204ms main app=system_server main=true group=FOREGROUND h=com.android.server.accessibility.AccessibilityManagerService$MainHandler c=<recycled PooledLambda@f8f5a62> m=0
+04-26 20:34:15.472   736   736 W libbinder.IPCThreadState: Sending oneway calls to frozen process.
+04-26 20:34:15.475 14925 19314 I NearbyDiscovery: (REDACTED) processGrantSlicePermission: %s
+04-26 20:34:15.481  1036  1091 V WindowManagerShell:  animated by com.android.wm.shell.transition.DefaultTransitionHandler@11f9e32
+04-26 20:34:15.481  1036  1091 V ShellTaskOrganizer: Task vanished taskId=116
+04-26 20:34:15.481  1036  1091 V ShellTaskOrganizer: Fullscreen Task Vanished: #116
+04-26 20:34:15.481  1036  1091 V ShellDesktopMode: Task Vanished: #116 closed=true
+04-26 20:34:15.482  1036  1091 V RecentTasksController: Notify recent tasks changed
+04-26 20:34:15.482  1036  1091 D ShellDesktopMode: AppToWebRepository: Task 116 is vanishing. Removing task data from repository
+04-26 20:34:15.486  1219  1219 D RecentTasksList: invalidateLoadedTasks - previous requestLoadId: -1
+04-26 20:34:15.486  1219  1219 D RecentTasksList: invalidateLoadedTasks - previous requestLoadId: -1
+04-26 20:34:15.487  4164  4164 I Finsky  : [2] Memory trim requested to level 40
+04-26 20:34:15.487  1036  1091 V AppCompat: SingleSurfaceLetterboxController: [117]
+04-26 20:34:15.487  1036  1091 V AppCompat: MultiSurfaceLetterboxController: []
+04-26 20:34:15.487  1036  1091 V AppCompat: LetterboxInputController: [117]
+04-26 20:34:15.487  4164  4164 I Finsky  : [2] Flushing in-memory image cache
+04-26 20:34:15.487  1036  1091 V AppCompat: RoundedCornersLetterboxController: {}
+04-26 20:34:15.488  1219  1219 D RecentsView: onTaskRemoved: 116, not handling task stack changes
+04-26 20:34:15.488  1219  1219 D RecentsView: onTaskRemoved: 116, not handling task stack changes
+04-26 20:34:15.494   736  1958 W WindowManager: Failed looking up window session=Session{597bd89 1036:u0a10196} callers=com.android.server.wm.WindowManagerService.removeClientToken:2272 com.android.server.wm.Session.remove:282 android.view.IWindowSession$Stub.onTransact:637 
+04-26 20:34:15.501  1036  1091 V RecentTasksController: generateList(getRecentTasks)
+04-26 20:34:15.501  1036  1091 V RecentTasksController: initializeDesksMap - allDeskIds: []
+04-26 20:34:15.501  1036  1091 V RecentTasksController: Task 117 is not an active desktop task
+04-26 20:34:15.501  1036  1091 V RecentTasksController: Added fullscreen task: 117
+04-26 20:34:15.501  1036  1091 V RecentTasksController: generateList - complete
+04-26 20:34:15.502   736  1958 E AppOps  : attributionTag VCN not declared in manifest of android
+04-26 20:34:15.505  1219  1219 D RecentTasksList: invalidateLoadedTasks - previous requestLoadId: -1
+04-26 20:34:15.520   736   736 W libbinder.IPCThreadState: Sending oneway calls to frozen process.
+04-26 20:34:15.521   736   736 W libbinder.IPCThreadState: Sending oneway calls to frozen process.
+04-26 20:34:15.521   736   736 W libbinder.IPCThreadState: Sending oneway calls to frozen process.
+04-26 20:34:15.522   736   736 V AccessibilityManagerService: onUserStateChangedLocked for userId: 0, forceUpdate: false
+04-26 20:34:15.527   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:15.541   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:15.541   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:15.547   736   736 V AccessibilityUserState: updateShortcutTargets: type:accessibility_shortcut_target_service, current:{}, new:{}
+04-26 20:34:15.547   736   736 V AccessibilityUserState: updateShortcutTargets: type:accessibility_button_targets, current:{}, new:{}
+04-26 20:34:15.547   736   736 V AccessibilityUserState: updateShortcutTargets: type:accessibility_gesture_targets, current:{}, new:{}
+04-26 20:34:15.547   736   736 V AccessibilityUserState: updateShortcutTargets: type:accessibility_qs_targets, current:{}, new:{}
+04-26 20:34:15.547   736   736 V AccessibilityUserState: updateShortcutTargets: type:accessibility_key_gesture_targets, current:{}, new:{}
+04-26 20:34:15.547   736   736 V AccessibilityUserState: updateShortcutTargets: type:accessibility_top_row_key_targets, current:{}, new:{}
+04-26 20:34:15.547   736   736 V AccessibilityUserState: updateShortcutTargets: type:accessibility_quick_access_targets, current:{}, new:{}
+04-26 20:34:15.547   736   736 W MagnificationConnectionManager: requestConnection duplicated request: connect=false, mConnectionState=DISCONNECTED
+04-26 20:34:15.547 19303 19303 D CompatChangeReporter: Compat change id reported: 242716250; UID 10230; state: ENABLED
+04-26 20:34:15.558   736   954 I AdbWifiNetworkMonitor: Wi-Fi network available
+04-26 20:34:15.558   736   954 I AdbWifiNetworkMonitor: Received the same Wi-Fi SSID. Ignoring.
+04-26 20:34:15.564   736   736 W libbinder.IPCThreadState: Sending oneway calls to frozen process.
+04-26 20:34:15.564   736   736 W libbinder.IPCThreadState: Sending oneway calls to frozen process.
+04-26 20:34:15.565   736   736 W libbinder.IPCThreadState: Sending oneway calls to frozen process.
+04-26 20:34:15.565   736   736 W libbinder.IPCThreadState: Sending oneway calls to frozen process.
+04-26 20:34:15.567 19303 19303 D nativeloader: Configuring clns-9 for other apk /data/app/~~fh3dKMzGW-hWLObaNsKscw==/com.muonline.client-10b8MwnPzBP3EIh-OShiww==/base.apk. target_sdk_version=34, uses_libraries=, library_path=/data/app/~~fh3dKMzGW-hWLObaNsKscw==/com.muonline.client-10b8MwnPzBP3EIh-OShiww==/lib/x86_64:/data/app/~~fh3dKMzGW-hWLObaNsKscw==/com.muonline.client-10b8MwnPzBP3EIh-OShiww==/base.apk!/lib/x86_64, permitted_path=/data:/mnt/expand:/data/user/0/com.muonline.client
+04-26 20:34:15.580 19303 19303 V GraphicsEnvironment: Currently set values for:
+04-26 20:34:15.580 19303 19303 V GraphicsEnvironment:   angle_gl_driver_selection_pkgs=[]
+04-26 20:34:15.584 19303 19303 V GraphicsEnvironment:   angle_gl_driver_selection_values=[]
+04-26 20:34:15.584 19303 19303 V GraphicsEnvironment: com.muonline.client is not listed in per-application setting
+04-26 20:34:15.584 19303 19303 V GraphicsEnvironment: No special selections for ANGLE, returning default driver choice
+04-26 20:34:15.589  1219  1219 D ScalingWorkspaceRevealAnim: onAnimationEnd, workspace and hotseat are visible
+04-26 20:34:15.590   736   921 I HalDevMgr: bestIfaceCreationProposal is null, requestIface=STA, existingIface=[name=wlan0 type=STA]
+04-26 20:34:15.590  1219  1219 V BaseDepthController: Applying blur: 0 to Surface(name=VRI-com.google.android.apps.nexuslauncher/com.google.android.apps.nexuslauncher.NexusLauncherActivity#1590)/@0xd45637f applyImmediately: false
+04-26 20:34:15.590  1219  1219 D BaseDepthController: shouldBlurWorkspace: false targetState: Normal currentStableState: Normal mCurrentBlur: 0 mLauncher.getDepthBlurTargets(): [com.android.launcher3.Workspace{573bc60 V.ED..... ......ID 0,0-1080,2400 #7f0a047d app:id/workspace}, com.android.launcher3.Hotseat{7eca519 V.ED..... ......ID 0,1905-1080,2400 #7f0a01f1 app:id/hotseat}]
+04-26 20:34:15.599  1366 12724 I NullBinder: NullBinder for android.net.action.RECOMMEND_NETWORKS triggering remote TransactionTooLargeException due to Service without Chimera impl, calling uid: 1000, calling pid: 0
+04-26 20:34:15.599  1366 12724 W libbinder.Binder: Large reply transaction of 1056768 bytes, interface descriptor , function: UNKNOWN_FUNCTION_NAME, code: 1, flags: 17
+04-26 20:34:15.602 19303 19303 V GraphicsEnvironment: Neither updatable production driver nor prerelease driver is supported.
+04-26 20:34:15.626  1160  1312 D IpClient/wlan0: interfaceLinkStateChanged: ifindex 16 up
+04-26 20:34:15.628 14925 14976 I Icing   : IndexChimeraService.getServiceInterface callingPackage=com.google.android.gms componentName=AppsCorpus serviceId=36
+04-26 20:34:15.634  1160  1312 D IpClient/wlan0: interfaceLinkStateChanged: ifindex 16 up
+04-26 20:34:15.634 14925 14925 D BoundBrokerSvc: onBind: Intent { act=com.google.android.gms.feedback.internal.IFeedbackService dat=chimera-action:/... xflg=0x4 cmp=com.google.android.gms/.chimera.GmsBoundBrokerService }
+04-26 20:34:15.634 14925 14925 D BoundBrokerSvc: Loading bound service for intent: Intent { act=com.google.android.gms.feedback.internal.IFeedbackService dat=chimera-action:/... xflg=0x4 cmp=com.google.android.gms/.chimera.GmsBoundBrokerService }
+04-26 20:34:15.643   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:15.644   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:15.644   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:15.665 19303 19328 I DisplayManager: Choreographer implicitly registered for the refresh rate.
+04-26 20:34:15.673  1219  1228 I s.nexuslauncher: NativeAlloc concurrent mark compact GC freed 1987KB AllocSpace bytes, 3(96KB) LOS objects, 49% free, 6409KB/12MB, paused 10.093ms,20.427ms total 132.755ms
+04-26 20:34:15.681  1219  1230 W System  : A resource failed to call release. 
+04-26 20:34:15.681  1219  1230 W System  : A resource failed to call release. 
+04-26 20:34:15.681  1219  1230 W System  : A resource failed to call release. 
+04-26 20:34:15.703 19303 19328 I GFXSTREAM: [eglDisplay.cpp(297)] Opening libGLESv1_CM_emulation.so
+04-26 20:34:15.705 19303 19328 I GFXSTREAM: [eglDisplay.cpp(297)] Opening libGLESv2_emulation.so
+04-26 20:34:15.720 19303 19328 W HWUI    : Failed to choose config with EGL_SWAP_BEHAVIOR_PRESERVED, retrying without...
+04-26 20:34:15.721 19303 19328 W HWUI    : Failed to initialize 101010-2 format, error = EGL_SUCCESS
+04-26 20:34:15.746   736   736 W Looper  : Slow dispatch took 126ms main app=system_server main=true group=FOREGROUND h=android.app.ActivityThread$H c=android.app.LoadedApk$ReceiverDispatcher$Args$$ExternalSyntheticLambda0@f8dbdc3 m=0
+04-26 20:34:15.756   736   748 I system_server: Background young concurrent mark compact GC freed 22MB AllocSpace bytes, 19(992KB) LOS objects, 36% free, 37MB/59MB, paused 5.359ms,49.745ms total 200.239ms
+04-26 20:34:15.765   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:15.769   736   736 W libbinder.IPCThreadState: Sending oneway calls to frozen process.
+04-26 20:34:15.770   736   736 W libbinder.IPCThreadState: Sending oneway calls to frozen process.
+04-26 20:34:15.771   736   736 W libbinder.IPCThreadState: Sending oneway calls to frozen process.
+04-26 20:34:15.772 14925 15001 I Icing   : Usage reports ok 1, Failed Usage reports 0, indexed 0, rejected 0
+04-26 20:34:15.772   736   736 W libbinder.IPCThreadState: Sending oneway calls to frozen process.
+04-26 20:34:15.775 19303 19303 D DesktopExperienceFlags: Toggle override initialized to: false
+04-26 20:34:15.775 19303 19303 D DesktopModeFlags: Toggle override initialized to: OVERRIDE_UNSET
+04-26 20:34:15.783   736   736 W libbinder.IPCThreadState: Sending oneway calls to frozen process.
+04-26 20:34:15.784   736   736 W libbinder.IPCThreadState: Sending oneway calls to frozen process.
+04-26 20:34:15.784   736   736 W libbinder.IPCThreadState: Sending oneway calls to frozen process.
+04-26 20:34:15.788   736   736 W libbinder.IPCThreadState: Sending oneway calls to frozen process.
+04-26 20:34:15.788   736   750 W System  : A resource failed to call close. 
+04-26 20:34:15.789   736   750 W System  : A resource failed to call close. 
+04-26 20:34:15.790  1036  1091 V WindowManagerShell: Transition animation finished (aborted=false), notifying core (#145) android.os.BinderProxy@567143f@0
+04-26 20:34:15.795 14925 14992 I Icing   : IndexChimeraService.getServiceInterface callingPackage=com.google.android.gms componentName=null serviceId=30
+04-26 20:34:15.797   736   759 V WindowManager: Finish Transition (#145): created at 04-26 20:34:15.158 collect-started=0.064ms request-sent=92.841ms started=128.31ms ready=180.256ms sent=184.531ms commit=143.792ms finished=639.153ms
+04-26 20:34:15.800  1219  1219 D VRI[NexusLauncherActivity]: visibilityChanged oldVisibility=true newVisibility=false
+04-26 20:34:15.802  1219  1219 D SmartspaceInteractor: notifySmartspaceEvent: SmartspaceTargetEvent{mSmartspaceTarget=null, mSmartspaceActionId='null', mEventType=7}
+04-26 20:34:15.803  1036  1344 D WallpaperService: onVisibilityChanged(false): com.android.systemui.wallpapers.ImageWallpaper$CanvasEngine@85e2344
+04-26 20:34:15.814  1036  1091 V WindowManagerShell: Track 0 became idle
+04-26 20:34:15.815  1036  1091 V WindowManagerShell: All active transition animations finished
+04-26 20:34:15.818  1036  1091 D Bubbles : BubbleData.onLocusVisibilityChanged() locusId=Overview|DISABLED visible=false taskId=1
+04-26 20:34:15.830   736   736 W Looper  : Drained
+04-26 20:34:15.833 19303 19303 W HWUI    : Unknown dataspace 0
+04-26 20:34:15.842 19303 19303 D InsetsController: Setting requestedVisibleTypes to 496 (was 503)
+04-26 20:34:15.845   736  1957 W InputChannel-JNI: Channel already disposed.
+04-26 20:34:15.855 19303 19303 D VRI[PreloadActivity]: WindowInsets changed: 2268x1080 statusBars:[0,74,0,0] navigationBars:[0,0,0,63] mandatorySystemGestures:[0,74,0,84] 
+04-26 20:34:15.855 19303 19303 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): android.view.ViewRootImpl$$ExternalSyntheticLambda13@7a716e3
+04-26 20:34:15.856 19303 19303 I HWUI    : Using FreeType backend (prop=Auto)
+04-26 20:34:15.856   736  2221 D CoreBackPreview: Window{ca554a5 u0 com.muonline.client/com.muonline.client.PreloadActivity}: Setting back callback OnBackInvokedCallbackInfo{mCallback=android.window.IOnBackInvokedCallback$Stub$Proxy@6a32c88, mPriority=0, mIsAnimationCallback=false, mOverrideBehavior=0}
+04-26 20:34:15.861 14925 15001 I Icing   : Usage reports ok 0, Failed Usage reports 0, indexed 0, rejected 0
+04-26 20:34:15.864   736  1957 D WindowManager: setClientSurface Surface(name=VRI-com.muonline.client/com.muonline.client.PreloadActivity#1613)/@0x43b9621 for ca554a5 com.muonline.client/com.muonline.client.PreloadActivity
+04-26 20:34:15.864   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:15.870   566   598 I libbinder.BpBinder: onLastStrongRef automatically unlinking death recipients for binder (0x7eaa36067cb0) with descriptor: '(not cached)'
+04-26 20:34:15.874 19303 19303 I Surface : Creating surface for consumer unnamed-19303-0 with slotExpansion=1 for 64 slots
+04-26 20:34:15.877 19303 19303 I Surface : Creating surface for consumer VRI[PreloadActivity]#0(BLAST Consumer)0 with slotExpansion=1 for 64 slots
+04-26 20:34:15.878 19303 19303 D VRI[PreloadActivity]: WindowInsets changed: statusBars:null navigationBars:null 
+04-26 20:34:15.898 14925 15001 I Icing   : Indexing com.google.android.gms-apps from com.google.android.gms
+04-26 20:34:15.905 19303 19331 I MuPreload: Check data root: /storage/emulated/0/Android/data/com.muonline.client/files existingDataDir=/storage/emulated/0/Android/data/com.muonline.client/files/Data usable=true marker=true
+04-26 20:34:15.937 14925 15001 I Icing   : Indexing done com.google.android.gms-apps
+04-26 20:34:15.937 19303 19331 I MuPreload: Skip download, usable data exists: /storage/emulated/0/Android/data/com.muonline.client/files/Data markerWasPresent=true
+04-26 20:34:15.939   736  1957 W ActivityManager: Skipping manifest association check for null package. SourceUid: 10214, SourcePkg: null, TargetUid: 10214, TargetPkg: com.google.android.gms
+04-26 20:34:15.985   736   759 I ActivityTaskManager: Displayed com.muonline.client/.PreloadActivity for user 0: +832ms
+04-26 20:34:16.009   736   881 I ImeTracker: com.muonline.client:ab526964: onRequestHide at ORIGIN_SERVER reason HIDE_UNSPECIFIED_WINDOW fromUser false userId 0 displayId 0
+04-26 20:34:16.010  1219  1219 D BaseActivity: Launcher flags updated: [] -[state_started]
+04-26 20:34:16.010  1219  1219 D BaseDepthController: setSurface:
+04-26 20:34:16.010  1219  1219 D BaseDepthController: 	mWaitingOnSurfaceValidity: false
+04-26 20:34:16.010  1219  1219 D BaseDepthController: 	mBaseSurface: null
+04-26 20:34:16.010  1219  1219 D BaseDepthController: mSurface is null and mCurrentBlur is: 0
+04-26 20:34:16.011  1219  1219 D LauncherStateManager: StateManager.goToState: fromState: Normal, toState: Normal, partial trace:
+04-26 20:34:16.011  1219  1219 D LauncherStateManager: 	at com.android.launcher3.statemanager.StateManager.moveToRestState(go/retraceme 7226a759aa2bb3787a79806f85d80eaad84f1f1e15acd6db988f2df789d1680d:26)
+04-26 20:34:16.011  1219  1219 D LauncherStateManager: 	at com.android.launcher3.statemanager.StateManager.moveToRestState(go/retraceme 7226a759aa2bb3787a79806f85d80eaad84f1f1e15acd6db988f2df789d1680d:35)
+04-26 20:34:16.011  1219  1219 D LauncherStateManager: 	at com.android.launcher3.statemanager.StatefulActivity.onStop(go/retraceme 7226a759aa2bb3787a79806f85d80eaad84f1f1e15acd6db988f2df789d1680d:31)
+04-26 20:34:16.011  1219  1219 D LauncherStateManager: StateManager.onRepeatStateSetAborted: state: Normal
+04-26 20:34:16.011  1219  1219 D KeyboardStateManager: hideKeyboard
+04-26 20:34:16.011  1219  1219 D KeyboardStateManager: isImeShown: false
+04-26 20:34:16.011  1219  1219 D StatsLog: LAUNCHER_ONSTOP
+04-26 20:34:16.013  1219  1219 D StatsLog: LAUNCHER_GOOGLE_SEARCH_RESTORE_LIST_SIZE_AFTER_ACTIVITY_RESTART
+04-26 20:34:16.014 19303 19303 D InsetsController: hide(ime())
+04-26 20:34:16.014 19303 19303 I ImeTracker: com.muonline.client:ab526964: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+04-26 20:34:16.017   736  1145 D InputMethodManagerService: Attach new input but force hide
+04-26 20:34:16.017   736  1145 I ImeTracker: com.muonline.client:6f2bce21: onRequestHide at ORIGIN_SERVER reason HIDE_SOFT_INPUT fromUser false userId 0 displayId 0
+04-26 20:34:16.018   736  1145 I ImeTracker: com.muonline.client:6f2bce21: onCancelled at PHASE_SERVER_SHOULD_HIDE
+04-26 20:34:16.018   736  1145 W InputChannel-JNI: Channel already disposed.
+04-26 20:34:16.020  4105  4105 I GoogleInputMethodService: GoogleInputMethodService.onFinishInput():2113 
+04-26 20:34:16.021  4105  4105 I Module  : DeviceLockedStatusModuleProvider$Module.updateDeviceLockedStatus():103 repeatCheckTimes = 0, locked = false
+04-26 20:34:16.026  4105  4105 I GoogleInputMethodService: GoogleInputMethodService.onStartInput():1384 onStartInput(EditorInfo{EditorInfo{packageName=com.muonline.client, inputType=0, inputTypeString=NULL, enableLearning=false, autoCorrection=false, autoComplete=false, imeOptions=0, privateImeOptions=null, actionName=UNSPECIFIED, actionLabel=null, initialSelStart=-1, initialSelEnd=-1, initialCapsMode=0, label=null, fieldId=0, fieldName=null, extras=null, hintText=null, hintLocales=[]}}, false)
+04-26 20:34:16.026   736  1145 I ImeTracker: system_server:6540965: onRequestHide at ORIGIN_SERVER reason IME_REQUESTED_CHANGED_LISTENER fromUser false displayId 0
+04-26 20:34:16.026  4105  4105 W AndroidIME: LatinIMEBase.updateInputViewCoverNavigation():319 Null input view, cannot update padding!
+04-26 20:34:16.026   736   762 I ImeTracker: system_server:6540965: onCancelled at PHASE_SERVER_SHOULD_HIDE
+04-26 20:34:16.028  4105  4105 I Module  : DeviceLockedStatusModuleProvider$Module.updateDeviceLockedStatus():103 repeatCheckTimes = 1, locked = false
+04-26 20:34:16.031   736  1145 W PackageConfigPersister: App-specific configuration not found for packageName: com.muonline.client and userId: 0
+04-26 20:34:16.033  4105  4118 I putmethod.latin: Waiting for a blocking GC ProfileSaver
+04-26 20:34:16.055  4105  4110 W putmethod.latin: Reducing the number of considered missed Gc histogram windows from 299 to 100
+04-26 20:34:16.055  4105  4118 I putmethod.latin: WaitForGcToComplete blocked ProfileSaver on Background for 22.153ms
+04-26 20:34:16.236  4511  4527 W libbinder.Binder: Binder transaction to android.content.IContentProvider, function: UNKNOWN_FUNCTION_NAME, code: 21, took 1767ms. Data bytes: 480 Reply bytes: 432 Flags: 18
+04-26 20:34:16.291   736  1953 V GrammaticalInflectionUtils: AttributionSource: android.content.AttributionSource@d322a4fb does not have READ_SYSTEM_GRAMMATICAL_GENDER permission.
+04-26 20:34:16.298  1036  1091 V WindowManagerShell: Transition requested (#146): android.os.BinderProxy@bcdfd3b TransitionRequestInfo { type = OPEN, triggerTask = TaskInfo{userId=0 taskId=117 effectiveUid=10230 displayId=0 isRunning=true baseIntent=Intent { flg=0x10000000 cmp=com.muonline.client/.PreloadActivity } baseActivity=ComponentInfo{com.muonline.client/com.muonline.client.PreloadActivity} topActivity=ComponentInfo{com.muonline.client/com.muonline.client.MuMainActivity} origActivity=null realActivity=ComponentInfo{com.muonline.client/com.muonline.client.PreloadActivity} realActivityIsAppLockEnabled=false numActivities=2 lastActiveTime=18230892 supportsMultiWindow=true supportsMultiWindowWithoutConstraints=true resizeMode=1 isResizeable=true minWidth=-1 minHeight=-1 defaultMinSize=220 token=WCT{android.os.BinderProxy@cc9010c} topActivityType=1 pictureInPictureParams=null shouldDockBigOverlays=false launchIntoPipHostTaskId=-1 lastParentTaskIdBeforePip=-1 displayCutoutSafeInsets=Rect(132, 0 - 0, 0) topActivityInfo=ActivityInfo{7efc58 com.muonline.client.MuMainActivity} launchCookies=[] positionInParent=Point(0, 0) parentTaskId=-1 isFocused=true isInteractive=false isVisible=true isVisibleRequested=true isTopActivityNoDisplay=false isSleeping=false locusId=null displayAreaFeatureId=1 isTopActivityTransparent=false isActivityStackTransparent=false lastNonFullscreenBounds=null leafTaskBoundsFromOptions= false capturedLink=null capturedLinkTimestamp=0 requestedVisibleTypes=503 topActivityRequestOpenInBrowserEducationTimestamp=0 appCompatTaskInfo=AppCompatTaskInfo { topActivityInSizeCompat=false isLeafTask= true eligibleForLetterboxEducation= false isLetterboxEducationEnabled= true isLetterboxDoubleTapEnabled= false eligibleForUserAspectRatioButton= false topActivityBoundsLetterboxed= false isFromLetterboxDoubleTap= false topActivityLetterboxVerticalPosition= -1 topActivityLetterboxHorizontalPosition= -1 topActivityLetterboxWidth=-1 topActivityLetterboxHeight=-1 topActivityAppBounds=Rect(132, 0 - 2400, 1017) isUserFullscreenOverrideEnabled=false isSystemFullscreenOverrideEnabled=false hasMinAspectRatioOverride=false topActivityLetterboxBounds=null topNonResizableActivityAspectRatio=-1.0} topActivityMainWindowFrame=null isAppBubble=false}, pipChange = null, remoteTransitionInfo = null, displayChange = null, requestedLocation = null, userChange = null, windowingLayerChange = null, fullscreenRequestChange = null, flags = 0, debugId = 146 }
+04-26 20:34:16.298  1036  1091 W DisconnectHandler: No disconnect change found in the transition, not handling request.
+04-26 20:34:16.298   736  1953 V ActivityTaskManager: TaskLaunchParamsModifier: phase=3 task=Task{8681873 #117 type=standard A=10230:com.muonline.client} activity=ActivityRecord{6637969 u0 com.muonline.client/.MuMainActivity t-1} display-area-from-source=DefaultTaskDisplayArea@125646128 display-id=0 task-display-area-windowing-mode=1 suggested-display-area=DefaultTaskDisplayArea@125646128 inherit-from-source=fullscreen non-freeform-task-display-area display-area=DefaultTaskDisplayArea@125646128 skip-bounds-fullscreen
+04-26 20:34:16.298   736  1953 I ActivityTaskManager: START u0 {flg=0x14000000 xflg=0x4 cmp=com.muonline.client/.MuMainActivity} with LAUNCH_SINGLE_TASK from uid 10230 (com.muonline.client) (sr=230885002) (BAL_ALLOW_VISIBLE_WINDOW) result code=0
+04-26 20:34:16.298  1036  1091 V ShellDesktopMode: DesktopTasksController: skipping handleRequest reason=triggerTask's display doesn't support desktop mode
+04-26 20:34:16.298  1036  1091 D ShellSplitScreen: logExit: no-op, mLoggerSessionId is null
+04-26 20:34:16.320 19303 19303 I MuMain  : MuMainActivity onCreate
+04-26 20:34:16.328 19303 19303 I MuMain  : extractGameAssets -> /storage/emulated/0/Android/data/com.muonline.client/files
+04-26 20:34:16.337 19303 19303 V SDL     : Device: emu64xa16k
+04-26 20:34:16.338 19303 19303 V SDL     : Model: sdk_gphone16k_x86_64
+04-26 20:34:16.338 19303 19303 V SDL     : onCreate()
+04-26 20:34:16.340 19303 19303 D nativeloader: Load /data/app/~~fh3dKMzGW-hWLObaNsKscw==/com.muonline.client-10b8MwnPzBP3EIh-OShiww==/lib/x86_64/libmpg123.so using class loader ns clns-9 (caller=/data/app/~~fh3dKMzGW-hWLObaNsKscw==/com.muonline.client-10b8MwnPzBP3EIh-OShiww==/base.apk): ok
+04-26 20:34:16.343 19303 19303 D nativeloader: Load /data/app/~~fh3dKMzGW-hWLObaNsKscw==/com.muonline.client-10b8MwnPzBP3EIh-OShiww==/lib/x86_64/libSDL2.so using class loader ns clns-9 (caller=/data/app/~~fh3dKMzGW-hWLObaNsKscw==/com.muonline.client-10b8MwnPzBP3EIh-OShiww==/base.apk): ok
+04-26 20:34:16.345 19303 19337 W InteractionJankMonitor: Initializing without READ_DEVICE_CONFIG permission. enabled=false, interval=1, missedFrameThreshold=3, frameTimeThreshold=64, package=com.muonline.client
+04-26 20:34:16.345 19303 19303 D nativeloader: Load /data/app/~~fh3dKMzGW-hWLObaNsKscw==/com.muonline.client-10b8MwnPzBP3EIh-OShiww==/lib/x86_64/libSDL2_image.so using class loader ns clns-9 (caller=/data/app/~~fh3dKMzGW-hWLObaNsKscw==/com.muonline.client-10b8MwnPzBP3EIh-OShiww==/base.apk): ok
+04-26 20:34:16.346 19303 19303 D nativeloader: Load /data/app/~~fh3dKMzGW-hWLObaNsKscw==/com.muonline.client-10b8MwnPzBP3EIh-OShiww==/lib/x86_64/libSDL2_mixer.so using class loader ns clns-9 (caller=/data/app/~~fh3dKMzGW-hWLObaNsKscw==/com.muonline.client-10b8MwnPzBP3EIh-OShiww==/base.apk): ok
+04-26 20:34:16.347 19303 19303 D nativeloader: Load /data/app/~~fh3dKMzGW-hWLObaNsKscw==/com.muonline.client-10b8MwnPzBP3EIh-OShiww==/lib/x86_64/libSDL2_ttf.so using class loader ns clns-9 (caller=/data/app/~~fh3dKMzGW-hWLObaNsKscw==/com.muonline.client-10b8MwnPzBP3EIh-OShiww==/base.apk): ok
+04-26 20:34:16.347 19303 19303 D nativeloader: Load /data/app/~~fh3dKMzGW-hWLObaNsKscw==/com.muonline.client-10b8MwnPzBP3EIh-OShiww==/lib/x86_64/libSDL_net.so using class loader ns clns-9 (caller=/data/app/~~fh3dKMzGW-hWLObaNsKscw==/com.muonline.client-10b8MwnPzBP3EIh-OShiww==/base.apk): ok
+04-26 20:34:16.347 19303 19303 D nativeloader: Load /data/app/~~fh3dKMzGW-hWLObaNsKscw==/com.muonline.client-10b8MwnPzBP3EIh-OShiww==/lib/x86_64/libbotan.so using class loader ns clns-9 (caller=/data/app/~~fh3dKMzGW-hWLObaNsKscw==/com.muonline.client-10b8MwnPzBP3EIh-OShiww==/base.apk): ok
+04-26 20:34:16.349 19303 19303 I MuMain  : early chdir(/sdcard/.../files) = 0 (errno=88)
+04-26 20:34:16.361 19303 19303 D nativeloader: Load /data/app/~~fh3dKMzGW-hWLObaNsKscw==/com.muonline.client-10b8MwnPzBP3EIh-OShiww==/lib/x86_64/libmain.so using class loader ns clns-9 (caller=/data/app/~~fh3dKMzGW-hWLObaNsKscw==/com.muonline.client-10b8MwnPzBP3EIh-OShiww==/base.apk): ok
+04-26 20:34:16.361 19303 19303 V SDL     : nativeSetupJNI()
+04-26 20:34:16.361 19303 19303 V SDL     : AUDIO nativeSetupJNI()
+04-26 20:34:16.361 19303 19303 V SDL     : CONTROLLER nativeSetupJNI()
+04-26 20:34:16.362  1036  1132 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): null
+04-26 20:34:16.363   736  1953 D CoreBackPreview: Window{c0d7442 u0 Splash Screen com.muonline.client EXITING}: Setting back callback null
+04-26 20:34:16.367 19303 19303 D AudioSystem: onNewService: media.audio_policy service obtained 0x73401cab3a60
+04-26 20:34:16.369 19303 19303 D AudioSystem: getService: IAudioPolicyService retrieved: 0x73401cab3a60  cached: 0x73401cab3a60
+04-26 20:34:16.371   560   593 D NativePermissionController: checkPermission: missing 13 for 10230
+04-26 20:34:16.372   560   593 D NativePermissionController: checkPermission: missing 13 for 10230
+04-26 20:34:16.375   560   593 D NativePermissionController: checkPermission: missing 13 for 10230
+04-26 20:34:16.375   560   593 D NativePermissionController: checkPermission: missing 13 for 10230
+04-26 20:34:16.385 19303 19303 V SDL     : onStart()
+04-26 20:34:16.386 19303 19303 D MuMain  : onResume
+04-26 20:34:16.386 19303 19303 V SDL     : onResume()
+04-26 20:34:16.389 19303 19303 D InsetsController: Setting requestedVisibleTypes to 496 (was 503)
+04-26 20:34:16.394   736  2221 W InputChannel-JNI: Channel already disposed.
+04-26 20:34:16.398   736  2221 I ImeTracker: system_server:a0bbebfe: onRequestHide at ORIGIN_SERVER reason IME_REQUESTED_CHANGED_LISTENER fromUser false displayId 0
+04-26 20:34:16.399   736   762 I ImeTracker: system_server:a0bbebfe: onCancelled at PHASE_SERVER_SHOULD_HIDE
+04-26 20:34:16.400   736  2221 I ImeTracker: system_server:333c7789: onRequestHide at ORIGIN_SERVER reason IME_REQUESTED_CHANGED_LISTENER fromUser false displayId 0
+04-26 20:34:16.400   736   762 I ImeTracker: system_server:333c7789: onCancelled at PHASE_SERVER_SHOULD_HIDE
+04-26 20:34:16.403 19303 19303 D VRI[MuMainActivity]: WindowInsets changed: 2268x1080 mandatorySystemGestures:[0,74,0,84] 
+04-26 20:34:16.403 19303 19303 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): android.view.ViewRootImpl$$ExternalSyntheticLambda13@12d5896
+04-26 20:34:16.404 19303 19303 D InsetsController: Setting requestedVisibleTypes to 503 (was 496)
+04-26 20:34:16.404   736  1959 D CoreBackPreview: Window{b6d5df5 u0 com.muonline.client/com.muonline.client.MuMainActivity}: Setting back callback OnBackInvokedCallbackInfo{mCallback=android.window.IOnBackInvokedCallback$Stub$Proxy@cf88218, mPriority=0, mIsAnimationCallback=false, mOverrideBehavior=0}
+04-26 20:34:16.406   736  1957 D WindowManager: setClientSurface Surface(name=VRI-com.muonline.client/com.muonline.client.MuMainActivity#1625)/@0x402e471 for b6d5df5 com.muonline.client/com.muonline.client.MuMainActivity
+04-26 20:34:16.408  1366  3046 I FontLog : (REDACTED) Received query %s, URI %s
+04-26 20:34:16.408  1366  3046 I FontLog : (REDACTED) Query [%s] resolved to %s
+04-26 20:34:16.412 19303 19303 I Surface : Creating surface for consumer unnamed-19303-1 with slotExpansion=1 for 64 slots
+04-26 20:34:16.412  1366  3046 I FontLog : (REDACTED) Fetch %s end status %s
+04-26 20:34:16.413 19303 19303 I Surface : Creating surface for consumer VRI[MuMainActivity]#1(BLAST Consumer)1 with slotExpansion=1 for 64 slots
+04-26 20:34:16.414 19303 19303 D VRI[MuMainActivity]: WindowInsets changed: statusBars:[0,74,0,0] navigationBars:[0,0,0,63] 
+04-26 20:34:16.420  1036  1091 V RecentTasksController: Notify recent tasks changed
+04-26 20:34:16.421  1219  1219 D RecentTasksList: invalidateLoadedTasks - previous requestLoadId: -1
+04-26 20:34:16.425 19303 19303 I Surface : Creating surface for consumer unnamed-19303-2 with slotExpansion=1 for 64 slots
+04-26 20:34:16.431  1366  5070 I FontLog : (REDACTED) Pulling font file for id = %d, cache size = %d
+04-26 20:34:16.431 19303 19303 I Surface : Creating surface for consumer 778fe58 SurfaceView[com.muonline.client/com.muonline.client.MuMainActivity]#2(BLAST Consumer)2 with slotExpansion=1 for 64 slots
+04-26 20:34:16.431 19303 19303 V SDL     : surfaceCreated()
+04-26 20:34:16.431 19303 19303 V SDL     : surfaceChanged()
+04-26 20:34:16.431 19303 19303 V SDL     : Window size: 2268x943
+04-26 20:34:16.431 19303 19303 V SDL     : Device size: 2400x1080
+04-26 20:34:16.436 19303 19345 V SDL     : Running main function SDL_main from library /data/app/~~fh3dKMzGW-hWLObaNsKscw==/com.muonline.client-10b8MwnPzBP3EIh-OShiww==/lib/x86_64/libmain.so
+04-26 20:34:16.436 19303 19345 V SDL     : nativeRunMain()
+04-26 20:34:16.436  1366  5070 I FontLog : (REDACTED) Pulling font file for id = %d, cache size = %d
+04-26 20:34:16.437 19303 19345 I MuMain  : === MuMain Android v1.0 starting ===
+04-26 20:34:16.444 19303 19345 I MuMain  : Working dir set to: /storage/emulated/0/Android/data/com.muonline.client/files
+04-26 20:34:16.463 19303 19345 W libOpenSLES: class OutputMix interface 0 requested but unavailable MPH=43
+04-26 20:34:16.463 19303 19345 I MuMain  : SDL2 initialized
+04-26 20:34:16.463 19303 19345 I MuMain  : Render backend request env=(null) -> opengl
+04-26 20:34:16.465 19303 19345 V SDL     : setOrientation() requestedOrientation=6 width=2400 height=1080 resizable=false hint=
+04-26 20:34:16.491   736   759 I ActivityTaskManager: Displayed com.muonline.client/.MuMainActivity for user 0: +196ms
+04-26 20:34:16.492 19303 19345 I SDL/APP : pixel format wanted SDL_PIXELFORMAT_RGBX8888 (2), got SDL_PIXELFORMAT_RGBX8888 (2)
+04-26 20:34:16.492   736   759 V WindowManager: Sent Transition (#146) createdAt=04-26 20:34:16.291 via request=TransitionRequestInfo { type = OPEN, triggerTask = TaskInfo{userId=0 taskId=117 effectiveUid=10230 displayId=0 isRunning=true baseIntent=Intent { flg=0x10000000 cmp=com.muonline.client/.PreloadActivity } baseActivity=ComponentInfo{com.muonline.client/com.muonline.client.PreloadActivity} topActivity=ComponentInfo{com.muonline.client/com.muonline.client.MuMainActivity} origActivity=null realActivity=ComponentInfo{com.muonline.client/com.muonline.client.PreloadActivity} realActivityIsAppLockEnabled=false numActivities=2 lastActiveTime=18230892 supportsMultiWindow=true supportsMultiWindowWithoutConstraints=true resizeMode=1 isResizeable=true minWidth=-1 minHeight=-1 defaultMinSize=220 token=WCT{RemoteToken{de43ba2 Task{8681873 #117 type=standard A=10230:com.muonline.client}}} topActivityType=1 pictureInPictureParams=null shouldDockBigOverlays=false launchIntoPipHostTaskId=-1 lastParentTaskIdBeforePip=-1 displayCutoutSafeInsets=Rect(132, 0 - 0, 0) topActivityInfo=ActivityInfo{b08b0a9 com.muonline.client.MuMainActivity} launchCookies=[] positionInParent=Point(0, 0) parentTaskId=-1 isFocused=true isInteractive=false isVisible=true isVisibleRequested=true isTopActivityNoDisplay=false isSleeping=false locusId=null displayAreaFeatureId=1 isTopActivityTransparent=false isActivityStackTransparent=false lastNonFullscreenBounds=null leafTaskBoundsFromOptions= false capturedLink=null capturedLinkTimestamp=0 requestedVisibleTypes=503 topActivityRequestOpenInBrowserEducationTimestamp=0 appCompatTaskInfo=AppCompatTaskInfo { topActivityInSizeCompat=false isLeafTask= true eligibleForLetterboxEducation= false isLetterboxEducationEnabled= true isLetterboxDoubleTapEnabled= false eligibleForUserAspectRatioButton= false topActivityBoundsLetterboxed= false isFromLetterboxDoubleTap= false topActivityLetterboxVerticalPosition= -1 topActivityLetterboxHorizontalPosition= -1 topActivityLetterboxWidth=-1 topActivityLetterboxHeight=-1 topActivityAppBounds=Rect(132, 0 - 2400, 1017) isUserFullscreenOverrideEnabled=false isSystemFullscreenOverrideEnabled=false hasMinAspectRatioOverride=false topActivityLetterboxBounds=null topNonResizableActivityAspectRatio=-1.0} topActivityMainWindowFrame=null isAppBubble=false}, pipChange = null, remoteTransitionInfo = null, displayChange = null, requestedLocation = null, userChange = null, windowingLayerChange = null, fullscreenRequestChange = null, flags = 0, debugId = 146 }
+04-26 20:34:16.492   736   759 V WindowManager:     startWCT=WindowContainerTransaction { changes= {} hops= [] flags= 0 errorCallbackToken=null taskFragmentOrganizer=null }
+04-26 20:34:16.492   736   759 V WindowManager:     info={id=146 t=OPEN f=0x0 trk=0 r=[0@Point(0, 0)] c=[
+04-26 20:34:16.492   736   759 V WindowManager:         {m=OPEN f=FILLS_TASK p=WCT{RemoteToken{de43ba2 Task{8681873 #117 type=standard A=10230:com.muonline.client}}} leash=Surface(name=ActivityRecord{6637969 u0 com.muonline.client/.MuMainActivity t117}#1618)/@0x8adb573 sb=Rect(0, 0 - 0, 0) eb=Rect(0, 0 - 2400, 1080) epz=Point(2400, 1080) d=-1->0 r=-1->1:-1 bc=ff000000 activity=ActivityTransitionInfo { component = ComponentInfo{com.muonline.client/com.muonline.client.MuMainActivity}, taskId = 117, appCompatTransitionInfo = AppCompatTransitionInfo { letterboxBounds = Rect(132, 0 - 2400, 1080), hasRoundedCorners = false } }},
+04-26 20:34:16.492   736   759 V WindowManager:         {m=CLOSE f=FILLS_TASK|IS_BEHIND_STARTING_WINDOW p=WCT{RemoteToken{de43ba2 Task{8681873 #117 type=standard A=10230:com.muonline.client}}} leash=Surface(name=ActivityRecord{230885002 u0 com.muonline.client/.PreloadActivity t117}#1600)/@0x8abcde2 sb=Rect(0, 0 - 2400, 1080) eb=Rect(0, 0 - 2400, 1080) epz=Point(2400, 1080) d=0 bc=ff000000 activity=ActivityTransitionInfo { component = ComponentInfo{com.muonline.client/com.muonline.client.PreloadActivity}, taskId = 117, appCompatTransitionInfo = AppCompatTransitionInfo { letterboxBounds = Rect(132, 0 - 2400, 1080), hasRoundedCorners = false } }},
+04-26 20:34:16.492   736   759 V WindowManager:         {WCT{RemoteToken{de43ba2 Task{8681873 #117 type=standard A=10230:com.muonline.client}}} m=CHANGE f=NONE leash=Surface(name=Task=117#1599)/@0x7322531 sb=Rect(0, 0 - 2400, 1080) eb=Rect(0, 0 - 2400, 1080) epz=Point(2400, 1080) d=0 taskParent=-1 winMode=1 userId=0}
+04-26 20:34:16.492   736   759 V WindowManager:     ]}
+04-26 20:34:16.492  1036  1417 V WindowManagerShell: onTransitionReady(transaction=3161095945364)
+04-26 20:34:16.493  1036  1091 V WindowManagerShell: onTransitionReady (#146) android.os.BinderProxy@bcdfd3b: {id=146 t=OPEN f=0x0 trk=0 r=[0@Point(0, 0)] c=[
+04-26 20:34:16.493  1036  1091 V WindowManagerShell:         {m=OPEN f=FILLS_TASK p=WCT{android.os.BinderProxy@cc9010c} leash=Surface(name=ActivityRecord{6637969 u0 com.muonline.client/.MuMainActivity t117}#1618)/@0xe3d77ed sb=Rect(0, 0 - 0, 0) eb=Rect(0, 0 - 2400, 1080) epz=Point(2400, 1080) d=-1->0 r=-1->1:-1 bc=ff000000 activity=ActivityTransitionInfo { component = ComponentInfo{com.muonline.client/com.muonline.client.MuMainActivity}, taskId = 117, appCompatTransitionInfo = AppCompatTransitionInfo { letterboxBounds = Rect(132, 0 - 2400, 1080), hasRoundedCorners = false } }},
+04-26 20:34:16.493  1036  1091 V WindowManagerShell:         {m=CLOSE f=FILLS_TASK|IS_BEHIND_STARTING_WINDOW p=WCT{android.os.BinderProxy@cc9010c} leash=Surface(name=ActivityRecord{230885002 u0 com.muonline.client/.PreloadActivity t117}#1600)/@0x9047622 sb=Rect(0, 0 - 2400, 1080) eb=Rect(0, 0 - 2400, 1080) epz=Point(2400, 1080) d=0 bc=ff000000 activity=ActivityTransitionInfo { component = ComponentInfo{com.muonline.client/com.muonline.client.PreloadActivity}, taskId = 117, appCompatTransitionInfo = AppCompatTransitionInfo { letterboxBounds = Rect(132, 0 - 2400, 1080), hasRoundedCorners = false } }},
+04-26 20:34:16.493  1036  1091 V WindowManagerShell:         {m=CHANGE f=NONE leash=Surface(name=Task=117#1599)/@0x330d8b3 sb=Rect(0, 0 - 2400, 1080) eb=Rect(0, 0 - 2400, 1080) epz=Point(2400, 1080) d=0 taskParent=-1 winMode=1 userId=0}
+04-26 20:34:16.493  1036  1091 V WindowManagerShell:     ]}
+04-26 20:34:16.493  1036  1091 V WindowManagerShell: Playing animation for (#146) android.os.BinderProxy@bcdfd3b@0
+04-26 20:34:16.493  1036  1091 D ShellSplitScreen: startAnimation: transition=146 isSplitActive=false
+04-26 20:34:16.493  1036  1091 V ShellRecents: RecentsTransitionHandler.startAnimation: no controller found
+04-26 20:34:16.493  1036  1091 V ShellDesktopMode: DesktopMixedTransitionHandler: No pending desktop transition
+04-26 20:34:16.493  1036  1091 V WindowManagerShell: Transition doesn't have explicit remote, search filters for match for {id=146 t=OPEN f=0x0 trk=0 r=[0@Point(0, 0)] c=[{m=OPEN f=FILLS_TASK p=WCT{android.os.BinderProxy@cc9010c} leash=Surface(name=ActivityRecord{6637969 u0 com.muonline.client/.MuMainActivity t117}#1618)/@0xe3d77ed sb=Rect(0, 0 - 0, 0) eb=Rect(0, 0 - 2400, 1080) epz=Point(2400, 1080) d=-1->0 r=-1->1:-1 bc=ff000000 activity=ActivityTransitionInfo { component = ComponentInfo{com.muonline.client/com.muonline.client.MuMainActivity}, taskId = 117, appCompatTransitionInfo = AppCompatTransitionInfo { letterboxBounds = Rect(132, 0 - 2400, 1080), hasRoundedCorners = false } }},{m=CLOSE f=FILLS_TASK|IS_BEHIND_STARTING_WINDOW p=WCT{android.os.BinderProxy@cc9010c} leash=Surface(name=ActivityRecord{230885002 u0 com.muonline.client/.PreloadActivity t117}#1600)/@0x9047622 sb=Rect(0, 0 - 2400, 1080) eb=Rect(0, 0 - 2400, 1080) epz=Point(2400, 1080) d=0 bc=ff000000 activity=ActivityTransitionInfo { component = ComponentInfo{com.muonline.client/com.muonline.client.PreloadActivity}, taskId = 117, appCompatTransitionInfo = AppCompatTransitionInfo { letterboxBounds = Rect(132, 0 - 2400, 1080), hasRoundedCorners = false } }},{m=CHANGE f=NONE leash=Surface(name=Task=117#1599)/@0x330d8b3 sb=Rect(0, 0 - 2400, 1080) eb=Rect(0, 0 - 2400, 1080) epz=Point(2400, 1080) d=0 taskParent=-1 winMode=1 userId=0}]}
+04-26 20:34:16.494  1036  1091 V WindowManagerShell:  Checking filter Pair{{types=[] flags=0x0 notFlags=0x0 checks=[{atype=undefined independent=true modes=[CLOSE,TO_BACK] flags=IN_TASK_WITH_EMBEDDED_ACTIVITY mustBeTask=false order=ANY topActivity=null launchCookie=null taskFragmentToken=android.os.BinderProxy@e90ae30 windowingMode=undefined isCrossDisplayMove=false}]} RemoteTransition { remoteTransition = android.window.IRemoteTransition$Stub$Proxy@1ccfaa9, appThread = android.app.IApplicationThread$Stub$Proxy@5c682e, debugName = overlayBackTransition, filter = {types=[] flags=0x0 notFlags=0x0 checks=[{atype=undefined independent=true modes=[CLOSE,TO_BACK] flags=IN_TASK_WITH_EMBEDDED_ACTIVITY mustBeTask=false order=ANY topActivity=null launchCookie=null taskFragmentToken=android.os.BinderProxy@e90ae30 windowingMode=undefined isCrossDisplayMove=false}]} }}
+04-26 20:34:16.494  1036  1091 V WindowManagerShell:  Checking filter Pair{{types=[] flags=0x0 notFlags=0x0 checks=[{atype=dream independent=true modes=[OPEN,TO_FRONT] flags=NONE mustBeTask=false order=ANY topActivity=null launchCookie=null windowingMode=undefined isCrossDisplayMove=false},{atype=home independent=true modes=[CLOSE,TO_BACK] flags=NONE mustBeTask=false order=ANY topActivity=null launchCookie=null windowingMode=undefined isCrossDisplayMove=false}]} RemoteTransition { remoteTransition = android.window.IRemoteTransition$Stub$Proxy@aa8fcf, appThread = android.app.IApplicationThread$Stub$Proxy@98a7d5c, debugName = LauncherToDream, filter = {types=[] flags=0x0 notFlags=0x0 checks=[{atype=dream independent=true modes=[OPEN,TO_FRONT] flags=NONE mustBeTask=false order=ANY topActivity=null launchCookie=null windowingMode=undefined isCrossDisplayMove=false},{atype=home independent=true modes=[CLOSE,TO_BACK] flags=NONE mustBeTask=false order=ANY topActivity=null launchCookie=null windowingMode=undefined isCrossDisplayMove=false}]} }}
+04-26 20:34:16.494  1036  1091 V WindowManagerShell:  Checking filter Pair{{types=[] flags=0x0 notFlags=0x0 checks=[{atype=standard independent=false modes=[CHANGE] flags=NONE mustBeTask=true order=ANY topActivity=null launchCookie=null windowingMode=undefined isCrossDisplayMove=true}]} RemoteTransition { remoteTransition = android.window.IRemoteTransition$Stub$Proxy@3519865, appThread = android.app.IApplicationThread$Stub$Proxy@94ad93a, debugName = QuickstepDisplayMove, filter = {types=[] flags=0x0 notFlags=0x0 checks=[{atype=standard independent=false modes=[CHANGE] flags=NONE mustBeTask=true order=ANY topActivity=null launchCookie=null windowingMode=undefined isCrossDisplayMove=true}]} }}
+04-26 20:34:16.494  1036  1091 V WindowManagerShell:  Checking filter Pair{{types=[] flags=0x0 notFlags=0x100 checks=[{atype=home independent=true modes=[OPEN,TO_FRONT] flags=NONE mustBeTask=false order=ANY topActivity=ComponentInfo{com.google.android.apps.nexuslauncher/com.google.android.apps.nexuslauncher.NexusLauncherActivity} launchCookie=null windowingMode=undefined isCrossDisplayMove=false},{atype=standard independent=true modes=[CLOSE,TO_BACK] flags=NONE mustBeTask=false order=ANY topActivity=null launchCookie=null windowingMode=undefined isCrossDisplayMove=false},{NOT atype=undefined independent=true modes=[] flags=NONE mustBeTask=true order=ANY topActivity=null launchCookie=null customAnim=true windowingMode=undefined isCrossDisplayMove=false}]} RemoteTransition { remoteTransition = android.window.IRemoteTransition$Stub$Proxy@fea59eb, appThread = android.app.IApplicationThread$Stub$Proxy@4f01348, debugName = QuickstepLaunchHome, filter = {types=[] flags=0x0 notFlags=0x100 checks=[{atype=home independent=true modes=[OPEN,TO_FRONT] flags=NONE mustBeTask=false order=ANY topActivity=ComponentInfo{com.google.android.apps.nexuslauncher/com.google.android.apps.nexuslauncher.NexusLauncherActivity} launchCookie=null windowingMode=undefined isCrossDisplayMove=false},{atype=standard independent=true modes=[CLOSE,TO_BACK] flags=NONE mustBeTask=false order=ANY topActivity=null launchCookie=null windowingMode=undefined isCrossDisplayMove=false},{NOT atype=undefined independent=true modes=[] flags=NONE mustBeTask=true order=ANY topActivity=null launchCookie=null customAnim=true windowingMode=undefined isCrossDisplayMove=false}]} }}
+04-26 20:34:16.495  1036  1091 V WindowManagerShell:  Checking filter Pair{{types=[OPEN,TO_FRONT] flags=0x0 notFlags=0x0 checks=[{atype=standard independent=true modes=[OPEN,TO_FRONT] flags=NONE mustBeTask=true order=ANY topActivity=null launchCookie=null windowingMode=freeform isCrossDisplayMove=false}]} RemoteTransition { remoteTransition = android.window.IRemoteTransition$Stub$Proxy@5987ffe, appThread = null, debugName = DesktopWindowLimitUnminimize, filter = {types=[OPEN,TO_FRONT] flags=0x0 notFlags=0x0 checks=[{atype=standard independent=true modes=[OPEN,TO_FRONT] flags=NONE mustBeTask=true order=ANY topActivity=null launchCookie=null windowingMode=freeform isCrossDisplayMove=false}]} }}
+04-26 20:34:16.495  1036  1091 V WindowManagerShell:  Delegate animation for (#146) to null
+04-26 20:34:16.495  1036  1091 V WindowManagerShell: start default transition animation, info = {id=146 t=OPEN f=0x0 trk=0 r=[0@Point(0, 0)] c=[{m=OPEN f=FILLS_TASK p=WCT{android.os.BinderProxy@cc9010c} leash=Surface(name=ActivityRecord{6637969 u0 com.muonline.client/.MuMainActivity t117}#1618)/@0xe3d77ed sb=Rect(0, 0 - 0, 0) eb=Rect(0, 0 - 2400, 1080) epz=Point(2400, 1080) d=-1->0 r=-1->1:-1 bc=ff000000 activity=ActivityTransitionInfo { component = ComponentInfo{com.muonline.client/com.muonline.client.MuMainActivity}, taskId = 117, appCompatTransitionInfo = AppCompatTransitionInfo { letterboxBounds = Rect(132, 0 - 2400, 1080), hasRoundedCorners = false } }},{m=CLOSE f=FILLS_TASK|IS_BEHIND_STARTING_WINDOW p=WCT{android.os.BinderProxy@cc9010c} leash=Surface(name=ActivityRecord{230885002 u0 com.muonline.client/.PreloadActivity t117}#1600)/@0x9047622 sb=Rect(0, 0 - 2400, 1080) eb=Rect(0, 0 - 2400, 1080) epz=Point(2400, 1080) d=0 bc=ff000000 activity=ActivityTransitionInfo { component = ComponentInfo{com.muonline.client/com.muonline.client.PreloadActivity}, taskId = 117, appCompatTransitionInfo = AppCompatTransitionInfo { letterboxBounds = Rect(132, 0 - 2400, 1080), hasRoundedCorners = false } }},{m=CHANGE f=NONE leash=Surface(name=Task=117#1599)/@0x330d8b3 sb=Rect(0, 0 - 2400, 1080) eb=Rect(0, 0 - 2400, 1080) epz=Point(2400, 1080) d=0 taskParent=-1 winMode=1 userId=0}]}
+04-26 20:34:16.495  1036  1091 V WindowManagerShell: loadAnimation: anim=android.view.animation.AnimationSet@6d3919c animAttr=0x5 type=OPEN isEntrance=false
+04-26 20:34:16.498   736  1954 I ImeTracker: system_server:a6b0b9c5: onRequestHide at ORIGIN_SERVER reason IME_REQUESTED_CHANGED_LISTENER fromUser false displayId 0
+04-26 20:34:16.498  1036  1091 V WindowManagerShell: loadAnimation: anim=android.view.animation.AnimationSet@1562b88 animAttr=0x4 type=OPEN isEntrance=true
+04-26 20:34:16.501   736   762 I ImeTracker: system_server:a6b0b9c5: onCancelled at PHASE_SERVER_SHOULD_HIDE
+04-26 20:34:16.501  1036  1091 V WindowManagerShell:  animated by com.android.wm.shell.transition.DefaultTransitionHandler@11f9e32
+04-26 20:34:16.536 19303 19303 D InsetsController: Setting requestedVisibleTypes to 496 (was 503)
+04-26 20:34:16.537 19303 19303 D VRI[MuMainActivity]: WindowInsets changed: statusBars:null navigationBars:null 
+04-26 20:34:16.538 19303 19303 V SDL     : surfaceChanged()
+04-26 20:34:16.538 19303 19303 V SDL     : Window size: 2268x1080
+04-26 20:34:16.538 19303 19303 V SDL     : Device size: 2400x1080
+04-26 20:34:16.546   566   598 I libbinder.BpBinder: onLastStrongRef automatically unlinking death recipients for binder (0x7eaa3606c2d0) with descriptor: '(not cached)'
+04-26 20:34:16.558 19303 19345 I MuMain  : Screen size (drawable): 2268x943 (scale: 3.54 x 1.96)
+04-26 20:34:16.574 19303 19345 I GL_Compat: GL_Compat_Init: OK (prog=3, vbo=1, ebo=2)
+04-26 20:34:16.574 19303 19345 I MuRender: OpenGLCompat initialized (drawable=2268x943)
+04-26 20:34:16.574 19303 19345 I MuMain  : Render backend active: OpenGLCompat
+04-26 20:34:16.574 19303 19345 I GL_Compat: GL path switch: preferDirectVA=1
+04-26 20:34:16.574 19303 19345 I MuMain  : GL compat VA policy: preferDirect=1 (emulator=1)
+04-26 20:34:16.574 19303 19345 I AndroidGDI: SDL2_ttf initialized, defaultSize=15
+04-26 20:34:16.576 19303 19345 I AndroidGDI: Font OK: /system/fonts/DroidSans.ttf sz=15
+04-26 20:34:16.577 19303 19345 I AndroidGDI: Font OK: /system/fonts/DroidSans-Bold.ttf sz=15
+04-26 20:34:16.577 19303 19345 I AndroidGDI: Font OK: /system/fonts/DroidSans-Bold.ttf sz=30
+04-26 20:34:16.578 19303 19345 I AndroidGDI: Font OK: /system/fonts/DroidSans.ttf sz=14
+04-26 20:34:16.578 19303 19345 I MuMain  : GDI fonts created: size=15 big=30
+04-26 20:34:16.578 19303 19345 I MuMain  : Audio config: sound=1 music=1 rememberMe=0
+04-26 20:34:16.578 19303 19345 I MuMain  : 
+04-26 20:34:16.578 19303 19345 I MuMain  : Mix_Init requested=0x8 loaded=0x8
+04-26 20:34:16.579 19303 19345 D AudioSystem: onNewServiceWithAdapter: media.audio_flinger service obtained 0x733fdca98e90
+04-26 20:34:16.581   560   593 W AudioFlinger: onStateChanged: pid:19303  uid:10230  state:unfrozen
+04-26 20:34:16.581 19303 19345 D AudioSystem: getService: IAudioFlingerService retrieved: 0x73401cab1580  IAudioFlinger cached: 0x733fdca98e90
+04-26 20:34:16.581 19303 19345 D muonline.client: PlayerBase::PlayerBase()
+04-26 20:34:16.581 19303 19345 D muonline.client: TrackPlayerBase::TrackPlayerBase()
+04-26 20:34:16.581 19303 19345 I libOpenSLES: Emulating old channel mask behavior (ignoring positional mask 0x3, using default mask 0x3 based on channel count of 2)
+04-26 20:34:16.582   560  5851 D NativePermissionController: checkPermission: missing 1 for 10230
+04-26 20:34:16.582   560  5851 D NativePermissionController: checkPermission: missing 3 for 10230
+04-26 20:34:16.582   560  5851 D NativePermissionController: checkPermission: missing 5 for 10230
+04-26 20:34:16.583   560  5851 W AudioFlinger: createTrack_l(): mismatch between requested flags (00000104) and output flags (00000002)
+04-26 20:34:16.583   560  5851 D AudioFlinger: Client defaulted notificationFrames to 882 for frameCount 4012
+04-26 20:34:16.583   560  5851 I AF::AfPlaybackCommon: creating track with enforcement level 2 shouldHarden 1
+04-26 20:34:16.586   521  6964 I RanchuHwc: logCompositionFallbackIfChanged: layer 494 CompositionType fallback from 2 to 1
+04-26 20:34:16.586   521  6964 I RanchuHwc: logCompositionFallbackIfChanged: layer 495 CompositionType fallback from 2 to 1
+04-26 20:34:16.586   521  6964 I RanchuHwc: logCompositionFallbackIfChanged: layer 488 CompositionType fallback from 3 to 1
+04-26 20:34:16.587   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.588   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.588   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.588   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.588   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.591 19303 19303 V SDL     : onWindowFocusChanged(): true
+04-26 20:34:16.591 19303 19303 V SDL     : nativeFocusChanged()
+04-26 20:34:16.593   736   881 I ImeTracker: com.muonline.client:9d36be41: onRequestHide at ORIGIN_SERVER reason HIDE_UNSPECIFIED_WINDOW fromUser false userId 0 displayId 0
+04-26 20:34:16.594 19303 19303 D InsetsController: hide(ime())
+04-26 20:34:16.594 19303 19303 I ImeTracker: com.muonline.client:9d36be41: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+04-26 20:34:16.594   736   881 W InputChannel-JNI: Channel already disposed.
+04-26 20:34:16.595  4105  4105 I GoogleInputMethodService: GoogleInputMethodService.onFinishInput():2113 
+04-26 20:34:16.596   736  2221 E AppOps  : attributionTag  not declared in manifest of com.muonline.client
+04-26 20:34:16.597   736  1959 I ImeTracker: system_server:af9d338d: onRequestHide at ORIGIN_SERVER reason IME_REQUESTED_CHANGED_LISTENER fromUser false displayId 0
+04-26 20:34:16.597  4105  4105 I Module  : DeviceLockedStatusModuleProvider$Module.updateDeviceLockedStatus():103 repeatCheckTimes = 0, locked = false
+04-26 20:34:16.597   736   762 I ImeTracker: system_server:af9d338d: onCancelled at PHASE_SERVER_SHOULD_HIDE
+04-26 20:34:16.598   736  1959 E AppOps  : attributionTag  not declared in manifest of com.muonline.client
+04-26 20:34:16.603  4105  4105 I GoogleInputMethodService: GoogleInputMethodService.onStartInput():1384 onStartInput(EditorInfo{EditorInfo{packageName=com.muonline.client, inputType=0, inputTypeString=NULL, enableLearning=false, autoCorrection=false, autoComplete=false, imeOptions=0, privateImeOptions=null, actionName=UNSPECIFIED, actionLabel=null, initialSelStart=-1, initialSelEnd=-1, initialCapsMode=0, label=null, fieldId=0, fieldName=null, extras=null, hintText=null, hintLocales=[]}}, false)
+04-26 20:34:16.603  4105  4105 W AndroidIME: LatinIMEBase.updateInputViewCoverNavigation():319 Null input view, cannot update padding!
+04-26 20:34:16.605   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.605   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.605   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.605   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.605   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.605  1174  1174 I bluetooth: system/btif/avrcp/avrcp_service.cc:533 SendMediaUpdate: track_changed=false :  play_state=true :  queue=false
+04-26 20:34:16.605 19303 19347 D muonline.client: PlayerBase::stop() from IPlayer
+04-26 20:34:16.605 19303 19347 D AudioTrack: stop(38): called with 0 frames delivered
+04-26 20:34:16.605  1174  1174 E MediaControlProfile: onCurrentPlayerStateUpdated: base actions not supported, player actions= 0, expected at least= 7f
+04-26 20:34:16.606  4105  4105 I Module  : DeviceLockedStatusModuleProvider$Module.updateDeviceLockedStatus():103 repeatCheckTimes = 1, locked = false
+04-26 20:34:16.606 19303 19345 I MuMain  : SDL_mixer initialized (32 channels)
+04-26 20:34:16.606 19303 19345 I MuMain  : INIT: srand
+04-26 20:34:16.606 19303 19345 I MuMain  : INIT: alloc GateAttribute
+04-26 20:34:16.606 19303 19345 I MuMain  : INIT: alloc SkillAttribute
+04-26 20:34:16.606 19303 19345 I MuMain  : INIT: alloc ItemAttRibute
+04-26 20:34:16.607 19303 19345 I MuMain  : INIT: alloc CharacterMemoryDump
+04-26 20:34:16.607   736  1959 E AppOps  : attributionTag  not declared in manifest of com.muonline.client
+04-26 20:34:16.607   736  1953 W PackageConfigPersister: App-specific configuration not found for packageName: com.muonline.client and userId: 0
+04-26 20:34:16.607  1174  1174 W MediaControlGattService: Feature PLAYBACK_SPEED support: true
+04-26 20:34:16.608  1174  1174 W MediaControlGattService: Feature PLAYBACK_SPEED support: true
+04-26 20:34:16.608  1174  1174 W MediaControlGattService: Feature PLAYBACK_SPEED support: true
+04-26 20:34:16.608  1174  1174 W MediaControlGattService: Feature PLAYBACK_SPEED_NOTIFY support: true
+04-26 20:34:16.608   736  2221 E AppOps  : attributionTag  not declared in manifest of com.muonline.client
+04-26 20:34:16.609  1174  1361 I BluetoothAdapterProperties: getBondedDevices: length=0
+04-26 20:34:16.609 19303 19345 I MuMain  : INIT: alloc CharacterMachine
+04-26 20:34:16.609 19303 19345 I MuMain  : INIT: CharacterMachine->Init()
+04-26 20:34:16.609 19303 19345 I MuMain  : INIT: new UI objects
+04-26 20:34:16.610   736  1957 E AppOps  : attributionTag  not declared in manifest of com.muonline.client
+04-26 20:34:16.610 19303 19345 I MuMain  : INIT: BuffStateSystem::Make()
+04-26 20:34:16.610 19303 19345 I MuMain  : INIT: MapProcess::Make()
+04-26 20:34:16.611 19303 19345 I MuMain  : INIT: PetProcess::Make()
+04-26 20:34:16.611 19303 19345 I MuMain  : INIT: CUIMng::Create()
+04-26 20:34:16.611 19303 19345 I MuMain  : INIT: g_pNewUISystem->Create()
+04-26 20:34:16.611   736  1959 E AppOps  : attributionTag  not declared in manifest of com.muonline.client
+04-26 20:34:16.612  1174  1174 W MediaControlGattService: Feature TRACK_POSITION support: true
+04-26 20:34:16.612  1174  1174 W MediaControlGattService: Feature TRACK_POSITION_NOTIFY support: true
+04-26 20:34:16.612  1174  1174 W MediaControlGattService: Feature MEDIA_STATE support: true
+04-26 20:34:16.616  1174  1361 I BluetoothAdapterProperties: getBondedDevices: length=0
+04-26 20:34:16.616  1174  1174 W MediaControlGattService: Feature MEDIA_CONTROL_POINT_OPCODES_SUPPORTED support: true
+04-26 20:34:16.616  1174  1174 W MediaControlGattService: Feature MEDIA_STATE support: true
+04-26 20:34:16.616  1174  1174 W MediaControlGattService: Feature MEDIA_STATE support: true
+04-26 20:34:16.617  1174  1361 I BluetoothAdapterProperties: getBondedDevices: length=0
+04-26 20:34:16.617  1174  1174 W MediaControlGattService: Feature MEDIA_STATE support: true
+04-26 20:34:16.618  1174  1174 W MediaControlGattService: Feature SEEKING_SPEED support: true
+04-26 20:34:16.618  1174  1174 W MediaControlGattService: Feature SEEKING_SPEED support: true
+04-26 20:34:16.618  1174  1174 W MediaControlGattService: Feature SEEKING_SPEED support: true
+04-26 20:34:16.618  1174  1174 W MediaControlProfile: MCS service state fields left unhandled: 
+04-26 20:34:16.618  1174  1174 W MediaControlProfile:    > PLAYER_NAME
+04-26 20:34:16.618  1174  1174 W MediaControlProfile:    > PLAYING_ORDER_SUPPORTED
+04-26 20:34:16.621   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.621   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.622   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.622   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.622   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.628 19303 19345 I MuMain  : INIT: UI creation done
+04-26 20:34:16.628 19303 19345 I MuMain  : VirtualPad: slots loaded version=4 idx=[-1,-1,-1,-1,-1] type=[0,0,0,0,0] path=Data/Local/android_touch_skill_slots.cfg
+04-26 20:34:16.628 19303 19345 I MuMain  : VirtualPad slots: [-1,-1,-1,-1,-1]
+04-26 20:34:16.628 19303 19345 I MuMain  : Android perf defaults: maxMsgPerCycle=70 targetFps=-1.0 fxScale=1.00 adaptive=on isEmulator=1
+04-26 20:34:16.628 19303 19345 I MuMain  : SDL mixer volume set: level=5 sdl=71
+04-26 20:34:16.628 19303 19345 I MuMain  : FPS overlay enabled
+04-26 20:34:16.629 19303 19345 I MuMain  : All systems initialized — entering main loop
+04-26 20:34:16.629 19303 19345 I MuMain  : Window resized → drawable: 2268x1080
+04-26 20:34:16.629 19303 19345 I MuMain  : CHATIME IME state changed focused=0 sdlTextInput=1
+04-26 20:34:16.629 19303 19345 I MuMain  : WEBZEN: enter
+04-26 20:34:16.632 19303 19345 I MuMain  : WEBZEN: loading title bitmaps
+04-26 20:34:16.634 19303 19345 I MuMain  : WEBZEN: OpenBasicData begin
+04-26 20:34:16.635 19303 19345 I MuMain  : OPENBASIC: enter
+04-26 20:34:16.635 19303 19345 I MuMain  : OPENBASIC: RenderTitle 0 begin
+04-26 20:34:16.638   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.638   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.638 19303 19345 I MuMain  : OPENBASIC: RenderTitle 0 done
+04-26 20:34:16.638 19303 19345 I MuMain  : OPENBASIC: first bitmap group begin
+04-26 20:34:16.638   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.638   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.639   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.653   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.653   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.653   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.653   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.653   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.662 19303 19345 I MuMain  : OPENBASIC: first bitmap group done
+04-26 20:34:16.670   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.670   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.670   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.670   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.670   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.686   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.686   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.686   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.686   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.686   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.699 19303 19345 I TakumiErrorReport: File not found Data\Effect\Shiny04.jpg (32118)->Data\Effect\Shiny05.jpg
+04-26 20:34:16.703   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.704   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.704   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.704   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.704   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.721   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.721   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.721   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.721   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.721   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.737   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.737   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.737   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.737   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.738   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.752   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.753   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.753   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.753   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.753   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.762 19303 19345 I TakumiErrorReport: > First Load Files OK.
+04-26 20:34:16.770   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.770   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.770   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.770   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.770   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.788   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.788   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.788   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.788   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.788   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.789  4164  4217 I Finsky  : [48] WM::SCH: Logging work initialize for 12-1
+04-26 20:34:16.804   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.805   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.805   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.805   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.805   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.805  4164  4217 I Finsky  : [48] WM::SCH: Logging work initialize for 12-1
+04-26 20:34:16.822   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.822   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.822   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.822   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.822   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.828  4164  4225 I Finsky  : [56] SCH: Scheduling phonesky job Id: 12-1, CT: 1777210455091, Constraints: [{ L: 15000, D: 86400000, C: CHARGING_NONE, I: IDLE_NONE, N: NET_ANY, B: BATTERY_ANY }]
+04-26 20:34:16.837   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.838   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.838   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.838   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.838   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.841   560   624 D AF::Track: interceptBuffer: took 807us to intercept 0 tracks
+04-26 20:34:16.846  4164  4222 I Finsky  : [53] SCH: Scheduling 1 system job(s)
+04-26 20:34:16.847  4164  4222 I Finsky  : [53] SCH: Scheduling system job Id: 9801, L: 13245, D: 43420841, C: false, I: false, N: 1
+04-26 20:34:16.854   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.854   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.854   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.854   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.854   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.871   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.871   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.871   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.886   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.887   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.887   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.893  4164  4223 I Finsky  : [54] SCH: Scheduling phonesky job Id: 12-1, CT: 1777210455220, Constraints: [{ L: 15000, D: 86400000, C: CHARGING_NONE, I: IDLE_NONE, N: NET_ANY, B: BATTERY_ANY }]
+04-26 20:34:16.894  4164  4218 I Finsky  : [49] [ContentSync] finished, scheduled=true
+04-26 20:34:16.900  4164  4224 I Finsky  : [55] SCH: Scheduling 0 system job(s)
+04-26 20:34:16.902  4164  4224 I Finsky  : [55] [ContentSync] finished, scheduled=true
+04-26 20:34:16.904   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.905   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.905   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.908   736  2221 I ImeTracker: system_server:5c388cfe: onRequestHide at ORIGIN_SERVER reason IME_REQUESTED_CHANGED_LISTENER fromUser false displayId 0
+04-26 20:34:16.909   736   762 I ImeTracker: system_server:5c388cfe: onCancelled at PHASE_SERVER_SHOULD_HIDE
+04-26 20:34:16.920   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.920   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.920   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.936   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.937   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.937   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.953   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.953   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.953   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.969  1036  1091 V WindowManagerShell: Transition animation finished (aborted=false), notifying core (#146) android.os.BinderProxy@bcdfd3b@0
+04-26 20:34:16.969   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.969   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.969   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:16.973   736   759 V WindowManager: Finish Transition (#146): created at 04-26 20:34:16.291 collect-started=0.049ms request-sent=5.501ms started=7.054ms ready=22.598ms sent=198.121ms commit=13.679ms finished=681.501ms
+04-26 20:34:16.975 19303 19303 D VRI[PreloadActivity]: visibilityChanged oldVisibility=true newVisibility=false
+04-26 20:34:16.979  1036  1091 V WindowManagerShell: Track 0 became idle
+04-26 20:34:16.979  1036  1091 V WindowManagerShell: All active transition animations finished
+04-26 20:34:16.992 19303 19303 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): null
+04-26 20:34:16.993   736  1959 D CoreBackPreview: Window{ca554a5 u0 com.muonline.client/com.muonline.client.PreloadActivity}: Setting back callback null
+04-26 20:34:16.993 19303 19303 D ViewRootImpl: Skipping stats log for color mode
+04-26 20:34:17.785 19303 19345 I MuMain  : OPENBASIC: OpenImages begin
+04-26 20:34:17.787 19303 19345 I MuMain  : OPENBASIC: OpenImages done
+04-26 20:34:17.788 19303 19345 I MuMain  : OPENBASIC: OpenSounds begin
+04-26 20:34:17.788 19303 19345 I MuMain  : OPENBASIC: OpenSounds done
+04-26 20:34:17.788 19303 19345 I MuMain  : OPENBASIC: scripts begin
+04-26 20:34:17.793 19303 19345 I MuMain  : OPENBASIC: OpenTextData begin
+04-26 20:34:17.796 19303 19345 I MuMain  : OPENBASIC: OpenTextData done
+04-26 20:34:17.798 19303 19345 I MuMain  : OPENBASIC: master/gate/filter done
+04-26 20:34:17.800 19303 19345 I MuMain  : WEBZEN: OpenBasicData done
+04-26 20:34:17.827 19303 19345 I TakumiErrorReport: File not found Data\Interface\InGameShop\ingame_Bt_page_L.tga (32485)->Data\Custom\Maps\CRadar.tga
+04-26 20:34:17.828 19303 19345 I TakumiErrorReport: File not found Data\Interface\InGameShop\IGS_Storage_Page.tga (32487)->Data\Custom\Maps\map_radar.tga
+04-26 20:34:17.830 19303 19345 I TakumiErrorReport: File not found Data\Interface\InGameShop\IGS_Storage_Page_Left.tga (32488)->Data\Custom\Maps\background-tcp.tga
+04-26 20:34:17.831 19303 19345 I TakumiErrorReport: File not found Data\Interface\InGameShop\IGS_Storage_Page_Right.tga (32489)->Data\Interface\newui_option_check.tga
+04-26 20:34:17.896 19303 19345 I TakumiErrorReport: File not found Data\Interface\newui_item_back01.tga (31373)->Data\Interface\newui_item_back04.tga
+04-26 20:34:17.897 19303 19345 I TakumiErrorReport: File not found Data\Interface\newui_item_back04.tga (31373)->Data\Interface\newui_item_back01.tga
+04-26 20:34:17.900 19303 19345 I MuMain  : WEBZEN: LoadMainSceneInterface done
+04-26 20:34:17.901 19303 19345 I TakumiErrorReport: > Loading ok.
+04-26 20:34:17.903 19303 19345 E BLASTBufferQueue: [778fe58 SurfaceView[com.muonline.client/com.muonline.client.MuMainActivity]#2](f:0,a:0) rejecting buffer:active_size=2268x1080, requested_size=2268x1080 buffer{size=2268x943 transform=0}
+04-26 20:34:17.956 19303 19345 I MuMain  : ADAPT fx scale: fps=0.8 frameMs=1327.78 1.00->0.90 target=0.55
+04-26 20:34:17.957 19303 19345 I MuMain  : PERF fps=0.8 frameMs=1327.78 phase(render=1272.17 pad=0.03 present=55.30) renderLevel=4 fxScale=1.00 maxMsg=70 avg(draw=132 verts=792 im=132 vaD=0 vaC=0 qI=0 qE=0) max(draw=132 verts=792)
+04-26 20:34:17.957 19303 19345 I MuMain  : PERF_SCENE world=-1 char(live=0 vis=0 ply=0 mon=0 npc=0 pet=0 prio=0 topMon=-1 x0) obj(live=0 vis=0 op=0 trap=0 topObj=-1 x0)
+04-26 20:34:17.957 19303 19345 I MuMain  : PERF_BUCKET objMove(cand=0 upd=0 def=0 n=0 m=0 f=0) objRender(cand=0 draw=0 cull=0 n=0 m=0 f=0 visDraw=0 visDef=0) charMove(cand=0 upd=0 def=0 n=0 m=0 f=0) charRender(cand=0 draw=0 def=0 cull=0 n=0 m=0 f=0)
+04-26 20:34:17.957 19303 19345 I MuMain  : PERF_TERRAIN world=-1 normal(block=0 tile=0) grass(block=0 tile=0) after(block=0 tile=0)
+04-26 20:34:17.957 19303 19345 I MuMain  : Frame 0 — drawCalls=132 verts=792 paths(im=132 vaD=0 vaC=0 qI=0 qE=0) SDL_err='Couldn't open asset '/storage/emulated/0/Android/data/com.muonline.client/files/Data/fonts/font_.ttf''
+04-26 20:34:17.961 19303 19345 I MuMain  : OpenTga logo file=Data\Logo\MU-logo.OZT size=512x256 alphaMin=0 alphaMax=255 alphaZero=80277 cornerRGBA=74,76,87,0
+04-26 20:34:18.052 19303 19345 I TakumiErrorReport: File not found Data\World74\leaf01.tga (30357)->Data\World74\leaf01.jpg
+04-26 20:34:18.056 19303 19345 I AndroidGDI: Font OK: /system/fonts/DroidSans-Bold.ttf sz=10
+04-26 20:34:18.057 19303 19345 I TakumiErrorReport: [Connect to Server 33] ip address = 171.235.182.88, port = 44405
+04-26 20:34:18.058 19303 19345 E MuMain  : PlayMp3 failed requested=[data\music\login_theme.mp3] resolved=[data/music/login_theme.mp3] reqExists=0 resolvedExists=0 cwd=[/storage/emulated/0/Android/data/com.muonline.client/files]: Couldn't open 'data/music/login_theme.mp3'
+04-26 20:34:18.058 19303 19345 I TakumiErrorReport: > Login Scene init success.
+04-26 20:34:18.069 19303 19345 I AndroidGDI: AndroidTextOut ENTRY len=34 hdc=0x733fdca9bdd0 bmp=0x733fdca9c190 text[0]=40
+04-26 20:34:18.070 19303 19345 I AndroidGDI: TextOut surf=241x18 fmt=0x16362004 maxA=255 dib[0..2]=0,0,0
+04-26 20:34:18.070 19303 19345 I AndroidGDI: AndroidTextOut ENTRY len=25 hdc=0x733fdca9bdd0 bmp=0x733fdca9c190 text[0]=32
+04-26 20:34:18.071 19303 19345 I AndroidGDI: TextOut surf=177x18 fmt=0x16362004 maxA=255 dib[0..2]=0,0,0
+04-26 20:34:18.071 19303 19345 I AndroidGDI: AndroidTextOut ENTRY len=14 hdc=0x733fdca9bdd0 bmp=0x733fdca9c190 text[0]=80
+04-26 20:34:18.071 19303 19345 I AndroidGDI: TextOut surf=95x18 fmt=0x16362004 maxA=255 dib[0..2]=0,0,0
+04-26 20:34:18.082 19303 19345 I MuMain  : Frame 1 — drawCalls=123 verts=43017 paths(im=885 vaD=0 vaC=0 qI=5 qE=0) SDL_err='Couldn't open 'data/music/login_theme.mp3''
+04-26 20:34:18.105 19303 19345 I AndroidGDI: AndroidTextOut ENTRY len=34 hdc=0x733fdca9bdd0 bmp=0x733fdca9c190 text[0]=40
+04-26 20:34:18.105 19303 19345 I AndroidGDI: TextOut surf=241x18 fmt=0x16362004 maxA=255 dib[0..2]=0,0,0
+04-26 20:34:18.105 19303 19345 I AndroidGDI: AndroidTextOut ENTRY len=25 hdc=0x733fdca9bdd0 bmp=0x733fdca9c190 text[0]=32
+04-26 20:34:18.105 19303 19345 I AndroidGDI: TextOut surf=177x18 fmt=0x16362004 maxA=255 dib[0..2]=0,0,0
+04-26 20:34:18.105 19303 19345 I AndroidGDI: AndroidTextOut ENTRY len=14 hdc=0x733fdca9bdd0 bmp=0x733fdca9c190 text[0]=80
+04-26 20:34:18.115 19303 19345 I MuMain  : Frame 2 — drawCalls=314 verts=70086 paths(im=1525 vaD=0 vaC=0 qI=19 qE=0) SDL_err=''
+04-26 20:34:18.137 19303 19345 I AndroidGDI: AndroidTextOut ENTRY len=34 hdc=0x733fdca9bdd0 bmp=0x733fdca9c190 text[0]=40
+04-26 20:34:18.137 19303 19345 I AndroidGDI: AndroidTextOut ENTRY len=25 hdc=0x733fdca9bdd0 bmp=0x733fdca9c190 text[0]=32
+04-26 20:34:18.137 19303 19345 I AndroidGDI: AndroidTextOut ENTRY len=14 hdc=0x733fdca9bdd0 bmp=0x733fdca9c190 text[0]=80
+04-26 20:34:18.138 19303 19345 I MuMain  : Frame 3 — drawCalls=317 verts=69198 paths(im=1512 vaD=0 vaC=0 qI=32 qE=0) SDL_err=''
+04-26 20:34:18.160 19303 19345 I AndroidGDI: AndroidTextOut ENTRY len=34 hdc=0x733fdca9bdd0 bmp=0x733fdca9c190 text[0]=40
+04-26 20:34:18.161 19303 19345 I MuMain  : Frame 4 — drawCalls=323 verts=69258 paths(im=1522 vaD=0 vaC=0 qI=40 qE=0) SDL_err=''
+04-26 20:34:18.187 19303 19345 I MuMain  : Frame 5 — drawCalls=339 verts=73659 paths(im=1539 vaD=0 vaC=0 qI=55 qE=0) SDL_err=''
+04-26 20:34:18.213 19303 19345 I MuMain  : Frame 6 — drawCalls=354 verts=73773 paths(im=1558 vaD=0 vaC=0 qI=68 qE=0) SDL_err=''
+04-26 20:34:18.238 19303 19345 I MuMain  : Frame 7 — drawCalls=364 verts=73845 paths(im=1570 vaD=0 vaC=0 qI=82 qE=0) SDL_err=''
+04-26 20:34:18.262 19303 19345 I MuMain  : Frame 8 — drawCalls=377 verts=74019 paths(im=1585 vaD=0 vaC=0 qI=94 qE=0) SDL_err=''
+04-26 20:34:18.288 19303 19345 I MuMain  : Frame 9 — drawCalls=386 verts=74139 paths(im=1591 vaD=0 vaC=0 qI=105 qE=0) SDL_err=''
+04-26 20:34:18.471 19303 19345 W MuMain  : ADAPT net budget down: fps=38.7 frameMs=25.83 maxMsg 70->60
+04-26 20:34:18.599   736   954 I AdbWifiNetworkMonitor: Wi-Fi network available
+04-26 20:34:18.599   736   954 I AdbWifiNetworkMonitor: Received the same Wi-Fi SSID. Ignoring.
+04-26 20:34:18.606  1366  1970 I NullBinder: NullBinder for android.net.action.RECOMMEND_NETWORKS triggering remote TransactionTooLargeException due to Service without Chimera impl, calling uid: 1000, calling pid: 0
+04-26 20:34:18.606  1366  1970 W libbinder.Binder: Large reply transaction of 1056768 bytes, interface descriptor , function: UNKNOWN_FUNCTION_NAME, code: 1, flags: 17
+04-26 20:34:18.608   736   921 I HalDevMgr: bestIfaceCreationProposal is null, requestIface=STA, existingIface=[name=wlan0 type=STA]
+04-26 20:34:18.749 19303 19345 W MuMain  : ADAPT net budget down: fps=36.0 frameMs=27.78 maxMsg 60->50
+04-26 20:34:19.013 19303 19345 W MuMain  : ADAPT net budget down: fps=38.0 frameMs=26.34 maxMsg 50->40
+04-26 20:34:19.013 19303 19345 I MuMain  : PERF fps=38.0 frameMs=26.34 phase(render=25.54 pad=0.02 present=0.69) renderLevel=4 fxScale=1.00 maxMsg=40 avg(draw=415 verts=74785 im=1807 vaD=0 vaC=0 qI=189 qE=0) max(draw=426 verts=76866)
+04-26 20:34:19.013 19303 19345 I MuMain  : PERF_SCENE world=73 char(live=0 vis=0 ply=0 mon=0 npc=0 pet=0 prio=0 topMon=-1 x0) obj(live=375 vis=173 op=0 trap=0 topObj=155 x29)
+04-26 20:34:19.013 19303 19345 I MuMain  : PERF_BUCKET objMove(cand=0 upd=0 def=0 n=0 m=0 f=0) objRender(cand=0 draw=0 cull=0 n=0 m=0 f=0 visDraw=0 visDef=0) charMove(cand=0 upd=0 def=0 n=0 m=0 f=0) charRender(cand=0 draw=0 def=0 cull=0 n=0 m=0 f=0)
+04-26 20:34:19.013 19303 19345 I MuMain  : PERF_TERRAIN world=73 normal(block=0 tile=0) grass(block=0 tile=0) after(block=0 tile=0)
+04-26 20:34:19.248   736  1699 E TaskPersister: File error accessing recents directory (directory doesn't exist?).
+04-26 20:34:19.287 19303 19345 I MuMain  : ADAPT fx scale: fps=36.5 frameMs=27.43 1.00->0.90 target=0.90
+04-26 20:34:19.287 19303 19345 W MuMain  : ADAPT net budget down: fps=36.5 frameMs=27.43 maxMsg 40->30
+04-26 20:34:19.425 19303 19345 I MuMain  : ZzzScene android logo alpha raw=1.020 clamp=1.000 glow=0.700
+04-26 20:34:19.568  1203  1331 D SatelliteController: isInCarrierRoamingNbIotNtn: satellite is disabled
+04-26 20:34:19.568  1203  1331 D SatelliteController: getCarrierRoamingNtnConnectType: Checking connect type from PLMN config for subId: 1
+04-26 20:34:19.573  1203  1331 D SatelliteController: getSatellitePerPlmnConfiguration: invalid subId or not supported via carrier.
+04-26 20:34:19.573  1203  1331 D SatelliteController: getCarrierRoamingNtnConnectType: config: null
+04-26 20:34:19.573  1203  1331 D SatelliteController: getCarrierRoamingNtnConnectType: Falling back to global carrier config connect type: 0
+04-26 20:34:19.573  1203  1331 D SatelliteController: updateLastNotifiedCarrierRoamingNtnSignalStrengthAndNotify(1)
+04-26 20:34:19.573  1203  1331 D SatelliteController: updateLastNotifiedCarrierRoamingNtnSignalStrengthAndNotify(1) lastNotifiedSignalStrength level: 0
+04-26 20:34:19.574  1203  1331 D SatelliteController: updateLastNotifiedCarrierRoamingNtnSignalStrengthAndNotify(1) currSignalStrength level: 0
+04-26 20:34:20.080 19303 19345 I MuMain  : PERF fps=41.6 frameMs=24.06 phase(render=23.27 pad=0.02 present=0.69) renderLevel=4 fxScale=1.00 maxMsg=30 avg(draw=367 verts=77912 im=1724 vaD=0 vaC=0 qI=180 qE=0) max(draw=393 verts=81471)
+04-26 20:34:20.080 19303 19345 I MuMain  : PERF_SCENE world=73 char(live=0 vis=0 ply=0 mon=0 npc=0 pet=0 prio=0 topMon=-1 x0) obj(live=375 vis=176 op=0 trap=0 topObj=79 x20)
+04-26 20:34:20.080 19303 19345 I MuMain  : PERF_BUCKET objMove(cand=0 upd=0 def=0 n=0 m=0 f=0) objRender(cand=0 draw=0 cull=0 n=0 m=0 f=0 visDraw=0 visDef=0) charMove(cand=0 upd=0 def=0 n=0 m=0 f=0) charRender(cand=0 draw=0 def=0 cull=0 n=0 m=0 f=0)
+04-26 20:34:20.080 19303 19345 I MuMain  : PERF_TERRAIN world=73 normal(block=0 tile=0) grass(block=0 tile=0) after(block=0 tile=0)
+04-26 20:34:20.257  1016  1016 I wpa_supplicant: wlan0: CTRL-EVENT-BEACON-LOSS 
+04-26 20:34:20.614 19303 19345 I MuMain  : ADAPT fx scale: fps=45.6 frameMs=21.93 1.00->0.90 target=0.90
+04-26 20:34:21.148 19303 19345 I MuMain  : PERF fps=56.2 frameMs=17.78 phase(render=16.94 pad=0.03 present=0.75) renderLevel=4 fxScale=1.00 maxMsg=30 avg(draw=246 verts=71116 im=1602 vaD=0 vaC=0 qI=103 qE=0) max(draw=259 verts=72348)
+04-26 20:34:21.148 19303 19345 I MuMain  : PERF_SCENE world=73 char(live=0 vis=0 ply=0 mon=0 npc=0 pet=0 prio=0 topMon=-1 x0) obj(live=375 vis=180 op=0 trap=0 topObj=79 x24)
+04-26 20:34:21.148 19303 19345 I MuMain  : PERF_BUCKET objMove(cand=0 upd=0 def=0 n=0 m=0 f=0) objRender(cand=0 draw=0 cull=0 n=0 m=0 f=0 visDraw=0 visDef=0) charMove(cand=0 upd=0 def=0 n=0 m=0 f=0) charRender(cand=0 draw=0 def=0 cull=0 n=0 m=0 f=0)
+04-26 20:34:21.148 19303 19345 I MuMain  : PERF_TERRAIN world=73 normal(block=0 tile=0) grass(block=0 tile=0) after(block=0 tile=0)
+04-26 20:34:21.614   736   954 I AdbWifiNetworkMonitor: Wi-Fi network available
+04-26 20:34:21.614   736   954 I AdbWifiNetworkMonitor: Received the same Wi-Fi SSID. Ignoring.
+04-26 20:34:21.624   736   921 I HalDevMgr: bestIfaceCreationProposal is null, requestIface=STA, existingIface=[name=wlan0 type=STA]
+04-26 20:34:21.630  1366  1970 I NullBinder: NullBinder for android.net.action.RECOMMEND_NETWORKS triggering remote TransactionTooLargeException due to Service without Chimera impl, calling uid: 1000, calling pid: 0
+04-26 20:34:21.630  1366  1970 W libbinder.Binder: Large reply transaction of 1056768 bytes, interface descriptor , function: UNKNOWN_FUNCTION_NAME, code: 1, flags: 17
+04-26 20:34:21.635  1160  1312 D IpClient/wlan0: interfaceLinkStateChanged: ifindex 16 up
+04-26 20:34:21.646  1160  1312 D IpClient/wlan0: interfaceLinkStateChanged: ifindex 16 up
+04-26 20:34:22.182 19303 19345 I MuMain  : ADAPT net budget up: fps=68.6 frameMs=14.58 maxMsg 30->35
+04-26 20:34:22.182 19303 19345 I MuMain  : PERF fps=68.6 frameMs=14.58 phase(render=13.96 pad=0.03 present=0.53) renderLevel=4 fxScale=1.00 maxMsg=35 avg(draw=180 verts=81386 im=1572 vaD=0 vaC=0 qI=66 qE=0) max(draw=192 verts=87201)
+04-26 20:34:22.182 19303 19345 I MuMain  : PERF_SCENE world=73 char(live=0 vis=0 ply=0 mon=0 npc=0 pet=0 prio=0 topMon=-1 x0) obj(live=375 vis=155 op=0 trap=0 topObj=79 x23)
+04-26 20:34:22.182 19303 19345 I MuMain  : PERF_BUCKET objMove(cand=0 upd=0 def=0 n=0 m=0 f=0) objRender(cand=0 draw=0 cull=0 n=0 m=0 f=0 visDraw=0 visDef=0) charMove(cand=0 upd=0 def=0 n=0 m=0 f=0) charRender(cand=0 draw=0 def=0 cull=0 n=0 m=0 f=0)
+04-26 20:34:22.182 19303 19345 I MuMain  : PERF_TERRAIN world=73 normal(block=0 tile=0) grass(block=0 tile=0) after(block=0 tile=0)
+04-26 20:34:22.316   736   919 D NetworkStatsObservers: Registering observer for RequestInfo from pid/uid:736/1000(android) for DataUsageRequest [ requestId=18, networkTemplate=NetworkTemplate: matchRule=MOBILE, matchSubscriberIds=[310260...], matchWifiNetworkKeys=[], metered=YES, defaultNetwork=NO, thresholdInBytes=5905261 ] accessLevel:3
+04-26 20:34:22.317   736  1030 D NetworkStatsObservers: Unregistering RequestInfo from pid/uid:736/1000(android) for DataUsageRequest [ requestId=17, networkTemplate=NetworkTemplate: matchRule=MOBILE, matchSubscriberIds=[310260...], matchWifiNetworkKeys=[], metered=YES, defaultNetwork=NO, thresholdInBytes=5905645 ] accessLevel:3
+04-26 20:34:22.800   736   836 W AppOps  : Noting op not finished: uid 10214 pkg com.google.android.gms code 113 startTime of in progress event=1777192258833
+04-26 20:34:22.815   736   836 W AppOps  : Noting op not finished: uid 10214 pkg com.google.android.gms code 79 startTime of in progress event=1777192269278
+04-26 20:34:22.840  1366  2230 I ActivityScheduler: nextTriggerTime: 18475537, in 238100ms, detectorType: 39, FULL_TYPE alarmWindowMillis: 80000
+04-26 20:34:23.232 19303 19345 I MuMain  : PERF fps=64.2 frameMs=15.57 phase(render=14.86 pad=0.04 present=0.62) renderLevel=4 fxScale=1.00 maxMsg=35 avg(draw=192 verts=94192 im=1611 vaD=0 vaC=0 qI=88 qE=0) max(draw=194 verts=94422)
+04-26 20:34:23.232 19303 19345 I MuMain  : PERF_SCENE world=73 char(live=0 vis=0 ply=0 mon=0 npc=0 pet=0 prio=0 topMon=-1 x0) obj(live=375 vis=168 op=0 trap=0 topObj=79 x29)
+04-26 20:34:23.232 19303 19345 I MuMain  : PERF_BUCKET objMove(cand=0 upd=0 def=0 n=0 m=0 f=0) objRender(cand=0 draw=0 cull=0 n=0 m=0 f=0 visDraw=0 visDef=0) charMove(cand=0 upd=0 def=0 n=0 m=0 f=0) charRender(cand=0 draw=0 def=0 cull=0 n=0 m=0 f=0)
+04-26 20:34:23.232 19303 19345 I MuMain  : PERF_TERRAIN world=73 normal(block=0 tile=0) grass(block=0 tile=0) after(block=0 tile=0)
+04-26 20:34:23.749 19303 19345 I MuMain  : ADAPT fx scale: fps=34.7 frameMs=28.79 1.00->0.90 target=0.80
+04-26 20:34:23.785  2780  2783 I artd    : GetBestInfo: odex next to the dex file (/data/app/~~PqdBwR9WSFUNw4iaJMgoGg==/com.google.android.gms-95Dc1VeYXyONiCBDqz_lkA==/oat/x86_64/base.odex) is kOatUpToDate with filter 'speed-profile' executable 'false'
+04-26 20:34:23.788  2780  2783 I artd    : GetBestInfo: dm (/data/app/~~PqdBwR9WSFUNw4iaJMgoGg==/com.google.android.gms-95Dc1VeYXyONiCBDqz_lkA==/split_AdsDynamite_installtime.dm) is kOatUpToDate with filter 'verify' executable 'false'
+04-26 20:34:23.790  2780  2783 I artd    : GetBestInfo: dm (/data/app/~~PqdBwR9WSFUNw4iaJMgoGg==/com.google.android.gms-95Dc1VeYXyONiCBDqz_lkA==/split_CronetDynamite_installtime.dm) is kOatUpToDate with filter 'verify' executable 'false'
+04-26 20:34:23.793  2780  2783 I artd    : GetBestInfo: dm (/data/app/~~PqdBwR9WSFUNw4iaJMgoGg==/com.google.android.gms-95Dc1VeYXyONiCBDqz_lkA==/split_DynamiteLoader_installtime.dm) is kOatUpToDate with filter 'verify' executable 'false'
+04-26 20:34:23.795  2780  2783 I artd    : GetBestInfo: dm (/data/app/~~PqdBwR9WSFUNw4iaJMgoGg==/com.google.android.gms-95Dc1VeYXyONiCBDqz_lkA==/split_DynamiteModulesA_installtime.dm) is kOatUpToDate with filter 'verify' executable 'false'
+04-26 20:34:23.797  2780  2783 I artd    : GetBestInfo: dm (/data/app/~~PqdBwR9WSFUNw4iaJMgoGg==/com.google.android.gms-95Dc1VeYXyONiCBDqz_lkA==/split_DynamiteModulesC_installtime.dm) is kOatUpToDate with filter 'verify' executable 'false'
+04-26 20:34:23.799  2780  2783 I artd    : GetBestInfo: dm (/data/app/~~PqdBwR9WSFUNw4iaJMgoGg==/com.google.android.gms-95Dc1VeYXyONiCBDqz_lkA==/split_GoogleCertificates_installtime.dm) is kOatUpToDate with filter 'verify' executable 'false'
+04-26 20:34:23.801  2780  2783 I artd    : GetBestInfo: dm (/data/app/~~PqdBwR9WSFUNw4iaJMgoGg==/com.google.android.gms-95Dc1VeYXyONiCBDqz_lkA==/split_MapsDynamite_installtime.dm) is kOatUpToDate with filter 'verify' executable 'false'
+04-26 20:34:23.804   736  2221 W AppOps  : Noting op not finished: uid 10214 pkg com.google.android.gms code 113 startTime of in progress event=1777192258833
+04-26 20:34:23.806  2780  2783 I artd    : GetBestInfo: dm (/data/app/~~PqdBwR9WSFUNw4iaJMgoGg==/com.google.android.gms-95Dc1VeYXyONiCBDqz_lkA==/split_MeasurementDynamite_installtime.dm) is kOatUpToDate with filter 'verify' executable 'false'
+04-26 20:34:23.809  2780  2783 I artd    : GetBestInfo: dm (/data/app/~~PqdBwR9WSFUNw4iaJMgoGg==/com.google.android.gms-95Dc1VeYXyONiCBDqz_lkA==/split_all_locale_splits.dm) is kOatUpToDate with filter 'verify' executable 'false'
+04-26 20:34:23.810  2780  2783 I artd    : GetBestInfo: /data/user_de/0/com.google.android.gms/app_chimera/m/0000000a/dl-TfliteDynamiteDynamite.integ_252130102100800.apk has no usable artifacts
+04-26 20:34:23.811  2780  2783 I artd    : GetBestInfo: /data/user_de/0/com.google.android.gms/app_chimera/m/00000001/CronetDynamite.apk has no usable artifacts
+04-26 20:34:23.813  2780  2783 I artd    : GetBestInfo: /data/user_de/0/com.google.android.gms/app_chimera/m/00000016/dl-MlkitOcrCommon.optional_261332100800.apk has no usable artifacts
+04-26 20:34:23.814  2780  2783 I artd    : GetBestInfo: /data/user_de/0/com.google.android.gms/app_chimera/m/00000002/DynamiteLoader.apk has no usable artifacts
+04-26 20:34:23.816  2780  2783 I artd    : GetBestInfo: /data/user_de/0/com.google.android.gms/app_chimera/m/0000000e/dl-MlkitBarcodeUi.optional_260235100800.apk has no usable artifacts
+04-26 20:34:23.817  2780  2783 I artd    : GetBestInfo: /data/user_de/0/com.google.android.gms/app_chimera/m/00000013/dl-Appsearch.optional_261332100800.apk has no usable artifacts
+04-26 20:34:23.818  2780  2783 I artd    : GetBestInfo: /data/user_de/0/com.google.android.gms/app_chimera/m/00000005/GoogleCertificates.apk has no usable artifacts
+04-26 20:34:23.824  2780  2783 I artd    : GetBestInfo: /data/user_de/0/com.google.android.gms/app_chimera/m/00000012/dl-PlayCloudSearch.optional_261332100000.apk has no usable artifacts
+04-26 20:34:23.827  2780  2783 I artd    : GetBestInfo: vdex next to the dex file (/data/user/0/com.google.android.gms/app_dg_cache/B3ED91DEC21F0EB5284BE10D982ABEAAC45F5C48/oat/x86_64/the.vdex) is kOatUpToDate with filter 'verify' executable 'false'
+04-26 20:34:23.829  2780  2783 I artd    : GetBestInfo: /data/user_de/0/com.google.android.gms/app_chimera/m/0000000f/dl-PlayCloudSearch.optional_260235100000.apk has no usable artifacts
+04-26 20:34:23.831  2780  2783 I artd    : GetBestInfo: /data/user_de/0/com.google.android.gms/app_chimera/m/00000008/dl-VisionOcr.optional_260235100000.apk has no usable artifacts
+04-26 20:34:23.833  2780  2783 I artd    : GetBestInfo: /data/user_de/0/com.google.android.gms/app_chimera/m/0000000b/dl-Appsearch.optional_260235100800.apk has no usable artifacts
+04-26 20:34:23.835  2780  2783 I artd    : GetBestInfo: /data/user_de/0/com.google.android.gms/app_chimera/m/00000011/dl-VisionOcr.optional_261332100000.apk has no usable artifacts
+04-26 20:34:23.837  2780  2783 I artd    : GetBestInfo: /data/user_de/0/com.google.android.gms/app_chimera/m/00000015/dl-MlkitBarcodeUi.optional_261332100800.apk has no usable artifacts
+04-26 20:34:23.839  2780  2783 I artd    : GetBestInfo: /data/user_de/0/com.google.android.gms/app_chimera/m/00000009/dl-MlkitOcrCommon.optional_260235100800.apk has no usable artifacts
+04-26 20:34:23.841  2780  2785 I artd    : GetBestInfo: vdex next to the dex file (/data/user/0/com.google.android.gms/app_dg_cache/CE973E4DE823F0AA69070767A9FABB590DDD455C/oat/x86_64/the.vdex) is kOatUpToDate with filter 'verify' executable 'false'
+04-26 20:34:23.842  2780  2785 I artd    : GetBestInfo: /data/user_de/0/com.google.android.gms/app_chimera/m/00000007/MeasurementDynamite.apk has no usable artifacts
+04-26 20:34:24.262 19303 19345 W MuMain  : ADAPT net budget down: fps=55.9 frameMs=17.88 maxMsg 35->30
+04-26 20:34:24.262 19303 19345 I MuMain  : PERF fps=55.9 frameMs=17.88 phase(render=16.98 pad=0.02 present=0.79) renderLevel=4 fxScale=1.00 maxMsg=30 avg(draw=235 verts=91754 im=1659 vaD=0 vaC=0 qI=129 qE=0) max(draw=246 verts=96516)
+04-26 20:34:24.262 19303 19345 I MuMain  : PERF_SCENE world=73 char(live=0 vis=0 ply=0 mon=0 npc=0 pet=0 prio=0 topMon=-1 x0) obj(live=375 vis=169 op=0 trap=0 topObj=79 x25)
+04-26 20:34:24.262 19303 19345 I MuMain  : PERF_BUCKET objMove(cand=0 upd=0 def=0 n=0 m=0 f=0) objRender(cand=0 draw=0 cull=0 n=0 m=0 f=0 visDraw=0 visDef=0) charMove(cand=0 upd=0 def=0 n=0 m=0 f=0) charRender(cand=0 draw=0 def=0 cull=0 n=0 m=0 f=0)
+04-26 20:34:24.262 19303 19345 I MuMain  : PERF_TERRAIN world=73 normal(block=0 tile=0) grass(block=0 tile=0) after(block=0 tile=0)
+04-26 20:34:24.632   736   954 I AdbWifiNetworkMonitor: Wi-Fi network available
+04-26 20:34:24.632   736   954 I AdbWifiNetworkMonitor: Received the same Wi-Fi SSID. Ignoring.
+04-26 20:34:24.641   736   921 I HalDevMgr: bestIfaceCreationProposal is null, requestIface=STA, existingIface=[name=wlan0 type=STA]
+04-26 20:34:24.646  1366  1970 I NullBinder: NullBinder for android.net.action.RECOMMEND_NETWORKS triggering remote TransactionTooLargeException due to Service without Chimera impl, calling uid: 1000, calling pid: 0
+04-26 20:34:24.646  1366  1970 W libbinder.Binder: Large reply transaction of 1056768 bytes, interface descriptor , function: UNKNOWN_FUNCTION_NAME, code: 1, flags: 17
+04-26 20:34:25.023   736   862 D ActivityManager: freezing 4276 com.android.vending:background
+04-26 20:34:25.318 19303 19345 I MuMain  : PERF fps=48.5 frameMs=20.64 phase(render=19.61 pad=0.02 present=0.94) renderLevel=4 fxScale=1.00 maxMsg=30 avg(draw=253 verts=93477 im=1724 vaD=0 vaC=0 qI=143 qE=0) max(draw=257 verts=95001)
+04-26 20:34:25.318 19303 19345 I MuMain  : PERF_SCENE world=73 char(live=0 vis=0 ply=0 mon=0 npc=0 pet=0 prio=0 topMon=-1 x0) obj(live=375 vis=153 op=0 trap=0 topObj=135 x18)
+04-26 20:34:25.318 19303 19345 I MuMain  : PERF_BUCKET objMove(cand=0 upd=0 def=0 n=0 m=0 f=0) objRender(cand=0 draw=0 cull=0 n=0 m=0 f=0 visDraw=0 visDef=0) charMove(cand=0 upd=0 def=0 n=0 m=0 f=0) charRender(cand=0 draw=0 def=0 cull=0 n=0 m=0 f=0)
+04-26 20:34:25.318 19303 19345 I MuMain  : PERF_TERRAIN world=73 normal(block=0 tile=0) grass(block=0 tile=0) after(block=0 tile=0)
+04-26 20:34:25.488   736   862 D ActivityManager: freezing 4164 com.android.vending
+04-26 20:34:25.495   736   931 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET, states=14
+04-26 20:34:25.496   736   931 D InetDiagMessage: Destroyed 2 sockets, proto=IPPROTO_TCP, family=AF_INET6, states=14
+04-26 20:34:25.496   736   931 D InetDiagMessage: Destroyed live tcp sockets for uids={10154} in 1ms
+04-26 20:34:25.847 19303 19345 I MuMain  : ADAPT fx scale: fps=42.0 frameMs=23.80 1.00->0.90 target=0.90
+04-26 20:34:26.378 19303 19345 I MuMain  : PERF fps=40.7 frameMs=24.58 phase(render=23.75 pad=0.03 present=0.74) renderLevel=4 fxScale=1.00 maxMsg=30 avg(draw=363 verts=104446 im=1869 vaD=0 vaC=0 qI=247 qE=0) max(draw=372 verts=104583)
+04-26 20:34:26.379 19303 19345 I MuMain  : PERF_SCENE world=73 char(live=0 vis=0 ply=0 mon=0 npc=0 pet=0 prio=0 topMon=-1 x0) obj(live=375 vis=126 op=0 trap=0 topObj=135 x18)
+04-26 20:34:26.379 19303 19345 I MuMain  : PERF_BUCKET objMove(cand=0 upd=0 def=0 n=0 m=0 f=0) objRender(cand=0 draw=0 cull=0 n=0 m=0 f=0 visDraw=0 visDef=0) charMove(cand=0 upd=0 def=0 n=0 m=0 f=0) charRender(cand=0 draw=0 def=0 cull=0 n=0 m=0 f=0)
+04-26 20:34:26.379 19303 19345 I MuMain  : PERF_TERRAIN world=73 normal(block=0 tile=0) grass(block=0 tile=0) after(block=0 tile=0)
+04-26 20:34:27.166 19303 19345 I MuMain  : ADAPT fx scale: fps=40.4 frameMs=24.78 1.00->0.90 target=0.90
+04-26 20:34:27.280   736   931 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET, states=14
+04-26 20:34:27.281   736   931 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET6, states=14
+04-26 20:34:27.281   736   931 D InetDiagMessage: Destroyed live tcp sockets for uids={10160} in 1ms
+04-26 20:34:27.281   736   931 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET, states=14
+04-26 20:34:27.282   736   931 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET6, states=14
+04-26 20:34:27.282   736   931 D InetDiagMessage: Destroyed live tcp sockets for uids={20160} in 1ms
+04-26 20:34:27.416 19303 19345 I MuMain  : PERF fps=39.9 frameMs=25.07 phase(render=24.17 pad=0.02 present=0.81) renderLevel=4 fxScale=1.00 maxMsg=30 avg(draw=375 verts=98661 im=1923 vaD=0 vaC=0 qI=277 qE=0) max(draw=383 verts=99798)
+04-26 20:34:27.417 19303 19345 I MuMain  : PERF_SCENE world=73 char(live=0 vis=0 ply=0 mon=0 npc=0 pet=0 prio=0 topMon=-1 x0) obj(live=375 vis=105 op=0 trap=0 topObj=135 x12)
+04-26 20:34:27.417 19303 19345 I MuMain  : PERF_BUCKET objMove(cand=0 upd=0 def=0 n=0 m=0 f=0) objRender(cand=0 draw=0 cull=0 n=0 m=0 f=0 visDraw=0 visDef=0) charMove(cand=0 upd=0 def=0 n=0 m=0 f=0) charRender(cand=0 draw=0 def=0 cull=0 n=0 m=0 f=0)
+04-26 20:34:27.417 19303 19345 I MuMain  : PERF_TERRAIN world=73 normal(block=0 tile=0) grass(block=0 tile=0) after(block=0 tile=0)
+04-26 20:34:27.647   736   921 I HalDevMgr: bestIfaceCreationProposal is null, requestIface=STA, existingIface=[name=wlan0 type=STA]
+04-26 20:34:27.656  1160  1312 D IpClient/wlan0: interfaceLinkStateChanged: ifindex 16 up
+04-26 20:34:27.661  1160  1312 D IpClient/wlan0: interfaceLinkStateChanged: ifindex 16 up
+04-26 20:34:28.445  1016  1016 I wpa_supplicant: wlan0: CTRL-EVENT-BEACON-LOSS 
+04-26 20:34:28.461 19303 19345 I MuMain  : ADAPT fx scale: fps=38.8 frameMs=25.81 1.00->0.90 target=0.90
+04-26 20:34:28.461 19303 19345 I MuMain  : PERF fps=38.8 frameMs=25.81 phase(render=24.90 pad=0.02 present=0.82) renderLevel=4 fxScale=1.00 maxMsg=30 avg(draw=395 verts=96589 im=1970 vaD=0 vaC=0 qI=297 qE=0) max(draw=401 verts=96672)
+04-26 20:34:28.461 19303 19345 I MuMain  : PERF_SCENE world=73 char(live=0 vis=0 ply=0 mon=0 npc=0 pet=0 prio=0 topMon=-1 x0) obj(live=375 vis=88 op=0 trap=0 topObj=129 x7)
+04-26 20:34:28.461 19303 19345 I MuMain  : PERF_BUCKET objMove(cand=0 upd=0 def=0 n=0 m=0 f=0) objRender(cand=0 draw=0 cull=0 n=0 m=0 f=0 visDraw=0 visDef=0) charMove(cand=0 upd=0 def=0 n=0 m=0 f=0) charRender(cand=0 draw=0 def=0 cull=0 n=0 m=0 f=0)
+04-26 20:34:28.461 19303 19345 I MuMain  : PERF_TERRAIN world=73 normal(block=0 tile=0) grass(block=0 tile=0) after(block=0 tile=0)
+04-26 20:34:29.450 19361 19361 W libbinder.BackendUnifiedServiceManager: Thread Pool max thread count is 0. Cannot cache binder as linkToDeath cannot be implemented. serviceName: SurfaceFlingerAIDL
+04-26 20:34:29.450 19361 19361 W libbinder.BpBinder: Linking to death on android.gui.ISurfaceComposer but there are no threads (yet?) listening to incoming transactions. See ProcessState::startThreadPool and ProcessState::setThreadPoolMaxThreadCount. Generally you should setup the binder threadpool before other initialization steps.
+04-26 20:34:29.450 19361 19361 W libbinder.ProcessState: Extra binder thread started, but 0 threads requested. Do not use *startThreadPool when zero threads are requested.
+04-26 20:34:29.469   560   624 D AF::Track: interceptBuffer: took 1984us to intercept 0 tracks
+04-26 20:34:29.513 19303 19345 I MuMain  : PERF fps=34.3 frameMs=29.13 phase(render=22.94 pad=0.03 present=6.10) renderLevel=4 fxScale=1.00 maxMsg=30 avg(draw=320 verts=81145 im=1906 vaD=0 vaC=0 qI=239 qE=0) max(draw=338 verts=85311)
+04-26 20:34:29.513 19303 19345 I MuMain  : PERF_SCENE world=73 char(live=0 vis=0 ply=0 mon=0 npc=0 pet=0 prio=0 topMon=-1 x0) obj(live=375 vis=73 op=0 trap=0 topObj=129 x7)
+04-26 20:34:29.513 19303 19345 I MuMain  : PERF_BUCKET objMove(cand=0 upd=0 def=0 n=0 m=0 f=0) objRender(cand=0 draw=0 cull=0 n=0 m=0 f=0 visDraw=0 visDef=0) charMove(cand=0 upd=0 def=0 n=0 m=0 f=0) charRender(cand=0 draw=0 def=0 cull=0 n=0 m=0 f=0)
+04-26 20:34:29.513 19303 19345 I MuMain  : PERF_TERRAIN world=73 normal(block=0 tile=0) grass(block=0 tile=0) after(block=0 tile=0)
+04-26 20:34:29.515   566   616 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+04-26 20:34:29.568  1203  1331 D SatelliteController: isInCarrierRoamingNbIotNtn: satellite is disabled
+04-26 20:34:29.568  1203  1331 D SatelliteController: getCarrierRoamingNtnConnectType: Checking connect type from PLMN config for subId: 1
+04-26 20:34:29.578  1203  1331 D SatelliteController: getSatellitePerPlmnConfiguration: invalid subId or not supported via carrier.
+04-26 20:34:29.580  1203  1331 D SatelliteController: getCarrierRoamingNtnConnectType: config: null
+04-26 20:34:29.580  1203  1331 D SatelliteController: getCarrierRoamingNtnConnectType: Falling back to global carrier config connect type: 0
+04-26 20:34:29.580  1203  1331 D SatelliteController: updateLastNotifiedCarrierRoamingNtnSignalStrengthAndNotify(1)
+04-26 20:34:29.580  1203  1331 D SatelliteController: updateLastNotifiedCarrierRoamingNtnSignalStrengthAndNotify(1) lastNotifiedSignalStrength level: 0
+04-26 20:34:29.580  1203  1331 D SatelliteController: updateLastNotifiedCarrierRoamingNtnSignalStrengthAndNotify(1) currSignalStrength level: 0

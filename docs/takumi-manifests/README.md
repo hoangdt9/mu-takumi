@@ -1,6 +1,8 @@
 # Manifests (Takumi ↔ OpenMU migration)
 
-Các file `.txt` trong thư mục này là **danh sách đầy đủ** artifact server/data/config tại thời điểm tạo (xem dòng `# Date` trong từng file).
+Các file `.txt` trong thư mục này là **danh sách đầy đủ** artifact server/data/config tại thời điểm tạo.
+
+**Header chuẩn (checklist §1):** ba dòng đầu mỗi file nên có dạng `# Snapshot …`, `# commit: <sha>` (`git -C "$TAK" rev-parse HEAD`), và `# ---` trước nội dung list. Sau khi chạy script dưới đây, chèn các dòng đó tay hoặc bọc script để không mất lineage.
 
 ## Tái sinh nhanh (macOS / Linux)
 

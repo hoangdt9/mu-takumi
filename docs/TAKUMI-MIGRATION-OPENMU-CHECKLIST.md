@@ -45,7 +45,8 @@
 
 ## Phase 2 — Dữ liệu (SQL Server → mô hình OpenMU / PostgreSQL)
 
-- [ ] Liệt kê **bảng / proc** thực sự dùng bởi DataServer/JoinServer/Game cũ (trace ODBC hoặc đọc code `QueryManager`).
+- [x] Inventory **`EXEC` + bảng (heuristic)** Data/Join → [`docs/takumi-game-spec/TAKUMI-SQL-BACKLOG.md`](takumi-game-spec/TAKUMI-SQL-BACKLOG.md).
+- [ ] Ánh xạ từng proc/bảng vào **schema OpenMU / Postgres** (spreadsheet + ADR; restore `.bak` làm chân lý DDL).
 - [ ] So sánh với **schema OpenMU** (EF migrations, setup DB admin tạo world).
 - [ ] Chọn một trong hai (ghi vào ADR ngắn):
   - [ ] **A)** Migrate dữ liệu từ `MuOnline.bak` → Postgres theo **mapping** trường (script ETL từng bảng).
@@ -161,12 +162,15 @@
 
 ## Liên kết nội bộ Takumi
 
-- `docs/protocol/TAKUMI-SERVER-NETWORK-BASELINE.md` — cổng / hai shard Takumi snapshot.
-- `docs/protocol/COMPATIBILITY-MATRIX.md` — ma trận gói tin (điền dần).
-- `docs/takumi-game-spec/SEASON-AND-DEFINES.md` — macro EX603 / `Util`.
-- `docs/TAKUMI-FULL-FILE-MIGRATION-CHECKLIST.md` — **danh sách đầy đủ** file/logic/data cần kiểm tra + manifest trong `docs/takumi-manifests/`.
-- `docs/SERVER-PORT-PLAN.md` — chiến lược A/B/C và phase tổng quát.
-- `docs/ANDROID-DEV-MAC.md` — build client test.
+- [`docs/takumi-game-spec/TAKUMI-SQL-BACKLOG.md`](takumi-game-spec/TAKUMI-SQL-BACKLOG.md) — 62 `EXEC` + bảng heuristic (Data/Join C++).
+- [`docs/takumi-game-spec/DATA-SUB1-DRIFT.md`](takumi-game-spec/DATA-SUB1-DRIFT.md) — so sánh `Sub 1/Data` vs `Data`.
+- [`docs/OPERATIONS-MIGRATION-NOTES.md`](OPERATIONS-MIGRATION-NOTES.md) — thứ tự batch, docker, scripts.
+- [`docs/protocol/TAKUMI-SERVER-NETWORK-BASELINE.md`](protocol/TAKUMI-SERVER-NETWORK-BASELINE.md) — cổng / hai shard Takumi snapshot.
+- [`docs/protocol/COMPATIBILITY-MATRIX.md`](protocol/COMPATIBILITY-MATRIX.md) — ma trận gói tin (điền dần).
+- [`docs/takumi-game-spec/SEASON-AND-DEFINES.md`](takumi-game-spec/SEASON-AND-DEFINES.md) — macro EX603 / `Util`.
+- [`docs/TAKUMI-FULL-FILE-MIGRATION-CHECKLIST.md`](TAKUMI-FULL-FILE-MIGRATION-CHECKLIST.md) — **danh sách đầy đủ** file/logic/data cần kiểm tra + manifest trong `docs/takumi-manifests/`.
+- [`docs/SERVER-PORT-PLAN.md`](SERVER-PORT-PLAN.md) — chiến lược A/B/C và phase tổng quát.
+- [`docs/ANDROID-DEV-MAC.md`](ANDROID-DEV-MAC.md) — build client test.
 - ~~`docker/` Wine~~ — chỉ sandbox; **production target** là OpenMU Docker.
 
 _Khi checklist này cập nhật, đánh dấu owner + ngày ở từng phase trong issue tracker._

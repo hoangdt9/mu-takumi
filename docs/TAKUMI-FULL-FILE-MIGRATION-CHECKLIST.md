@@ -21,6 +21,10 @@
 | §1 — Manifest snapshot | **Xong** — tiêu đề `# Snapshot` + `# Git SHA…` đầu mỗi file trong [`docs/takumi-manifests/`](takumi-manifests/) |
 | §2 — Macro / build 603 | **Xong** — [`docs/takumi-game-spec/SEASON-AND-DEFINES.md`](takumi-game-spec/SEASON-AND-DEFINES.md) |
 | §3 — Coupling `Source/Util/` (theo vcxproj) | **Xong** — ghi trong `SEASON-AND-DEFINES.md` |
+| §5 (SQL) — Trích proc/bảng từ C++ | **Xong** — [`docs/takumi-game-spec/TAKUMI-SQL-BACKLOG.md`](takumi-game-spec/TAKUMI-SQL-BACKLOG.md) |
+| §8 — Drift `Sub 1/Data` vs `Data` | **Xong** — [`docs/takumi-game-spec/DATA-SUB1-DRIFT.md`](takumi-game-spec/DATA-SUB1-DRIFT.md) (identical @ 2026-04-30) |
+| §12 — Batch / docker / script | **Xong** — [`docs/OPERATIONS-MIGRATION-NOTES.md`](OPERATIONS-MIGRATION-NOTES.md) |
+| Repo remote | **Đã push:** [github.com/hoangdt9/mu-takumi](https://github.com/hoangdt9/mu-takumi) — cập nhật manifest Git SHA sau mỗi tag quan trọng |
 | §4–§14 — Parity OpenMU / migrate từng module | **Chưa** |
 | Ma trận gói tin (spike) | **Khung** — [`docs/protocol/COMPATIBILITY-MATRIX.md`](protocol/COMPATIBILITY-MATRIX.md) |
 
@@ -63,7 +67,7 @@ TAK=/Users/hoangmac/Project/MU/takumi
 # Script đầy đủ: docs/takumi-manifests/README.md
 ```
 
-- [x] Gắn **snapshot + placeholder Git** vào đầu mỗi manifest (đổi `# Git SHA:` thành `# commit: <sha>` khi repo có `git`).
+- [x] Gắn **snapshot + `# commit:`** vào đầu mỗi manifest (`git rev-parse HEAD` sau mỗi lần tái sinh); hướng dẫn: [`docs/takumi-manifests/README.md`](takumi-manifests/README.md).
 
 ---
 
@@ -165,7 +169,7 @@ TAK=/Users/hoangmac/Project/MU/takumi
 | [ ] `Warehouse.cpp` |
 
 - [x] **`MuServer/2.DataServer`**: các key `DataServerPort`, ODBC DSN **đã baseline** trong [`protocol/TAKUMI-SERVER-NETWORK-BASELINE.md`](protocol/TAKUMI-SERVER-NETWORK-BASELINE.md) (không dán PASS vào markdown). Rotation `sa`/PWD khi chuyển Postgres.
-- [ ] Trích **`QueryManager.cpp`** danh sách **bảng + stored proc** vào backlog SQL (chuẩn bị Postgres / EF).
+- [x] Trích **`QueryManager.cpp` + mọi `ExecQuery`/`EXEC` trong Data/Join `*.cpp`** — **đã lưu:** [`docs/takumi-game-spec/TAKUMI-SQL-BACKLOG.md`](takumi-game-spec/TAKUMI-SQL-BACKLOG.md) (62 proc + 51 bảng heuristic).
 
 ---
 
@@ -240,7 +244,7 @@ Danh sách **đầy đủ từng đường dẫn** nằm trong [`docs/takumi-man
 - [ ] **`Terrain/*.att|.map|…`** (theo đuôi thực tế trong repo).
 - [ ] **`Util/*.txt|.dat`** helpers.
 
-- [ ] **`MuServer/4.GameServer/Sub 1/Data/`**: diff recursive với **`MuServer/4.GameServer/Data/`** và ghi *drift intentional* vào backlog.
+- [x] **`MuServer/4.GameServer/Sub 1/Data/`**: `diff -rq` với **`MuServer/4.GameServer/Data/`** — **không chênh** @ 2026-04-30; ghi trong [`docs/takumi-game-spec/DATA-SUB1-DRIFT.md`](takumi-game-spec/DATA-SUB1-DRIFT.md).
 
 *(Xem **`TAKUMI-MUSERVER-GAMEDATA-FILES.txt`** để checkbox từng file nếu cần kỹ luật tuyệt đối.)*
 
@@ -282,6 +286,7 @@ Danh sách **đầy đủ từng đường dẫn** nằm trong [`docs/takumi-man
 
 - [ ] **`MuOnline.bak`** — nguồn schema + dữ liệu thật để spike ETL Postgres.
 - [ ] **`SQL Back/*.sql`** — `6. Backup DB Server.sql`, `SQLPOINT.sql`, `SQLRest.sql`, `SQLUp.sql`, `SQL mUA VIpchar.sql`, `Xoa DB Open.sql` — grep tham chiếu bảng, đánh dấu proc dùng / không.
+- [x] **Trích proc/bảng từ server C++** (bổ sung cho `.bak`) — [`docs/takumi-game-spec/TAKUMI-SQL-BACKLOG.md`](takumi-game-spec/TAKUMI-SQL-BACKLOG.md).
 - [ ] **`docker/sql/restore-muonline.sh`** (repo) — chỉ là dev container; không thay roadmap Postgres OpenMU nhưng cần cho **golden compare** trong giai đoạn song song.
 
 ---
@@ -290,10 +295,10 @@ Danh sách **đầy đủ từng đường dẫn** nằm trong [`docs/takumi-man
 
 | Path | Kiểm tra |
 |------|----------|
-| [ ] `MuServer/Start_*.bat`, `Stop_MuServer.bat`, `StartServer.bat`, `StartSyncedServer.bat`, `XoaLog.bat` | Thứ tự & biến môi trường — chuyển sang `docker compose` / `dotnet run` OpenMU |
-| [ ] `docker/docker-compose.yml`, `docker/server/*`, `docker/sql/*` | Profile `db` / `wine` — OpenMU thay `wine` |
-| [ ] `scripts/open-mu-vm.sh`, `run-mssql-docker.sh`, `run-muserver-docker.sh` | Cập nhật khi default target = OpenMU |
-| [ ] `VMWare/*.vmx` (nếu có) | Chỉ dev legacy / compare — không production target |
+| [x] `MuServer/Start_*.bat`, `Stop_MuServer.bat`, … | **Đã ghi** thứ tự + hướng OpenMU — [`docs/OPERATIONS-MIGRATION-NOTES.md`](OPERATIONS-MIGRATION-NOTES.md) |
+| [x] `docker/docker-compose.yml`, `docker/server/*`, `docker/sql/*` | Cùng doc § «Repo Docker» |
+| [x] `scripts/open-mu-vm.sh`, `run-mssql-docker.sh`, `run-muserver-docker.sh` | Cùng doc § «Script local» |
+| [x] `VMWare/*.vmx` (nếu có) | **`.gitignore`** — không clone VM; chỉ dev local |
 
 ---
 

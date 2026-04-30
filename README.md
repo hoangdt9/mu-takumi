@@ -5,6 +5,16 @@ Private/dev fork of the Takumi MU stack focused on:
 - Migration path to **OpenMU** (.NET, Linux/macOS/Docker) — see `docs/TAKUMI-MIGRATION-OPENMU-CHECKLIST.md`.
 - Baseline manifests and protocol/network notes — `docs/`, `docs/takumi-manifests/`.
 
+## Tài liệu migration (OpenMU)
+
+- [`docs/TAKUMI-MIGRATION-OPENMU-CHECKLIST.md`](docs/TAKUMI-MIGRATION-OPENMU-CHECKLIST.md) — phases + gate.
+- [`docs/TAKUMI-FULL-FILE-MIGRATION-CHECKLIST.md`](docs/TAKUMI-FULL-FILE-MIGRATION-CHECKLIST.md) — inventory file + manifest.
+- [`docs/protocol/TAKUMI-SERVER-NETWORK-BASELINE.md`](docs/protocol/TAKUMI-SERVER-NETWORK-BASELINE.md) — cổng & shard.
+- [`docs/protocol/COMPATIBILITY-MATRIX.md`](docs/protocol/COMPATIBILITY-MATRIX.md) — ma trận gói tin (điền sau pcap).
+- [`docs/takumi-game-spec/TAKUMI-SQL-BACKLOG.md`](docs/takumi-game-spec/TAKUMI-SQL-BACKLOG.md) — ODBC / proc / bảng.
+- [`docs/takumi-game-spec/DATA-SUB1-DRIFT.md`](docs/takumi-game-spec/DATA-SUB1-DRIFT.md) — drift `Sub 1/Data` vs `Data`.
+- [`docs/OPERATIONS-MIGRATION-NOTES.md`](docs/OPERATIONS-MIGRATION-NOTES.md) — thứ tự batch Windows, Docker, scripts.
+
 Repository: https://github.com/hoangdt9/mu-takumi  
 
 ## Sau khi clone

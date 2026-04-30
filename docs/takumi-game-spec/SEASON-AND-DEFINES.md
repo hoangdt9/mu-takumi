@@ -34,3 +34,5 @@ Tham chiếu rà codebase **2026-04-30**. Build production hiện tại (xuất 
 | `..\..\Util\*` compiled | không | không | `MD5.cpp` + headers | `CCRC32.Cpp`, `Math.cpp` + headers |
 
 Thư **`cryptopp` / `detours` / `lua` / `mapm`**: không có `ClCompile`/`ClInclude` từ bốn project server trong snapshot `.vcxproj`; backlog nếu cần grep thư viện tĩnh trong source.
+
+**Liên quan OpenMU / DB:** [`TAKUMI-SQL-BACKLOG.md`](TAKUMI-SQL-BACKLOG.md).

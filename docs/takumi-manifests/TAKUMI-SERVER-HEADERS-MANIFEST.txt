@@ -1,5 +1,5 @@
 # Snapshot (migration checklist pass #1): 2026-04-30
-# Git SHA: không phát hiện repo `.git` tại sandbox — thay tay khi có
+# commit: 8797e42eb71610bca9b4fb868d743619100774be
 # ---
 # Headers .h/.hpp (server + GetMainInfo)
 

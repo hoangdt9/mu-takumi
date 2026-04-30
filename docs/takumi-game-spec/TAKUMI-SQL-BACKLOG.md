@@ -99,15 +99,15 @@ AccountCharacter, CardPhone, CashShopData, CashShopInventory, CashShopPeriodicIt
 | `SQL mUA VIpchar.sql` | `UPDATE character` một nhân vật (`mLvVIPChar`) trên DB `MuMaThan` | One-off GM; **không** merge vào pipeline OpenMU. |
 | `SQLPOINT.sql` | `ALTER PROCEDURE [dbo].[WZ_CreateCharacter]` (script SSMS) | File xuất **UTF-16 LE** (`U S E [...]`) — mở bằng editor hỗ trợ BOM hoặc `iconv`/SSMS; DB tên trong header: `MuOnlinecLASSIC` (sic). Đối chiếu với proc trong C++ backlog. |
 | `SQLRest.sql` | Reset stats / level một lượt trên `[Character]` | Dev/GM; không schema. |
-| `SQLUp.sql` | Patch schema: `ALTER [Character]` (vd. `DanhHieu`, `LucChien`, `TimeReset`, `mLvVIPChar`), `CREATE TABLE` `DataNapGame`, `ItemMarketData`, `CustomItemBank`, `EquipInventory`, … | **Nguồn DDL custom** đáng git diff với `.bak` + EF OpenMU. |
+| `SQLUp.sql` | DDL custom (đầy đủ file không dài duplicate ở đây): xem **`PHASE2-OPENMU-DATA-MODEL-MAP.md`** §1 + §2 mapping OpenMU EF. |
 | `Xoa DB Open.sql` | `DELETE FROM …` nhiều bảng trên `[MuOnline]` | Reset world; có trùng dòng (`Gens_Rank`). Dùng làm checklist bảng “có trên server cũ”. |
 
-**Việc tiếp theo (SQL Back):** grep thêm `CREATE`/`ALTER` trong `SQLUp.sql` → bảng phụ lục; không coi script này thay `MuOnline.bak` làm chân lý đầy đủ.
+**Đã có:** DDL `SQLUp.sql` được tóm và ánh xạ khái niệm OpenMU trong [`PHASE2-OPENMU-DATA-MODEL-MAP.md`](PHASE2-OPENMU-DATA-MODEL-MAP.md). Vẫn cần **export từ `.bak`/MSSQL** để chứng nhận cột không khai trong `SQLUp`.
 
 ## Việc tiếp theo
 
-1. Export **DDL** từ DB thật hoặc `.bak` và diff với **[OpenMU PostgreSQL schema](https://github.com/MUnique/OpenMU)** (fork của bạn).
+1. Export **DDL** từ DB thật hoặc `.bak` và diff với **EF migrations** fork OpenMU (`Persistence/EntityFramework/Migrations`; schema ví dụ `AccountData`, `Configuration` trong codegen).
 2. Ghi **mapping** từng proc/bảng vào issue tracker / spreadsheet (cột: OpenMU entity / WONTFIX / deferred).
 3. Cập nhật `docs/protocol/COMPATIBILITY-MATRIX.md` nếu login phụ thuộc cột lạ trong `MEMB_INFO`.
 
-**Liên quan:** `docs/TAKUMI-FULL-FILE-MIGRATION-CHECKLIST.md` §5, §11; `docs/TAKUMI-MIGRATION-OPENMU-CHECKLIST.md` Phase 2; mục **SQL Back** ở trên.
+**Liên quan:** `docs/TAKUMI-FULL-FILE-MIGRATION-CHECKLIST.md` §5, §11; `docs/TAKUMI-MIGRATION-OPENMU-CHECKLIST.md` Phase 2; **`PHASE2-OPENMU-DATA-MODEL-MAP.md`** (mapping DDL + ADR nháp); [`tools/db-migrate/README.md`](../../tools/db-migrate/README.md).

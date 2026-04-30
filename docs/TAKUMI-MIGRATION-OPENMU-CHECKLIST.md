@@ -45,14 +45,16 @@
 
 ## Phase 2 — Dữ liệu (SQL Server → mô hình OpenMU / PostgreSQL)
 
+Đọc **[`docs/takumi-game-spec/PHASE2-OPENMU-DATA-MODEL-MAP.md`](takumi-game-spec/PHASE2-OPENMU-DATA-MODEL-MAP.md)** (DDL `SQLUp.sql`, map `Character`/`Account` EF, ADR nháp A/B).
+
 - [x] Inventory **`EXEC` + bảng (heuristic)** Data/Join → [`docs/takumi-game-spec/TAKUMI-SQL-BACKLOG.md`](takumi-game-spec/TAKUMI-SQL-BACKLOG.md).
-- [x] Inventory **`MuServer/7.DataBase/SQL Back/*.sql`** → cùng file (mục **SQL Back**).
-- [ ] Ánh xạ từng proc/bảng vào **schema OpenMU / Postgres** (spreadsheet + ADR; restore `.bak` làm chân lý DDL).
-- [ ] So sánh với **schema OpenMU** (EF migrations, setup DB admin tạo world).
-- [ ] Chọn một trong hai (ghi vào ADR ngắn):
+- [x] Inventory **`MuServer/7.DataBase/SQL Back/*.sql`** → cùng file (mục **SQL Back**); **`SQLUp.sql`** đã tóm DDL + mapping concept trong **`PHASE2-OPENMU-DATA-MODEL-MAP.md`**.
+- [ ] Ánh xạ **từng proc/bảng** vào Postgres/OpenMU (**spreadsheet** + EF entity name); **`PHASE2` doc chỉ là khung**.
+- [x] **Khảo sát** khái niệm OpenMU (**`Character`**, **`Account`**, schema **AccountData/Configuration**) — không thay bằng staging DB.
+- [ ] Chọn một trong hai và chốt (ghi vào wiki/ADR repo fork):
   - [ ] **A)** Migrate dữ liệu từ `MuOnline.bak` → Postgres theo **mapping** trường (script ETL từng bảng).
   - [ ] **B)** **Fresh world** OpenMU + chỉ import subset (account, character) qua tool one-off.
-- [ ] Tooling: script `sql` / `dotnet` restore + transform — đặt trong repo (vd. `OpenMU/deploy/takumi-migration/` hoặc `takumi/tools/db-migrate/`).
+- [x] **Stub** thư mục + quy ước tooling: [`tools/db-migrate/README.md`](tools/db-migrate/README.md) (chưa có script ETL).
 - [ ] **Gate 2:** Có bộ dữ liệu dev đủ login + spawn character trên **OpenMU** (kể cả dữ liệu giả lập).
 
 ---
@@ -163,7 +165,8 @@
 
 ## Liên kết nội bộ Takumi
 
-- [`docs/takumi-game-spec/TAKUMI-SQL-BACKLOG.md`](takumi-game-spec/TAKUMI-SQL-BACKLOG.md) — 62 `EXEC` + bảng heuristic (Data/Join C++).
+- [`docs/takumi-game-spec/TAKUMI-SQL-BACKLOG.md`](takumi-game-spec/TAKUMI-SQL-BACKLOG.md) — `EXEC`/bảng heuristic + SQL Back.
+- [`docs/takumi-game-spec/PHASE2-OPENMU-DATA-MODEL-MAP.md`](takumi-game-spec/PHASE2-OPENMU-DATA-MODEL-MAP.md) — Phase 2 DDL `SQLUp` ↔ OpenMU EF + ADR nháp.
 - [`docs/takumi-game-spec/DATA-SUB1-DRIFT.md`](takumi-game-spec/DATA-SUB1-DRIFT.md) — so sánh `Sub 1/Data` vs `Data`.
 - [`docs/takumi-game-spec/CONNECT-SERVER-REAL-DRIFT.md`](takumi-game-spec/CONNECT-SERVER-REAL-DRIFT.md) — `1.ConnectServer` vs `_real` (INI).
 - [`docs/takumi-game-spec/GAMESERVER-DATA-FOLDER-MAP.md`](takumi-game-spec/GAMESERVER-DATA-FOLDER-MAP.md) — `Data/*` → vùng OpenMU (discovery).

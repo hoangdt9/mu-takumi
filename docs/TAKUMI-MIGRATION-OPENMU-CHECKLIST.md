@@ -46,6 +46,7 @@
 ## Phase 2 — Dữ liệu (SQL Server → mô hình OpenMU / PostgreSQL)
 
 - [x] Inventory **`EXEC` + bảng (heuristic)** Data/Join → [`docs/takumi-game-spec/TAKUMI-SQL-BACKLOG.md`](takumi-game-spec/TAKUMI-SQL-BACKLOG.md).
+- [x] Inventory **`MuServer/7.DataBase/SQL Back/*.sql`** → cùng file (mục **SQL Back**).
 - [ ] Ánh xạ từng proc/bảng vào **schema OpenMU / Postgres** (spreadsheet + ADR; restore `.bak` làm chân lý DDL).
 - [ ] So sánh với **schema OpenMU** (EF migrations, setup DB admin tạo world).
 - [ ] Chọn một trong hai (ghi vào ADR ngắn):

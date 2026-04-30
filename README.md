@@ -36,6 +36,20 @@ Repository: https://github.com/hoangdt9/mu-takumi
 | `MuServer/` | Layout deploy + Data (txt/dat) |
 | `docs/` | Checklist migrate OpenMU + protocol baseline |
 
+## Đẩy lên GitHub (maintainer)
+
+Repo đích: [hoangdt9/mu-takumi](https://github.com/hoangdt9/mu-takumi). Trên máy có quyền ghi:
+
+```bash
+cd /path/to/takumi   # nhánh main, đã commit
+
+# PAT + HTTPS hoặc SSH:
+git remote set-url origin git@github.com:hoangdt9/mu-takumi.git
+git push -u origin main
+```
+
+Không có credential sẽ lỗi `could not read Username` — chạy `gh auth login` hoặc dùng SSH key.
+
 ## Bảo mật
 
 Đừng force-add `DataServer.ini` / `JoinServer.ini` chứa mật khẩu thật lên GitHub công khai. Nếu đã lộ, đổi pass SQL và `GlobalPassword`.

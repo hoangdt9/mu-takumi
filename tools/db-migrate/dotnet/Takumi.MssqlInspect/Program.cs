@@ -2,8 +2,8 @@ using Microsoft.Data.SqlClient;
 
 /// <summary>
 /// Read-only MSSQL schema dump for Phase 2 (no credentials in repo).
-/// Usage: TAKUMI_MSSQL_CONNECTION="Server=...;Database=MuOnline;User Id=...;Password=...;TrustServerCertificate=True" dotnet run
-/// Or: dotnet run -- --connection "..."
+/// Connection: env TAKUMI_MSSQL_CONNECTION or args --connection "..."
+/// From repo root: dotnet run --project tools/db-migrate/dotnet/Takumi.MssqlInspect -- --help
 /// </summary>
 internal static class Program
 {
@@ -20,9 +20,10 @@ internal static class Program
           --markdown            Column detail as markdown (default: CSV for --table / full dump uses one CSV header).
           --schema dbo          Table schema filter (default: dbo).
 
-        Example:
+        Example (from Takumi repo root):
+          dotnet run --project tools/db-migrate/dotnet/Takumi.MssqlInspect -- --help
           TAKUMI_MSSQL_CONNECTION="Server=127.0.0.1,1433;Database=MuOnline;User Id=sa;Password=***;TrustServerCertificate=True" \\
-            dotnet run --project tools/db-migrate/dotnet/Takumi.MssqlInspect
+            dotnet run --project tools/db-migrate/dotnet/Takumi.MssqlInspect --
         """;
 
     public static async Task<int> Main(string[] args)

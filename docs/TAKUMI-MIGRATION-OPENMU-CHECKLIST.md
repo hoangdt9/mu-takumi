@@ -94,7 +94,7 @@
 
 - [x] Inventory thư mục **`MuServer/4.GameServer/Data/**` về mặt chức năng — [`docs/takumi-game-spec/GAMESERVER-DATA-FOLDER-MAP.md`](takumi-game-spec/GAMESERVER-DATA-FOLDER-MAP.md) (song song [`TAKUMI-MUSERVER-GAMEDATA-FILES.txt`](takumi-manifests/TAKUMI-MUSERVER-GAMEDATA-FILES.txt)).
 - [x] Trích **`#define`/season** từ vcxproj / headers (vd. `GAMESERVER_UPDATE`) — **đã ghi:** [`docs/takumi-game-spec/SEASON-AND-DEFINES.md`](takumi-game-spec/SEASON-AND-DEFINES.md); mở rộng `CUSTOM_*` khi audit từng module.
-- [ ] Liệt kê **opcode / packet handlers** được đề cập trong code (grep `0x`, `CASE`, send buffer) để ghép vào handlers OpenMU.
+- [x] Chỉ mục điều phối **head/sub** và entry point Connect / Join-internal / Game (phần lõi **`ProtocolCore`**) → [`docs/protocol/TAKUMI-PROTOCOL-DISPATCH-INDEX.md`](protocol/TAKUMI-PROTOCOL-DISPATCH-INDEX.md). Bảng **đầy đủ every case** không thực hiện tại markdown — đọc `Protocol.cpp` / `DSProtocol.cpp` trong IDE hoặc bổ sung script riêng.
 - [ ] Trích các **formula** trong comment hoặc hằng số đáng nhớ (damage, EXP, drop rate) vào một file `docs/takumi-game-spec/` (Markdown bảng + link file C++ làm chứng cứ).
 
 **4.2 — Nền mạng in-game**
@@ -169,7 +169,7 @@
 - [`docs/takumi-game-spec/GAMESERVER-DATA-FOLDER-MAP.md`](takumi-game-spec/GAMESERVER-DATA-FOLDER-MAP.md) — `Data/*` → vùng OpenMU (discovery).
 - [`docs/MANIFEST-TRACKER-TEMPLATE.md`](MANIFEST-TRACKER-TEMPLATE.md) — §17 spreadsheet / Issues.
 - [`docs/OPERATIONS-MIGRATION-NOTES.md`](OPERATIONS-MIGRATION-NOTES.md) — thứ tự batch, docker, scripts.
-- [`docs/protocol/TAKUMI-SERVER-NETWORK-BASELINE.md`](protocol/TAKUMI-SERVER-NETWORK-BASELINE.md) — cổng / hai shard Takumi snapshot.
+- [`docs/protocol/TAKUMI-PROTOCOL-DISPATCH-INDEX.md`](protocol/TAKUMI-PROTOCOL-DISPATCH-INDEX.md) — chỉ mục head/sub dispatcher (discovery).
 - [`docs/protocol/COMPATIBILITY-MATRIX.md`](protocol/COMPATIBILITY-MATRIX.md) — ma trận gói tin (điền dần).
 - [`docs/takumi-game-spec/SEASON-AND-DEFINES.md`](takumi-game-spec/SEASON-AND-DEFINES.md) — macro EX603 / `Util`.
 - [`docs/TAKUMI-FULL-FILE-MIGRATION-CHECKLIST.md`](TAKUMI-FULL-FILE-MIGRATION-CHECKLIST.md) — **danh sách đầy đủ** file/logic/data cần kiểm tra + manifest trong `docs/takumi-manifests/`.

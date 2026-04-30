@@ -11,6 +11,7 @@ Private/dev fork of the Takumi MU stack focused on:
 - [`docs/TAKUMI-FULL-FILE-MIGRATION-CHECKLIST.md`](docs/TAKUMI-FULL-FILE-MIGRATION-CHECKLIST.md) — inventory file + manifest.
 - [`docs/protocol/TAKUMI-SERVER-NETWORK-BASELINE.md`](docs/protocol/TAKUMI-SERVER-NETWORK-BASELINE.md) — cổng & shard.
 - [`docs/protocol/COMPATIBILITY-MATRIX.md`](docs/protocol/COMPATIBILITY-MATRIX.md) — ma trận gói tin (điền sau pcap).
+- [`docs/protocol/TAKUMI-PROTOCOL-DISPATCH-INDEX.md`](docs/protocol/TAKUMI-PROTOCOL-DISPATCH-INDEX.md) — head/sub dispatcher từ mã (Connect / Join-internal / Game).
 - [`docs/takumi-game-spec/TAKUMI-SQL-BACKLOG.md`](docs/takumi-game-spec/TAKUMI-SQL-BACKLOG.md) — ODBC / proc / bảng + **SQL Back**.
 - [`docs/takumi-game-spec/DATA-SUB1-DRIFT.md`](docs/takumi-game-spec/DATA-SUB1-DRIFT.md) — drift `Sub 1/Data` vs `Data`.
 - [`docs/takumi-game-spec/GAMESERVER-VS-GAMESERVER-REAL.md`](docs/takumi-game-spec/GAMESERVER-VS-GAMESERVER-REAL.md) — `4.GameServer` vs `4.GameServer_real`.

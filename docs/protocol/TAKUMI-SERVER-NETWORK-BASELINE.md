@@ -14,9 +14,9 @@ Tài liệu này đóng mục **§0 checklist migration**: ghi nhận **IP/hostn
 | Cùng file | `ConnectServerPortUDP` | `63001` |
 | `GameServerInfo - Common.ini` (cả hai shard) | `ConnectServerPort` (nội bộ GS↔CS) | `63001` |
 
-**Ghi chú:** Client MU thường dùng **UDP** cho danh sách server; JoinServer.ini tham chiếu `ConnectServerPort = 63001`. Cần **spike pcap** để xác nhận client Takumi dùng TCP 63000 hay UDP 63001 (hoặc cả hai).
+- **`Client → Connect`** (spike UDP/TCP): trong code chỉ **`0xF4`** + subs **`0x03`** / **`0x06`** — xem [**`TAKUMI-PROTOCOL-DISPATCH-INDEX.md`**](TAKUMI-PROTOCOL-DISPATCH-INDEX.md) §3 và bảng cổng dưới.
 
-## DataServer
+**Ghi chú:** JoinServer.ini và GS thường tham chiếu **`ConnectServerPort = 63001`**. Client có thể dùng **UDP** hoặc **TCP** tùy bản EXE — cần **pcap** để xác nhận Takumi Android/PC đi đường nào.
 
 | Tham số | Giá trị |
 |---------|---------|
@@ -67,3 +67,4 @@ Map sang listener **Connect / Login / Game** của fork PostgreSQL/OpenMU và gh
 - **`1.ConnectServer` vs `_real`:** ini đồng nhất trong repo — [`docs/takumi-game-spec/CONNECT-SERVER-REAL-DRIFT.md`](takumi-game-spec/CONNECT-SERVER-REAL-DRIFT.md)
 - `MuServer/2.DataServer/DataServer.ini`
 - `MuServer/3.JoinServer/JoinServer.ini`
+- Chỉ mục dispatcher (head/sub) từ mã server: [**`docs/protocol/TAKUMI-PROTOCOL-DISPATCH-INDEX.md`**](TAKUMI-PROTOCOL-DISPATCH-INDEX.md)

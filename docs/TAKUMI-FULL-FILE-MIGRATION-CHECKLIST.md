@@ -29,6 +29,7 @@
 | §12 — Batch / docker / script | **Xong** — [`docs/OPERATIONS-MIGRATION-NOTES.md`](OPERATIONS-MIGRATION-NOTES.md) |
 | Repo remote | **Đã push:** [github.com/hoangdt9/mu-takumi](https://github.com/hoangdt9/mu-takumi) — các manifest `# commit:` đồng bộ với HEAD sau `git push` (`git rev-parse HEAD`) |
 | §4–§14 — Parity OpenMU / migrate từng module | **Chưa** |
+| Phase 4.1 — Chỉ mục dispatcher packet (discovery) | **Khung** — [`protocol/TAKUMI-PROTOCOL-DISPATCH-INDEX.md`](protocol/TAKUMI-PROTOCOL-DISPATCH-INDEX.md) |
 | Ma trận gói tin (spike) | **Khung** — [`docs/protocol/COMPATIBILITY-MATRIX.md`](protocol/COMPATIBILITY-MATRIX.md) |
 
 ---
@@ -102,7 +103,7 @@ TAK=/Users/hoangmac/Project/MU/takumi
 |------|-----------------------------------|
 | [ ] `ClientManager.cpp` | Session / blacklist / concurrency |
 | [ ] `ConnectServer.cpp` | Entry, lifecycle |
-| [ ] `ConnectServerProtocol.cpp` | **Danh bạ packet CS↔client** |
+| [ ] `ConnectServerProtocol.cpp` | **Danh bạ packet CS↔client** — dispatcher đã rút gọn trong [`protocol/TAKUMI-PROTOCOL-DISPATCH-INDEX.md`](protocol/TAKUMI-PROTOCOL-DISPATCH-INDEX.md) §3; parity OpenMU từng field vẫn backlog. |
 | [ ] `CriticalSection.cpp` | Chỉ tham khảo threading — OpenMU có model riêng |
 | [ ] `IpManager.cpp` | Allow/block IP |
 | [ ] `Log.cpp` | Chuẩn log tương đương |
@@ -118,6 +119,7 @@ TAK=/Users/hoangmac/Project/MU/takumi
 | [ ] `Util.cpp` | Tiện ích chung |
 
 - [x] Cặp **`ConnectServer.ini`**, **`ServerList.ini`** (`MuServer/1.ConnectServer*` và `1.ConnectServer_real`): cổng đã vào [`TAKUMI-SERVER-NETWORK-BASELINE.md`](protocol/TAKUMI-SERVER-NETWORK-BASELINE.md); **`_real`** vs chuẩn: **cùng nội dung INI** @ 2026-04-30 — [`CONNECT-SERVER-REAL-DRIFT.md`](takumi-game-spec/CONNECT-SERVER-REAL-DRIFT.md) (khác chủ yếu tên/binary deploy).
+- **Discovery dispatcher client→Connect:** [`protocol/TAKUMI-PROTOCOL-DISPATCH-INDEX.md`](protocol/TAKUMI-PROTOCOL-DISPATCH-INDEX.md) §3 (`0xF4`/subs).
 
 ---
 
@@ -172,6 +174,7 @@ TAK=/Users/hoangmac/Project/MU/takumi
 | [ ] `Warehouse.cpp` |
 
 - [x] **`MuServer/2.DataServer`**: các key `DataServerPort`, ODBC DSN **đã baseline** trong [`protocol/TAKUMI-SERVER-NETWORK-BASELINE.md`](protocol/TAKUMI-SERVER-NETWORK-BASELINE.md) (không dán PASS vào markdown). Rotation `sa`/PWD khi chuyển Postgres.
+- **Điều phối GS↔Data** (discovery): **`DSProtocol.cpp`** — không rút gọn trong doc protocol; backlog parity theo luồng DataServer/OpenMU abstraction.
 - [x] Trích **`QueryManager.cpp` + mọi `ExecQuery`/`EXEC` trong Data/Join `*.cpp`** — **đã lưu:** [`docs/takumi-game-spec/TAKUMI-SQL-BACKLOG.md`](takumi-game-spec/TAKUMI-SQL-BACKLOG.md) (62 proc + 51 bảng heuristic).
 
 ---
@@ -199,6 +202,7 @@ TAK=/Users/hoangmac/Project/MU/takumi
 | [ ] `Util.cpp` |
 
 - [x] **`MuServer/3.JoinServer`**: cổng + liên kết Connect **đã baseline** trong [`protocol/TAKUMI-SERVER-NETWORK-BASELINE.md`](protocol/TAKUMI-SERVER-NETWORK-BASELINE.md); các file TXT còn lại rà khi vào parity login OpenMU.
+- **Discovery dispatcher** `JoinServerProtocolCore` (tin nội bộ GS→Join): [`protocol/TAKUMI-PROTOCOL-DISPATCH-INDEX.md`](protocol/TAKUMI-PROTOCOL-DISPATCH-INDEX.md) §4.
 
 ---
 
@@ -207,6 +211,8 @@ TAK=/Users/hoangmac/Project/MU/takumi
 - [x] Baseline cổng game **55901 / 55920**, serial, version → [`docs/protocol/TAKUMI-SERVER-NETWORK-BASELINE.md`](protocol/TAKUMI-SERVER-NETWORK-BASELINE.md).
 
 Danh sách **đầy đủ từng đường dẫn** nằm trong [`docs/takumi-manifests/TAKUMI-SERVER-SOURCE-MANIFEST.txt`](takumi-manifests/TAKUMI-SERVER-SOURCE-MANIFEST.txt), mục `## 4.GameServer GameServer/*.cpp`.
+
+**Điều phối client→GS (discovery):** [`docs/protocol/TAKUMI-PROTOCOL-DISPATCH-INDEX.md`](protocol/TAKUMI-PROTOCOL-DISPATCH-INDEX.md).
 
 - [ ] Tạo bảng theo dõi thật (sheet / GitHub Projects): một dòng một path trong manifest § 7; cột theo [**`MANIFEST-TRACKER-TEMPLATE.md`**](MANIFEST-TRACKER-TEMPLATE.md).
 - [x] **Khung `Data/*` theo chức năng** (discovery, không thay manifest từng file): [`GAMESERVER-DATA-FOLDER-MAP.md`](takumi-game-spec/GAMESERVER-DATA-FOLDER-MAP.md).

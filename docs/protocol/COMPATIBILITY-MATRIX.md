@@ -12,7 +12,11 @@
 | Game | Encryption/session key | See `Protect.cpp` stack; ENCRYPT macros in stdafx | TBD | |
 | Anti-cheat | XShield dependency | Batch starts XShield.exe | Usually none — policy | Decide remove/replace |
 
-**Quy trình:** mỗi dòng DONE khi có file hex dump hoặc test TCP integration chứng minh.
+## Chỉ mục từ mã C++ (bổ sung pcap sau)
+
+Điều hướng **head/sub** và hằng **`PROTOCOL_CODE*`** đã được tóm trong [**`TAKUMI-PROTOCOL-DISPATCH-INDEX.md`**](TAKUMI-PROTOCOL-DISPATCH-INDEX.md). **Không thay thế** golden capture — chỉ là mỏ neo khi grep `Protocol.cpp`/OpenMU handler.
+
+**Quy trình:** mỗi dòng trên được coi là DONE khi có file hex dump hoặc test TCP integration chứng minh.
 
 **Liên quan:**
 

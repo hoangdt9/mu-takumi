@@ -91,10 +91,23 @@ Có thể trùng casing (`Character` vs `CHARACTER`, `MEMB_INFO` vs `memb_info`)
 
 AccountCharacter, CardPhone, CashShopData, CashShopInventory, CashShopPeriodicItem, CHARACTER, Character, CustomAttack, CustomGift, CustomItemBank, CustomNpcQuest, CustomQuest, DataNapGame, EquipInventory, EventInventory, EventLeoTheHelper, EventSantaClaus, ExtWarehouse, GameServerInfo, Gens_Rank, Gens_Reward, Guild, GuildMember, HelperData, ItemMarketData, LOG_CREDITOS, LuckyCoin, LuckyItem, MasterSkillTree, MEMB_INFO, memb_info, MuRummyCard, MuRummyData, MuunInventory, OptionData, PcPointData, PentagramJewel, PShopItemValue, QuestKillCount, QuestWorld, RankingDuel, RankingKingGuild, RankingKingPlayer, SNSData, T_FriendList, T_FriendMail, T_FriendMain, T_PetItem_Info, T_WaitFriend, warehouse, WarehouseGuild.
 
+## SQL Back — script kèm repo (`MuServer/7.DataBase/SQL Back/`)
+
+| File | Mục đích (tóm tắt) | Ghi chú migration |
+|------|---------------------|-------------------|
+| `6. Backup DB Server.sql` | `BACKUP DATABASE [MuOnline_TakumiUP15]` + shrink | Đường `@dateBackup` hardcode `E:\...` — chỉ ops Windows; không dùng trên Postgres. |
+| `SQL mUA VIpchar.sql` | `UPDATE character` một nhân vật (`mLvVIPChar`) trên DB `MuMaThan` | One-off GM; **không** merge vào pipeline OpenMU. |
+| `SQLPOINT.sql` | `ALTER PROCEDURE [dbo].[WZ_CreateCharacter]` (script SSMS) | File xuất **UTF-16 LE** (`U S E [...]`) — mở bằng editor hỗ trợ BOM hoặc `iconv`/SSMS; DB tên trong header: `MuOnlinecLASSIC` (sic). Đối chiếu với proc trong C++ backlog. |
+| `SQLRest.sql` | Reset stats / level một lượt trên `[Character]` | Dev/GM; không schema. |
+| `SQLUp.sql` | Patch schema: `ALTER [Character]` (vd. `DanhHieu`, `LucChien`, `TimeReset`, `mLvVIPChar`), `CREATE TABLE` `DataNapGame`, `ItemMarketData`, `CustomItemBank`, `EquipInventory`, … | **Nguồn DDL custom** đáng git diff với `.bak` + EF OpenMU. |
+| `Xoa DB Open.sql` | `DELETE FROM …` nhiều bảng trên `[MuOnline]` | Reset world; có trùng dòng (`Gens_Rank`). Dùng làm checklist bảng “có trên server cũ”. |
+
+**Việc tiếp theo (SQL Back):** grep thêm `CREATE`/`ALTER` trong `SQLUp.sql` → bảng phụ lục; không coi script này thay `MuOnline.bak` làm chân lý đầy đủ.
+
 ## Việc tiếp theo
 
 1. Export **DDL** từ DB thật hoặc `.bak` và diff với **[OpenMU PostgreSQL schema](https://github.com/MUnique/OpenMU)** (fork của bạn).
 2. Ghi **mapping** từng proc/bảng vào issue tracker / spreadsheet (cột: OpenMU entity / WONTFIX / deferred).
 3. Cập nhật `docs/protocol/COMPATIBILITY-MATRIX.md` nếu login phụ thuộc cột lạ trong `MEMB_INFO`.
 
-**Liên quan:** `docs/TAKUMI-FULL-FILE-MIGRATION-CHECKLIST.md` §5, §11; `docs/TAKUMI-MIGRATION-OPENMU-CHECKLIST.md` Phase 2.
+**Liên quan:** `docs/TAKUMI-FULL-FILE-MIGRATION-CHECKLIST.md` §5, §11; `docs/TAKUMI-MIGRATION-OPENMU-CHECKLIST.md` Phase 2; mục **SQL Back** ở trên.

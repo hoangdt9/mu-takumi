@@ -22,9 +22,9 @@
 | §2 — Macro / build 603 | **Xong** — [`docs/takumi-game-spec/SEASON-AND-DEFINES.md`](takumi-game-spec/SEASON-AND-DEFINES.md) |
 | §3 — Coupling `Source/Util/` (theo vcxproj) | **Xong** — ghi trong `SEASON-AND-DEFINES.md` |
 | §5 (SQL) — Trích proc/bảng từ C++ | **Xong** — [`docs/takumi-game-spec/TAKUMI-SQL-BACKLOG.md`](takumi-game-spec/TAKUMI-SQL-BACKLOG.md) |
-| §8 — Drift `Sub 1/Data` vs `Data` | **Xong** — [`docs/takumi-game-spec/DATA-SUB1-DRIFT.md`](takumi-game-spec/DATA-SUB1-DRIFT.md) (identical @ 2026-04-30) |
+| §8 — Drift `Sub 1/Data` vs `Data`; **`4.GameServer` vs `4.GameServer_real`** | **Xong** — [`DATA-SUB1-DRIFT.md`](takumi-game-spec/DATA-SUB1-DRIFT.md), [`GAMESERVER-VS-GAMESERVER-REAL.md`](takumi-game-spec/GAMESERVER-VS-GAMESERVER-REAL.md) |
 | §12 — Batch / docker / script | **Xong** — [`docs/OPERATIONS-MIGRATION-NOTES.md`](OPERATIONS-MIGRATION-NOTES.md) |
-| Repo remote | **Đã push:** [github.com/hoangdt9/mu-takumi](https://github.com/hoangdt9/mu-takumi) — cập nhật manifest Git SHA sau mỗi tag quan trọng |
+| Repo remote | **Đã push:** [github.com/hoangdt9/mu-takumi](https://github.com/hoangdt9/mu-takumi) — các manifest `# commit:` đồng bộ với HEAD sau `git push` (`git rev-parse HEAD`) |
 | §4–§14 — Parity OpenMU / migrate từng module | **Chưa** |
 | Ma trận gói tin (spike) | **Khung** — [`docs/protocol/COMPATIBILITY-MATRIX.md`](protocol/COMPATIBILITY-MATRIX.md) |
 
@@ -263,7 +263,7 @@ Danh sách **đầy đủ từng đường dẫn** nằm trong [`docs/takumi-man
 
 ### 8c. Cây **`4.GameServer_real`** (snapshot / backup layout)
 
-- [ ] Diff với **`4.GameServer`** — quyết cái nào authoritative; không để sót chỉnh sản xuất nằm trong `_real`.
+- [x] Diff với **`4.GameServer`** — **ghi:** [`docs/takumi-game-spec/GAMESERVER-VS-GAMESERVER-REAL.md`](takumi-game-spec/GAMESERVER-VS-GAMESERVER-REAL.md). **Authority tree:** `4.GameServer` (đủ CS + Sub 1); `_real` chủ yếu khác layout / localhost / tuning (`Common.ini`, `GHRSReset.ini`, `MapServerInfo.dat`).
 
 ---
 
@@ -285,7 +285,7 @@ Danh sách **đầy đủ từng đường dẫn** nằm trong [`docs/takumi-man
 ## 11 — Cơ sở dữ liệu MSSQL hiện tại (`MuServer/7.DataBase`)
 
 - [ ] **`MuOnline.bak`** — nguồn schema + dữ liệu thật để spike ETL Postgres.
-- [ ] **`SQL Back/*.sql`** — `6. Backup DB Server.sql`, `SQLPOINT.sql`, `SQLRest.sql`, `SQLUp.sql`, `SQL mUA VIpchar.sql`, `Xoa DB Open.sql` — grep tham chiếu bảng, đánh dấu proc dùng / không.
+- [x] **`SQL Back/*.sql`** — **đã tóm trong** [`docs/takumi-game-spec/TAKUMI-SQL-BACKLOG.md`](takumi-game-spec/TAKUMI-SQL-BACKLOG.md) (mục **SQL Back**); vẫn cần diff chi tiết DDL `SQLUp.sql` ↔ `.bak` / OpenMU khi vào Gate 2.
 - [x] **Trích proc/bảng từ server C++** (bổ sung cho `.bak`) — [`docs/takumi-game-spec/TAKUMI-SQL-BACKLOG.md`](takumi-game-spec/TAKUMI-SQL-BACKLOG.md).
 - [ ] **`docker/sql/restore-muonline.sh`** (repo) — chỉ là dev container; không thay roadmap Postgres OpenMU nhưng cần cho **golden compare** trong giai đoạn song song.
 

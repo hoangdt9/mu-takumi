@@ -164,6 +164,7 @@
 
 - [`docs/takumi-game-spec/TAKUMI-SQL-BACKLOG.md`](takumi-game-spec/TAKUMI-SQL-BACKLOG.md) — 62 `EXEC` + bảng heuristic (Data/Join C++).
 - [`docs/takumi-game-spec/DATA-SUB1-DRIFT.md`](takumi-game-spec/DATA-SUB1-DRIFT.md) — so sánh `Sub 1/Data` vs `Data`.
+- [`docs/takumi-game-spec/GAMESERVER-VS-GAMESERVER-REAL.md`](takumi-game-spec/GAMESERVER-VS-GAMESERVER-REAL.md) — `4.GameServer` vs `4.GameServer_real` (authority + tuning).
 - [`docs/OPERATIONS-MIGRATION-NOTES.md`](OPERATIONS-MIGRATION-NOTES.md) — thứ tự batch, docker, scripts.
 - [`docs/protocol/TAKUMI-SERVER-NETWORK-BASELINE.md`](protocol/TAKUMI-SERVER-NETWORK-BASELINE.md) — cổng / hai shard Takumi snapshot.
 - [`docs/protocol/COMPATIBILITY-MATRIX.md`](protocol/COMPATIBILITY-MATRIX.md) — ma trận gói tin (điền dần).

@@ -23,6 +23,9 @@
 | §3 — Coupling `Source/Util/` (theo vcxproj) | **Xong** — ghi trong `SEASON-AND-DEFINES.md` |
 | §5 (SQL) — Trích proc/bảng từ C++ | **Xong** — [`docs/takumi-game-spec/TAKUMI-SQL-BACKLOG.md`](takumi-game-spec/TAKUMI-SQL-BACKLOG.md) |
 | §8 — Drift `Sub 1/Data` vs `Data`; **`4.GameServer` vs `4.GameServer_real`** | **Xong** — [`DATA-SUB1-DRIFT.md`](takumi-game-spec/DATA-SUB1-DRIFT.md), [`GAMESERVER-VS-GAMESERVER-REAL.md`](takumi-game-spec/GAMESERVER-VS-GAMESERVER-REAL.md) |
+| §4 — `1.ConnectServer` vs `1.ConnectServer_real` | **Xong** (INI đồng nhất) — [`CONNECT-SERVER-REAL-DRIFT.md`](takumi-game-spec/CONNECT-SERVER-REAL-DRIFT.md) |
+| §7–§8a — Ánh xạ thư mục `Data/` | **Khung** — [`GAMESERVER-DATA-FOLDER-MAP.md`](takumi-game-spec/GAMESERVER-DATA-FOLDER-MAP.md) |
+| §17 — Tracker mẫu (sheet/issue) | **Khung** — [`MANIFEST-TRACKER-TEMPLATE.md`](MANIFEST-TRACKER-TEMPLATE.md) |
 | §12 — Batch / docker / script | **Xong** — [`docs/OPERATIONS-MIGRATION-NOTES.md`](OPERATIONS-MIGRATION-NOTES.md) |
 | Repo remote | **Đã push:** [github.com/hoangdt9/mu-takumi](https://github.com/hoangdt9/mu-takumi) — các manifest `# commit:` đồng bộ với HEAD sau `git push` (`git rev-parse HEAD`) |
 | §4–§14 — Parity OpenMU / migrate từng module | **Chưa** |
@@ -114,7 +117,7 @@ TAK=/Users/hoangmac/Project/MU/takumi
 | [ ] `stdafx.cpp` | N/A |
 | [ ] `Util.cpp` | Tiện ích chung |
 
-- [x] Cặp **`ConnectServer.ini`**, **`ServerList.ini`** (`MuServer/1.ConnectServer*` và `1.ConnectServer_real`): cổng đã vào [`TAKUMI-SERVER-NETWORK-BASELINE.md`](protocol/TAKUMI-SERVER-NETWORK-BASELINE.md); **authority** hai bản `_real` vẫn **chốt khi có vận hành thật** (changelog).
+- [x] Cặp **`ConnectServer.ini`**, **`ServerList.ini`** (`MuServer/1.ConnectServer*` và `1.ConnectServer_real`): cổng đã vào [`TAKUMI-SERVER-NETWORK-BASELINE.md`](protocol/TAKUMI-SERVER-NETWORK-BASELINE.md); **`_real`** vs chuẩn: **cùng nội dung INI** @ 2026-04-30 — [`CONNECT-SERVER-REAL-DRIFT.md`](takumi-game-spec/CONNECT-SERVER-REAL-DRIFT.md) (khác chủ yếu tên/binary deploy).
 
 ---
 
@@ -205,8 +208,9 @@ TAK=/Users/hoangmac/Project/MU/takumi
 
 Danh sách **đầy đủ từng đường dẫn** nằm trong [`docs/takumi-manifests/TAKUMI-SERVER-SOURCE-MANIFEST.txt`](takumi-manifests/TAKUMI-SERVER-SOURCE-MANIFEST.txt), mục `## 4.GameServer GameServer/*.cpp`.
 
-- [ ] Tạo bảng theo dõi (sheet / issue tracker): một dòng một file trong manifest § 7; cột **OpenMU module / parity / chứng cứ pcap**.
-- [ ] **Nhóm ưu tiên đọc** (overlap với `GameServer/Data` và client thật) — chỉ là thứ tự gợi ý; **không** thay danh sách đầy đủ trong manifest:
+- [ ] Tạo bảng theo dõi thật (sheet / GitHub Projects): một dòng một path trong manifest § 7; cột theo [**`MANIFEST-TRACKER-TEMPLATE.md`**](MANIFEST-TRACKER-TEMPLATE.md).
+- [x] **Khung `Data/*` theo chức năng** (discovery, không thay manifest từng file): [`GAMESERVER-DATA-FOLDER-MAP.md`](takumi-game-spec/GAMESERVER-DATA-FOLDER-MAP.md).
+- [x] **Nhóm ưu tiên đọc** `.cpp` (overlap với `GameServer/Data` và client thật) — thứ tự gợi ý; **không** thay danh sách đầy đủ trong manifest:
 
 | Gợi nhóm chức năng | Ví dụ file (grep manifest) |
 |--------------------|-----------------------------|
@@ -227,7 +231,7 @@ Danh sách **đầy đủ từng đường dẫn** nằm trong [`docs/takumi-man
 
 ### 8a. Thư mục `MuServer/4.GameServer/Data/*` — kiểu dữ liệu (inventory đầy đủ trong manifest)
 
-- [x] **Đã có danh sách đường dẫn từng file** trong [`TAKUMI-MUSERVER-GAMEDATA-FILES.txt`](takumi-manifests/TAKUMI-MUSERVER-GAMEDATA-FILES.txt) — checkbox dưới đây là **đọc/import** theo từng hệ subsystem (kéo backlog).
+- [x] **Đã có danh sách đường dẫn từng file** trong [`TAKUMI-MUSERVER-GAMEDATA-FILES.txt`](takumi-manifests/TAKUMI-MUSERVER-GAMEDATA-FILES.txt) — checkbox dưới đây là **đọc/import** theo từng hệ subsystem (kéo backlog); **bản đồ thư mục** (chức năng ↔ OpenMU): [`GAMESERVER-DATA-FOLDER-MAP.md`](takumi-game-spec/GAMESERVER-DATA-FOLDER-MAP.md).
 - [ ] **`CashShop/`** — gói/ sản phẩm zen/cash (`CashShop*.txt`).
 - [ ] **`Character/DefaultClassInfo.txt`** — căn chỉnh với **class/version** OpenMU fork.
 - [ ] **`Custom/*.txt|.ini`** — toàn bộ custom Takumi (**26+ pattern** trong `Custom/` repo).
@@ -379,6 +383,8 @@ Ghi vào backlog fork (chưa sửa code OpenMU trong repo Takumi):
 ---
 
 ## 17 — Đầu ra chứng nhận “không sót” checklist file
+
+Mẫu cột cho sheet/issue: **[`MANIFEST-TRACKER-TEMPLATE.md`](MANIFEST-TRACKER-TEMPLATE.md)**.
 
 - [ ] Mọi dòng **`TAKUMI-SERVER-SOURCE-MANIFEST.txt`** có trạng thái trong tracker nội bộ **hoặc** được gộp chủ đích (vd. nhóm `Protect.cpp` = “skipped security parity”).
 - [ ] Mọi dòng **`TAKUMI-MUSERVER-GAMEDATA-FILES.txt`** được phân loại: **đã có converter / nhập tay / không dùng / deferred**.

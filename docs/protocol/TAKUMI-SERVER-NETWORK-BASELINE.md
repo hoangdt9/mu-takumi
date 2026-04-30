@@ -64,5 +64,6 @@ Map sang listener **Connect / Login / Game** của fork PostgreSQL/OpenMU và gh
 - `MuServer/4.GameServer/GameServer/Data/GameServerInfo - Common.ini` (CS shard)
 - `MuServer/4.GameServer/Sub 1/GameServer/Data/GameServerInfo - Common.ini` (main shard)
 - `MuServer/1.ConnectServer/ConnectServer.ini`
+- **`1.ConnectServer` vs `_real`:** ini đồng nhất trong repo — [`docs/takumi-game-spec/CONNECT-SERVER-REAL-DRIFT.md`](takumi-game-spec/CONNECT-SERVER-REAL-DRIFT.md)
 - `MuServer/2.DataServer/DataServer.ini`
 - `MuServer/3.JoinServer/JoinServer.ini`

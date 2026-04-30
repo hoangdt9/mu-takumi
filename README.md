@@ -14,6 +14,9 @@ Private/dev fork of the Takumi MU stack focused on:
 - [`docs/takumi-game-spec/TAKUMI-SQL-BACKLOG.md`](docs/takumi-game-spec/TAKUMI-SQL-BACKLOG.md) — ODBC / proc / bảng + **SQL Back**.
 - [`docs/takumi-game-spec/DATA-SUB1-DRIFT.md`](docs/takumi-game-spec/DATA-SUB1-DRIFT.md) — drift `Sub 1/Data` vs `Data`.
 - [`docs/takumi-game-spec/GAMESERVER-VS-GAMESERVER-REAL.md`](docs/takumi-game-spec/GAMESERVER-VS-GAMESERVER-REAL.md) — `4.GameServer` vs `4.GameServer_real`.
+- [`docs/takumi-game-spec/CONNECT-SERVER-REAL-DRIFT.md`](docs/takumi-game-spec/CONNECT-SERVER-REAL-DRIFT.md) — `1.ConnectServer` vs `_real`.
+- [`docs/takumi-game-spec/GAMESERVER-DATA-FOLDER-MAP.md`](docs/takumi-game-spec/GAMESERVER-DATA-FOLDER-MAP.md) — bản đồ thư mục `Data/`.
+- [`docs/MANIFEST-TRACKER-TEMPLATE.md`](docs/MANIFEST-TRACKER-TEMPLATE.md) — template tracker manifest §17.
 - [`docs/OPERATIONS-MIGRATION-NOTES.md`](docs/OPERATIONS-MIGRATION-NOTES.md) — thứ tự batch Windows, Docker, scripts.
 
 Repository: https://github.com/hoangdt9/mu-takumi  

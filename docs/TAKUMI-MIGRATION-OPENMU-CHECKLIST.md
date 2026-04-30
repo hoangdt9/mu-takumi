@@ -59,7 +59,7 @@
 
 ## Phase 3 — Connect / Join / Login (tương thích Takumi client)
 
-- [ ] Xác định client Takumi dùng **cổ Connect** nào (so với 44405/44406 OpenMU).
+- [ ] Xác định client Takumi dùng **cổ Connect** nào (so với 44405/44406 OpenMU). _Tham chiếu snapshot:_ [`docs/protocol/TAKUMI-SERVER-NETWORK-BASELINE.md`](protocol/TAKUMI-SERVER-NETWORK-BASELINE.md) (UDP `63001` vs TCP `63000` — cần **pcap**).
 - [ ] Nếu lệch packet: mở rộng **packet handlers** trong `MUnique.OpenMU.Network` (hoặc plugin) — tham chiếu `OpenMU/docs/Packets/`.
 - [ ] Viết **integration test** TCP: golden bytes từ Phase 0 → assert response length/flag tối thiểu.
 - [ ] **Gate 3:** Client Takumi (PC hoặc Android) **list server + login** vào được tài khoản (có thể chưa vào map ổn định).
@@ -92,8 +92,8 @@
 
 **4.1 — Discovery (chỉ đọc/ghi backlog, không sửa engine OpenMU)**
 
-- [ ] Inventory thư mục `GameServer/` (theo chức năng): combat, monster, player, skill, item, map, NPC, castle, vuốt list file chính.
-- [ ] Trích **`#define`/season** từ vcxproj / headers (vd. `GAMESERVER_UPDATE`) — gắn label cho fork.
+- [x] Inventory thư mục **`MuServer/4.GameServer/Data/**` về mặt chức năng — [`docs/takumi-game-spec/GAMESERVER-DATA-FOLDER-MAP.md`](takumi-game-spec/GAMESERVER-DATA-FOLDER-MAP.md) (song song [`TAKUMI-MUSERVER-GAMEDATA-FILES.txt`](takumi-manifests/TAKUMI-MUSERVER-GAMEDATA-FILES.txt)).
+- [x] Trích **`#define`/season** từ vcxproj / headers (vd. `GAMESERVER_UPDATE`) — **đã ghi:** [`docs/takumi-game-spec/SEASON-AND-DEFINES.md`](takumi-game-spec/SEASON-AND-DEFINES.md); mở rộng `CUSTOM_*` khi audit từng module.
 - [ ] Liệt kê **opcode / packet handlers** được đề cập trong code (grep `0x`, `CASE`, send buffer) để ghép vào handlers OpenMU.
 - [ ] Trích các **formula** trong comment hoặc hằng số đáng nhớ (damage, EXP, drop rate) vào một file `docs/takumi-game-spec/` (Markdown bảng + link file C++ làm chứng cứ).
 
@@ -165,7 +165,9 @@
 
 - [`docs/takumi-game-spec/TAKUMI-SQL-BACKLOG.md`](takumi-game-spec/TAKUMI-SQL-BACKLOG.md) — 62 `EXEC` + bảng heuristic (Data/Join C++).
 - [`docs/takumi-game-spec/DATA-SUB1-DRIFT.md`](takumi-game-spec/DATA-SUB1-DRIFT.md) — so sánh `Sub 1/Data` vs `Data`.
-- [`docs/takumi-game-spec/GAMESERVER-VS-GAMESERVER-REAL.md`](takumi-game-spec/GAMESERVER-VS-GAMESERVER-REAL.md) — `4.GameServer` vs `4.GameServer_real` (authority + tuning).
+- [`docs/takumi-game-spec/CONNECT-SERVER-REAL-DRIFT.md`](takumi-game-spec/CONNECT-SERVER-REAL-DRIFT.md) — `1.ConnectServer` vs `_real` (INI).
+- [`docs/takumi-game-spec/GAMESERVER-DATA-FOLDER-MAP.md`](takumi-game-spec/GAMESERVER-DATA-FOLDER-MAP.md) — `Data/*` → vùng OpenMU (discovery).
+- [`docs/MANIFEST-TRACKER-TEMPLATE.md`](MANIFEST-TRACKER-TEMPLATE.md) — §17 spreadsheet / Issues.
 - [`docs/OPERATIONS-MIGRATION-NOTES.md`](OPERATIONS-MIGRATION-NOTES.md) — thứ tự batch, docker, scripts.
 - [`docs/protocol/TAKUMI-SERVER-NETWORK-BASELINE.md`](protocol/TAKUMI-SERVER-NETWORK-BASELINE.md) — cổng / hai shard Takumi snapshot.
 - [`docs/protocol/COMPATIBILITY-MATRIX.md`](protocol/COMPATIBILITY-MATRIX.md) — ma trận gói tin (điền dần).

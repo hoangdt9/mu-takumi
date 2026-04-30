@@ -72,13 +72,14 @@ OpenMU **`Character`** dùng `Guid Id`, **`CharacterClass`** (FK), `Experience`,
 
 ---
 
-## 4. Công cụ & bước kỹ thuật (stub)
+## 4. Công cụ & bước kỹ thuật
 
 Tham chiếu: [`tools/db-migrate/README.md`](../../tools/db-migrate/README.md).
 
-1. Restore **`.bak`** trên MSSQL hoặc export schema bằng SSMS/Azure Data Studio (`CREATE TABLE` script).  
-2. So bảng `Character`/`MEMB_INFO`/… với **`EntityDataContextModelSnapshot`** OpenMU.  
-3. Viết script transform (dotnet hoặc Python) chỉ đọc DB nguồn, ghi **Postgres staging** không đụng prod.  
+1. Restore **`.bak`** trên MSSQL (hoặc SSMS script `CREATE TABLE` nếu không có instance).  
+2. Chạy **`takumi-mssql-inspect`** (read-only) để lấy CSV cột `dbo` hoặc `--table` / `--markdown` cho từng bảng — so với **`EntityDataContextModelSnapshot`** OpenMU.  
+3. Điền mapping: template **[`PHASE2-MAPPING-TEMPLATE.csv`](PHASE2-MAPPING-TEMPLATE.csv)** (hoặc Sheet clone) từ [`TAKUMI-SQL-BACKLOG.md`](TAKUMI-SQL-BACKLOG.md).  
+4. **TODO:** script ETL (dotnet/Npgsql) chỉ đọc MSSQL, ghi **Postgres staging** — không chạy trên prod.  
 
 ---
 

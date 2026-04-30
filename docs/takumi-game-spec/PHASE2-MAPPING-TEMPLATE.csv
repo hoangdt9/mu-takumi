@@ -1,0 +1,10 @@
+kind,legacy_name,openmu_or_plugin,parity_status,notes
+PROC,WZ_CreateCharacter,,todo,So với path tạo char OpenMU Persistence
+PROC,WZ_GetItemSerial,,todo,
+PROC,WZ_CustomRanking,Takumi plugin / WONTFIX,deferred,Tùy có dùng trên staging
+TABLE,Character,MUnique.OpenMU DataModel.Character + ItemStorage,todo,Cột SQLUp: DanhHieu LucChien TimeReset mLvVIPChar mPointVIPChar
+TABLE,MEMB_INFO,Account + hash password,todo,Legacy plain/MD5 vs BCrypt OpenMU
+TABLE,DataNapGame,Takumi plugin table,deferred,
+TABLE,ItemMarketData,Takumi plugin / market service,deferred,
+TABLE,CustomItemBank,Takumi plugin / storage extension,deferred,
+TABLE,EquipInventory,Takumi plugin / decode blob → ItemStorage,todo,

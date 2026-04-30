@@ -54,7 +54,7 @@
 - [ ] Chọn một trong hai và chốt (ghi vào wiki/ADR repo fork):
   - [ ] **A)** Migrate dữ liệu từ `MuOnline.bak` → Postgres theo **mapping** trường (script ETL từng bảng).
   - [ ] **B)** **Fresh world** OpenMU + chỉ import subset (account, character) qua tool one-off.
-- [x] **Stub** thư mục + quy ước tooling: [`tools/db-migrate/README.md`](tools/db-migrate/README.md) (chưa có script ETL).
+- [x] Tooling Phase 2 (read-only MSSQL): [`tools/db-migrate/README.md`](tools/db-migrate/README.md) — **`takumi-mssql-inspect`** + template [`docs/takumi-game-spec/PHASE2-MAPPING-TEMPLATE.csv`](takumi-game-spec/PHASE2-MAPPING-TEMPLATE.csv); script **ETL → Postgres** vẫn TODO.
 - [ ] **Gate 2:** Có bộ dữ liệu dev đủ login + spawn character trên **OpenMU** (kể cả dữ liệu giả lập).
 
 ---

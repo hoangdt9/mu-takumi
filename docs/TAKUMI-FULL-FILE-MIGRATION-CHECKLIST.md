@@ -22,7 +22,7 @@
 | §2 — Macro / build 603 | **Xong** — [`docs/takumi-game-spec/SEASON-AND-DEFINES.md`](takumi-game-spec/SEASON-AND-DEFINES.md) |
 | §3 — Coupling `Source/Util/` (theo vcxproj) | **Xong** — ghi trong `SEASON-AND-DEFINES.md` |
 | §5 (SQL) — Trích proc/bảng từ C++ | **Xong** — [`docs/takumi-game-spec/TAKUMI-SQL-BACKLOG.md`](takumi-game-spec/TAKUMI-SQL-BACKLOG.md) |
-| §11 / Phase 2 — `SQLUp.sql` + map OpenMU (concept) | **Khung** — [`PHASE2-OPENMU-DATA-MODEL-MAP.md`](takumi-game-spec/PHASE2-OPENMU-DATA-MODEL-MAP.md); [`PHASE2-MAPPING-TEMPLATE.csv`](takumi-game-spec/PHASE2-MAPPING-TEMPLATE.csv) + [`takumi-mssql-inspect`](../tools/db-migrate/README.md); ETL Postgres + điền đủ sheet vẫn TODO |
+| §11 / Phase 2 — `SQLUp.sql` + map OpenMU (concept) | **Khung** — [`PHASE2-OPENMU-DATA-MODEL-MAP.md`](takumi-game-spec/PHASE2-OPENMU-DATA-MODEL-MAP.md); [`PHASE2-MAPPING-TEMPLATE.csv`](takumi-game-spec/PHASE2-MAPPING-TEMPLATE.csv) + [`takumi-mssql-inspect` / `takumi-pg-inspect`](../tools/db-migrate/README.md); ETL Postgres + điền đủ sheet vẫn TODO |
 | §8 — Drift `Sub 1/Data` vs `Data`; **`4.GameServer` vs `4.GameServer_real`** | **Xong** — [`DATA-SUB1-DRIFT.md`](takumi-game-spec/DATA-SUB1-DRIFT.md), [`GAMESERVER-VS-GAMESERVER-REAL.md`](takumi-game-spec/GAMESERVER-VS-GAMESERVER-REAL.md) |
 | §4 — `1.ConnectServer` vs `1.ConnectServer_real` | **Xong** (INI đồng nhất) — [`CONNECT-SERVER-REAL-DRIFT.md`](takumi-game-spec/CONNECT-SERVER-REAL-DRIFT.md) |
 | §7–§8a — Ánh xạ thư mục `Data/` | **Khung** — [`GAMESERVER-DATA-FOLDER-MAP.md`](takumi-game-spec/GAMESERVER-DATA-FOLDER-MAP.md) |

@@ -77,7 +77,7 @@ OpenMU **`Character`** dùng `Guid Id`, **`CharacterClass`** (FK), `Experience`,
 Tham chiếu: [`tools/db-migrate/README.md`](../../tools/db-migrate/README.md).
 
 1. Restore **`.bak`** trên MSSQL (hoặc SSMS script `CREATE TABLE` nếu không có instance).  
-2. Chạy **`takumi-mssql-inspect`** (read-only) để lấy CSV cột `dbo` hoặc `--table` / `--markdown` cho từng bảng — so với **`EntityDataContextModelSnapshot`** OpenMU.  
+2. Chạy **`takumi-mssql-inspect`** (read-only) CSV cột MSSQL `dbo` và **`takumi-pg-inspect`** CSV cùng định dạng cho schema Postgres OpenMU (vd. **`AccountData`**) — đối chiếu với **`EntityDataContextModelSnapshot`** / ETL.  
 3. Điền mapping: template **[`PHASE2-MAPPING-TEMPLATE.csv`](PHASE2-MAPPING-TEMPLATE.csv)** (hoặc Sheet clone) từ [`TAKUMI-SQL-BACKLOG.md`](TAKUMI-SQL-BACKLOG.md).  
 4. **TODO:** script ETL (dotnet/Npgsql) chỉ đọc MSSQL, ghi **Postgres staging** — không chạy trên prod.  
 

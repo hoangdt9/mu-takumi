@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="Takumi.MssqlInspect/Takumi.MssqlInspect.csproj" />
+  <Project Path="Takumi.PgInspect/Takumi.PgInspect.csproj" />
+</Solution>

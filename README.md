@@ -15,7 +15,7 @@ Private/dev fork of the Takumi MU stack focused on:
 - [`docs/takumi-game-spec/TAKUMI-SQL-BACKLOG.md`](docs/takumi-game-spec/TAKUMI-SQL-BACKLOG.md) — ODBC / proc / bảng + **SQL Back**.
 - [`docs/takumi-game-spec/PHASE2-OPENMU-DATA-MODEL-MAP.md`](docs/takumi-game-spec/PHASE2-OPENMU-DATA-MODEL-MAP.md) — Phase 2: `SQLUp` ↔ entity OpenMU / ADR nháp ETL.
 - [`docs/takumi-game-spec/PHASE2-MAPPING-TEMPLATE.csv`](docs/takumi-game-spec/PHASE2-MAPPING-TEMPLATE.csv) — seed CSV proc/bảng × OpenMU / plugin.
-- [`tools/db-migrate/README.md`](tools/db-migrate/README.md) — **`takumi-mssql-inspect`** (dump schema read-only) + quy ước ETL MSSQL → Postgres (ETL TODO).
+- [`tools/db-migrate/README.md`](tools/db-migrate/README.md) — **`takumi-mssql-inspect`** + **`takumi-pg-inspect`** (dump schema read-only) + quy ước ETL (ETL TODO).
 - [`docs/takumi-game-spec/DATA-SUB1-DRIFT.md`](docs/takumi-game-spec/DATA-SUB1-DRIFT.md) — drift `Sub 1/Data` vs `Data`.
 - [`docs/takumi-game-spec/GAMESERVER-VS-GAMESERVER-REAL.md`](docs/takumi-game-spec/GAMESERVER-VS-GAMESERVER-REAL.md) — `4.GameServer` vs `4.GameServer_real`.
 - [`docs/takumi-game-spec/CONNECT-SERVER-REAL-DRIFT.md`](docs/takumi-game-spec/CONNECT-SERVER-REAL-DRIFT.md) — `1.ConnectServer` vs `_real`.

@@ -39,6 +39,18 @@ dotnet run --project tools/db-migrate/dotnet/Takumi.PgInspect -- --mapping-openm
 
 Sau đó cập nhật `PHASE2-MAPPING-TEMPLATE.csv` (merge với `LEGACY_PROC` + `HEURISTIC_VERIFY` từ backlog — xem [`TAKUMI-SQL-BACKLOG.md`](../../docs/takumi-game-spec/TAKUMI-SQL-BACKLOG.md)).
 
+**Row counts (đối chiếu trước/sau ETL, không cần đếm tay):** cả hai tool xuất CSV cùng cột `table_schema,table_name,row_count`.
+
+- MSSQL: `--row-counts` — số dòng từ `sys.partitions` (mỗi bảng base một dòng).
+- Postgres: `--row-counts` / `--row-counts-openmu-all` — `n_live_tup` từ `pg_stat_all_tables` (ước lượng thống kê; chạy `ANALYZE` trên DB nếu cần số “mới” hơn).
+
+```bash
+TAKUMI_MSSQL_CONNECTION="..." dotnet run --project tools/db-migrate/dotnet/Takumi.MssqlInspect -- --row-counts \
+  > tools/db-migrate/schemas/mssql-dbo-row-counts.csv
+TAKUMI_PG_CONNECTION="..." dotnet run --project tools/db-migrate/dotnet/Takumi.PgInspect -- --row-counts-openmu-all \
+  > tools/db-migrate/schemas/openmu-all-row-counts.csv
+```
+
 ## `takumi-mssql-inspect` (read-only)
 
 **.NET 10**, assembly `Microsoft.Data.SqlClient`. **Không** ghi DB; chỉ đọc `INFORMATION_SCHEMA`.
@@ -61,6 +73,9 @@ TAKUMI_MSSQL_CONNECTION="Server=127.0.0.1,1433;Database=MuOnline;User Id=sa;Pass
 
 # Chỉ danh sách bảng
 dotnet run --project tools/db-migrate/dotnet/Takumi.MssqlInspect -- --tables
+
+# Số dòng mỗi bảng dbo → CSV (đối chiếu migration)
+dotnet run --project tools/db-migrate/dotnet/Takumi.MssqlInspect -- --row-counts
 
 # Một bảng: CSV hoặc markdown
 dotnet run --project tools/db-migrate/dotnet/Takumi.MssqlInspect -- --table Character
@@ -94,6 +109,10 @@ TAKUMI_PG_CONNECTION="Host=127.0.0.1;Port=5433;Database=openmu;Username=postgres
 dotnet run --project tools/db-migrate/dotnet/Takumi.PgInspect -- --schema data --tables
 dotnet run --project tools/db-migrate/dotnet/Takumi.PgInspect -- --schema data --table Character
 dotnet run --project tools/db-migrate/dotnet/Takumi.PgInspect -- --schema config --tables
+
+# Số dòng (pg_stat) — một schema hoặc cả OpenMU
+dotnet run --project tools/db-migrate/dotnet/Takumi.PgInspect -- --schema data --row-counts
+dotnet run --project tools/db-migrate/dotnet/Takumi.PgInspect -- --row-counts-openmu-all
 ```
 
 *(Port `5433` nếu dùng `deploy/all-in-one/docker-compose.override.yml`; mặc định compose có thể là `5432`.)*

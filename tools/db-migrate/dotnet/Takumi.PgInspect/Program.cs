@@ -16,6 +16,8 @@ internal static class Program
           --tables              List schema.table_name only.
           --mapping-rows        CSV: header + TABLE row per base table in --schema (fill mapping columns).
           --mapping-openmu-all  Same CSV for schemas data,config,friend,guild (legacy_name = schema.table).
+          --row-counts          CSV: table_schema,table_name,row_count (pg_stat; run ANALYZE for fresher estimates).
+          --row-counts-openmu-all  Same for schemas data,config,friend,guild.
           --table Name          Columns for one table (schema.Name; default schema: public).
           --markdown            Column detail as markdown.
           --schema public       Table schema filter (default: public). OpenMU: data / config / friend / guild.
@@ -49,6 +51,8 @@ internal static class Program
         var tablesOnly = args.Contains("--tables");
         var mappingRows = args.Contains("--mapping-rows");
         var mappingOpenMuAll = args.Contains("--mapping-openmu-all");
+        var rowCounts = args.Contains("--row-counts");
+        var rowCountsOpenMuAll = args.Contains("--row-counts-openmu-all");
         var tableFilter = ArgValue(args, "--table");
         var markdown = args.Contains("--markdown");
 
@@ -63,9 +67,21 @@ internal static class Program
                 return 0;
             }
 
+            if (rowCountsOpenMuAll)
+            {
+                await EmitOpenMuAllRowCountsAsync(conn);
+                return 0;
+            }
+
             if (mappingRows)
             {
                 await EmitMappingTemplateRowsAsync(conn, schema);
+                return 0;
+            }
+
+            if (rowCounts)
+            {
+                await EmitRowCountsAsync(conn, schema);
                 return 0;
             }
 
@@ -144,6 +160,56 @@ internal static class Program
             var qualified = $"{sch}.{t}";
             var note = $"{qualified} — OpenMU EF snapshot; đối chiếu legacy MSSQL";
             Console.WriteLine($"TABLE,{EscapeCsv(qualified)},,todo,{EscapeCsv(note)}");
+        }
+    }
+
+    private static async Task EmitRowCountsAsync(NpgsqlConnection conn, string schema)
+    {
+        const string sql = """
+            SELECT t.table_schema, t.table_name, COALESCE(s.n_live_tup::bigint, 0)
+            FROM information_schema.tables t
+            LEFT JOIN pg_catalog.pg_stat_all_tables s
+              ON s.schemaname = t.table_schema AND s.relname = t.table_name
+            WHERE t.table_type = 'BASE TABLE' AND t.table_schema = @schema
+            ORDER BY t.table_name
+            """;
+
+        Console.WriteLine("table_schema,table_name,row_count");
+
+        await using var cmd = new NpgsqlCommand(sql, conn);
+        cmd.Parameters.AddWithValue("schema", schema);
+        await using var r = await cmd.ExecuteReaderAsync();
+        while (await r.ReadAsync())
+        {
+            var sch = r.GetString(0);
+            var tbl = r.GetString(1);
+            var cnt = r.GetInt64(2);
+            Console.WriteLine($"{sch},{EscapeCsv(tbl)},{cnt}");
+        }
+    }
+
+    private static async Task EmitOpenMuAllRowCountsAsync(NpgsqlConnection conn)
+    {
+        const string sql = """
+            SELECT t.table_schema, t.table_name, COALESCE(s.n_live_tup::bigint, 0)
+            FROM information_schema.tables t
+            LEFT JOIN pg_catalog.pg_stat_all_tables s
+              ON s.schemaname = t.table_schema AND s.relname = t.table_name
+            WHERE t.table_type = 'BASE TABLE'
+              AND t.table_schema IN ('data', 'config', 'friend', 'guild')
+            ORDER BY t.table_schema, t.table_name
+            """;
+
+        Console.WriteLine("table_schema,table_name,row_count");
+
+        await using var cmd = new NpgsqlCommand(sql, conn);
+        await using var r = await cmd.ExecuteReaderAsync();
+        while (await r.ReadAsync())
+        {
+            var sch = r.GetString(0);
+            var tbl = r.GetString(1);
+            var cnt = r.GetInt64(2);
+            Console.WriteLine($"{sch},{EscapeCsv(tbl)},{cnt}");
         }
     }
 

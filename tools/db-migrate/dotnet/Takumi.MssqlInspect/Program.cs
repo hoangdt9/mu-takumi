@@ -17,6 +17,7 @@ internal static class Program
         Options:
           --tables              List TABLE_SCHEMA.TABLE_NAME only.
           --mapping-rows        CSV mapping rows: header + one TABLE line per base table (same columns as PHASE2-MAPPING-TEMPLATE).
+          --row-counts          CSV: table_schema,table_name,row_count (sys.partitions per table; full base-table coverage).
           --table Name          Columns for one table (dbo.Name).
           --markdown            Column detail as markdown (default: CSV for --table / full dump uses one CSV header).
           --schema dbo          Table schema filter (default: dbo).
@@ -24,6 +25,9 @@ internal static class Program
         Example (regenerate LEGACY_TABLE list):
           dotnet run --project tools/db-migrate/dotnet/Takumi.MssqlInspect -- --mapping-rows \\
             > docs/takumi-game-spec/PHASE2-MAPPING-MSSQL-DBO-AUTO.csv
+        Row counts (verify vs ETL / snapshot):
+          dotnet run --project tools/db-migrate/dotnet/Takumi.MssqlInspect -- --row-counts \\
+            > tools/db-migrate/schemas/mssql-dbo-row-counts.csv
         """;
 
     public static async Task<int> Main(string[] args)
@@ -57,6 +61,12 @@ internal static class Program
             if (args.Contains("--mapping-rows"))
             {
                 await EmitMappingTemplateRowsAsync(conn, schema);
+                return 0;
+            }
+
+            if (args.Contains("--row-counts"))
+            {
+                await EmitRowCountsAsync(conn, schema);
                 return 0;
             }
 
@@ -109,6 +119,31 @@ internal static class Program
             var t = r.GetString(0);
             var note = $"{schema}.{t} — điền map OpenMU/plugin; so cột với takumi-mssql-inspect --table {t}";
             Console.WriteLine($"TABLE,{EscapeCsv(t)},,todo,{EscapeCsv(note)}");
+        }
+    }
+
+    private static async Task EmitRowCountsAsync(SqlConnection conn, string schema)
+    {
+        const string sql = """
+            SELECT t.name AS table_name, SUM(p.rows) AS row_count
+            FROM sys.tables t
+            INNER JOIN sys.schemas s ON t.schema_id = s.schema_id
+            INNER JOIN sys.partitions p ON t.object_id = p.object_id
+            WHERE s.name = @schema AND p.index_id IN (0, 1)
+            GROUP BY t.name
+            ORDER BY t.name
+            """;
+
+        Console.WriteLine("table_schema,table_name,row_count");
+
+        await using var cmd = new SqlCommand(sql, conn);
+        cmd.Parameters.AddWithValue("@schema", schema);
+        await using var r = await cmd.ExecuteReaderAsync();
+        while (await r.ReadAsync())
+        {
+            var name = r.GetString(0);
+            var cnt = Convert.ToInt64(r.GetValue(1));
+            Console.WriteLine($"{schema},{EscapeCsv(name)},{cnt}");
         }
     }
 

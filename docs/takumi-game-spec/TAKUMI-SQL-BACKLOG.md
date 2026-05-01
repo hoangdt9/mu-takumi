@@ -91,6 +91,9 @@ Có thể trùng casing (`Character` vs `CHARACTER`, `MEMB_INFO` vs `memb_info`)
 
 AccountCharacter, CardPhone, CashShopData, CashShopInventory, CashShopPeriodicItem, CHARACTER, Character, CustomAttack, CustomGift, CustomItemBank, CustomNpcQuest, CustomQuest, DataNapGame, EquipInventory, EventInventory, EventLeoTheHelper, EventSantaClaus, ExtWarehouse, GameServerInfo, Gens_Rank, Gens_Reward, Guild, GuildMember, HelperData, ItemMarketData, LOG_CREDITOS, LuckyCoin, LuckyItem, MasterSkillTree, MEMB_INFO, memb_info, MuRummyCard, MuRummyData, MuunInventory, OptionData, PcPointData, PentagramJewel, PShopItemValue, QuestKillCount, QuestWorld, RankingDuel, RankingKingGuild, RankingKingPlayer, SNSData, T_FriendList, T_FriendMail, T_FriendMain, T_PetItem_Info, T_WaitFriend, warehouse, WarehouseGuild.
 
+**Ánh xạ đủ từng dòng (không chỉ “vài bảng mẫu”):** [`PHASE2-MAPPING-TEMPLATE.csv`](PHASE2-MAPPING-TEMPLATE.csv) list **62** proc + **51** bảng khớp danh sách trên; cột gợi ý OpenMU/plugin là **nháp** — bắt buộc chỉnh sau khi diff `takumi-mssql-inspect` (`.bak`) và `takumi-pg-inspect` (`data`/`config`).  
+**Không** coi bảng legacy “đã giống” Postgres chỉ vì tên tương tự: `Character`/`MEMB_INFO` MSSQL khác kiến trúc EF OpenMU (Guid, `ItemStorage`, BCrypt, …). Cặp **`CHARACTER` vs `Character`**, **`MEMB_INFO` vs `memb_info`** là trùng tên heuristic từ chuỗi SQL trong C++ — trên DB thật có thể chỉ tồn tại một bảng; dùng CSV dump để gộp.
+
 ## SQL Back — script kèm repo (`MuServer/7.DataBase/SQL Back/`)
 
 | File | Mục đích (tóm tắt) | Ghi chú migration |

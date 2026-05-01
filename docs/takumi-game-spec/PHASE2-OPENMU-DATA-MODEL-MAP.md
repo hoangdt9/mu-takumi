@@ -78,7 +78,7 @@ Tham chiếu: [`tools/db-migrate/README.md`](../../tools/db-migrate/README.md).
 
 1. Restore **`.bak`** trên MSSQL (hoặc SSMS script `CREATE TABLE` nếu không có instance).  
 2. Chạy **`takumi-mssql-inspect`** (read-only) CSV cột MSSQL `dbo` và **`takumi-pg-inspect`** CSV cùng định dạng cho schema Postgres OpenMU **`data`** / **`config`** — đối chiếu với **`EntityDataContextModelSnapshot`** / ETL.  
-3. Điền mapping: template **[`PHASE2-MAPPING-TEMPLATE.csv`](PHASE2-MAPPING-TEMPLATE.csv)** (hoặc Sheet clone) từ [`TAKUMI-SQL-BACKLOG.md`](TAKUMI-SQL-BACKLOG.md).  
+3. Điền mapping: **[`PHASE2-MAPPING-TEMPLATE.csv`](PHASE2-MAPPING-TEMPLATE.csv)** — **62 proc + 51 bảng** đã có một dòng mỗi object (theo [`TAKUMI-SQL-BACKLOG.md`](TAKUMI-SQL-BACKLOG.md)); chỉnh `openmu_or_plugin` / `parity_status` / `notes` sau khi so CSV inspector. Clone sang Sheet nếu cần thêm cột.  
 4. **TODO:** script ETL (dotnet/Npgsql) chỉ đọc MSSQL, ghi **Postgres staging** — không chạy trên prod.  
 
 ---

@@ -21,7 +21,7 @@
 
 | Khi | Nội dung |
 |-----|----------|
-| 2026-05 | Phase 2: restore `MuOnline.bak` (Docker [`docker/sql/restore-muonline.sh`](../docker/sql/restore-muonline.sh), logical `MuOnlineS6`); **`takumi-mssql-inspect`** / **`takumi-pg-inspect`** + **`regen-mapping-slices.sh`** (mapping slice + row-count CSV); **`takumi-etl check-sources`** để probe DB dev. Export vào [`tools/db-migrate/schemas/`](../tools/db-migrate/schemas/) (gitignored) & slice trong `docs/takumi-game-spec/`. Postgres OpenMU: `--schema data`/`config`/… (`SchemaNames`).
+| 2026-05 | Phase 2: MSSQL restore; inspectors + **`regen-mapping-slices.sh`**; **`takumi-etl`** (`preview-login-path`, **`staging-login-path`**, **`staging-login-sync.sh`**) → PG schema **`takumi_staging`**; promote vào **`data`**. OpenMU dùng `--schema data`/`config`; export [`tools/db-migrate/schemas/`](../tools/db-migrate/schemas/) gitignored. |
 
 ---
 
@@ -60,7 +60,7 @@
 - [ ] Chọn một trong hai và chốt (ghi vào wiki/ADR repo fork):
   - [ ] **A)** Migrate dữ liệu từ `MuOnline.bak` → Postgres theo **mapping** trường (script ETL từng bảng).
   - [ ] **B)** **Fresh world** OpenMU + chỉ import subset (account, character) qua tool one-off.
-- [x] Tooling Phase 2 (read-only + workflow): [`tools/db-migrate/README.md`](tools/db-migrate/README.md) — **`takumi-mssql-inspect`**, **`takumi-pg-inspect`**, **`regen-mapping-slices.sh`**, scaffold **`takumi-etl`** (`check-sources`); template [`docs/takumi-game-spec/PHASE2-MAPPING-TEMPLATE.csv`](takumi-game-spec/PHASE2-MAPPING-TEMPLATE.csv). **Loads ETL → Postgres OpenMU** vẫn TODO.
+- [x] Tooling Phase 2: [`tools/db-migrate/README.md`](tools/db-migrate/README.md) — inspectors, **`regen-mapping-slices.sh`**, **`takumi-etl`** (`check-sources`, `preview-login-path`, **`staging-login-path`**, script **`staging-login-sync.sh`**) + template mapping. **Promote staging → `data.*` OpenMU** và transform mật khẩu/blob vẫn TODO.
 - [x] **Dump CSV schema (inspector)** trên dev: sau restore MSSQL ([`docker/sql/restore-muonline.sh`](../docker/sql/restore-muonline.sh) + `.bak`) và Postgres OpenMU — chạy hai tool trong [`tools/db-migrate/README.md`](tools/db-migrate/README.md); lưu dưới `tools/db-migrate/schemas/*.csv` (gitignored). _Đã spike 2026-05._
 - [ ] **Đồng bộ mapping + không sót MSSQL:** điền cột trong [`PHASE2-MAPPING-TEMPLATE.csv`](takumi-game-spec/PHASE2-MAPPING-TEMPLATE.csv); **ưu tiên giá trị nghiệp vụ từ MSSQL** khi trùng tên (chi tiết **[§0](takumi-game-spec/PHASE2-OPENMU-DATA-MODEL-MAP.md)**); regen slice qua [`tools/db-migrate/README.md`](tools/db-migrate/README.md) khi DB thay đổi. **Lưu ý:** Postgres OpenMU là **đa schema** (`data`/`config`/…), không phải “multi-language DB”; Phase 4+ có thể **chỉnh lại** ETL/schema sau parity GameServer.
 - [ ] **Gate 2:** Có bộ dữ liệu dev đủ login + spawn character trên **OpenMU** (kể cả dữ liệu giả lập).

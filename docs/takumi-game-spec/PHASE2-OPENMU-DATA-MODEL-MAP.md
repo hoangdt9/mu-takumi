@@ -104,7 +104,8 @@ Tham chiếu: [`tools/db-migrate/README.md`](../../tools/db-migrate/README.md).
 2. Chạy **`takumi-mssql-inspect`** (read-only) CSV cột MSSQL `dbo` và **`takumi-pg-inspect`** CSV cùng định dạng cho schema Postgres OpenMU **`data`** / **`config`** — đối chiếu với **`EntityDataContextModelSnapshot`** / ETL.  
 3. Điền mapping: **[`PHASE2-MAPPING-TEMPLATE.csv`](PHASE2-MAPPING-TEMPLATE.csv)** — một file **236 dòng** (header + 62 proc + 61 bảng `dbo` + 101 bảng OpenMU EF + 11 heuristic); chỉnh cột sau khi so CSV inspector. Regenerate slice: `--mapping-rows` / `--mapping-openmu-all` trong [`tools/db-migrate/README.md`](../../tools/db-migrate/README.md).  
 4. Spike (read-only): **`takumi-etl preview-login-path`** trong [`tools/db-migrate/README.md`](../../tools/db-migrate/README.md) — khảo sát `MEMB_INFO` / `Character`, gợi ý map sang OpenMU EF (Gate 2 / ADR §3).
-5. **TODO:** script ETL (dotnet/Npgsql) ghi **Postgres staging** hoặc trực tiếp EF-shape — không chạy trên prod.  
+5. **Staging (dev, có mật khẩu):** **`takumi-etl staging-login-path --recreate --load`** hoặc **`bash tools/db-migrate/staging-login-sync.sh`** — tạo schema **`takumi_staging`** (không đè `data`/`config`) và copy **`MEMB_INFO`** + **`Character`** (cột nhị phân → `bytea`, còn lại `text`). Chi tiết **[`tools/db-migrate/README.md`](../../tools/db-migrate/README.md)**.  
+6. **TODO:** promote staging → **`data.Account`** / **`data.Character`** (hash BCrypt, Guid, parse `Inventory` blob) — không chạy nhầm trên prod.  
 
 ---
 
@@ -112,6 +113,6 @@ Tham chiếu: [`tools/db-migrate/README.md`](../../tools/db-migrate/README.md).
 
 - [ ] Spreadsheet: điền **`PHASE2-MAPPING-TEMPLATE.csv`** — file **đầy đủ** gồm `LEGACY_PROC` (62) + `LEGACY_TABLE` (61 `dbo`) + `OPENMU_TABLE` (101) + `HEURISTIC_VERIFY` (11); chỉnh `openmu_or_plugin` / `parity_status` sau diff inspector.  
 - [ ] **Kiểm tra không sót nguồn:** mỗi `LEGACY_TABLE` có đích hoặc WONTFIX ghi rõ; sau ETL có smoke so row count/sample (mục **§0** trên file này).
-- [ ] Chạy thử **migration pipeline** và **Gate 2** staging.  
+- [ ] Chạy **`staging-login-path`** (dev) và so row count; sau đó **Gate 2**: promote hoặc seed tay lên OpenMU khi sẵn transform.    
 
 **Liên kết:** [`TAKUMI-MIGRATION-OPENMU-CHECKLIST.md`](../TAKUMI-MIGRATION-OPENMU-CHECKLIST.md) Phase 2; [`TAKUMI-FULL-FILE-MIGRATION-CHECKLIST.md`](../TAKUMI-FULL-FILE-MIGRATION-CHECKLIST.md) §11.

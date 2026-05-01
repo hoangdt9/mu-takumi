@@ -1,30 +1,34 @@
 using Microsoft.Data.SqlClient;
 using Npgsql;
+using Takumi.Etl;
 
 /// <summary>
-/// Takumi MSSQL → OpenMU Postgres ETL scaffolding (loads still TODO).
+/// Takumi MSSQL → Postgres (staging + OpenMU path). Loads: optional takumi_staging mirrors.
 /// </summary>
 internal static class Program
 {
     private const string Help = """
-        takumi-etl — Phase 2 scaffold. Read-only MSSQL previews; Postgres loads TODO.
+        takumi-etl — Phase 2: MSSQL → Postgres staging for Gate 2 (dev only).
 
-        Env (inspectors reuse the same vars):
-          TAKUMI_MSSQL_CONNECTION    Server=...;Database=...;
-          TAKUMI_PG_CONNECTION       optional for future writer steps
+        Env:
+          TAKUMI_MSSQL_CONNECTION    legacy MuOnline
+          TAKUMI_PG_CONNECTION       OpenMU Postgres (staging schema takumi_* does not collide with data/config)
 
         Commands:
-          check-sources          OK/SKIP/FAIL per connection in env.
+          check-sources
+             Connection smoke test.
 
-          preview-login-path     MSSQL-only: dbo MEMB_INFO + Character — row counts, columns,
-                                 heuristic lines for OpenMU data.Account / Character (no writes).
+          preview-login-path [--schema dbo]
+             Read-only MSSQL: MEMB_INFO + Character outlines + heuristic OpenMU map.
 
-          Options after command:
-          --schema dbo           Table schema filter (default: dbo).
+          staging-login-path [--schema dbo] (--recreate | --load)+
+             --recreate   DROP + CREATE takumi_staging.legacy_memb_info / legacy_character (columns from MSSQL).
+             --load       TRUNCATE + copy all rows (passwords/binary land in staging — dev DB only).
 
-        From repo root:
-          dotnet run --project tools/db-migrate/dotnet/Takumi.Etl -- check-sources
-          dotnet run --project tools/db-migrate/dotnet/Takumi.Etl -- preview-login-path --schema dbo
+        Full staging refresh:
+          dotnet run --project tools/db-migrate/dotnet/Takumi.Etl -- staging-login-path --recreate --load
+
+        NEVER point --load at production Postgres.
         """;
 
     public static async Task<int> Main(string[] args)
@@ -40,30 +44,22 @@ internal static class Program
 
         if (args[0] == "preview-login-path")
         {
-            var tail = args.AsSpan(1).ToArray();
-            var schema = ArgValue(tail, "--schema") ?? "dbo";
+            var tail = args.Skip(1).ToArray();
+            var schema = EtlArgs.ArgValue(tail, "--schema") ?? "dbo";
             return await PreviewLoginPathAsync(schema);
         }
+
+        if (args[0] == "staging-login-path")
+            return await StagingLoginPath.RunAsync(args.Skip(1).ToArray());
 
         Console.Error.WriteLine($"Unknown command: {args[0]}\n");
         Console.WriteLine(Help);
         return 2;
     }
 
-    private static string? ArgValue(IReadOnlyList<string> args, string name)
-    {
-        for (var i = 0; i < args.Count - 1; i++)
-        {
-            if (string.Equals(args[i], name, StringComparison.OrdinalIgnoreCase))
-                return args[i + 1];
-        }
-
-        return null;
-    }
-
     private static async Task<int> PreviewLoginPathAsync(string schema)
     {
-        if (!IsSafeSqlIdentifier(schema))
+        if (!LegacyMssql.IsSafeSqlIdentifier(schema))
         {
             Console.Error.WriteLine("Invalid --schema (use letters/digits/_ only).");
             return 2;
@@ -79,8 +75,8 @@ internal static class Program
         await using var conn = new SqlConnection(mssql);
         await conn.OpenAsync();
 
-        var membName = await ResolveTableNameAsync(conn, schema, "MEMB_INFO");
-        var charName = await ResolveTableNameAsync(conn, schema, "Character");
+        var membName = await LegacyMssql.ResolveTableNameAsync(conn, schema, "MEMB_INFO");
+        var charName = await LegacyMssql.ResolveTableNameAsync(conn, schema, "Character");
 
         Console.WriteLine($"Legacy schema [{schema}], login-path preview (read-only)");
 
@@ -94,18 +90,16 @@ internal static class Program
         }
 
         Console.WriteLine("""
-            
+
             --- Heuristic targets (verify OpenMU EF + PHASE2 doc) ---
-            MSSQL memb___id        -> data.Account.LoginName (PK not 1:1; OpenMU may use GUID keys — keep id map table)
-            MSSQL memb__pwd        -> data.Account.PasswordHash (legacy may be plaintext/MD5; OpenMU prefers BCrypt — re-hash policy Gate 2)
-            MSSQL bloc_code (+ TTL) -> data.Account.State (AccountState.Normal/Banned/TemporaryBanned)
-            Character.AccountID    -> must match memb___id (string) linking to migrated Account.LoginName / map table
+            MSSQL memb___id        -> data.Account.LoginName (Guid PK on Account — keep id mapping table if needed)
+            MSSQL memb__pwd        -> data.Account.PasswordHash (BCrypt migration policy at Gate 2)
+            MSSQL bloc_code (+ TTL) -> data.Account.State
+            Character.AccountID    -> fk to memb___id / migrated login
             Character.Name         -> data.Character.Name
-            Character.cLevel (+ exp fields if any) -> Level / Experience (OpenMU model differs — normalize)
-            Character.Class        -> CharacterClass FK via config.CharacterClass.Number
-            Character.Inventory    -> ItemStorage / parse blob → Item slots (no raw copy)
-            
-            Docs: docs/takumi-game-spec/PHASE2-OPENMU-DATA-MODEL-MAP.md §2, §3.
+            Character.Class / cLevel / inventory blob -> EF shape + parsers (staging: takumi_staging.legacy_*)
+
+            Docs: docs/takumi-game-spec/PHASE2-OPENMU-DATA-MODEL-MAP.md §2–§5.
             """);
 
         return 0;
@@ -128,61 +122,16 @@ internal static class Program
         Console.WriteLine($"  resolved name: {schema}.{actualTableName}");
 
         await using var countCmd = new SqlCommand(
-            $"SELECT COUNT(*) FROM {Bracket(schema)}.{Bracket(actualTableName)}",
+            $"SELECT COUNT(*) FROM {LegacyMssql.Bracket(schema)}.{LegacyMssql.Bracket(actualTableName)}",
             conn);
         var cntObj = await countCmd.ExecuteScalarAsync();
         Console.WriteLine($"  row_count: {cntObj}");
 
-        const string colSql = """
-            SELECT COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, IS_NULLABLE
-            FROM INFORMATION_SCHEMA.COLUMNS
-            WHERE TABLE_SCHEMA = @sch AND TABLE_NAME = @tbl
-            ORDER BY ORDINAL_POSITION
-            """;
-
-        await using var colCmd = new SqlCommand(colSql, conn);
-        colCmd.Parameters.AddWithValue("@sch", schema);
-        colCmd.Parameters.AddWithValue("@tbl", actualTableName);
-        await using var r = await colCmd.ExecuteReaderAsync();
+        var cols = await LegacyMssql.GetColumnsAsync(conn, schema, actualTableName);
 
         Console.WriteLine("  columns:");
-        while (await r.ReadAsync())
-        {
-            var cname = r.GetString(0);
-            var dt = r.GetString(1);
-            var maxlen = r.IsDBNull(2) ? "" : r.GetInt32(2).ToString();
-            var nullable = r.GetString(3);
-            Console.WriteLine($"    {cname}\t{dt}\t{(maxlen == "" ? "(n/a)" : maxlen)}\t{nullable}");
-        }
-    }
-
-    private static async Task<string?> ResolveTableNameAsync(
-        SqlConnection conn,
-        string schema,
-        string logicalLower)
-    {
-        const string sql = """
-            SELECT t.name
-            FROM sys.tables t
-            INNER JOIN sys.schemas s ON t.schema_id = s.schema_id
-            WHERE s.name = @sch AND lower(t.name) = @logical
-            """;
-        await using var cmd = new SqlCommand(sql, conn);
-        cmd.Parameters.AddWithValue("@sch", schema);
-        cmd.Parameters.AddWithValue("@logical", logicalLower.ToLowerInvariant());
-        var o = await cmd.ExecuteScalarAsync();
-        return o is string n ? n : null;
-    }
-
-    private static bool IsSafeSqlIdentifier(string id) =>
-        id.Length is > 0 and <= 128 &&
-        id.All(ch => char.IsLetterOrDigit(ch) || ch == '_');
-
-    private static string Bracket(string id)
-    {
-        if (!IsSafeSqlIdentifier(id))
-            throw new ArgumentException("Unsafe identifier.", nameof(id));
-        return "[" + id.Replace("]", "]]", StringComparison.Ordinal) + "]";
+        foreach (var c in cols)
+            Console.WriteLine($"    {c.Name}\t{c.DataType}\t{(c.StoreAsBytea ? "bytea→PG" : "text→PG")}");
     }
 
     private static async Task<int> CheckSourcesAsync()

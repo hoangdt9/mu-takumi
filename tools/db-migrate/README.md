@@ -1,6 +1,6 @@
 # DB migrate — Takumi (MSSQL) → OpenMU (PostgreSQL)
 
-Quy ước layout **Phase 2** (xem [`docs/TAKUMI-MIGRATION-OPENMU-CHECKLIST.md`](../../docs/TAKUMI-MIGRATION-OPENMU-CHECKLIST.md)). Job **copy sang Postgres/OpenMU** (ETL đầy đủ) **TODO**. Repo có **hai inspector read-only** (MSSQL + Postgres) cùng CSV cột, **`takumi-etl`** (smoke-test DB + holder cho loader sau), và script **`regen-mapping-slices.sh`**.
+Quy ước layout **Phase 2** (xem [`docs/TAKUMI-MIGRATION-OPENMU-CHECKLIST.md`](../../docs/TAKUMI-MIGRATION-OPENMU-CHECKLIST.md)). Repo có inspectors read-only + **`regen-mapping-slices.sh`** + **`takumi-etl`**: **`preview-login-path`** (chỉ đọc), **`staging-login-path`** (mirror vào Postgres schema **`takumi_staging`**). Bước **promote** staging → **`data.Account` / `data.Character`** OpenMU (BCrypt, Guid, blob) vẫn TODO.
 
 ## Mục tiêu
 
@@ -12,10 +12,11 @@ Quy ước layout **Phase 2** (xem [`docs/TAKUMI-MIGRATION-OPENMU-CHECKLIST.md`]
 ```
 tools/db-migrate/
   README.md                    (file này)
-  regen-mapping-slices.sh      một lần chạy: slice mapping + row-count (cần env)
+  regen-mapping-slices.sh      slice mapping CSV + row-count (cần env)
+  staging-login-sync.sh        wrapper: staging-login-path --recreate --load
   dotnet/
     Takumi.DbTools.slnx        (Etl + MssqlInspect + PgInspect)
-    Takumi.Etl/                takumi-etl (`check-sources` — loads TODO)
+    Takumi.Etl/                takumi-etl — check-sources | preview-login-path | staging-login-path
     Takumi.MssqlInspect/       takumi-mssql-inspect
     Takumi.PgInspect/          takumi-pg-inspect (OpenMU / Postgres)
   schemas/                     export CSV redirect — không chứa password
@@ -101,16 +102,43 @@ Release binary: `dotnet publish -c Release` → chạy `takumi-mssql-inspect` tr
 
 Build solution: `dotnet build tools/db-migrate/dotnet/Takumi.DbTools.slnx`
 
-## `takumi-etl` (Phase 2 scaffold)
+## `takumi-etl` (Phase 2)
 
-Chưa ghi Postgres. Lệnh **`check-sources`** mở kết nối MSSQL/OpenMU có trong env (giống inspector) và in `OK`, `FAIL`, hoặc `SKIP`.
+Cần .NET 10. **Không** chạy `staging-login-path --load` trên Postgres production — staging chứa **mật khẩu** và blob **Inventory**.
 
-**`preview-login-path`** (read-only MSSQL): tìm `MEMB_INFO` + `Character` theo `--schema dbo` (tên bảng match không phân biệt hoa thường), in **số dòng**, **danh sách cột** và một khối gợi ý map sang `data.Account` / `data.Character` (theo PHASE2 §2 — không INSERT).
+### `check-sources`
+
+Probe **`TAKUMI_MSSQL_CONNECTION`** và **`TAKUMI_PG_CONNECTION`** (OK / FAIL / SKIP).
+
+### `preview-login-path` (read-only MSSQL)
+
+Định vị **`MEMB_INFO`** + **`Character`** (match tên không phụ thuộc hoa/thường), in row count và cột; không ghi Postgres.
 
 ```bash
 TAKUMI_MSSQL_CONNECTION="..." dotnet run --project tools/db-migrate/dotnet/Takumi.Etl -- preview-login-path
 dotnet run --project tools/db-migrate/dotnet/Takumi.Etl -- check-sources
 ```
+
+### `staging-login-path` (ghi Postgres staging)
+
+Mirror hai bảng vào **`takumi_staging.legacy_memb_info`** và **`takumi_staging.legacy_character`** (cùng DB với OpenMU).
+
+- **`--recreate`** : `DROP` + `CREATE`; kiểu cột sinh từ MSSQL (**`bytea`** cho nhị phân/`timestamp`/rowversion hiểu là binary). Cột **`etl_staged_at`**.
+- **`--load`** : `TRUNCATE` + đổ đủ row từ MSSQL (`CommandTimeout = 0` cho bảng lớn).
+
+Cần **cả hai** env `TAKUMI_MSSQL_CONNECTION` và `TAKUMI_PG_CONNECTION`.
+
+```bash
+export TAKUMI_MSSQL_CONNECTION="..."
+export TAKUMI_PG_CONNECTION="Host=127.0.0.1;Port=5433;Database=openmu;Username=postgres;Password=***"
+
+dotnet run --project tools/db-migrate/dotnet/Takumi.Etl -- staging-login-path --recreate --load
+bash tools/db-migrate/staging-login-sync.sh              # wrapper tương đương
+```
+
+Bước tiếp theo (**TODO** trong repo): transform staging → **`data.Account` / `data.Character`** OpenMU.
+
+Build: `dotnet build tools/db-migrate/dotnet/Takumi.DbTools.slnx`
 
 ## `takumi-pg-inspect` (read-only, Postgres)
 

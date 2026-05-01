@@ -17,6 +17,12 @@
 
 **Baseline OpenMU trong repo này:** `OpenMU/docs/Checklist-Server.md`, `OpenMU/QuickStart.md`, Docker `OpenMU/deploy/all-in-one`.
 
+**Snapshot tiến độ (cập nhật khi milestone đổi):**
+
+| Khi | Nội dung |
+|-----|----------|
+| 2026-05 | Phase 2: restore `MuOnline.bak` vào Docker (`docker/sql/restore-muonline.sh`, logical `MuOnlineS6`); chạy **`takumi-mssql-inspect`** + **`takumi-pg-inspect`** trên DB dev → CSV local trong `tools/db-migrate/schemas/` (gitignored). Schema Postgres OpenMU dùng `--schema data` / `config` (xem `OpenMU/.../SchemaNames.cs`). |
+
 ---
 
 ## Phase 0 — Preflight & quyết định (Gate: GO / NO-GO fork sâu)
@@ -55,7 +61,8 @@
   - [ ] **A)** Migrate dữ liệu từ `MuOnline.bak` → Postgres theo **mapping** trường (script ETL từng bảng).
   - [ ] **B)** **Fresh world** OpenMU + chỉ import subset (account, character) qua tool one-off.
 - [x] Tooling Phase 2 (read-only): [`tools/db-migrate/README.md`](tools/db-migrate/README.md) — **`takumi-mssql-inspect`**, **`takumi-pg-inspect`**, template [`docs/takumi-game-spec/PHASE2-MAPPING-TEMPLATE.csv`](takumi-game-spec/PHASE2-MAPPING-TEMPLATE.csv); script **ETL → Postgres** vẫn TODO.
-- [ ] **CSV schema thực tế:** sau restore MSSQL ([`docker/sql/restore-muonline.sh`](../docker/sql/restore-muonline.sh) + `.bak`) và Postgres OpenMU — chạy hai inspector, lưu dưới `tools/db-migrate/schemas/` (gitignored), cập nhật Sheet / [`PHASE2-MAPPING-TEMPLATE.csv`](takumi-game-spec/PHASE2-MAPPING-TEMPLATE.csv).
+- [x] **Dump CSV schema (inspector)** trên dev: sau restore MSSQL ([`docker/sql/restore-muonline.sh`](../docker/sql/restore-muonline.sh) + `.bak`) và Postgres OpenMU — chạy hai tool trong [`tools/db-migrate/README.md`](tools/db-migrate/README.md); lưu dưới `tools/db-migrate/schemas/*.csv` (gitignored). _Đã spike 2026-05._
+- [ ] **Đồng bộ mapping:** đối chiếu CSV MSSQL ↔ Postgres (`data`/`config`) ↔ EF và cập nhật đầy đủ Sheet / [`PHASE2-MAPPING-TEMPLATE.csv`](takumi-game-spec/PHASE2-MAPPING-TEMPLATE.csv) (từng proc/bảng × entity / plugin).
 - [ ] **Gate 2:** Có bộ dữ liệu dev đủ login + spawn character trên **OpenMU** (kể cả dữ liệu giả lập).
 
 ---

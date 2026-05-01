@@ -4,6 +4,13 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+ENV_FILE="$ROOT/tools/db-migrate/.env"
+if [[ -f "$ENV_FILE" ]]; then
+  set -a
+  # shellcheck disable=1091
+  source "$ENV_FILE"
+  set +a
+fi
 MSQL_PROJ="$ROOT/tools/db-migrate/dotnet/Takumi.MssqlInspect/Takumi.MssqlInspect.csproj"
 PG_PROJ="$ROOT/tools/db-migrate/dotnet/Takumi.PgInspect/Takumi.PgInspect.csproj"
 DOC="$ROOT/docs/takumi-game-spec"

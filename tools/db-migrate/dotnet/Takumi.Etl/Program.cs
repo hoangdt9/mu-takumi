@@ -10,6 +10,9 @@ internal static class Program
     private const string Help = """
         takumi-etl — Phase 2: MSSQL → Postgres staging for Gate 2 (dev only).
 
+        Env files (optional; do not commit secrets):
+          tools/db-migrate/.env — copy from db-migrate.env.sample; bash wrappers auto-source it.
+
         Env:
           TAKUMI_MSSQL_CONNECTION    legacy MuOnline
           TAKUMI_PG_CONNECTION       OpenMU Postgres (staging schema takumi_* does not collide with data/config)
@@ -33,6 +36,8 @@ internal static class Program
 
     public static async Task<int> Main(string[] args)
     {
+        EnvLoader.ApplyRepoLocalDotEnv();
+
         if (args.Length == 0 || args.Contains("-h") || args.Contains("--help"))
         {
             Console.WriteLine(Help);
@@ -68,7 +73,8 @@ internal static class Program
         var mssql = Environment.GetEnvironmentVariable("TAKUMI_MSSQL_CONNECTION");
         if (string.IsNullOrWhiteSpace(mssql))
         {
-            Console.Error.WriteLine("preview-login-path requires TAKUMI_MSSQL_CONNECTION.");
+            Console.Error.WriteLine(
+                "preview-login-path requires TAKUMI_MSSQL_CONNECTION (export hoặc file tools/db-migrate/.env từ db-migrate.env.sample — README).");
             return 2;
         }
 

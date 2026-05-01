@@ -13,7 +13,9 @@ Quy ước layout **Phase 2** (xem [`docs/TAKUMI-MIGRATION-OPENMU-CHECKLIST.md`]
 tools/db-migrate/
   README.md                    (file này)
   regen-mapping-slices.sh      slice mapping CSV + row-count (cần env)
-  staging-login-sync.sh        wrapper: staging-login-path --recreate --load
+  staging-login-sync.sh       wrapper (--recreate --load); có thể nhận thêm như `--schema dbo`; auto-source `.env`
+  db-migrate.env.sample      template → rename/copy thành `tools/db-migrate/.env`
+
   dotnet/
     Takumi.DbTools.slnx        (Etl + MssqlInspect + PgInspect)
     Takumi.Etl/                takumi-etl — check-sources | preview-login-path | staging-login-path
@@ -26,7 +28,13 @@ tools/db-migrate/
 
 ### Spreadsheet mapping — **đủ tầng** (proc + dbo + OpenMU EF + heuristic)
 
-[`docs/takumi-game-spec/PHASE2-MAPPING-TEMPLATE.csv`](../../docs/takumi-game-spec/PHASE2-MAPPING-TEMPLATE.csv) — **236 dòng** (bao gồm header): `LEGACY_PROC` (62), `LEGACY_TABLE` (61 `dbo` từ `.bak`), `OPENMU_TABLE` (101 bảng `data`/`config`/`friend`/`guild`), `HEURISTIC_VERIFY` (11 tên chỉ từ grep C++). Clone sang Sheet để điền `openmu_or_plugin` / `parity_status`.
+[`docs/takumi-game-spec/PHASE2-MAPPING-TEMPLATE.csv`](../../docs/takumi-game-spec/PHASE2-MAPPING-TEMPLATE.csv) — **236 dòng** (bao gồm header): `LEGACY_PROC` (62), `LEGACY_TABLE` (61 dbo), `OPENMU_TABLE` (101), `HEURISTIC_VERIFY` (11). Cột **`openmu_or_plugin` / `parity_status` / notes** có **default *ưu tiên Takumi* (dbo = chân lý)** — có thể tái áp đặt bằng:
+
+```bash
+python3 tools/db-migrate/scripts/apply_phase2_takumi_defaults.py
+```
+
+Tiếp tục trên Sheet với reviewer; không xóa dòng dbo thiếu map mà không ghi WONTFIX.
 
 **Regenerate slice từ DB (sau khi restore / OpenMU migrate):**
 
@@ -48,7 +56,10 @@ dotnet run --project tools/db-migrate/dotnet/Takumi.PgInspect -- --mapping-openm
   > docs/takumi-game-spec/PHASE2-MAPPING-OPENMU-EF-TABLES-FULL.csv
 ```
 
-Sau đó cập nhật `PHASE2-MAPPING-TEMPLATE.csv` (merge với `LEGACY_PROC` + `HEURISTIC_VERIFY` từ backlog — xem [`TAKUMI-SQL-BACKLOG.md`](../../docs/takumi-game-spec/TAKUMI-SQL-BACKLOG.md)).
+Sau đó merge tay với backlog khi khác nguồn C++/SQL cố định: [`TAKUMI-SQL-BACKLOG.md`](../../docs/takumi-game-spec/TAKUMI-SQL-BACKLOG.md).
+
+**Connection env:** copy [`tools/db-migrate/db-migrate.env.sample`](db-migrate.env.sample) → `tools/db-migrate/.env`; `staging-login-sync.sh`, `regen-mapping-slices.sh` và **`takumi-etl`** tự nạp file đó (`source` trong bash hoặc `EnvLoader` .NET).
+
 
 **Row counts (đối chiếu trước/sau ETL, không cần đếm tay):** cả hai tool xuất CSV cùng cột `table_schema,table_name,row_count`.
 

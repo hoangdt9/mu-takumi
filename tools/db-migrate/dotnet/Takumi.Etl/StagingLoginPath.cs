@@ -47,7 +47,10 @@ internal static class StagingLoginPath
         var pgCs = Environment.GetEnvironmentVariable("TAKUMI_PG_CONNECTION");
         if (string.IsNullOrWhiteSpace(mssql) || string.IsNullOrWhiteSpace(pgCs))
         {
-            Console.Error.WriteLine("staging-login-path requires TAKUMI_MSSQL_CONNECTION and TAKUMI_PG_CONNECTION.");
+            Console.Error.WriteLine(
+                "staging-login-path requires TAKUMI_MSSQL_CONNECTION and TAKUMI_PG_CONNECTION.\n" +
+                "  • copy tools/db-migrate/db-migrate.env.sample → tools/db-migrate/.env rồi chỉnh port/mật khẩu\n" +
+                "  • staging-login-sync.sh tự động source tools/db-migrate/.env");
             return 2;
         }
 

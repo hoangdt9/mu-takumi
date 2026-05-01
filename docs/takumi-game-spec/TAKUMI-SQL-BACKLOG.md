@@ -106,7 +106,7 @@ AccountCharacter, CardPhone, CashShopData, CashShopInventory, CashShopPeriodicIt
 
 ## Việc tiếp theo
 
-1. Export **DDL** từ DB thật hoặc `.bak` và diff với **EF migrations** fork OpenMU (`Persistence/EntityFramework/Migrations`; schema ví dụ `AccountData`, `Configuration` trong codegen).
+1. Export **DDL** từ DB thật hoặc `.bak` và diff với **EF migrations** fork OpenMU (`Persistence/EntityFramework/Migrations`; trên Postgres: schema **`data`** / **`config`** từ `SchemaNames.cs`).
 2. Ghi **mapping** từng proc/bảng vào issue tracker / spreadsheet (cột: OpenMU entity / WONTFIX / deferred). **Seed trong repo:** [`PHASE2-MAPPING-TEMPLATE.csv`](PHASE2-MAPPING-TEMPLATE.csv) (mở rộng từ danh sách § proc/bảng ở trên; clone sang Sheet khi cần nhiều cột).
 3. Cập nhật `docs/protocol/COMPATIBILITY-MATRIX.md` nếu login phụ thuộc cột lạ trong `MEMB_INFO`.
 

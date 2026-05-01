@@ -33,7 +33,7 @@
 
 ## 2. So sánh khái niệm với OpenMU (EF)
 
-Tham chiếu entity chính: **`OpenMU/src/DataModel/Entities/Character.cs`**, **`OpenMU/src/DataModel/Entities/Account.cs`**. Postgres: bảng và schema do **EF migrations** trong `OpenMU/src/Persistence/EntityFramework/Migrations/` và attribute `Table(..., Schema = SchemaNames.*)` (thường **`AccountData`** cho dữ liệu người chơi, **`Configuration`** cho world config).
+Tham chiếu entity chính: **`OpenMU/src/DataModel/Entities/Character.cs`**, **`OpenMU/src/DataModel/Entities/Account.cs`**. Postgres: bảng và schema do **EF migrations** trong `OpenMU/src/Persistence/EntityFramework/Migrations/` và attribute `Table(..., Schema = SchemaNames.*)`. Trên DB thực tế tên schema là **`data`** (hằng C# `SchemaNames.AccountData`), **`config`** (`Configuration`), **`friend`**, **`guild`** — khi dùng `takumi-pg-inspect` truyền `--schema data` / `--schema config`.
 
 ### 2.1 Nhóm “character core” vanilla
 
@@ -77,7 +77,7 @@ OpenMU **`Character`** dùng `Guid Id`, **`CharacterClass`** (FK), `Experience`,
 Tham chiếu: [`tools/db-migrate/README.md`](../../tools/db-migrate/README.md).
 
 1. Restore **`.bak`** trên MSSQL (hoặc SSMS script `CREATE TABLE` nếu không có instance).  
-2. Chạy **`takumi-mssql-inspect`** (read-only) CSV cột MSSQL `dbo` và **`takumi-pg-inspect`** CSV cùng định dạng cho schema Postgres OpenMU (vd. **`AccountData`**) — đối chiếu với **`EntityDataContextModelSnapshot`** / ETL.  
+2. Chạy **`takumi-mssql-inspect`** (read-only) CSV cột MSSQL `dbo` và **`takumi-pg-inspect`** CSV cùng định dạng cho schema Postgres OpenMU **`data`** / **`config`** — đối chiếu với **`EntityDataContextModelSnapshot`** / ETL.  
 3. Điền mapping: template **[`PHASE2-MAPPING-TEMPLATE.csv`](PHASE2-MAPPING-TEMPLATE.csv)** (hoặc Sheet clone) từ [`TAKUMI-SQL-BACKLOG.md`](TAKUMI-SQL-BACKLOG.md).  
 4. **TODO:** script ETL (dotnet/Npgsql) chỉ đọc MSSQL, ghi **Postgres staging** — không chạy trên prod.  
 

@@ -66,18 +66,21 @@ Build cả hai tool: `dotnet build tools/db-migrate/dotnet/Takumi.DbTools.slnx`
 
 **Connection:** `TAKUMI_PG_CONNECTION` hoặc `--connection` (chuỗi Npgsql, ví dụ `Host=127.0.0.1;Port=5439;Database=openmu;Username=postgres;Password=***`).
 
-OpenMU thường dùng schema EF như **`AccountData`**, **`Configuration`** — chỉ định **`--schema AccountData`** (mặc định `public`).
+OpenMU: trong Postgres tên schema là **`data`**, **`config`**, **`friend`**, **`guild`** (xem `OpenMU/.../SchemaNames.cs`: `AccountData` → `"data"`, `Configuration` → `"config"`). Với inspector dùng **`--schema data`** (không phải chữ `AccountData`).
 
 ```bash
 dotnet run --project tools/db-migrate/dotnet/Takumi.PgInspect -- --help
 
-TAKUMI_PG_CONNECTION="Host=127.0.0.1;Port=5439;Database=openmu;Username=postgres;Password=***" \
-  dotnet run --project tools/db-migrate/dotnet/Takumi.PgInspect -- --schema AccountData \
-  > tools/db-migrate/schemas/openmu-accountdata-columns.csv
+TAKUMI_PG_CONNECTION="Host=127.0.0.1;Port=5433;Database=openmu;Username=postgres;Password=***" \
+  dotnet run --project tools/db-migrate/dotnet/Takumi.PgInspect -- --schema data \
+  > tools/db-migrate/schemas/openmu-data-columns.csv
 
-dotnet run --project tools/db-migrate/dotnet/Takumi.PgInspect -- --schema AccountData --tables
-dotnet run --project tools/db-migrate/dotnet/Takumi.PgInspect -- --schema AccountData --table Character
+dotnet run --project tools/db-migrate/dotnet/Takumi.PgInspect -- --schema data --tables
+dotnet run --project tools/db-migrate/dotnet/Takumi.PgInspect -- --schema data --table Character
+dotnet run --project tools/db-migrate/dotnet/Takumi.PgInspect -- --schema config --tables
 ```
+
+*(Port `5433` nếu dùng `deploy/all-in-one/docker-compose.override.yml`; mặc định compose có thể là `5432`.)*
 
 Chiến lược entity / ADR: **[`docs/takumi-game-spec/PHASE2-OPENMU-DATA-MODEL-MAP.md`](../../docs/takumi-game-spec/PHASE2-OPENMU-DATA-MODEL-MAP.md)**.
 

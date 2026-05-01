@@ -50,7 +50,7 @@
 - [x] Inventory **`EXEC` + bảng (heuristic)** Data/Join → [`docs/takumi-game-spec/TAKUMI-SQL-BACKLOG.md`](takumi-game-spec/TAKUMI-SQL-BACKLOG.md).
 - [x] Inventory **`MuServer/7.DataBase/SQL Back/*.sql`** → cùng file (mục **SQL Back**); **`SQLUp.sql`** đã tóm DDL + mapping concept trong **`PHASE2-OPENMU-DATA-MODEL-MAP.md`**.
 - [ ] Ánh xạ **từng proc/bảng** vào Postgres/OpenMU (**spreadsheet** + EF entity name); **`PHASE2` doc chỉ là khung**.
-- [x] **Khảo sát** khái niệm OpenMU (**`Character`**, **`Account`**, schema **AccountData/Configuration**) — không thay bằng staging DB.
+- [x] **Khảo sát** khái niệm OpenMU (**`Character`**, **`Account`**, schema **`data`** / **`config`** trong Postgres = hằng EF `SchemaNames`) — không thay bằng staging DB.
 - [ ] Chọn một trong hai và chốt (ghi vào wiki/ADR repo fork):
   - [ ] **A)** Migrate dữ liệu từ `MuOnline.bak` → Postgres theo **mapping** trường (script ETL từng bảng).
   - [ ] **B)** **Fresh world** OpenMU + chỉ import subset (account, character) qua tool one-off.

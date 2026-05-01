@@ -16,12 +16,12 @@ internal static class Program
           --tables              List schema.table_name only.
           --table Name          Columns for one table (schema.Name; default schema: public).
           --markdown            Column detail as markdown.
-          --schema public       Table schema filter (default: public).
+          --schema public       Table schema filter (default: public). OpenMU: data / config / friend / guild.
 
-        Example (OpenMU all-in-one Postgres):
+        Example (OpenMU Postgres — schema tên data/config, c.f. SchemaNames.cs):
           dotnet run --project tools/db-migrate/dotnet/Takumi.PgInspect -- --help
-          TAKUMI_PG_CONNECTION="Host=127.0.0.1;Port=5439;Database=openmu;Username=postgres;Password=***" \\
-            dotnet run --project tools/db-migrate/dotnet/Takumi.PgInspect -- --schema AccountData --tables
+          TAKUMI_PG_CONNECTION="Host=127.0.0.1;Port=5433;Database=openmu;Username=postgres;Password=***" \\
+            dotnet run --project tools/db-migrate/dotnet/Takumi.PgInspect -- --schema data --tables
         """;
 
     public static async Task<int> Main(string[] args)

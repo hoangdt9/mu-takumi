@@ -103,7 +103,8 @@ Tham chiếu: [`tools/db-migrate/README.md`](../../tools/db-migrate/README.md).
 1. Restore **`.bak`** trên MSSQL (hoặc SSMS script `CREATE TABLE` nếu không có instance).  
 2. Chạy **`takumi-mssql-inspect`** (read-only) CSV cột MSSQL `dbo` và **`takumi-pg-inspect`** CSV cùng định dạng cho schema Postgres OpenMU **`data`** / **`config`** — đối chiếu với **`EntityDataContextModelSnapshot`** / ETL.  
 3. Điền mapping: **[`PHASE2-MAPPING-TEMPLATE.csv`](PHASE2-MAPPING-TEMPLATE.csv)** — một file **236 dòng** (header + 62 proc + 61 bảng `dbo` + 101 bảng OpenMU EF + 11 heuristic); chỉnh cột sau khi so CSV inspector. Regenerate slice: `--mapping-rows` / `--mapping-openmu-all` trong [`tools/db-migrate/README.md`](../../tools/db-migrate/README.md).  
-4. **TODO:** script ETL (dotnet/Npgsql) chỉ đọc MSSQL, ghi **Postgres staging** — không chạy trên prod.  
+4. Spike (read-only): **`takumi-etl preview-login-path`** trong [`tools/db-migrate/README.md`](../../tools/db-migrate/README.md) — khảo sát `MEMB_INFO` / `Character`, gợi ý map sang OpenMU EF (Gate 2 / ADR §3).
+5. **TODO:** script ETL (dotnet/Npgsql) ghi **Postgres staging** hoặc trực tiếp EF-shape — không chạy trên prod.  
 
 ---
 

@@ -105,7 +105,10 @@ Build solution: `dotnet build tools/db-migrate/dotnet/Takumi.DbTools.slnx`
 
 Chưa ghi Postgres. Lệnh **`check-sources`** mở kết nối MSSQL/OpenMU có trong env (giống inspector) và in `OK`, `FAIL`, hoặc `SKIP`.
 
+**`preview-login-path`** (read-only MSSQL): tìm `MEMB_INFO` + `Character` theo `--schema dbo` (tên bảng match không phân biệt hoa thường), in **số dòng**, **danh sách cột** và một khối gợi ý map sang `data.Account` / `data.Character` (theo PHASE2 §2 — không INSERT).
+
 ```bash
+TAKUMI_MSSQL_CONNECTION="..." dotnet run --project tools/db-migrate/dotnet/Takumi.Etl -- preview-login-path
 dotnet run --project tools/db-migrate/dotnet/Takumi.Etl -- check-sources
 ```
 

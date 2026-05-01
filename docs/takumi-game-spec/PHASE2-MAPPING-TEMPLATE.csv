@@ -1,114 +1,236 @@
 kind,legacy_name,openmu_or_plugin,parity_status,notes
-PROC,WZ_CONNECT_MEMB,Login / session,todo,Không giữ EXEC runtime — map sang flow OpenMU Connect+Login
-PROC,WZ_CS_GetAllGuildMarkRegInfo,Guild / siege,todo,Nhóm WZ_CS_* castle siege — đối chiếu persistence OpenMU
-PROC,WZ_CS_GetCalcRegGuildList,Guild / siege,todo,
-PROC,WZ_CS_GetCastleNpcInfo,Guild / siege,todo,
-PROC,WZ_CS_GetCastleTaxInfo,Guild / siege,todo,
-PROC,WZ_CS_GetCastleTotalInfo,Guild / siege,todo,
-PROC,WZ_CS_GetCsGuildUnionInfo,Guild / siege,todo,
-PROC,WZ_CS_GetGuildMarkRegInfo,Guild / siege,todo,
-PROC,WZ_CS_GetOwnerGuildMaster,Guild / siege,todo,
-PROC,WZ_CS_GetSiegeGuildInfo,Guild / siege,todo,
-PROC,WZ_CS_ModifyCastleOwnerInfo,Guild / siege,todo,
-PROC,WZ_CS_ModifyCastleSchedule,Guild / siege,todo,
-PROC,WZ_CS_ModifyGuildGiveUp,Guild / siege,todo,
-PROC,WZ_CS_ModifyGuildMarkReset,Guild / siege,todo,
-PROC,WZ_CS_ModifyMoney,Guild / siege,todo,
-PROC,WZ_CS_ModifySiegeEnd,Guild / siege,todo,
-PROC,WZ_CS_ModifyTaxRate,Guild / siege,todo,
-PROC,WZ_CS_ReqNpcBuy,Guild / siege,todo,
-PROC,WZ_CS_ReqNpcRemove,Guild / siege,todo,
-PROC,WZ_CS_ReqNpcRepair,Guild / siege,todo,
-PROC,WZ_CS_ReqNpcUpdate,Guild / siege,todo,
-PROC,WZ_CS_ReqNpcUpgrade,Guild / siege,todo,
-PROC,WZ_CS_ReqRegAttackGuild,Guild / siege,todo,
-PROC,WZ_CS_ReqRegGuildMark,Guild / siege,todo,
-PROC,WZ_CS_ResetCastleSiege,Guild / siege,todo,
-PROC,WZ_CS_ResetCastleTaxInfo,Guild / siege,todo,
-PROC,WZ_CS_ResetRegSiegeInfo,Guild / siege,todo,
-PROC,WZ_CS_ResetSiegeGuildInfo,Guild / siege,todo,
-PROC,WZ_CS_SetSiegeGuildInfo,Guild / siege,todo,
-PROC,WZ_CS_SetSiegeGuildOK,Guild / siege,todo,
-PROC,WZ_CW_InfoLoad,Game / event,deferred,CW — đối chiếu feature OpenMU hoặc plugin Takumi
-PROC,WZ_CW_InfoSave,Game / event,deferred,
-PROC,WZ_CreateCharacter,MUnique.OpenMU persistence,todo,Path tạo char + inventory shape
-PROC,WZ_CustomArenaRanking,Takumi plugin,deferred,WZ_Custom* không vanilla OpenMU
-PROC,WZ_CustomMonsterReward,Takumi plugin,deferred,
-PROC,WZ_CustomRanking,Takumi plugin,deferred,
-PROC,WZ_CustomTop,Takumi plugin,deferred,
-PROC,WZ_DISCONNECT_MEMB,Login / session,todo,
-PROC,WZ_DeleteCharacter,MUnique.OpenMU persistence,todo,
-PROC,WZ_DesblocAccount,Admin / account,todo,
-PROC,WZ_GetAccountLevel,Account / vault,todo,
-PROC,WZ_GetCharacterGensInfo,Gens / season,deferred,Có Gens trên world target không
-PROC,WZ_GetCoin,Zen / wallet,deferred,Đơn vị coin legacy vs OpenMU
-PROC,WZ_GetItemSerial,Item / serial,todo,Generator item serial
-PROC,WZ_GetMarryInfo,Marry / social,deferred,
-PROC,WZ_GetMasterResetInfo,Reset / custom,deferred,
-PROC,WZ_GetResetInfo,Reset / custom,deferred,
-PROC,WZ_RankingBloodCastle,Ranking / event,deferred,Event ranking — logic OpenMU
-PROC,WZ_RankingChaosCastle,Ranking / event,deferred,
-PROC,WZ_RankingDevilSquare,Ranking / event,deferred,
-PROC,WZ_RankingIllusionTemple,Ranking / event,deferred,
-PROC,WZ_RenameCharacter,MUnique.OpenMU persistence,todo,
-PROC,WZ_SetAccountLevel,Account / vault,todo,
-PROC,WZ_SetCoin,Zen / wallet,deferred,
-PROC,WZ_SetDiemMonter,Takumi plugin,deferred,Custom điểm quái
-PROC,WZ_SetDivorceInfo,Marry / social,deferred,
-PROC,WZ_SetMarryInfo,Marry / social,deferred,
-PROC,WZ_SetMasterResetInfo,Reset / custom,deferred,
-PROC,WZ_SetResetInfo,Reset / custom,deferred,
-PROC,WZ_SetReward,Takumi plugin,deferred,
-PROC,WZ_SetRewardAll,Takumi plugin,deferred,
-PROC,WZ_TvTRanking,Takumi plugin,deferred,
-TABLE,AccountCharacter,data.Account / Character link,todo,Heuristic C++; đối chiếu bảng thật trên .bak
-TABLE,CardPhone,,deferred,Cash/phone card nếu dùng
-TABLE,CashShopData,config / cash shop,deferred,Vanilla-flavored — entity OpenMU tương đương
-TABLE,CashShopInventory,config / cash shop,deferred,
-TABLE,CashShopPeriodicItem,config / cash shop,deferred,
-TABLE,CHARACTER,data.Character,todo,Trùng casing heuristic với Character — gộp sau inspect
-TABLE,Character,data.Character + ItemStorage,todo,Không 1:1 row legacy ↔ EF; decode inventory/blob
-TABLE,CustomAttack,Takumi plugin,deferred,
-TABLE,CustomGift,Takumi plugin,deferred,
-TABLE,CustomItemBank,Takumi plugin / storage,deferred,
-TABLE,CustomNpcQuest,Takumi plugin,deferred,
-TABLE,CustomQuest,Takumi plugin,deferred,
-TABLE,DataNapGame,Takumi plugin,deferred,SQLUp / nạp
-TABLE,EquipInventory,Takumi plugin / blob,todo,Blob → ItemStorage OpenMU
-TABLE,EventInventory,,deferred,
-TABLE,EventLeoTheHelper,,deferred,
-TABLE,EventSantaClaus,,deferred,
-TABLE,ExtWarehouse,data storage extension,deferred,
-TABLE,GameServerInfo,config GameServerDefinition,todo,Map world / cổng
-TABLE,Gens_Rank,Gens / plugin,deferred,
-TABLE,Gens_Reward,Gens / plugin,deferred,
-TABLE,Guild,guild.Guild,todo,
-TABLE,GuildMember,guild membership,todo,
-TABLE,HelperData,,deferred,
-TABLE,ItemMarketData,Takumi plugin / market,deferred,
-TABLE,LOG_CREDITOS,,deferred,Audit — WONTFIX staging được
-TABLE,LuckyCoin,,deferred,
-TABLE,LuckyItem,,deferred,
-TABLE,MasterSkillTree,data master skill,todo,
-TABLE,MEMB_INFO,data.Account / login,todo,Hash password legacy vs BCrypt OpenMU
-TABLE,memb_info,data.Account,todo,Trùng casing heuristic với MEMB_INFO — gộp sau inspect
-TABLE,MuRummyCard,,deferred,
-TABLE,MuRummyData,,deferred,
-TABLE,MuunInventory,data / season,deferred,
-TABLE,OptionData,item options,deferred,
-TABLE,PcPointData,,deferred,
-TABLE,PentagramJewel,data / pentagram,deferred,
-TABLE,PShopItemValue,personal shop,deferred,
-TABLE,QuestKillCount,data quest,deferred,
-TABLE,QuestWorld,data quest,deferred,
-TABLE,RankingDuel,Takumi plugin,deferred,
-TABLE,RankingKingGuild,Takumi plugin,deferred,
-TABLE,RankingKingPlayer,Takumi plugin,deferred,
-TABLE,SNSData,,deferred,
-TABLE,T_FriendList,data.Friend / mail,todo,Mạng xã hội OpenMU schema friend
-TABLE,T_FriendMail,data letter / mail,deferred,
-TABLE,T_FriendMain,data friend,deferred,
-TABLE,T_PetItem_Info,,deferred,
-TABLE,T_WaitFriend,,deferred,
-TABLE,warehouse,data vault / storage,todo,Tên lowercase trong heuristic
-TABLE,WarehouseGuild,guild warehouse,deferred,
+LEGACY_PROC,WZ_CONNECT_MEMB,Login / session,todo,Không giữ EXEC runtime — map sang flow OpenMU Connect+Login
+LEGACY_PROC,WZ_CS_GetAllGuildMarkRegInfo,Guild / siege,todo,Nhóm WZ_CS_* castle siege — đối chiếu persistence OpenMU
+LEGACY_PROC,WZ_CS_GetCalcRegGuildList,Guild / siege,todo,
+LEGACY_PROC,WZ_CS_GetCastleNpcInfo,Guild / siege,todo,
+LEGACY_PROC,WZ_CS_GetCastleTaxInfo,Guild / siege,todo,
+LEGACY_PROC,WZ_CS_GetCastleTotalInfo,Guild / siege,todo,
+LEGACY_PROC,WZ_CS_GetCsGuildUnionInfo,Guild / siege,todo,
+LEGACY_PROC,WZ_CS_GetGuildMarkRegInfo,Guild / siege,todo,
+LEGACY_PROC,WZ_CS_GetOwnerGuildMaster,Guild / siege,todo,
+LEGACY_PROC,WZ_CS_GetSiegeGuildInfo,Guild / siege,todo,
+LEGACY_PROC,WZ_CS_ModifyCastleOwnerInfo,Guild / siege,todo,
+LEGACY_PROC,WZ_CS_ModifyCastleSchedule,Guild / siege,todo,
+LEGACY_PROC,WZ_CS_ModifyGuildGiveUp,Guild / siege,todo,
+LEGACY_PROC,WZ_CS_ModifyGuildMarkReset,Guild / siege,todo,
+LEGACY_PROC,WZ_CS_ModifyMoney,Guild / siege,todo,
+LEGACY_PROC,WZ_CS_ModifySiegeEnd,Guild / siege,todo,
+LEGACY_PROC,WZ_CS_ModifyTaxRate,Guild / siege,todo,
+LEGACY_PROC,WZ_CS_ReqNpcBuy,Guild / siege,todo,
+LEGACY_PROC,WZ_CS_ReqNpcRemove,Guild / siege,todo,
+LEGACY_PROC,WZ_CS_ReqNpcRepair,Guild / siege,todo,
+LEGACY_PROC,WZ_CS_ReqNpcUpdate,Guild / siege,todo,
+LEGACY_PROC,WZ_CS_ReqNpcUpgrade,Guild / siege,todo,
+LEGACY_PROC,WZ_CS_ReqRegAttackGuild,Guild / siege,todo,
+LEGACY_PROC,WZ_CS_ReqRegGuildMark,Guild / siege,todo,
+LEGACY_PROC,WZ_CS_ResetCastleSiege,Guild / siege,todo,
+LEGACY_PROC,WZ_CS_ResetCastleTaxInfo,Guild / siege,todo,
+LEGACY_PROC,WZ_CS_ResetRegSiegeInfo,Guild / siege,todo,
+LEGACY_PROC,WZ_CS_ResetSiegeGuildInfo,Guild / siege,todo,
+LEGACY_PROC,WZ_CS_SetSiegeGuildInfo,Guild / siege,todo,
+LEGACY_PROC,WZ_CS_SetSiegeGuildOK,Guild / siege,todo,
+LEGACY_PROC,WZ_CW_InfoLoad,Game / event,deferred,CW — đối chiếu feature OpenMU hoặc plugin Takumi
+LEGACY_PROC,WZ_CW_InfoSave,Game / event,deferred,
+LEGACY_PROC,WZ_CreateCharacter,MUnique.OpenMU persistence,todo,Path tạo char + inventory shape
+LEGACY_PROC,WZ_CustomArenaRanking,Takumi plugin,deferred,WZ_Custom* không vanilla OpenMU
+LEGACY_PROC,WZ_CustomMonsterReward,Takumi plugin,deferred,
+LEGACY_PROC,WZ_CustomRanking,Takumi plugin,deferred,
+LEGACY_PROC,WZ_CustomTop,Takumi plugin,deferred,
+LEGACY_PROC,WZ_DISCONNECT_MEMB,Login / session,todo,
+LEGACY_PROC,WZ_DeleteCharacter,MUnique.OpenMU persistence,todo,
+LEGACY_PROC,WZ_DesblocAccount,Admin / account,todo,
+LEGACY_PROC,WZ_GetAccountLevel,Account / vault,todo,
+LEGACY_PROC,WZ_GetCharacterGensInfo,Gens / season,deferred,Có Gens trên world target không
+LEGACY_PROC,WZ_GetCoin,Zen / wallet,deferred,Đơn vị coin legacy vs OpenMU
+LEGACY_PROC,WZ_GetItemSerial,Item / serial,todo,Generator item serial
+LEGACY_PROC,WZ_GetMarryInfo,Marry / social,deferred,
+LEGACY_PROC,WZ_GetMasterResetInfo,Reset / custom,deferred,
+LEGACY_PROC,WZ_GetResetInfo,Reset / custom,deferred,
+LEGACY_PROC,WZ_RankingBloodCastle,Ranking / event,deferred,Event ranking — logic OpenMU
+LEGACY_PROC,WZ_RankingChaosCastle,Ranking / event,deferred,
+LEGACY_PROC,WZ_RankingDevilSquare,Ranking / event,deferred,
+LEGACY_PROC,WZ_RankingIllusionTemple,Ranking / event,deferred,
+LEGACY_PROC,WZ_RenameCharacter,MUnique.OpenMU persistence,todo,
+LEGACY_PROC,WZ_SetAccountLevel,Account / vault,todo,
+LEGACY_PROC,WZ_SetCoin,Zen / wallet,deferred,
+LEGACY_PROC,WZ_SetDiemMonter,Takumi plugin,deferred,Custom điểm quái
+LEGACY_PROC,WZ_SetDivorceInfo,Marry / social,deferred,
+LEGACY_PROC,WZ_SetMarryInfo,Marry / social,deferred,
+LEGACY_PROC,WZ_SetMasterResetInfo,Reset / custom,deferred,
+LEGACY_PROC,WZ_SetResetInfo,Reset / custom,deferred,
+LEGACY_PROC,WZ_SetReward,Takumi plugin,deferred,
+LEGACY_PROC,WZ_SetRewardAll,Takumi plugin,deferred,
+LEGACY_PROC,WZ_TvTRanking,Takumi plugin,deferred,
+LEGACY_TABLE,AccountCharacter,,todo,dbo.AccountCharacter — điền map OpenMU/plugin; so cột với takumi-mssql-inspect --table AccountCharacter
+LEGACY_TABLE,CashLog,,todo,dbo.CashLog — điền map OpenMU/plugin; so cột với takumi-mssql-inspect --table CashLog
+LEGACY_TABLE,CashShopData,,todo,dbo.CashShopData — điền map OpenMU/plugin; so cột với takumi-mssql-inspect --table CashShopData
+LEGACY_TABLE,CashShopInventory,,todo,dbo.CashShopInventory — điền map OpenMU/plugin; so cột với takumi-mssql-inspect --table CashShopInventory
+LEGACY_TABLE,CashShopPeriodicItem,,todo,dbo.CashShopPeriodicItem — điền map OpenMU/plugin; so cột với takumi-mssql-inspect --table CashShopPeriodicItem
+LEGACY_TABLE,Character,,todo,dbo.Character — điền map OpenMU/plugin; so cột với takumi-mssql-inspect --table Character
+LEGACY_TABLE,CustomAttack,,todo,dbo.CustomAttack — điền map OpenMU/plugin; so cột với takumi-mssql-inspect --table CustomAttack
+LEGACY_TABLE,CustomGift,,todo,dbo.CustomGift — điền map OpenMU/plugin; so cột với takumi-mssql-inspect --table CustomGift
+LEGACY_TABLE,CustomItemBank,,todo,dbo.CustomItemBank — điền map OpenMU/plugin; so cột với takumi-mssql-inspect --table CustomItemBank
+LEGACY_TABLE,CustomJewelBank,,todo,dbo.CustomJewelBank — điền map OpenMU/plugin; so cột với takumi-mssql-inspect --table CustomJewelBank
+LEGACY_TABLE,CustomNpcQuest,,todo,dbo.CustomNpcQuest — điền map OpenMU/plugin; so cột với takumi-mssql-inspect --table CustomNpcQuest
+LEGACY_TABLE,CustomQuest,,todo,dbo.CustomQuest — điền map OpenMU/plugin; so cột với takumi-mssql-inspect --table CustomQuest
+LEGACY_TABLE,DataNapGame,,todo,dbo.DataNapGame — điền map OpenMU/plugin; so cột với takumi-mssql-inspect --table DataNapGame
+LEGACY_TABLE,DefaultClassType,,todo,dbo.DefaultClassType — điền map OpenMU/plugin; so cột với takumi-mssql-inspect --table DefaultClassType
+LEGACY_TABLE,EquipInventory,,todo,dbo.EquipInventory — điền map OpenMU/plugin; so cột với takumi-mssql-inspect --table EquipInventory
+LEGACY_TABLE,EventLeoTheHelper,,todo,dbo.EventLeoTheHelper — điền map OpenMU/plugin; so cột với takumi-mssql-inspect --table EventLeoTheHelper
+LEGACY_TABLE,EventSantaClaus,,todo,dbo.EventSantaClaus — điền map OpenMU/plugin; so cột với takumi-mssql-inspect --table EventSantaClaus
+LEGACY_TABLE,ExtWarehouse,,todo,dbo.ExtWarehouse — điền map OpenMU/plugin; so cột với takumi-mssql-inspect --table ExtWarehouse
+LEGACY_TABLE,GameServerInfo,,todo,dbo.GameServerInfo — điền map OpenMU/plugin; so cột với takumi-mssql-inspect --table GameServerInfo
+LEGACY_TABLE,Gens_Duprian,,todo,dbo.Gens_Duprian — điền map OpenMU/plugin; so cột với takumi-mssql-inspect --table Gens_Duprian
+LEGACY_TABLE,Gens_Rank,,todo,dbo.Gens_Rank — điền map OpenMU/plugin; so cột với takumi-mssql-inspect --table Gens_Rank
+LEGACY_TABLE,Gens_Reward,,todo,dbo.Gens_Reward — điền map OpenMU/plugin; so cột với takumi-mssql-inspect --table Gens_Reward
+LEGACY_TABLE,Gens_Varnert,,todo,dbo.Gens_Varnert — điền map OpenMU/plugin; so cột với takumi-mssql-inspect --table Gens_Varnert
+LEGACY_TABLE,Guild,,todo,dbo.Guild — điền map OpenMU/plugin; so cột với takumi-mssql-inspect --table Guild
+LEGACY_TABLE,GuildMember,,todo,dbo.GuildMember — điền map OpenMU/plugin; so cột với takumi-mssql-inspect --table GuildMember
+LEGACY_TABLE,HelperData,,todo,dbo.HelperData — điền map OpenMU/plugin; so cột với takumi-mssql-inspect --table HelperData
+LEGACY_TABLE,ItemLog,,todo,dbo.ItemLog — điền map OpenMU/plugin; so cột với takumi-mssql-inspect --table ItemLog
+LEGACY_TABLE,ItemMarketData,,todo,dbo.ItemMarketData — điền map OpenMU/plugin; so cột với takumi-mssql-inspect --table ItemMarketData
+LEGACY_TABLE,LOG_CREDITOS,,todo,dbo.LOG_CREDITOS — điền map OpenMU/plugin; so cột với takumi-mssql-inspect --table LOG_CREDITOS
+LEGACY_TABLE,LuckyCoin,,todo,dbo.LuckyCoin — điền map OpenMU/plugin; so cột với takumi-mssql-inspect --table LuckyCoin
+LEGACY_TABLE,LuckyItem,,todo,dbo.LuckyItem — điền map OpenMU/plugin; so cột với takumi-mssql-inspect --table LuckyItem
+LEGACY_TABLE,Marry,,todo,dbo.Marry — điền map OpenMU/plugin; so cột với takumi-mssql-inspect --table Marry
+LEGACY_TABLE,MasterSkillTree,,todo,dbo.MasterSkillTree — điền map OpenMU/plugin; so cột với takumi-mssql-inspect --table MasterSkillTree
+LEGACY_TABLE,MEMB_INFO,,todo,dbo.MEMB_INFO — điền map OpenMU/plugin; so cột với takumi-mssql-inspect --table MEMB_INFO
+LEGACY_TABLE,MEMB_STAT,,todo,dbo.MEMB_STAT — điền map OpenMU/plugin; so cột với takumi-mssql-inspect --table MEMB_STAT
+LEGACY_TABLE,MK_Server,,todo,dbo.MK_Server — điền map OpenMU/plugin; so cột với takumi-mssql-inspect --table MK_Server
+LEGACY_TABLE,MuCastle_DATA,,todo,dbo.MuCastle_DATA — điền map OpenMU/plugin; so cột với takumi-mssql-inspect --table MuCastle_DATA
+LEGACY_TABLE,MuCastle_MONEY_STATISTICS,,todo,dbo.MuCastle_MONEY_STATISTICS — điền map OpenMU/plugin; so cột với takumi-mssql-inspect --table MuCastle_MONEY_STATISTICS
+LEGACY_TABLE,MuCastle_NPC,,todo,dbo.MuCastle_NPC — điền map OpenMU/plugin; so cột với takumi-mssql-inspect --table MuCastle_NPC
+LEGACY_TABLE,MuCastle_REG_SIEGE,,todo,dbo.MuCastle_REG_SIEGE — điền map OpenMU/plugin; so cột với takumi-mssql-inspect --table MuCastle_REG_SIEGE
+LEGACY_TABLE,MuCastle_SIEGE_GUILDLIST,,todo,dbo.MuCastle_SIEGE_GUILDLIST — điền map OpenMU/plugin; so cột với takumi-mssql-inspect --table MuCastle_SIEGE_GUILDLIST
+LEGACY_TABLE,OptionData,,todo,dbo.OptionData — điền map OpenMU/plugin; so cột với takumi-mssql-inspect --table OptionData
+LEGACY_TABLE,QuestKillCount,,todo,dbo.QuestKillCount — điền map OpenMU/plugin; so cột với takumi-mssql-inspect --table QuestKillCount
+LEGACY_TABLE,QuestWorld,,todo,dbo.QuestWorld — điền map OpenMU/plugin; so cột với takumi-mssql-inspect --table QuestWorld
+LEGACY_TABLE,RankingBloodCastle,,todo,dbo.RankingBloodCastle — điền map OpenMU/plugin; so cột với takumi-mssql-inspect --table RankingBloodCastle
+LEGACY_TABLE,RankingChaosCastle,,todo,dbo.RankingChaosCastle — điền map OpenMU/plugin; so cột với takumi-mssql-inspect --table RankingChaosCastle
+LEGACY_TABLE,RankingDevilSquare,,todo,dbo.RankingDevilSquare — điền map OpenMU/plugin; so cột với takumi-mssql-inspect --table RankingDevilSquare
+LEGACY_TABLE,RankingDuel,,todo,dbo.RankingDuel — điền map OpenMU/plugin; so cột với takumi-mssql-inspect --table RankingDuel
+LEGACY_TABLE,RankingIllusionTemple,,todo,dbo.RankingIllusionTemple — điền map OpenMU/plugin; so cột với takumi-mssql-inspect --table RankingIllusionTemple
+LEGACY_TABLE,RankingKingGuild,,todo,dbo.RankingKingGuild — điền map OpenMU/plugin; so cột với takumi-mssql-inspect --table RankingKingGuild
+LEGACY_TABLE,RankingKingPlayer,,todo,dbo.RankingKingPlayer — điền map OpenMU/plugin; so cột với takumi-mssql-inspect --table RankingKingPlayer
+LEGACY_TABLE,RankingTvT,,todo,dbo.RankingTvT — điền map OpenMU/plugin; so cột với takumi-mssql-inspect --table RankingTvT
+LEGACY_TABLE,T_CGuid,,todo,dbo.T_CGuid — điền map OpenMU/plugin; so cột với takumi-mssql-inspect --table T_CGuid
+LEGACY_TABLE,T_FriendList,,todo,dbo.T_FriendList — điền map OpenMU/plugin; so cột với takumi-mssql-inspect --table T_FriendList
+LEGACY_TABLE,T_FriendMail,,todo,dbo.T_FriendMail — điền map OpenMU/plugin; so cột với takumi-mssql-inspect --table T_FriendMail
+LEGACY_TABLE,T_FriendMain,,todo,dbo.T_FriendMain — điền map OpenMU/plugin; so cột với takumi-mssql-inspect --table T_FriendMain
+LEGACY_TABLE,T_PetItem_Info,,todo,dbo.T_PetItem_Info — điền map OpenMU/plugin; so cột với takumi-mssql-inspect --table T_PetItem_Info
+LEGACY_TABLE,T_WaitFriend,,todo,dbo.T_WaitFriend — điền map OpenMU/plugin; so cột với takumi-mssql-inspect --table T_WaitFriend
+LEGACY_TABLE,warehouse,,todo,dbo.warehouse — điền map OpenMU/plugin; so cột với takumi-mssql-inspect --table warehouse
+LEGACY_TABLE,WarehouseGuild,,todo,dbo.WarehouseGuild — điền map OpenMU/plugin; so cột với takumi-mssql-inspect --table WarehouseGuild
+LEGACY_TABLE,WZ_CW_INFO,,todo,dbo.WZ_CW_INFO — điền map OpenMU/plugin; so cột với takumi-mssql-inspect --table WZ_CW_INFO
+OPENMU_TABLE,config.AreaSkillSettings,,todo,config.AreaSkillSettings — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.AttributeDefinition,,todo,config.AttributeDefinition — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.AttributeRelationship,,todo,config.AttributeRelationship — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.AttributeRequirement,,todo,config.AttributeRequirement — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.BattleZoneDefinition,,todo,config.BattleZoneDefinition — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.CharacterClass,,todo,config.CharacterClass — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.ChatServerDefinition,,todo,config.ChatServerDefinition — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.ChatServerEndpoint,,todo,config.ChatServerEndpoint — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.CombinationBonusRequirement,,todo,config.CombinationBonusRequirement — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.ConfigurationUpdate,,todo,config.ConfigurationUpdate — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.ConfigurationUpdateState,,todo,config.ConfigurationUpdateState — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.ConnectServerDefinition,,todo,config.ConnectServerDefinition — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.ConstValueAttribute,,todo,config.ConstValueAttribute — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.DropItemGroup,,todo,config.DropItemGroup — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.DropItemGroupItemDefinition,,todo,config.DropItemGroupItemDefinition — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.DuelArea,,todo,config.DuelArea — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.DuelConfiguration,,todo,config.DuelConfiguration — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.EnterGate,,todo,config.EnterGate — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.ExitGate,,todo,config.ExitGate — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.GameClientDefinition,,todo,config.GameClientDefinition — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.GameConfiguration,,todo,config.GameConfiguration — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.GameMapDefinition,,todo,config.GameMapDefinition — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.GameMapDefinitionDropItemGroup,,todo,config.GameMapDefinitionDropItemGroup — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.GameServerConfiguration,,todo,config.GameServerConfiguration — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.GameServerConfigurationGameMapDefinition,,todo,config.GameServerConfigurationGameMapDefinition — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.GameServerDefinition,,todo,config.GameServerDefinition — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.GameServerEndpoint,,todo,config.GameServerEndpoint — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.IncreasableItemOption,,todo,config.IncreasableItemOption — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.ItemBasePowerUpDefinition,,todo,config.ItemBasePowerUpDefinition — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.ItemCrafting,,todo,config.ItemCrafting — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.ItemCraftingRequiredItem,,todo,config.ItemCraftingRequiredItem — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.ItemCraftingRequiredItemItemDefinition,,todo,config.ItemCraftingRequiredItemItemDefinition — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.ItemCraftingRequiredItemItemOptionType,,todo,config.ItemCraftingRequiredItemItemOptionType — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.ItemCraftingResultItem,,todo,config.ItemCraftingResultItem — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.ItemDefinition,,todo,config.ItemDefinition — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.ItemDefinitionCharacterClass,,todo,config.ItemDefinitionCharacterClass — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.ItemDefinitionItemOptionDefinition,,todo,config.ItemDefinitionItemOptionDefinition — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.ItemDefinitionItemSetGroup,,todo,config.ItemDefinitionItemSetGroup — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.ItemDropItemGroup,,todo,config.ItemDropItemGroup — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.ItemDropItemGroupItemDefinition,,todo,config.ItemDropItemGroupItemDefinition — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.ItemLevelBonusTable,,todo,config.ItemLevelBonusTable — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.ItemOfItemSet,,todo,config.ItemOfItemSet — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.ItemOption,,todo,config.ItemOption — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.ItemOptionCombinationBonus,,todo,config.ItemOptionCombinationBonus — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.ItemOptionDefinition,,todo,config.ItemOptionDefinition — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.ItemOptionOfLevel,,todo,config.ItemOptionOfLevel — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.ItemOptionType,,todo,config.ItemOptionType — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.ItemSetGroup,,todo,config.ItemSetGroup — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.ItemSlotType,,todo,config.ItemSlotType — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.JewelMix,,todo,config.JewelMix — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.LevelBonus,,todo,config.LevelBonus — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.MagicEffectDefinition,,todo,config.MagicEffectDefinition — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.MasterSkillDefinition,,todo,config.MasterSkillDefinition — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.MasterSkillDefinitionSkill,,todo,config.MasterSkillDefinitionSkill — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.MasterSkillRoot,,todo,config.MasterSkillRoot — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.MiniGameChangeEvent,,todo,config.MiniGameChangeEvent — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.MiniGameDefinition,,todo,config.MiniGameDefinition — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.MiniGameReward,,todo,config.MiniGameReward — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.MiniGameSpawnWave,,todo,config.MiniGameSpawnWave — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.MiniGameTerrainChange,,todo,config.MiniGameTerrainChange — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.MonsterAttribute,,todo,config.MonsterAttribute — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.MonsterDefinition,,todo,config.MonsterDefinition — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.MonsterDefinitionDropItemGroup,,todo,config.MonsterDefinitionDropItemGroup — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.MonsterSpawnArea,,todo,config.MonsterSpawnArea — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.PlugInConfiguration,,todo,config.PlugInConfiguration — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.PowerUpDefinition,,todo,config.PowerUpDefinition — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.PowerUpDefinitionValue,,todo,config.PowerUpDefinitionValue — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.QuestDefinition,,todo,config.QuestDefinition — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.QuestItemRequirement,,todo,config.QuestItemRequirement — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.QuestMonsterKillRequirement,,todo,config.QuestMonsterKillRequirement — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.QuestReward,,todo,config.QuestReward — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.Rectangle,,todo,config.Rectangle — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.SimpleCraftingSettings,,todo,config.SimpleCraftingSettings — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.Skill,,todo,config.Skill — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.SkillCharacterClass,,todo,config.SkillCharacterClass — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.SkillComboDefinition,,todo,config.SkillComboDefinition — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.SkillComboStep,,todo,config.SkillComboStep — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.StatAttributeDefinition,,todo,config.StatAttributeDefinition — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.SystemConfiguration,,todo,config.SystemConfiguration — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,config.WarpInfo,,todo,config.WarpInfo — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,data.Account,,todo,data.Account — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,data.AccountCharacterClass,,todo,data.AccountCharacterClass — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,data.AppearanceData,,todo,data.AppearanceData — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,data.Character,,todo,data.Character — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,data.CharacterDropItemGroup,,todo,data.CharacterDropItemGroup — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,data.CharacterQuestState,,todo,data.CharacterQuestState — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,data.Item,,todo,data.Item — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,data.ItemAppearance,,todo,data.ItemAppearance — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,data.ItemAppearanceItemOptionType,,todo,data.ItemAppearanceItemOptionType — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,data.ItemItemOfItemSet,,todo,data.ItemItemOfItemSet — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,data.ItemOptionLink,,todo,data.ItemOptionLink — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,data.ItemStorage,,todo,data.ItemStorage — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,data.LetterBody,,todo,data.LetterBody — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,data.LetterHeader,,todo,data.LetterHeader — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,data.MiniGameRankingEntry,,todo,data.MiniGameRankingEntry — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,data.QuestMonsterKillRequirementState,,todo,data.QuestMonsterKillRequirementState — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,data.SkillEntry,,todo,data.SkillEntry — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,data.StatAttribute,,todo,data.StatAttribute — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,friend.Friend,,todo,friend.Friend — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,guild.Guild,,todo,guild.Guild — OpenMU EF snapshot; đối chiếu legacy MSSQL
+OPENMU_TABLE,guild.GuildMember,,todo,guild.GuildMember — OpenMU EF snapshot; đối chiếu legacy MSSQL
+HEURISTIC_VERIFY,CardPhone,,verify,Chỉ từ grep C++ — không có trong dbo snapshot MuOnline.bak repo
+HEURISTIC_VERIFY,CHARACTER,,verify,C++ khác casing; DB chỉ có Character
+HEURISTIC_VERIFY,EventInventory,,verify,Không có trong snapshot dbo
+HEURISTIC_VERIFY,memb_info,,verify,C++; DB dùng MEMB_INFO
+HEURISTIC_VERIFY,MuRummyCard,,verify,Không trong snapshot dbo
+HEURISTIC_VERIFY,MuRummyData,,verify,
+HEURISTIC_VERIFY,MuunInventory,,verify,
+HEURISTIC_VERIFY,PcPointData,,verify,
+HEURISTIC_VERIFY,PentagramJewel,,verify,
+HEURISTIC_VERIFY,PShopItemValue,,verify,
+HEURISTIC_VERIFY,SNSData,,verify,

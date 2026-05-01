@@ -78,14 +78,14 @@ Tham chiếu: [`tools/db-migrate/README.md`](../../tools/db-migrate/README.md).
 
 1. Restore **`.bak`** trên MSSQL (hoặc SSMS script `CREATE TABLE` nếu không có instance).  
 2. Chạy **`takumi-mssql-inspect`** (read-only) CSV cột MSSQL `dbo` và **`takumi-pg-inspect`** CSV cùng định dạng cho schema Postgres OpenMU **`data`** / **`config`** — đối chiếu với **`EntityDataContextModelSnapshot`** / ETL.  
-3. Điền mapping: **[`PHASE2-MAPPING-TEMPLATE.csv`](PHASE2-MAPPING-TEMPLATE.csv)** — **62 proc + 51 bảng** đã có một dòng mỗi object (theo [`TAKUMI-SQL-BACKLOG.md`](TAKUMI-SQL-BACKLOG.md)); chỉnh `openmu_or_plugin` / `parity_status` / `notes` sau khi so CSV inspector. Clone sang Sheet nếu cần thêm cột.  
+3. Điền mapping: **[`PHASE2-MAPPING-TEMPLATE.csv`](PHASE2-MAPPING-TEMPLATE.csv)** — một file **236 dòng** (header + 62 proc + 61 bảng `dbo` + 101 bảng OpenMU EF + 11 heuristic); chỉnh cột sau khi so CSV inspector. Regenerate slice: `--mapping-rows` / `--mapping-openmu-all` trong [`tools/db-migrate/README.md`](../../tools/db-migrate/README.md).  
 4. **TODO:** script ETL (dotnet/Npgsql) chỉ đọc MSSQL, ghi **Postgres staging** — không chạy trên prod.  
 
 ---
 
 ## 5. Việc còn mở Phase 2
 
-- [ ] Spreadsheet: một dòng một **bảng/proc legacy** × cột **OpenMU / plugin / WONTFIX**. **[`PHASE2-MAPPING-TEMPLATE.csv`](PHASE2-MAPPING-TEMPLATE.csv)** đã seed đại diện từ [`TAKUMI-SQL-BACKLOG.md`](TAKUMI-SQL-BACKLOG.md) — bổ sung proc/bảng còn lại sau khi có CSV từ `takumi-mssql-inspect`.  
+- [ ] Spreadsheet: điền **`PHASE2-MAPPING-TEMPLATE.csv`** — file **đầy đủ** gồm `LEGACY_PROC` (62) + `LEGACY_TABLE` (61 `dbo`) + `OPENMU_TABLE` (101) + `HEURISTIC_VERIFY` (11); chỉnh `openmu_or_plugin` / `parity_status` sau diff inspector.  
 - [ ] Chạy thử **migration pipeline** và **Gate 2** staging.  
 
 **Liên kết:** [`TAKUMI-MIGRATION-OPENMU-CHECKLIST.md`](../TAKUMI-MIGRATION-OPENMU-CHECKLIST.md) Phase 2; [`TAKUMI-FULL-FILE-MIGRATION-CHECKLIST.md`](../TAKUMI-FULL-FILE-MIGRATION-CHECKLIST.md) §11.

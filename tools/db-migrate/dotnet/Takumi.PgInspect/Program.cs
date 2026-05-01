@@ -14,14 +14,17 @@ internal static class Program
 
         Options:
           --tables              List schema.table_name only.
+          --mapping-rows        CSV: header + TABLE row per base table in --schema (fill mapping columns).
+          --mapping-openmu-all  Same CSV for schemas data,config,friend,guild (legacy_name = schema.table).
           --table Name          Columns for one table (schema.Name; default schema: public).
           --markdown            Column detail as markdown.
           --schema public       Table schema filter (default: public). OpenMU: data / config / friend / guild.
 
         Example (OpenMU Postgres — schema tên data/config, c.f. SchemaNames.cs):
-          dotnet run --project tools/db-migrate/dotnet/Takumi.PgInspect -- --help
-          TAKUMI_PG_CONNECTION="Host=127.0.0.1;Port=5433;Database=openmu;Username=postgres;Password=***" \\
+          TAKUMI_PG_CONNECTION="Host=127.0.0.1;Port=5433;..." \\
             dotnet run --project tools/db-migrate/dotnet/Takumi.PgInspect -- --schema data --tables
+          dotnet run --project tools/db-migrate/dotnet/Takumi.PgInspect -- --mapping-openmu-all \\
+            > docs/takumi-game-spec/PHASE2-MAPPING-OPENMU-EF-TABLES-FULL.csv
         """;
 
     public static async Task<int> Main(string[] args)
@@ -44,6 +47,8 @@ internal static class Program
         }
 
         var tablesOnly = args.Contains("--tables");
+        var mappingRows = args.Contains("--mapping-rows");
+        var mappingOpenMuAll = args.Contains("--mapping-openmu-all");
         var tableFilter = ArgValue(args, "--table");
         var markdown = args.Contains("--markdown");
 
@@ -51,6 +56,18 @@ internal static class Program
         {
             await using var conn = new NpgsqlConnection(connStr);
             await conn.OpenAsync();
+
+            if (mappingOpenMuAll)
+            {
+                await EmitOpenMuAllMappingRowsAsync(conn);
+                return 0;
+            }
+
+            if (mappingRows)
+            {
+                await EmitMappingTemplateRowsAsync(conn, schema);
+                return 0;
+            }
 
             if (tablesOnly)
             {
@@ -80,6 +97,54 @@ internal static class Program
         }
 
         return null;
+    }
+
+    private static async Task EmitMappingTemplateRowsAsync(NpgsqlConnection conn, string schema)
+    {
+        const string sql = """
+            SELECT table_name
+            FROM information_schema.tables
+            WHERE table_type = 'BASE TABLE'
+              AND table_schema = @schema
+            ORDER BY table_name
+            """;
+
+        Console.WriteLine("kind,legacy_name,openmu_or_plugin,parity_status,notes");
+
+        await using var cmd = new NpgsqlCommand(sql, conn);
+        cmd.Parameters.AddWithValue("schema", schema);
+        await using var r = await cmd.ExecuteReaderAsync();
+        while (await r.ReadAsync())
+        {
+            var t = r.GetString(0);
+            var qualified = $"{schema}.{t}";
+            var note = $"{qualified} — OpenMU Postgres; map từ takumi-pg-inspect --table {t}";
+            Console.WriteLine($"TABLE,{EscapeCsv(qualified)},,todo,{EscapeCsv(note)}");
+        }
+    }
+
+    private static async Task EmitOpenMuAllMappingRowsAsync(NpgsqlConnection conn)
+    {
+        const string sql = """
+            SELECT table_schema, table_name
+            FROM information_schema.tables
+            WHERE table_type = 'BASE TABLE'
+              AND table_schema IN ('data', 'config', 'friend', 'guild')
+            ORDER BY table_schema, table_name
+            """;
+
+        Console.WriteLine("kind,legacy_name,openmu_or_plugin,parity_status,notes");
+
+        await using var cmd = new NpgsqlCommand(sql, conn);
+        await using var r = await cmd.ExecuteReaderAsync();
+        while (await r.ReadAsync())
+        {
+            var sch = r.GetString(0);
+            var t = r.GetString(1);
+            var qualified = $"{sch}.{t}";
+            var note = $"{qualified} — OpenMU EF snapshot; đối chiếu legacy MSSQL";
+            Console.WriteLine($"TABLE,{EscapeCsv(qualified)},,todo,{EscapeCsv(note)}");
+        }
     }
 
     private static async Task ListTablesAsync(NpgsqlConnection conn, string schema)

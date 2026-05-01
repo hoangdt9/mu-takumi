@@ -91,8 +91,17 @@ Có thể trùng casing (`Character` vs `CHARACTER`, `MEMB_INFO` vs `memb_info`)
 
 AccountCharacter, CardPhone, CashShopData, CashShopInventory, CashShopPeriodicItem, CHARACTER, Character, CustomAttack, CustomGift, CustomItemBank, CustomNpcQuest, CustomQuest, DataNapGame, EquipInventory, EventInventory, EventLeoTheHelper, EventSantaClaus, ExtWarehouse, GameServerInfo, Gens_Rank, Gens_Reward, Guild, GuildMember, HelperData, ItemMarketData, LOG_CREDITOS, LuckyCoin, LuckyItem, MasterSkillTree, MEMB_INFO, memb_info, MuRummyCard, MuRummyData, MuunInventory, OptionData, PcPointData, PentagramJewel, PShopItemValue, QuestKillCount, QuestWorld, RankingDuel, RankingKingGuild, RankingKingPlayer, SNSData, T_FriendList, T_FriendMail, T_FriendMain, T_PetItem_Info, T_WaitFriend, warehouse, WarehouseGuild.
 
-**Ánh xạ đủ từng dòng (không chỉ “vài bảng mẫu”):** [`PHASE2-MAPPING-TEMPLATE.csv`](PHASE2-MAPPING-TEMPLATE.csv) list **62** proc + **51** bảng khớp danh sách trên; cột gợi ý OpenMU/plugin là **nháp** — bắt buộc chỉnh sau khi diff `takumi-mssql-inspect` (`.bak`) và `takumi-pg-inspect` (`data`/`config`).  
-**Không** coi bảng legacy “đã giống” Postgres chỉ vì tên tương tự: `Character`/`MEMB_INFO` MSSQL khác kiến trúc EF OpenMU (Guid, `ItemStorage`, BCrypt, …). Cặp **`CHARACTER` vs `Character`**, **`MEMB_INFO` vs `memb_info`** là trùng tên heuristic từ chuỗi SQL trong C++ — trên DB thật có thể chỉ tồn tại một bảng; dùng CSV dump để gộp.
+**File mapping “một file đủ tầng” (không rút gọn):** [`PHASE2-MAPPING-TEMPLATE.csv`](PHASE2-MAPPING-TEMPLATE.csv) — cột `kind`:
+
+| `kind` | Ý nghĩa | Số dòng (snapshot repo `.bak` + OpenMU dev) |
+|--------|---------|-----------------------------------------------|
+| `LEGACY_PROC` | 62 `WZ_*` từ quét C++ (khớp mục trên) | 62 |
+| `LEGACY_TABLE` | Mọi bảng `dbo` trên **`MuOnline.bak`** restore (đầy đủ, không chỉ 51 tên heuristic) | 61 |
+| `OPENMU_TABLE` | Mọi bảng Postgres OpenMU schema `data`+`config`+`friend`+`guild` (EF snapshot) | 101 |
+| `HEURISTIC_VERIFY` | Tên chỉ xuất hiện trong grep C++ / heuristic § dưới — **không** thấy trong snapshot `dbo` | 11 |
+
+Regenerate từ DB sau khi đổi `.bak`/`docker`: [`PHASE2-MAPPING-MSSQL-DBO-AUTO.csv`](PHASE2-MAPPING-MSSQL-DBO-AUTO.csv) (`takumi-mssql-inspect --mapping-rows`), [`PHASE2-MAPPING-OPENMU-EF-TABLES-FULL.csv`](PHASE2-MAPPING-OPENMU-EF-TABLES-FULL.csv) (`takumi-pg-inspect --mapping-openmu-all`), rồi merge lại cột `kind` như trên.  
+**Không** coi bảng legacy “đã giống” Postgres chỉ vì tên tương tự. Heuristic **51** tên ⊂ **61** bảng `dbo` thực tế — thêm bảng chỉ có trên DB (CashLog, MuCastle_*, Ranking*, …).
 
 ## SQL Back — script kèm repo (`MuServer/7.DataBase/SQL Back/`)
 

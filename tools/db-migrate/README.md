@@ -19,9 +19,23 @@ tools/db-migrate/
   schemas/                     (optional) export CSV redirect — không chứa password
 ```
 
-### Spreadsheet mapping (seed)
+### Spreadsheet mapping — **đủ tầng** (proc + dbo + OpenMU EF + heuristic)
 
-[`docs/takumi-game-spec/PHASE2-MAPPING-TEMPLATE.csv`](../../docs/takumi-game-spec/PHASE2-MAPPING-TEMPLATE.csv) — cột: `kind,legacy_name,openmu_or_plugin,parity_status,notes`. **Đủ 62 proc + 51 bảng** khớp [`TAKUMI-SQL-BACKLOG.md`](../../docs/takumi-game-spec/TAKUMI-SQL-BACKLOG.md) (không phải mẫu rút gọn). Copy sang Sheet hoặc mở rộng cột; **đối chiếu đầy đủ** với CSV từ `takumi-mssql-inspect` / `takumi-pg-inspect` và chỉnh cột gợi ý cho đúng fork.
+[`docs/takumi-game-spec/PHASE2-MAPPING-TEMPLATE.csv`](../../docs/takumi-game-spec/PHASE2-MAPPING-TEMPLATE.csv) — **236 dòng** (bao gồm header): `LEGACY_PROC` (62), `LEGACY_TABLE` (61 `dbo` từ `.bak`), `OPENMU_TABLE` (101 bảng `data`/`config`/`friend`/`guild`), `HEURISTIC_VERIFY` (11 tên chỉ từ grep C++). Clone sang Sheet để điền `openmu_or_plugin` / `parity_status`.
+
+**Regenerate slice từ DB (sau khi restore / OpenMU migrate):**
+
+```bash
+# MSSQL: mọi bảng dbo → CSV (chỉ phần LEGACY_TABLE + header)
+dotnet run --project tools/db-migrate/dotnet/Takumi.MssqlInspect -- --mapping-rows \
+  > docs/takumi-game-spec/PHASE2-MAPPING-MSSQL-DBO-AUTO.csv
+
+# Postgres OpenMU: đủ 4 schema EF
+dotnet run --project tools/db-migrate/dotnet/Takumi.PgInspect -- --mapping-openmu-all \
+  > docs/takumi-game-spec/PHASE2-MAPPING-OPENMU-EF-TABLES-FULL.csv
+```
+
+Sau đó cập nhật `PHASE2-MAPPING-TEMPLATE.csv` (merge với `LEGACY_PROC` + `HEURISTIC_VERIFY` từ backlog — xem [`TAKUMI-SQL-BACKLOG.md`](../../docs/takumi-game-spec/TAKUMI-SQL-BACKLOG.md)).
 
 ## `takumi-mssql-inspect` (read-only)
 

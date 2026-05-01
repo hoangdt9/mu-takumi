@@ -16,14 +16,14 @@ internal static class Program
 
         Options:
           --tables              List TABLE_SCHEMA.TABLE_NAME only.
+          --mapping-rows        CSV mapping rows: header + one TABLE line per base table (same columns as PHASE2-MAPPING-TEMPLATE).
           --table Name          Columns for one table (dbo.Name).
           --markdown            Column detail as markdown (default: CSV for --table / full dump uses one CSV header).
           --schema dbo          Table schema filter (default: dbo).
 
-        Example (from Takumi repo root):
-          dotnet run --project tools/db-migrate/dotnet/Takumi.MssqlInspect -- --help
-          TAKUMI_MSSQL_CONNECTION="Server=127.0.0.1,1433;Database=MuOnline;User Id=sa;Password=***;TrustServerCertificate=True" \\
-            dotnet run --project tools/db-migrate/dotnet/Takumi.MssqlInspect --
+        Example (regenerate LEGACY_TABLE list):
+          dotnet run --project tools/db-migrate/dotnet/Takumi.MssqlInspect -- --mapping-rows \\
+            > docs/takumi-game-spec/PHASE2-MAPPING-MSSQL-DBO-AUTO.csv
         """;
 
     public static async Task<int> Main(string[] args)
@@ -54,6 +54,12 @@ internal static class Program
             await using var conn = new SqlConnection(connStr);
             await conn.OpenAsync();
 
+            if (args.Contains("--mapping-rows"))
+            {
+                await EmitMappingTemplateRowsAsync(conn, schema);
+                return 0;
+            }
+
             if (tablesOnly)
             {
                 await ListTablesAsync(conn, schema);
@@ -82,6 +88,28 @@ internal static class Program
         }
 
         return null;
+    }
+
+    private static async Task EmitMappingTemplateRowsAsync(SqlConnection conn, string schema)
+    {
+        const string sql = """
+            SELECT TABLE_NAME
+            FROM INFORMATION_SCHEMA.TABLES
+            WHERE TABLE_TYPE = 'BASE TABLE' AND TABLE_SCHEMA = @schema
+            ORDER BY TABLE_NAME
+            """;
+
+        Console.WriteLine("kind,legacy_name,openmu_or_plugin,parity_status,notes");
+
+        await using var cmd = new SqlCommand(sql, conn);
+        cmd.Parameters.AddWithValue("@schema", schema);
+        await using var r = await cmd.ExecuteReaderAsync();
+        while (await r.ReadAsync())
+        {
+            var t = r.GetString(0);
+            var note = $"{schema}.{t} — điền map OpenMU/plugin; so cột với takumi-mssql-inspect --table {t}";
+            Console.WriteLine($"TABLE,{EscapeCsv(t)},,todo,{EscapeCsv(note)}");
+        }
     }
 
     private static async Task ListTablesAsync(SqlConnection conn, string schema)

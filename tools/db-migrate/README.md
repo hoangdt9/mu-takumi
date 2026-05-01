@@ -1,6 +1,6 @@
 # DB migrate — Takumi (MSSQL) → OpenMU (PostgreSQL)
 
-Quy ước layout **Phase 2** (xem [`docs/TAKUMI-MIGRATION-OPENMU-CHECKLIST.md`](../../docs/TAKUMI-MIGRATION-OPENMU-CHECKLIST.md)). **ETL Postgres** vẫn TODO; trong repo có **hai công cụ đọc-only** (MSSQL legacy + Postgres OpenMU) cùng định dạng CSV để so cột.
+Quy ước layout **Phase 2** (xem [`docs/TAKUMI-MIGRATION-OPENMU-CHECKLIST.md`](../../docs/TAKUMI-MIGRATION-OPENMU-CHECKLIST.md)). Job **copy sang Postgres/OpenMU** (ETL đầy đủ) **TODO**. Repo có **hai inspector read-only** (MSSQL + Postgres) cùng CSV cột, **`takumi-etl`** (smoke-test DB + holder cho loader sau), và script **`regen-mapping-slices.sh`**.
 
 ## Mục tiêu
 
@@ -12,11 +12,13 @@ Quy ước layout **Phase 2** (xem [`docs/TAKUMI-MIGRATION-OPENMU-CHECKLIST.md`]
 ```
 tools/db-migrate/
   README.md                    (file này)
+  regen-mapping-slices.sh      một lần chạy: slice mapping + row-count (cần env)
   dotnet/
-    Takumi.DbTools.slnx        (MssqlInspect + PgInspect)
+    Takumi.DbTools.slnx        (Etl + MssqlInspect + PgInspect)
+    Takumi.Etl/                takumi-etl (`check-sources` — loads TODO)
     Takumi.MssqlInspect/       takumi-mssql-inspect
     Takumi.PgInspect/          takumi-pg-inspect (OpenMU / Postgres)
-  schemas/                     (optional) export CSV redirect — không chứa password
+  schemas/                     export CSV redirect — không chứa password
 ```
 
 **Nguyên tắc dữ liệu:** khi ETL/trùng tên, **ưu tiên bảo toàn nội dung từ MSSQL** (legacy là sự thật cho account/char/item); Postgres OpenMU là **đa schema** (`data`, `config`, …) trong một DB — không nhầm với “multi-language”. Chi tiết: [`PHASE2-OPENMU-DATA-MODEL-MAP.md`](../../docs/takumi-game-spec/PHASE2-OPENMU-DATA-MODEL-MAP.md) **§0**.
@@ -26,6 +28,14 @@ tools/db-migrate/
 [`docs/takumi-game-spec/PHASE2-MAPPING-TEMPLATE.csv`](../../docs/takumi-game-spec/PHASE2-MAPPING-TEMPLATE.csv) — **236 dòng** (bao gồm header): `LEGACY_PROC` (62), `LEGACY_TABLE` (61 `dbo` từ `.bak`), `OPENMU_TABLE` (101 bảng `data`/`config`/`friend`/`guild`), `HEURISTIC_VERIFY` (11 tên chỉ từ grep C++). Clone sang Sheet để điền `openmu_or_plugin` / `parity_status`.
 
 **Regenerate slice từ DB (sau khi restore / OpenMU migrate):**
+
+```bash
+export TAKUMI_MSSQL_CONNECTION="..."
+export TAKUMI_PG_CONNECTION="..."
+bash tools/db-migrate/regen-mapping-slices.sh
+```
+
+Tương đương từng lệnh:
 
 ```bash
 # MSSQL: mọi bảng dbo → CSV (chỉ phần LEGACY_TABLE + header)
@@ -89,7 +99,15 @@ Hoặc `cd tools/db-migrate/dotnet/Takumi.MssqlInspect` rồi `dotnet run -- --h
 
 Release binary: `dotnet publish -c Release` → chạy `takumi-mssql-inspect` trong thư mục publish.
 
-Build cả hai tool: `dotnet build tools/db-migrate/dotnet/Takumi.DbTools.slnx`
+Build solution: `dotnet build tools/db-migrate/dotnet/Takumi.DbTools.slnx`
+
+## `takumi-etl` (Phase 2 scaffold)
+
+Chưa ghi Postgres. Lệnh **`check-sources`** mở kết nối MSSQL/OpenMU có trong env (giống inspector) và in `OK`, `FAIL`, hoặc `SKIP`.
+
+```bash
+dotnet run --project tools/db-migrate/dotnet/Takumi.Etl -- check-sources
+```
 
 ## `takumi-pg-inspect` (read-only, Postgres)
 

@@ -22,7 +22,7 @@
 | §2 — Macro / build 603 | **Xong** — [`docs/takumi-game-spec/SEASON-AND-DEFINES.md`](takumi-game-spec/SEASON-AND-DEFINES.md) |
 | §3 — Coupling `Source/Util/` (theo vcxproj) | **Xong** — ghi trong `SEASON-AND-DEFINES.md` |
 | §5 (SQL) — Trích proc/bảng từ C++ | **Xong** — [`docs/takumi-game-spec/TAKUMI-SQL-BACKLOG.md`](takumi-game-spec/TAKUMI-SQL-BACKLOG.md) |
-| §11 / Phase 2 — `SQLUp.sql` + map OpenMU (concept) | **Khung** — [`PHASE2-OPENMU-DATA-MODEL-MAP.md`](takumi-game-spec/PHASE2-OPENMU-DATA-MODEL-MAP.md); [`PHASE2-MAPPING-TEMPLATE.csv`](takumi-game-spec/PHASE2-MAPPING-TEMPLATE.csv) + [`takumi-mssql-inspect` / `takumi-pg-inspect`](../tools/db-migrate/README.md); ETL Postgres + điền đủ sheet vẫn TODO |
+| §11 / Phase 2 — `SQLUp.sql` + map OpenMU (concept) | **Khung** — [`PHASE2-OPENMU-DATA-MODEL-MAP.md`](takumi-game-spec/PHASE2-OPENMU-DATA-MODEL-MAP.md); inspect + template + [`docker/sql/restore-muonline.sh`](../docker/sql/restore-muonline.sh) **đã repo**; **ETL Postgres + spreadsheet đầy đủ + Gate 2 data** vẫn TODO |
 | §8 — Drift `Sub 1/Data` vs `Data`; **`4.GameServer` vs `4.GameServer_real`** | **Xong** — [`DATA-SUB1-DRIFT.md`](takumi-game-spec/DATA-SUB1-DRIFT.md), [`GAMESERVER-VS-GAMESERVER-REAL.md`](takumi-game-spec/GAMESERVER-VS-GAMESERVER-REAL.md) |
 | §4 — `1.ConnectServer` vs `1.ConnectServer_real` | **Xong** (INI đồng nhất) — [`CONNECT-SERVER-REAL-DRIFT.md`](takumi-game-spec/CONNECT-SERVER-REAL-DRIFT.md) |
 | §7–§8a — Ánh xạ thư mục `Data/` | **Khung** — [`GAMESERVER-DATA-FOLDER-MAP.md`](takumi-game-spec/GAMESERVER-DATA-FOLDER-MAP.md) |
@@ -298,7 +298,8 @@ Danh sách **đầy đủ từng đường dẫn** nằm trong [`docs/takumi-man
 - [ ] **`MuOnline.bak`** — nguồn schema + dữ liệu thật để spike ETL Postgres (**chân lý** so với `SQLUp.sql` — đã map patch trong [`PHASE2-OPENMU-DATA-MODEL-MAP.md`](takumi-game-spec/PHASE2-OPENMU-DATA-MODEL-MAP.md)).
 - [x] **`SQL Back/*.sql`** — **đã tóm trong** [`docs/takumi-game-spec/TAKUMI-SQL-BACKLOG.md`](takumi-game-spec/TAKUMI-SQL-BACKLOG.md) (mục **SQL Back**); vẫn cần diff chi tiết DDL `SQLUp.sql` ↔ `.bak` / OpenMU khi vào Gate 2.
 - [x] **Trích proc/bảng từ server C++** (bổ sung cho `.bak`) — [`docs/takumi-game-spec/TAKUMI-SQL-BACKLOG.md`](takumi-game-spec/TAKUMI-SQL-BACKLOG.md).
-- [ ] **`docker/sql/restore-muonline.sh`** (repo) — dev container MSSQL cho golden compare song song Postgres OpenMU — quy ước ETL trong [`tools/db-migrate/README.md`](../tools/db-migrate/README.md).
+- [x] **Schema inspect (read-only)** — [`takumi-mssql-inspect` / `takumi-pg-inspect`](../tools/db-migrate/README.md), solution [`Takumi.DbTools.slnx`](../tools/db-migrate/dotnet/Takumi.DbTools.slnx), template [`PHASE2-MAPPING-TEMPLATE.csv`](takumi-game-spec/PHASE2-MAPPING-TEMPLATE.csv).
+- [x] **`docker/sql/restore-muonline.sh`** — **đã có trong repo**; restore `.bak` vào container `takumi-mssql` (profile `db`), hướng dẫn [`docker/README.md`](../docker/README.md) + ETL quy ước [`tools/db-migrate/README.md`](../tools/db-migrate/README.md). *(Gate 2: cần chạy thật trên máy dev có `.bak` + Docker.)*
 
 ---
 
@@ -399,4 +400,4 @@ Mẫu cột cho sheet/issue: **[`MANIFEST-TRACKER-TEMPLATE.md`](MANIFEST-TRACKER
 
 ---
 
-**Kết:** Checklist trong file này + **manifest** trong `docs/takumi-manifests/` là **bộ đầy đủ** để không bỏ sót artifact Takumi trong quá trình chuyển sang OpenMU. Lộ trình theo gate thời gian vẫn dùng [`TAKUMI-MIGRATION-OPENMU-CHECKLIST.md`](TAKUMI-MIGRATION-OPENMU-CHECKLIST.md).
+**Kết:** Checklist trong file này + **manifest** trong `docs/takumi-manifests/` là **bộ đầy đủ** để không bỏ sót artifact Takumi trong quá trình chuyển sang OpenMU. Lộ trình theo gate thời gian vẫn dùng [`TAKUMI-MIGRATION-OPENMU-CHECKLIST.md`](TAKUMI-MIGRATION-OPENMU-CHECKLIST.md); **§11 / Phase 2** (MSSQL restore, inspector, mapping CSV) giữ đồng bộ với checklist pha đó.

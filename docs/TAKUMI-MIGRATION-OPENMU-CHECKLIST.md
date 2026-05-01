@@ -55,6 +55,7 @@
   - [ ] **A)** Migrate dữ liệu từ `MuOnline.bak` → Postgres theo **mapping** trường (script ETL từng bảng).
   - [ ] **B)** **Fresh world** OpenMU + chỉ import subset (account, character) qua tool one-off.
 - [x] Tooling Phase 2 (read-only): [`tools/db-migrate/README.md`](tools/db-migrate/README.md) — **`takumi-mssql-inspect`**, **`takumi-pg-inspect`**, template [`docs/takumi-game-spec/PHASE2-MAPPING-TEMPLATE.csv`](takumi-game-spec/PHASE2-MAPPING-TEMPLATE.csv); script **ETL → Postgres** vẫn TODO.
+- [ ] **CSV schema thực tế:** sau restore MSSQL ([`docker/sql/restore-muonline.sh`](../docker/sql/restore-muonline.sh) + `.bak`) và Postgres OpenMU — chạy hai inspector, lưu dưới `tools/db-migrate/schemas/` (gitignored), cập nhật Sheet / [`PHASE2-MAPPING-TEMPLATE.csv`](takumi-game-spec/PHASE2-MAPPING-TEMPLATE.csv).
 - [ ] **Gate 2:** Có bộ dữ liệu dev đủ login + spawn character trên **OpenMU** (kể cả dữ liệu giả lập).
 
 ---
@@ -166,6 +167,9 @@
 ## Liên kết nội bộ Takumi
 
 - [`docs/takumi-game-spec/TAKUMI-SQL-BACKLOG.md`](takumi-game-spec/TAKUMI-SQL-BACKLOG.md) — `EXEC`/bảng heuristic + SQL Back.
+- [`docs/takumi-game-spec/PHASE2-MAPPING-TEMPLATE.csv`](takumi-game-spec/PHASE2-MAPPING-TEMPLATE.csv) — seed spreadsheet proc/bảng × OpenMU.
+- [`tools/db-migrate/README.md`](tools/db-migrate/README.md) — **`takumi-mssql-inspect`** + **`takumi-pg-inspect`**, quy ước ETL.
+- [`docker/sql/restore-muonline.sh`](../docker/sql/restore-muonline.sh) — restore **`MuOnline.bak`** vào MSSQL Docker (Phase 2 spike).
 - [`docs/takumi-game-spec/PHASE2-OPENMU-DATA-MODEL-MAP.md`](takumi-game-spec/PHASE2-OPENMU-DATA-MODEL-MAP.md) — Phase 2 DDL `SQLUp` ↔ OpenMU EF + ADR nháp.
 - [`docs/takumi-game-spec/DATA-SUB1-DRIFT.md`](takumi-game-spec/DATA-SUB1-DRIFT.md) — so sánh `Sub 1/Data` vs `Data`.
 - [`docs/takumi-game-spec/CONNECT-SERVER-REAL-DRIFT.md`](takumi-game-spec/CONNECT-SERVER-REAL-DRIFT.md) — `1.ConnectServer` vs `_real` (INI).

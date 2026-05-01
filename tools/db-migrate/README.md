@@ -19,6 +19,8 @@ tools/db-migrate/
   schemas/                     (optional) export CSV redirect — không chứa password
 ```
 
+**Nguyên tắc dữ liệu:** khi ETL/trùng tên, **ưu tiên bảo toàn nội dung từ MSSQL** (legacy là sự thật cho account/char/item); Postgres OpenMU là **đa schema** (`data`, `config`, …) trong một DB — không nhầm với “multi-language”. Chi tiết: [`PHASE2-OPENMU-DATA-MODEL-MAP.md`](../../docs/takumi-game-spec/PHASE2-OPENMU-DATA-MODEL-MAP.md) **§0**.
+
 ### Spreadsheet mapping — **đủ tầng** (proc + dbo + OpenMU EF + heuristic)
 
 [`docs/takumi-game-spec/PHASE2-MAPPING-TEMPLATE.csv`](../../docs/takumi-game-spec/PHASE2-MAPPING-TEMPLATE.csv) — **236 dòng** (bao gồm header): `LEGACY_PROC` (62), `LEGACY_TABLE` (61 `dbo` từ `.bak`), `OPENMU_TABLE` (101 bảng `data`/`config`/`friend`/`guild`), `HEURISTIC_VERIFY` (11 tên chỉ từ grep C++). Clone sang Sheet để điền `openmu_or_plugin` / `parity_status`.

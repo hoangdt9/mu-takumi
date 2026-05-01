@@ -91,6 +91,8 @@ Có thể trùng casing (`Character` vs `CHARACTER`, `MEMB_INFO` vs `memb_info`)
 
 AccountCharacter, CardPhone, CashShopData, CashShopInventory, CashShopPeriodicItem, CHARACTER, Character, CustomAttack, CustomGift, CustomItemBank, CustomNpcQuest, CustomQuest, DataNapGame, EquipInventory, EventInventory, EventLeoTheHelper, EventSantaClaus, ExtWarehouse, GameServerInfo, Gens_Rank, Gens_Reward, Guild, GuildMember, HelperData, ItemMarketData, LOG_CREDITOS, LuckyCoin, LuckyItem, MasterSkillTree, MEMB_INFO, memb_info, MuRummyCard, MuRummyData, MuunInventory, OptionData, PcPointData, PentagramJewel, PShopItemValue, QuestKillCount, QuestWorld, RankingDuel, RankingKingGuild, RankingKingPlayer, SNSData, T_FriendList, T_FriendMail, T_FriendMain, T_PetItem_Info, T_WaitFriend, warehouse, WarehouseGuild.
 
+**Nguyên tắc merge / không sót dữ liệu:** xem **§0** [`PHASE2-OPENMU-DATA-MODEL-MAP.md`](PHASE2-OPENMU-DATA-MODEL-MAP.md) (ưu tiên nghiệp vụ MSSQL, đa schema Postgres, vòng lặp chỉnh sau Phase 4).
+
 **File mapping “một file đủ tầng” (không rút gọn):** [`PHASE2-MAPPING-TEMPLATE.csv`](PHASE2-MAPPING-TEMPLATE.csv) — cột `kind`:
 
 | `kind` | Ý nghĩa | Số dòng (snapshot repo `.bak` + OpenMU dev) |

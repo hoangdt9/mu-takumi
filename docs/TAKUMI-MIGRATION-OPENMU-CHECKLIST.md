@@ -62,7 +62,7 @@
   - [ ] **B)** **Fresh world** OpenMU + chỉ import subset (account, character) qua tool one-off.
 - [x] Tooling Phase 2 (read-only): [`tools/db-migrate/README.md`](tools/db-migrate/README.md) — **`takumi-mssql-inspect`**, **`takumi-pg-inspect`**, template [`docs/takumi-game-spec/PHASE2-MAPPING-TEMPLATE.csv`](takumi-game-spec/PHASE2-MAPPING-TEMPLATE.csv); script **ETL → Postgres** vẫn TODO.
 - [x] **Dump CSV schema (inspector)** trên dev: sau restore MSSQL ([`docker/sql/restore-muonline.sh`](../docker/sql/restore-muonline.sh) + `.bak`) và Postgres OpenMU — chạy hai tool trong [`tools/db-migrate/README.md`](tools/db-migrate/README.md); lưu dưới `tools/db-migrate/schemas/*.csv` (gitignored). _Đã spike 2026-05._
-- [ ] **Đồng bộ mapping:** điền cột trong [`PHASE2-MAPPING-TEMPLATE.csv`](takumi-game-spec/PHASE2-MAPPING-TEMPLATE.csv) — **đủ** các `kind` `LEGACY_PROC` (62) / `LEGACY_TABLE` (61 dbo) / `OPENMU_TABLE` (101) / `HEURISTIC_VERIFY` (11); regen qua `--mapping-rows` và `--mapping-openmu-all` trong [`tools/db-migrate/README.md`](tools/db-migrate/README.md) khi DB thay đổi.
+- [ ] **Đồng bộ mapping + không sót MSSQL:** điền cột trong [`PHASE2-MAPPING-TEMPLATE.csv`](takumi-game-spec/PHASE2-MAPPING-TEMPLATE.csv); **ưu tiên giá trị nghiệp vụ từ MSSQL** khi trùng tên (chi tiết **[§0](takumi-game-spec/PHASE2-OPENMU-DATA-MODEL-MAP.md)**); regen slice qua [`tools/db-migrate/README.md`](tools/db-migrate/README.md) khi DB thay đổi. **Lưu ý:** Postgres OpenMU là **đa schema** (`data`/`config`/…), không phải “multi-language DB”; Phase 4+ có thể **chỉnh lại** ETL/schema sau parity GameServer.
 - [ ] **Gate 2:** Có bộ dữ liệu dev đủ login + spawn character trên **OpenMU** (kể cả dữ liệu giả lập).
 
 ---

@@ -4,6 +4,30 @@
 
 **Chân lý schema đầy đủ:** vẫn là **`MuServer/7.DataBase/MuOnline.bak`** (+ restore MSSQL); `SQLUp.sql` chỉ là **patch custom** đã áp vào một bản MU cụ thể.
 
+## 0 — Nguồn sự thật, ưu tiên merge, và “đa schema” Postgres
+
+### 0.1 Không sót dữ liệu legacy (mặc định dự án Takumi)
+
+- **Nguồn import** cho dữ liệu đã tồn tại trên server cũ là **MSSQL** đã restore (`dbo.*`, proc semantics trong [`TAKUMI-SQL-BACKLOG.md`](TAKUMI-SQL-BACKLOG.md) và bảng đầy đủ trong [`PHASE2-MAPPING-TEMPLATE.csv`](PHASE2-MAPPING-TEMPLATE.csv) phần `LEGACY_*`).
+- Mỗi bảng `LEGACY_TABLE` cần một trong các đích: **map sang bảng OpenMU / bảng plugin Postgres / lưu staging audit / ghi quyết định WONTFIX có lý do** — tránh “lỡ” không nhắc tới.
+- Kiểm tra sau ETL (khi có script): so **số bảng nguồn**, **số dòng tối thiểu** (hoặc sample hash) theo từng bảng quan trọng; log bảng nguồn **0 row** vs **bỏ qua**.
+
+### 0.2 Trùng tên hoặc trùng “khái niệm” — ưu tiên **giá trị nghiệp vụ từ MSSQL**
+
+- Nếu cùng tên bảng/cột giữa legacy và OpenMU nhưng **kiểu khác** (vd. `int` map ID vs `uuid` OpenMU): **ưu tiên bảo toàn thông tin từ MSSQL** khi transform (ghi vào cột đích tương đương, extension table, hoặc JSON/metadata plugin), không âm thầm lấy default OpenMU làm sự thật.
+- **Ngoại lệ an toàn hệ thống:** khóa chính, FK, mật khẩu (hash lại BCrypt), constraint OpenMU — có thể **sinh giá trị mới** (Guid) nhưng phải **giữ bản đồ** sang id legacy để không mất liên kết.
+- Bản **fresh OpenMU** (world config) có thể giữ nguyên từ bộ cài; chỉ phần **account/character/inventory/…** mang từ player cần áp quy tắc “MSSQL wins” ở trên.
+
+### 0.3 Postgres OpenMU là **đa schema** (không phải “đa ngôn ngữ” DB)
+
+- OpenMU dùng nhiều **schema** trong **một** database PostgreSQL: `data`, `config`, `friend`, `guild` (xem `SchemaNames.cs`) — đó là **tách vùng dữ liệu**, không có nghĩa DB tự “multi-language” như i18n client.
+- Chuỗi hiển thị ngôn ngữ / file client / `Data/*.txt` là lớp **game content**; có thể phải chỉnh khi parity client Takumi, **độc lập** với quyết định Phase 2 nhưng vẫn phải **đồng bộ** khi vào Phase 4.
+
+### 0.4 Sau Phase 2 — các bước C++/OpenMU **có thể bắt chỉnh lại ETL / schema**
+
+- Khi implement **GameServer** (.NET) và so packet với client Takumi, có thể phát hiện thiếu cột, thiếu bảng plugin, hoặc map ID world sai → **quay lại** mapping + ETL/staging là bình thường.
+- Coi **PHASE2 mapping + ETL** là phiên bản **lặp** theo gate (Gate 2 → Gate 4), không phải một lần xong vĩnh viễn.
+
 ---
 
 ## 1. DDL trong `MuServer/7.DataBase/SQL Back/SQLUp.sql` (đầy đủ file)
@@ -86,6 +110,7 @@ Tham chiếu: [`tools/db-migrate/README.md`](../../tools/db-migrate/README.md).
 ## 5. Việc còn mở Phase 2
 
 - [ ] Spreadsheet: điền **`PHASE2-MAPPING-TEMPLATE.csv`** — file **đầy đủ** gồm `LEGACY_PROC` (62) + `LEGACY_TABLE` (61 `dbo`) + `OPENMU_TABLE` (101) + `HEURISTIC_VERIFY` (11); chỉnh `openmu_or_plugin` / `parity_status` sau diff inspector.  
+- [ ] **Kiểm tra không sót nguồn:** mỗi `LEGACY_TABLE` có đích hoặc WONTFIX ghi rõ; sau ETL có smoke so row count/sample (mục **§0** trên file này).
 - [ ] Chạy thử **migration pipeline** và **Gate 2** staging.  
 
 **Liên kết:** [`TAKUMI-MIGRATION-OPENMU-CHECKLIST.md`](../TAKUMI-MIGRATION-OPENMU-CHECKLIST.md) Phase 2; [`TAKUMI-FULL-FILE-MIGRATION-CHECKLIST.md`](../TAKUMI-FULL-FILE-MIGRATION-CHECKLIST.md) §11.

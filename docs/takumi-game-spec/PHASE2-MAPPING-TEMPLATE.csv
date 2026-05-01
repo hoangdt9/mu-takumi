@@ -1,10 +1,73 @@
 kind,legacy_name,openmu_or_plugin,parity_status,notes
 PROC,WZ_CreateCharacter,,todo,So với path tạo char OpenMU Persistence
-PROC,WZ_GetItemSerial,,todo,
-PROC,WZ_CustomRanking,Takumi plugin / WONTFIX,deferred,Tùy có dùng trên staging
+PROC,WZ_GetItemSerial,,todo,Serial item uniqueness vs OpenMU generator
+PROC,WZ_CONNECT_MEMB,,todo,Login session; đối chiếu Join/Data flow OpenMU
+PROC,WZ_DISCONNECT_MEMB,,todo,
+PROC,WZ_DeleteCharacter,,todo,
+PROC,WZ_RenameCharacter,,todo,
+PROC,WZ_DesblocAccount,,todo,Admin unblock account
+PROC,WZ_GetCharacterGensInfo,,deferred,Gens; kiểm tra có trong world OpenMU target
+PROC,WZ_GetAccountLevel,,deferred,
+PROC,WZ_SetAccountLevel,,deferred,
+PROC,WZ_GetCoin,,deferred,Đơn vị zen/coin legacy vs OpenMU account wallet
+PROC,WZ_SetCoin,,deferred,
+PROC,WZ_GetMarryInfo,,deferred,
+PROC,WZ_SetMarryInfo,,deferred,
+PROC,WZ_SetDivorceInfo,,deferred,
+PROC,WZ_GetResetInfo,,deferred,Custom reset stats — plugin hoặc bỏ
+PROC,WZ_SetResetInfo,,deferred,
+PROC,WZ_GetMasterResetInfo,,deferred,
+PROC,WZ_SetMasterResetInfo,,deferred,
+PROC,WZ_CustomRanking,Takumi plugin,deferred,WZ_Custom* — không vanilla OpenMU
+PROC,WZ_CustomArenaRanking,Takumi plugin,deferred,
+PROC,WZ_CustomMonsterReward,Takumi plugin,deferred,
+PROC,WZ_CustomTop,Takumi plugin,deferred,
+PROC,WZ_TvTRanking,Takumi plugin,deferred,
+PROC,WZ_SetReward,Takumi plugin,deferred,
+PROC,WZ_SetRewardAll,Takumi plugin,deferred,
+PROC,WZ_SetDiemMonter,Takumi plugin,deferred,
+PROC,WZ_RankingBloodCastle,,deferred,Ranking event — logic OpenMU vs proc
+PROC,WZ_RankingChaosCastle,,deferred,
+PROC,WZ_RankingDevilSquare,,deferred,
+PROC,WZ_RankingIllusionTemple,,deferred,
+PROC,WZ_CS_GetCastleTotalInfo,OpenMU siege / guild,deferred,Đại diện nhóm WZ_CS_* siege — còn ~30 proc CS trong backlog
+PROC,WZ_CW_InfoLoad,,deferred,Chaos Castle War / custom — đối chiếu tên thật trong .bak
+PROC,WZ_CW_InfoSave,,deferred,
 TABLE,Character,MUnique.OpenMU DataModel.Character + ItemStorage,todo,Cột SQLUp: DanhHieu LucChien TimeReset mLvVIPChar mPointVIPChar
+TABLE,CHARACTER,,todo,Có thể trùng Character; consolidate sau inspect .bak
 TABLE,MEMB_INFO,Account + hash password,todo,Legacy plain/MD5 vs BCrypt OpenMU
+TABLE,memb_info,,todo,Trùng casing heuristic; merge một dòng sau DDL thật
 TABLE,DataNapGame,Takumi plugin table,deferred,
 TABLE,ItemMarketData,Takumi plugin / market service,deferred,
 TABLE,CustomItemBank,Takumi plugin / storage extension,deferred,
 TABLE,EquipInventory,Takumi plugin / decode blob → ItemStorage,todo,
+TABLE,Guild,OpenMU Guild entities,todo,Map guild id/name/master
+TABLE,GuildMember,,todo,
+TABLE,warehouse,OpenMU Account storage / ItemStorage,todo,Tên lowercase trong heuristic
+TABLE,GameServerInfo,Configuration / game server definition,todo,Có thể map world config OpenMU
+TABLE,Gens_Rank,,deferred,Gens ladder — plugin nếu cần parity
+TABLE,Gens_Reward,,deferred,
+TABLE,MasterSkillTree,OpenMU master skills,todo,Cấu trúc cây vs EF
+TABLE,OptionData,,deferred,Item options legacy
+TABLE,QuestWorld,,deferred,Quest data; OpenMU quest model
+TABLE,CashShopData,,deferred,Cash shop nếu dùng
+TABLE,CashShopInventory,,deferred,
+TABLE,CashShopPeriodicItem,,deferred,
+TABLE,CustomAttack,Takumi plugin,deferred,
+TABLE,CustomGift,Takumi plugin,deferred,
+TABLE,CustomNpcQuest,Takumi plugin,deferred,
+TABLE,CustomQuest,Takumi plugin,deferred,
+TABLE,EventInventory,,deferred,
+TABLE,ExtWarehouse,,deferred,
+TABLE,RankingDuel,Takumi plugin,deferred,
+TABLE,RankingKingGuild,Takumi plugin,deferred,
+TABLE,RankingKingPlayer,Takumi plugin,deferred,
+TABLE,T_FriendList,Friend/social,todo,OpenMU có tương đương social không
+TABLE,T_FriendMain,,todo,
+TABLE,T_FriendMail,,deferred,
+TABLE,T_WaitFriend,,deferred,
+TABLE,MuunInventory,,deferred,Muun inventory season
+TABLE,PentagramJewel,,deferred,
+TABLE,AccountCharacter,,todo,Liên kết account–char legacy
+TABLE,LOG_CREDITOS,,deferred,Audit log; không bắt buộc Gate 2
+TABLE,PShopItemValue,,deferred,Personal shop values

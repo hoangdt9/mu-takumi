@@ -21,7 +21,7 @@ tools/db-migrate/
 
 ### Spreadsheet mapping (seed)
 
-[`docs/takumi-game-spec/PHASE2-MAPPING-TEMPLATE.csv`](../../docs/takumi-game-spec/PHASE2-MAPPING-TEMPLATE.csv) — cột: `kind,legacy_name,openmu_or_plugin,parity_status,notes`. Copy sang Sheet hoặc mở rộng trong repo.
+[`docs/takumi-game-spec/PHASE2-MAPPING-TEMPLATE.csv`](../../docs/takumi-game-spec/PHASE2-MAPPING-TEMPLATE.csv) — cột: `kind,legacy_name,openmu_or_plugin,parity_status,notes`. Copy sang Sheet hoặc mở rộng trong repo; **đối chiếu đầy đủ** 62 `WZ_*` + 51 bảng heuristic trong [`TAKUMI-SQL-BACKLOG.md`](../../docs/takumi-game-spec/TAKUMI-SQL-BACKLOG.md) và bổ sung dòng khi rà `.bak`/inspector.
 
 ## `takumi-mssql-inspect` (read-only)
 

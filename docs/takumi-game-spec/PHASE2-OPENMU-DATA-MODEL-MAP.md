@@ -85,7 +85,7 @@ Tham chiếu: [`tools/db-migrate/README.md`](../../tools/db-migrate/README.md).
 
 ## 5. Việc còn mở Phase 2
 
-- [ ] Spreadsheet: một dòng một **bảng/proc legacy** × cột **OpenMU / plugin / WONTFIX**.  
+- [ ] Spreadsheet: một dòng một **bảng/proc legacy** × cột **OpenMU / plugin / WONTFIX**. **[`PHASE2-MAPPING-TEMPLATE.csv`](PHASE2-MAPPING-TEMPLATE.csv)** đã seed đại diện từ [`TAKUMI-SQL-BACKLOG.md`](TAKUMI-SQL-BACKLOG.md) — bổ sung proc/bảng còn lại sau khi có CSV từ `takumi-mssql-inspect`.  
 - [ ] Chạy thử **migration pipeline** và **Gate 2** staging.  
 
 **Liên kết:** [`TAKUMI-MIGRATION-OPENMU-CHECKLIST.md`](../TAKUMI-MIGRATION-OPENMU-CHECKLIST.md) Phase 2; [`TAKUMI-FULL-FILE-MIGRATION-CHECKLIST.md`](../TAKUMI-FULL-FILE-MIGRATION-CHECKLIST.md) §11.

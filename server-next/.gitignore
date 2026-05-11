@@ -1,0 +1,8 @@
+# Build outputs (restore sources from backup/VCS — do not rely on bin/ alone)
+**/bin/
+**/obj/
+**/*.user
+**/*.suo
+
+# Local overrides (use `.env.lan.example` as template)
+.env

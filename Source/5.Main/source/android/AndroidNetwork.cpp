@@ -9,8 +9,10 @@
 #include <android/log.h>
 #include <arpa/inet.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <linux/tcp.h>
 #include <netinet/in.h>
+#include <poll.h>
 #include <sys/socket.h>
 #include <time.h>
 #include <unistd.h>
@@ -59,6 +61,32 @@ static void ProcessPacketCallback(const PacketInfo*) {}
 
 namespace
 {
+constexpr int kConnectPollTimeoutMs = 10000;
+
+std::atomic<int> g_lastConnectErrno { 0 };
+
+static void NoteConnectFailure(int errCode)
+{
+    g_lastConnectErrno.store(errCode, std::memory_order_relaxed);
+}
+
+static void ClearConnectFailure()
+{
+    g_lastConnectErrno.store(0, std::memory_order_relaxed);
+}
+
+static void LogConnectOutcomeToTakumi(const char* hostAscii, int32_t port, const char* detail, int err)
+{
+    __android_log_print(
+        ANDROID_LOG_INFO,
+        "TakumiErrorReport",
+        "[Android Socket] ConnectionManager_Connect %s host=%s port=%d errno=%d",
+        detail ? detail : "",
+        hostAscii ? hostAscii : "",
+        static_cast<int>(port),
+        err);
+}
+
 struct AndroidConnState
 {
     std::shared_ptr<std::atomic<bool>> running;
@@ -498,6 +526,7 @@ MU_EXPORT int32_t ConnectionManager_Connect(
 {
     if (!host || port <= 0)
     {
+        NoteConnectFailure(EINVAL);
         return 0;
     }
 
@@ -510,7 +539,9 @@ MU_EXPORT int32_t ConnectionManager_Connect(
     int fd = socket(AF_INET, SOCK_STREAM, 0);
     if (fd <= 0)
     {
-        NET_LOGE("socket failed errno=%d", errno);
+        const int e = errno;
+        NET_LOGE("socket failed errno=%d", e);
+        NoteConnectFailure(e);
         return 0;
     }
 
@@ -520,14 +551,109 @@ MU_EXPORT int32_t ConnectionManager_Connect(
     if (inet_pton(AF_INET, hostAscii, &address.sin_addr) != 1)
     {
         NET_LOGE("inet_pton failed for host=%s", hostAscii);
+        NoteConnectFailure(EINVAL);
         close(fd);
         return 0;
     }
 
     NET_LOGI("connect start %s:%d", hostAscii, port);
-    if (connect(fd, reinterpret_cast<sockaddr*>(&address), sizeof(address)) != 0)
+
+    const int savedFlags = fcntl(fd, F_GETFL, 0);
+    if (savedFlags < 0)
     {
-        NET_LOGE("connect failed %s:%d errno=%d", hostAscii, port, errno);
+        const int e = errno;
+        NET_LOGE("fcntl F_GETFL failed %s:%d errno=%d", hostAscii, port, e);
+        LogConnectOutcomeToTakumi(hostAscii, port, "F_GETFL failed", e);
+        NoteConnectFailure(e);
+        close(fd);
+        return 0;
+    }
+
+    if (fcntl(fd, F_SETFL, savedFlags | O_NONBLOCK) != 0)
+    {
+        const int e = errno;
+        NET_LOGE("fcntl O_NONBLOCK failed %s:%d errno=%d", hostAscii, port, e);
+        LogConnectOutcomeToTakumi(hostAscii, port, "O_NONBLOCK failed", e);
+        NoteConnectFailure(e);
+        close(fd);
+        return 0;
+    }
+
+    const int cr = connect(fd, reinterpret_cast<sockaddr*>(&address), sizeof(address));
+    if (cr != 0 && errno != EINPROGRESS)
+    {
+        const int e = errno;
+        NET_LOGE("connect failed %s:%d errno=%d", hostAscii, port, e);
+        LogConnectOutcomeToTakumi(hostAscii, port, "connect immediate error", e);
+        NoteConnectFailure(e);
+        fcntl(fd, F_SETFL, savedFlags);
+        close(fd);
+        return 0;
+    }
+
+    if (cr != 0)
+    {
+        pollfd pfd {};
+        pfd.fd = fd;
+        pfd.events = POLLOUT;
+
+        int pr = 0;
+        do
+        {
+            pr = poll(&pfd, 1, kConnectPollTimeoutMs);
+        } while (pr < 0 && errno == EINTR);
+
+        if (pr == 0)
+        {
+            NET_LOGE("connect timeout %s:%d after %dms", hostAscii, port, kConnectPollTimeoutMs);
+            LogConnectOutcomeToTakumi(hostAscii, port, "timeout (poll)", ETIMEDOUT);
+            NoteConnectFailure(ETIMEDOUT);
+            fcntl(fd, F_SETFL, savedFlags);
+            close(fd);
+            return 0;
+        }
+
+        if (pr < 0)
+        {
+            const int e = errno;
+            NET_LOGE("connect poll error %s:%d errno=%d", hostAscii, port, e);
+            LogConnectOutcomeToTakumi(hostAscii, port, "poll error", e);
+            NoteConnectFailure(e);
+            fcntl(fd, F_SETFL, savedFlags);
+            close(fd);
+            return 0;
+        }
+
+        int soError = 0;
+        socklen_t soLen = sizeof(soError);
+        if (getsockopt(fd, SOL_SOCKET, SO_ERROR, &soError, &soLen) != 0)
+        {
+            const int e = errno;
+            NET_LOGE("getsockopt SO_ERROR failed %s:%d errno=%d", hostAscii, port, e);
+            LogConnectOutcomeToTakumi(hostAscii, port, "getsockopt SO_ERROR failed", e);
+            NoteConnectFailure(e);
+            fcntl(fd, F_SETFL, savedFlags);
+            close(fd);
+            return 0;
+        }
+
+        if (soError != 0)
+        {
+            NET_LOGE("connect async error %s:%d so_error=%d", hostAscii, port, soError);
+            LogConnectOutcomeToTakumi(hostAscii, port, "async connect failed", soError);
+            NoteConnectFailure(soError);
+            fcntl(fd, F_SETFL, savedFlags);
+            close(fd);
+            return 0;
+        }
+    }
+
+    if (fcntl(fd, F_SETFL, savedFlags) != 0)
+    {
+        const int e = errno;
+        NET_LOGE("fcntl restore blocking failed %s:%d errno=%d", hostAscii, port, e);
+        LogConnectOutcomeToTakumi(hostAscii, port, "restore blocking failed", e);
+        NoteConnectFailure(e);
         close(fd);
         return 0;
     }
@@ -557,7 +683,13 @@ MU_EXPORT int32_t ConnectionManager_Connect(
     }
 
     NET_LOGI("connect success %s:%d fd=%d", hostAscii, port, fd);
+    ClearConnectFailure();
     return fd;
+}
+
+MU_EXPORT int32_t ConnectionManager_GetLastConnectErrno(void)
+{
+    return g_lastConnectErrno.load(std::memory_order_relaxed);
 }
 
 MU_EXPORT void ConnectionManager_Disconnect(int32_t handle)

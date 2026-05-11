@@ -1,0 +1,14 @@
+{
+    "folders": [
+        {
+            "name": "Takumi Android (Gradle root)",
+            "path": "Source/android"
+        }
+    ],
+    "settings": {
+        "java.configuration.updateBuildConfiguration": "automatic",
+        "java.import.gradle.enabled": true,
+        "java.import.gradle.wrapper.enabled": true,
+        "java.project.importOnFirstTimeStartup": "automatic"
+    }
+}

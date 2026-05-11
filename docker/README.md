@@ -9,6 +9,29 @@
 
 ---
 
+## 0) HTTP `data.zip` cho Android Preload (Docker)
+
+Dùng khi muốn điện thoại/emulator tải `data.zip` từ máy bạn (LAN), giống flow `http://<IP>:18080/data.zip`.
+
+1. Đặt file **`data.zip`** vào `docker/data-zip/host/data.zip` (xem `docker/data-zip/host/README.md`).
+2. Chạy:
+
+   ```bash
+   cd takumi/docker
+   docker compose --profile datazip up -d
+   ```
+
+3. Cổng host mặc định **`18080`** (đổi `DATA_ZIP_PUBLISH_PORT` trong `.env` nếu cần).
+4. Build Android với URL đúng IP máy chạy Docker (mặc định Gradle: `http://192.168.1.50:18080/data.zip`), hoặc:
+
+   ```bash
+   ./gradlew :app:assembleRealDevicePreloadDefaultDebug -PmuDataZipLan=http://YOUR_LAN_IP:18080/data.zip
+   ```
+
+`PreloadActivity` thử **`DATA_ZIP_URL_LAN`** trước, sau đó mới tới URL công khai dự phòng.
+
+---
+
 ## Chuẩn bị `.env`
 
 ```bash

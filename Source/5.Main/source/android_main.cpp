@@ -1,4 +1,4 @@
-﻿// =============================================================================
+// =============================================================================
 // android_main.cpp
 // sokol_app entry point for Android â€” replaces Winmain.cpp on Android platform.
 //
@@ -24,6 +24,55 @@
 #define TAKUMI_ANDROID_MAIN_UNDEF_MINMAX 1
 
 #include <unistd.h>
+#include <fcntl.h>
+
+// Android: game data is under /Android/data/<applicationId>/files (see PreloadActivity).
+// applicationId may differ from the Java namespace (e.g. flavor `preloadDatafresh` → `.dataredl`).
+// Resolve at runtime from /proc/self/cmdline (first NUL-terminated field is typically the package name).
+static char g_androidHostPackage[256];
+
+static void EnsureAndroidHostPackageInitialized()
+{
+    if (g_androidHostPackage[0] != '\0')
+    {
+        return;
+    }
+
+    const char* fallback = "com.muonline.client";
+    char buf[384];
+    std::memset(buf, 0, sizeof(buf));
+    const int fd = open("/proc/self/cmdline", O_RDONLY | O_CLOEXEC);
+    if (fd < 0)
+    {
+        std::strncpy(g_androidHostPackage, fallback, sizeof(g_androidHostPackage) - 1);
+        g_androidHostPackage[sizeof(g_androidHostPackage) - 1] = '\0';
+        return;
+    }
+
+    const ssize_t n = read(fd, buf, sizeof(buf) - 1);
+    close(fd);
+    if (n <= 0)
+    {
+        std::strncpy(g_androidHostPackage, fallback, sizeof(g_androidHostPackage) - 1);
+        g_androidHostPackage[sizeof(g_androidHostPackage) - 1] = '\0';
+        return;
+    }
+
+    buf[n] = '\0';
+    size_t i = 0;
+    while (i < static_cast<size_t>(n) && buf[i] != '\0' && i + 1 < sizeof(g_androidHostPackage))
+    {
+        g_androidHostPackage[i] = buf[i];
+        ++i;
+    }
+    g_androidHostPackage[i] = '\0';
+
+    if (i == 0 || std::strncmp(g_androidHostPackage, "com.", 4) != 0)
+    {
+        std::strncpy(g_androidHostPackage, fallback, sizeof(g_androidHostPackage) - 1);
+        g_androidHostPackage[sizeof(g_androidHostPackage) - 1] = '\0';
+    }
+}
 
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Set working directory BEFORE any C++ global constructors run.
@@ -35,18 +84,58 @@
 __attribute__((constructor(101)))
 static void android_set_data_dir_early()
 {
-    // External files dir â€” accessible via adb push, no root needed
-    int r1 = chdir("/sdcard/Android/data/com.muonline.client/files");
+    EnsureAndroidHostPackageInitialized();
+
+    char path[512];
+    std::snprintf(
+        path,
+        sizeof(path),
+        "/sdcard/Android/data/%s/files",
+        g_androidHostPackage);
+    int r1 = chdir(path);
 #if !defined(MU_ANDROID_DISABLE_LOG)
-    __android_log_print(ANDROID_LOG_INFO, "MuMain",
-        "early chdir(/sdcard/.../files) = %d (errno=%d)", r1, errno);
+    __android_log_print(
+        ANDROID_LOG_INFO,
+        "MuMain",
+        "early chdir(%s) = %d (errno=%d) pkg=%s",
+        path,
+        r1,
+        errno,
+        g_androidHostPackage);
 #endif
-    if (r1 == 0) return;
-    // Fallback: internal storage
-    int r2 = chdir("/data/data/com.muonline.client/files");
+    if (r1 == 0)
+    {
+        return;
+    }
+
+    std::snprintf(
+        path,
+        sizeof(path),
+        "/storage/emulated/0/Android/data/%s/files",
+        g_androidHostPackage);
+    r1 = chdir(path);
 #if !defined(MU_ANDROID_DISABLE_LOG)
-    __android_log_print(ANDROID_LOG_INFO, "MuMain",
-        "fallback chdir(/data/.../files) = %d (errno=%d)", r2, errno);
+    __android_log_print(ANDROID_LOG_INFO, "MuMain", "early chdir(%s) = %d (errno=%d)", path, r1, errno);
+#endif
+    if (r1 == 0)
+    {
+        return;
+    }
+
+    std::snprintf(path, sizeof(path), "/data/user/0/%s/files", g_androidHostPackage);
+    r1 = chdir(path);
+#if !defined(MU_ANDROID_DISABLE_LOG)
+    __android_log_print(ANDROID_LOG_INFO, "MuMain", "early chdir(%s) = %d (errno=%d)", path, r1, errno);
+#endif
+    if (r1 == 0)
+    {
+        return;
+    }
+
+    std::snprintf(path, sizeof(path), "/data/data/%s/files", g_androidHostPackage);
+    const int r2 = chdir(path);
+#if !defined(MU_ANDROID_DISABLE_LOG)
+    __android_log_print(ANDROID_LOG_INFO, "MuMain", "fallback chdir(%s) = %d (errno=%d)", path, r2, errno);
 #endif
 }
 #endif
@@ -203,12 +292,23 @@ static std::string ReadAndroidSystemProperty(const char* key)
 
 static void SetWorkingDirectoryToMobileDataRoot()
 {
-    static constexpr const char* kMobileDataRoots[] = {
-        "/sdcard/Android/data/com.muonline.client/files",
-        "/storage/emulated/0/Android/data/com.muonline.client/files",
-        "/data/user/0/com.muonline.client/files",
-        "/data/data/com.muonline.client/files"
-    };
+    EnsureAndroidHostPackageInitialized();
+
+    char roots[4][512] = {};
+    std::snprintf(
+        roots[0],
+        sizeof(roots[0]),
+        "/sdcard/Android/data/%s/files",
+        g_androidHostPackage);
+    std::snprintf(
+        roots[1],
+        sizeof(roots[1]),
+        "/storage/emulated/0/Android/data/%s/files",
+        g_androidHostPackage);
+    std::snprintf(roots[2], sizeof(roots[2]), "/data/user/0/%s/files", g_androidHostPackage);
+    std::snprintf(roots[3], sizeof(roots[3]), "/data/data/%s/files", g_androidHostPackage);
+
+    const char* kMobileDataRoots[] = { roots[0], roots[1], roots[2], roots[3] };
 
     for (const char* workingDir : kMobileDataRoots)
     {
@@ -4582,10 +4682,19 @@ static std::string ResolveMusicPath(const char* name)
         return resolved;
     }
 
-    static constexpr std::array<const char*, 2> kExternalBaseDirs = {
-        "/sdcard/Android/data/com.muonline.client/files",
-        "/storage/emulated/0/Android/data/com.muonline.client/files"
-    };
+    EnsureAndroidHostPackageInitialized();
+    char externalBases[2][512] = {};
+    std::snprintf(
+        externalBases[0],
+        sizeof(externalBases[0]),
+        "/sdcard/Android/data/%s/files",
+        g_androidHostPackage);
+    std::snprintf(
+        externalBases[1],
+        sizeof(externalBases[1]),
+        "/storage/emulated/0/Android/data/%s/files",
+        g_androidHostPackage);
+    const std::array<const char*, 2> kExternalBaseDirs = { externalBases[0], externalBases[1] };
 
     for (const char* baseRaw : kExternalBaseDirs)
     {
@@ -6454,6 +6563,76 @@ static void QueueSappEventAsSDL(const sapp_event* event)
     }
 }
 
+namespace
+{
+std::wstring g_androidBootstrapServerIp;
+int g_androidBootstrapServerPort = 0;
+
+void TrimAsciiUtf8InPlace(std::string& s)
+{
+    while (!s.empty() && (s.back() == ' ' || s.back() == '\t' || s.back() == '\r' || s.back() == '\n'))
+    {
+        s.pop_back();
+    }
+    size_t i = 0;
+    while (i < s.size() && (s[i] == ' ' || s[i] == '\t' || s[i] == '\r' || s[i] == '\n'))
+    {
+        ++i;
+    }
+    if (i > 0)
+    {
+        s.erase(0, i);
+    }
+}
+
+void ApplyAndroidNetworkBootstrapOverrides(std::wstring& serverIP, int& configuredPort)
+{
+    if (!g_androidBootstrapServerIp.empty())
+    {
+        serverIP = g_androidBootstrapServerIp;
+    }
+    if (g_androidBootstrapServerPort > 0)
+    {
+        configuredPort = g_androidBootstrapServerPort;
+    }
+}
+} // namespace
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_muonline_client_MuMainNativeActivity_nativeApplyNetworkBootstrap(
+    JNIEnv* env,
+    jclass,
+    jstring host,
+    jint port)
+{
+    g_androidBootstrapServerIp.clear();
+    g_androidBootstrapServerPort = 0;
+    if (env == nullptr)
+    {
+        return;
+    }
+
+    if (host != nullptr)
+    {
+        const char* utf8 = env->GetStringUTFChars(host, nullptr);
+        if (utf8 != nullptr)
+        {
+            std::string narrow(utf8);
+            env->ReleaseStringUTFChars(host, utf8);
+            TrimAsciiUtf8InPlace(narrow);
+            if (!narrow.empty())
+            {
+                g_androidBootstrapServerIp.assign(narrow.begin(), narrow.end());
+            }
+        }
+    }
+
+    if (port > 0 && port <= 65535)
+    {
+        g_androidBootstrapServerPort = static_cast<int>(port);
+    }
+}
+
 extern "C" JNIEXPORT void JNICALL
 Java_com_muonline_client_MuMainNativeActivity_nativeOnTextInput(
     JNIEnv* env,
@@ -6623,11 +6802,14 @@ static bool InitializeAndroidGame()
 
     static std::wstring serverIP = GameConfig::GetInstance().GetServerIP();
     int configuredPort = GameConfig::GetInstance().GetServerPort();
+    ApplyAndroidNetworkBootstrapOverrides(serverIP, configuredPort);
     if (serverIP.empty() || serverIP == L"127.127.127.127" || serverIP == L"192.168.1.33" || serverIP == L"192.168.99.200")
     {
         serverIP = L"192.168.0.174";
     }
-    if ((configuredPort <= 0) || (configuredPort == 55901) || (configuredPort == 44405) || (configuredPort == 44406))
+    // Only remap invalid ports or a known-wrong first-hop (55901 = game shard in MuServer docs).
+    // Keep OpenMU connect (44405/44406) and server-next (e.g. 44605/44606) exactly as in GameConfig.
+    if (configuredPort <= 0 || configuredPort == 55901)
     {
         configuredPort = 63000;
     }
@@ -7398,11 +7580,14 @@ int SDL_main(int argc, char* argv[])
 
     static std::wstring serverIP = GameConfig::GetInstance().GetServerIP();
     int configuredPort = GameConfig::GetInstance().GetServerPort();
+    ApplyAndroidNetworkBootstrapOverrides(serverIP, configuredPort);
     if (serverIP.empty() || serverIP == L"127.127.127.127" || serverIP == L"192.168.1.33" || serverIP == L"192.168.99.200")
     {
         serverIP = L"192.168.0.174";
     }
-    if (configuredPort <= 0 || configuredPort == 55901 || configuredPort == 44405 || configuredPort == 44406)
+    // Only remap invalid ports or a known-wrong first-hop (55901 = game shard in MuServer docs).
+    // Keep OpenMU connect (44405/44406) and server-next (e.g. 44605/44606) exactly as in GameConfig.
+    if (configuredPort <= 0 || configuredPort == 55901)
     {
         configuredPort = 63000;
     }

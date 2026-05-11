@@ -1424,10 +1424,7 @@ bool NewRenderLogInScene(HDC hDC)
 #endif // MOVIE_DIRECTSHOW
 
 	vec3_t pos;
-	if(CCameraMove::GetInstancePtr()->IsCameraMove()) 
-	{
-		VectorCopy(CameraPosition, pos);
-	}
+	VectorCopy(CameraPosition, pos);
 
     MoveMainCamera();
 	const bool skipNonEssentialPasses = SkipNonEssentialMobilePasses();

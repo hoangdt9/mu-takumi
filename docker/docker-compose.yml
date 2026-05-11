@@ -11,7 +11,22 @@
 #
 # Restore .bak: copy docker/.env.example → .env, set MSSQL_SA_PASSWORD, rồi ./sql/restore-muonline.sh
 #
+# Static HTTP for Android Preload `data.zip` (place file at ./data-zip/host/data.zip):
+#   docker compose --profile datazip up -d
+#   → http://<host-LAN>:18080/data.zip  (port: DATA_ZIP_PUBLISH_PORT in .env)
+#
 services:
+  datazip:
+    profiles: ["datazip"]
+    image: nginx:alpine
+    container_name: takumi-datazip
+    restart: unless-stopped
+    ports:
+      - "${DATA_ZIP_PUBLISH_PORT:-18080}:80"
+    volumes:
+      - ./data-zip/host:/srv/data:ro
+      - ./data-zip/default.conf:/etc/nginx/conf.d/default.conf:ro
+
   sqlserver:
     profiles: ["db"]
     image: mcr.microsoft.com/mssql/server:2022-latest

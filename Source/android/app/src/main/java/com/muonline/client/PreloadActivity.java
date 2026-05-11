@@ -47,9 +47,20 @@ import java.util.zip.ZipFile;
 public class PreloadActivity extends Activity {
 
     private static final String TAG = "MuPreload";
-    private static final String[] DATA_ZIP_URL_CANDIDATES = {
-        "http://update.daybreak.id.vn/update/data.zip"
-    };
+    private static final String[] DATA_ZIP_URL_CANDIDATES = buildDataZipUrlCandidates();
+
+    private static String[] buildDataZipUrlCandidates() {
+        java.util.ArrayList<String> urls = new java.util.ArrayList<>();
+        String lan = BuildConfig.DATA_ZIP_URL_LAN;
+        if (lan != null) {
+            String trimmed = lan.trim();
+            if (!trimmed.isEmpty()) {
+                urls.add(trimmed);
+            }
+        }
+        urls.add("http://update.daybreak.id.vn/update/data.zip");
+        return urls.toArray(new String[0]);
+    }
     private static final String BASIC_AUTH_USERNAME = "admin";
     private static final String BASIC_AUTH_PASSWORD = "openmu";
     private static final String DATA_FOLDER_NAME = "Data";

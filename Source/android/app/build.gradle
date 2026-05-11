@@ -104,7 +104,7 @@ if (!missingRequestedAbis.isEmpty()) {
     }
 
     if (failOnMissingRequiredAbis) {
-        throw new GradleException(
+        throw new RuntimeException(
             "Missing required ABIs (${missingRequestedAbis.join(', ')}). " +
             "Populate src/main/jniLibs/<abi>/ with: ${requiredNativeLibs.join(', ')}")
     }
@@ -212,7 +212,7 @@ def patchElfLoadAlignment16k = { File soFile ->
 
         if (pAlign >= targetAlign) {
             if (pAlign != 0 && (pOffset % pAlign) != (pVaddr % pAlign)) {
-                throw new GradleException(
+                throw new RuntimeException(
                     "Invalid native alignment in ${soFile}: PT_LOAD #${i} has " +
                     "p_offset=0x${Long.toHexString(pOffset)}, " +
                     "p_vaddr=0x${Long.toHexString(pVaddr)}, " +
@@ -222,7 +222,7 @@ def patchElfLoadAlignment16k = { File soFile ->
         }
 
         if ((pOffset % targetAlign) != (pVaddr % targetAlign)) {
-            throw new GradleException(
+            throw new RuntimeException(
                 "Unsafe 16KB patch for ${soFile}: PT_LOAD #${i} has " +
                 "p_offset=0x${Long.toHexString(pOffset)}, " +
                 "p_vaddr=0x${Long.toHexString(pVaddr)}. " +
@@ -272,7 +272,8 @@ android {
     namespace 'com.muonline.client'
     compileSdk 34
 
-    flavorDimensions 'target'
+    // `preloadDatafresh` = separate applicationId → empty scoped storage → Preload always runs data.zip download.
+    flavorDimensions 'target', 'preload'
 
     defaultConfig {
         applicationId "com.muonline.client"
@@ -280,6 +281,29 @@ android {
         targetSdk 34
         versionCode 1
         versionName "1.0"
+
+        manifestPlaceholders = [takumiAppLabel: "MU Online"]
+
+        // First URL tried by PreloadActivity for data.zip (Docker static host on LAN).
+        // Override at build time: ./gradlew ... -PmuDataZipLan=http://10.0.2.2:18080/data.zip
+        def muDataZipLan = (project.findProperty("muDataZipLan") ?: "http://192.168.1.50:18080/data.zip").toString()
+        buildConfigField "String", "DATA_ZIP_URL_LAN", "\"${muDataZipLan}\""
+
+        // Optional first-hop TCP target (Connect / CS). Set at build time, e.g.:
+        //   ./gradlew ... -PmuBootstrapServerHost=192.168.0.10 -PmuBootstrapServerPort=44605
+        def muBootstrapHost = (project.findProperty("muBootstrapServerHost") ?: "").toString()
+        def muBootstrapPortRaw = (project.findProperty("muBootstrapServerPort") ?: "0").toString()
+        int muBootstrapPort = 0
+        try {
+            muBootstrapPort = muBootstrapPortRaw.toInteger()
+        } catch (NumberFormatException ignored) {
+            muBootstrapPort = 0
+        }
+        if (muBootstrapPort < 0 || muBootstrapPort > 65535) {
+            muBootstrapPort = 0
+        }
+        buildConfigField "String", "MU_BOOTSTRAP_SERVER_HOST", "\"${muBootstrapHost.replace('"', '\\"')}\""
+        buildConfigField "int", "MU_BOOTSTRAP_SERVER_PORT", "${muBootstrapPort}"
 
         externalNativeBuild {
             cmake {
@@ -317,6 +341,19 @@ android {
                 abiFilters(*universalAbis)
             }
             buildConfigField "String", "TARGET_PROFILE", '"universal"'
+        }
+
+        // Default: same package id as historical builds (`com.muonline.client`).
+        preloadDefault {
+            dimension 'preload'
+        }
+
+        // Side-by-side APK to force first-time data sync (empty Android/data/<app>/files).
+        preloadDatafresh {
+            dimension 'preload'
+            applicationIdSuffix '.dataredl'
+            versionNameSuffix '-dataredl'
+            manifestPlaceholders = [takumiAppLabel: "MU DataRedl"]
         }
     }
 
@@ -369,7 +406,7 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.6.1'
 }
 
-tasks.matching { it.name ==~ /merge.+NativeLibs/ }.configureEach { Task task ->
+tasks.matching { it.name ==~ /merge.+NativeLibs/ }.configureEach { task ->
     task.doLast {
         def matcher = (task.name =~ /merge(.+)NativeLibs/)
         if (!matcher.matches()) {
@@ -382,7 +419,7 @@ tasks.matching { it.name ==~ /merge.+NativeLibs/ }.configureEach { Task task ->
     }
 }
 
-tasks.matching { it.name ==~ /strip.+DebugSymbols/ }.configureEach { Task task ->
+tasks.matching { it.name ==~ /strip.+DebugSymbols/ }.configureEach { task ->
     task.doLast {
         def matcher = (task.name =~ /strip(.+)DebugSymbols/)
         if (!matcher.matches()) {
@@ -403,7 +440,7 @@ tasks.register('patchSourceJniLibs16k') {
     }
 }
 
-tasks.matching { it.name == 'preBuild' }.configureEach { Task task ->
+tasks.matching { it.name == 'preBuild' }.configureEach { task ->
     task.dependsOn('patchSourceJniLibs16k')
 }
 

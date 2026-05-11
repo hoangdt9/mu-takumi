@@ -1,6 +1,7 @@
 package com.muonline.client;
 
 import android.app.NativeActivity;
+import android.content.Context;
 import android.content.res.AssetManager;
 import android.graphics.Color;
 import android.os.Build;
@@ -13,6 +14,7 @@ import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputConnectionWrapper;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 
@@ -26,6 +28,9 @@ public class MuMainNativeActivity extends NativeActivity {
     static {
         System.loadLibrary("main");
     }
+
+    /** Build-time / Gradle overrides for first TCP hop (see app/build.gradle). */
+    private static native void nativeApplyNetworkBootstrap(String host, int port);
 
     private static native void nativeOnTextInput(String text);
     private static native void nativeOnKeyEvent(
@@ -59,6 +64,8 @@ public class MuMainNativeActivity extends NativeActivity {
         imeBridge.setTextIsSelectable(false);
         imeBridge.setFocusable(true);
         imeBridge.setFocusableInTouchMode(true);
+        // Do not pop the soft keyboard on splash / gameplay; chat can call showSoftInput when needed.
+        imeBridge.setShowSoftInputOnFocus(false);
         imeBridge.setSingleLine(true);
         imeBridge.setInputType(
             InputType.TYPE_CLASS_TEXT
@@ -73,7 +80,18 @@ public class MuMainNativeActivity extends NativeActivity {
         params.leftMargin = 0;
         params.topMargin = 0;
         addContentView(imeBridge, params);
-        imeBridge.requestFocus();
+        imeBridge.post(
+            () -> {
+                View decor = getWindow() != null ? getWindow().getDecorView() : null;
+                if (decor == null) {
+                    return;
+                }
+                InputMethodManager imm =
+                    (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                if (imm != null) {
+                    imm.hideSoftInputFromWindow(decor.getWindowToken(), 0);
+                }
+            });
     }
 
     private final class BridgeEditText extends EditText {
@@ -267,6 +285,9 @@ public class MuMainNativeActivity extends NativeActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        nativeApplyNetworkBootstrap(
+            BuildConfig.MU_BOOTSTRAP_SERVER_HOST,
+            BuildConfig.MU_BOOTSTRAP_SERVER_PORT);
         extractGameAssets();
         configureFullscreenWindow();
         super.onCreate(savedInstanceState);
@@ -278,9 +299,6 @@ public class MuMainNativeActivity extends NativeActivity {
         super.onWindowFocusChanged(hasFocus);
         if (hasFocus) {
             configureFullscreenWindow();
-            if (imeBridge != null) {
-                imeBridge.requestFocus();
-            }
         }
     }
 }

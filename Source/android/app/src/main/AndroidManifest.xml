@@ -19,7 +19,7 @@
 
     <application
         android:allowBackup="false"
-        android:label="MU Online"
+        android:label="${takumiAppLabel}"
         android:icon="@mipmap/ic_launcher"
         android:hardwareAccelerated="true"
         android:largeHeap="true"
@@ -27,7 +27,7 @@
 
         <activity
             android:name=".PreloadActivity"
-            android:label="MU Online"
+            android:label="${takumiAppLabel}"
             android:exported="true"
             android:screenOrientation="landscape"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|keyboard|navigation|uiMode"
@@ -43,7 +43,7 @@
 
         <activity
             android:name=".MuMainNativeActivity"
-            android:label="MU Online"
+            android:label="${takumiAppLabel}"
             android:exported="false"
             android:screenOrientation="landscape"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|keyboard|navigation|uiMode"

@@ -27,6 +27,7 @@
 #include <mutex>
 #include <string>
 #include <unordered_map>
+#include <string.h>
 
 extern "C" int32_t ConnectionManager_Connect(
     const wchar_t* host,
@@ -34,6 +35,7 @@ extern "C" int32_t ConnectionManager_Connect(
     BYTE isEncrypted,
     void(*onPacket)(int32_t, int32_t, uint8_t*),
     void(*onDisconnect)(int32_t));
+extern "C" int32_t ConnectionManager_GetLastConnectErrno(void);
 extern "C" void ConnectionManager_Disconnect(int32_t handle);
 extern "C" void ConnectionManager_Send(int32_t handle, const uint8_t* data, int32_t size);
 extern "C" void SendServerListRequest(int32_t handle);
@@ -625,7 +627,8 @@ BOOL CWsctlc::Close(SOCKET& socket)
 
 BOOL CWsctlc::Connect(char* ipAddr, unsigned short port, DWORD)
 {
-    if (m_hWnd == NULL || ipAddr == nullptr || ipAddr[0] == '\0')
+    // Android path does not use a real HWND; blocking connect runs on the caller thread.
+    if (ipAddr == nullptr || ipAddr[0] == '\0')
     {
         return FALSE;
     }
@@ -645,7 +648,19 @@ BOOL CWsctlc::Connect(char* ipAddr, unsigned short port, DWORD)
 
     if (handle <= 0)
     {
-        g_ErrorReport.Write("[Android Socket] connect failed ip=%s port=%d\r\n", ipAddr, port);
+        const int32_t lastErr = ConnectionManager_GetLastConnectErrno();
+        char errBuf[128] = {};
+        if (lastErr != 0)
+        {
+            strerror_r(lastErr, errBuf, sizeof(errBuf));
+        }
+        g_ErrorReport.Write(
+            "[Android Socket] connect failed ip=%s port=%d errno=%d (%s). "
+            "Kiem tra may chu dang mo TCP tai dia chi nay va dien thoai cung mang Wi-Fi (build: -PmuBootstrapServerHost / -PmuBootstrapServerPort).\r\n",
+            ipAddr,
+            port,
+            static_cast<int>(lastErr),
+            errBuf[0] != 0 ? errBuf : "unknown");
         return FALSE;
     }
 

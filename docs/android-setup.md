@@ -48,14 +48,11 @@ powershell
   & .\gradlew.bat ':app:assembleUniversalDebug' '-PmuRequiredAbis=armeabi-v7a,arm64-v8a,x86,x86_64' '-PmuFailOnMissingRequiredAbis=true'
   & .\gradlew.bat ':app:assembleUniversalRelease' '-PmuRequiredAbis=armeabi-v7a,arm64-v8a,x86,x86_64' '-PmuFailOnMissingRequiredAbis=true'
 
-	fix ip và auto update
+### Fix IP và URL `data.zip` (bản Takumi hiện tại)
 
-  - Source/5.Main/source/android_main.cpp:241
-  - Source/5.Main/source/android_main.cpp:6557
-  - Source/5.Main/source/android_main.cpp:7079
-  - Source/5.Main/source/LauncherHelper.h:36
-  - Source/5.Main/source/GameConfig/GameConfigConstants.h:58
-  - Source/5.Main/source/Winmain.cpp:1564
-  - Source/5.Main/source/Scenes/SceneCore.cpp:56
+- **Server IP / cổng (native):** các file trong `Source/5.Main/source/` (ví dụ `android_main.cpp`, `GameConfig/GameConfigConstants.h`, `LauncherHelper.h`, `Winmain.cpp`, `Scenes/SceneCore.cpp`) — chỉnh theo IP máy chạy Connect/Login thật.
+- **`data.zip` (Android):** không sửa cứng một dòng trong `PreloadActivity` nữa; thứ tự URL do `buildDataZipUrlCandidates()`:
+  1. `BuildConfig.DATA_ZIP_URL_LAN` (Gradle `DATA_ZIP_URL_LAN`, mặc định trong `app/build.gradle`; override `-PmuDataZipLan=http://<LAN>:18080/data.zip`).
+  2. Fallback `http://update.daybreak.id.vn/update/data.zip`.
 
-   update ở /Source/android/app/src/main/java/com/muonline/client/PreloadActivity.java:51: http://update.daybreak.id.vn/update/data.zip.
+Chi tiết build Mac: `docs/ANDROID-DEV-MAC.md`.

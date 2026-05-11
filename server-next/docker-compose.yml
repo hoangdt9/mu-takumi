@@ -1,0 +1,25 @@
+# Takumi Server Next — PostgreSQL only (Mac / LAN Android QA).
+# The .NET host is expected to run on the host machine once `src/**/*.csproj` sources are restored.
+#
+# Usage:
+#   cd takumi/server-next
+#   cp -n .env.lan.example .env   # if you do not already have .env
+#   docker compose up -d
+#
+# Default publish: host port 54444 → container 5432 (override TAKUMI_POSTGRES_PUBLISH_PORT).
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: takumi-next-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: "${TAKUMI_PG_USER:-takumi}"
+      POSTGRES_PASSWORD: "${TAKUMI_PG_PASSWORD:-takumi}"
+      POSTGRES_DB: "${TAKUMI_PG_DATABASE:-takumi_runtime}"
+    ports:
+      - "${TAKUMI_POSTGRES_PUBLISH_PORT:-54444}:5432"
+    volumes:
+      - takumi_next_pgdata:/var/lib/postgresql/data
+
+volumes:
+  takumi_next_pgdata:

@@ -18,15 +18,15 @@ typedef struct __LAUNCHINFO {
 bool wzRegisterConnectionKey();		//. Register connection key.
 void wzUnregisterConnectionKey();	//. Unregister connection key
 unsigned long wzGetConnectionKey();
-/* Connection Key°¡ ¾ø´Ù¸é ½ÇÆÐÇÑ´Ù.(return 0xFFFFFFFF) */
+/* Connection Keyï¿½ï¿½ ï¿½ï¿½ï¿½Ù¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½.(return 0xFFFFFFFF) */
 
 bool wzPushLaunchInfo(const WZLAUNCHINFO& LaunchInfo);
-/* Á¢¼ÓÅ°°¡ ¾ø°Å³ª Á¢¼ÓÅ°°¡ µî·ÏµÈÈÄ 5ÃÊ ÀÌ³»¿¡ ÇÔ¼ö°¡ È£ÃâµÇÁö ¸øÇßÀ»°æ¿ì ½ÇÆÐÇÑ´Ù. */
-/* ÇÔ¼ö°¡ È£ÃâµÈ µÚ¿¡´Â Á¢¼ÓÅ°°¡ µî·ÏÇØÁ¦µÈ´Ù */
+/* ï¿½ï¿½ï¿½ï¿½Å°ï¿½ï¿½ ï¿½ï¿½ï¿½Å³ï¿½ ï¿½ï¿½ï¿½ï¿½Å°ï¿½ï¿½ ï¿½ï¿½Ïµï¿½ï¿½ï¿½ 5ï¿½ï¿½ ï¿½Ì³ï¿½ï¿½ï¿½ ï¿½Ô¼ï¿½ï¿½ï¿½ È£ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½. */
+/* ï¿½Ô¼ï¿½ï¿½ï¿½ È£ï¿½ï¿½ï¿½ ï¿½Ú¿ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Å°ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È´ï¿½ */
 
 bool wzPopLaunchInfo(WZLAUNCHINFO& LaunchInfo);				
-/* LaunchInfo°¡ ¾ø´Ù¸é ½ÇÆÐÇÑ´Ù. */
-/* ÇÔ¼ö°¡ È£ÃâµÈ µÚ¿¡´Â Á¢¼ÓÁ¤º¸°¡ »èÁ¦µÈ´Ù */
+/* LaunchInfoï¿½ï¿½ ï¿½ï¿½ï¿½Ù¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½. */
+/* ï¿½Ô¼ï¿½ï¿½ï¿½ È£ï¿½ï¿½ï¿½ ï¿½Ú¿ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½È´ï¿½ */
 
 /*
 	// example

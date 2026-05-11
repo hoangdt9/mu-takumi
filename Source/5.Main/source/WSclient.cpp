@@ -420,6 +420,20 @@ void ReceiveServerConnect(BYTE* ReceiveBuffer) //Recebe informação do ConnectS
 	if (CreateSocket(IP, Data->Port))
 	{
 		g_bGameServerConnected = TRUE;
+		// server-next compatibility:
+		// Some Takumi Server Next stacks may not implement the classic "join server" handshake
+		// (F1 sub=0x00) that normally triggers hiding ServerSelWin and showing LoginWin.
+		// If we are connected to the known Takumi login port, enable Login UI immediately so
+		// the client can send the login request.
+		if (Data->Port == 44606)
+		{
+			CUIMng& rUIMng = CUIMng::Instance();
+			rUIMng.HideWin(&rUIMng.m_ServerSelWin);
+			rUIMng.ShowWin(&rUIMng.m_LoginWin);
+			HeroKey = 0;
+			CurrentProtocolState = RECEIVE_JOIN_SERVER_SUCCESS;
+			g_ErrorReport.Write("[AndroidLogin] Server-next fallback: bypass join server handshake, enable login UI (port=%d)\r\n", Data->Port);
+		}
 	}
 #else
 	gProtocolSend.DisconnectServer();

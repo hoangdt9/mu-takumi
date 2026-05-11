@@ -94,6 +94,48 @@ public class MuMainNativeActivity extends NativeActivity {
             });
     }
 
+    /**
+     * Invoked from native ({@code MobilePlatform}) when a Win32-style edit control gains focus
+     * (login, chat). {@code ANativeActivity_showSoftInput} used by Sokol is unreliable here;
+     * driving {@link InputMethodManager} on the invisible bridge view matches IME events to
+     * {@link #nativeOnTextInput} / {@link #nativeOnKeyEvent}.
+     */
+    public void showImeBridgeKeyboard() {
+        runOnUiThread(
+            () -> {
+                installImeBridge();
+                if (imeBridge == null) {
+                    return;
+                }
+                imeBridge.requestFocus();
+                InputMethodManager imm =
+                    (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                if (imm != null) {
+                    imm.showSoftInput(imeBridge, InputMethodManager.SHOW_IMPLICIT);
+                }
+            });
+    }
+
+    /** Invoked from native when text input mode ends. */
+    public void hideImeBridgeKeyboard() {
+        runOnUiThread(
+            () -> {
+                if (imeBridge == null) {
+                    return;
+                }
+                InputMethodManager imm =
+                    (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                if (imm != null) {
+                    imm.hideSoftInputFromWindow(imeBridge.getWindowToken(), 0);
+                }
+                imeBridge.clearFocus();
+                View decor = getWindow() != null ? getWindow().getDecorView() : null;
+                if (decor != null) {
+                    decor.requestFocus();
+                }
+            });
+    }
+
     private final class BridgeEditText extends EditText {
         BridgeEditText(MuMainNativeActivity activity) {
             super(activity);

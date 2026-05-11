@@ -10,6 +10,8 @@
 #include <initializer_list>
 
 #if defined(__ANDROID__)
+#include <android/native_activity.h>
+#include <jni.h>
 #include <unistd.h>
 #endif
 
@@ -41,6 +43,63 @@ std::string MU_GetFirstExistingPath(std::initializer_list<const char*> candidate
     return {};
 }
 } // namespace
+
+#if defined(__ANDROID__)
+namespace
+{
+void MU_AndroidCallActivityVoidMethod(const char* methodName, const char* methodSig)
+{
+    const void* pActivity = sapp_android_get_native_activity();
+    if (pActivity == nullptr)
+    {
+        return;
+    }
+
+    auto* nativeActivity = static_cast<ANativeActivity*>(const_cast<void*>(pActivity));
+    JavaVM* vm = nativeActivity->vm;
+    JNIEnv* env = nullptr;
+    const jint getEnvResult = vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6);
+    bool needDetach = false;
+    if (getEnvResult == JNI_EDETACHED)
+    {
+        if (vm->AttachCurrentThread(&env, nullptr) != JNI_OK || env == nullptr)
+        {
+            return;
+        }
+        needDetach = true;
+    }
+    else if (getEnvResult != JNI_OK || env == nullptr)
+    {
+        return;
+    }
+
+    jclass clazz = env->GetObjectClass(nativeActivity->clazz);
+    if (clazz != nullptr)
+    {
+        jmethodID mid = env->GetMethodID(clazz, methodName, methodSig);
+        if (mid == nullptr)
+        {
+            env->ExceptionClear();
+        }
+        else
+        {
+            env->CallVoidMethod(nativeActivity->clazz, mid);
+        }
+        if (env->ExceptionCheck())
+        {
+            env->ExceptionDescribe();
+            env->ExceptionClear();
+        }
+        env->DeleteLocalRef(clazz);
+    }
+
+    if (needDetach)
+    {
+        vm->DetachCurrentThread();
+    }
+}
+} // namespace
+#endif
 
 void MU_MobilePlatformInit()
 {
@@ -77,13 +136,23 @@ void MU_MobileClearKeyboardState()
 void MU_MobileStartTextInput()
 {
     g_textInputActive = true;
+#if defined(__ANDROID__)
+    // Sokol uses ANativeActivity_showSoftInput, which often does not show IME for this app;
+    // the Java bridge view receives composition and forwards to native.
+    MU_AndroidCallActivityVoidMethod("showImeBridgeKeyboard", "()V");
+#else
     sapp_show_keyboard(true);
+#endif
 }
 
 void MU_MobileStopTextInput()
 {
     g_textInputActive = false;
+#if defined(__ANDROID__)
+    MU_AndroidCallActivityVoidMethod("hideImeBridgeKeyboard", "()V");
+#else
     sapp_show_keyboard(false);
+#endif
 }
 
 bool MU_MobileIsTextInputActive()

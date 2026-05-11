@@ -439,14 +439,15 @@ public class PreloadActivity extends Activity {
                 return;
             }
 
-            Log.e(TAG, "Preload failed", ex);
+            Log.e(TAG, "Preload failed (HTTP data.zip, not MU connect server)", ex);
             postUi(() -> {
                 if (cancelled) {
                     return;
                 }
                 stageText.setText("Preload failed");
                 detailText.setText(ex.getMessage() != null ? ex.getMessage() : "Unknown error");
-                timerText.setText("Please reopen app after checking server/port.");
+                timerText.setText(
+                    "data.zip over HTTP/LAN failed. Fix muDataZipLan / static host, or copy Data (same as dataredl).");
             });
         }
     }

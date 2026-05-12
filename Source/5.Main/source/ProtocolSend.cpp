@@ -5,6 +5,9 @@
 #include "UIMng.h"
 #include "WSclient.h"
 #include "wsclientinline.h"
+#ifdef __ANDROID__
+#include "Utilities/Log/ErrorReport.h"
+#endif
 
 CProtocolSend gProtocolSend;
 
@@ -165,7 +168,15 @@ void CProtocolSend::SendCheckOnline()
 
 void CProtocolSend::SendRequestLogInNew(char* account, char* password)
 {
-	SendRequestLogIn(account,password);
+#ifdef __ANDROID__
+	g_ErrorReport.Write(
+		"[AndroidLogin] SendRequestLogInNew enter account=%s\r\n",
+		account ? account : "");
+#endif
+	SendRequestLogIn(account, password);
+#ifdef __ANDROID__
+	g_ErrorReport.Write("[AndroidLogin] SendRequestLogInNew exit (after SendRequestLogIn macro)\r\n");
+#endif
 	return;
 
 	PMSG_CONNECT_ACCOUNT_SEND pMsg = { 0 };

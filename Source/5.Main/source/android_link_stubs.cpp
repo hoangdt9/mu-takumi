@@ -16,6 +16,7 @@
 #include "android/SimpleModulusCrypt.h"
 
 #include <SDL_mixer.h>
+#include <android/log.h>
 
 #include <algorithm>
 #include <cmath>
@@ -151,14 +152,11 @@ bool ShouldSuppressAndroidRuntimeLog(const char* format)
         return true;
     }
 
-    static const char* kParsedPacketPrefix = "[Android Socket] parsed packet";
-    static const char* kSendPacketPrefix = "[Android Socket] send packet";
+    // Do not suppress "[Android Socket] send packet" / "parsed packet": those are required for
+    // diagnosing login and MU TCP flows (they were hidden here and looked like "no send/recv").
     static const char* kOpenMonsterPrefix = "OpenMonsterModel(";
 
-    return
-        std::strncmp(format, kParsedPacketPrefix, std::strlen(kParsedPacketPrefix)) == 0 ||
-        std::strncmp(format, kSendPacketPrefix, std::strlen(kSendPacketPrefix)) == 0 ||
-        std::strncmp(format, kOpenMonsterPrefix, std::strlen(kOpenMonsterPrefix)) == 0;
+    return std::strncmp(format, kOpenMonsterPrefix, std::strlen(kOpenMonsterPrefix)) == 0;
 }
 }
 
@@ -468,11 +466,26 @@ void CWsctlc::AndroidOnPacket(int32_t handle, int32_t size, uint8_t* data)
         }
         else
         {
+            char hexPrefix[4 * 16 + 8] = {};
+            const int avail = client->m_nRecvBufLen - offset;
+            const int n = (avail > 16) ? 16 : avail;
+            int p = 0;
+            for (int i = 0; i < n && p < (int)sizeof(hexPrefix) - 4; ++i)
+            {
+                p += std::snprintf(
+                    hexPrefix + p,
+                    sizeof(hexPrefix) - static_cast<size_t>(p),
+                    "%02X ",
+                    static_cast<unsigned int>(client->m_RecvBuf[offset + i]));
+            }
             g_ErrorReport.Write(
-                "[Android Socket] packet sync lost handle=%d first=0x%02X len=%d\r\n",
+                "[Android Socket] packet sync lost handle=%d first=0x%02X bufLen=%d prefix=%s\r\n",
                 handle,
                 client->m_RecvBuf[offset],
-                client->m_nRecvBufLen);
+                client->m_nRecvBufLen,
+                hexPrefix);
+            g_ErrorReport.Write(
+                "[Android Socket] sync hint: expect C1/C2/C3/C4 — if garbage, wrong TCP service on port or extra Protect/XOR layer\r\n");
             client->m_nRecvBufLen = 0;
             return;
         }
@@ -671,7 +684,11 @@ BOOL CWsctlc::Connect(char* ipAddr, unsigned short port, DWORD)
     }
 
     m_socket = static_cast<SOCKET>(handle);
-    g_ErrorReport.Write("[Android Socket] connected ip=%s port=%d handle=%d\r\n", ipAddr, port, handle);
+    g_ErrorReport.Write(
+        "[Android Socket] connected ip=%s port=%d handle=%d [AndroidLogin] native CM ok\r\n",
+        ipAddr,
+        port,
+        handle);
 
     if (IsConnectServerPort(port))
     {

@@ -21,6 +21,10 @@ extern ItemAddOptioninfo*			g_pItemAddOptioninfo;
 #include "Utilities/Log/DebugAngel.h" 
 #include "PacketManager.h"
 
+#ifdef __ANDROID__
+#include "Utilities/Log/ErrorReport.h"
+#endif
+
 #define PACKET_MOVE         0xD4
 #define PACKET_POSITION     0x15
 #define PACKET_MAGIC_ATTACK 0xDB
@@ -71,7 +75,17 @@ __forceinline int SendPacket( char *buf, int len, BOOL bEncrypt = FALSE, BOOL bF
 	gProtocolSend.SendPacketClassic((uint8_t*)buf,len);
 
 	if(SceneFlag >= CHARACTER_SCENE)
+	{
+#ifdef __ANDROID__
+		if (len >= 4 && static_cast<unsigned char>(buf[2]) == 0xF1 && static_cast<unsigned char>(buf[3]) == 0x01)
+		{
+			g_ErrorReport.Write(
+				"[AndroidLogin] WARNING SendPacket early return (SceneFlag>=CHARACTER_SCENE); login packet NOT sent over socket. SceneFlag=%d\r\n",
+				SceneFlag);
+		}
+#endif
 		return 1;
+	}
 	#endif
 
 #ifdef SAVE_PACKET
@@ -99,6 +113,21 @@ __forceinline int SendPacket( char *buf, int len, BOOL bEncrypt = FALSE, BOOL bF
 	PWMSG_ENCRYPTED wc;
 
 	int iSize = g_SimpleModulusCS.Encrypt( NULL, byBuffer + iSkip, len - iSkip);
+
+#ifdef __ANDROID__
+	const bool loginF1 =
+		len >= 4 && static_cast<unsigned char>(byBuffer[0]) == 0xC1 &&
+		static_cast<unsigned char>(byBuffer[2]) == 0xF1 && static_cast<unsigned char>(byBuffer[3]) == 0x01;
+	if (loginF1)
+	{
+		g_ErrorReport.Write(
+			"[AndroidLogin] SendPacket login encrypt smEncSize=%d plainWire=%d payloadAfterSkip=%d pktSerial=0x%02X\r\n",
+			iSize,
+			len,
+			len - iSkip,
+			static_cast<unsigned int>((g_byPacketSerialSend - 1u) & 0xFFu));
+	}
+#endif
 	
 	if ( iSize < 256 && bForceC4 == FALSE)
 	{
@@ -110,6 +139,12 @@ __forceinline int SendPacket( char *buf, int len, BOOL bEncrypt = FALSE, BOOL bF
 		g_SimpleModulusCS.Encrypt( bc.byBuffer, byBuffer + iSkip, len - iSkip);
 		assert( iSize < 256);
 
+#ifdef __ANDROID__
+		if (loginF1)
+		{
+			g_ErrorReport.Write("[AndroidLogin] SendPacket login sending C3 wireLen=%d (C1+F1:01 path)\r\n", iLength);
+		}
+#endif
 		return ( g_pSocketClient->sSend( ( char*)&bc, iLength));
 	}
 	else
@@ -123,6 +158,12 @@ __forceinline int SendPacket( char *buf, int len, BOOL bEncrypt = FALSE, BOOL bF
 		g_SimpleModulusCS.Encrypt( wc.byBuffer, byBuffer + iSkip, len - iSkip);
 
 		assert( iSize <= MAX_SPE_BUFFERSIZE_);
+#ifdef __ANDROID__
+		if (loginF1)
+		{
+			g_ErrorReport.Write("[AndroidLogin] SendPacket login sending C4 wireLen=%d\r\n", iLength);
+		}
+#endif
 		return ( g_pSocketClient->sSend( ( char*)&wc, iLength));
 	}
 }

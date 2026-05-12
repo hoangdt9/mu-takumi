@@ -29,6 +29,12 @@ Optional: first-hop `data.zip` URL (Docker static host on LAN) — default `http
 
 Output: `app/build/outputs/apk/realDevicePreloadDefault/debug/` (APK name includes flavor segments; exact path may vary by AGP).
 
+### Tránh tải lại `data.zip` mỗi lần rebuild (dev)
+
+- **`assemble...Debug`** bật `BuildConfig.DEV_SKIP_DATA_ZIP` (mặc định **true**): nếu đã có file marker `.mu_data_ready_v1` hoặc thư mục `Data/` đủ heuristic (không bắt buộc đủ mọi file trong danh sách Takumi), PreloadActivity **bỏ qua** HTTP `data.zip`.
+- Cài đè bằng `adb install -r` **cùng `applicationId`** (`preloadDefault`, không dùng `preloadDatafresh`) để giữ `Android/data/com.muonline.client/files/`.
+- Buộc đồng bộ đủ như release: thêm `-PmuDevSkipDataZip=false` khi build debug.
+
 ## Build APK (emulator — x86)
 
 ```bash
@@ -89,6 +95,53 @@ adb logcat -c && adb logcat -v threadtime MuPreload:I MuMain:I TakumiErrorReport
 ## Test Android với **Takumi Server Next** trên Mac (Docker tối thiểu)
 
 Khi client/APK trỏ tới **Connect/Login Takumi** (ví dụ cổng **`44605` / `44606`** trong `server-next/.env`, biến `TAKUMI_PUBLIC_HOST` = IP LAN máy Mac), chỉ cần chạy **một** stack server — tránh chạy song song **OpenMU** (`44505`/`55901`…) cùng lúc nếu không cần, để log và cấu hình client không lẫn cổng.
+
+### Docker Desktop: Postgres vs container `takumi-next-host`
+
+- **`server-next/docker-compose.yml` trong repo chỉ chạy Postgres** (mặc định host port **54444**). Container **`takumi-next-host`** trên máy bạn là image/compose **riêng** (thường map **44605** + **44606**); `lsof` hiện **`com.docke`** chứ không phải `dotnet` trực tiếp — đó là bình thường.
+- **Đừng `docker restart takumi-next-host` nhẹ nhàng** nếu CMD đang là `dotnet run --project src/Takumi.Server.Host` mà repo **chưa có** project Host đầy đủ: container sẽ **crash loop** (`Couldn't find a project to run`). Cần **sửa Dockerfile/CMD** hoặc mount đúng source trước khi restart.
+- Log kiểu **`[login] ignored unsupported MU packet`** trong container = server nhận **C3** nhưng **không xử lý** (decrypt/ghi không khớp hoặc handler thiếu) → client không có byte trả về.
+- **Kiểm tra nhanh cổng + container**: từ repo gốc `takumi`:
+
+```bash
+./server-next/scripts/check-takumi-ports.sh
+```
+
+- **Chỉ cần login smoke (cổng 44606)** trong Docker: dùng file compose kèm `docker-compose.legacy-login-host.yml` (xem comment trong file). **Lưu ý:** compose đó **không** phục vụ Connect Server (**44605**); APK vẫn cần nguồn server list (container/host khác hoặc cấu hình client).
+
+### LegacyLoginHost (.NET) vs cổng **44606**
+
+#### Dấu hiệu vàng từ `adb logcat -s TakumiErrorReport:D`
+
+Sau dòng **`[AndroidLogin] TCP session start … port=44606`** bạn **phải** thấy ngay (vài ms–vài chục ms) một dòng:
+
+`[AndroidLogin] recv tcp … b0..b7=C1 …` (gói join `F1 00`, độ dài 12, byte đầu `C1`).
+
+- **Nếu không có `recv tcp` nào trước khi bấm login** → TCP đã `connected` nhưng **server không gửi một byte**. Đây **không** phải lỗi SimpleModulus trên điện thoại; service đang listen **44606** không gửi join (hoặc container nhận login nhưng **ignore** packet — xem log Docker). Trên **LegacyLoginHost** đúng chuẩn, console có **`sent join C1 F1 00`** và logcat có **`recv tcp`** với byte đầu **`C1`**.
+- **Nếu có `recv tcp` (join) nhưng sau login vẫn không có `Translate F1`** → khi đó mới xem **`Dec2.dat`** khớp host/client (`TAKUMI_DEC2_PATH`) và account (`TAKUMI_ACCOUNTS`).
+
+Kiểm tra ai đang giữ cổng: `lsof -nP -iTCP:44606 -sTCP:LISTEN`. **Docker** (`com.docker…`) chỉ là process publish cổng — ổn nếu container thực sự là login host đúng chuẩn (join + phản hồi login). Muốn chạy **`dotnet run` trực tiếp trên Mac** trên **44606**, trước hết **`docker stop`** container đang chiếm cổng. Hoặc đổi cổng và **sửa client** cho trùng, ví dụ **44607**:
+
+```bash
+export TAKUMI_LOGIN_PORT=44607
+export TAKUMI_DEC2_PATH="/absolute/path/to/takumi/.../Data/Dec2.dat"   # cùng file với Data trên điện thoại; lấy từ repo ClientBuild hoặc adb pull
+cd server-next
+dotnet run --project src/Takumi.Server.LegacyLoginHost/Takumi.Server.LegacyLoginHost.csproj -c Release
+```
+
+Bắt buộc thấy log **`[keys] Loaded Dec2.dat`**; nếu chỉ thấy cảnh báo “default keys” thì **login mã hóa (C3) sẽ không giải được** — `TAKUMI_DEC2_PATH` phải trỏ tới file thật, không dùng chuỗi placeholder.
+
+### Log dừng tại `> Try to Login "…"` và **không** có `[AndroidLogin] Translate F1`
+
+Luồng C (`LoginWin.cpp` → `SendRequestLogIn` / Android `ConnectionManager_SendLogin`) gửi login **C3 F1 01** đã mã hóa. Sau đó client chỉ xử lý tiếp khi `ProtocolCompiler` nhận được **C1 F1 01** (hoặc C3 rồi giải SM) và gọi `TranslateProtocol` — log **`[AndroidLogin] Translate F1 sub=0x01 value=0x…`** xuất hiện tại đó (`WSclient.cpp`).
+
+Nếu **không** có `Translate F1`, thường là:
+
+1. **Không có phản hồi TCP đúng host**: cổng game (ví dụ `44606`) đang là **Docker/nginx/OpenMU** khác, không phải `LegacyLoginHost` — kiểm tra `lsof -nP -iTCP:44606 -sTCP:LISTEN`. Process nhận kết nối phải là **`dotnet`** của host bạn chạy (hoặc đổi cổng + sửa bảng server trong client cho khớp).
+2. **Giải mã login phía server thất bại**: `Dec2.dat` trên máy chạy host **khác** file trong `…/Android/data/…/files/Data/Dec2.dat` trên điện thoại → pipeline SM không ra gói plaintext → handler không trả `F1 01`.
+3. **Đã có phản hồi nhưng sai mật khẩu / serial / version**: khi đó **phải** thấy `Translate F1` với `value=0x00` (sai pass) hoặc `0x06` (serial/version). Nếu log có `passLen=6` mà `TAKUMI_ACCOUNTS` vẫn mặc định `test:test` (4 ký tự), đặt lại ví dụ `TAKUMI_ACCOUNTS=test:yourSixCharPass`.
+
+GameServer C (`CGConnectAccountRecv`) chỉ gọi `PacketArgumentDecrypt` cho **10 byte đầu** của password (`sizeof(password)-1` với `password[11]`). LegacyLoginHost đã căn theo hành vi đó.
 
 ### Nên bật
 

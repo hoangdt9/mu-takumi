@@ -373,12 +373,19 @@ android {
             debuggable true
             jniDebuggable true
             buildConfigField "boolean", "ENABLE_LOGS", muEnableLogs ? "true" : "false"
+            // Skip HTTP data.zip when marker or existing Data/ passes relaxed checks (see PreloadActivity).
+            // Default ON for faster iterative installs; full sync: -PmuDevSkipDataZip=false
+            def devSkipDataZip = project.hasProperty('muDevSkipDataZip')
+                ? project.property('muDevSkipDataZip').toString().toBoolean()
+                : true
+            buildConfigField "boolean", "DEV_SKIP_DATA_ZIP", devSkipDataZip ? "true" : "false"
         }
         release {
             minifyEnabled false
             debuggable false
             signingConfig signingConfigs.debug
             buildConfigField "boolean", "ENABLE_LOGS", muEnableLogs ? "true" : "false"
+            buildConfigField "boolean", "DEV_SKIP_DATA_ZIP", "false"
         }
     }
 

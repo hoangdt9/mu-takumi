@@ -19,6 +19,7 @@
 #include "../UIMng.h"
 #include "../Input.h"
 #include "../WSclient.h"
+#include "../wsclientinline.h"
 #include "../Utilities/Log/muConsoleDebug.h"
 #include "../ZzzInterface.h"
 #include "../GlobalText.h"
@@ -339,7 +340,10 @@ void NewMoveLogInScene()
             rUIMng.ShowWin(&rUIMng.m_SysMenuWin);
         }
     }
-    if (RECEIVE_LOG_IN_SUCCESS == CurrentProtocolState)
+    const bool loginOkPendingScene =
+        RECEIVE_LOG_IN_SUCCESS == CurrentProtocolState
+        || (RECEIVE_CHARACTERS_LIST == CurrentProtocolState && SceneFlag == LOG_IN_SCENE && LogIn == 2);
+    if (loginOkPendingScene)
     {
         g_ErrorReport.Write(L"> Request Character list\r\n");
 

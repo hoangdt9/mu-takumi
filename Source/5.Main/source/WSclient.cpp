@@ -423,16 +423,45 @@ void ReceiveServerConnect(BYTE* ReceiveBuffer) //Recebe informação do ConnectS
 		// server-next compatibility:
 		// Some Takumi Server Next stacks may not implement the classic "join server" handshake
 		// (F1 sub=0x00) that normally triggers hiding ServerSelWin and showing LoginWin.
-		// If we are connected to the known Takumi login port, enable Login UI immediately so
-		// the client can send the login request.
-		if (Data->Port == 44606)
+		// Enable Login UI when CS redirects to the game/login endpoint (game port != connect-server port),
+		// not only when the game port is exactly 44606.
+#if defined(__ANDROID__)
+		const bool enableLoginUiFallback = (static_cast<unsigned short>(Data->Port) != g_ServerPort);
+#else
+		const bool enableLoginUiFallback = (Data->Port == 44606);
+#endif
+		if (enableLoginUiFallback)
 		{
 			CUIMng& rUIMng = CUIMng::Instance();
 			rUIMng.HideWin(&rUIMng.m_ServerSelWin);
 			rUIMng.ShowWin(&rUIMng.m_LoginWin);
 			HeroKey = 0;
 			CurrentProtocolState = RECEIVE_JOIN_SERVER_SUCCESS;
-			g_ErrorReport.Write("[AndroidLogin] Server-next fallback: bypass join server handshake, enable login UI (port=%d)\r\n", Data->Port);
+			g_ErrorReport.Write(
+				"[AndroidLogin] Post-CS redirect: bypass join handshake wait, enable login UI (csPort=%u gamePort=%d)\r\n",
+				static_cast<unsigned int>(g_ServerPort),
+				static_cast<int>(Data->Port));
+		}
+	}
+#else
+#if defined(__ANDROID__)
+	// NEW_PROTOCOL_SYSTEM builds use Asio CustomClient on PC; Android uses JNI + SocketClient for MU TCP.
+	if (CreateSocket(IP, Data->Port))
+	{
+		g_bGameServerConnected = TRUE;
+		g_ConsoleDebug->Write(MCD_NORMAL, " > Android CreateSocket (login/data port)");
+		const bool enableLoginUiFallback = (static_cast<unsigned short>(Data->Port) != g_ServerPort);
+		if (enableLoginUiFallback)
+		{
+			CUIMng& rUIMng = CUIMng::Instance();
+			rUIMng.HideWin(&rUIMng.m_ServerSelWin);
+			rUIMng.ShowWin(&rUIMng.m_LoginWin);
+			HeroKey = 0;
+			CurrentProtocolState = RECEIVE_JOIN_SERVER_SUCCESS;
+			g_ErrorReport.Write(
+				"[AndroidLogin] Post-CS redirect: bypass join handshake wait, enable login UI (csPort=%u gamePort=%d)\r\n",
+				static_cast<unsigned int>(g_ServerPort),
+				static_cast<int>(Data->Port));
 		}
 	}
 #else
@@ -443,6 +472,7 @@ void ReceiveServerConnect(BYTE* ReceiveBuffer) //Recebe informação do ConnectS
 		g_bGameServerConnected = TRUE;
 		g_ConsoleDebug->Write(MCD_NORMAL, " > ProtocolSend Connect");
 	}
+#endif
 #endif
 	
 	char Text[100];

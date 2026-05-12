@@ -4,7 +4,6 @@
 /*.dat
 *.sdf
 .tmp/
-.tmp\
 *.obj
 *.sbr
 *.tlog

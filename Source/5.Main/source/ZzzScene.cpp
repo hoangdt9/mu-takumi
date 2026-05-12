@@ -1327,6 +1327,41 @@ void NewMoveLogInScene()
 		CreateLogInScene();
 	}
 
+	// Login success must be handled even while the optional intro movie is playing
+	// (MOVIE_DIRECTSHOW: IsMoving() used to return early and never reached this).
+	// If the game server sends F3 (character list) immediately after F1 (login ok),
+	// ReceiveCharacterList may run first and set CurrentProtocolState to RECEIVE_CHARACTERS_LIST,
+	// so the strict RECEIVE_LOG_IN_SUCCESS check would never fire and the UI stays on login.
+	const bool loginOkPendingScene =
+		RECEIVE_LOG_IN_SUCCESS == CurrentProtocolState
+		|| (RECEIVE_CHARACTERS_LIST == CurrentProtocolState && SceneFlag == LOG_IN_SCENE && LogIn == 2);
+	if (loginOkPendingScene)
+	{
+#ifdef MOVIE_DIRECTSHOW
+		if (g_pMovieScene)
+		{
+			g_pMovieScene->Destroy();
+			SAFE_DELETE(g_pMovieScene);
+		}
+		CUIMng::Instance().SetMoving(false);
+#endif // MOVIE_DIRECTSHOW
+		g_ErrorReport.Write( "> Request Character list\r\n");
+
+		CCameraMove::GetInstancePtr()->SetTourMode(FALSE);
+
+		SceneFlag = CHARACTER_SCENE;
+
+		#ifdef NEW_PROTOCOL_SYSTEM
+			gProtocolSend.SendRequestCharactersListNew();
+		#else
+			SendRequestCharactersList(g_pMultiLanguage->GetLanguage());
+		#endif
+
+        ReleaseLogoSceneData();
+
+		ClearCharacters();
+	}
+
 #ifdef MOVIE_DIRECTSHOW
 	if(CUIMng::Instance().IsMoving() == true)
 	{
@@ -1363,25 +1398,6 @@ void NewMoveLogInScene()
 		}
 
 		
-	}
-
-	if (RECEIVE_LOG_IN_SUCCESS == CurrentProtocolState)
-	{
-		g_ErrorReport.Write( "> Request Character list\r\n");
-
-		CCameraMove::GetInstancePtr()->SetTourMode(FALSE);
-
-		SceneFlag = CHARACTER_SCENE;
-
-		#ifdef NEW_PROTOCOL_SYSTEM
-			gProtocolSend.SendRequestCharactersListNew();
-		#else
-			SendRequestCharactersList(g_pMultiLanguage->GetLanguage());
-		#endif
-
-        ReleaseLogoSceneData();
-
-		ClearCharacters();
 	}
 
 	g_ConsoleDebug->UpdateMainScene();

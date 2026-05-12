@@ -4,6 +4,7 @@
 
 #include "AndroidNetwork.h"
 #include "SimpleModulusCrypt.h"
+#include "Utilities/Log/ErrorReport.h"
 #include "WSclient.h"
 
 #include <android/log.h>
@@ -59,6 +60,8 @@ static void ProcessPacketCallback(const PacketInfo*) {}
 
 #define MU_EXPORT extern "C" __attribute__((visibility("default")))
 
+extern CErrorReport g_ErrorReport;
+
 namespace
 {
 constexpr int kConnectPollTimeoutMs = 10000;
@@ -100,6 +103,8 @@ struct AndroidConnState
     uint64_t lastRecvBytes;
     float uploadKBps;
     float downloadKBps;
+    /// Raw recv snippets for TakumiErrorReport — per socket so connect-server traffic cannot exhaust game-port logs.
+    std::atomic<int> takumiRecvDiagRemaining { 256 };
 
     explicit AndroidConnState(bool isEncrypted)
         : running(std::make_shared<std::atomic<bool>>(true))
@@ -373,6 +378,7 @@ void RecvLoop(
     int32_t handle,
     bool isEncrypted,
     const std::shared_ptr<std::atomic<bool>>& running,
+    AndroidConnState* connState,
     void(*onPacket)(int32_t, int32_t, uint8_t*),
     void(*onDisconnect)(int32_t))
 {
@@ -391,10 +397,63 @@ void RecvLoop(
             }
 
             NET_LOGE("[fd=%d] recv failed: count=%d errno=%d", handle, count, errno);
+            __android_log_print(
+                ANDROID_LOG_INFO,
+                "TakumiErrorReport",
+                "[AndroidLogin] recv closed/error fd=%d count=%d errno=%d",
+                handle,
+                count,
+                count < 0 ? errno : 0);
             break;
         }
 
         RecordRecvBytes(handle, static_cast<size_t>(count));
+
+        if (connState && connState->takumiRecvDiagRemaining.fetch_sub(1) > 0)
+        {
+            __android_log_print(
+                ANDROID_LOG_INFO,
+                "TakumiErrorReport",
+                "[AndroidLogin] recv tcp fd=%d nbytes=%d enc=%d "
+                "b0..b7=%02X %02X %02X %02X %02X %02X %02X %02X",
+                handle,
+                count,
+                isEncrypted ? 1 : 0,
+                count > 0 ? readBuffer[0] : 0,
+                count > 1 ? readBuffer[1] : 0,
+                count > 2 ? readBuffer[2] : 0,
+                count > 3 ? readBuffer[3] : 0,
+                count > 4 ? readBuffer[4] : 0,
+                count > 5 ? readBuffer[5] : 0,
+                count > 6 ? readBuffer[6] : 0,
+                count > 7 ? readBuffer[7] : 0);
+            g_ErrorReport.Write(
+                "[AndroidLogin] recv tcp fd=%d nbytes=%d enc=%d "
+                "b0..b7=%02X %02X %02X %02X %02X %02X %02X %02X\r\n",
+                handle,
+                count,
+                isEncrypted ? 1 : 0,
+                count > 0 ? readBuffer[0] : 0,
+                count > 1 ? readBuffer[1] : 0,
+                count > 2 ? readBuffer[2] : 0,
+                count > 3 ? readBuffer[3] : 0,
+                count > 4 ? readBuffer[4] : 0,
+                count > 5 ? readBuffer[5] : 0,
+                count > 6 ? readBuffer[6] : 0,
+                count > 7 ? readBuffer[7] : 0);
+        }
+        else if (!connState && count > 0)
+        {
+            static std::atomic<int> s_recvWithoutConn { 8 };
+            if (s_recvWithoutConn.fetch_sub(1) > 0)
+            {
+                g_ErrorReport.Write(
+                    "[AndroidLogin] BUG recv fd=%d nbytes=%d but connState=null\r\n",
+                    handle,
+                    count);
+            }
+        }
+
         const int budgetBefore = g_recvLogBudget.fetch_sub(1);
         if (budgetBefore > 0)
         {
@@ -671,9 +730,9 @@ MU_EXPORT int32_t ConnectionManager_Connect(
 
     const auto runningFlag = state->running;
     const bool encrypted = state->encrypted;
-    state->recvThread = std::thread([fd, encrypted, runningFlag, onPacket, onDisconnect]()
+    state->recvThread = std::thread([fd, encrypted, runningFlag, state, onPacket, onDisconnect]()
     {
-        RecvLoop(fd, encrypted, runningFlag, onPacket, onDisconnect);
+        RecvLoop(fd, encrypted, runningFlag, state, onPacket, onDisconnect);
     });
 
     if (encrypted)
@@ -681,6 +740,21 @@ MU_EXPORT int32_t ConnectionManager_Connect(
         g_gameEncryptCounter.store(0);
         g_gameDecryptCounter.store(0);
     }
+
+    g_recvLogBudget.store(2000);
+    g_ErrorReport.Write(
+        "[AndroidLogin] TCP session start fd=%d port=%d host=%s recvDiag=256 per-socket\r\n",
+        fd,
+        static_cast<int>(port),
+        hostAscii);
+    __android_log_print(
+        ANDROID_LOG_INFO,
+        "TakumiErrorReport",
+        "[AndroidLogin] TCP session start fd=%d port=%d host=%s recvDiag=256(per-socket) "
+        "(game port should show [AndroidLogin] recv tcp… immediately if LegacyLoginHost/GS sends join)",
+        fd,
+        static_cast<int>(port),
+        hostAscii);
 
     NET_LOGI("connect success %s:%d fd=%d", hostAscii, port, fd);
     ClearConnectFailure();

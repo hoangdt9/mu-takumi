@@ -825,6 +825,22 @@ public class PreloadActivity extends Activity {
 
     private boolean shouldSkipDownload(File existingDataDir, File externalRoot) {
         File marker = new File(externalRoot, DATA_READY_MARKER_FILE);
+
+        // Debug builds: avoid re-downloading ~500MB data.zip on every reinstall when Data/ or marker
+        // already exists (strict Takumi file list often forces download after partial/cached trees).
+        if (BuildConfig.DEV_SKIP_DATA_ZIP) {
+            if (marker.exists()) {
+                Log.i(TAG, "DEV_SKIP_DATA_ZIP: marker exists → skip HTTP data.zip (set -PmuDevSkipDataZip=false to force sync)");
+                return true;
+            }
+            if (isRelaxedDevDataPresent(existingDataDir)) {
+                writeDataReadyMarker(externalRoot, existingDataDir);
+                Log.i(TAG, "DEV_SKIP_DATA_ZIP: relaxed Data/ checks OK → skip HTTP data.zip at "
+                    + existingDataDir.getAbsolutePath());
+                return true;
+            }
+        }
+
         if (isDataFolderUsable(existingDataDir)) {
             writeDataReadyMarker(externalRoot, existingDataDir);
             Log.i(TAG, "Skip download, usable data exists: " + existingDataDir.getAbsolutePath()
@@ -835,6 +851,30 @@ public class PreloadActivity extends Activity {
         Log.i(TAG, "Data not usable, download required. root=" + externalRoot.getAbsolutePath()
             + " marker=" + marker.exists());
         return false;
+    }
+
+    /**
+     * Same heuristics as the tail of {@link #isDataFolderUsable} but without the strict
+     * {@link #TAKUMI_REQUIRED_FILES} gate — used only when {@link BuildConfig#DEV_SKIP_DATA_ZIP}.
+     */
+    private boolean isRelaxedDevDataPresent(File dataDir) {
+        if (dataDir == null || !dataDir.exists() || !dataDir.isDirectory()) {
+            return false;
+        }
+
+        int hintMatches = 0;
+        for (String hint : DATA_DIR_HINTS) {
+            File child = findChildDirectoryIgnoreCase(dataDir, hint);
+            if (child != null && child.isDirectory()) {
+                hintMatches++;
+            }
+        }
+        if (hintMatches >= 2) {
+            return true;
+        }
+
+        DataScanResult scanResult = quickScanDataFolder(dataDir, 3, 64);
+        return scanResult.fileCount >= 10 && scanResult.totalBytes >= (256L * 1024L);
     }
 
     private boolean isDataFolderUsable(File dataDir) {

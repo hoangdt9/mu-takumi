@@ -7025,6 +7025,8 @@ static void RunAndroidGameFrame()
 
     if (g_bWndActive)
     {
+        // Drain TCP recv queue before Scene so login/server replies apply before UI logic this frame.
+        ProtocolCompiler();
         const Uint64 renderSceneStart = static_cast<Uint64>(MU_MobilePerfNow());
         Scene(nullptr);
         const Uint64 virtualPadStart = static_cast<Uint64>(MU_MobilePerfNow());
@@ -7909,6 +7911,7 @@ int SDL_main(int argc, char* argv[])
 
             if (s_crfResult)
             {
+                ProtocolCompiler();
                 const Uint64 renderSceneStart = static_cast<Uint64>(MU_MobilePerfNow());
                 Scene(nullptr);
                 const Uint64 virtualPadStart = static_cast<Uint64>(MU_MobilePerfNow());

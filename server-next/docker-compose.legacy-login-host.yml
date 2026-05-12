@@ -1,0 +1,28 @@
+# Optional: login smoke host only (port 44606). Does NOT replace Connect Server (44605).
+#
+#   cd server-next
+#   cp Data/Dec2.dat from your APK Data (same bytes as phone).
+#   export TAKUMI_DEC2_PATH="$(pwd)/Data/Dec2.dat"   # or set in environment below
+#   docker compose -f docker-compose.yml -f docker-compose.legacy-login-host.yml up -d legacy-login
+#
+# Apple Silicon: dotnet/sdk image may be amd64 — slower but OK for QA.
+services:
+  legacy-login:
+    image: mcr.microsoft.com/dotnet/sdk:10.0
+    container_name: takumi-legacy-login
+    working_dir: /app
+    volumes:
+      - .:/app
+    ports:
+      - "${TAKUMI_LEGACY_LOGIN_PUBLISH:-44606}:44606"
+    environment:
+      TAKUMI_LOGIN_PORT: "44606"
+      # Set when running compose (host env is passed through):
+      TAKUMI_DEC2_PATH: "${TAKUMI_DEC2_PATH:-}"
+    command:
+      - dotnet
+      - run
+      - --project
+      - src/Takumi.Server.LegacyLoginHost/Takumi.Server.LegacyLoginHost.csproj
+      - -c
+      - Release

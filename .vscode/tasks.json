@@ -1,0 +1,31 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "server-next: LegacyLoginHost (watch)",
+      "type": "shell",
+      "command": "./scripts/run-legacy-login-host.sh",
+      "options": {
+        "cwd": "${workspaceFolder}/server-next"
+      },
+      "problemMatcher": "$msCompile",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "server-next: Android logcat (Takumi)",
+      "type": "shell",
+      "command": "./scripts/watch-android-takumi-log.sh",
+      "options": {
+        "cwd": "${workspaceFolder}/server-next"
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": []
+    }
+  ]
+}

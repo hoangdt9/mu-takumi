@@ -4,7 +4,7 @@ Last updated: 2026-05-12
 
 ## Repository vs checklist (read first)
 
-- **`server-next/README.md`** describes what is actually in tree: **PostgreSQL** can be started with **`server-next/docker-compose.yml`**. The .NET host must be run from **restored `src/**/*.csproj` sources** (this clone may only contain `bin/` / `obj/` leftovers with **no `.cs` files** — `dotnet build` will not work until sources return).
+- **`server-next/README.md`** describes what is actually in tree: **`server-next/docker-compose.yml`** starts **PostgreSQL** and **LegacyLoginHost** in Docker (Connect **44605**, login **44606**; Postgres **54444** by default). The .NET host can still be run on the host with `dotnet watch` when you prefer hot reload — **do not** bind the same ports while Docker publishes them.
 - The **`## Done`** section below is the **intended / previously implemented** feature set. Treat unchecked **Exit criteria** and **`## In Progress`** as the current engineering truth for QA; do not assume every `[x]` is verifiable without a compilable solution in git.
 
 ## Client APK, `data.zip`, and Docker (what to redo when)
@@ -21,7 +21,7 @@ Use this to avoid unnecessary rebuilds.
 
 **Parallel stacks:** if both `takumi-openmu` and `server-next` run, keep **host ports and client target** unambiguous (e.g. OpenMU `44505` vs Takumi `44605`) so QA logs match the stack under test.
 
-**Minimal Docker on Mac (Android QA):** for APK pointed at `server-next`, run **Postgres** via **`server-next/docker-compose.yml`** (default host port **54444**), then run the **Takumi host** process on the Mac (or your own container) so it listens on `TAKUMI_CONNECT_PORT` / `TAKUMI_LOGIN_PORT` (**44605** / **44606** by default) with `TAKUMI_PUBLIC_HOST` = Mac LAN IP. Optionally add `takumi/docker` **`--profile datazip`** (port **18080**) when you need LAN `data.zip` download. **Stop** the `takumi-openmu` compose group (and `docker` Wine/SQL profiles) while testing `server-next` to avoid port confusion and extra emulation load. See `docs/ANDROID-DEV-MAC.md` § *Takumi Server Next* and `server-next/README.md`.
+**Minimal Docker on Mac (Android QA):** for APK pointed at `server-next`, run **`cd server-next && docker compose up -d`** (or **`./scripts/docker-up.sh`**) — **Postgres** (default **54444**) and **LegacyLoginHost** (**44605** / **44606**) with `TAKUMI_PUBLIC_HOST` in `.env` = Mac LAN IP. **LAN `data.zip`:** `docker compose --profile datazip up -d` or **`./scripts/docker-up.sh --with-datazip`** (nginx on host **18080**, same `takumi/docker/data-zip/host/data.zip`); do **not** also run `takumi/docker` `datazip` on the same publish port. **Stop** the `takumi-openmu` compose group (and `docker` Wine/SQL profiles) while testing `server-next` to avoid port confusion and extra emulation load. See `docs/ANDROID-DEV-MAC.md` § *Takumi Server Next* and `server-next/README.md`.
 
 ## Done
 

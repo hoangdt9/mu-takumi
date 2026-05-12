@@ -14,15 +14,25 @@
 Dùng khi muốn điện thoại/emulator tải `data.zip` từ máy bạn (LAN), giống flow `http://<IP>:18080/data.zip`.
 
 1. Đặt file **`data.zip`** vào `docker/data-zip/host/data.zip` (xem `docker/data-zip/host/README.md`).
-2. Chạy:
+2. **Cách A — chỉ cần zip (repo `docker/`):**
 
    ```bash
    cd takumi/docker
    docker compose --profile datazip up -d
    ```
 
-3. Cổng host mặc định **`18080`** (đổi `DATA_ZIP_PUBLISH_PORT` trong `.env` nếu cần).
-4. Build Android với URL đúng IP máy chạy Docker (mặc định Gradle: `http://192.168.1.50:18080/data.zip`), hoặc:
+3. **Cách B — cùng stack `server-next` (Postgres + LegacyLoginHost):** trong `server-next` dùng profile `datazip` (cùng file zip, cùng nginx config, cổng host mặc định vẫn **18080**):
+
+   ```bash
+   cd takumi/server-next
+   docker compose --profile datazip up -d
+   # hoặc: ./scripts/docker-up.sh --with-datazip
+   ```
+
+   **Không** bật **Cách A** và **Cách B** cùng lúc nếu cả hai publish **18080** trên host.
+
+4. Cổng host mặc định **`18080`** (đổi `DATA_ZIP_PUBLISH_PORT` trong `.env` của project đang chạy compose nếu cần).
+5. Build Android với URL đúng IP máy chạy Docker (mặc định Gradle: `http://192.168.1.50:18080/data.zip`), hoặc:
 
    ```bash
    ./gradlew :app:assembleRealDevicePreloadDefaultDebug -PmuDataZipLan=http://YOUR_LAN_IP:18080/data.zip

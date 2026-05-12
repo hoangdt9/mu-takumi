@@ -6,7 +6,8 @@
 |------|---------|
 | `docs/IMPLEMENTATION-CHECKLIST.md` | Feature and QA checklist for Connect / Login / character flow. |
 | `.env.lan.example` | Copy to `.env` and set `TAKUMI_PUBLIC_HOST` to the LAN IP phones use. |
-| `docker-compose.yml` | **PostgreSQL only** for local QA (`takumi-next-postgres` on port **54444** by default). |
+| `docker-compose.yml` | **Postgres + LegacyLoginHost** in Docker (**54444**, **44605**, **44606**). Optional profile **`datazip`**: nginx serves `../docker/data-zip/host/data.zip` on host port **18080** (see `.env.lan.example`). |
+| `scripts/docker-up.sh` | `docker compose up -d` + `ps`. Pass **`--with-datazip`** to enable the `datazip` profile. |
 
 ## Source code status
 
@@ -19,13 +20,32 @@ Example Npgsql URL for a host app on the same machine as Docker Desktop:
 
 (Adjust user/password/database to match `.env` / `docker-compose.yml` overrides.)
 
-## Quick start (database + LAN)
+## Quick start (database + LAN server in Docker)
 
-1. `cp .env.lan.example .env` and set `TAKUMI_PUBLIC_HOST` to your Mac’s Wi‑Fi IP.
-2. `docker compose up -d` — **Postgres only** (default host port **54444**).
-3. Optional login smoke on **44606** (does not include Connect **44605**): see `docker-compose.legacy-login-host.yml` and `../docs/ANDROID-DEV-MAC.md`.
-4. Full `Takumi.Server.Host`: run when `src/Takumi.Server.Host` sources exist; connection string → Postgres above.
+1. `cp .env.lan.example .env` and set `TAKUMI_PUBLIC_HOST` to your Mac’s Wi‑Fi IP (phones must reach it).
+2. **`docker compose up -d`** or **`./scripts/docker-up.sh`** — starts **Postgres** (default **54444**) and **LegacyLoginHost** (**44605** Connect + **44606** login). Dec2 is always **`/keys/Dec2.dat`** inside the container (read-only mount `../ClientBuild_192.168.99.200/Data` → `/keys`). Override **`TAKUMI_DEC2_HOST_DIR`** if your `Dec2.dat` lives elsewhere; **`TAKUMI_DEC2_PATH` in `.env` is only for host `dotnet run`**, not substituted into Docker (host paths would break SimpleModulus).
+3. **Optional LAN `data.zip` download** (different host port, default **18080**): `docker compose --profile datazip up -d` or `./scripts/docker-up.sh --with-datazip`. Serves `../docker/data-zip/host/data.zip` as `http://<LAN-IP>:18080/data.zip` (override `DATA_ZIP_PUBLISH_PORT`). Same nginx config as `takumi/docker` — do not run both `datazip` stacks on the same publish port.
+4. Logs: `docker compose logs -f legacy-login`. Stop: `docker compose down`.
+5. Full `Takumi.Server.Host`: run when `src/Takumi.Server.Host` sources exist; connection string → Postgres above.
 
 Port/env sanity: `./scripts/check-takumi-ports.sh` from `server-next`.
+
+## One-command LAN smoke host (auto rebuild)
+
+From `server-next/`:
+
+```bash
+./scripts/run-legacy-login-host.sh
+```
+
+This loads `.env` if present, sets `TAKUMI_VERBOSE=1`, defaults `TAKUMI_DEC2_PATH` when `../ClientBuild_192.168.99.200/Data/Dec2.dat` exists, then runs **`dotnet watch`** on `Takumi.Server.LegacyLoginHost` so you edit `Program.cs`, save, and the listener restarts — you only interact with the Android client.
+
+**Second terminal — phone logs:**
+
+```bash
+./scripts/watch-android-takumi-log.sh
+```
+
+Clears logcat by default; use `TAKUMI_LOGCAT_CLEAR=0 ./scripts/watch-android-takumi-log.sh` to keep history. Requires `adb` and a connected device.
 
 See also `../docs/ANDROID-DEV-MAC.md` (Takumi Server Next + optional `datazip` profile under `../docker/`).

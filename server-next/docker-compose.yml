@@ -1,12 +1,21 @@
-# Takumi Server Next — PostgreSQL only (Mac / LAN Android QA).
-# The .NET host is expected to run on the host machine once `src/**/*.csproj` sources are restored.
+# Takumi Server Next — Postgres + LegacyLoginHost (Connect 44605 + game/login 44606) for LAN Android QA.
 #
 # Usage:
 #   cd takumi/server-next
-#   cp -n .env.lan.example .env   # if you do not already have .env
+#   cp -n .env.lan.example .env   # set TAKUMI_PUBLIC_HOST to Mac LAN IP the phone uses
 #   docker compose up -d
+#   ./scripts/docker-up.sh        # same + sanity checks
 #
-# Default publish: host port 54444 → container 5432 (override TAKUMI_POSTGRES_PUBLISH_PORT).
+# After the first `up`, Docker Desktop restarts will bring containers back if they were running
+# (`restart: unless-stopped`). Stop explicitly: `docker compose down`.
+#
+# Default: host 54444 → Postgres; 44605/44606 → LegacyLoginHost (see .env for overrides).
+#
+# Optional LAN static `data.zip` (Android Preload): same stack, **different port** (default 18080):
+#   docker compose --profile datazip up -d
+#   # or: COMPOSE_PROFILES=datazip in .env, or ./scripts/docker-up.sh --with-datazip
+# Place file at ../docker/data-zip/host/data.zip → http://<LAN-IP>:18080/data.zip
+
 services:
   postgres:
     image: postgres:16-alpine
@@ -20,6 +29,46 @@ services:
       - "${TAKUMI_POSTGRES_PUBLISH_PORT:-54444}:5432"
     volumes:
       - takumi_next_pgdata:/var/lib/postgresql/data
+
+  legacy-login:
+    image: mcr.microsoft.com/dotnet/sdk:10.0
+    container_name: takumi-legacy-login
+    restart: unless-stopped
+    working_dir: /app
+    volumes:
+      - .:/app
+      - ${TAKUMI_DEC2_HOST_DIR:-../ClientBuild_192.168.99.200/Data}:/keys:ro
+    ports:
+      - "${TAKUMI_CONNECT_PUBLISH:-44605}:44605"
+      - "${TAKUMI_LEGACY_LOGIN_PUBLISH:-44606}:44606"
+    environment:
+      TAKUMI_LOGIN_PORT: "44606"
+      TAKUMI_CONNECT_PORT: "44605"
+      # Always /keys/Dec2.dat (mounted volume). Do not use ${TAKUMI_DEC2_PATH} from host .env — paths
+      # like /Users/... do not exist in the container and SimpleModulus falls back to wrong keys.
+      TAKUMI_DEC2_PATH: /keys/Dec2.dat
+      TAKUMI_PUBLIC_HOST: "${TAKUMI_PUBLIC_HOST:-}"
+      TAKUMI_VERBOSE: "${TAKUMI_VERBOSE:-1}"
+      DOTNET_ENVIRONMENT: "${DOTNET_ENVIRONMENT:-Development}"
+    command:
+      - dotnet
+      - run
+      - --project
+      - src/Takumi.Server.LegacyLoginHost/Takumi.Server.LegacyLoginHost.csproj
+      - -c
+      - Release
+
+  # Static HTTP for Android Preload `data.zip` (nginx). Host port **defaults to 18080** — not 44605/44606.
+  datazip:
+    profiles: ["datazip"]
+    image: nginx:alpine
+    container_name: takumi-next-datazip
+    restart: unless-stopped
+    ports:
+      - "${DATA_ZIP_PUBLISH_PORT:-18080}:80"
+    volumes:
+      - ${TAKUMI_DATA_ZIP_HOST_DIR:-../docker/data-zip/host}:/srv/data:ro
+      - ${TAKUMI_DATA_ZIP_NGINX_CONF:-../docker/data-zip/default.conf}:/etc/nginx/conf.d/default.conf:ro
 
 volumes:
   takumi_next_pgdata:

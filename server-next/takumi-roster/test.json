@@ -1,0 +1,14 @@
+{
+  "characters": [
+    {
+      "name": "dk001",
+      "serverClass": 16,
+      "level": 1
+    },
+    {
+      "name": "dw001",
+      "serverClass": 0,
+      "level": 1
+    }
+  ]
+}

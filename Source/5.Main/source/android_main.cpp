@@ -3256,6 +3256,11 @@ bool HandleVirtualFingerDown(const SDL_TouchFingerEvent& touch)
         }
     }
 
+    if (CUIMng::Instance().m_MsgWin.AndroidTryFocusDeleteResidentInput(uiX, uiY))
+    {
+        return true;
+    }
+
     if (!IsVirtualPadAvailable())
     {
         return false;
@@ -5855,6 +5860,12 @@ static void HandleSDLEvent(const SDL_Event& ev, int& screenW, int& screenH)
     // For now: second finger â†’ right-click
     case SDL_FINGERDOWN:
         g_seenFingerInput = true;
+        // Sync touch → MouseX/MouseY before any handler that may return early (chat,
+        // delete-resident IME, etc.). Otherwise MsgWin::UpdateWhileShow still sees
+        // the previous cursor, treats the tap as "outside" the field, and calls
+        // SetFocus(nullptr) — IME opens then immediately closes; users double-tap.
+        g_iNoMouseTime = 0;
+        UpdateMouseFromTouch(ev.tfinger, screenW, screenH);
         if (HandleVirtualPickerFingerDown(ev.tfinger))
         {
             break;
@@ -5863,8 +5874,6 @@ static void HandleSDLEvent(const SDL_Event& ev, int& screenW, int& screenH)
         {
             break;
         }
-        g_iNoMouseTime = 0;
-        UpdateMouseFromTouch(ev.tfinger, screenW, screenH);
 #if defined(__ANDROID__) || defined(MU_IOS)
         if (kLogInputEvents)
         {
@@ -6151,9 +6160,6 @@ std::mutex g_PendingSdlEventsMutex;
 std::vector<SDL_Event> g_PendingSdlEvents;
 AndroidFrameState g_AndroidFrameState = {};
 
-std::mutex g_ImeEditorActionMutex;
-static bool g_pendingImeEditorAction = false;
-
 constexpr jint kAndroidKeyActionDown = 0;
 constexpr jint kAndroidKeyActionUp = 1;
 constexpr jint kAndroidKeyActionMultiple = 2;
@@ -6171,23 +6177,6 @@ static std::vector<SDL_Event> DrainSyntheticSDLEvents()
     std::lock_guard<std::mutex> lock(g_PendingSdlEventsMutex);
     events.swap(g_PendingSdlEvents);
     return events;
-}
-
-static void DrainPendingImeEditorAction()
-{
-    bool fire = false;
-    {
-        std::lock_guard<std::mutex> lock(g_ImeEditorActionMutex);
-        if (g_pendingImeEditorAction)
-        {
-            g_pendingImeEditorAction = false;
-            fire = true;
-        }
-    }
-    if (fire)
-    {
-        SetEnterPressed(true);
-    }
 }
 
 static SDL_Keymod ConvertAndroidMetaStateToSDLKeymod(jint metaState)
@@ -6690,21 +6679,68 @@ Java_com_muonline_client_MuMainNativeActivity_nativeOnKeyEvent(
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_muonline_client_MuMainNativeActivity_nativeOnImeEditorAction(
-    JNIEnv*,
-    jclass,
-    jint actionCode)
+Java_com_muonline_client_MuMainNativeActivity_nativeOnImeEditorAction(JNIEnv*, jclass, jint actionCode)
 {
-    (void)actionCode;
-    std::lock_guard<std::mutex> lock(g_ImeEditorActionMutex);
-    g_pendingImeEditorAction = true;
+    // EditorInfo.IME_ACTION_UNSPECIFIED = 0 — no-op.
+    if (actionCode == 0)
+    {
+        return;
+    }
+
+    // Same path as hardware Enter: SDL_KEYDOWN/UP SDLK_RETURN → HandleSDLEvent → WM_CHAR / SetEnterPressed.
+    SDL_Event down{};
+    down.type = SDL_KEYDOWN;
+    down.key.state = SDL_PRESSED;
+    down.key.repeat = 0;
+    down.key.keysym.sym = SDLK_RETURN;
+    down.key.keysym.scancode = SDL_SCANCODE_RETURN;
+    down.key.keysym.mod = KMOD_NONE;
+    QueueSyntheticSDLEvent(down);
+
+    SDL_Event up{};
+    up.type = SDL_KEYUP;
+    up.key.state = SDL_RELEASED;
+    up.key.repeat = 0;
+    up.key.keysym.sym = SDLK_RETURN;
+    up.key.keysym.scancode = SDL_SCANCODE_RETURN;
+    up.key.keysym.mod = KMOD_NONE;
+    QueueSyntheticSDLEvent(up);
 }
+
+#if defined(__ANDROID__) || defined(MU_IOS)
+static void AndroidSyncImeWithFocusedTextInput()
+{
+    const bool hasFocusedTextInput = AndroidHasFocusedTextInput() || g_charNameInputActive;
+#if !defined(MU_ANDROID_DISABLE_LOG)
+    static int s_lastImeState = -1;
+    const int imeState = hasFocusedTextInput ? 1 : 0;
+    if (s_lastImeState != imeState)
+    {
+        LOGI(
+            "CHATIME IME state changed focused=%d sdlTextInput=%d",
+            imeState,
+            MU_MobileIsTextInputActive() ? 1 : 0);
+        s_lastImeState = imeState;
+    }
+#endif
+    if (hasFocusedTextInput)
+    {
+        if (!MU_MobileIsTextInputActive())
+        {
+            MU_MobileStartTextInput();
+        }
+    }
+    else if (MU_MobileIsTextInputActive())
+    {
+        MU_MobileStopTextInput();
+    }
+}
+#endif
 
 static void ProcessAndroidEventQueue()
 {
     int screenW = g_DrawableWidth;
     int screenH = g_DrawableHeight;
-    DrainPendingImeEditorAction();
     std::vector<SDL_Event> events = DrainSyntheticSDLEvents();
     for (const SDL_Event& event : events)
     {
@@ -6911,6 +6947,20 @@ static bool InitializeAndroidGame()
     g_pUIManager = new CUIManager;
     g_pUIMapName = new CUIMapName;
 
+    // Winmain.cpp parity: without Init(), m_hEditWnd stays NULL and GiveFocus() is a no-op
+    // (delete-character resident code / other modal passwd flows never open SDL IME on Android).
+    if (g_iChatInputType == 1)
+    {
+        g_pMercenaryInputBox->Init(g_hWnd);
+        g_pSingleTextInputBox->Init(g_hWnd, 200, 20);
+        g_pSinglePasswdInputBox->Init(g_hWnd, 200, 20, 9, TRUE);
+        g_pSingleTextInputBox->SetState(UISTATE_HIDE);
+        g_pSinglePasswdInputBox->SetState(UISTATE_HIDE);
+        g_pMercenaryInputBox->SetFont(g_hFont);
+        g_pSingleTextInputBox->SetFont(g_hFont);
+        g_pSinglePasswdInputBox->SetFont(g_hFont);
+    }
+
     LOGI("INIT: BuffStateSystem::Make()");
     g_BuffSystem = BuffStateSystem::Make();
     LOGI("INIT: MapProcess::Make()");
@@ -7013,31 +7063,6 @@ static void RunAndroidGameFrame()
         return;
     }
 
-    const bool hasFocusedTextInput = AndroidHasFocusedTextInput() || g_charNameInputActive;
-#if !defined(MU_ANDROID_DISABLE_LOG)
-    static int s_lastImeState = -1;
-    const int imeState = hasFocusedTextInput ? 1 : 0;
-    if (s_lastImeState != imeState)
-    {
-        LOGI(
-            "CHATIME IME state changed focused=%d sdlTextInput=%d",
-            imeState,
-            MU_MobileIsTextInputActive() ? 1 : 0);
-        s_lastImeState = imeState;
-    }
-#endif
-    if (hasFocusedTextInput)
-    {
-        if (!MU_MobileIsTextInputActive())
-        {
-            MU_MobileStartTextInput();
-        }
-    }
-    else if (MU_MobileIsTextInputActive())
-    {
-        MU_MobileStopTextInput();
-    }
-
     AndroidDrainPackets();
     UpdateVirtualPadHolds();
 
@@ -7061,6 +7086,10 @@ static void RunAndroidGameFrame()
         ProtocolCompiler();
         const Uint64 renderSceneStart = static_cast<Uint64>(MU_MobilePerfNow());
         Scene(nullptr);
+#if defined(__ANDROID__) || defined(MU_IOS)
+        // After UI updates focus from this frame's taps, sync soft keyboard (was before Scene = one frame stale).
+        AndroidSyncImeWithFocusedTextInput();
+#endif
         const Uint64 virtualPadStart = static_cast<Uint64>(MU_MobilePerfNow());
         RenderVirtualPad();
         const Uint64 presentStart = static_cast<Uint64>(MU_MobilePerfNow());
@@ -7708,6 +7737,18 @@ int SDL_main(int argc, char* argv[])
     g_pSinglePasswdInputBox = new CUITextInputBox;
     g_pUIManager            = new CUIManager;
     g_pUIMapName            = new CUIMapName;
+
+    if (g_iChatInputType == 1)
+    {
+        g_pMercenaryInputBox->Init(g_hWnd);
+        g_pSingleTextInputBox->Init(g_hWnd, 200, 20);
+        g_pSinglePasswdInputBox->Init(g_hWnd, 200, 20, 9, TRUE);
+        g_pSingleTextInputBox->SetState(UISTATE_HIDE);
+        g_pSinglePasswdInputBox->SetState(UISTATE_HIDE);
+        g_pMercenaryInputBox->SetFont(g_hFont);
+        g_pSingleTextInputBox->SetFont(g_hFont);
+        g_pSinglePasswdInputBox->SetFont(g_hFont);
+    }
 
     LOGI("INIT: BuffStateSystem::Make()");
     g_BuffSystem = BuffStateSystem::Make();

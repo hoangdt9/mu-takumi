@@ -38,3 +38,5 @@ Tài liệu tổng hợp thay đổi client native (màn chọn nhân vật trê
 ## Server (`server-next`)
 
 Không đổi schema hay handler trong phiên này; chỉ cập nhật checklist và liên kết tài liệu. MVP vẫn tham chiếu `server-next/docs/IMPLEMENTATION-CHECKLIST.md` (một session TCP login, join map sau `F3 03`, v.v.).
+
+**Tiếp theo (phiên sau):** IME toàn cục trên Android, modal, xóa nhân vật, JNI — [`DEVELOPMENT-LOG-2026-05-14.md`](DEVELOPMENT-LOG-2026-05-14.md).

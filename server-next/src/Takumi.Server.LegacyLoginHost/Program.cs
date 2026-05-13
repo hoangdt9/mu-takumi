@@ -72,41 +72,68 @@ if (string.IsNullOrEmpty(publicHost))
     publicHost = "127.0.0.1";
 }
 
-// Connect-server list (C2 F4 06): Takumi maps connect index → ServerList.bmd group via (index/20). If your
-// Data/Local/ServerList.bmd has no group 0, the server-select UI stays empty — set TAKUMI_CS_CONNECT_BASE to 20, 40, …
-// Default 20: most shipped ServerList.bmd start at group 1 (connect IDs 20–39).
-// NOTE: TAKUMI_CS_CONNECT_BASE=0 in .env is a common mistake (Compose passes 0; ${VAR:-20} does not override a set value).
-var csConnectBase = 20;
+// Connect-server list (C2 F4 06): Takumi maps connect index → ServerList.bmd group via (index/20) — see ServerListManager.cpp.
+// If every ID maps to a missing BMD group, InsertServerGroup drops the line → empty sub-server list.
+// Override: TAKUMI_CS_CONNECT_IDS=…  OR  TAKUMI_CS_CONNECT_BASE + TAKUMI_CS_CONNECT_COUNT (sequential IDs).
 var csBaseRaw = Environment.GetEnvironmentVariable("TAKUMI_CS_CONNECT_BASE");
-if (!string.IsNullOrWhiteSpace(csBaseRaw)
-    && int.TryParse(csBaseRaw, NumberStyles.Integer, CultureInfo.InvariantCulture, out var csb))
-{
-    if (csb is >= 1 and <= 65532)
-    {
-        csConnectBase = csb;
-    }
-    else if (csb == 0)
-    {
-        Console.Error.WriteLine(
-            "[connect] WARNING: TAKUMI_CS_CONNECT_BASE=0 is invalid for typical ServerList.bmd (no group 0). Using 20. Remove the line from .env or set 20/40/…");
-    }
-    else
-    {
-        Console.Error.WriteLine(
-            "[connect] WARNING: TAKUMI_CS_CONNECT_BASE={0} out of range 1..65532 — using 20.",
-            csb);
-    }
-}
+var csCountRaw = Environment.GetEnvironmentVariable("TAKUMI_CS_CONNECT_COUNT");
+var csIdsRaw = Environment.GetEnvironmentVariable("TAKUMI_CS_CONNECT_IDS");
 
-var csConnectCount = 3;
-if (!string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("TAKUMI_CS_CONNECT_COUNT"))
-    && int.TryParse(Environment.GetEnvironmentVariable("TAKUMI_CS_CONNECT_COUNT"), NumberStyles.Integer, CultureInfo.InvariantCulture, out var csc)
-    && csc is >= 1 and <= 32)
+byte[] connectServerListPacket;
+string connectListBootDesc;
+if (TryParseConnectIdsCsv(csIdsRaw, out var explicitConnectIds))
 {
-    csConnectCount = csc;
+    connectServerListPacket = ConnectWire.BuildServerList602FromIds(explicitConnectIds, loadPercent: 0x0A);
+    connectListBootDesc = $"TAKUMI_CS_CONNECT_IDS=[{string.Join(',', explicitConnectIds)}]";
 }
+else if (!string.IsNullOrWhiteSpace(csBaseRaw) || !string.IsNullOrWhiteSpace(csCountRaw))
+{
+    // NOTE: TAKUMI_CS_CONNECT_BASE=0 in .env is a common mistake (no group 0 in many BMDs).
+    var csConnectBase = 20;
+    if (!string.IsNullOrWhiteSpace(csBaseRaw)
+        && int.TryParse(csBaseRaw, NumberStyles.Integer, CultureInfo.InvariantCulture, out var csb))
+    {
+        if (csb is >= 1 and <= 65532)
+        {
+            csConnectBase = csb;
+        }
+        else if (csb == 0)
+        {
+            Console.Error.WriteLine(
+                "[connect] WARNING: TAKUMI_CS_CONNECT_BASE=0 is invalid for typical ServerList.bmd (no group 0). Using 20. Remove the line from .env or set 20/40/…");
+        }
+        else
+        {
+            Console.Error.WriteLine(
+                "[connect] WARNING: TAKUMI_CS_CONNECT_BASE={0} out of range 1..65532 — using 20.",
+                csb);
+        }
+    }
 
-var connectServerListPacket = ConnectWire.BuildServerList602(csConnectBase, csConnectCount, loadPercent: 0x0A);
+    var csConnectCount = 3;
+    if (!string.IsNullOrWhiteSpace(csCountRaw)
+        && int.TryParse(csCountRaw, NumberStyles.Integer, CultureInfo.InvariantCulture, out var csc)
+        && csc is >= 1 and <= 32)
+    {
+        csConnectCount = csc;
+    }
+
+    connectServerListPacket = ConnectWire.BuildServerList602(csConnectBase, csConnectCount, loadPercent: 0x0A);
+    connectListBootDesc = $"TAKUMI_CS_CONNECT_BASE={csConnectBase} TAKUMI_CS_CONNECT_COUNT={csConnectCount}";
+}
+else
+{
+    // Default: one wire id per BMD group 0..31 (id = group*20 → first sub-slot in that group). Max 32 entries per F4 06.
+    Span<int> preset = stackalloc int[32];
+    for (var g = 0; g < 32; g++)
+    {
+        preset[g] = g * 20;
+    }
+
+    connectServerListPacket = ConnectWire.BuildServerList602FromIds(preset, loadPercent: 0x0A);
+    connectListBootDesc =
+        "default F4 06: ids 0,20,40,…,620 (32×group slot-1); override with TAKUMI_CS_CONNECT_IDS or BASE+COUNT";
+}
 
 // SO_REUSEADDR can allow a *second* listener on the same port while an older host is still running (e.g. stray dotnet),
 // so phones may hit the old process and keep seeing C1 4A (33-byte slots). Default: strict bind (reuse off).
@@ -205,13 +232,12 @@ if (connectPort > 0)
 {
     Console.WriteLine(
         "Minimal Connect Server on *:{0} -> TAKUMI_PUBLIC_HOST={1} game/login port={2} (verbose={3})\n" +
-        "  F4 06 list: connectBase={4} count={5} (set TAKUMI_CS_CONNECT_BASE to match Data/Local/ServerList.bmd group index×20)",
+        "  F4 06: {4}",
         connectPort,
         publicHost,
         port,
         verbose,
-        csConnectBase,
-        csConnectCount);
+        connectListBootDesc);
 }
 
 try
@@ -251,6 +277,38 @@ finally
 }
 
 return 0;
+
+static bool TryParseConnectIdsCsv(string? csv, out int[] ids)
+{
+    ids = Array.Empty<int>();
+    if (string.IsNullOrWhiteSpace(csv))
+    {
+        return false;
+    }
+
+    var parts = csv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+    if (parts.Length is < 1 or > 32)
+    {
+        Console.Error.WriteLine("[connect] WARNING: TAKUMI_CS_CONNECT_IDS must have 1..32 comma-separated integers.");
+        return false;
+    }
+
+    var list = new int[parts.Length];
+    for (var i = 0; i < parts.Length; i++)
+    {
+        if (!int.TryParse(parts[i], NumberStyles.Integer, CultureInfo.InvariantCulture, out var id)
+            || id is < 0 or > 65535)
+        {
+            Console.Error.WriteLine("[connect] WARNING: TAKUMI_CS_CONNECT_IDS invalid token '{0}'.", parts[i]);
+            return false;
+        }
+
+        list[i] = id;
+    }
+
+    ids = list;
+    return true;
+}
 
 /// <summary>
 /// Inverse of StreamPacketEngine <c>XorData</c> / <c>mu::Xor32Encrypt</c> (same XOR formula as SimpleModulusCrypt.h).
@@ -367,6 +425,47 @@ static async Task HandleClientAsync(
                     serverClass,
                     Encoding.ASCII.GetString(nameCopy).TrimEnd('\0'),
                     createOff);
+                return;
+            }
+
+            // Delete character F3 02: C1 22 F3 02 + name[10] + resident[20] (Takumi `SendRequestDeleteCharacter` in wsclientinline.h).
+            // Without this handler the client stays on MESSAGE_WAIT forever after OK on the captcha dialog.
+            if (TryFindDeleteCharacterRequest(packet, remote, out var deleteOff, out var deleteName10, out _))
+            {
+                if (!loggedIn)
+                {
+                    Console.WriteLine("[{0}] delete character (F3 02) before login — ignored", remote);
+                    return;
+                }
+
+                var pickedDel = FindRosterEntry(roster, deleteName10);
+                if (pickedDel is null)
+                {
+                    Console.WriteLine(
+                        "[{0}] delete character — not in roster name='{1}' (respond Value=2 resident wrong) frame@{2}",
+                        remote,
+                        Encoding.ASCII.GetString(deleteName10).TrimEnd('\0'),
+                        deleteOff);
+                    await connection.Output.WriteAsync(BuildDeleteCharacterResponse(2), ct).ConfigureAwait(false);
+                    await connection.Output.FlushAsync(ct).ConfigureAwait(false);
+                    return;
+                }
+
+                var removed = roster.RemoveAll(e => NameBytesEqual(e.Name10, deleteName10));
+                if (!string.IsNullOrEmpty(loggedAccountId))
+                {
+                    SavePersistedRoster(loggedAccountId, roster);
+                }
+
+                await connection.Output.WriteAsync(BuildDeleteCharacterResponse(1), ct).ConfigureAwait(false);
+                await connection.Output.FlushAsync(ct).ConfigureAwait(false);
+                Console.WriteLine(
+                    "[{0}] delete character OK removed={1} name='{2}' rosterCount={3} frame@{4}",
+                    remote,
+                    removed,
+                    Encoding.ASCII.GetString(deleteName10).TrimEnd('\0'),
+                    roster.Count,
+                    deleteOff);
                 return;
             }
 
@@ -1309,6 +1408,80 @@ static bool TryFindCreateCharacterRequest(ReadOnlySpan<byte> packet, string remo
     return false;
 }
 
+/// <summary>PRECEIVE delete character: <see cref="PHEADER_DEFAULT_SUBCODE"/> — Value 1=success, 2=resident wrong, 0=guild, 3=item block (WSclient.cpp ReceiveDeleteCharacter).</summary>
+static byte[] BuildDeleteCharacterResponse(byte value) => new byte[] { 0xC1, 0x05, 0xF3, 0x02, value };
+
+/// <summary>Find PMSG_REQUEST_DELETE_CHARACTER (F3/02): C1 + Size + F3 + 02 + id[10] + resident[20] (34 bytes after full decrypt).</summary>
+static bool TryFindDeleteCharacterRequest(ReadOnlySpan<byte> packet, string remote, out int frameOffset, out byte[] name10, out byte[] resident20)
+{
+    frameOffset = -1;
+    name10 = Array.Empty<byte>();
+    resident20 = Array.Empty<byte>();
+    const int kFrameLen = 34;
+    Span<byte> scratch = stackalloc byte[kFrameLen];
+
+    for (var i = 0; i <= packet.Length - kFrameLen; i++)
+    {
+        if (packet[i] != 0xC1)
+        {
+            continue;
+        }
+
+        // Fast path: logical F3/02 + id + resident already visible (Size may rarely disagree with 0x22).
+        if (packet[i + 2] == 0xF3 && packet[i + 3] == 0x02 && i + kFrameLen <= packet.Length)
+        {
+            if (packet[i + 1] != kFrameLen)
+            {
+                Console.WriteLine(
+                    "[{0}] delete F3/02 plaintext fast path sizeByte=0x{1:X2} (expected 0x{2:X2}) frame@{3}",
+                    remote,
+                    packet[i + 1],
+                    kFrameLen,
+                    i);
+            }
+
+            frameOffset = i;
+            name10 = packet.Slice(i + 4, 10).ToArray();
+            resident20 = packet.Slice(i + 14, 20).ToArray();
+            return true;
+        }
+
+        packet.Slice(i, kFrameLen).CopyTo(scratch);
+        for (var pass = 0; pass < 8 && (scratch[2] != 0xF3 || scratch[3] != 0x02); pass++)
+        {
+            DecodeTakumiStreamXor(scratch, firstXorIndex: 3);
+        }
+
+        if (scratch[2] != 0xF3 || scratch[3] != 0x02)
+        {
+            continue;
+        }
+
+        // Takumi delete wire is always 34 bytes (PBMSG + F3/02 + id[10] + resident[20]). The Size field
+        // should be 0x22, but some decrypt/coalesce paths leave a mismatched size byte while the tail is
+        // still a valid delete frame — do not drop the handler on that alone.
+        if (scratch[1] != kFrameLen)
+        {
+            Console.WriteLine(
+                "[{0}] delete F3/02 sizeByte=0x{1:X2} (expected 0x{2:X2}) — still accepting frame@{3} hex={4}",
+                remote,
+                scratch[1],
+                kFrameLen,
+                i,
+                Convert.ToHexString(packet.Slice(i, kFrameLen)));
+        }
+
+        frameOffset = i;
+        name10 = new byte[10];
+        scratch.Slice(4, 10).CopyTo(name10);
+        resident20 = new byte[20];
+        scratch.Slice(14, 20).CopyTo(resident20);
+        return true;
+    }
+
+    return false;
+}
+
 /// <summary>Detects PMSG_CHARACTER_LIST_REQ (F3 / 00). Takumi XOR hides logical 0x00 (wire often 0x0D after F3).</summary>
 static bool TryFindCharacterListRequest(ReadOnlySpan<byte> packet, out int frameOffset)
 {
@@ -1662,6 +1835,39 @@ file static class ConnectWire
             if (id > 65535)
             {
                 throw new ArgumentException("connectBase + count exceeds ushort server id range.", nameof(connectBase));
+            }
+
+            BinaryPrimitives.WriteUInt16LittleEndian(p.AsSpan(off, 2), (ushort)id);
+            p[off + 2] = loadPercent;
+            p[off + 3] = 0;
+            off += 4;
+        }
+
+        return p;
+    }
+
+    /// <summary>Same wire as <see cref="BuildServerList602"/> but with an explicit list of connect indices (F4 06 entries).</summary>
+    public static byte[] BuildServerList602FromIds(ReadOnlySpan<int> connectIds, byte loadPercent)
+    {
+        if (connectIds.Length is < 1 or > 32)
+        {
+            throw new ArgumentOutOfRangeException(nameof(connectIds));
+        }
+
+        var len = 7 + connectIds.Length * 4;
+        var p = new byte[len];
+        p[0] = 0xC2;
+        BinaryPrimitives.WriteUInt16BigEndian(p.AsSpan(1, 2), (ushort)len);
+        p[3] = 0xF4;
+        p[4] = 0x06;
+        BinaryPrimitives.WriteUInt16BigEndian(p.AsSpan(5, 2), (ushort)connectIds.Length);
+        var off = 7;
+        for (var i = 0; i < connectIds.Length; i++)
+        {
+            var id = connectIds[i];
+            if (id is < 0 or > 65535)
+            {
+                throw new ArgumentOutOfRangeException(nameof(connectIds));
             }
 
             BinaryPrimitives.WriteUInt16LittleEndian(p.AsSpan(off, 2), (ushort)id);

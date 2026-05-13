@@ -33,6 +33,13 @@
 | Phase 4.1 — Chỉ mục dispatcher packet (discovery) | **Khung** — [`protocol/TAKUMI-PROTOCOL-DISPATCH-INDEX.md`](protocol/TAKUMI-PROTOCOL-DISPATCH-INDEX.md) |
 | Ma trận gói tin (spike) | **Khung** — [`docs/protocol/COMPATIBILITY-MATRIX.md`](protocol/COMPATIBILITY-MATRIX.md) |
 
+### Cập nhật tiến độ client native (2026-05-12 — 2026-05-14)
+
+| Mục | Trạng thái |
+|-----|------------|
+| Android/iOS — màn chọn nhân vật, double-tap / long-press → `StartGame`, ray pick, IME sau login | **Đã làm (commit ~2026-05-13)** — [`docs/DEVELOPMENT-LOG-2026-05-12.md`](DEVELOPMENT-LOG-2026-05-12.md) |
+| Android/iOS — IME toàn cục: `ShowWin` active cùng frame, đồng bộ touch→Mouse trước handler, Init `SinglePasswd` trên Android, SysMenu tap-outside, JNI **Done** → Return, flow xóa nhân vật + captcha 6 số | **Đang trong working tree (ghi 2026-05-14)** — [`docs/DEVELOPMENT-LOG-2026-05-14.md`](DEVELOPMENT-LOG-2026-05-14.md) |
+
 ---
 
 ## 0 — Thứ tự process chạy máy chủ Takumi hiện tại (baseline hành vi)

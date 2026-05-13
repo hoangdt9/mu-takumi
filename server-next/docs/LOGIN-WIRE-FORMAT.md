@@ -45,3 +45,7 @@ If the host only parses **plain C1** login and skips SimpleModulus, the client m
 
 - Hex trace after login click must show **outgoing `C3`** (first byte `0xC3`), not `C1`.
 - Incoming login result must be parsed after client `ProtocolCompiler` (`SimpleModulusSC` + serial) — usually **`C3`** from server as well for encrypted responses.
+
+## Native client session notes (IME / character UI)
+
+IME ordering, modal focus, and character-delete UX are **not** part of this login wire layout but affect whether QA can complete login → list → delete on a real device. See **`../../docs/DEVELOPMENT-LOG-2026-05-14.md`** and **`IMPLEMENTATION-CHECKLIST.md`** (exit criteria for **`F3 02`**).

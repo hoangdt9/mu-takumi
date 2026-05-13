@@ -1147,21 +1147,17 @@ void NewMoveCharacterScene()
 	// CInput::Update() runs later in MainScene(). IsLBtnDn() is therefore one frame behind touch;
 	// use SEASON3B::IsPress/IsRepeat(VK_LBUTTON) here so taps align with the scanned key state.
 	//
-	// Double-tap: two distinct taps (finger up between) on the same slot within a short window.
-	// Long-press: only after finger was released since last pick; hold longer on 3D (not UI) — same intent as Connect.
-	static int s_charSelLastTapSlot = -1;
-	static double s_charSelLastTapTime = 0.0;
+	// Tap again on the already-highlighted hero (ray hits OBB) => StartGame. Taps that miss the model must not enter.
+	// Long-press: only after finger was released since last pick; hold counts only while the ray hits SelectedHero.
 	static double s_charSelHoldStartAbs = -1.0;
 	static bool s_charSelHoldFired = false;
 	static bool s_charSelReleasedSinceLastPick = true;
-	static bool s_charSelReleasedSinceFirstTap = false;
 
 	if (SEASON3B::IsRelease(VK_LBUTTON))
 	{
 		s_charSelHoldStartAbs = -1.0;
 		s_charSelHoldFired = false;
 		s_charSelReleasedSinceLastPick = true;
-		s_charSelReleasedSinceFirstTap = true;
 	}
 
 	const bool charSelBlockingModal =
@@ -1199,63 +1195,47 @@ void NewMoveCharacterScene()
 			SelectedCharacter = tapSlot;
 		}
 
-		const double now = g_pTimer->GetAbsTime();
-		constexpr double kDoubleTapSeconds = 0.85;
-		const bool inDoubleTapWindow =
-			s_charSelLastTapSlot >= 0
-			&& (now - s_charSelLastTapTime) <= kDoubleTapSeconds;
-		// Require finger up between taps so one long press / one noisy bounce cannot count as double-tap.
-		// Second tap often misses OBB on touch; if we're still within the window and the committed
-		// hero matches the first tap slot, enter game (do not treat ray miss as "clear selection").
-		const bool doubleTapEnter =
-			s_charSelReleasedSinceFirstTap
-			&& inDoubleTapWindow
-			&& (
-				(tapSlot >= 0 && tapSlot <= 4 && tapSlot == s_charSelLastTapSlot)
-				|| (tapSlot < 0
-					&& SelectedHero >= 0
-					&& SelectedHero <= 4
-					&& SelectedHero == s_charSelLastTapSlot));
-
-		if (doubleTapEnter)
+		// Focused hero already chosen: a new press that actually hits the same model enters the game.
+		// (Removed old "tapSlot < 0" double-tap path — it treated outside/OBB-miss as confirm and inverted UX.)
+		if (tapSlot >= 0 && tapSlot <= 4
+			&& SelectedHero >= 0 && SelectedHero <= 4
+			&& tapSlot == SelectedHero)
 		{
 			::PlayBuffer(SOUND_CLICK01);
-			SelectedHero = s_charSelLastTapSlot;
-			s_charSelLastTapSlot = -1;
-			s_charSelLastTapTime = 0.0;
 			s_charSelHoldStartAbs = -1.0;
 			s_charSelHoldFired = false;
-			s_charSelReleasedSinceFirstTap = false;
 			::StartGame();
 		}
 		else if (tapSlot >= 0 && tapSlot <= 4)
 		{
-			s_charSelLastTapSlot = tapSlot;
-			s_charSelLastTapTime = now;
-			s_charSelReleasedSinceFirstTap = false;
 			s_charSelReleasedSinceLastPick = false;
 			SelectedHero = tapSlot;
 			rUIMng.m_CharSelMainWin.UpdateDisplay();
 		}
 		else
 		{
-			if (!inDoubleTapWindow)
-			{
-				s_charSelLastTapSlot = -1;
-			}
 			rUIMng.m_CharSelMainWin.UpdateDisplay();
 		}
 	}
 
-	// Hold finger on the 3D area (cursor not on UI) to submit like the Connect button.
+	// Hold on the selected hero model (ray must hit SelectedHero; holding empty ground does not enter).
 	// Only after finger was released since selecting a hero (avoids "one tap" counting as hold).
 	if (mobileCharSelFinger && !rUIMng.IsCursorOnUI()
 		&& SelectedHero >= 0 && SelectedHero <= 4
 		&& s_charSelReleasedSinceLastPick)
 	{
+		CharacterSelect_UpdateTapRayForPick();
+		const int holdSlot = SelectCharacter(KIND_PLAYER);
+		const bool holdOnSelectedHero = (holdSlot == SelectedHero);
+
 		const double nowHold = g_pTimer->GetAbsTime();
 		constexpr double kHoldToEnterSeconds = 1.15;
-		if (SEASON3B::IsPress(VK_LBUTTON))
+		if (!holdOnSelectedHero)
+		{
+			s_charSelHoldStartAbs = -1.0;
+			s_charSelHoldFired = false;
+		}
+		else if (SEASON3B::IsPress(VK_LBUTTON))
 		{
 			s_charSelHoldStartAbs = nowHold;
 			s_charSelHoldFired = false;
@@ -1267,8 +1247,6 @@ void NewMoveCharacterScene()
 				::PlayBuffer(SOUND_CLICK01);
 				if (SelectedCharacter >= 0 && SelectedCharacter <= 4)
 					SelectedHero = SelectedCharacter;
-				s_charSelLastTapSlot = -1;
-				s_charSelLastTapTime = 0.0;
 				s_charSelHoldFired = true;
 				s_charSelHoldStartAbs = -1.0;
 				::StartGame();

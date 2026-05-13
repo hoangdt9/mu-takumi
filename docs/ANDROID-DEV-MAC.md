@@ -174,3 +174,14 @@ Image **linux/amd64** chạy qua emulation: thường ổn cho DB + .NET, nhưng
 3. Đối chiếu `server-next/docs/IMPLEMENTATION-CHECKLIST.md` (MVP: một session login TCP vs **game port** sau select — nếu checklist ghi “chưa có”, client có thể thoát sau select).
 
 **Tóm tối thiểu:** `server-next` (Postgres + LegacyLoginHost trong Docker) **+** tuỳ chọn **`datazip`** (profile trong `server-next` *hoặc* `takumi/docker`, cùng file zip, **một** cổng publish); tắt OpenMU/Wine/MuServer Docker khi không dùng.
+
+---
+
+## Chọn nhân vật trên điện thoại (touch → vào game)
+
+Sau khi sửa native (`ZzzScene.cpp`), trên Android/iOS có thể:
+
+- **Chạm hai lần** (double-tap) trên cùng nhân vật trong cửa sổ ngắn để gọi `StartGame()` tương tự **H.tất / Kết nối**.
+- **Giữ ngón tay ~0,5 giây** trên vùng 3D (không phải thanh UI) khi đã chọn slot (`SelectedHero`) để vào game.
+
+**Kỹ thuật:** `NewMoveCharacterScene` chạy **trước** `CInput::Update()` trong cùng frame nên không dùng `IsLBtnDn()` cho nhánh này; dùng `SEASON3B::IsPress` / `IsRepeat(VK_LBUTTON)`. Chi tiết, IME, và ray pick: **`docs/DEVELOPMENT-LOG-2026-05-12.md`**.

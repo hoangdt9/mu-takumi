@@ -25,10 +25,14 @@
 #include "../NewUISystem.h"
 #include "../DSPlaySound.h"
 #include "../Winmain.h"
+#include "../Time/Timer.h"
 #include "SceneCommon.h"
 #include "../Camera/CameraUtility.h"
 #include "../ZzzOpenData.h"
 #include "LoginScene.h"
+#if defined(__ANDROID__) || defined(MU_IOS)
+#include "../Platform/MobilePlatform.h"
+#endif
 
 // External declarations
 extern EGameScene SceneFlag;
@@ -44,6 +48,7 @@ extern DWORD g_dwBKSent;
 extern HWND g_hWnd;
 extern CErrorReport g_ErrorReport;
 extern double WorldTime;
+extern CTimer* g_pTimer;
 extern int MouseX;
 extern int MouseY;
 extern vec3_t MouseTarget;
@@ -137,6 +142,10 @@ void CreateCharacterScene()
     ImmReleaseContext(g_hWnd, hIMC);
     g_bIMEBlock = TRUE;
 
+#if defined(__ANDROID__) || defined(MU_IOS)
+    MU_MobileStopTextInput();
+#endif
+
     g_ErrorReport.Write(L"> Character scene init success.\r\n");
 }
 
@@ -210,6 +219,41 @@ void NewMoveCharacterScene()
         return;
     }
 
+#if defined(__ANDROID__) || defined(MU_IOS)
+    static int s_charSelLastTapSlot = -1;
+    static double s_charSelLastTapTime = 0.0;
+
+    if (rInput.IsLBtnDn() && rUIMng.m_CharSelMainWin.IsShow())
+    {
+        if (SelectedCharacter >= 0 && SelectedCharacter < MAX_CHARACTERS_PER_ACCOUNT)
+        {
+            const double now = g_pTimer->GetAbsTime();
+            constexpr double kDoubleTapSeconds = 0.55;
+            if (SelectedCharacter == s_charSelLastTapSlot
+                && (now - s_charSelLastTapTime) <= kDoubleTapSeconds)
+            {
+                ::PlayBuffer(SOUND_CLICK01);
+                SelectedHero = SelectedCharacter;
+                s_charSelLastTapSlot = -1;
+                s_charSelLastTapTime = 0.0;
+                ::StartGame();
+            }
+            else
+            {
+                s_charSelLastTapSlot = SelectedCharacter;
+                s_charSelLastTapTime = now;
+                SelectedHero = SelectedCharacter;
+                rUIMng.m_CharSelMainWin.UpdateDisplay();
+            }
+        }
+        else
+        {
+            s_charSelLastTapSlot = -1;
+            SelectedHero = -1;
+            rUIMng.m_CharSelMainWin.UpdateDisplay();
+        }
+    }
+#else
     if (rInput.IsLBtnDbl() && rUIMng.m_CharSelMainWin.IsShow())
     {
         if (SelectedCharacter < 0 || SelectedCharacter >= MAX_CHARACTERS_PER_ACCOUNT)
@@ -228,6 +272,7 @@ void NewMoveCharacterScene()
             SelectedHero = SelectedCharacter;
         rUIMng.m_CharSelMainWin.UpdateDisplay();
     }
+#endif
 
     g_ConsoleDebug->UpdateMainScene();
 }

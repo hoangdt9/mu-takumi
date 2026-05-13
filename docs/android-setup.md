@@ -56,3 +56,15 @@ powershell
   2. Fallback `http://update.daybreak.id.vn/update/data.zip`.
 
 Chi tiết build Mac: `docs/ANDROID-DEV-MAC.md`.
+
+**Nhật ký thay đổi client (chọn nhân vật / touch):** `docs/DEVELOPMENT-LOG-2026-05-12.md`.
+
+
+cd /Users/hoangmac/Project/MU/takumi/Source/android
+chmod +x ./gradlew
+./gradlew :app:assembleRealDevicePreloadDefaultDebug \
+  -PmuRequiredAbis=armeabi-v7a,arm64-v8a \
+  -PmuFailOnMissingRequiredAbis=true
+
+cd /Users/hoangmac/Project/MU/takumi/Source/android
+adb install -r app/build/outputs/apk/realDevicePreloadDefault/debug/*.apk 

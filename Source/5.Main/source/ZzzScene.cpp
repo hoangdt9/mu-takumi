@@ -17,6 +17,9 @@
 #ifdef __ANDROID__
 #include <android/log.h>
 #endif
+#if defined(__ANDROID__) || defined(MU_IOS)
+#include "MobilePlatform.h"
+#endif
 #include "ZzzScene.h"
 #include "ZzzEffect.h"
 #include "ZzzAI.h"
@@ -1024,8 +1027,40 @@ void CreateCharacterScene()
 	ImmReleaseContext(g_hWnd, hIMC);
 	g_bIMEBlock = TRUE;
 
+#if defined(__ANDROID__) || defined(MU_IOS)
+	// Login flow may leave the Java IME bridge visible; char-select has no text field.
+	MU_MobileStopTextInput();
+	// Drop fake Win32 edit focus so android_main's per-frame IME poll does not call StartTextInput again.
+	::SetFocus(nullptr);
+#endif
+
     g_ErrorReport.Write( "> Character scene init success.\r\n");
 }
+
+#if defined(__ANDROID__) || defined(MU_IOS)
+// Match NewRenderCharacterScene camera + projection before CreateScreenVector so SelectCharacter ray matches the 3D view.
+static void CharacterSelect_UpdateTapRayForPick()
+{
+	vec3_t pos;
+	Vector(9758.0f, 18913.0f, 675.0f, pos);
+	MoveMainCamera();
+	int Width, Height;
+#if(WIDE_SCREEN)
+	Height = GetWindowsY();
+	Width = GetWindowsX();
+	glClearColor(0.f, 0.f, 0.f, 1.f);
+	BeginOpengl(0, 25, GetWindowsX(), GetWindowsY() - 50);
+#else
+	Height = 480;
+	Width = GetScreenWidth();
+	glClearColor(0.f, 0.f, 0.f, 1.f);
+	BeginOpengl(0, 25, 640, 430);
+#endif
+	CreateFrustrum((float)Width / 640.0f, (float)(Height - 50) / 480.0f, pos);
+	CreateScreenVector(MouseX, MouseY, MouseTarget);
+	EndOpengl();
+}
+#endif
 
 void NewMoveCharacterScene()
 {
@@ -1039,6 +1074,21 @@ void NewMoveCharacterScene()
 		InitCharacterScene = true;
 		CreateCharacterScene();
 	}
+
+#if defined(__ANDROID__) || defined(MU_IOS)
+	// LoginScene can switch to CHARACTER_SCENE without re-running CreateCharacterScene; clear stale edit focus once per frame is cheap.
+	{
+		CUIMng& rUIMngEarly = CUIMng::Instance();
+		if (rUIMngEarly.m_CharSelMainWin.IsShow()
+			&& !rUIMngEarly.m_CharMakeWin.IsShow()
+			&& AndroidHasFocusedTextInput())
+		{
+			::SetFocus(nullptr);
+			MU_MobileStopTextInput();
+		}
+	}
+#endif
+
     InitTerrainLight();
     MoveObjects();
 	MoveBugs();
@@ -1092,11 +1142,139 @@ void NewMoveCharacterScene()
 		}
 	}
 
-	if (rUIMng.IsCursorOnUI())
+#if defined(__ANDROID__) || defined(MU_IOS)
+	// NewMoveCharacterScene runs in UpdateSceneState() immediately after ScanAsyncKeyState(), while
+	// CInput::Update() runs later in MainScene(). IsLBtnDn() is therefore one frame behind touch;
+	// use SEASON3B::IsPress/IsRepeat(VK_LBUTTON) here so taps align with the scanned key state.
+	//
+	// Double-tap: two presses on the same slot (or second press with ray miss but same SelectedHero).
+	// Long-press: hold ~0.48s on the 3D viewport (not UI chrome) with a hero already selected — same as Connect.
+	static int s_charSelLastTapSlot = -1;
+	static double s_charSelLastTapTime = 0.0;
+	static double s_charSelHoldStartAbs = -1.0;
+	static bool s_charSelHoldFired = false;
+
+	if (SEASON3B::IsRelease(VK_LBUTTON))
 	{
-		return;
+		s_charSelHoldStartAbs = -1.0;
+		s_charSelHoldFired = false;
 	}
 
+	const bool charSelBlockingModal =
+		rUIMng.m_MsgWin.IsShow() || rUIMng.m_CharMakeWin.IsShow()
+		|| rUIMng.m_SysMenuWin.IsShow() || rUIMng.m_OptionWin.IsShow();
+
+	const bool mobileCharSelFinger =
+		rUIMng.m_CharSelMainWin.IsShow()
+		&& !charSelBlockingModal
+		&& (SEASON3B::IsPress(VK_LBUTTON) || SEASON3B::IsRepeat(VK_LBUTTON));
+
+	const bool mobileCharSelTap =
+		SEASON3B::IsPress(VK_LBUTTON)
+		&& rUIMng.m_CharSelMainWin.IsShow()
+		&& !charSelBlockingModal;
+#endif
+
+	if (rUIMng.IsCursorOnUI())
+	{
+#if defined(__ANDROID__) || defined(MU_IOS)
+		if (!mobileCharSelFinger)
+#endif
+		{
+			return;
+		}
+	}
+
+#if defined(__ANDROID__) || defined(MU_IOS)
+	if (mobileCharSelTap)
+	{
+		CharacterSelect_UpdateTapRayForPick();
+		const int tapSlot = SelectCharacter(KIND_PLAYER);
+		if (tapSlot >= 0 && tapSlot <= 4)
+		{
+			SelectedCharacter = tapSlot;
+		}
+
+		const double now = g_pTimer->GetAbsTime();
+		constexpr double kDoubleTapSeconds = 0.75;
+		const bool inDoubleTapWindow =
+			s_charSelLastTapSlot >= 0
+			&& (now - s_charSelLastTapTime) <= kDoubleTapSeconds;
+		// Second tap often misses OBB on touch; if we're still within the window and the committed
+		// hero matches the first tap slot, enter game (do not treat ray miss as "clear selection").
+		const bool doubleTapEnter =
+			inDoubleTapWindow
+			&& (
+				(tapSlot >= 0 && tapSlot <= 4 && tapSlot == s_charSelLastTapSlot)
+				|| (tapSlot < 0
+					&& SelectedHero >= 0
+					&& SelectedHero <= 4
+					&& SelectedHero == s_charSelLastTapSlot));
+
+		if (doubleTapEnter)
+		{
+			::PlayBuffer(SOUND_CLICK01);
+			SelectedHero = s_charSelLastTapSlot;
+			s_charSelLastTapSlot = -1;
+			s_charSelLastTapTime = 0.0;
+			s_charSelHoldStartAbs = -1.0;
+			s_charSelHoldFired = false;
+			::StartGame();
+		}
+		else if (tapSlot >= 0 && tapSlot <= 4)
+		{
+			s_charSelLastTapSlot = tapSlot;
+			s_charSelLastTapTime = now;
+			SelectedHero = tapSlot;
+			rUIMng.m_CharSelMainWin.UpdateDisplay();
+		}
+		else
+		{
+			if (!inDoubleTapWindow)
+			{
+				s_charSelLastTapSlot = -1;
+			}
+			rUIMng.m_CharSelMainWin.UpdateDisplay();
+		}
+	}
+
+	// Hold finger on the 3D area (cursor not on UI) to submit like the Connect button.
+	if (mobileCharSelFinger && !rUIMng.IsCursorOnUI()
+		&& SelectedHero >= 0 && SelectedHero <= 4)
+	{
+		const double nowHold = g_pTimer->GetAbsTime();
+		constexpr double kHoldToEnterSeconds = 0.48;
+		if (SEASON3B::IsPress(VK_LBUTTON))
+		{
+			s_charSelHoldStartAbs = nowHold;
+			s_charSelHoldFired = false;
+		}
+		else if (!s_charSelHoldFired && s_charSelHoldStartAbs > 0.0 && SEASON3B::IsRepeat(VK_LBUTTON))
+		{
+			if ((nowHold - s_charSelHoldStartAbs) >= kHoldToEnterSeconds)
+			{
+				::PlayBuffer(SOUND_CLICK01);
+				if (SelectedCharacter >= 0 && SelectedCharacter <= 4)
+					SelectedHero = SelectedCharacter;
+				s_charSelLastTapSlot = -1;
+				s_charSelLastTapTime = 0.0;
+				s_charSelHoldFired = true;
+				s_charSelHoldStartAbs = -1.0;
+				::StartGame();
+			}
+		}
+	}
+	else if (
+		rUIMng.m_CharSelMainWin.IsShow()
+		&& !charSelBlockingModal
+		&& SEASON3B::IsRepeat(VK_LBUTTON)
+		&& rUIMng.IsCursorOnUI())
+	{
+		// Finger slid onto UI chrome while holding — drop stale hold anchor (avoid firing after sliding back).
+		s_charSelHoldStartAbs = -1.0;
+		s_charSelHoldFired = false;
+	}
+#else
 	if (rInput.IsLBtnDbl() && rUIMng.m_CharSelMainWin.IsShow())
 	{
 		if (SelectedCharacter < 0 || SelectedCharacter > 4)
@@ -1115,6 +1293,7 @@ void NewMoveCharacterScene()
 			SelectedHero = SelectedCharacter;
 		rUIMng.m_CharSelMainWin.UpdateDisplay();
 	}
+#endif
 
 	g_ConsoleDebug->UpdateMainScene();
 }

@@ -19,6 +19,11 @@
 #include "UIControls.h"
 #include "ZzzOpenglUtil.h"
 
+#if defined(__ANDROID__) || defined(MU_IOS)
+#include "sokol_app.h"
+#include "MobilePlatform.h"
+#endif
+
 #define	MW_OK		0
 #define	MW_CANCEL	1
 
@@ -93,7 +98,7 @@ void CMsgWin::SetCtrlPosition()
 		m_sprInput.SetPosition(nBaseXPos + 32, nBtnYPos + 4);
 		m_aBtn[MW_OK].SetPosition(nBaseXPos + 209, nBtnYPos);
 		m_aBtn[MW_CANCEL].SetPosition(nBaseXPos + 264, nBtnYPos);
-		// 입력 텍스트 위치 지정.
+		// ??? ???? ??? ????.
 		if (m_nMsgCode == MESSAGE_DELETE_CHARACTER_RESIDENT)
 			if (g_iChatInputType == 1)
 				g_pSinglePasswdInputBox->SetPosition(
@@ -200,7 +205,12 @@ void CMsgWin::UpdateWhileActive(double dDeltaTick)
 				{
 					g_ErrorReport.Write("> Menu - Exit game.");
 					g_ErrorReport.WriteCurrentTime();
+#if defined(__ANDROID__) || defined(MU_IOS)
+					MU_MobileStopTextInput();
+					sapp_request_quit();
+#else
 					::PostMessage(g_hWnd, WM_CLOSE, 0, 0);
+#endif
 				}
 				else
 				{
@@ -452,9 +462,19 @@ void CMsgWin::ManageOKClick()
 	switch (m_nMsgCode)
 	{
 	case RECEIVE_LOG_IN_FAIL_VERSION:
+#if defined(__ANDROID__) || defined(MU_IOS)
+		MU_MobileStopTextInput();
+		sapp_request_quit();
+#else
 		::PostMessage(g_hWnd, WM_CLOSE, 0, 0);
+#endif
 		break;
 	case MESSAGE_SERVER_LOST:
+#if defined(__ANDROID__) || defined(MU_IOS)
+		MU_MobileStopTextInput();
+		sapp_request_quit();
+		break;
+#endif
 	case MESSAGE_VERSION:
 	case RECEIVE_LOG_IN_FAIL_ERROR:
 	case MESSAGE_INPUT_ID:

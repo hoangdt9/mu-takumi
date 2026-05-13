@@ -50,9 +50,8 @@ services:
       TAKUMI_PUBLIC_HOST: "${TAKUMI_PUBLIC_HOST:-}"
       TAKUMI_VERBOSE: "${TAKUMI_VERBOSE:-1}"
       DOTNET_ENVIRONMENT: "${DOTNET_ENVIRONMENT:-Development}"
-      # Connect list F4 06: server IDs = base + 0..count-1. Client uses id/20 as ServerList.bmd group — base 0 → empty if BMD has no group 0.
-      TAKUMI_CS_CONNECT_BASE: "${TAKUMI_CS_CONNECT_BASE:-20}"
-      TAKUMI_CS_CONNECT_COUNT: "${TAKUMI_CS_CONNECT_COUNT:-3}"
+      # F4 06 connect list: when unset, LegacyLoginHost uses default ids 0,20,40,… (32 groups). Override: TAKUMI_CS_CONNECT_IDS or BASE+COUNT.
+      # Override with TAKUMI_CS_CONNECT_IDS=20,21,22 or TAKUMI_CS_CONNECT_BASE + TAKUMI_CS_CONNECT_COUNT (see Program.cs).
     # Build then run so a stale bin/Release from the host volume cannot mask Program.cs changes.
     command:
       - /bin/sh

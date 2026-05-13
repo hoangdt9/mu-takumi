@@ -8,6 +8,7 @@
 | `.env.lan.example` | Copy to `.env` and set `TAKUMI_PUBLIC_HOST` to the LAN IP phones use. |
 | `docker-compose.yml` | **Postgres + LegacyLoginHost** in Docker (**54444**, **44605**, **44606**). Optional profile **`datazip`**: nginx serves `../docker/data-zip/host/data.zip` on host port **18080** (see `.env.lan.example`). |
 | `scripts/docker-up.sh` | `docker compose up -d` + `ps`. Pass **`--with-datazip`** to enable the `datazip` profile. |
+| `scripts/docker-recreate-legacy-login.sh` | `docker compose up -d --force-recreate legacy-login` from **this** folder (avoids *no configuration file provided* when your shell cwd was `Source/android`). From repo root `takumi/`: `bash scripts/docker-recreate-legacy-login.sh`. From `takumi/Source/android`: `bash ../../scripts/docker-recreate-legacy-login.sh`. |
 
 ## Source code status
 
@@ -23,7 +24,7 @@ Example Npgsql URL for a host app on the same machine as Docker Desktop:
 ## Quick start (database + LAN server in Docker)
 
 1. `cp .env.lan.example .env` and set `TAKUMI_PUBLIC_HOST` to your Mac’s Wi‑Fi IP (phones must reach it).
-2. **`docker compose up -d`** or **`./scripts/docker-up.sh`** — starts **Postgres** (default **54444**) and **LegacyLoginHost** (**44605** Connect + **44606** login). Dec2 is always **`/keys/Dec2.dat`** inside the container (read-only mount `../ClientBuild_192.168.99.200/Data` → `/keys`). Override **`TAKUMI_DEC2_HOST_DIR`** if your `Dec2.dat` lives elsewhere; **`TAKUMI_DEC2_PATH` in `.env` is only for host `dotnet run`**, not substituted into Docker (host paths would break SimpleModulus). Connect list **F4 06** uses **`TAKUMI_CS_CONNECT_BASE`** (default **20**) so sub-server lines match `Data/Local/ServerList.bmd` (`connectIndex/20` = group); set **40**, **60**, … if your first BMD group is not 1.
+2. **`docker compose up -d`** or **`./scripts/docker-up.sh`** — starts **Postgres** (default **54444**) and **LegacyLoginHost** (**44605** Connect + **44606** login). Dec2 is always **`/keys/Dec2.dat`** inside the container (read-only mount `../ClientBuild_192.168.99.200/Data` → `/keys`). Override **`TAKUMI_DEC2_HOST_DIR`** if your `Dec2.dat` lives elsewhere; **`TAKUMI_DEC2_PATH` in `.env` is only for host `dotnet run`**, not substituted into Docker (host paths would break SimpleModulus). Connect list **F4 06** (sub-server lines): if **`TAKUMI_CS_CONNECT_IDS`** / **`TAKUMI_CS_CONNECT_BASE`** are unset, the host sends a **multi-group default** (wire ids `0, 20, 40, …` up to 32 groups so `Data/Local/ServerList.bmd` usually matches at least one `connectIndex/20` group). Override with **`TAKUMI_CS_CONNECT_IDS=20,21,22`** or **`TAKUMI_CS_CONNECT_BASE` + `TAKUMI_CS_CONNECT_COUNT`** when your BMD uses different groups.
 3. **Optional LAN `data.zip` download** (different host port, default **18080**): `docker compose --profile datazip up -d` or `./scripts/docker-up.sh --with-datazip`. Serves `../docker/data-zip/host/data.zip` as `http://<LAN-IP>:18080/data.zip` (override `DATA_ZIP_PUBLISH_PORT`). Same nginx config as `takumi/docker` — do not run both `datazip` stacks on the same publish port.
 4. Logs: `docker compose logs -f legacy-login`. Stop: `docker compose down`.
 5. Full `Takumi.Server.Host`: run when `src/Takumi.Server.Host` sources exist; connection string → Postgres above.

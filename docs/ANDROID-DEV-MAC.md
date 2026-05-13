@@ -110,6 +110,7 @@ Khi client/APK trỏ tới **Connect/Login Takumi** (ví dụ cổng **`44605` /
 ```
 
 - **Server LAN trong Docker:** trong `server-next` chạy `docker compose up -d` hoặc `./scripts/docker-up.sh` — stack gồm **Postgres** và **LegacyLoginHost** (Connect **44605** + login **44606**). Cần `.env` với `TAKUMI_PUBLIC_HOST` = IP LAN Mac.
+- **Lỗi `no configuration file provided`:** bạn đang gọi `docker compose` từ thư mục **không** chứa `docker-compose.yml` (thường là `Source/android` sau khi build APK). Cách nhanh: `cd` vào `server-next` rồi chạy lại, hoặc từ `Source/android`: `bash ../../scripts/docker-recreate-legacy-login.sh` (wrapper gọi compose trong `server-next`).
 
 ### LegacyLoginHost (.NET) vs cổng **44606**
 

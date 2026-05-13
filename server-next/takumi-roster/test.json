@@ -1,11 +1,6 @@
 {
   "characters": [
     {
-      "name": "dk001",
-      "serverClass": 16,
-      "level": 1
-    },
-    {
       "name": "dk002",
       "serverClass": 32,
       "level": 1

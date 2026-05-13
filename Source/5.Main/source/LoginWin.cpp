@@ -232,12 +232,14 @@ void CLoginWin::UpdateWhileActive(double dDeltaTick)
 		if (gCB_DangKyInGame) gCB_DangKyInGame->OpenOnOff();
 	}
 #endif
-	else if (CInput::Instance().IsKeyDown(VK_RETURN))
+	// Android/iOS soft IME: CInput::IsKeyDown is suppressed while text-edit mode is active,
+	// but SEASON3B::IsPress still observes GetAsyncKeyState / g_bEnterPressed (see NewUICommon.cpp).
+	else if (SEASON3B::IsPress(VK_RETURN))
 	{
 		::PlayBuffer(SOUND_CLICK01);
 		RequestLogin();
 	}
-	else if (CInput::Instance().IsKeyDown(VK_ESCAPE))
+	else if (SEASON3B::IsPress(VK_ESCAPE))
 	{
 		::PlayBuffer(SOUND_CLICK01);
 		CancelLogin();
@@ -260,6 +262,11 @@ void CLoginWin::UpdateWhileShow(double dDeltaTick)
 		else if (m_asprInputBox[LIW_PASSWORD].CursorInObject())
 		{
 			m_pPassInputBox->GiveFocus(TRUE);
+		}
+		else if (AndroidHasFocusedTextInput())
+		{
+			// Tap outside account/password fields: drop Win32 edit focus and hide soft keyboard.
+			SetFocus(nullptr);
 		}
 	}
 #endif

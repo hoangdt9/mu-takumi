@@ -7,6 +7,7 @@ import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.InputType;
+import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -39,6 +40,9 @@ public class MuMainNativeActivity extends NativeActivity {
         int unicodeChar,
         int metaState,
         int repeatCount);
+
+    /** IME "Done" / action key — must not insert '\\n' into the invisible bridge (password field). */
+    private static native void nativeOnImeEditorAction(int actionCode);
 
     private BridgeEditText imeBridge;
 
@@ -79,6 +83,7 @@ public class MuMainNativeActivity extends NativeActivity {
         FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(1, 1);
         params.leftMargin = 0;
         params.topMargin = 0;
+        params.gravity = Gravity.TOP | Gravity.START;
         addContentView(imeBridge, params);
         imeBridge.post(
             () -> {
@@ -92,6 +97,30 @@ public class MuMainNativeActivity extends NativeActivity {
                     imm.hideSoftInputFromWindow(decor.getWindowToken(), 0);
                 }
             });
+    }
+
+    /** Called from native when the game sets the SDL text-input rect (screen pixels). */
+    public void syncImeBridgeBounds(final int x, final int y, final int w, final int h) {
+        runOnUiThread(() -> applyImeBridgeBounds(x, y, w, h));
+    }
+
+    private void applyImeBridgeBounds(int x, int y, int w, int h) {
+        if (imeBridge == null) {
+            return;
+        }
+        FrameLayout.LayoutParams p = (FrameLayout.LayoutParams) imeBridge.getLayoutParams();
+        if (p == null) {
+            p = new FrameLayout.LayoutParams(1, 1);
+        }
+        final int bw = Math.max(1, w);
+        final int bh = Math.max(1, h);
+        p.width = bw;
+        p.height = bh;
+        p.leftMargin = Math.max(0, x);
+        p.topMargin = Math.max(0, y);
+        p.gravity = Gravity.TOP | Gravity.START;
+        imeBridge.setLayoutParams(p);
+        imeBridge.requestLayout();
     }
 
     /**
@@ -209,7 +238,7 @@ public class MuMainNativeActivity extends NativeActivity {
 
                 @Override
                 public boolean performEditorAction(int actionCode) {
-                    nativeOnTextInput("\n");
+                    nativeOnImeEditorAction(actionCode);
                     return true;
                 }
             };
@@ -312,6 +341,10 @@ public class MuMainNativeActivity extends NativeActivity {
 
         getWindow().setStatusBarColor(Color.TRANSPARENT);
         getWindow().setNavigationBarColor(Color.TRANSPARENT);
+        // Pan the window when IME opens so the focused (invisible) bridge tracks the real text field rect.
+        getWindow().setSoftInputMode(
+            WindowManager.LayoutParams.SOFT_INPUT_STATE_UNSPECIFIED
+                | WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
         applyImmersiveFlags();
     }
 

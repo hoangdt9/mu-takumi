@@ -1,12 +1,13 @@
 # Takumi Server Next - Implementation Checklist
 
-Last updated: 2026-05-12 (client touch doc + checklist sync)
+Last updated: 2026-05-13 (world-position root cause + world-data migration plan)
 
 ## Repository vs checklist (read first)
 
 - **`server-next/README.md`** describes what is actually in tree: **`server-next/docker-compose.yml`** starts **PostgreSQL** and **LegacyLoginHost** in Docker (Connect **44605**, login **44606**; Postgres **54444** by default). Compose defaults **`TAKUMI_CS_CONNECT_BASE=20`** so F4 06 sub-lines match typical `ServerList.bmd` (group = connectId/20). The .NET host can still be run on the host with `dotnet watch` when you prefer hot reload — **do not** bind the same ports while Docker publishes them.
 - The **`## Done`** section below is the **intended / previously implemented** feature set. Treat unchecked **Exit criteria** and **`## In Progress`** as the current engineering truth for QA; do not assume every `[x]` is verifiable without a compilable solution in git.
 - **Native client (C++) session notes** (Android/iOS character select: IME, touch → `StartGame`, ray pick): **`../../docs/DEVELOPMENT-LOG-2026-05-12.md`** (from this file: up to repo `takumi/docs/`).
+- **What is actually in `server-next` today (git):** mostly **`src/Takumi.Server.LegacyLoginHost`** (`Program.cs`) + Docker Postgres wiring — see **`../README.md` § Source code status**. Sections below that reference a multi-project `Takumi.Server.*` solution describe the **intended** architecture; when those projects are absent from the tree, treat **LegacyLoginHost** behaviour and this checklist’s unchecked items as the live contract.
 
 ## Client APK, `data.zip`, and Docker (what to redo when)
 
@@ -75,6 +76,7 @@ Use this to avoid unnecessary rebuilds.
 ## Next (High Priority)
 
 - [ ] Dedicated **game** TCP server after character select (minimal map/scope packets) if client leaves login socket or expects game port.
+- [ ] **Persist last map + X/Y (and angle)** for each character: extend roster JSON **or** DB row used by join builder; replace hard-coded Lorencia stub in `BuildJoinMapServer602` (see **§ Character world position**).
 - [ ] Persist and **enforce** session ticket / account session state in `TakumiLoginServer` (table `session_ticket` exists; not wired yet).
 - [ ] Extend integration tests: malformed C1 length, oversized packet close, rate limits.
 
@@ -93,6 +95,52 @@ Use this to avoid unnecessary rebuilds.
 - [x] Runtime `inventory_slot` table + staging `inventory_staging` + startup importer (minimal item fields).
 - [x] After `F3 03`, send Season 6 `F3 10` inventory from `inventory_slot` (extended item encoding; flat `ItemIndex` → group/number).
 - [ ] Extend staging→runtime mapping to skills, warehouse, guild/social domains.
+
+## Character world position — why reconnect always “resets”
+
+**Symptom:** After leaving the game and selecting the same character again, the client appears at a **fixed starter position** (e.g. Lorencia) instead of where you logged off.
+
+**Root cause (current `LegacyLoginHost`):**
+
+1. **`BuildJoinMapServer602` in `../src/Takumi.Server.LegacyLoginHost/Program.cs`** builds `PRECEIVE_JOIN_MAP_SERVER` with **hard-coded** tile coordinates (**135, 122**) and default **map id 0** (Lorencia). The `CharacterRosterEntry` is explicitly **ignored** for layout (`_ = r; // roster ignored for stub`).
+2. **Roster JSON** (`TAKUMI_ROSTER_DIR` / `./takumi-roster`) persists **name / class / level only** — not **map index, X, Y, angle**, so there is nowhere to read last world state from.
+3. There is **no authoritative game server** in this folder that receives movement / map changes and writes them back to DB on disconnect (contrast: a full GameServer saves `PositionX` / `PositionY` / map on save or logout).
+
+**Mitigations (pick one or combine):**
+
+| Approach | Scope |
+|----------|--------|
+| **A. Minimal** | Extend roster (or `takumi_runtime.character`) with `map_id`, `pos_x`, `pos_y`, `angle`; update `BuildJoinMapServer602` to emit saved values; optionally bump coords when client sends move packets if you add parsing on the login socket. |
+| **B. Correct** | Stand up a **dedicated game TCP server** after `F3 03`, persist world state in Postgres (or legacy SQL), and keep LegacyLoginHost for auth/list only — matches **`## Next (High Priority)`** “Dedicated game TCP server”. |
+
+Until **A** or **B** is implemented, **expect spawn at stub join coordinates** every time.
+
+## World content migration → `server-next` (maps, NPCs, monsters)
+
+**Goal:** Move **data-driven world definitions** out of legacy `MuServer` text/XML and C++ loaders into **versioned, testable** assets consumed by `server-next` (JSON/SQL + C# loaders), then drive **scope / spawn / NPC dialog** packets from that model once a game server exists.
+
+**Authoritative sources in this repo (legacy, read-only references):**
+
+| Domain | Typical paths under repo root |
+|--------|--------------------------------|
+| Monster spawns (per map) | `MuServer/4.GameServer/Data/Monster/MonsterSetBase.txt`, `MonsterSetBaseCS.txt` (+ `Sub 1/` copies); loader: `Source/4.GameServer/GameServer/MonsterSetBase.cpp` |
+| NPC / shop / gate (server-side) | `MuServer/4.GameServer/Data/Custom/` (e.g. `CustomNpcMove.txt`, `CustomNpcCommand.txt`); broader NPC tables vary by fork — search `Source/4.GameServer/GameServer/` for `Npc`, `Shop`, `Gate` |
+| Events / gates / terrain-dependent logic | `MuServer/4.GameServer/Data/Event/`, `Data/Custom/` |
+| Client-only placement (reference) | `Source/5.Main` OBJS / map loaders — **not** the server-of-record; use for cross-check only |
+
+**Suggested migration phases (checklist):**
+
+- [ ] **Inventory & schema** — Tables or JSON schemas for `world_map`, `monster_spawn` (map_id, mob_id, x, y, dir, count, regen), `npc_spawn` (map_id, npc_id, x, y, type), `gate` / `shop_merchant` as needed; document PK and versioning (e.g. `data_revision`).
+- [ ] **ETL** — One-off or repeatable importer: parse `MonsterSetBase*.txt` (+ CS variants) into staging CSV/SQL; validate coordinate ranges per map id; reject duplicates with CI report.
+- [ ] **NPC / merchant parity** — Map fork-specific NPC/shop/gate tables (often under `Data/Custom/` or SQL dumps) into the same DB model; link `npc_id` to dialog / item lists where the legacy server references IDs.
+- [ ] **Runtime API** — Read-only queries from C# (`IMapCatalog`, `IMonsterSpawnTable`) used by future **GameServer** when building initial scope (`0x12` / `0x13` family, exact opcodes per Season 6 Takumi client).
+- [ ] **Wire integration** — Blocked until **Dedicated game TCP server** exists: spawn lists must not be sent on the login-only socket unless the client tolerates it (usually it does not).
+- [ ] **Persistence loop** — When game server handles movement / map change, update `character` (or session) row so **§ Character world position** mitigation **A** becomes unnecessary for stub join.
+
+**Exit criteria (world migration “done enough” for MVP game port):**
+
+- [ ] Importer runs in CI or `docker compose` init container; seeded DB contains at least **Lorencia** spawns matching a known-good `MonsterSetBase.txt` row count.
+- [ ] Game server (when present) logs `mapId` + spawn batch id at player enter; no hard-coded `(135,122)` in join path for DB-backed characters.
 
 ## Exit Criteria for "Login/Select MVP"
 

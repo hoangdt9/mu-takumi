@@ -67,4 +67,19 @@ chmod +x ./gradlew
   -PmuFailOnMissingRequiredAbis=true
 
 cd /Users/hoangmac/Project/MU/takumi/Source/android
-adb install -r app/build/outputs/apk/realDevicePreloadDefault/debug/*.apk 
+adb install -r app/build/outputs/apk/realDevicePreloadDefault/debug/*.apk
+
+### ADB: `unauthorized` và dòng `$ADB_VENDOR_KEYS is not set`
+
+- **Ý nghĩa:** Thiết bị chưa duyệt fingerprint RSA của `adb` trên máy tính này. Khi đó mọi lệnh (`install`, `tcpip`, …) đều báo lỗi.
+- **Dòng `ADB_VENDOR_KEYS`:** Thông báo mặc định của `adb`; với máy dev cá nhân **gần như không cần** set biến môi trường đó (chủ yếu dùng trong môi trường doanh nghiệp / ký adb tùy chỉnh).
+
+**Cách xử lý (làm trên điện thoại + Mac):**
+
+1. Cáp truyền dữ liệu (không dùng cáp “charge only”), USB mode **File transfer / MTP**, màn hình **mở khóa**.
+2. **Settings → Developer options → Revoke USB debugging authorizations**, rút cáp và cắm lại.
+3. Tìm hộp thoại **“Allow USB debugging?”** → **Allow** (nên tick *Always allow from this computer*). Đôi khi popup nằm sau app khác hoặc trong shade thông báo.
+4. Trên Mac: `adb kill-server && adb start-server`, rồi `adb devices` — serial phải ở trạng thái **`device`**, không phải `unauthorized`.
+5. Nếu vẫn lỗi: kiểm tra chỉ dùng **một** bản `adb` (`which adb` — Homebrew vs `Android/sdk/platform-tools`); đổi bản thì `kill-server` rồi thử lại.
+
+**`adb tcpip 5555`:** chỉ chạy được sau khi thiết bị đã là **`device`** (đã ủy quyền USB ít nhất một lần với máy này).

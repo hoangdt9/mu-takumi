@@ -6151,6 +6151,9 @@ std::mutex g_PendingSdlEventsMutex;
 std::vector<SDL_Event> g_PendingSdlEvents;
 AndroidFrameState g_AndroidFrameState = {};
 
+std::mutex g_ImeEditorActionMutex;
+static bool g_pendingImeEditorAction = false;
+
 constexpr jint kAndroidKeyActionDown = 0;
 constexpr jint kAndroidKeyActionUp = 1;
 constexpr jint kAndroidKeyActionMultiple = 2;
@@ -6168,6 +6171,23 @@ static std::vector<SDL_Event> DrainSyntheticSDLEvents()
     std::lock_guard<std::mutex> lock(g_PendingSdlEventsMutex);
     events.swap(g_PendingSdlEvents);
     return events;
+}
+
+static void DrainPendingImeEditorAction()
+{
+    bool fire = false;
+    {
+        std::lock_guard<std::mutex> lock(g_ImeEditorActionMutex);
+        if (g_pendingImeEditorAction)
+        {
+            g_pendingImeEditorAction = false;
+            fire = true;
+        }
+    }
+    if (fire)
+    {
+        SetEnterPressed(true);
+    }
 }
 
 static SDL_Keymod ConvertAndroidMetaStateToSDLKeymod(jint metaState)
@@ -6669,10 +6689,22 @@ Java_com_muonline_client_MuMainNativeActivity_nativeOnKeyEvent(
     QueueAndroidKeyEvent(action, keyCode, unicodeChar, metaState, repeatCount);
 }
 
+extern "C" JNIEXPORT void JNICALL
+Java_com_muonline_client_MuMainNativeActivity_nativeOnImeEditorAction(
+    JNIEnv*,
+    jclass,
+    jint actionCode)
+{
+    (void)actionCode;
+    std::lock_guard<std::mutex> lock(g_ImeEditorActionMutex);
+    g_pendingImeEditorAction = true;
+}
+
 static void ProcessAndroidEventQueue()
 {
     int screenW = g_DrawableWidth;
     int screenH = g_DrawableHeight;
+    DrainPendingImeEditorAction();
     std::vector<SDL_Event> events = DrainSyntheticSDLEvents();
     for (const SDL_Event& event : events)
     {

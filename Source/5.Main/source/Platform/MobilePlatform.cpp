@@ -99,6 +99,58 @@ void MU_AndroidCallActivityVoidMethod(const char* methodName, const char* method
     }
 }
 } // namespace
+
+static void MU_AndroidSyncImeBridgeBounds(int x, int y, int w, int h)
+{
+    const void* pActivity = sapp_android_get_native_activity();
+    if (pActivity == nullptr)
+    {
+        return;
+    }
+
+    auto* nativeActivity = static_cast<ANativeActivity*>(const_cast<void*>(pActivity));
+    JavaVM* vm = nativeActivity->vm;
+    JNIEnv* env = nullptr;
+    const jint getEnvResult = vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6);
+    bool needDetach = false;
+    if (getEnvResult == JNI_EDETACHED)
+    {
+        if (vm->AttachCurrentThread(&env, nullptr) != JNI_OK || env == nullptr)
+        {
+            return;
+        }
+        needDetach = true;
+    }
+    else if (getEnvResult != JNI_OK || env == nullptr)
+    {
+        return;
+    }
+
+    jclass clazz = env->GetObjectClass(nativeActivity->clazz);
+    if (clazz != nullptr)
+    {
+        jmethodID mid = env->GetMethodID(clazz, "syncImeBridgeBounds", "(IIII)V");
+        if (mid == nullptr)
+        {
+            env->ExceptionClear();
+        }
+        else
+        {
+            env->CallVoidMethod(nativeActivity->clazz, mid, x, y, w, h);
+        }
+        if (env->ExceptionCheck())
+        {
+            env->ExceptionDescribe();
+            env->ExceptionClear();
+        }
+        env->DeleteLocalRef(clazz);
+    }
+
+    if (needDetach)
+    {
+        vm->DetachCurrentThread();
+    }
+}
 #endif
 
 void MU_MobilePlatformInit()
@@ -140,6 +192,12 @@ void MU_MobileStartTextInput()
     // Sokol uses ANativeActivity_showSoftInput, which often does not show IME for this app;
     // the Java bridge view receives composition and forwards to native.
     MU_AndroidCallActivityVoidMethod("showImeBridgeKeyboard", "()V");
+    {
+        const SDL_Rect& r = g_textInputRect;
+        const int bw = (r.w > 0) ? r.w : 1;
+        const int bh = (r.h > 0) ? r.h : 1;
+        MU_AndroidSyncImeBridgeBounds(r.x, r.y, bw, bh);
+    }
 #else
     sapp_show_keyboard(true);
 #endif
@@ -165,6 +223,11 @@ void MU_MobileSetTextInputRect(const SDL_Rect* rect)
     if (rect)
     {
         g_textInputRect = *rect;
+#if defined(__ANDROID__)
+        const int bw = (rect->w > 0) ? rect->w : 1;
+        const int bh = (rect->h > 0) ? rect->h : 1;
+        MU_AndroidSyncImeBridgeBounds(rect->x, rect->y, bw, bh);
+#endif
     }
     else
     {

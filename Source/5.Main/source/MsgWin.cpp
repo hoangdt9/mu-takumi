@@ -18,10 +18,12 @@
 #include "wsclientinline.h"
 #include "UIControls.h"
 #include "ZzzOpenglUtil.h"
+#include <algorithm>
 
 #if defined(__ANDROID__) || defined(MU_IOS)
 #include "sokol_app.h"
 #include "MobilePlatform.h"
+#include "Platform/PlatformDefs.h"
 #endif
 
 #define	MW_OK		0
@@ -29,8 +31,73 @@
 
 extern float g_fScreenRate_x;
 extern float g_fScreenRate_y;
+
+namespace
+{
+constexpr int kDeleteCharGuardDigits = 6;
+// Client-side captcha for character delete (shown on 2nd line of MsgWin).
+char s_DeleteCharGuardCode[kDeleteCharGuardDigits + 1];
+
+static void GenerateDeleteCharGuardCode()
+{
+	for (int i = 0; i < kDeleteCharGuardDigits; ++i)
+	{
+		s_DeleteCharGuardCode[i] = static_cast<char>('0' + (rand() % 10));
+	}
+	s_DeleteCharGuardCode[kDeleteCharGuardDigits] = '\0';
+	// Avoid trivial all-zero code (some servers treat empty resident specially).
+	if (strspn(s_DeleteCharGuardCode, "0") == static_cast<size_t>(kDeleteCharGuardDigits))
+	{
+		s_DeleteCharGuardCode[0] = '1';
+	}
+}
+
+// Virtual 640x480 hit target for the delete-captcha field: full input sprite slab
+// plus padding (fat finger). Matches LoginWin using the whole input box sprite,
+// not only the CUITextInputBox text metrics.
+static bool DeleteResidentFieldHitVirtual(float vx, float vy, CSprite& sprInput)
+{
+	const int bx = static_cast<int>(static_cast<float>(sprInput.GetXPos()) / g_fScreenRate_x);
+	const int by = static_cast<int>(static_cast<float>(sprInput.GetYPos()) / g_fScreenRate_y);
+	const int bw = static_cast<int>(static_cast<float>(sprInput.GetWidth()) / g_fScreenRate_x);
+	const int bh = static_cast<int>(static_cast<float>(sprInput.GetHeight()) / g_fScreenRate_y);
+	constexpr int kPadH = 14;
+	constexpr int kPadV = 20;
+	const int hx = bx - kPadH;
+	const int hy = by - kPadV;
+	const int hw = bw + 2 * kPadH;
+	const int hh = bh + 2 * kPadV;
+	return vx >= static_cast<float>(hx) && vx < static_cast<float>(hx + hw)
+		&& vy >= static_cast<float>(hy) && vy < static_cast<float>(hy + hh);
+}
+} // namespace
+
 extern int g_iChatInputType;
 extern CUITextInputBox* g_pSinglePasswdInputBox;
+
+#if defined(__ANDROID__) || defined(MU_IOS)
+bool CMsgWin::AndroidTryFocusDeleteResidentInput(float virtualUiX, float virtualUiY)
+{
+	if (!m_bShow || m_nMsgCode != MESSAGE_DELETE_CHARACTER_RESIDENT || m_eType != MWT_STR_INPUT)
+	{
+		return false;
+	}
+	if (g_iChatInputType != 1 || g_pSinglePasswdInputBox == nullptr)
+	{
+		return false;
+	}
+	if (g_pSinglePasswdInputBox->GetState() != UISTATE_NORMAL)
+	{
+		return false;
+	}
+	if (!DeleteResidentFieldHitVirtual(virtualUiX, virtualUiY, m_sprInput))
+	{
+		return false;
+	}
+	g_pSinglePasswdInputBox->GiveFocus(TRUE);
+	return true;
+}
+#endif
 
 CMsgWin::CMsgWin()
 {
@@ -100,10 +167,19 @@ void CMsgWin::SetCtrlPosition()
 		m_aBtn[MW_CANCEL].SetPosition(nBaseXPos + 264, nBtnYPos);
 		// ??? ???? ??? ????.
 		if (m_nMsgCode == MESSAGE_DELETE_CHARACTER_RESIDENT)
+		{
 			if (g_iChatInputType == 1)
+			{
+				const int sprVw = static_cast<int>(static_cast<float>(m_sprInput.GetWidth()) / g_fScreenRate_x);
+				const int sprVh = static_cast<int>(static_cast<float>(m_sprInput.GetHeight()) / g_fScreenRate_y);
+				const int textW = (std::max)(90, sprVw - 18);
+				const int textH = (std::max)(18, sprVh - 10);
 				g_pSinglePasswdInputBox->SetPosition(
 					int((m_sprInput.GetXPos() + 10) / g_fScreenRate_x),
 					int((m_sprInput.GetYPos() + 8) / g_fScreenRate_y));
+				g_pSinglePasswdInputBox->SetSize(textW, textH);
+			}
+		}
 		break;
 	}
 }
@@ -156,6 +232,36 @@ bool CMsgWin::CursorInWin(int nArea)
 	}
 
 	return CWin::CursorInWin(nArea);
+}
+
+void CMsgWin::UpdateWhileShow(double dDeltaTick)
+{
+#if defined(__ANDROID__) || defined(MU_IOS)
+	CInput& rInput = CInput::Instance();
+	// Runs even before Active(true) is applied (same frame as PopUp), so the soft
+	// keyboard can open on tap without waiting for the next frame.
+	if (m_nMsgCode == MESSAGE_DELETE_CHARACTER_RESIDENT && m_eType == MWT_STR_INPUT && rInput.IsLBtnDn())
+	{
+		// Whole input sprite + padding (same idea as LoginWin hitting m_asprInputBox).
+		const bool onPasswd = (g_iChatInputType == 1 && g_pSinglePasswdInputBox != nullptr
+			&& g_pSinglePasswdInputBox->GetState() == UISTATE_NORMAL
+			&& DeleteResidentFieldHitVirtual(static_cast<float>(MouseX), static_cast<float>(MouseY), m_sprInput));
+		if (onPasswd)
+		{
+			g_pSinglePasswdInputBox->GiveFocus(TRUE);
+		}
+		else
+		{
+			const bool onButton = m_aBtn[MW_OK].CursorInObject() || m_aBtn[MW_CANCEL].CursorInObject();
+			if (!onButton && AndroidHasFocusedTextInput())
+			{
+				::SetFocus(nullptr);
+			}
+		}
+	}
+#else
+	(void)dDeltaTick;
+#endif
 }
 
 void CMsgWin::UpdateWhileActive(double dDeltaTick)
@@ -293,8 +399,10 @@ void CMsgWin::SetMsg(MSG_WIN_TYPE eType, LPCTSTR lpszMsg, LPCTSTR lpszMsg2)
 	}
 	else
 	{
-		strcpy(m_aszMsg[0], lpszMsg);
-		strcpy(m_aszMsg[1], lpszMsg2);
+		// m_aszMsg rows are MW_MSG_ROW_MAX (52) bytes. Do not use strncpy_s(..., _TRUNCATE) on Android:
+		// _TRUNCATE is MSVC-specific; Bionic treats it as a huge count and FORTIFY aborts.
+		snprintf(m_aszMsg[0], sizeof(m_aszMsg[0]), "%s", lpszMsg);
+		snprintf(m_aszMsg[1], sizeof(m_aszMsg[1]), "%s", lpszMsg2);
 		m_nMsgLine = 2;
 	}
 }
@@ -407,9 +515,15 @@ void CMsgWin::PopUp(int nMsgCode, char* pszMsg)
 		eType = MWT_BTN_BOTH;
 		break;
 	case MESSAGE_DELETE_CHARACTER_RESIDENT:
-		lpszMsg = GlobalText[1713];
+		GenerateDeleteCharGuardCode();
+		// ASCII-only for NDK; must fit in m_aszMsg[][MW_MSG_ROW_MAX] (52) when SetMsg copies two lines.
+		sprintf(
+			szTempMsg,
+			"Vui long go %d so ben duoi trung ma hien thi.",
+			kDeleteCharGuardDigits);
+		lpszMsg = szTempMsg;
+		lpszMsg2 = s_DeleteCharGuardCode;
 		eType = MWT_STR_INPUT;
-		InitResidentNumInput();
 		break;
 	case MESSAGE_DELETE_CHARACTER_ITEM_BLOCK:
 		lpszMsg = GlobalText[439];
@@ -452,11 +566,38 @@ void CMsgWin::PopUp(int nMsgCode, char* pszMsg)
 
 	SetMsg(eType, lpszMsg, lpszMsg2);
 	rUIMng.ShowWin(this);
+
+	if (m_nMsgCode == MESSAGE_DELETE_CHARACTER_RESIDENT)
+	{
+		InitResidentNumInput();
+	}
 }
 
 void CMsgWin::ManageOKClick()
 {
 	CUIMng& rUIMng = CUIMng::Instance();
+
+	if (m_nMsgCode == MESSAGE_DELETE_CHARACTER_RESIDENT)
+	{
+		char typed[kDeleteCharGuardDigits + 8] = {};
+		if (g_iChatInputType == 1)
+		{
+			g_pSinglePasswdInputBox->GetText(typed);
+		}
+		else
+		{
+			strncpy_s(typed, sizeof(typed), InputText[0], _TRUNCATE);
+		}
+		// Match legacy behaviour: do not send delete with empty / partial resident.
+		if (strlen(typed) != static_cast<size_t>(kDeleteCharGuardDigits)
+			|| strcmp(typed, s_DeleteCharGuardCode) != 0)
+		{
+			::PlayBuffer(SOUND_CLICK01);
+			CUIMng::Instance().PopUpMsgWin(MESSAGE_STORAGE_RESIDENTWRONG);
+			return;
+		}
+	}
+
 	rUIMng.HideWin(this);
 
 	switch (m_nMsgCode)
@@ -518,6 +659,17 @@ void CMsgWin::ManageOKClick()
 void CMsgWin::ManageCancelClick()
 {
 	CUIMng& rUIMng = CUIMng::Instance();
+	if (m_nMsgCode == MESSAGE_DELETE_CHARACTER_RESIDENT && g_iChatInputType == 1)
+	{
+		g_pSinglePasswdInputBox->SetText(NULL);
+		g_pSinglePasswdInputBox->SetState(UISTATE_HIDE);
+	}
+#if defined(__ANDROID__) || defined(MU_IOS)
+	if (m_nMsgCode == MESSAGE_DELETE_CHARACTER_RESIDENT)
+	{
+		MU_MobileStopTextInput();
+	}
+#endif
 	m_nMsgCode = -1;
 	rUIMng.HideWin(this);
 }
@@ -527,16 +679,18 @@ void CMsgWin::InitResidentNumInput()
 	::ClearInput();
 	InputEnable = true;
 	InputNumber = 1;
-	InputTextMax[0] = g_iLengthAuthorityCode;
+	InputTextMax[0] = kDeleteCharGuardDigits;
 	InputTextHide[0] = 1;
 
 	if (g_iChatInputType == 1)
 	{
 		g_pSinglePasswdInputBox->SetState(UISTATE_NORMAL);
-		g_pSinglePasswdInputBox->SetOption(UIOPTION_NULL);
+		g_pSinglePasswdInputBox->SetOption(UIOPTION_NUMBERONLY);
 		g_pSinglePasswdInputBox->SetBackColor(0, 0, 0, 0);
-		g_pSinglePasswdInputBox->SetTextLimit(20);
-		g_pSinglePasswdInputBox->GiveFocus();
+		g_pSinglePasswdInputBox->SetTextLimit(kDeleteCharGuardDigits);
+#if !defined(__ANDROID__) && !defined(MU_IOS)
+		g_pSinglePasswdInputBox->GiveFocus(TRUE);
+#endif
 	}
 }
 
@@ -549,5 +703,8 @@ void CMsgWin::RequestDeleteCharacter()
 		g_pSinglePasswdInputBox->SetState(UISTATE_HIDE);
 	}
 	InputEnable = false;
-	SendRequestDeleteCharacter(CharactersClient[SelectedHero].ID, InputText[0]);
+	char resident20[21];
+	memset(resident20, 0, sizeof(resident20));
+	strncpy_s(resident20, sizeof(resident20), InputText[0], 20);
+	SendRequestDeleteCharacter(CharactersClient[SelectedHero].ID, resident20);
 }

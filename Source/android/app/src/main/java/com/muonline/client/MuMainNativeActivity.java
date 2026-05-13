@@ -40,6 +40,9 @@ public class MuMainNativeActivity extends NativeActivity {
         int metaState,
         int repeatCount);
 
+    /** IME action bar (Done / Go / Next): same as pressing Return on a physical keyboard. */
+    private static native void nativeOnImeEditorAction(int actionCode);
+
     private BridgeEditText imeBridge;
 
     private void resetImeBridgeBuffer() {
@@ -209,7 +212,8 @@ public class MuMainNativeActivity extends NativeActivity {
 
                 @Override
                 public boolean performEditorAction(int actionCode) {
-                    nativeOnTextInput("\n");
+                    // Do not inject "\\n" as text (pollutes password fields). Native maps to SDL Return / default OK.
+                    nativeOnImeEditorAction(actionCode);
                     return true;
                 }
             };

@@ -25,6 +25,9 @@
 #if(CB_AUTOLOGINWIN)
 #include "CB_AutoLogin.h"
 #endif
+#if defined(__ANDROID__) || defined(MU_IOS)
+#include "Platform/PlatformDefs.h"
+#endif
 #define	LIW_ACCOUNT		0
 #define	LIW_PASSWORD	1
 
@@ -260,6 +263,18 @@ void CLoginWin::UpdateWhileShow(double dDeltaTick)
 		else if (m_asprInputBox[LIW_PASSWORD].CursorInObject())
 		{
 			m_pPassInputBox->GiveFocus(TRUE);
+		}
+		else
+		{
+			const bool onButton = m_aBtn[LIW_OK].CursorInObject() || m_aBtn[LIW_CANCEL].CursorInObject()
+#if(CB_DANGKYINGAME)
+				|| m_DangKy.CursorInObject()
+#endif
+				;
+			if (!onButton && AndroidHasFocusedTextInput())
+			{
+				::SetFocus(nullptr);
+			}
 		}
 	}
 #endif

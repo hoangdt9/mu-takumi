@@ -184,4 +184,4 @@ Sau khi sửa native (`ZzzScene.cpp`), trên Android/iOS có thể:
 - **Chạm hai lần** (double-tap) trên cùng nhân vật trong cửa sổ ngắn để gọi `StartGame()` tương tự **H.tất / Kết nối**.
 - **Giữ ngón tay ~0,5 giây** trên vùng 3D (không phải thanh UI) khi đã chọn slot (`SelectedHero`) để vào game.
 
-**Kỹ thuật:** `NewMoveCharacterScene` chạy **trước** `CInput::Update()` trong cùng frame nên không dùng `IsLBtnDn()` cho nhánh này; dùng `SEASON3B::IsPress` / `IsRepeat(VK_LBUTTON)`. Chi tiết, IME, và ray pick: **`docs/DEVELOPMENT-LOG-2026-05-12.md`**.
+**Kỹ thuật:** `NewMoveCharacterScene` chạy **trước** `CInput::Update()` trong cùng frame nên không dùng `IsLBtnDn()` cho nhánh này; dùng `SEASON3B::IsPress` / `IsRepeat(VK_LBUTTON)`. Chi tiết touch + ray pick + IME sau login: **`docs/DEVELOPMENT-LOG-2026-05-12.md`**. Bổ sung **SysMenu / modal / xóa nhân vật / JNI IME Done / thứ tự `UpdateMouseFromTouch`**: **`docs/DEVELOPMENT-LOG-2026-05-14.md`**.

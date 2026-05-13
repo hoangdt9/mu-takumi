@@ -1,6 +1,8 @@
 
 #include "stdafx.h"
 #include "NewUISystem.h"
+#include "Input.h"
+#include "UIMng.h"
 #include "NewUIMessageBox.h"
 #include "wsclientinline.h"
 #include "PersonalShopTitleImp.h"
@@ -1763,7 +1765,19 @@ bool SEASON3B::CNewUISystem::Update()
 
 	if(m_pNewUIMng)
 	{
-		m_pNewUIMng->UpdateMouseEvent();
+		const bool mouseEventUnused = m_pNewUIMng->UpdateMouseEvent();
+#if defined(__ANDROID__) || defined(MU_IOS)
+		// Tap missed every registered Season3B panel: clear legacy edit focus so IME hides
+		// (same intent as CUIMng tap-outside when no CWin hit).
+		if (mouseEventUnused && CInput::Instance().IsLBtnDn() && AndroidHasFocusedTextInput())
+		{
+			// Legacy MsgWin (e.g. delete-character captcha) is not a Season3B object; do not steal IME.
+			if (!CUIMng::Instance().m_MsgWin.IsShow())
+			{
+				::SetFocus(nullptr);
+			}
+		}
+#endif
 		m_pNewUIMng->UpdateKeyEvent();
 		return m_pNewUIMng->Update();
 	}

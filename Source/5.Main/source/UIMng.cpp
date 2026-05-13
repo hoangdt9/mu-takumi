@@ -16,6 +16,9 @@
 #include "GameCensorship.h"
 #include "UIControls.h"
 #include "ServerListManager.h"
+#if defined(__ANDROID__) || defined(MU_IOS)
+#include "Platform/PlatformDefs.h"
+#endif
 
 #define	DOCK_EXTENT		10
 
@@ -351,6 +354,14 @@ void CUIMng::ShowWin(CWin* pWin)
 {
 	pWin->Show(TRUE);
 	SetActiveWin(pWin);
+	// Deferring Active(true) to the next frame left modal windows (e.g. MsgWin) inactive
+	// for the rest of the current CUIMng::Update pass, so UpdateWhileActive / VK_RETURN
+	// did not run until later. Activate immediately so input/IME works the same frame.
+	if (pWin->IsShow())
+	{
+		pWin->Active(true);
+		m_bWinActive = false;
+	}
 }
 
 void CUIMng::HideWin(CWin* pWin)
@@ -651,6 +662,12 @@ void CUIMng::Update(double dDeltaTick)
 		{
 			pWin = (CWin*)m_WinList.GetHead();
 			pWin->Active(false);
+#if defined(__ANDROID__) || defined(MU_IOS)
+			if (AndroidHasFocusedTextInput())
+			{
+				::SetFocus(nullptr);
+			}
+#endif
 		}
 	}
 	else if (rInput.IsLBtnUp())

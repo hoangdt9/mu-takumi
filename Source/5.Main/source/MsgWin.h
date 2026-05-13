@@ -35,15 +35,20 @@ public:
 	CMsgWin();
 	virtual ~CMsgWin();
 	void Create();
-	void SetPosition(int nXCoord, int nYCoord);
-	void Show(bool bShow);
-	bool CursorInWin(int nArea);
+	void SetPosition(int nXCoord, int nYCoord) override;
+	void Show(bool bShow) override;
+	bool CursorInWin(int nArea) override;
 	void PopUp(int nMsgCode, char* pszMsg = NULL);
+#if defined(__ANDROID__) || defined(MU_IOS)
+	// TouchToVirtualUi / FocusVirtualChatInputAt space — must run from android_main before virtual pad consumes the finger.
+	bool AndroidTryFocusDeleteResidentInput(float virtualUiX, float virtualUiY);
+#endif
 
 protected:
-	void PreRelease();
-	void UpdateWhileActive(double dDeltaTick);
-	void RenderControls();
+	void PreRelease() override;
+	void UpdateWhileShow(double dDeltaTick) override;
+	void UpdateWhileActive(double dDeltaTick) override;
+	void RenderControls() override;
 	void SetCtrlPosition();
 	void SetMsg(MSG_WIN_TYPE eType, LPCTSTR lpszMsg, LPCTSTR lpszMsg2 = NULL);
 	void ManageOKClick();

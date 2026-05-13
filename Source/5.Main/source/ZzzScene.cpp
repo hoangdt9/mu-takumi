@@ -1079,8 +1079,13 @@ void NewMoveCharacterScene()
 	// LoginScene can switch to CHARACTER_SCENE without re-running CreateCharacterScene; clear stale edit focus once per frame is cheap.
 	{
 		CUIMng& rUIMngEarly = CUIMng::Instance();
+		const bool blockingLegacyModal = rUIMngEarly.m_MsgWin.IsShow()
+			|| rUIMngEarly.m_ServerMsgWin.IsShow()
+			|| rUIMngEarly.m_SysMenuWin.IsShow()
+			|| rUIMngEarly.m_OptionWin.IsShow();
 		if (rUIMngEarly.m_CharSelMainWin.IsShow()
 			&& !rUIMngEarly.m_CharMakeWin.IsShow()
+			&& !blockingLegacyModal
 			&& AndroidHasFocusedTextInput())
 		{
 			::SetFocus(nullptr);

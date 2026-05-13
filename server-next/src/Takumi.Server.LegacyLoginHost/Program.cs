@@ -370,6 +370,47 @@ static async Task HandleClientAsync(
                 return;
             }
 
+            // Delete character F3 02: C1 22 F3 02 + name[10] + resident[20] (Takumi `SendRequestDeleteCharacter` in wsclientinline.h).
+            // Without this handler the client stays on MESSAGE_WAIT forever after OK on the captcha dialog.
+            if (TryFindDeleteCharacterRequest(packet, remote, out var deleteOff, out var deleteName10, out _))
+            {
+                if (!loggedIn)
+                {
+                    Console.WriteLine("[{0}] delete character (F3 02) before login — ignored", remote);
+                    return;
+                }
+
+                var pickedDel = FindRosterEntry(roster, deleteName10);
+                if (pickedDel is null)
+                {
+                    Console.WriteLine(
+                        "[{0}] delete character — not in roster name='{1}' (respond Value=2 resident wrong) frame@{2}",
+                        remote,
+                        Encoding.ASCII.GetString(deleteName10).TrimEnd('\0'),
+                        deleteOff);
+                    await connection.Output.WriteAsync(BuildDeleteCharacterResponse(2), ct).ConfigureAwait(false);
+                    await connection.Output.FlushAsync(ct).ConfigureAwait(false);
+                    return;
+                }
+
+                var removed = roster.RemoveAll(e => NameBytesEqual(e.Name10, deleteName10));
+                if (!string.IsNullOrEmpty(loggedAccountId))
+                {
+                    SavePersistedRoster(loggedAccountId, roster);
+                }
+
+                await connection.Output.WriteAsync(BuildDeleteCharacterResponse(1), ct).ConfigureAwait(false);
+                await connection.Output.FlushAsync(ct).ConfigureAwait(false);
+                Console.WriteLine(
+                    "[{0}] delete character OK removed={1} name='{2}' rosterCount={3} frame@{4}",
+                    remote,
+                    removed,
+                    Encoding.ASCII.GetString(deleteName10).TrimEnd('\0'),
+                    roster.Count,
+                    deleteOff);
+                return;
+            }
+
             // Join map: desktop SendRequestJoinMapServer (F3 03) or Android SendSelectCharacter (F3 15) then ReceiveJoinMapServer.
             if (TryFindCharacterJoinRequest(packet, out var joinOff, out var joinName10))
             {
@@ -1303,6 +1344,59 @@ static bool TryFindCreateCharacterRequest(ReadOnlySpan<byte> packet, string remo
         name10 = new byte[10];
         scratch.Slice(4, 10).CopyTo(name10);
         packedClass = scratch[14];
+        return true;
+    }
+
+    return false;
+}
+
+/// <summary>PRECEIVE delete character: <see cref="PHEADER_DEFAULT_SUBCODE"/> — Value 1=success, 2=resident wrong, 0=guild, 3=item block (WSclient.cpp ReceiveDeleteCharacter).</summary>
+static byte[] BuildDeleteCharacterResponse(byte value) => new byte[] { 0xC1, 0x05, 0xF3, 0x02, value };
+
+/// <summary>Find PMSG_REQUEST_DELETE_CHARACTER (F3/02): C1 + Size + F3 + 02 + id[10] + resident[20] (34 bytes after full decrypt).</summary>
+static bool TryFindDeleteCharacterRequest(ReadOnlySpan<byte> packet, string remote, out int frameOffset, out byte[] name10, out byte[] resident20)
+{
+    frameOffset = -1;
+    name10 = Array.Empty<byte>();
+    resident20 = Array.Empty<byte>();
+    const int kFrameLen = 34;
+    Span<byte> scratch = stackalloc byte[kFrameLen];
+
+    for (var i = 0; i <= packet.Length - kFrameLen; i++)
+    {
+        if (packet[i] != 0xC1)
+        {
+            continue;
+        }
+
+        packet.Slice(i, kFrameLen).CopyTo(scratch);
+        for (var pass = 0; pass < 8 && (scratch[2] != 0xF3 || scratch[3] != 0x02); pass++)
+        {
+            DecodeTakumiStreamXor(scratch, firstXorIndex: 3);
+        }
+
+        if (scratch[2] != 0xF3 || scratch[3] != 0x02)
+        {
+            continue;
+        }
+
+        // Size must match PBMSG length after normalization (34 = 0x22).
+        if (scratch[1] != kFrameLen)
+        {
+            Console.WriteLine(
+                "[{0}] delete F3/02 candidate skipped — sizeByte=0x{1:X2} (want 0x{2:X2}) hex={3}",
+                remote,
+                scratch[1],
+                kFrameLen,
+                Convert.ToHexString(packet.Slice(i, kFrameLen)));
+            continue;
+        }
+
+        frameOffset = i;
+        name10 = new byte[10];
+        scratch.Slice(4, 10).CopyTo(name10);
+        resident20 = new byte[20];
+        scratch.Slice(14, 20).CopyTo(resident20);
         return true;
     }
 

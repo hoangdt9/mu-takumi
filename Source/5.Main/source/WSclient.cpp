@@ -611,24 +611,96 @@ void ReceiveCharacterList( BYTE *ReceiveBuffer )
 	g_pReconnect->ReconnectOnCharacterList();  //Add
 #endif
 	LPPHEADER_DEFAULT_CHARACTER_LIST Data = (LPPHEADER_DEFAULT_CHARACTER_LIST)ReceiveBuffer;
-    
-    int Offset = sizeof(PHEADER_DEFAULT_CHARACTER_LIST);
+
+	const int headerSize = static_cast<int>(sizeof(PHEADER_DEFAULT_CHARACTER_LIST));
+	const int totalSize = static_cast<int>(ReceiveBuffer[1]);
+	const int count = static_cast<int>(Data->Value);
+	int entrySize = 0;
+	if (count > 0 && totalSize >= headerSize)
+	{
+		const int remainder = totalSize - headerSize;
+		if (remainder > 0 && (remainder % count) == 0)
+		{
+			entrySize = remainder / count;
+		}
+	}
+	if (entrySize != 33 && entrySize != 34)
+	{
+		g_ErrorReport.Write(
+			"[ReceiveCharacterList] unsupported layout total=%d header=%d count=%d (entrySize inferred=%d)\r\n",
+			totalSize,
+			headerSize,
+			count,
+			(count > 0) ? (totalSize - headerSize) / count : -1);
+		CurrentProtocolState = RECEIVE_CHARACTERS_LIST;
+		return;
+	}
+
+	int Offset = headerSize;
 
 	#ifdef _DEBUG
-		g_ConsoleDebug->Write(MCD_RECEIVE, "[ReceiveList Count %d Max class %d]",Data->Value,Data->MaxClass);
+		g_ConsoleDebug->Write(MCD_RECEIVE, "[ReceiveList Count %d Max class %d entry=%d]",Data->Value,Data->MaxClass,entrySize);
 	#else
-		g_ErrorReport.Write("[ReceiveList Count %d Max class %d]",Data->Value,Data->MaxClass);
+		g_ErrorReport.Write("[ReceiveList Count %d Max class %d entry=%d]",Data->Value,Data->MaxClass,entrySize);
 	#endif
 	CharacterAttribute->IsVaultExtended = Data->ExtWarehouse;
 	for(int i=0;i<Data->Value;i++)
 	{
-		LPPRECEIVE_CHARACTER_LIST Data2 = (LPPRECEIVE_CHARACTER_LIST)(ReceiveBuffer+Offset);
-		
-		int iClass = gCharacterManager.ChangeServerClassTypeToClientClassType(Data2->Class);
-		
+		const BYTE* e = ReceiveBuffer + Offset;
+
+		const BYTE slot = e[0];
+		WORD level = 0;
+		BYTE ctl = 0;
+		BYTE guildStatus = 0;
+		int iClass = 0;
+		const BYTE* equipForChangeExt = NULL;
+
+		if (entrySize == 33)
+		{
+			// Packed legacy: no padding byte before Level (OpenMU uses 34 with pad).
+			level = static_cast<WORD>(e[11] | (e[12] << 8));
+			ctl = e[13];
+			const BYTE classByte = e[14];
+			iClass = gCharacterManager.ChangeServerClassTypeToClientClassType(classByte);
+			equipForChangeExt = e + 15;
+			guildStatus = e[32];
+		}
+		else // entrySize == 34
+		{
+			level = static_cast<WORD>(e[12] | (e[13] << 8));
+			ctl = e[14];
+#if defined(MU_CHARACTER_LIST_USE_OPENMU_CHARSET)
+			// OpenMU: 18-byte preview starts at e+15 (class bits in preview[0]).
+			const BYTE b15 = e[15];
+			if ((b15 & 7u) != 0)
+			{
+				iClass = gCharacterManager.ChangeServerClassTypeToClientClassType(
+					static_cast<BYTE>((b15 >> 3) & 0x1F));
+				equipForChangeExt = e + 15;
+			}
+			else if (b15 >= 1 && b15 <= 7)
+			{
+				iClass = gCharacterManager.ChangeServerClassTypeToClientClassType(b15);
+				equipForChangeExt = e + 16;
+			}
+			else
+			{
+				iClass = gCharacterManager.ChangeServerClassTypeToClientClassType(
+					static_cast<BYTE>((b15 >> 3) & 0x1F));
+				equipForChangeExt = e + 15;
+			}
+#else
+			// MSVC / server-next / typical Season 6: ServerClass at e[15], 17 equip bytes at e+16.
+			// (Values like 0x10/0x20 are *not* OpenMU charset; heuristic OpenMU branch mis-parsed them.)
+			iClass = gCharacterManager.ChangeServerClassTypeToClientClassType(e[15]);
+			equipForChangeExt = e + 16;
+#endif
+			guildStatus = e[33];
+		}
+
 		float fPos[2], fAngle = 0.0f;
-		
-		switch(Data2->Index)
+
+		switch(slot)
 		{
 #ifdef PJH_NEW_SERVER_SELECT_MAP
  		case 0:	fPos[0] = 8008.0f;	fPos[1] = 18885.0f;	fAngle = 115.0f; break;
@@ -645,19 +717,19 @@ void ReceiveCharacterList( BYTE *ReceiveBuffer )
 #endif //PJH_NEW_SERVER_SELECT_MAP
 		default: return;
 		}
-		
-		CHARACTER *c = CreateHero(Data2->Index,iClass,0,fPos[0],fPos[1],fAngle);
-		
-		c->Level = Data2->Level;
-		c->CtlCode = Data2->CtlCode;
-		
-		memcpy(c->ID,(char *)Data2->ID,MAX_ID_SIZE);
+
+		CHARACTER *c = CreateHero(slot, iClass, 0, fPos[0], fPos[1], fAngle);
+
+		c->Level = level;
+		c->CtlCode = ctl;
+
+		memcpy(c->ID, e + 1, MAX_ID_SIZE);
 		c->ID[MAX_ID_SIZE] = NULL;
-		
-		ChangeCharacterExt(Data2->Index,Data2->Equipment);
-		
-		c->GuildStatus = Data2->byGuildStatus;
-		Offset += sizeof(PRECEIVE_CHARACTER_LIST);
+
+		ChangeCharacterExt(slot, const_cast<BYTE*>(equipForChangeExt));
+
+		c->GuildStatus = guildStatus;
+		Offset += entrySize;
 	}
 	CurrentProtocolState = RECEIVE_CHARACTERS_LIST;
 }
@@ -710,13 +782,13 @@ void ReceiveCreateCharacter( BYTE *ReceiveBuffer )
 		INT		iCharacterKey;
 		iCharacterKey = Data->Index;
 		DeleteCharacter( iCharacterKey );
-		
-		CreateHero(Data->Index,CharacterView.Class,CharacterView.Skin,fPos[0],fPos[1],fAngle); 
+
+		// Use server protocol class (F3 01) for the mesh — CreateHero() bakes BodyPart from this.
+		// CharacterView.Class is UI CLASS_TYPE and can lag or disagree with the wire; setting .Class
+		// after CreateHero does not rebuild parts (see ZzzCharacter.cpp CreateHero).
+		const int iClass = static_cast<int>(gCharacterManager.ChangeServerClassTypeToClientClassType(Data->Class));
+		CreateHero(Data->Index, iClass, CharacterView.Skin, fPos[0], fPos[1], fAngle);
 		CharactersClient[Data->Index].Level = Data->Level;
-		
-		int iClass = gCharacterManager.ChangeServerClassTypeToClientClassType(Data->Class);
-		
-		CharactersClient[Data->Index].Class = iClass;
 		memcpy(CharactersClient[Data->Index].ID,Data->ID,MAX_ID_SIZE);
 		CharactersClient[Data->Index].ID[MAX_ID_SIZE] = NULL;
 		CurrentProtocolState = RECEIVE_CREATE_CHARACTER_SUCCESS;
@@ -1034,7 +1106,6 @@ BOOL ReceiveJoinMapServer(BYTE *ReceiveBuffer, BOOL bEncrypted)
 	CharacterAttribute->wMinusPoint     = Data->wMinusPoint;
     CharacterAttribute->wMaxMinusPoint  = Data->wMaxMinusPoint;
 
-
 	CharacterAttribute->InventoryExtensions = Data->ExtInventory;
 
 	CharacterMachine->Gold            = Data->Gold;
@@ -1053,7 +1124,8 @@ BOOL ReceiveJoinMapServer(BYTE *ReceiveBuffer, BOOL bEncrypted)
 	}
 
 	ClearCharacters();
-	
+	ClearInventory();
+
 	if(gMapManager.WorldActive == WD_34CRYWOLF_1ST)
 	{
 		SendRequestCrywolfInfo();
@@ -1073,27 +1145,59 @@ BOOL ReceiveJoinMapServer(BYTE *ReceiveBuffer, BOOL bEncrypted)
 	c->Skin = 0;
 	c->PK    = Data->PK;
 	c->CtlCode	= Data->CtlCode;
+	c->GuildStatus = G_NONE;
+	c->GuildMarkIndex = -1;
+	c->GuildType = GT_NORMAL;
+	c->GuildRelationShip = GR_NONE;
 	o->Kind  = KIND_PLAYER;
    	SetCharacterClass(c);
+
+	// SetCharacterClass runs CalculateAll(); re-apply join packet sheet so empty/stub stats stay authoritative.
+	CharacterAttribute->LevelUpPoint  = Data->LevelUpPoint;
+	CharacterAttribute->Strength      = Data->Strength;
+	CharacterAttribute->Dexterity     = Data->Dexterity;
+	CharacterAttribute->Vitality      = Data->Vitality;
+	CharacterAttribute->Energy        = Data->Energy;
+	CharacterAttribute->Charisma      = Data->Charisma;
+	CharacterAttribute->Life          = Data->Life;
+	CharacterAttribute->LifeMax       = Data->LifeMax;
+	CharacterAttribute->Mana          = Data->Mana;
+	CharacterAttribute->ManaMax       = Data->ManaMax;
+	CharacterAttribute->SkillMana     = Data->SkillMana;
+	CharacterAttribute->SkillManaMax  = Data->SkillManaMax;
+	CharacterAttribute->Shield		  = Data->Shield;
+	CharacterAttribute->ShieldMax	  = Data->ShieldMax;
+	CharacterAttribute->AddPoint		= Data->AddPoint;
+	CharacterAttribute->MaxAddPoint		= Data->MaxAddPoint;
+	CharacterAttribute->wMinusPoint     = Data->wMinusPoint;
+	CharacterAttribute->wMaxMinusPoint  = Data->wMaxMinusPoint;
+	CharacterMachine->Gold            = Data->Gold;
+	CharacterMachine->StorageGold     = 0;
+
+	CharacterAttribute->PrintPlayer.Clear();
+	CharacterAttribute->PrintPlayer.ViewReset = Data->ViewReset;
+	CharacterAttribute->PrintPlayer.ViewMasterReset = Data->ViewMasterReset;
+	CharacterAttribute->PrintPlayer.ViewPoint = Data->ViewPoint;
+	CharacterAttribute->PrintPlayer.ViewCurHP = (DWORD)CharacterAttribute->Life;
+	CharacterAttribute->PrintPlayer.ViewMaxHP = (DWORD)CharacterAttribute->LifeMax;
+	CharacterAttribute->PrintPlayer.ViewCurMP = (DWORD)CharacterAttribute->Mana;
+	CharacterAttribute->PrintPlayer.ViewMaxMP = (DWORD)CharacterAttribute->ManaMax;
+	CharacterAttribute->PrintPlayer.ViewCurBP = Data->ViewCurBP;
+	CharacterAttribute->PrintPlayer.ViewMaxBP = Data->ViewMaxBP;
+	CharacterAttribute->PrintPlayer.ViewCurSD = (DWORD)CharacterAttribute->Shield;
+	CharacterAttribute->PrintPlayer.ViewMaxSD = (DWORD)CharacterAttribute->ShieldMax;
+	CharacterAttribute->PrintPlayer.ViewStrength = CharacterAttribute->Strength;
+	CharacterAttribute->PrintPlayer.ViewDexterity = CharacterAttribute->Dexterity;
+	CharacterAttribute->PrintPlayer.ViewVitality = CharacterAttribute->Vitality;
+	CharacterAttribute->PrintPlayer.ViewEnergy = CharacterAttribute->Energy;
+	CharacterAttribute->PrintPlayer.ViewLeadership = CharacterAttribute->Charisma;
+	CharacterAttribute->PrintPlayer.ViewExperience = (DWORD)CharacterAttribute->Experience;
+	CharacterAttribute->PrintPlayer.ViewNextExperience = (DWORD)CharacterAttribute->NextExperince;
 
 	Hero = c;
 
 	memcpy(c->ID,(char *)CharacterAttribute->Name,MAX_ID_SIZE);
 
-    for ( int i=0; i<MAX_EQUIPMENT; ++i )
-    {
-        CharacterMachine->Equipment[i].Type = -1;
-        CharacterMachine->Equipment[i].Level = 0;
-        CharacterMachine->Equipment[i].Option1 = 0;
-    }
-#if(HAISLOTRING)
-	for (int i = 0; i < 16; ++i)
-	{
-		CharacterMachine->EquipmentMuun[i].Type = -1;
-		CharacterMachine->EquipmentMuun[i].Level = 0;
-		CharacterMachine->EquipmentMuun[i].Option1 = 0;
-	}
-#endif
 	c->ID[MAX_ID_SIZE] = NULL;
 	CreateEffect(BITMAP_MAGIC+2,o->Position,o->Angle,o->Light,0,o);
 	

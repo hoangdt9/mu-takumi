@@ -13865,6 +13865,50 @@ void ChangeCharacterExt(int Key,BYTE *Equipment, CHARACTER * pCharacter, OBJECT 
 	if(o->Type != MODEL_PLAYER)
 		return;
 
+	// Roster stub (e.g. LegacyLoginHost): 17×0xFF is not a real itemset — ChangeCharacterExt bit-tests
+	// treat 0xFF as wings/mounts (horse + Fenrir). Reset to class default underwear / no helpers.
+	if (Equipment != NULL)
+	{
+		bool allFf = true;
+		for (int i = 0; i < 17; ++i)
+		{
+			if (Equipment[i] != 0xFF)
+			{
+				allFf = false;
+				break;
+			}
+		}
+		if (allFf)
+		{
+			BYTE base = gCharacterManager.GetBaseClass(c->Class);
+			DeleteBug(o);
+			ThePetProcess().DeletePet(c, c->Helper.Type, true);
+			c->Weapon[0].Type = -1;
+			c->Weapon[0].Option1 = 0;
+			c->Weapon[0].ExtOption = 0;
+			c->Weapon[1].Type = -1;
+			c->Weapon[1].Option1 = 0;
+			c->Weapon[1].ExtOption = 0;
+			c->Wing.Type = -1;
+			c->Wing.Option1 = 0;
+			c->Wing.ExtOption = 0;
+			c->Helper.Type = -1;
+			c->Helper.Option1 = 0;
+			c->Helper.ExtOption = 0;
+#if(CB_ATTACK_HIDEN_WING)
+			c->WingCache = -1;
+			c->CacheTimeAttack_WING = 0;
+#endif
+			c->BodyPart[BODYPART_HELM  ].Type = MODEL_BODY_HELM + base;
+			c->BodyPart[BODYPART_ARMOR ].Type = MODEL_BODY_ARMOR + base;
+			c->BodyPart[BODYPART_PANTS ].Type = MODEL_BODY_PANTS + base;
+			c->BodyPart[BODYPART_GLOVES].Type = MODEL_BODY_GLOVES + base;
+			c->BodyPart[BODYPART_BOOTS ].Type = MODEL_BODY_BOOTS + base;
+			SetCharacterScale(c);
+			return;
+		}
+	}
+
 	BYTE Type = 0;
 	BYTE ExtBit = 0;
 	short ExtType = 0;

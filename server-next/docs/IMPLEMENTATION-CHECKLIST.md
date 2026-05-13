@@ -4,7 +4,7 @@ Last updated: 2026-05-12 (client touch doc + checklist sync)
 
 ## Repository vs checklist (read first)
 
-- **`server-next/README.md`** describes what is actually in tree: **`server-next/docker-compose.yml`** starts **PostgreSQL** and **LegacyLoginHost** in Docker (Connect **44605**, login **44606**; Postgres **54444** by default). The .NET host can still be run on the host with `dotnet watch` when you prefer hot reload — **do not** bind the same ports while Docker publishes them.
+- **`server-next/README.md`** describes what is actually in tree: **`server-next/docker-compose.yml`** starts **PostgreSQL** and **LegacyLoginHost** in Docker (Connect **44605**, login **44606**; Postgres **54444** by default). Compose defaults **`TAKUMI_CS_CONNECT_BASE=20`** so F4 06 sub-lines match typical `ServerList.bmd` (group = connectId/20). The .NET host can still be run on the host with `dotnet watch` when you prefer hot reload — **do not** bind the same ports while Docker publishes them.
 - The **`## Done`** section below is the **intended / previously implemented** feature set. Treat unchecked **Exit criteria** and **`## In Progress`** as the current engineering truth for QA; do not assume every `[x]` is verifiable without a compilable solution in git.
 - **Native client (C++) session notes** (Android/iOS character select: IME, touch → `StartGame`, ray pick): **`../../docs/DEVELOPMENT-LOG-2026-05-12.md`** (from this file: up to repo `takumi/docs/`).
 

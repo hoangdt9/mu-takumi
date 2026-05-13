@@ -74,12 +74,28 @@ if (string.IsNullOrEmpty(publicHost))
 
 // Connect-server list (C2 F4 06): Takumi maps connect index → ServerList.bmd group via (index/20). If your
 // Data/Local/ServerList.bmd has no group 0, the server-select UI stays empty — set TAKUMI_CS_CONNECT_BASE to 20, 40, …
-var csConnectBase = 0;
-if (!string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("TAKUMI_CS_CONNECT_BASE"))
-    && int.TryParse(Environment.GetEnvironmentVariable("TAKUMI_CS_CONNECT_BASE"), NumberStyles.Integer, CultureInfo.InvariantCulture, out var csb)
-    && csb is >= 0 and <= 65532)
+// Default 20: most shipped ServerList.bmd start at group 1 (connect IDs 20–39).
+// NOTE: TAKUMI_CS_CONNECT_BASE=0 in .env is a common mistake (Compose passes 0; ${VAR:-20} does not override a set value).
+var csConnectBase = 20;
+var csBaseRaw = Environment.GetEnvironmentVariable("TAKUMI_CS_CONNECT_BASE");
+if (!string.IsNullOrWhiteSpace(csBaseRaw)
+    && int.TryParse(csBaseRaw, NumberStyles.Integer, CultureInfo.InvariantCulture, out var csb))
 {
-    csConnectBase = csb;
+    if (csb is >= 1 and <= 65532)
+    {
+        csConnectBase = csb;
+    }
+    else if (csb == 0)
+    {
+        Console.Error.WriteLine(
+            "[connect] WARNING: TAKUMI_CS_CONNECT_BASE=0 is invalid for typical ServerList.bmd (no group 0). Using 20. Remove the line from .env or set 20/40/…");
+    }
+    else
+    {
+        Console.Error.WriteLine(
+            "[connect] WARNING: TAKUMI_CS_CONNECT_BASE={0} out of range 1..65532 — using 20.",
+            csb);
+    }
 }
 
 var csConnectCount = 3;
@@ -100,6 +116,7 @@ using var cts = new CancellationTokenSource();
 Console.CancelKeyPress += (_, e) => { e.Cancel = true; cts.Cancel(); };
 
 TcpListener listener;
+TcpListener? connectListener = null;
 try
 {
     listener = new TcpListener(IPAddress.Any, port);
@@ -127,13 +144,33 @@ catch (SocketException ex) when (ex.SocketErrorCode == SocketError.AddressAlread
 
 if (connectPort > 0)
 {
+    // Bind connect port on the main thread before any client can complete TCP handshake to 44605.
+    // Previously Start() ran inside Task.Run, creating a short race where phones could connect before listen().
+    try
+    {
+        connectListener = new TcpListener(IPAddress.Any, connectPort);
+        connectListener.Server.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, reuseSocketAddr);
+        connectListener.Start();
+        var boundMsg = $"[connect] listening on *:{connectPort} (bound synchronously before game accept loop)";
+        Console.WriteLine(boundMsg);
+        Console.Error.WriteLine(boundMsg);
+    }
+    catch (SocketException ex) when (ex.SocketErrorCode == SocketError.AddressAlreadyInUse)
+    {
+        Console.Error.WriteLine(
+            "Cannot bind connect port {0}: address already in use. Stop the other listener or change TAKUMI_CONNECT_PORT / publish mapping.\n" +
+            "  Check: lsof -nP -iTCP:{0} -sTCP:LISTEN",
+            connectPort);
+        return 1;
+    }
+
     _ = Task.Run(
         async () =>
         {
             try
             {
-                await RunMinimalConnectServerAsync(
-                        connectPort,
+                await RunConnectAcceptLoopAsync(
+                        connectListener!,
                         publicHost!,
                         (ushort)port,
                         verbose,
@@ -143,7 +180,6 @@ if (connectPort > 0)
             }
             catch (OperationCanceledException) when (cts.IsCancellationRequested)
             {
-                // shutdown
             }
             catch (Exception ex)
             {
@@ -202,6 +238,15 @@ try
 }
 finally
 {
+    try
+    {
+        connectListener?.Stop();
+    }
+    catch
+    {
+        // ignore double-stop / races during shutdown
+    }
+
     listener.Stop();
 }
 
@@ -258,6 +303,7 @@ static async Task HandleClientAsync(
         var loggedIn = false;
         string? loggedAccountId = null;
         var roster = new List<CharacterRosterEntry>();
+        byte[]? sessionJoinCharacterName10 = null;
         // PacketReceived may invoke handlers concurrently before the previous async handler awaits;
         // a follow-up 12-byte F3 request could run before loggedIn=true → list ignored. Serialize per connection.
         using var packetGate = new SemaphoreSlim(1, 1);
@@ -291,9 +337,10 @@ static async Task HandleClientAsync(
                     Convert.ToHexString(packet));
             }
 
-            // Create character F3 01: Android SendCreateCharacter (C1 0F F3 01 + name[10] + class); Takumi expects
-            // PRECEIVE_CREATE_CHARACTER (19 bytes) to close the wait dialog — see WSclient ReceiveCreateCharacter.
-            if (TryFindCreateCharacterRequest(packet, remote, out var createOff, out var nameCopy, out var reqClass))
+            // Create character F3 01: C1 0F F3 01 + name[10] + packed class byte.
+            // Client CharMakeWin uses SendRequestCreateCharacter: last byte = (CLASS_TYPE<<4)|skin (DK=1 → 0x1n), not raw protocol.
+            // ReceiveCreateCharacter expects Data->Class = Season6 protocol (e.g. DK = 0x20) — see CharacterManager PROTO_CLASS_CODES.
+            if (TryFindCreateCharacterRequest(packet, remote, out var createOff, out var nameCopy, out var packedClass))
             {
                 if (!loggedIn)
                 {
@@ -301,9 +348,10 @@ static async Task HandleClientAsync(
                     return;
                 }
 
-                UpsertRoster(roster, nameCopy, reqClass, level: 1);
+                var serverClass = MapCreateCharacterPackedByteToServerProtocol(packedClass);
+                UpsertRoster(roster, nameCopy, serverClass, level: 1);
                 var slotByte = (byte)(roster.Count - 1);
-                var resp = BuildCreateCharacterSuccessPacket(nameCopy, slotByte, level: 1, serverClass: reqClass);
+                var resp = BuildCreateCharacterSuccessPacket(nameCopy, slotByte, level: 1, serverClass: serverClass);
                 await connection.Output.WriteAsync(resp, ct).ConfigureAwait(false);
                 await connection.Output.FlushAsync(ct).ConfigureAwait(false);
                 if (!string.IsNullOrEmpty(loggedAccountId))
@@ -312,10 +360,11 @@ static async Task HandleClientAsync(
                 }
 
                 Console.WriteLine(
-                    "[{0}] sent create character OK (F3 01) slot={1} class=0x{2:X2} name='{3}' frame@{4}",
+                    "[{0}] sent create character OK (F3 01) slot={1} packed=0x{2:X2} serverClass=0x{3:X2} name='{4}' frame@{5}",
                     remote,
                     slotByte,
-                    reqClass,
+                    packedClass,
+                    serverClass,
                     Encoding.ASCII.GetString(nameCopy).TrimEnd('\0'),
                     createOff);
                 return;
@@ -345,6 +394,8 @@ static async Task HandleClientAsync(
                 var joinPkt = BuildJoinMapServer602(picked);
                 await connection.Output.WriteAsync(joinPkt, ct).ConfigureAwait(false);
                 await connection.Output.FlushAsync(ct).ConfigureAwait(false);
+                sessionJoinCharacterName10 = new byte[10];
+                Buffer.BlockCopy(joinName10, 0, sessionJoinCharacterName10, 0, 10);
                 Console.WriteLine(
                     "[{0}] sent join map (F3 03) map={1} xy=({2},{3}) name='{4}' rosterClass=0x{5:X2} frame@{6}",
                     remote,
@@ -354,6 +405,42 @@ static async Task HandleClientAsync(
                     Encoding.ASCII.GetString(picked.Name10).TrimEnd('\0'),
                     picked.ServerClass,
                     joinOff);
+                return;
+            }
+
+            if (loggedIn && TryFindGameLogoutRequest(packet, out var logoutOff, out var logoutFlag))
+            {
+                var ack = new byte[] { 0xC1, 0x05, 0xF1, 0x02, logoutFlag };
+                await connection.Output.WriteAsync(ack, ct).ConfigureAwait(false);
+                await connection.Output.FlushAsync(ct).ConfigureAwait(false);
+                Console.WriteLine("[{0}] ack game logout F1 02 value=0x{1:X2} frame@{2}", remote, logoutFlag, logoutOff);
+                return;
+            }
+
+            if (loggedIn
+                && sessionJoinCharacterName10 is not null
+                && TryFindMoveMapRequest(packet, out var moveOff, out _, out var mapIdx))
+            {
+                var pickedMove = FindRosterEntry(roster, sessionJoinCharacterName10);
+                var ackMove = new byte[] { 0xC1, 0x05, 0x8E, 0x03, 0x01 };
+                await connection.Output.WriteAsync(ackMove, ct).ConfigureAwait(false);
+                await connection.Output.FlushAsync(ct).ConfigureAwait(false);
+                if (pickedMove is not null)
+                {
+                    var joinPktMove = BuildJoinMapServer602(pickedMove, (byte)(mapIdx & 0xFF));
+                    await connection.Output.WriteAsync(joinPktMove, ct).ConfigureAwait(false);
+                    await connection.Output.FlushAsync(ct).ConfigureAwait(false);
+                    Console.WriteLine(
+                        "[{0}] stub move map: 8E 03 ok + F3 03 mapId={1} frame@{2}",
+                        remote,
+                        mapIdx,
+                        moveOff);
+                }
+                else
+                {
+                    Console.WriteLine("[{0}] stub move map: 8E 03 ok only (no roster match) frame@{1}", remote, moveOff);
+                }
+
                 return;
             }
 
@@ -577,24 +664,36 @@ static byte[] BuildServerInfoPacket(string ip, ushort gamePort)
     return pkt;
 }
 
-static async Task RunMinimalConnectServerAsync(
-    int listenPort,
+static async Task RunConnectAcceptLoopAsync(
+    TcpListener listener,
     string publicHost,
     ushort gamePort,
     bool verbose,
     byte[] serverList602,
     CancellationToken ct)
 {
-    var listener = new TcpListener(IPAddress.Any, listenPort);
-    var reuse = string.Equals(Environment.GetEnvironmentVariable("TAKUMI_REUSE_ADDR"), "1", StringComparison.OrdinalIgnoreCase);
-    listener.Server.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, reuse);
-    listener.Start();
-    Console.WriteLine("[connect] listening on *:{0}", listenPort);
     try
     {
         while (!ct.IsCancellationRequested)
         {
-            var tcp = await listener.AcceptTcpClientAsync(ct).ConfigureAwait(false);
+            TcpClient tcp;
+            try
+            {
+                tcp = await listener.AcceptTcpClientAsync(ct).ConfigureAwait(false);
+            }
+            catch (ObjectDisposedException)
+            {
+                break;
+            }
+            catch (SocketException)
+            {
+                break;
+            }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+                break;
+            }
+
             _ = HandleMinimalConnectClientAsync(tcp, publicHost, gamePort, verbose, serverList602, ct);
         }
     }
@@ -602,10 +701,33 @@ static async Task RunMinimalConnectServerAsync(
     {
         // shutdown
     }
-    finally
+}
+
+/// <summary>Find C1 … F4 … inside a buffer (junk prefix / coalesced reads).</summary>
+static bool TryFindC1F4Request(ReadOnlySpan<byte> data, byte f4SubCode, out int packetOffset)
+{
+    packetOffset = 0;
+    for (var i = 0; i <= data.Length - 4; i++)
     {
-        listener.Stop();
+        if (data[i] != 0xC1)
+        {
+            continue;
+        }
+
+        var declaredLen = data[i + 1];
+        if (declaredLen < 4 || i + declaredLen > data.Length)
+        {
+            continue;
+        }
+
+        if (data[i + 2] == 0xF4 && data[i + 3] == f4SubCode)
+        {
+            packetOffset = i;
+            return true;
+        }
     }
+
+    return false;
 }
 
 static async Task HandleMinimalConnectClientAsync(
@@ -636,14 +758,24 @@ static async Task HandleMinimalConnectClientAsync(
             var hex = Convert.ToHexString(buf.AsSpan(0, n));
             Console.WriteLine("[connect] recv {0}: {1}", remote, hex);
 
-            if (n >= 4 && buf[0] == 0xC1 && buf[2] == 0xF4 && buf[3] == 0x06)
+            if (TryFindC1F4Request(buf.AsSpan(0, n), 0x06, out var off06))
             {
+                if (off06 != 0)
+                {
+                    Console.WriteLine("[connect] F4 06 at offset {0} from {1} (non-zero prefix — check middleboxes / coalesced reads)", off06, remote);
+                }
+
                 await stream.WriteAsync(serverList602, ct).ConfigureAwait(false);
                 await stream.FlushAsync(ct).ConfigureAwait(false);
                 Console.WriteLine("[connect] sent {0}: ServerList ({1} bytes)", remote, serverList602.Length);
             }
-            else if (n >= 4 && buf[0] == 0xC1 && buf[2] == 0xF4 && buf[3] == 0x03)
+            else if (TryFindC1F4Request(buf.AsSpan(0, n), 0x03, out var off03))
             {
+                if (off03 != 0)
+                {
+                    Console.WriteLine("[connect] F4 03 at offset {0} from {1}", off03, remote);
+                }
+
                 var pkt = BuildServerInfoPacket(publicHost, gamePort);
                 await stream.WriteAsync(pkt, ct).ConfigureAwait(false);
                 await stream.FlushAsync(ct).ConfigureAwait(false);
@@ -908,6 +1040,83 @@ static bool TryFindCharacterJoinRequest(ReadOnlySpan<byte> packet, out int frame
     return false;
 }
 
+/// <summary>Game client logout / return to char select (1) or server select (2): <c>C1|C3 ?? F1 02 &lt;flag&gt;</c> (Takumi <c>SendRequestLogOut</c> — <c>Send(TRUE)</c> uses C3 on wire).</summary>
+static bool TryFindGameLogoutRequest(ReadOnlySpan<byte> packet, out int frameOffset, out byte value)
+{
+    frameOffset = -1;
+    value = 0;
+    Span<byte> xorScratch = stackalloc byte[64];
+    for (var i = 0; i <= packet.Length - 5; i++)
+    {
+        var lead = packet[i];
+        if (lead != 0xC1 && lead != 0xC3)
+        {
+            continue;
+        }
+
+        var size = packet[i + 1];
+        if (size < 5 || i + size > packet.Length)
+        {
+            continue;
+        }
+
+        if (packet[i + 2] == 0xF1 && packet[i + 3] == 0x02)
+        {
+            frameOffset = i;
+            value = packet[i + 4];
+            return true;
+        }
+
+        // Still obfuscated after PipelinedDecryptor (same pattern as F3 join / create).
+        if (lead == 0xC3 && size is >= 5 and <= 64 && i + size <= packet.Length)
+        {
+            var work = xorScratch[..(int)size];
+            packet.Slice(i, size).CopyTo(work);
+            for (var pass = 0; pass < 8 && (work[2] != 0xF1 || work[3] != 0x02); pass++)
+            {
+                DecodeTakumiStreamXor(work, 3);
+            }
+
+            if (work[2] == 0xF1 && work[3] == 0x02)
+            {
+                frameOffset = i;
+                value = work[4];
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+/// <summary>Move-map request: <c>C1|C3 0A 8E 02</c> + DWORD block key + WORD map index (<c>SendRequestMoveMap</c>).</summary>
+static bool TryFindMoveMapRequest(ReadOnlySpan<byte> packet, out int frameOffset, out uint blockKey, out ushort mapIndex)
+{
+    frameOffset = -1;
+    blockKey = 0;
+    mapIndex = 0;
+    for (var i = 0; i <= packet.Length - 10; i++)
+    {
+        var lead = packet[i];
+        if (lead != 0xC1 && lead != 0xC3)
+        {
+            continue;
+        }
+
+        if (packet[i + 1] != 0x0A || packet[i + 2] != 0x8E || packet[i + 3] != 0x02)
+        {
+            continue;
+        }
+
+        frameOffset = i;
+        blockKey = BinaryPrimitives.ReadUInt32LittleEndian(packet.Slice(i + 4));
+        mapIndex = BinaryPrimitives.ReadUInt16LittleEndian(packet.Slice(i + 8));
+        return true;
+    }
+
+    return false;
+}
+
 /// <summary>Stderr-only: compare with adb <c>[AndroidLogin] recv tcp ... b0..b7=</c> for the same connection.</summary>
 static void LogCharacterListWire(string remote, byte[] list, string tag)
 {
@@ -973,44 +1182,41 @@ static byte[] BuildCharacterList602(List<CharacterRosterEntry> roster)
             p[off++] = 0xFF;
         }
 
-        p[off++] = 0; // byGuildStatus
+        // G_NONE = (BYTE)-1 — client CharSelMainWin / guild UI treat 0 as "in guild" (G_PERSON).
+        p[off++] = 0xFF;
     }
 
     return p;
 }
 
 /// <summary><c>PRECEIVE_JOIN_MAP_SERVER</c> (Takumi WSclient.h) — plain C1, same as other host→client stubs here.</summary>
-static byte[] BuildJoinMapServer602(CharacterRosterEntry r)
+static byte[] BuildJoinMapServer602(CharacterRosterEntry r, byte mapId = 0)
 {
-    var p = new byte[123];
+    // Wire layout must match packed <see cref="PRECEIVE_JOIN_MAP_SERVER"/> (131 bytes, 16 trailing DWORD "view" fields).
+    const int totalLen = 131;
+    var p = new byte[totalLen];
     p[0] = 0xC1;
-    p[1] = 123;
+    p[1] = (byte)totalLen;
     p[2] = 0xF3;
     p[3] = 0x03;
     // Lorencia (0) — safe starter tile near center.
     p[4] = 135;
     p[5] = 122;
-    p[6] = 0;
+    p[6] = mapId;
     p[7] = 1; // angle byte 1 → 0° in client ((Angle-1)*45)
 
-    BinaryPrimitives.WriteUInt64BigEndian(p.AsSpan(8), (ulong)Math.Max(0, (r.Level - 1) * 50));
-    BinaryPrimitives.WriteUInt64BigEndian(p.AsSpan(16), 200);
+    _ = r; // roster ignored for stub: empty new-character sheet
+    BinaryPrimitives.WriteUInt64BigEndian(p.AsSpan(8), 0UL);
+    BinaryPrimitives.WriteUInt64BigEndian(p.AsSpan(16), 0UL);
 
-    BinaryPrimitives.WriteUInt16LittleEndian(p.AsSpan(24), (ushort)(r.Level > 1 ? r.Level - 1 : 0));
-    BinaryPrimitives.WriteUInt16LittleEndian(p.AsSpan(26), 18);
-    BinaryPrimitives.WriteUInt16LittleEndian(p.AsSpan(28), 18);
-    BinaryPrimitives.WriteUInt16LittleEndian(p.AsSpan(30), 15);
-    BinaryPrimitives.WriteUInt16LittleEndian(p.AsSpan(32), 30);
-    BinaryPrimitives.WriteUInt16LittleEndian(p.AsSpan(34), 60);
-    BinaryPrimitives.WriteUInt16LittleEndian(p.AsSpan(36), 60);
-    BinaryPrimitives.WriteUInt16LittleEndian(p.AsSpan(38), 46);
-    BinaryPrimitives.WriteUInt16LittleEndian(p.AsSpan(40), 46);
-    BinaryPrimitives.WriteUInt16LittleEndian(p.AsSpan(42), 0);
-    BinaryPrimitives.WriteUInt16LittleEndian(p.AsSpan(44), 0);
-    BinaryPrimitives.WriteUInt16LittleEndian(p.AsSpan(46), 0);
-    BinaryPrimitives.WriteUInt16LittleEndian(p.AsSpan(48), 0);
+    BinaryPrimitives.WriteUInt16LittleEndian(p.AsSpan(24), 0);
+    for (var i = 26; i < 50; i += 2)
+    {
+        BinaryPrimitives.WriteUInt16LittleEndian(p.AsSpan(i), 0);
+    }
+
     BinaryPrimitives.WriteUInt32LittleEndian(p.AsSpan(50), 0);
-    p[54] = 3;
+    p[54] = 0; // PK — neutral
     p[55] = 0;
     BinaryPrimitives.WriteInt16LittleEndian(p.AsSpan(56), 0);
     BinaryPrimitives.WriteInt16LittleEndian(p.AsSpan(58), 0);
@@ -1018,8 +1224,27 @@ static byte[] BuildJoinMapServer602(CharacterRosterEntry r)
     BinaryPrimitives.WriteUInt16LittleEndian(p.AsSpan(62), 0);
     BinaryPrimitives.WriteUInt16LittleEndian(p.AsSpan(64), 0);
     p[66] = 0;
-    p.AsSpan(67, 56).Clear();
+    p.AsSpan(67, 64).Clear();
     return p;
+}
+
+/// <summary>
+/// Maps client create packet byte <c>(CLASS_TYPE &lt;&lt; 4) | skin</c> to Season 6 wire class (Takumi <c>PROTO_CLASS_CODES</c> / DB group * 0x10).
+/// </summary>
+static byte MapCreateCharacterPackedByteToServerProtocol(byte packed)
+{
+    var jobNibble = (byte)(packed >> 4);
+    return jobNibble switch
+    {
+        0 => 0x00, // Dark Wizard
+        1 => 0x20, // Dark Knight
+        2 => 0x40, // Fairy Elf
+        3 => 0x60, // Magic Gladiator
+        4 => 0x80, // Dark Lord
+        5 => 0xA0, // Summoner
+        6 => 0xC0, // Rage Fighter
+        _ => 0x00,
+    };
 }
 
 /// <summary>Find PMSG_CREATE_CHARACTER (F3/01).</summary>
@@ -1027,12 +1252,13 @@ static byte[] BuildJoinMapServer602(CharacterRosterEntry r)
 /// C++ path: StreamPacketEngine XOR (StreamPacketEngine.h) then SendGameEncrypted applies mu::Xor32Encrypt from index 3
 /// (SimpleModulusCrypt.h — same 32-byte table). Client send log shows sub 0x0C for logical 0x01.
 /// PipelinedDecryptor may leave bytes still obfuscated or fully logical; run Takumi decode only when subcode is not yet 0x01.
+/// Last byte out param is the <b>packed</b> (UI job &lt;&lt; 4)|skin — map with <see cref="MapCreateCharacterPackedByteToServerProtocol"/> before roster/response.
 /// </remarks>
-static bool TryFindCreateCharacterRequest(ReadOnlySpan<byte> packet, string remote, out int frameOffset, out byte[] name10, out byte serverClass)
+static bool TryFindCreateCharacterRequest(ReadOnlySpan<byte> packet, string remote, out int frameOffset, out byte[] name10, out byte packedClass)
 {
     frameOffset = -1;
     name10 = Array.Empty<byte>();
-    serverClass = 0;
+    packedClass = 0;
     Span<byte> scratch = stackalloc byte[15];
 
     for (var i = 0; i <= packet.Length - 15; i++)
@@ -1076,7 +1302,7 @@ static bool TryFindCreateCharacterRequest(ReadOnlySpan<byte> packet, string remo
         frameOffset = i;
         name10 = new byte[10];
         scratch.Slice(4, 10).CopyTo(name10);
-        serverClass = scratch[14];
+        packedClass = scratch[14];
         return true;
     }
 

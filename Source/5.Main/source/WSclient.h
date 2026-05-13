@@ -355,8 +355,12 @@ typedef struct
 	BYTE         ResidentNumber[13];
 } PREQUEST_CHANGE_PASSWORD, * LPPREQUEST_CHANGE_PASSWORD;
 
-//receive characters list
-typedef struct 
+// receive characters list (F3 00) ? wire layout is NOT a single fixed struct:
+// - 33 bytes/slot: packed legacy (no pad before Level): Class + Equipment[17] follow CtlCode.
+// - 34 bytes/slot: pad before Level, then either legacy (Class + Equip[17]) or OpenMU/MUnique
+//   (18-byte preview charset at the same offset as Class+first equip byte; see ReceiveCharacterList).
+// Do not use sizeof(PRECEIVE_CHARACTER_LIST) for walking the packet; WSclient.cpp parses explicitly.
+typedef struct
 {
 	BYTE         Index;
 	BYTE         ID[MAX_ID_SIZE];
@@ -364,7 +368,7 @@ typedef struct
 	BYTE		 CtlCode;
 	BYTE         Class;
 	BYTE         Equipment[EQUIPMENT_LENGTH];
-    BYTE         byGuildStatus;
+	BYTE         byGuildStatus;
 } PRECEIVE_CHARACTER_LIST, * LPPRECEIVE_CHARACTER_LIST;
 
 //request create character
@@ -407,6 +411,7 @@ typedef struct
 } PREQUEST_JOIN_MAP_SERVER, * LPPREQUEST_JOIN_MAP_SERVER;
 
 //receive join map server
+#pragma pack(push, 1)
 typedef struct 
 {
 	PBMSG_HEADER Header;
@@ -472,6 +477,7 @@ typedef struct
 	DWORD ViewEnergy;
 	DWORD ViewLeadership;
 } PRECEIVE_JOIN_MAP_SERVER, * LPPRECEIVE_JOIN_MAP_SERVER;
+#pragma pack(pop)
 
 //receive revival
 typedef struct 
@@ -1097,7 +1103,7 @@ typedef struct {
 	BYTE         GuildKeyL;
 } PRECEIVE_GUILD_PLAYER, * LPPRECEIVE_GUILD_PLAYER;
 
-// 길드원 목록
+// ???? ???
 typedef struct {
 	BYTE         ID[MAX_ID_SIZE];
 	BYTE         Number;
@@ -1105,7 +1111,7 @@ typedef struct {
 	BYTE		 GuildStatus;
 } PRECEIVE_GUILD_LIST, * LPPRECEIVE_GUILD_LIST;
 
-// 길드원 목록 리스트
+// ???? ??? ?????
 typedef struct {
 	PWMSG_HEADER Header;
 	BYTE         Result;
@@ -1448,7 +1454,7 @@ typedef struct
 } NPC_QUESTEXP_REQUEST_INFO, *LPNPC_QUESTEXP_REQUEST_INFO;
 #pragma pack(pop)
 
-// 보상
+// ????
 enum QUEST_REWARD_TYPE
 {
 	QUEST_REWARD_NONE		= 0x0000,
@@ -2555,7 +2561,7 @@ typedef struct
 } PMSG_ANS_CRYWOLF_INFO, *LPPMSG_ANS_CRYWOLF_INFO;
 
 //--------------------------------------------------------------------------
-// GC [0xBD][0x02] 방어막, 제단 상태 정보
+// GC [0xBD][0x02] ???, ???? ???? ????
 //--------------------------------------------------------------------------
 typedef struct
 {
@@ -3300,7 +3306,7 @@ typedef struct
 }PMSG_CASHSHOP_BUYITEM_REQ, *LPPMSG_CASHSHOP_BUYITEM_REQ;
 
 //----------------------------------------------------------------------------
-// 아이템 구매 결과 (0xD2)(0x03)
+// ?????? ???? ??? (0xD2)(0x03)
 //----------------------------------------------------------------------------
 typedef struct
 {

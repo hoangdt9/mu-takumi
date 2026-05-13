@@ -478,7 +478,7 @@ typedef struct
 		GetViewIndex = 0;
 		ViewDamageHP = 0;
 		ViewDamageSD = 0;
-		FillMemory(ViewDamageTable,0,sizeof(ViewDamageTable));
+		FillMemory(ViewDamageTable, sizeof(ViewDamageTable), 0);
 		ViewDamageCount = 0;
 		ViewDamageValue = 0;
 		ViewExperience = 0;
@@ -996,7 +996,6 @@ struct HELPER_STRUCT
 		TimerOffline = 0;
 		ReBuff[0] = 0;
 		ReBuff[1] = 0;
-		ReBuff[2] = 0;
 		TimerBuffParty = 0;
 		TimerMove = 0;
 		TimerSkill = 0;

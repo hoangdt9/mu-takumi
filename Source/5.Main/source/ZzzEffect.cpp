@@ -893,7 +893,7 @@ void CreateEffect(int Type, vec3_t Position, vec3_t Angle, vec3_t Light, int Sub
 			case MODEL_SUMMONER_CASTING_EFFECT222:
 			{
 				o->LifeTime = 40;
-				if (o->SubType = 0)
+				if (o->SubType == 0)
 					o->Scale = 1.0f;
 				o->Alpha = 1.0f;
 				Vector(0.f, 0.f, 0.f, o->Direction);
@@ -1926,7 +1926,7 @@ void CreateEffect(int Type, vec3_t Position, vec3_t Angle, vec3_t Light, int Sub
 				}
 				//. Create Effect
 				if (Type == MODEL_ARROW_NATURE && o->SubType == 1)
-				{	//. ³ì»ö ¶ì »ý¼º
+				{	//. Â³Ã¬Â»Ã¶ Â¶Ã¬ Â»Ã½Â¼Âº
 					CreateJoint(BITMAP_FLARE + 1, o->Position, o->Position, o->Angle, 13, o, 20.f, 40);
 					//					CreateJoint ( BITMAP_FLARE+1, o->Position, o->Position, o->Angle, 6, o, 20.f, 40 );
 					//					CheckTargetRange(o);
@@ -5278,7 +5278,7 @@ void CreateEffect(int Type, vec3_t Position, vec3_t Angle, vec3_t Light, int Sub
 				{
 					const int	TOTAL_LIFETIME = 60;
 					vec3_t		v3PosStart, v3PosTarget;
-					vec3_t		arv3PosProcess[3];
+					vec3_t		arv3PosProcess[4];
 
 					o->ExtState = TOTAL_LIFETIME;
 					o->LifeTime = TOTAL_LIFETIME;
@@ -5632,7 +5632,7 @@ void CreateEffect(int Type, vec3_t Position, vec3_t Angle, vec3_t Light, int Sub
 					break;
 					case MODEL_SWORDRIGHT02_EMPIREGUARDIAN_BOSS_GAION_:
 					{
-						if (o->SubType == 1)	// ÀÏ¹Ý°ø°Ý Animation
+						if (o->SubType == 1)	// ï¿½??ï¿½ï¿½ï¿½ Animation
 						{
 							//const int	TOTAL_LIFETIME = 24;
 							const int	TOTAL_LIFETIME = 30;
@@ -7821,7 +7821,7 @@ void MoveEffect(OBJECT * o, int iIndex)
 		VectorAdd(vPos, pObject->Position, o->Position);
 
 		if (pObject->Live)
-			o->LifeTime = 100.f; //¹«ÇÑ
+			o->LifeTime = 100.f; //ï¿½ï¿½ï¿½ï¿½
 
 		BMD* b = &Models[o->Type];
 		b->PlayAnimation(&o->AnimationFrame, &o->PriorAnimationFrame, &o->PriorAction, o->Velocity / 5.f, o->Position, o->Angle);
@@ -9499,7 +9499,7 @@ void MoveEffect(OBJECT * o, int iIndex)
 				fScale = (float)(rand() % 80 + 32) * 0.01f * 1.0f;
 				Vector(o->Position[0] + (rand() % 70 - 35) * 1.0f, o->Position[1] + (rand() % 70 - 35) * 1.0f,
 					o->Position[2] + (rand() % 70 - 35) * 1.0f, vPos);
-				CreateParticle(BITMAP_LIGHTNING_MEGA1 + rand() % 3, vPos, pObject->Angle, vLight, 0, fScale);	// Àü±â
+				CreateParticle(BITMAP_LIGHTNING_MEGA1 + rand() % 3, vPos, pObject->Angle, vLight, 0, fScale);	// ï¿½ï¿½ï¿½ï¿½
 			}
 
 			vec34_t Matrix;
@@ -9518,7 +9518,7 @@ void MoveEffect(OBJECT * o, int iIndex)
 				VectorAdd(vPosition, o->Position, vPosition);
 				vPosition[2] = RequestTerrainHeight(vPosition[0], vPosition[1]) + 20;
 
-				CreateParticle(BITMAP_LIGHTNING_MEGA1 + rand() % 3, vPosition, pObject->Angle, vLight, 0, fScale);	// Àü±â
+				CreateParticle(BITMAP_LIGHTNING_MEGA1 + rand() % 3, vPosition, pObject->Angle, vLight, 0, fScale);	// ï¿½ï¿½ï¿½ï¿½
 			}
 
 			VectorCopy(o->Position, vPosition);
@@ -11802,7 +11802,7 @@ void MoveEffect(OBJECT * o, int iIndex)
 		{
 			Vector(1.f, 1.f, 1.f, Light);
 
-			CreateJoint(BITMAP_JOINT_THUNDER, o->Position, o->Position, o->Angle, 3, NULL, 20.f, 7); //  Àü±â
+			CreateJoint(BITMAP_JOINT_THUNDER, o->Position, o->Position, o->Angle, 3, NULL, 20.f, 7); //  ï¿½ï¿½ï¿½ï¿½
 			CreateSprite(BITMAP_SHINY + 1, o->Position, (float)(rand() % 8 + 8) * 0.2f, Light, o, (float)(rand() % 360));
 		}
 
@@ -15667,7 +15667,7 @@ void MoveEffect(OBJECT * o, int iIndex)
 		VectorCopy(o->Position, v3Pos);
 
 		CreateParticle(BITMAP_WATERFALL_3, v3Pos, o->Angle, o->Light, 11, 0.6f);
-		// ¿¬±â
+		// ï¿½ï¿½ï¿½ï¿½
 		CreateParticle(BITMAP_SMOKE, v3Pos, o->Angle, o->Light, 52, 0.6f);
 
 		if (15 == o->LifeTime)
@@ -16610,10 +16610,10 @@ void MoveEffect(OBJECT * o, int iIndex)
 				o->m_Interpolates.GetAlphaCurrent(o->Alpha, fCurrentRate);
 			}
 
-			// 13. APPEAR EFFECTµé
+			// 13. APPEAR EFFECTï¿½ï¿½
 			if (fCurrentRate >= 0.0f && fCurrentRate <= 0.5f)
 			{
-				o->Visible = true;		// MoveEffect­ CreateEffect
+				o->Visible = true;		// MoveEffectï¿½ CreateEffect
 				BMD* b = &Models[o->Type];
 				vec3_t* arrEachBonePos;
 				vec3_t	v3LightModify;
@@ -16712,7 +16712,7 @@ void MoveEffect(OBJECT * o, int iIndex)
 				o->m_Interpolates.GetAlphaCurrent(o->Alpha, fCurrentRate);
 			}
 
-			// 3. APPEAR EFFECTµé
+			// 3. APPEAR EFFECTï¿½ï¿½
 			if (fCurrentRate >= 0.0f && fCurrentRate <= 0.6f)
 			{
 				o->Visible = true;		// MoveEffect CreateEffect
@@ -17387,7 +17387,7 @@ void MoveEffect(OBJECT * o, int iIndex)
 				CreateEffect(MODEL_WINDFOCE, o->Position, o->Angle, vLight, 3, o, -1, 0, 0, 0, 1.0f);
 			}
 		}
-		else if (o->SubType == 1)		//Áö¼ÓÀûÀÎ°Å
+		else if (o->SubType == 1)		//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½?ï¿½
 		{
 			if (o->Owner != NULL && o->Owner->Live == true
 				&& (g_isCharacterBuff(o->Owner, eBuff_Att_up_Ourforces)
@@ -18949,7 +18949,7 @@ void RenderEffects(bool bRenderBlendMesh)
 
 						Vector(0.0f, 0.0f, 0.0f, vLight);
 
-						// 2-2. ±âº» Jewel Effect //
+						// 2-2. ï¿½? Jewel Effect //
 						Vector(fLumi1 * 1.0f, fLumi1 * 0.4f, fLumi1 * 0.1f, vLight);
 
 						//			if( MODEL_MONSTER01+164 == o->Owner->Type )	// 2-3-1.
@@ -18957,7 +18957,7 @@ void RenderEffects(bool bRenderBlendMesh)
 							VectorCopy(arrEachBoneTranslations[iBoneIdx_SwordEffectMain01], vPos_SwordEffectRed01);
 							VectorCopy(arrEachBoneTranslations[iBoneIdx_SwordEffectMain02], vPos_SwordEffectRed02);
 						}
-						// 			else // 2-3-1. Effect¸¦ ÅëÇÑ ·»´õÀÇ °æ¿ì.
+						// 			else // 2-3-1. Effectï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½.
 						// 			{
 						// 				pBMDSwordModel->TransformByObjectBone(vPos_SwordEffectRed01, o, iBoneIdx_SwordEffectMain01, vRelative);
 						// 				pBMDSwordModel->TransformByObjectBone(vPos_SwordEffectRed02, o, iBoneIdx_SwordEffectMain02, vRelative);
@@ -18965,9 +18965,9 @@ void RenderEffects(bool bRenderBlendMesh)
 
 						CreateSprite(BITMAP_LIGHT_RED, vPos_SwordEffectRed01, 1.3f, vLight, o);
 						CreateSprite(BITMAP_LIGHT_RED, vPos_SwordEffectRed02, 1.3f, vLight, o);
-						// 2-2. ±âº» Jewel Effect //
+						// 2-2. ï¿½? Jewel Effect //
 
-						// 2-3. ±âº» Edge Effect
+						// 2-3. ï¿½? Edge Effect
 						{
 							VectorCopy(arrEachBoneTranslations[iBoneIdx_SwordEffectEdge01], vPos_SwordEffectEdge01);
 							VectorCopy(arrEachBoneTranslations[iBoneIdx_SwordEffectEdge02], vPos_SwordEffectEdge02);

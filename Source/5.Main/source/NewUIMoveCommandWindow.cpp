@@ -216,6 +216,7 @@ CNewUIMoveCommandWindow::CNewUIMoveCommandWindow()
 	m_iMousePosY = 0;
 	m_bScrollBtnActive = false;
 	m_iScrollBtnMouseEvent = MOVECOMMAND_MOUSEBTN_NORMAL;
+	m_AndroidMoveMapPressedOrder = -1;
 }
 
 CNewUIMoveCommandWindow::~CNewUIMoveCommandWindow()
@@ -644,6 +645,7 @@ bool SEASON3B::CNewUIMoveCommandWindow::BtnProcess()
 			GetAndroidMoveMapCloseButtonRect(m_Pos.x, m_Pos.y, m_MapNameUISize.x, &closeX, &closeY, &closeW, &closeH);
 			if (SEASON3B::IsRelease(VK_LBUTTON) && CheckMouseIn(closeX, closeY, closeW, closeH))
 			{
+				m_AndroidMoveMapPressedOrder = -1;
 				g_pNewUISystem->Hide(SEASON3B::INTERFACE_MOVEMAP);
 				return true;
 			}
@@ -655,6 +657,7 @@ bool SEASON3B::CNewUIMoveCommandWindow::BtnProcess()
 			GetAndroidMoveMapPageButtonRect(m_Pos.x, m_Pos.y, m_MapNameUISize.x, m_MapNameUISize.y, false, &prevX, &prevY, &prevW, &prevH);
 			if (m_iCurPage > 1 && SEASON3B::IsRelease(VK_LBUTTON) && CheckMouseIn(prevX, prevY, prevW, prevH))
 			{
+				m_AndroidMoveMapPressedOrder = -1;
 				--m_iCurPage;
 				UpdateScrolling();
 				SettingCanMoveMap();
@@ -668,6 +671,7 @@ bool SEASON3B::CNewUIMoveCommandWindow::BtnProcess()
 			GetAndroidMoveMapPageButtonRect(m_Pos.x, m_Pos.y, m_MapNameUISize.x, m_MapNameUISize.y, true, &nextX, &nextY, &nextW, &nextH);
 			if (m_iCurPage < m_iNumPage && SEASON3B::IsRelease(VK_LBUTTON) && CheckMouseIn(nextX, nextY, nextW, nextH))
 			{
+				m_AndroidMoveMapPressedOrder = -1;
 				++m_iCurPage;
 				UpdateScrolling();
 				SettingCanMoveMap();
@@ -703,20 +707,47 @@ bool SEASON3B::CNewUIMoveCommandWindow::BtnProcess()
 					{
 						(*li)->_bSelected = true;
 
-						if (SEASON3B::IsRelease(VK_LBUTTON))
+						if (SEASON3B::IsPress(VK_LBUTTON))
 						{
-							if (IsTheMapInDifferentServer(gMapManager.WorldActive, (*li)->_ReqInfo.index))
-							{
-								SaveOptions();
-							}
-
-							SendRequestMoveMap(g_pMoveCommandWindow->GetMoveCommandKey(), (*li)->_ReqInfo.index);
-							g_pNewUISystem->Hide(SEASON3B::INTERFACE_MOVEMAP);
-							return true;
+							m_AndroidMoveMapPressedOrder = order;
 						}
 					}
 				}
 			}
+
+			if (SEASON3B::IsRelease(VK_LBUTTON) && m_AndroidMoveMapPressedOrder >= 0)
+			{
+				const int pressedOrder = m_AndroidMoveMapPressedOrder;
+				m_AndroidMoveMapPressedOrder = -1;
+				int ord2 = 0;
+				for (std::list<CMoveCommandData::MOVEINFODATA*>::iterator lj = m_listMoveInfoData.begin();
+					lj != m_listMoveInfoData.end();
+					++lj, ++ord2)
+				{
+					if (ord2 != pressedOrder)
+					{
+						continue;
+					}
+					if ((*lj)->_bCanMove == true)
+					{
+						if (IsTheMapInDifferentServer(gMapManager.WorldActive, (*lj)->_ReqInfo.index))
+						{
+							SaveOptions();
+						}
+
+						SendRequestMoveMap(g_pMoveCommandWindow->GetMoveCommandKey(), (*lj)->_ReqInfo.index);
+						g_pNewUISystem->Hide(SEASON3B::INTERFACE_MOVEMAP);
+						return true;
+					}
+					break;
+				}
+			}
+		}
+
+		if (SEASON3B::IsRelease(VK_LBUTTON)
+			&& !CheckMouseIn(m_Pos.x, m_Pos.y, m_MapNameUISize.x, m_MapNameUISize.y))
+		{
+			m_AndroidMoveMapPressedOrder = -1;
 		}
 
 		return false;
@@ -1418,6 +1449,7 @@ void SEASON3B::CNewUIMoveCommandWindow::OpenningProcess()
 		}
 
 		m_iScrollBtnMouseEvent = MOVECOMMAND_MOUSEBTN_NORMAL;
+		m_AndroidMoveMapPressedOrder = -1;
 		UpdateScrolling();
 		return;
 	}

@@ -79,6 +79,8 @@ namespace SEASON3B
 		int							m_iScrollBtnMouseEvent;
 		bool						m_bScrollBtnActive;
 		DWORD						m_dwMoveCommandKey;
+		/// <summary>Android grid: global list index captured on LBUTTON down (-1 = none). Commit on release so lift-off can miss the tile rect.</summary>
+		int							m_AndroidMoveMapPressedOrder;
 
 	public:
 		CNewUIMoveCommandWindow();

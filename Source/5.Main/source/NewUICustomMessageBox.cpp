@@ -17,6 +17,10 @@
 #include "w_CursedTemple.h"
 #include "Reconnect.h"
 
+#if defined(__ANDROID__) || defined(MU_IOS)
+#include "MobilePlatform.h"
+#endif
+
 extern int DisplayWinCDepthBox;
 extern int DisplayWin;
 extern int DisplayWinMid;
@@ -1566,7 +1570,7 @@ void SEASON3B::CGemIntegrationUnityMsgBox::SetButtonInfo()
 	for( int k=0; k< (int)COMGEM::eCOMTYPE_END; k++ )
 	{
 		cButton.SetInfo(CNewUIMessageBoxMng::IMAGE_MSGBOX_BTN_EMPTY, x+50.0f, y+ (height+10.0f)*k, MSGBOX_BTN_EMPTY_WIDTH + 20, height, CNewUIMessageBoxButton::MSGBOX_BTN_SIZE_EMPTY);
-		// 1808 "%d∞≥ ¡∂«’(%d¡® º“ø‰)"
+		// 1808 "%dùù ùùùù(%dùù ù?ù)"
 		unicode::_sprintf(szTemp, GlobalText[1808], 10*(k+1), 500000*(k+1));
 		cButton.SetText(szTemp);
 		m_cMixButton.push_back(cButton);
@@ -2219,6 +2223,7 @@ void SEASON3B::CGemIntegrationDisjointMsgBox::RenderButtons()
 //////////////////////////////////////////////////////////////////////////
 
 SEASON3B::CSystemMenuMsgBox::CSystemMenuMsgBox()
+	: m_SystemMenuPressedBtn(-1)
 {
 
 }
@@ -2243,6 +2248,7 @@ bool SEASON3B::CSystemMenuMsgBox::Create(float fPriority)
 	CNewUIMessageBoxBase::Create(x, y, width, height, fPriority);
 
 	SetButtonInfo();
+	m_SystemMenuPressedBtn = -1;
 
 	return true;
 }
@@ -2304,6 +2310,7 @@ void SEASON3B::CSystemMenuMsgBox::RenderButtons()
 
 void SEASON3B::CSystemMenuMsgBox::SetAddCallbackFunc()
 {
+	AddCallbackFunc(SEASON3B::CSystemMenuMsgBox::LButtonDown, MSGBOX_EVENT_MOUSE_LBUTTON_DOWN);
 	AddCallbackFunc(SEASON3B::CSystemMenuMsgBox::LButtonUp, MSGBOX_EVENT_MOUSE_LBUTTON_UP);
 	AddCallbackFunc(SEASON3B::CSystemMenuMsgBox::GameOverBtnDown, MSGBOX_EVENT_USER_CUSTOM_SYSTEMMENU_GAMEOVER);
 	AddCallbackFunc(SEASON3B::CSystemMenuMsgBox::ChooseServerBtnDown, MSGBOX_EVENT_USER_CUSTOM_SYSTEMMENU_CHOOSESERVER);
@@ -2345,51 +2352,124 @@ void SEASON3B::CSystemMenuMsgBox::SetButtonInfo()
 	m_BtnCancel.SetText(GlobalText[384]);
 }
 
+CALLBACK_RESULT SEASON3B::CSystemMenuMsgBox::LButtonDown(class CNewUIMessageBoxBase* pOwner, const leaf::xstreambuf& xParam)
+{
+	CSystemMenuMsgBox* pMsgBox = dynamic_cast<CSystemMenuMsgBox*>(pOwner);
+	if (pMsgBox == NULL)
+	{
+		return CALLBACK_CONTINUE;
+	}
+
+	pMsgBox->m_SystemMenuPressedBtn = -1;
+	if (pMsgBox->m_BtnGameOver.IsMouseIn() == true)
+	{
+		pMsgBox->m_SystemMenuPressedBtn = 0;
+	}
+	else if (pMsgBox->m_BtnChooseServer.IsMouseIn() == true)
+	{
+		pMsgBox->m_SystemMenuPressedBtn = 1;
+	}
+	else if (pMsgBox->m_BtnChooseCharacter.IsMouseIn() == true)
+	{
+		pMsgBox->m_SystemMenuPressedBtn = 2;
+	}
+	else if (pMsgBox->m_BtnOption.IsMouseIn() == true)
+	{
+		pMsgBox->m_SystemMenuPressedBtn = 3;
+	}
+	else if (pMsgBox->m_BtnCancel.IsMouseIn() == true)
+	{
+		pMsgBox->m_SystemMenuPressedBtn = 4;
+	}
+
+	return CALLBACK_CONTINUE;
+}
+
 CALLBACK_RESULT SEASON3B::CSystemMenuMsgBox::LButtonUp(class CNewUIMessageBoxBase* pOwner, const leaf::xstreambuf& xParam)
 {
 	CSystemMenuMsgBox* pMsgBox = dynamic_cast<CSystemMenuMsgBox*>(pOwner);
-	if(pMsgBox)
+	if (pMsgBox == NULL)
 	{
-		if(pMsgBox->m_BtnGameOver.IsMouseIn() == true)
+		return CALLBACK_CONTINUE;
+	}
+
+	int lane = pMsgBox->m_SystemMenuPressedBtn;
+	pMsgBox->m_SystemMenuPressedBtn = -1;
+	if (lane < 0)
+	{
+		if (pMsgBox->m_BtnGameOver.IsMouseIn() == true)
 		{
-			g_MessageBox->SendEvent(pOwner, MSGBOX_EVENT_USER_CUSTOM_SYSTEMMENU_GAMEOVER);
+			lane = 0;
+		}
+		else if (pMsgBox->m_BtnChooseServer.IsMouseIn() == true)
+		{
+			lane = 1;
+		}
+		else if (pMsgBox->m_BtnChooseCharacter.IsMouseIn() == true)
+		{
+			lane = 2;
+		}
+		else if (pMsgBox->m_BtnOption.IsMouseIn() == true)
+		{
+			lane = 3;
+		}
+		else if (pMsgBox->m_BtnCancel.IsMouseIn() == true)
+		{
+			lane = 4;
+		}
+	}
 
-			if(Hero->PK) return CALLBACK_BREAK;
+	if (lane == 0)
+	{
+		g_MessageBox->SendEvent(pOwner, MSGBOX_EVENT_USER_CUSTOM_SYSTEMMENU_GAMEOVER);
 
-			g_pNewUIHotKey->SetStateGameOver(true);	
-			
+		if (Hero != NULL && Hero->PK != 0)
+		{
 			return CALLBACK_BREAK;
 		}
-		if(pMsgBox->m_BtnChooseServer.IsMouseIn() == true)
+
+#if !defined(__ANDROID__) && !defined(MU_IOS)
+		// Desktop: arm disconnect countdown UI. Mobile: GameOverBtnDown calls MU_MobileRequestExit ù skip countdown.
+		g_pNewUIHotKey->SetStateGameOver(true);
+#endif
+
+		return CALLBACK_BREAK;
+	}
+	if (lane == 1)
+	{
+		g_MessageBox->SendEvent(pOwner, MSGBOX_EVENT_USER_CUSTOM_SYSTEMMENU_CHOOSESERVER);
+
+		if (Hero != NULL && Hero->PK != 0)
 		{
-			g_MessageBox->SendEvent(pOwner, MSGBOX_EVENT_USER_CUSTOM_SYSTEMMENU_CHOOSESERVER);
-
-			if(Hero->PK) return CALLBACK_BREAK;
-
-			g_pNewUIHotKey->SetStateGameOver(true);	
-
 			return CALLBACK_BREAK;
 		}
-		if(pMsgBox->m_BtnChooseCharacter.IsMouseIn() == true)
+
+		g_pNewUIHotKey->SetStateGameOver(true);
+
+		return CALLBACK_BREAK;
+	}
+	if (lane == 2)
+	{
+		g_MessageBox->SendEvent(pOwner, MSGBOX_EVENT_USER_CUSTOM_SYSTEMMENU_CHOOSECHARACTER);
+
+		if (Hero != NULL && Hero->PK != 0)
 		{
-			g_MessageBox->SendEvent(pOwner, MSGBOX_EVENT_USER_CUSTOM_SYSTEMMENU_CHOOSECHARACTER);
-
-			if(Hero->PK) return CALLBACK_BREAK;
-
-			g_pNewUIHotKey->SetStateGameOver(true);	
-
 			return CALLBACK_BREAK;
 		}
-		if(pMsgBox->m_BtnOption.IsMouseIn() == true)
-		{
-			g_MessageBox->SendEvent(pOwner, MSGBOX_EVENT_USER_CUSTOM_SYSTEMMENU_OPTION);
-			return CALLBACK_BREAK;
-		}
-		if(pMsgBox->m_BtnCancel.IsMouseIn() == true)
-		{
-			g_MessageBox->SendEvent(pOwner, MSGBOX_EVENT_USER_COMMON_CANCEL);
-			return CALLBACK_BREAK;
-		}	
+
+		g_pNewUIHotKey->SetStateGameOver(true);
+
+		return CALLBACK_BREAK;
+	}
+	if (lane == 3)
+	{
+		g_MessageBox->SendEvent(pOwner, MSGBOX_EVENT_USER_CUSTOM_SYSTEMMENU_OPTION);
+		return CALLBACK_BREAK;
+	}
+	if (lane == 4)
+	{
+		g_MessageBox->SendEvent(pOwner, MSGBOX_EVENT_USER_COMMON_CANCEL);
+		return CALLBACK_BREAK;
 	}
 
 	return CALLBACK_CONTINUE;
@@ -2416,7 +2496,12 @@ CALLBACK_RESULT SEASON3B::CSystemMenuMsgBox::GameOverBtnDown(class CNewUIMessage
 	}
 	else
 	{
+#if defined(__ANDROID__) || defined(MU_IOS)
+		// Stub / partial servers may not complete F4 logout; finish the task so "Exit game" always closes the app.
+		MU_MobileRequestExit();
+#else
 		SendRequestLogOut(0);
+#endif
 	}
 
 	PlayBuffer(SOUND_CLICK01);
@@ -2462,7 +2547,7 @@ CALLBACK_RESULT SEASON3B::CSystemMenuMsgBox::ChooseCharacterBtnDown(class CNewUI
 	g_ErrorReport.Write( "> Menu - Join with another character. ");
 	g_ErrorReport.WriteCurrentTime();
 
-    //  ∞‘¿”≥ªø°º≠ º≥¡§«— µ•¿Ã≈Õ ¿˙¿Â.
+    //  ùùù?ùùùùù ùùùùùù ùùùùùù ùùùù.
     SaveOptions();
 	SaveMacro("Data\\Macro.txt");
 
@@ -4390,7 +4475,7 @@ void CCherryBlossomMsgBox::SetButtonInfo()
 	x = GetPos().x + msgboxhalfwidth - btnhalfwidth;
 	y = GetPos().y + GetSize().cy - (MSGBOX_BTN_EMPTY_HEIGHT + MSGBOX_BTN_BOTTOM_BLANK);
 	m_BtnExit.SetInfo(CNewUIMessageBoxMng::IMAGE_MSGBOX_BTN_EMPTY_SMALL, x, y, width, height, CNewUIMessageBoxButton::MSGBOX_BTN_SIZE_EMPTY_SMALL);
-	// 1002 "¥›±‚"
+	// 1002 "ù?ù"
 	m_BtnExit.SetText(GlobalText[1002]);
 }	
 
@@ -5896,11 +5981,11 @@ void SEASON3B::CLuckyTradeMenuMsgBox::SetButtonInfo()
 	x = GetPos().x + msgboxhalfwidth - btnhalfwidth;
 	y = GetPos().y + 85;
 	m_BtnTrade.SetInfo(CNewUIMessageBoxMng::IMAGE_MSGBOX_BTN_EMPTY, x, y, width, height, CNewUIMessageBoxButton::MSGBOX_BTN_SIZE_EMPTY);
-	m_BtnTrade.SetText("∑∞≈∞æ∆¿Ã≈€ ±≥»Ø");	// "GlobalText"
+	m_BtnTrade.SetText("ùù?ùùùùùù ùù?");	// "GlobalText"
 
 	y = GetPos().y + 120;
 	m_BtnRefinery.SetInfo(CNewUIMessageBoxMng::IMAGE_MSGBOX_BTN_EMPTY, x, y, width, height, CNewUIMessageBoxButton::MSGBOX_BTN_SIZE_EMPTY);
-	m_BtnRefinery.SetText("∑∞≈∞æ∆¿Ã≈€ ¡¶∑√");	// "GlobalText"
+	m_BtnRefinery.SetText("ùù?ùùùùùù ùùùù");	// "GlobalText"
 
 	width = MSGBOX_BTN_EMPTY_SMALL_WIDTH;
 	btnhalfwidth = width / 2.f;
@@ -5940,12 +6025,12 @@ void SEASON3B::CLuckyTradeMenuMsgBox::RenderTexts()
 	g_pRenderText->SetBgColor(0, 0, 0, 0);
 	g_pRenderText->SetTextColor(255, 255, 255, 255);
 	g_pRenderText->SetFont(g_hFontBold);
-	sprintf( szText, "∑∞≈∞æ∆¿Ã≈€ ±≥»ØNPC" );	// "LuckyItem Trade NPC"
+	sprintf( szText, "ùù?ùùùùùù ùù?NPC" );	// "LuckyItem Trade NPC"
 	g_pRenderText->RenderText(fPos_x, fPos_y, szText, MSGBOX_WIDTH - 20.0f, 0, RT3_SORT_CENTER);
 	
 	fPos_y += 15;
 	g_pRenderText->SetFont(g_hFont);
-	sprintf( szText, "∑∞≈∞æ∆¿Ã≈€¿∏∑Œ ±≥»Ø«œ∞≈≥™ ¡¶∑√«“ ºˆ ¿÷Ω¿¥œ¥." );
+	sprintf( szText, "ùù?ùùùùùùùùùù ùù?ù??ù ùùùùùù ùù ù?ùù?." );
 	g_pRenderText->RenderText(fPos_x, fPos_y+1*18, szText, MSGBOX_WIDTH - 20.0f, 0, RT3_SORT_CENTER);
 }
 
@@ -6553,7 +6638,7 @@ void SEASON3B::CElpisMsgBox::RenderTexts()
 	g_pRenderText->RenderText(fPos_x, fPos_y+0*18, szText, MSGBOX_WIDTH - 20.0f, 0, RT3_SORT_CENTER);
 
 	fPos_y += 15;
-	g_pRenderText->SetTextColor(220, 183, 131, 255);	// »≤±›ªˆ
+	g_pRenderText->SetTextColor(220, 183, 131, 255);	// ?ù?ù
 
 	switch(m_iMessageType)
 	{
@@ -7015,7 +7100,7 @@ void SEASON3B::CResetCharacterPointMsgBox::SetButtonInfo()
 	x = GetPos().x + msgboxhalfwidth - btnhalfwidth;
 	y = GetPos().y + 105;
 	m_ResetCharacterPointBtn.SetInfo(CNewUIMessageBoxMng::IMAGE_MSGBOX_BTN_EMPTY, x, y, width, height, CNewUIMessageBoxButton::MSGBOX_BTN_SIZE_EMPTY);
-	m_ResetCharacterPointBtn.SetText(GlobalText[1884]); // "Ω∫≈» √ ±‚»≠"
+	m_ResetCharacterPointBtn.SetText(GlobalText[1884]); // "ùùùù ù?ù?"
 
 	
 	width = MSGBOX_BTN_EMPTY_SMALL_WIDTH;

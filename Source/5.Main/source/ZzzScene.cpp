@@ -2920,10 +2920,12 @@ void MainScene(HDC hDC)
 	//}
 	g_pNewKeyInput->ScanAsyncKeyState();
 
-	// Legacy CUIMng (MsgWin, etc.) only received Update() on login/character scenes; in MAIN_SCENE
-	// m_MsgWin still renders via CUIMng::Render but never got input — e.g. OK on "server lost" did nothing.
+	// Legacy CUIMng (MsgWin, SysMenuWin, OptionWin) only received Update() on login/character
+	// scenes; in MAIN_SCENE those windows still render via CUIMng::Render but never got input.
 	if (LOG_IN_SCENE == SceneFlag || CHARACTER_SCENE == SceneFlag
-		|| (MAIN_SCENE == SceneFlag && CUIMng::Instance().m_MsgWin.IsShow()))
+		|| (MAIN_SCENE == SceneFlag && (CUIMng::Instance().m_MsgWin.IsShow()
+			|| CUIMng::Instance().m_SysMenuWin.IsShow()
+			|| CUIMng::Instance().m_OptionWin.IsShow())))
 	{
 		double dDeltaTick = g_pTimer->GetTimeElapsed();
 		dDeltaTick = MIN(dDeltaTick, 200.0 * FPS_ANIMATION_FACTOR);

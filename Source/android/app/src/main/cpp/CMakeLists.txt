@@ -191,13 +191,52 @@ if(MU_ENABLE_BGFX)
     target_compile_definitions(main PRIVATE MU_BGFX_SUPPORT=1)
 endif()
 
+# Legacy Windows-first client on NDK/Clang: suppress high-volume, low-signal warnings.
+# Concrete OOB/assignment bugs are fixed in-tree where found; remainder is legacy debt.
 target_compile_options(main PRIVATE
     -Wno-unknown-pragmas
     -Wno-error=deprecated-declarations
     -Wno-error=format-security
     -Wno-format-security
+    -Wno-format
     -Wno-multichar
     -Wno-narrowing
+    -Wno-nonportable-include-path
+    -Wno-non-c-typedef-for-linkage
+    -Wno-ignored-attributes
+    -Wno-macro-redefined
+    -Wno-writable-strings
+    -Wno-deprecated-writable-strings
+    -Wno-tautological-constant-out-of-range-compare
+    -Wno-tautological-pointer-compare
+    -Wno-undefined-inline
+    -Wno-switch
+    -Wno-null-arithmetic
+    -Wno-unused-value
+    -Wno-missing-declarations
+    -Wno-extra-tokens
+    -Wno-null-conversion
+    -Wno-invalid-source-encoding
+    -Wno-deprecated-enum-float-conversion
+    -Wno-deprecated-anon-enum-enum-conversion
+    -Wno-parentheses-equality
+    -Wno-parentheses
+    -Wno-deprecated-enum-compare
+    -Wno-implicit-const-int-float-conversion
+    -Wno-literal-conversion
+    -Wno-pointer-bool-conversion
+    -Wno-string-compare
+    -Wno-delete-abstract-non-virtual-dtor
+    -Wno-delete-incomplete
+    -Wno-return-type
+    -Wno-pragma-once-outside-header
+    -Wno-extern-initializer
+    -Wno-logical-not-parentheses
+    -Wno-dangling-else
+    -Wno-fortify-source
+    -Wno-int-to-pointer-cast
+    -Wno-int-to-void-pointer-cast
+    -Wno-constant-conversion
     -fno-strict-aliasing
     -fvisibility=hidden
     -fvisibility-inlines-hidden

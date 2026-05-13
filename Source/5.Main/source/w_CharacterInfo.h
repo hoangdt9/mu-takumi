@@ -251,7 +251,8 @@ public:
 	void*       m_pParts;
 
 	void*       m_pPet;
-	PET_INFO	m_PetInfo[PET_TYPE_END];
+	// PET_TYPE_END used as extra Muun/cache slot in protocol/UI; needs one past pet types.
+	PET_INFO	m_PetInfo[PET_TYPE_END + 1];
 
 	char        OwnerID[32];
 		

@@ -23,6 +23,9 @@
 #include "CharacterManager.h"
 #include "SkillManager.h"
 
+#if defined(__ANDROID__) || defined(MU_IOS)
+#include "MobilePlatform.h"
+#endif
 
 extern int DisplayWinCDepthBox;
 extern int DisplayWin;
@@ -1156,7 +1159,12 @@ bool SEASON3B::CServerLostMsgBoxLayout::SetLayout()
 
 CALLBACK_RESULT SEASON3B::CServerLostMsgBoxLayout::OkBtnDown(class CNewUIMessageBoxBase* pOwner, const leaf::xstreambuf& xParam)
 {
+#if defined(__ANDROID__) || defined(MU_IOS)
+	MU_MobileStopTextInput();
+	MU_MobileRequestExit();
+#else
 	SendMessage(g_hWnd, WM_DESTROY, 0, 0);
+#endif
 
 	PlayBuffer(SOUND_CLICK01);
 	g_MessageBox->SendEvent(pOwner, MSGBOX_EVENT_DESTROY);
@@ -1942,7 +1950,7 @@ bool  SEASON3B::CLuckyItemMsgBoxLayout::SetLayout()
 	if(false == pMsgBox->Create(MSGBOX_COMMON_TYPE_OKCANCEL))
 		return false;
 	
-	// 아이템 제목
+	// ?????? ????
 	int				nTextIndex[10]	= {0, };
 	eLUCKYITEMTYPE	eAct		 = g_pLuckyItemWnd->GetAct();
 	

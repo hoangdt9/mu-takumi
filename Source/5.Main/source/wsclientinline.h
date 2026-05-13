@@ -387,7 +387,7 @@ __forceinline void SendChat(const char* Text)
 	}
 	else if(ChatTime > 0)
 	{
-		if(strcmp(ChatText,Text)==NULL) return;
+		if(strcmp(ChatText, Text) == 0) return;
 	}
 	strcpy(ChatText,Text);
 	ChatTime = 70;

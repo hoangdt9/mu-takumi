@@ -50,13 +50,16 @@ services:
       TAKUMI_PUBLIC_HOST: "${TAKUMI_PUBLIC_HOST:-}"
       TAKUMI_VERBOSE: "${TAKUMI_VERBOSE:-1}"
       DOTNET_ENVIRONMENT: "${DOTNET_ENVIRONMENT:-Development}"
+      # Connect list F4 06: server IDs = base + 0..count-1. Client uses id/20 as ServerList.bmd group — base 0 → empty if BMD has no group 0.
+      TAKUMI_CS_CONNECT_BASE: "${TAKUMI_CS_CONNECT_BASE:-20}"
+      TAKUMI_CS_CONNECT_COUNT: "${TAKUMI_CS_CONNECT_COUNT:-3}"
+    # Build then run so a stale bin/Release from the host volume cannot mask Program.cs changes.
     command:
-      - dotnet
-      - run
-      - --project
-      - src/Takumi.Server.LegacyLoginHost/Takumi.Server.LegacyLoginHost.csproj
+      - /bin/sh
       - -c
-      - Release
+      - >-
+        dotnet build src/Takumi.Server.LegacyLoginHost/Takumi.Server.LegacyLoginHost.csproj -c Release -nologo -v q
+        && exec dotnet run --project src/Takumi.Server.LegacyLoginHost/Takumi.Server.LegacyLoginHost.csproj -c Release --no-build
 
   # Static HTTP for Android Preload `data.zip` (nginx). Host port **defaults to 18080** — not 44605/44606.
   datazip:

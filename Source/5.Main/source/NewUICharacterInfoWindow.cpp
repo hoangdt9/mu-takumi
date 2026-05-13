@@ -397,7 +397,7 @@ void SEASON3B::CNewUICharacterInfoWindow::RenderTableTexts()
 	{
 		//unicode::_sprintf(strLevel, GlobalText[200], CharacterAttribute->Level);
 		//unicode::_sprintf(strExtra, " / RS %d ", CharacterAttribute->PrintPlayer.ViewReset);
-		unicode::_sprintf(strLevel, gCustomMessage.GetMessageA(0), CharacterAttribute->Level, CharacterAttribute->PrintPlayer.ViewReset, CharacterAttribute->PrintPlayer.ViewMasterReset);
+		unicode::_sprintf(strLevel, GlobalText[200], CharacterAttribute->Level);
 		//strcat(strLevel, strExtra);
 
 		unicode::_sprintf(strExp, GlobalText[201], CharacterAttribute->Experience, CharacterAttribute->NextExperince);

@@ -108,6 +108,7 @@ void CHARACTER::Initialize()
 	m_pPet = NULL;
 	InitPetInfo(PET_TYPE_DARK_HORSE);
 	InitPetInfo(PET_TYPE_DARK_SPIRIT);
+	m_PetInfo[PET_TYPE_END].m_dwPetType = 0xFFFF;
 
 	for( int i = 0; i < 32; ++i ) OwnerID[i] = 0;
 

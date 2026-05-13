@@ -966,10 +966,9 @@ MU_EXPORT void SendCreateCharacter(int32_t handle, const wchar_t* name, uint32_t
         packet[4 + i] = static_cast<uint8_t>(name[i] & 0xFF);
     }
 
-    // OpenMU encodes this field as 6 bits at positions 2..7 (Class << 2).
-    // `characterClass` here is the CharacterClassNumber enum value (e.g. 0, 4, 8, 12, ...).
-    // Sending it raw would make the server decode a wrong class for all non-zero values.
-    packet[14] = static_cast<uint8_t>((characterClass & 0x3F) << 2);
+    // Match desktop SendRequestCreateCharacter (wsclientinline.h): (CLASS_TYPE<<4) | (skin&0xF).
+    // CLASS_TYPE: 0=Wiz, 1=DK, 2=Elf, … — not OpenMU CharacterClassNumber spacing.
+    packet[14] = static_cast<uint8_t>((characterClass & 0x0Fu) << 4);
     SendGameEncrypted(handle, packet, sizeof(packet));
 }
 

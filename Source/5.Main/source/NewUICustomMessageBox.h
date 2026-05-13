@@ -391,6 +391,7 @@ namespace SEASON3B
 		bool Update();
 		bool Render();
 
+		static CALLBACK_RESULT LButtonDown(class CNewUIMessageBoxBase* pOwner, const leaf::xstreambuf& xParam);
 		static CALLBACK_RESULT LButtonUp(class CNewUIMessageBoxBase* pOwner, const leaf::xstreambuf& xParam);
 		static CALLBACK_RESULT GameOverBtnDown(class CNewUIMessageBoxBase* pOwner, const leaf::xstreambuf& xParam);
 		static CALLBACK_RESULT ChooseServerBtnDown(class CNewUIMessageBoxBase* pOwner, const leaf::xstreambuf& xParam);
@@ -409,7 +410,9 @@ namespace SEASON3B
 		CNewUIMessageBoxButton m_BtnChooseServer;
 		CNewUIMessageBoxButton m_BtnChooseCharacter;
 		CNewUIMessageBoxButton m_BtnOption;
-		CNewUIMessageBoxButton m_BtnCancel;	
+		CNewUIMessageBoxButton m_BtnCancel;
+		/// <summary>Which menu row had finger on LBUTTON_DOWN (-1 none). Fixes touch where release is outside the tight empty-button rect.</summary>
+		int m_SystemMenuPressedBtn;
 	};
 
 	class CBloodCastleResultMsgBox : public CNewUIMessageBoxBase

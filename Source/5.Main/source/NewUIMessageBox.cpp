@@ -134,7 +134,7 @@ void SEASON3B::CNewUIMessageBoxBase::RenderMsgBackColor(bool _bRender)
 		EnableAlphaTest();
 		//glColor4f(0.2f, 0.2f, 0.2f, m_fOpacityAlpha);
 		glColor4f(m_vColor[0], m_vColor[1], m_vColor[2], m_fOpacityAlpha);
-		// 메인프레임에서 높이값을 51을 잡고있음
+		// ????????????? ??????? 51?? ???????
 		RenderColor(_fPosX, _fPosY, _fWidth, _fHeight);
 		glEnable(GL_TEXTURE_2D);
 		
@@ -205,7 +205,10 @@ bool SEASON3B::CNewUIMessageBoxMng::UpdateMouseEvent()
 	std::sort(m_vecMsgBoxes.begin(),m_vecMsgBoxes.end(), ComparePriority);
 	type_vector_msgbox::iterator vi = m_vecMsgBoxes.begin();
 	if(vi == m_vecMsgBoxes.end())
+	{
+		m_EventState = EVENT_NONE;
 		return true;
+	}
 	
 	CNewUIMessageBoxBase* pCurMsgBox = (*vi);
 
@@ -231,17 +234,30 @@ bool SEASON3B::CNewUIMessageBoxMng::UpdateMouseEvent()
 
 		return false;
 	}
+	// Touch / pen: first contact is often already MouseLButtonPush with no prior hover frame
+	// (desktop mouse always gets HOVER first). Without this, message boxes never receive
+	// LBUTTON_DOWN/LBUTTON_UP on Android.
+	else if(m_EventState == EVENT_NONE && MouseLButtonPush &&
+		SEASON3B::CheckMouseIn(pCurMsgBox->GetPos().x, pCurMsgBox->GetPos().y,
+		pCurMsgBox->GetSize().cx, pCurMsgBox->GetSize().cy))
+	{
+		SendEvent(pCurMsgBox, MSGBOX_EVENT_MOUSE_HOVER);
+		SendEvent(pCurMsgBox, MSGBOX_EVENT_MOUSE_LBUTTON_DOWN);
+		m_EventState = EVENT_WND_MOUSE_LBUTTON_DOWN;
+		return false;
+	}
 	else if(m_EventState == EVENT_WND_MOUSE_LBUTTON_DOWN)
 	{
-		if(false == MouseLButtonPush && SEASON3B::CheckMouseIn(pCurMsgBox->GetPos().x, pCurMsgBox->GetPos().y, 
-			pCurMsgBox->GetSize().cx, pCurMsgBox->GetSize().cy))
+		// Release outside the dialog still delivers LBUTTON_UP; per-button handlers use
+		// IsMouseIn() so stray releases do nothing (avoids touch coords missing the box rect).
+		if(false == MouseLButtonPush)
 		{
 			SendEvent(pCurMsgBox, MSGBOX_EVENT_MOUSE_LBUTTON_UP);
 			m_EventState = EVENT_NONE;
 
 			return false;
 		}
-		else if(false == MouseLButtonPush || true == MouseLButtonPop)
+		else if(true == MouseLButtonPop)
 		{
 			m_EventState = EVENT_NONE;
 		}
@@ -271,11 +287,9 @@ bool SEASON3B::CNewUIMessageBoxMng::UpdateMouseEvent()
 		}
 	}
 
-	if(pCurMsgBox->CanMove() == false)
-	{
-		return false;
-	}
-	
+	// Do not return false here: default message boxes use CanMove()==false, and doing so
+	// caused UpdateMouseEvent to stop the entire UI stack every frame while any dialog
+	// was queued; lower z-order panels (main HUD / inventory hotbar buttons) never ran.
 	return true;
 }
 

@@ -30,13 +30,16 @@ void CSMServer::Init ( void )
 
 void CSMServer::SetHeroID ( char* ID )
 {
-    m_strHeroID.clear();
-
+    std::string next;
     if (ID != nullptr)
     {
-        m_strHeroID = ID;
+        next = ID;
     }
-
+    if (next == m_strHeroID)
+    {
+        return;
+    }
+    m_strHeroID = std::move(next);
     g_ErrorReport.Write("[AndroidLogin] SetHeroID hero=%s\r\n", m_strHeroID.c_str());
 }
 

@@ -52,6 +52,7 @@ echo ""
 docker compose ps
 echo ""
 echo "  Connect / game: 44605 / 44606 (override with TAKUMI_CONNECT_PUBLISH / TAKUMI_LEGACY_LOGIN_PUBLISH)"
+echo "  F4 06 list IDs:  TAKUMI_CS_CONNECT_BASE (default 20) × TAKUMI_CS_CONNECT_COUNT — must match ServerList.bmd groups (id/20)"
 echo "  Postgres:        54444 (override with TAKUMI_POSTGRES_PUBLISH_PORT)"
 if [[ -n "${COMPOSE_PROFILES:-}" ]] && [[ "${COMPOSE_PROFILES}" == *"datazip"* ]]; then
   echo "  data.zip HTTP:   ${DATA_ZIP_PUBLISH_PORT:-18080} → GET /data.zip (file: ../docker/data-zip/host/data.zip)"

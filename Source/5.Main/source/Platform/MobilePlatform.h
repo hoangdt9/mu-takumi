@@ -25,4 +25,7 @@ const void* MU_MobileGetNativeWindow();
 const void* MU_MobileGetEglDisplay();
 const void* MU_MobileGetEglContext();
 
+/** Sokol quit + Android {@code ANativeActivity_finish} so the task actually closes after fatal dialogs. */
+void MU_MobileRequestExit();
+
 #endif // defined(__ANDROID__) || defined(MU_IOS)

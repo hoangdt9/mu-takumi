@@ -172,6 +172,18 @@ void MU_MobileSetTextInputRect(const SDL_Rect* rect)
     }
 }
 
+void MU_MobileRequestExit()
+{
+    sapp_request_quit();
+#if defined(__ANDROID__)
+    const void* pActivity = sapp_android_get_native_activity();
+    if (pActivity != nullptr)
+    {
+        ANativeActivity_finish(static_cast<ANativeActivity*>(const_cast<void*>(pActivity)));
+    }
+#endif
+}
+
 std::string MU_MobileGetExternalDataPath()
 {
     return MU_GetFirstExistingPath({

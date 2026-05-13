@@ -207,7 +207,7 @@ void CMsgWin::UpdateWhileActive(double dDeltaTick)
 					g_ErrorReport.WriteCurrentTime();
 #if defined(__ANDROID__) || defined(MU_IOS)
 					MU_MobileStopTextInput();
-					sapp_request_quit();
+					MU_MobileRequestExit();
 #else
 					::PostMessage(g_hWnd, WM_CLOSE, 0, 0);
 #endif
@@ -464,7 +464,7 @@ void CMsgWin::ManageOKClick()
 	case RECEIVE_LOG_IN_FAIL_VERSION:
 #if defined(__ANDROID__) || defined(MU_IOS)
 		MU_MobileStopTextInput();
-		sapp_request_quit();
+		MU_MobileRequestExit();
 #else
 		::PostMessage(g_hWnd, WM_CLOSE, 0, 0);
 #endif
@@ -472,9 +472,11 @@ void CMsgWin::ManageOKClick()
 	case MESSAGE_SERVER_LOST:
 #if defined(__ANDROID__) || defined(MU_IOS)
 		MU_MobileStopTextInput();
-		sapp_request_quit();
-		break;
+		MU_MobileRequestExit();
+#else
+		::PostMessage(g_hWnd, WM_CLOSE, 0, 0);
 #endif
+		break;
 	case MESSAGE_VERSION:
 	case RECEIVE_LOG_IN_FAIL_ERROR:
 	case MESSAGE_INPUT_ID:

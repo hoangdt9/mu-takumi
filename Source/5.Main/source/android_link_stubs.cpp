@@ -500,13 +500,35 @@ void CWsctlc::AndroidOnPacket(int32_t handle, int32_t size, uint8_t* data)
         }
         else if (packetSize <= client->m_nRecvBufLen)
         {
+            const BYTE* pkt = client->m_RecvBuf + offset;
+            BYTE head = 0;
+            BYTE sub = 0;
+            if (pkt[0] == 0xC1 || pkt[0] == 0xC3)
+            {
+                head = (packetSize > 2) ? pkt[2] : 0;
+                sub = (packetSize > 3) ? pkt[3] : 0;
+            }
+            else if (pkt[0] == 0xC2 || pkt[0] == 0xC4)
+            {
+                head = (packetSize > 3) ? pkt[3] : 0;
+                sub = (packetSize > 4) ? pkt[4] : 0;
+            }
+
             g_ErrorReport.Write(
                 "[Android Socket] parsed packet handle=%d type=0x%02X size=%d head=0x%02X sub=0x%02X\r\n",
                 handle,
-                client->m_RecvBuf[offset],
+                pkt[0],
                 packetSize,
-                (packetSize > 2) ? client->m_RecvBuf[offset + 2] : 0,
-                (packetSize > 3) ? client->m_RecvBuf[offset + 3] : 0);
+                head,
+                sub);
+
+            if ((pkt[0] == 0xC2 || pkt[0] == 0xC4) && head == 0xF4 && sub == 0x06)
+            {
+                g_ErrorReport.Write(
+                    "[Android Socket] queued C2 F4 06 server list wire=%d bytes (expect ReceiveServerList / Success line)\r\n",
+                    packetSize);
+            }
+
             client->m_pPacketQueue->PushPacket(client->m_RecvBuf + offset, packetSize);
             offset += packetSize;
             client->m_nRecvBufLen -= packetSize;

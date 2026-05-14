@@ -377,6 +377,10 @@ void ReceiveServerList(BYTE* ReceiveBuffer, int Size)
 {
 	if (ReceiveBuffer == NULL || Size < 7)
 	{
+		g_ErrorReport.Write(
+			"[ReceiveServerList] skip early: buf=%p size=%d (need C2 F4 06 + count + entries)\r\n",
+			ReceiveBuffer,
+			Size);
 		return;
 	}
 
@@ -389,6 +393,12 @@ void ReceiveServerList(BYTE* ReceiveBuffer, int Size)
 	const int maxBySize = (Size - Offset) / entrySize;
 	if (maxBySize <= 0)
 	{
+		g_ErrorReport.Write(
+			"[ReceiveServerList] skip: size=%d offset=%d entrySize=%d totalDeclared=%d (payload too small)\r\n",
+			Size,
+			Offset,
+			entrySize,
+			totalDeclared);
 		return;
 	}
 

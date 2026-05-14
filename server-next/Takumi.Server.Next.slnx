@@ -1,6 +1,3 @@
 <Solution>
-  <Project Path="src/Takumi.Server.Shared/Takumi.Server.Shared.csproj" />
-  <Project Path="src/Takumi.Server.Game/Takumi.Server.Game.csproj" />
-  <Project Path="src/Takumi.Server.GameHost/Takumi.Server.GameHost.csproj" />
   <Project Path="src/Takumi.Server.LegacyLoginHost/Takumi.Server.LegacyLoginHost.csproj" />
 </Solution>

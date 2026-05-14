@@ -69,6 +69,7 @@ public class PreloadActivity extends Activity {
                 urls.add(trimmedFb);
             }
         }
+        urls.add("http://update.daybreak.id.vn/update/data.zip");
         return urls.toArray(new String[0]);
     }
     private static final String BASIC_AUTH_USERNAME = "admin";

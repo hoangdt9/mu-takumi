@@ -1,6 +1,6 @@
 # Takumi Server Next - Implementation Checklist
 
-Last updated: 2026-05-14 (standard migration roadmap `Source/` → `server-next` + `Takumi.Server.Game` scaffold)
+Last updated: 2026-05-14 (standard migration roadmap `Source/` → `server-next`; solution currently **LegacyLoginHost-only** aligned with `main`)
 
 ## Repository vs checklist (read first)
 
@@ -77,7 +77,7 @@ Use this to avoid unnecessary rebuilds.
 ## Next (High Priority)
 
 - [ ] **M4–M5:** Persist **map + X/Y + angle** + join **ticket / game-port handoff** (see checklist **§ Lộ trình chuẩn**).  
-- [x] **M6:** **`Takumi.Server.Game`** + **`Takumi.Server.GameHost`** — TCP listener + decrypt loop (parity `Source/4.GameServer` bootstrap); chạy `dotnet run --project src/Takumi.Server.GameHost` (cổng mặc định **55901**, `TAKUMI_GAME_PORT`).  
+- [ ] **M6:** **`Takumi.Server.Game`** + **`Takumi.Server.GameHost`** — TCP listener + decrypt loop (parity `Source/4.GameServer` bootstrap); *not in this branch* (merge with `main` removed experimental projects). Planned: `dotnet run` on dedicated game port (e.g. **55901**, `TAKUMI_GAME_PORT`).  
 - [ ] Dedicated **game** TCP server after character select (minimal map/scope packets) if client leaves login socket or expects game port.
 - [ ] Persist and **enforce** session ticket / account session state in `TakumiLoginServer` (table `session_ticket` exists; not wired yet).
 - [ ] Extend integration tests: malformed C1 length, oversized packet close, rate limits.
@@ -138,9 +138,8 @@ Use this to avoid unnecessary rebuilds.
    - [ ] Trả đúng địa chỉ GS mà `ServerList.bmd` / client mong đợi.
 
 6. **M6 — Game TCP host (`Takumi.Server.Game`) — skeleton `4.GameServer`**  
-   - [x] Project `src/Takumi.Server.Game` tạo trong repo (class library; listener `dotnet run` sẽ thêm ở bước sau).  
-   - [x] `dotnet run` process **`Takumi.Server.GameHost`**: accept, SimpleModulus + Xor32 giống login, `BeginReceiveAsync` + log RX (bootstrap; chưa gameplay).  
-   - [x] Log packet head/sub (`event=decrypted_rx` + optional hex khi `TAKUMI_VERBOSE=1`).
+   - [ ] Project `src/Takumi.Server.Game` (class library) + **`Takumi.Server.GameHost`** `dotnet run` listener: accept, SimpleModulus + Xor32 giống login, `BeginReceiveAsync` + log RX (bootstrap; chưa gameplay). *Chưa có trong tree hiện tại — ưu tiên compose `main` + LAN `.env`.*  
+   - [ ] Log packet head/sub (`event=decrypted_rx` + optional hex khi `TAKUMI_VERBOSE=1`).
 
 7. **M7 — Persistence vòng đời nhân vật**  
    - [ ] Lưu/khôi phục HP/MP/zen/map/xy khi thoát / periodic save (parity `GameServer` save).  
@@ -165,8 +164,8 @@ Use this to avoid unnecessary rebuilds.
     - [ ] Parity `6.GetMainInfo` nếu client vẫn gọi HTTP/TCP riêng.
 
 13. **M13 — Vận hành**  
-    - [x] `docker-compose.all-in-one.yml` + `deploy/all-in-one/`: **một image** Postgres + LegacyLoginHost + GameHost (supervisord); `./scripts/docker-up-all-in-one.sh`.  
-    - [ ] `docker-compose` (stack hai service): thêm service `game` riêng *hoặc* chỉ dùng aio — tùy triển khai.  
+    - [x] `docker-compose.yml`: Postgres + LegacyLoginHost; optional profile **`datazip`** (`./scripts/docker-up.sh --with-datazip`).  
+    - [ ] Thêm service **`game`** riêng (TCP game port) *hoặc* mở rộng compose — tùy triển khai sau M6+.  
     - [ ] CI: integration test client script hoặc pcap replay tới cổng đúng.
 
 **Ghi chú:** Cho đến khi **M6+** xong, client có thể vẫn **dính một TCP** như `LegacyLoginHost` hiện tại; “chuẩn” là tách **game port** và process giống `Source/`.

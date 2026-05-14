@@ -11,8 +11,4 @@
     <PackageReference Include="MUnique.OpenMU.Network" Version="0.9.9" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Takumi.Server.Shared\Takumi.Server.Shared.csproj" />
-  </ItemGroup>
-
 </Project>

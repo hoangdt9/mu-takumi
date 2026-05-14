@@ -6,39 +6,86 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.Locale
 
-/** Reads TAKUMI_LAN_IP or (legacy) TAKUMI_PUBLIC_HOST from ../../server-next/.env — no ${…} expansion. */
-def readTakumiLanIpFromServerNextEnvFile() {
-    def f = file("${rootProject.projectDir}/../../server-next/.env")
-    if (!f.exists()) {
-        return ""
+/** `takumi/server-next/.env` (repo root), relative to Gradle root `takumi/Source/android`. */
+File takumiServerNextEnvFile() {
+    return rootProject.file("../../server-next/.env")
+}
+
+/** Minimal KEY=value reader (no export / multiline). */
+String readDotEnvValue(File envFile, String key) {
+    if (envFile == null || !envFile.isFile()) {
+        return null
     }
-    def map = new LinkedHashMap<String, String>()
-    f.eachLine { line ->
-        line = line.trim()
-        if (line.isEmpty() || line.startsWith("#")) {
-            return
+    for (String line : envFile.readLines("UTF-8")) {
+        String t = line.trim()
+        if (t.isEmpty() || t.startsWith("#")) {
+            continue
         }
-        def idx = line.indexOf('=')
-        if (idx <= 0) {
-            return
+        int eq = t.indexOf('=')
+        if (eq <= 0) {
+            continue
         }
-        def k = line.substring(0, idx).trim()
-        def v = line.substring(idx + 1).trim()
-        if ((v.startsWith('"') && v.endsWith('"') && v.length() >= 2)
-                || (v.startsWith("'") && v.endsWith("'") && v.length() >= 2)) {
+        String k = t.substring(0, eq).trim()
+        if (!k.equals(key)) {
+            continue
+        }
+        String v = t.substring(eq + 1).trim()
+        if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) {
             v = v.substring(1, v.length() - 1)
         }
-        map[k] = v
+        return v
     }
-    def lan = (map["TAKUMI_LAN_IP"] ?: "").trim()
-    if (!lan.isEmpty()) {
-        return lan
+    return null
+}
+
+/** LAN/bootstrap host: TAKUMI_LAN_IP first, then TAKUMI_PUBLIC_HOST (no ${…} placeholders). */
+String readBootstrapHostFromServerNextEnv() {
+    File envFile = takumiServerNextEnvFile()
+    String lan = readDotEnvValue(envFile, "TAKUMI_LAN_IP")
+    if (lan != null && !lan.trim().isEmpty() && !lan.contains("\${")) {
+        return lan.trim()
     }
-    def pub = (map["TAKUMI_PUBLIC_HOST"] ?: "").trim()
-    if (pub.contains("\${")) {
-        return ""
+    String pub = readDotEnvValue(envFile, "TAKUMI_PUBLIC_HOST")
+    if (pub != null && !pub.trim().isEmpty() && !pub.contains("\${")) {
+        return pub.trim()
     }
-    return pub
+    return ""
+}
+
+/**
+ * Preload data.zip URL baked into BuildConfig.DATA_ZIP_URL_LAN.
+ * Priority: -PmuDataZipLan → TAKUMI_DATA_ZIP_URL → TAKUMI_LAN_IP + DATA_ZIP_PUBLISH_PORT →
+ * TAKUMI_PUBLIC_HOST + DATA_ZIP_PUBLISH_PORT → emulator default.
+ */
+String resolveDataZipUrlForBuildConfig() {
+    String cli = rootProject.findProperty("muDataZipLan")?.toString()?.trim()
+    if (cli) {
+        return cli
+    }
+    File envFile = takumiServerNextEnvFile()
+    String explicit = readDotEnvValue(envFile, "TAKUMI_DATA_ZIP_URL")
+    if (explicit != null && !explicit.isEmpty()) {
+        return explicit
+    }
+    String portStr = readDotEnvValue(envFile, "DATA_ZIP_PUBLISH_PORT")
+    int p = 18080
+    if (portStr != null && !portStr.isEmpty()) {
+        try {
+            p = Integer.parseInt(portStr.trim())
+        } catch (NumberFormatException ignored) {
+            p = 18080
+        }
+    }
+    String lanHost = readDotEnvValue(envFile, "TAKUMI_LAN_IP")
+    if (lanHost != null && !lanHost.trim().isEmpty() && !lanHost.contains("\${")) {
+        return "http://${lanHost.trim()}:${p}/data.zip"
+    }
+    String host = readDotEnvValue(envFile, "TAKUMI_PUBLIC_HOST")
+    if (host != null && !host.isEmpty()) {
+        return "http://${host}:${p}/data.zip"
+    }
+    println("TakumiMu WARNING: server-next/.env missing TAKUMI_DATA_ZIP_URL, TAKUMI_LAN_IP, and TAKUMI_PUBLIC_HOST — using http://10.0.2.2:18080/data.zip (emulator→host). Set .env for real devices.")
+    return "http://10.0.2.2:18080/data.zip"
 }
 
 def requiredNativeLibs = [
@@ -303,8 +350,6 @@ def patchNativeDirTo16k = { File dir, String label ->
     }
 }
 
-def takumiLanFromEnvFile = readTakumiLanIpFromServerNextEnvFile()
-
 android {
     namespace 'com.muonline.client'
     compileSdk 34
@@ -323,23 +368,20 @@ android {
 
         def muLanIp = (project.findProperty("muLanIp") ?: "").toString().trim()
         if (muLanIp.isEmpty()) {
-            muLanIp = takumiLanFromEnvFile
+            muLanIp = readBootstrapHostFromServerNextEnv()
         }
         if (muLanIp.isEmpty()) {
-            muLanIp = "192.168.1.50"
-            println("TakumiMu: server-next/.env missing or has no TAKUMI_LAN_IP — using fallback ${muLanIp}. Set TAKUMI_LAN_IP in server-next/.env or -PmuLanIp=...")
+            muLanIp = "10.0.2.2"
+            println("TakumiMu: server-next/.env missing TAKUMI_LAN_IP / TAKUMI_PUBLIC_HOST — using ${muLanIp} for CMake MU_LAN_DEFAULT_HOST_A (emulator). Set .env for devices.")
         } else {
-            println("TakumiMu: LAN IP for bootstrap / native defaults: ${muLanIp} (from server-next/.env or -PmuLanIp)")
+            println("TakumiMu: native default host (CMake): ${muLanIp} (.env or -PmuLanIp)")
         }
 
-        // First URL tried by PreloadActivity for data.zip (Docker static host on LAN).
-        // Override full URL: ./gradlew ... -PmuDataZipLan=http://10.0.2.2:18080/data.zip
-        def muDataZipLanOverride = (project.findProperty("muDataZipLan") ?: "").toString().trim()
-        def muDataZipLan = muDataZipLanOverride.isEmpty()
-            ? "http://${muLanIp}:18080/data.zip"
-            : muDataZipLanOverride
-        buildConfigField "String", "DATA_ZIP_URL_LAN", "\"${muDataZipLan}\""
-        // Optional second URL (e.g. public mirror). Default empty = LAN-only QA (see PreloadActivity).
+        // Preload data.zip: resolveDataZipUrlForBuildConfig() (server-next/.env + -PmuDataZipLan override).
+        def muDataZipLan = resolveDataZipUrlForBuildConfig()
+        println("TakumiMu DATA_ZIP_URL_LAN (BuildConfig) = ${muDataZipLan}")
+        buildConfigField "String", "DATA_ZIP_URL_LAN", "\"${muDataZipLan.replace("\\", "\\\\").replace("\"", "\\\"")}\""
+
         def muDataZipFallback = (project.findProperty("muDataZipFallbackUrl") ?: "").toString().trim()
         buildConfigField "String", "DATA_ZIP_URL_FALLBACK", muDataZipFallback.isEmpty()
             ? "\"\""
@@ -348,16 +390,21 @@ android {
         // Optional first-hop TCP target (Connect / CS). Set at build time, e.g.:
         //   ./gradlew ... -PmuBootstrapServerHost=192.168.0.10 -PmuBootstrapServerPort=44605
         def muBootstrapHostOverride = (project.findProperty("muBootstrapServerHost") ?: "").toString().trim()
-        def muBootstrapHost = muBootstrapHostOverride.isEmpty() ? muLanIp : muBootstrapHostOverride
-        def muBootstrapPortRaw = (project.findProperty("muBootstrapServerPort") ?: "44605").toString()
+        def muBootstrapHost = muBootstrapHostOverride.isEmpty() ? readBootstrapHostFromServerNextEnv() : muBootstrapHostOverride
+        def muBootstrapPortRaw = (project.findProperty("muBootstrapServerPort") ?: "").toString().trim()
         int muBootstrapPort = 0
-        try {
-            muBootstrapPort = muBootstrapPortRaw.toInteger()
-        } catch (NumberFormatException ignored) {
-            muBootstrapPort = 0
+        if (!muBootstrapPortRaw.isEmpty()) {
+            try {
+                muBootstrapPort = muBootstrapPortRaw.toInteger()
+            } catch (NumberFormatException ignored) {
+                muBootstrapPort = 0
+            }
         }
         if (muBootstrapPort < 0 || muBootstrapPort > 65535) {
             muBootstrapPort = 0
+        }
+        if (muBootstrapPort == 0 && !muBootstrapHost.isEmpty()) {
+            muBootstrapPort = 44605
         }
         buildConfigField "String", "MU_BOOTSTRAP_SERVER_HOST", "\"${muBootstrapHost.replace('"', '\\"')}\""
         buildConfigField "int", "MU_BOOTSTRAP_SERVER_PORT", "${muBootstrapPort}"

@@ -17,12 +17,16 @@ using Microsoft.Extensions.Logging.Abstractions;
 using MUnique.OpenMU.Network;
 using MUnique.OpenMU.Network.SimpleModulus;
 using MUnique.OpenMU.Network.Xor;
-using MUnique.OpenMU.PlugIns;
 using Pipelines.Sockets.Unofficial;
-using Takumi.Server.LegacyLoginHost;
+using Takumi.Server.Connect;
+using Takumi.Server.Join;
+using Takumi.Server.Game;
+using Takumi.Server.Persistence;
 using Takumi.Server.Protocol;
 
 RepoEnvLoader.ApplyDefaultsAndLocalEnv();
+TakumiPostgresMirror.InitIfEnabled();
+TakumiPostgresMirror.InitSessionHandoffIfEnabled();
 
 if (!int.TryParse(
         Environment.GetEnvironmentVariable("TAKUMI_LOGIN_PORT"),
@@ -36,8 +40,17 @@ if (!int.TryParse(
     return 1;
 }
 
-var joinVersion = ParseHexOrAscii5(Environment.GetEnvironmentVariable("TAKUMI_JOIN_VERSION_HEX"))
-                  ?? ParseHexOrAscii5(Environment.GetEnvironmentVariable("TAKUMI_JOIN_VERSION"));
+var advertisedGamePort = port;
+var gamePortRaw = Environment.GetEnvironmentVariable("TAKUMI_GAME_PORT")?.Trim();
+if (!string.IsNullOrEmpty(gamePortRaw)
+    && int.TryParse(gamePortRaw, NumberStyles.Integer, CultureInfo.InvariantCulture, out var gpParsed)
+    && gpParsed is > 0 and <= 65535)
+{
+    advertisedGamePort = gpParsed;
+}
+
+var joinVersion = GameWireEnv.ParseJoinVersion5(Environment.GetEnvironmentVariable("TAKUMI_JOIN_VERSION_HEX"))
+                  ?? GameWireEnv.ParseJoinVersion5(Environment.GetEnvironmentVariable("TAKUMI_JOIN_VERSION"));
 if (joinVersion is null || joinVersion.Length != 5)
 {
     Console.Error.WriteLine(
@@ -45,7 +58,7 @@ if (joinVersion is null || joinVersion.Length != 5)
     return 1;
 }
 
-var serverSerial = ParseSerial(Environment.GetEnvironmentVariable("TAKUMI_SERVER_SERIAL"));
+var serverSerial = GameWireEnv.ParseSerial16(Environment.GetEnvironmentVariable("TAKUMI_SERVER_SERIAL"));
 if (serverSerial is null || serverSerial.Length != 16)
 {
     Console.Error.WriteLine("Server serial must be 16 bytes ASCII. Set TAKUMI_SERVER_SERIAL in server-next/env.defaults or .env.");
@@ -60,10 +73,13 @@ if (accounts is null || accounts.Count == 0)
     return 1;
 }
 
-var (serverDecryptKeys, decryptKeysTag) = LoadDecryptKeysFromDec2OrDefault();
+var (serverDecryptKeys, decryptKeysTag) = Dec2ServerDecryptKeysLoader.Load();
 
 var verbose = string.Equals(Environment.GetEnvironmentVariable("TAKUMI_VERBOSE"), "1", StringComparison.OrdinalIgnoreCase)
               || string.Equals(Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT"), "Development", StringComparison.OrdinalIgnoreCase);
+
+var sessionTicketStore = new InMemorySessionTicketStore();
+var sessionTicketTtl = ParseSessionTicketTtl();
 
 // Minimal Connect Server (F4 06 / F4 03) for Android LAN QA. Set TAKUMI_CONNECT_PORT=0 to disable.
 var connectPort = 0;
@@ -166,6 +182,20 @@ else
         "default F4 06: 15+15+2 safe ids (0..14,20..34,40,41); never >15 slots/group (client SLM_MAX_SERVER_COUNT)";
 }
 
+var connectReturnBusyRaw = Environment.GetEnvironmentVariable("TAKUMI_CONNECT_RETURN_BUSY")?.Trim();
+var connectReturnBusy = string.Equals(connectReturnBusyRaw, "1", StringComparison.OrdinalIgnoreCase)
+                        || string.Equals(connectReturnBusyRaw, "true", StringComparison.OrdinalIgnoreCase)
+                        || string.Equals(connectReturnBusyRaw, "yes", StringComparison.OrdinalIgnoreCase);
+byte connectBusyServerIndex = 0;
+if (byte.TryParse(
+        Environment.GetEnvironmentVariable("TAKUMI_CONNECT_BUSY_INDEX"),
+        NumberStyles.Integer,
+        CultureInfo.InvariantCulture,
+        out var cbi))
+{
+    connectBusyServerIndex = cbi;
+}
+
 // SO_REUSEADDR can allow a *second* listener on the same port while an older host is still running (e.g. stray dotnet),
 // so phones may hit the old process and keep seeing C1 4A (33-byte slots). Default: strict bind (reuse off).
 var reuseSocketAddr = string.Equals(Environment.GetEnvironmentVariable("TAKUMI_REUSE_ADDR"), "1", StringComparison.OrdinalIgnoreCase);
@@ -181,11 +211,12 @@ try
     listener.Server.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, reuseSocketAddr);
     listener.Start();
     Console.Error.WriteLine(
-        "[boot] LegacyLoginHost pid={0} gamePort={1} charlist slot bytes=34 (2 chars => wire C1 4C / 76 bytes). asm={2}\n" +
-        "[boot] SO_REUSEADDR={3} (set TAKUMI_REUSE_ADDR=1 only if you hit TIME_WAIT bind failures after quick restarts)\n" +
+        "[boot] LegacyLoginHost pid={0} listenPort={1} connectF4GamePort={2} charlist slot bytes=34 (2 chars => wire C1 4C / 76 bytes). asm={3}\n" +
+        "[boot] SO_REUSEADDR={4} (set TAKUMI_REUSE_ADDR=1 only if you hit TIME_WAIT bind failures after quick restarts)\n" +
         "[boot] If logcat still shows C1 4A / nbytes=74, another process may share this port — check: lsof -nP -iTCP:{1} -sTCP:LISTEN",
         Environment.ProcessId,
         port,
+        advertisedGamePort,
         System.Reflection.Assembly.GetExecutingAssembly().Location,
         reuseSocketAddr);
 }
@@ -222,19 +253,22 @@ if (connectPort > 0)
         return 1;
     }
 
+    var connectOptions = new ConnectMiniServerOptions
+    {
+        PublicHost = publicHost!,
+        GamePort = (ushort)advertisedGamePort,
+        Verbose = verbose,
+        ServerList602 = connectServerListPacket,
+        ReturnBusy = connectReturnBusy,
+        BusyServerIndex = connectBusyServerIndex,
+    };
+
     _ = Task.Run(
         async () =>
         {
             try
             {
-                await RunConnectAcceptLoopAsync(
-                        connectListener!,
-                        publicHost!,
-                        (ushort)port,
-                        verbose,
-                        connectServerListPacket,
-                        cts.Token)
-                    .ConfigureAwait(false);
+                await ConnectMiniServer.RunAcceptLoopAsync(connectListener!, connectOptions, cts.Token).ConfigureAwait(false);
             }
             catch (OperationCanceledException) when (cts.IsCancellationRequested)
             {
@@ -249,12 +283,15 @@ if (connectPort > 0)
 
 Console.WriteLine(
     "Takumi.Server.LegacyLoginHost listening on *:{0}. Ctrl+C to stop.\n" +
-    "  Join version (5 bytes wire): {1}\n" +
-    "  Server serial (16 bytes):    {2}\n" +
-    "  Accounts:                    {3}\n" +
-    "  SimpleModulus (server decrypt): {4}\n" +
+    "  Connect F4 03 game port:     {1} (set TAKUMI_GAME_PORT; default = login port)\n" +
+    "  Join version (5 bytes wire): {2}\n" +
+    "  Server serial (16 bytes):    {3}\n" +
+    "  Accounts:                    {4}\n" +
+    "  SimpleModulus (server decrypt): {5}\n" +
+    "  Session ticket TTL:          TAKUMI_SESSION_TICKET_TTL_MINUTES (default 120)\n" +
     "  Game keepalive (post-login): TAKUMI_GAME_KEEPALIVE_SECONDS (default 25; 0=off)",
     port,
+    advertisedGamePort,
     Convert.ToHexString(joinVersion),
     Encoding.ASCII.GetString(serverSerial),
     string.Join(", ", accounts.Select(kv => kv.Key + ":***")),
@@ -262,14 +299,21 @@ Console.WriteLine(
 
 if (connectPort > 0)
 {
+    var busyNote = connectReturnBusy
+        ? $"  TAKUMI_CONNECT_RETURN_BUSY=1 -> list requests answer F4 05 busy (index={connectBusyServerIndex})\n"
+        : string.Empty;
     Console.WriteLine(
-        "Minimal Connect Server on *:{0} -> TAKUMI_PUBLIC_HOST={1} game/login port={2} (verbose={3})\n" +
-        "  F4 06: {4}",
+        "Minimal Connect Server on *:{0} -> TAKUMI_PUBLIC_HOST={1} F4 03 game port={2} (listen/login={3}) (verbose={4})\n" +
+        "  F4 02|06 list + F4 03 info + patch/version (C1 head 0x02 or main 0x05)\n" +
+        "{6}" +
+        "  F4 06 payload: {5}",
         connectPort,
         publicHost,
+        advertisedGamePort,
         port,
         verbose,
-        connectListBootDesc);
+        connectListBootDesc,
+        busyNote);
 }
 
 try
@@ -287,11 +331,21 @@ try
         }
 
         var acceptedFrom = tcp.Client.RemoteEndPoint?.ToString() ?? "?";
-        var acceptMsg = $"[game] TCP accept from {acceptedFrom} (game/login port {port}) — next: join F1 00";
+        var acceptMsg =
+            $"[game] TCP accept from {acceptedFrom} (listen {port}, F4 03 advertises {advertisedGamePort}) — next: join F1 00";
         Console.WriteLine(acceptMsg);
         Console.Error.WriteLine(acceptMsg);
 
-        _ = HandleClientAsync(tcp, joinVersion, serverSerial, accounts, serverDecryptKeys, verbose, cts.Token);
+        _ = HandleClientAsync(
+            tcp,
+            joinVersion,
+            serverSerial,
+            accounts,
+            serverDecryptKeys,
+            verbose,
+            sessionTicketStore,
+            sessionTicketTtl,
+            cts.Token);
     }
 }
 finally
@@ -362,77 +416,18 @@ static void DecodeTakumiStreamXor(Span<byte> buffer, int firstXorIndex)
     }
 }
 
-static TimeSpan ParseGameKeepAliveInterval()
+static TimeSpan ParseSessionTicketTtl()
 {
-    var raw = Environment.GetEnvironmentVariable("TAKUMI_GAME_KEEPALIVE_SECONDS");
+    var raw = Environment.GetEnvironmentVariable("TAKUMI_SESSION_TICKET_TTL_MINUTES");
     if (string.IsNullOrWhiteSpace(raw)
-        || !int.TryParse(raw, NumberStyles.Integer, CultureInfo.InvariantCulture, out var sec))
+        || !int.TryParse(raw, NumberStyles.Integer, CultureInfo.InvariantCulture, out var min)
+        || min <= 0)
     {
-        return TimeSpan.FromSeconds(25);
+        return TimeSpan.FromMinutes(120);
     }
 
-    if (sec <= 0)
-    {
-        return TimeSpan.Zero;
-    }
-
-    sec = Math.Clamp(sec, 5, 600);
-    return TimeSpan.FromSeconds(sec);
-}
-
-static async Task RunGamePortKeepAliveAsync(
-    Connection connection,
-    SemaphoreSlim packetGate,
-    LoginLatch loginLatch,
-    TcpClient tcp,
-    string remote,
-    bool verbose,
-    TimeSpan interval,
-    CancellationToken cancellationToken)
-{
-    try
-    {
-        // PeriodicTimer defers the first tick by a full interval — idle NATs can drop the session before any ping.
-        // Poll quickly until login, then send the first ping soon after login and every `interval` thereafter.
-        var pollWhenNotLoggedIn = TimeSpan.FromSeconds(3);
-        while (!cancellationToken.IsCancellationRequested)
-        {
-            if (!loginLatch.IsLoggedIn || !tcp.Connected)
-            {
-                await Task.Delay(pollWhenNotLoggedIn, cancellationToken).ConfigureAwait(false);
-                continue;
-            }
-
-            await packetGate.WaitAsync(cancellationToken).ConfigureAwait(false);
-            try
-            {
-                await connection.Output.WriteAsync(GamePortKeepAliveWire.PingRequest, cancellationToken).ConfigureAwait(false);
-                await connection.Output.FlushAsync(cancellationToken).ConfigureAwait(false);
-                if (verbose)
-                {
-                    Console.WriteLine("[{0}] keepalive sent C1 03 71 (ping request)", remote);
-                }
-            }
-            catch (ObjectDisposedException)
-            {
-                break;
-            }
-            finally
-            {
-                packetGate.Release();
-            }
-
-            await Task.Delay(interval, cancellationToken).ConfigureAwait(false);
-        }
-    }
-    catch (OperationCanceledException)
-    {
-        // expected when client disconnects or host shuts down
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine("[{0}] keepalive task error: {1}", remote, ex.Message);
-    }
+    min = Math.Clamp(min, 5, 7 * 24 * 60);
+    return TimeSpan.FromMinutes(min);
 }
 
 static async Task HandleClientAsync(
@@ -442,14 +437,23 @@ static async Task HandleClientAsync(
     IReadOnlyDictionary<string, string> accounts,
     SimpleModulusKeys serverDecryptKeys,
     bool verbose,
+    InMemorySessionTicketStore sessionTicketStore,
+    TimeSpan sessionTicketTtl,
     CancellationToken ct)
 {
     var remote = tcp.Client.RemoteEndPoint?.ToString() ?? "?";
+    string? loggedAccountId = null;
+    Guid? connectionSessionTicket = null;
+    var roster = new List<CharacterRosterEntry>();
+    var rosterDirty = 0;
+    var rosterDbMergeOverlay =
+        !string.Equals(Environment.GetEnvironmentVariable("TAKUMI_ROSTER_DB_MERGE_MODE")?.Trim(), "json", StringComparison.OrdinalIgnoreCase);
+    byte[]? sessionJoinCharacterName10 = null;
     try
     {
         tcp.NoDelay = true;
         var socket = tcp.Client;
-        SocketIdleHelpers.TryApplyGamePortTcpKeepAlive(socket);
+        ConnectTcpKeepAlive.TryApply(socket);
         var socketConnection = SocketConnection.Create(socket);
         using var connection = new Connection(
             socketConnection,
@@ -466,26 +470,43 @@ static async Task HandleClientAsync(
         Console.Error.WriteLine(joinMsg);
 
         var loginLatch = new LoginLatch();
-        string? loggedAccountId = null;
-        var roster = new List<CharacterRosterEntry>();
-        byte[]? sessionJoinCharacterName10 = null;
+        // loggedAccountId, roster, sessionJoinCharacterName10 — outer scope for disconnect flush (M4).
         // PacketReceived may invoke handlers concurrently before the previous async handler awaits;
         // a follow-up 12-byte F3 request could run before SetLoggedIn() → list ignored. Serialize per connection.
         using var packetGate = new SemaphoreSlim(1, 1);
 
         using var connectionCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-        var keepAliveInterval = ParseGameKeepAliveInterval();
+        var keepAliveInterval = GamePortKeepAliveRunner.ParseIntervalSeconds();
         Task? keepAliveTask = null;
         if (keepAliveInterval > TimeSpan.Zero)
         {
-            keepAliveTask = RunGamePortKeepAliveAsync(
+            keepAliveTask = GamePortKeepAliveRunner.RunAsync(
                 connection,
                 packetGate,
-                loginLatch,
+                () => loginLatch.IsLoggedIn,
                 tcp,
                 remote,
                 verbose,
                 keepAliveInterval,
+                connectionCts.Token);
+        }
+
+        var periodicInterval = RosterPeriodicFlush.TryParseIntervalFromEnv();
+        Task? rosterPeriodicTask = null;
+        if (periodicInterval is { } per && per > TimeSpan.Zero)
+        {
+            rosterPeriodicTask = RosterPeriodicSaveRunner.RunAsync(
+                () => loginLatch.IsLoggedIn,
+                () => Volatile.Read(ref rosterDirty),
+                () => Volatile.Write(ref rosterDirty, 0),
+                () =>
+                {
+                    if (!string.IsNullOrEmpty(loggedAccountId))
+                    {
+                        SavePersistedRoster(loggedAccountId, roster);
+                    }
+                },
+                per,
                 connectionCts.Token);
         }
 
@@ -508,6 +529,17 @@ static async Task HandleClientAsync(
                 {
                 }
             }
+
+            if (rosterPeriodicTask is not null)
+            {
+                try
+                {
+                    await rosterPeriodicTask.ConfigureAwait(false);
+                }
+                catch
+                {
+                }
+            }
         }
 
         async ValueTask OnPacketAsync(ReadOnlySequence<byte> packetSeq)
@@ -522,7 +554,7 @@ static async Task HandleClientAsync(
             }
 
             var t = packet[0];
-            Console.WriteLine("[{0}] decrypted len={1} head=0x{2:X2}", remote, packet.Length, t);
+            GameRxStructuredLog.DecryptedRx(remote, packet.Length, t, verbose);
 
             if (loginLatch.IsLoggedIn && packet.Length == 15 && packet[0] == 0xC1)
             {
@@ -591,20 +623,42 @@ static async Task HandleClientAsync(
                     return;
                 }
 
-                var joinPkt = JoinMapServerWire602.Build(ToWire(picked));
+                var spawn = new JoinMapSpawnWire(picked.MapId, picked.PosX, picked.PosY, picked.Angle);
+                var joinPkt = JoinMapServerWire602.Build(ToWire(picked), spawn);
+                var invPkt = await JoinInventoryPacket602.BuildAsync(TakumiPostgresMirror.InventorySlots, loggedAccountId, joinName10, ct).ConfigureAwait(false);
                 await connection.Output.WriteAsync(joinPkt, ct).ConfigureAwait(false);
+                await connection.Output.WriteAsync(invPkt, ct).ConfigureAwait(false);
                 await connection.Output.FlushAsync(ct).ConfigureAwait(false);
                 sessionJoinCharacterName10 = new byte[10];
                 Buffer.BlockCopy(joinName10, 0, sessionJoinCharacterName10, 0, 10);
                 Console.WriteLine(
-                    "[{0}] sent join map (F3 03) map={1} xy=({2},{3}) name='{4}' rosterClass=0x{5:X2} frame@{6}",
+                    "[{0}] sent join map (F3 03) + inventory (F3 10 len={8}) map={1} xy=({2},{3}) ang={4} name='{5}' rosterClass=0x{6:X2} frame@{7}",
                     remote,
                     joinPkt[6],
                     joinPkt[4],
                     joinPkt[5],
+                    joinPkt[7],
                     Encoding.ASCII.GetString(picked.Name10).TrimEnd('\0'),
                     picked.ServerClass,
-                    joinOff);
+                    joinOff,
+                    invPkt.Length);
+                if (connectionSessionTicket is { } tJoin)
+                {
+                    sessionTicketStore.Touch(tJoin, sessionTicketTtl);
+                    if (TakumiPostgresMirror.SessionHandoff is { } shJoin
+                        && sessionTicketStore.TryValidate(tJoin, out _, out var expJoin))
+                    {
+                        try
+                        {
+                            await shJoin.TouchExpiresAsync(tJoin, expJoin, ct).ConfigureAwait(false);
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine("[session-ticket-db] touch after join: {0}", ex.Message);
+                        }
+                    }
+                }
+
                 return;
             }
 
@@ -632,6 +686,19 @@ static async Task HandleClientAsync(
                 }
 
                 var removed = roster.RemoveAll(e => NameBytesEqual(e.Name10, deleteName10));
+                if (!string.IsNullOrEmpty(loggedAccountId) && TakumiPostgresMirror.CharacterRoster is { } dbDel)
+                {
+                    try
+                    {
+                        var delName = CharacterRosterMerge.NormaliseName(Encoding.ASCII.GetString(deleteName10));
+                        await dbDel.DeleteCharacterAsync(loggedAccountId, delName, ct).ConfigureAwait(false);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine("[roster-db] explicit delete row failed for {0}: {1}", loggedAccountId, ex.Message);
+                    }
+                }
+
                 if (!string.IsNullOrEmpty(loggedAccountId))
                 {
                     SavePersistedRoster(loggedAccountId, roster);
@@ -668,18 +735,79 @@ static async Task HandleClientAsync(
                 await connection.Output.FlushAsync(ct).ConfigureAwait(false);
                 if (pickedMove is not null)
                 {
-                    var joinPktMove = JoinMapServerWire602.Build(ToWire(pickedMove), (byte)(mapIdx & 0xFF));
+                    pickedMove.MapId = (byte)(mapIdx & 0xFF);
+                    if (!string.IsNullOrEmpty(loggedAccountId))
+                    {
+                        SavePersistedRoster(loggedAccountId, roster);
+                    }
+
+                    var mvSpawn = new JoinMapSpawnWire(pickedMove.MapId, pickedMove.PosX, pickedMove.PosY, pickedMove.Angle);
+                    var joinPktMove = JoinMapServerWire602.Build(ToWire(pickedMove), mvSpawn);
+                    var invMove = await JoinInventoryPacket602.BuildAsync(TakumiPostgresMirror.InventorySlots, loggedAccountId, sessionJoinCharacterName10, ct).ConfigureAwait(false);
                     await connection.Output.WriteAsync(joinPktMove, ct).ConfigureAwait(false);
+                    await connection.Output.WriteAsync(invMove, ct).ConfigureAwait(false);
                     await connection.Output.FlushAsync(ct).ConfigureAwait(false);
                     Console.WriteLine(
-                        "[{0}] stub move map: 8E 03 ok + F3 03 mapId={1} frame@{2}",
+                        "[{0}] stub move map: 8E 03 ok + F3 03 + F3 10 len={1} mapId={2} frame@{3}",
                         remote,
+                        invMove.Length,
                         mapIdx,
                         moveOff);
+                    if (connectionSessionTicket is { } tMove)
+                    {
+                        sessionTicketStore.Touch(tMove, sessionTicketTtl);
+                        if (TakumiPostgresMirror.SessionHandoff is { } shMove
+                            && sessionTicketStore.TryValidate(tMove, out _, out var expMove))
+                        {
+                            try
+                            {
+                                await shMove.TouchExpiresAsync(tMove, expMove, ct).ConfigureAwait(false);
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine("[session-ticket-db] touch after move-map: {0}", ex.Message);
+                            }
+                        }
+                    }
                 }
                 else
                 {
                     Console.WriteLine("[{0}] stub move map: 8E 03 ok only (no roster match) frame@{1}", remote, moveOff);
+                }
+
+                return;
+            }
+
+            if (loginLatch.IsLoggedIn
+                && sessionJoinCharacterName10 is not null
+                && ClientWalkPackets602.TryFindInstantMove(packet, out _, out var instX, out var instY))
+            {
+                var pickedInst = FindRosterEntry(roster, sessionJoinCharacterName10);
+                if (pickedInst is not null)
+                {
+                    pickedInst.PosX = instX;
+                    pickedInst.PosY = instY;
+                    Volatile.Write(ref rosterDirty, 1);
+                }
+
+                return;
+            }
+
+            if (loginLatch.IsLoggedIn
+                && sessionJoinCharacterName10 is not null
+                && ClientWalkPackets602.TryFindWalkEndTile(packet, out _, out var walkX, out var walkY, out var walkAng, out var walkMoved))
+            {
+                var pickedWalk = FindRosterEntry(roster, sessionJoinCharacterName10);
+                if (pickedWalk is not null)
+                {
+                    if (walkMoved)
+                    {
+                        pickedWalk.PosX = walkX;
+                        pickedWalk.PosY = walkY;
+                    }
+
+                    pickedWalk.Angle = walkAng;
+                    Volatile.Write(ref rosterDirty, 1);
                 }
 
                 return;
@@ -835,8 +963,63 @@ static async Task HandleClientAsync(
 
             loginLatch.SetLoggedIn();
             loggedAccountId = id;
+            var issued = sessionTicketStore.Issue(id, sessionTicketTtl);
+            connectionSessionTicket = issued.TicketId;
+            if (TakumiPostgresMirror.SessionHandoff is { } shIss)
+            {
+                try
+                {
+                    await shIss.ReplacePendingForAccountAsync(
+                            id,
+                            issued.TicketId,
+                            issued.ExpiresUtc,
+                            ConnectClientIp.TryFormatIp(tcp.Client.RemoteEndPoint),
+                            ct)
+                        .ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("[session-ticket-db] replace pending failed: {0}", ex.Message);
+                }
+            }
+
+            if (verbose)
+            {
+                Console.WriteLine(
+                    "[{0}] M5 session ticket issued account={1} expUtc={2:o} ticket={3}",
+                    remote,
+                    id,
+                    issued.ExpiresUtc,
+                    issued.TicketId);
+            }
+
             roster.Clear();
             LoadPersistedRoster(id, roster);
+            if (rosterDbMergeOverlay && TakumiPostgresMirror.CharacterRoster is not null)
+            {
+                try
+                {
+                    var dbRows = await TakumiPostgresMirror.CharacterRoster.LoadByAccountAsync(id, ct).ConfigureAwait(false);
+                    CharacterRosterMerge.ApplyDbOverlay(
+                        roster,
+                        dbRows,
+                        static e => Encoding.ASCII.GetString(e.Name10).TrimEnd('\0', ' '),
+                        static (e, d) =>
+                        {
+                            e.MapId = d.MapId;
+                            e.PosX = d.PosX;
+                            e.PosY = d.PosY;
+                            e.Angle = d.Angle;
+                            e.Level = d.Level;
+                            e.ServerClass = d.ServerClass;
+                        });
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("[roster-db] merge after login failed for {0}: {1}", id, ex.Message);
+                }
+            }
+
             Console.WriteLine(
                 "[{0}] login ok id={1} rosterPersisted={2} rosterCount={3}",
                 remote,
@@ -883,146 +1066,38 @@ static async Task HandleClientAsync(
     }
     finally
     {
-        tcp.Dispose();
-    }
-}
-
-static async Task RunConnectAcceptLoopAsync(
-    TcpListener listener,
-    string publicHost,
-    ushort gamePort,
-    bool verbose,
-    byte[] serverList602,
-    CancellationToken ct)
-{
-    try
-    {
-        while (!ct.IsCancellationRequested)
+        if (connectionSessionTicket is { } tid)
         {
-            TcpClient tcp;
+            if (TakumiPostgresMirror.SessionHandoff is { } shFin)
+            {
+                try
+                {
+                    await shFin.DeleteByTicketAsync(tid, ct).ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("[session-ticket-db] delete on disconnect: {0}", ex.Message);
+                }
+            }
+
+            sessionTicketStore.RevokeTicket(tid);
+        }
+
+        if (!string.IsNullOrEmpty(loggedAccountId) && roster.Count > 0)
+        {
             try
             {
-                tcp = await listener.AcceptTcpClientAsync(ct).ConfigureAwait(false);
+                SavePersistedRoster(loggedAccountId, roster);
             }
-            catch (ObjectDisposedException)
+            catch (Exception ex)
             {
-                break;
+                Console.WriteLine("[roster] disconnect flush failed: {0}", ex.Message);
             }
-            catch (SocketException)
-            {
-                break;
-            }
-            catch (OperationCanceledException) when (ct.IsCancellationRequested)
-            {
-                break;
-            }
-
-            _ = HandleMinimalConnectClientAsync(tcp, publicHost, gamePort, verbose, serverList602, ct);
-        }
-    }
-    catch (OperationCanceledException) when (ct.IsCancellationRequested)
-    {
-        // shutdown
-    }
-}
-
-/// <summary>Find C1 … F4 … inside a buffer (junk prefix / coalesced reads).</summary>
-static bool TryFindC1F4Request(ReadOnlySpan<byte> data, byte f4SubCode, out int packetOffset)
-{
-    packetOffset = 0;
-    for (var i = 0; i <= data.Length - 4; i++)
-    {
-        if (data[i] != 0xC1)
-        {
-            continue;
         }
 
-        var declaredLen = data[i + 1];
-        if (declaredLen < 4 || i + declaredLen > data.Length)
-        {
-            continue;
-        }
+        CharacterRosterMirrorWriter.TryDrainPendingUpserts(TimeSpan.FromMilliseconds(900));
 
-        if (data[i + 2] == 0xF4 && data[i + 3] == f4SubCode)
-        {
-            packetOffset = i;
-            return true;
-        }
-    }
-
-    return false;
-}
-
-static async Task HandleMinimalConnectClientAsync(
-    TcpClient tcp,
-    string publicHost,
-    ushort gamePort,
-    bool verbose,
-    byte[] serverList602,
-    CancellationToken ct)
-{
-    var remote = tcp.Client.RemoteEndPoint?.ToString() ?? "?";
-    var acceptMsg = $"[connect] TCP accept from {remote} (Connect Server — waiting for F4 06 / F4 03)";
-    Console.WriteLine(acceptMsg);
-    Console.Error.WriteLine(acceptMsg);
-    try
-    {
-        tcp.NoDelay = true;
-        SocketIdleHelpers.TryApplyGamePortTcpKeepAlive(tcp.Client);
-        await using var stream = tcp.GetStream();
-        var buf = new byte[512];
-        while (!ct.IsCancellationRequested)
-        {
-            var n = await stream.ReadAsync(buf.AsMemory(0, buf.Length), ct).ConfigureAwait(false);
-            if (n <= 0)
-            {
-                break;
-            }
-
-            var hex = Convert.ToHexString(buf.AsSpan(0, n));
-            Console.WriteLine("[connect] recv {0}: {1}", remote, hex);
-
-            if (TryFindC1F4Request(buf.AsSpan(0, n), 0x06, out var off06))
-            {
-                if (off06 != 0)
-                {
-                    Console.WriteLine("[connect] F4 06 at offset {0} from {1} (non-zero prefix — check middleboxes / coalesced reads)", off06, remote);
-                }
-
-                await stream.WriteAsync(serverList602, ct).ConfigureAwait(false);
-                await stream.FlushAsync(ct).ConfigureAwait(false);
-                Console.WriteLine("[connect] sent {0}: ServerList ({1} bytes)", remote, serverList602.Length);
-            }
-            else if (TryFindC1F4Request(buf.AsSpan(0, n), 0x03, out var off03))
-            {
-                if (off03 != 0)
-                {
-                    Console.WriteLine("[connect] F4 03 at offset {0} from {1}", off03, remote);
-                }
-
-                var pkt = ConnectServerInfo602.Build(publicHost, gamePort);
-                await stream.WriteAsync(pkt, ct).ConfigureAwait(false);
-                await stream.FlushAsync(ct).ConfigureAwait(false);
-                Console.WriteLine(
-                    "[connect] sent {0}: ServerInfo ip={1} port={2} ({3} bytes)",
-                    remote,
-                    publicHost,
-                    gamePort,
-                    pkt.Length);
-            }
-            else if (verbose)
-            {
-                Console.WriteLine("[connect] ignored packet from {0} (see hex above)", remote);
-            }
-        }
-    }
-    catch (OperationCanceledException) when (ct.IsCancellationRequested)
-    {
-        // shutdown
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine("[connect] error {0}: {1}", remote, ex.Message);
+        tcp.Dispose();
     }
 }
 
@@ -1057,6 +1132,63 @@ static string SanitizeAccountForFile(string accountId)
 
 static string GetRosterFilePath(string accountId) => Path.Combine(GetRosterRoot(), SanitizeAccountForFile(accountId) + ".json");
 
+static JoinMapSpawnWire ReadNewCharacterSpawnDefaultsFromEnv()
+{
+    var d = JoinMapSpawnWire.LorenciaDefault;
+    if (byte.TryParse(
+            Environment.GetEnvironmentVariable("TAKUMI_DEFAULT_SPAWN_MAP"),
+            NumberStyles.Integer,
+            CultureInfo.InvariantCulture,
+            out var m))
+    {
+        d = d with { Map = m };
+    }
+
+    if (byte.TryParse(
+            Environment.GetEnvironmentVariable("TAKUMI_DEFAULT_SPAWN_X"),
+            NumberStyles.Integer,
+            CultureInfo.InvariantCulture,
+            out var x))
+    {
+        d = d with { PositionX = x };
+    }
+
+    if (byte.TryParse(
+            Environment.GetEnvironmentVariable("TAKUMI_DEFAULT_SPAWN_Y"),
+            NumberStyles.Integer,
+            CultureInfo.InvariantCulture,
+            out var y))
+    {
+        d = d with { PositionY = y };
+    }
+
+    if (byte.TryParse(
+            Environment.GetEnvironmentVariable("TAKUMI_DEFAULT_SPAWN_ANGLE"),
+            NumberStyles.Integer,
+            CultureInfo.InvariantCulture,
+            out var a)
+        && a > 0)
+    {
+        d = d with { Angle = a };
+    }
+
+    return d;
+}
+
+static void ApplyLegacySpawnIfUnset(CharacterRosterEntry e)
+{
+    if (e.PosX != 0 || e.PosY != 0 || e.Angle != 0)
+    {
+        return;
+    }
+
+    var d = ReadNewCharacterSpawnDefaultsFromEnv();
+    e.MapId = d.Map;
+    e.PosX = d.PositionX;
+    e.PosY = d.PositionY;
+    e.Angle = d.Angle;
+}
+
 static void LoadPersistedRoster(string accountId, List<CharacterRosterEntry> roster)
 {
     roster.Clear();
@@ -1090,7 +1222,18 @@ static void LoadPersistedRoster(string accountId, List<CharacterRosterEntry> ros
             var nm = new byte[10];
             var enc = Encoding.ASCII.GetBytes(c.Name.Trim());
             Buffer.BlockCopy(enc, 0, nm, 0, Math.Min(10, enc.Length));
-            roster.Add(new CharacterRosterEntry { Name10 = nm, ServerClass = c.ServerClass, Level = c.Level });
+            var entry = new CharacterRosterEntry
+            {
+                Name10 = nm,
+                ServerClass = c.ServerClass,
+                Level = c.Level,
+                MapId = c.MapId,
+                PosX = c.PosX,
+                PosY = c.PosY,
+                Angle = c.Angle,
+            };
+            ApplyLegacySpawnIfUnset(entry);
+            roster.Add(entry);
         }
     }
     catch (Exception ex)
@@ -1110,7 +1253,17 @@ static void SavePersistedRoster(string accountId, IReadOnlyList<CharacterRosterE
             continue;
         }
 
-        root.Characters.Add(new RosterPersistChar { Name = name, ServerClass = e.ServerClass, Level = e.Level });
+        root.Characters.Add(
+            new RosterPersistChar
+            {
+                Name = name,
+                ServerClass = e.ServerClass,
+                Level = e.Level,
+                MapId = e.MapId,
+                PosX = e.PosX,
+                PosY = e.PosY,
+                Angle = e.Angle,
+            });
     }
 
     var path = GetRosterFilePath(accountId);
@@ -1132,6 +1285,45 @@ static void SavePersistedRoster(string accountId, IReadOnlyList<CharacterRosterE
     {
         Console.WriteLine("[roster] save failed {0}: {1}", path, ex.Message);
     }
+
+    ScheduleRosterDbUpsert(accountId, roster);
+}
+
+static void ScheduleRosterDbUpsert(string accountId, IReadOnlyList<CharacterRosterEntry> roster)
+{
+    CharacterRosterRow[] snapshot;
+    try
+    {
+        var list = new List<CharacterRosterRow>(roster.Count);
+        foreach (var e in roster)
+        {
+            var name = Encoding.ASCII.GetString(e.Name10).TrimEnd('\0', ' ');
+            if (string.IsNullOrEmpty(name))
+            {
+                continue;
+            }
+
+            list.Add(
+                new CharacterRosterRow
+                {
+                    Name = name,
+                    ServerClass = e.ServerClass,
+                    Level = e.Level,
+                    MapId = e.MapId,
+                    PosX = e.PosX,
+                    PosY = e.PosY,
+                    Angle = e.Angle,
+                });
+        }
+
+        snapshot = list.ToArray();
+    }
+    catch
+    {
+        return;
+    }
+
+    CharacterRosterMirrorWriter.ScheduleReplaceAccountRoster(accountId, snapshot);
 }
 
 static ReadOnlySpan<byte> TrimName10(ReadOnlySpan<byte> name10)
@@ -1162,7 +1354,18 @@ static void UpsertRoster(List<CharacterRosterEntry> roster, byte[] name10, byte 
         }
     }
 
-    roster.Add(new CharacterRosterEntry { Name10 = copy, ServerClass = serverClass, Level = level });
+    var sp = ReadNewCharacterSpawnDefaultsFromEnv();
+    roster.Add(
+        new CharacterRosterEntry
+        {
+            Name10 = copy,
+            ServerClass = serverClass,
+            Level = level,
+            MapId = sp.Map,
+            PosX = sp.PositionX,
+            PosY = sp.PositionY,
+            Angle = sp.Angle,
+        });
 }
 
 static CharacterRosterEntry? FindRosterEntry(List<CharacterRosterEntry> roster, byte[] joinName10)
@@ -1559,104 +1762,6 @@ static async Task WriteAsync(Connection connection, ReadOnlyMemory<byte> pkt, Ca
     await connection.Output.FlushAsync(ct).ConfigureAwait(false);
 }
 
-static (SimpleModulusKeys Keys, string SourceTag) LoadDecryptKeysFromDec2OrDefault()
-{
-    var serializer = new SimpleModulusKeySerializer();
-    var candidates = new List<string>();
-
-    var envPath = Environment.GetEnvironmentVariable("TAKUMI_DEC2_PATH");
-    if (!string.IsNullOrWhiteSpace(envPath))
-    {
-        var trimmed = envPath.Trim();
-        candidates.Add(trimmed);
-        if (!File.Exists(trimmed))
-        {
-            Console.Error.WriteLine(
-                "[keys] ERROR: TAKUMI_DEC2_PATH is set but file does not exist:\n  {0}\n" +
-                "Use a real path (copy from phone: adb pull …/files/Data/Dec2.dat). Do not use placeholder text.",
-                Path.GetFullPath(trimmed));
-        }
-    }
-
-    candidates.Add(Path.Combine(AppContext.BaseDirectory, "Data", "Dec2.dat"));
-    candidates.Add(Path.Combine(Environment.CurrentDirectory, "Data", "Dec2.dat"));
-    candidates.Add(Path.Combine(Environment.CurrentDirectory, "Dec2.dat"));
-
-    foreach (var dir in new[] { AppContext.BaseDirectory, Environment.CurrentDirectory })
-    {
-        try
-        {
-            if (!string.IsNullOrEmpty(dir))
-            {
-                candidates.AddRange(WalkParentsForDataDec2(dir));
-            }
-        }
-        catch
-        {
-            // ignore invalid paths
-        }
-    }
-
-    foreach (var path in candidates.Distinct(StringComparer.OrdinalIgnoreCase))
-    {
-        try
-        {
-            if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
-            {
-                continue;
-            }
-
-            if (!serializer.TryDeserialize(path, out var modulusKey, out var cryptKey, out var xorKey))
-            {
-                Console.WriteLine("[keys] TryDeserialize failed for: {0}", path);
-                continue;
-            }
-
-            if (modulusKey.Length != 4 || cryptKey.Length != 4 || xorKey.Length != 4)
-            {
-                Console.WriteLine(
-                    "[keys] Unexpected lengths in {0}: mod={1} key={2} xor={3}",
-                    path,
-                    modulusKey.Length,
-                    cryptKey.Length,
-                    xorKey.Length);
-                continue;
-            }
-
-            var combined = new uint[12];
-            Array.Copy(modulusKey, 0, combined, 0, 4);
-            Array.Copy(cryptKey, 0, combined, 4, 4);
-            Array.Copy(xorKey, 0, combined, 8, 4);
-
-            var keys = SimpleModulusKeys.CreateDecryptionKeys(combined);
-            Console.WriteLine("[keys] Loaded Dec2.dat (server decrypt): {0}", path);
-            return (keys, $"Dec2 ({path})");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine("[keys] Error reading {0}: {1}", path, ex.Message);
-        }
-    }
-
-    Console.WriteLine(
-        "[keys] WARNING: Dec2.dat not loaded — using OpenMU default server keys. " +
-        "If login never completes, copy the client Data/Dec2.dat beside the exe or set TAKUMI_DEC2_PATH.");
-    return (PipelinedSimpleModulusDecryptor.DefaultServerKey, "OpenMU default (may NOT match your client)");
-}
-
-/// <summary>
-/// Looks for Data/Dec2.dat walking up from <paramref name="startDir"/> (helps when running from bin/Release/net10.0).
-/// </summary>
-static IEnumerable<string> WalkParentsForDataDec2(string startDir)
-{
-    var dir = Path.GetFullPath(startDir);
-    for (var depth = 0; depth < 18 && !string.IsNullOrEmpty(dir); depth++)
-    {
-        yield return Path.Combine(dir, "Data", "Dec2.dat");
-        dir = Directory.GetParent(dir)?.FullName ?? string.Empty;
-    }
-}
-
 static void BuxXor(byte[] buf)
 {
     ReadOnlySpan<byte> xorTable = stackalloc byte[] { 0xFC, 0xCF, 0xAB };
@@ -1664,64 +1769,6 @@ static void BuxXor(byte[] buf)
     {
         buf[i] ^= xorTable[i % 3];
     }
-}
-
-static byte[]? ParseHexOrAscii5(string? s)
-{
-    if (string.IsNullOrWhiteSpace(s))
-    {
-        return null;
-    }
-
-    s = s.Trim();
-    if (s.Length == 5 && s.All(c => c < 128))
-    {
-        return Encoding.ASCII.GetBytes(s);
-    }
-
-    var parts = s.Split(new[] { ' ', ',', ';' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-    if (parts.Length == 5 && parts.All(p => byte.TryParse(p, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out _)))
-    {
-        return parts.Select(p => byte.Parse(p, NumberStyles.HexNumber, CultureInfo.InvariantCulture)).ToArray();
-    }
-
-    if (parts.Length == 5)
-    {
-        try
-        {
-            return Convert.FromHexString(string.Concat(parts));
-        }
-        catch
-        {
-            return null;
-        }
-    }
-
-    try
-    {
-        var bytes = Convert.FromHexString(s.Replace(" ", string.Empty, StringComparison.Ordinal));
-        return bytes.Length == 5 ? bytes : null;
-    }
-    catch
-    {
-        return null;
-    }
-}
-
-static byte[]? ParseSerial(string? s)
-{
-    if (string.IsNullOrWhiteSpace(s))
-    {
-        return null;
-    }
-
-    var t = s.Trim();
-    if (t.Length == 16 && t.All(static c => c < 128))
-    {
-        return Encoding.ASCII.GetBytes(t);
-    }
-
-    return null;
 }
 
 static Dictionary<string, string>? ParseAccounts(string? s)
@@ -1762,6 +1809,15 @@ file sealed class CharacterRosterEntry
     public byte[] Name10 = new byte[10];
     public byte ServerClass;
     public ushort Level;
+
+    /// <summary>World map id (Takumi <c>PRECEIVE_JOIN_MAP_SERVER.Map</c>).</summary>
+    public byte MapId;
+
+    public byte PosX;
+    public byte PosY;
+
+    /// <summary>1-based wire angle (client uses <c>(Angle-1)*45</c> degrees).</summary>
+    public byte Angle;
 }
 
 file sealed class RosterPersistRoot
@@ -1774,6 +1830,11 @@ file sealed class RosterPersistChar
     public string Name { get; set; } = "";
     public byte ServerClass { get; set; }
     public ushort Level { get; set; }
+
+    public byte MapId { get; set; }
+    public byte PosX { get; set; }
+    public byte PosY { get; set; }
+    public byte Angle { get; set; }
 }
 
 /// <summary>Thread-safe login flag for keepalive + packet gate (visibility across tasks).</summary>
@@ -1785,3 +1846,4 @@ file sealed class LoginLatch
 
     public void SetLoggedIn() => Volatile.Write(ref this._loggedIn, 1);
 }
+

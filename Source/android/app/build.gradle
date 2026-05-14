@@ -6,6 +6,69 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.Locale
 
+/** `takumi/server-next/.env` (repo root), relative to Gradle root `takumi/Source/android`. */
+File takumiServerNextEnvFile() {
+    return rootProject.file("../../server-next/.env")
+}
+
+/** Minimal KEY=value reader (no export / multiline). */
+String readDotEnvValue(File envFile, String key) {
+    if (envFile == null || !envFile.isFile()) {
+        return null
+    }
+    for (String line : envFile.readLines("UTF-8")) {
+        String t = line.trim()
+        if (t.isEmpty() || t.startsWith("#")) {
+            continue
+        }
+        int eq = t.indexOf('=')
+        if (eq <= 0) {
+            continue
+        }
+        String k = t.substring(0, eq).trim()
+        if (!k.equals(key)) {
+            continue
+        }
+        String v = t.substring(eq + 1).trim()
+        if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) {
+            v = v.substring(1, v.length() - 1)
+        }
+        return v
+    }
+    return null
+}
+
+/**
+ * Preload data.zip URL baked into BuildConfig.DATA_ZIP_URL_LAN.
+ * Priority: -PmuDataZipLan → server-next/.env TAKUMI_DATA_ZIP_URL → TAKUMI_PUBLIC_HOST + DATA_ZIP_PUBLISH_PORT → emulator default.
+ */
+String resolveDataZipUrlForBuildConfig() {
+    String cli = rootProject.findProperty("muDataZipLan")?.toString()?.trim()
+    if (cli) {
+        return cli
+    }
+    File envFile = takumiServerNextEnvFile()
+    String explicit = readDotEnvValue(envFile, "TAKUMI_DATA_ZIP_URL")
+    if (explicit != null && !explicit.isEmpty()) {
+        return explicit
+    }
+    String host = readDotEnvValue(envFile, "TAKUMI_PUBLIC_HOST")
+    String portStr = readDotEnvValue(envFile, "DATA_ZIP_PUBLISH_PORT")
+    if (host != null && !host.isEmpty()) {
+        int p = 18080
+        if (portStr != null && !portStr.isEmpty()) {
+            try {
+                p = Integer.parseInt(portStr.trim())
+            } catch (NumberFormatException ignored) {
+                p = 18080
+            }
+        }
+        return "http://${host}:${p}/data.zip"
+    }
+    println("TakumiMu WARNING: server-next/.env missing TAKUMI_DATA_ZIP_URL and TAKUMI_PUBLIC_HOST — using http://10.0.2.2:18080/data.zip (emulator→host). Set .env for real devices.")
+    return "http://10.0.2.2:18080/data.zip"
+}
+
 def requiredNativeLibs = [
     "libSDL2.so",
     "libSDL2_image.so",
@@ -284,10 +347,12 @@ android {
 
         manifestPlaceholders = [takumiAppLabel: "MU Online"]
 
-        // First URL tried by PreloadActivity for data.zip (Docker static host on LAN).
-        // Override at build time: ./gradlew ... -PmuDataZipLan=http://10.0.2.2:18080/data.zip
-        def muDataZipLan = (project.findProperty("muDataZipLan") ?: "http://192.168.1.50:18080/data.zip").toString()
-        buildConfigField "String", "DATA_ZIP_URL_LAN", "\"${muDataZipLan}\""
+        // First URL tried by PreloadActivity for data.zip (Docker nginx profile `datazip`).
+        // Single source of truth: server-next/.env → TAKUMI_DATA_ZIP_URL (or TAKUMI_PUBLIC_HOST + DATA_ZIP_PUBLISH_PORT).
+        // Override: ./gradlew ... -PmuDataZipLan=http://...
+        def muDataZipLan = resolveDataZipUrlForBuildConfig()
+        println("TakumiMu DATA_ZIP_URL_LAN (BuildConfig) = ${muDataZipLan}")
+        buildConfigField "String", "DATA_ZIP_URL_LAN", "\"${muDataZipLan.replace("\\", "\\\\").replace("\"", "\\\"")}\""
 
         // Optional first-hop TCP target (Connect / CS). Set at build time, e.g.:
         //   ./gradlew ... -PmuBootstrapServerHost=192.168.0.10 -PmuBootstrapServerPort=44605

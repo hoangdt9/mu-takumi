@@ -55,7 +55,18 @@ echo "  Connect / game: 44605 / 44606 (override with TAKUMI_CONNECT_PUBLISH / TA
 echo "  F4 06 list:      default multi-group ids unless .env sets TAKUMI_CS_CONNECT_IDS or BASE+COUNT (see README)"
 echo "  Postgres:        54444 (override with TAKUMI_POSTGRES_PUBLISH_PORT)"
 if [[ -n "${COMPOSE_PROFILES:-}" ]] && [[ "${COMPOSE_PROFILES}" == *"datazip"* ]]; then
-  echo "  data.zip HTTP:   ${DATA_ZIP_PUBLISH_PORT:-18080} → GET /data.zip (file: ../docker/data-zip/host/data.zip)"
+  set -a
+  # shellcheck disable=SC1091
+  . "$ROOT/.env"
+  set +a
+  dp="${DATA_ZIP_PUBLISH_PORT:-18080}"
+  if [[ -n "${TAKUMI_DATA_ZIP_URL:-}" ]]; then
+    echo "  data.zip (APK):  ${TAKUMI_DATA_ZIP_URL}  (GET /data.zip; file: ../docker/data-zip/host/data.zip)"
+  elif [[ -n "${TAKUMI_PUBLIC_HOST:-}" ]]; then
+    echo "  data.zip (APK):  http://${TAKUMI_PUBLIC_HOST}:${dp}/data.zip  (or set TAKUMI_DATA_ZIP_URL in .env)"
+  else
+    echo "  data.zip HTTP:   port ${dp} → GET /data.zip (set TAKUMI_DATA_ZIP_URL or TAKUMI_PUBLIC_HOST in .env for APK)"
+  fi
 fi
 echo "  Logs:           docker compose logs -f legacy-login"
 echo "  Stop:           docker compose down"

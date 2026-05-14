@@ -2,6 +2,19 @@
 
 Project: `Source/android` (Gradle + CMake + JNI).
 
+## Chuyển sang Mac khác (dev mới)
+
+1. **Clone repo** (hoặc copy workspace), cài **Android Studio**, **JDK 17 hoặc 21**, **SDK + NDK** (xem mục Prerequisites bên dưới).
+2. **`Source/android/local.properties`:** tạo/cập nhật `sdk.dir=/Users/<bạn>/Library/Android/sdk` (đường dẫn SDK trên máy mới).
+3. **`server-next/.env` (local, không commit):**
+   - `cp server-next/.env.lan.example server-next/.env`
+   - Thay **`YOUR_LAN_IP`** bằng IP LAN của Mac mới (cùng Wi‑Fi với điện thoại): `TAKUMI_PUBLIC_HOST`, `TAKUMI_DATA_ZIP_URL`, và các biến khác nếu cần.
+4. **`server-next/env.defaults`:** đã có trong repo (port **44605/44606**, serial, tài khoản test). Chỉ sửa nếu stack của bạn khác (thường không cần đổi khi đổi Mac).
+5. **Build APK:** từ `Source/android`, `./gradlew :app:assembleRealDevicePreloadDefaultDebug …` — Gradle đọc `../../server-next/.env` và in `TakumiMu DATA_ZIP_URL_LAN` / `MU_BOOTSTRAP_SERVER` trong log configure; kiểm tra đúng IP/port.
+6. **Cài APK:** nếu gặp `INSTALL_FAILED_UPDATE_INCOMPATIBLE` (chữ ký khác bản cũ): `adb uninstall com.muonline.client` rồi `adb install …` lại (mất data local của app).
+7. **Docker (nếu dùng):** `cd server-next && docker compose up -d` (và profile `datazip` nếu cần `data.zip`). Đặt file `takumi/docker/data-zip/host/data.zip` trên máy mới nếu Preload cần tải.
+8. **`gradle.properties`:** không chứa IP máy; nếu máy cũ có `org.gradle.java.home` trỏ ổ Windows — **xóa** hoặc trỏ JBR của Android Studio trên Mac mới (mục *Fix Windows-only Gradle*).
+
 ## Prerequisites
 
 - **JDK for the Gradle daemon:** use **JDK 17 or 21** (`java -version`). Android Studio’s embedded JBR is fine. **JDK 24** as `JAVA_HOME` can leave the build sitting on **`CONFIGURING > :app`** (AGP/SDK components are validated against LTS JDKs first); if that happens, point Gradle at JBR explicitly (see below).
@@ -36,7 +49,7 @@ chmod +x ./gradlew
   -PmuFailOnMissingRequiredAbis=true
 ```
 
-Optional: first-hop `data.zip` URL (Docker static host on LAN) — default `http://192.168.1.50:18080/data.zip`, override with `-PmuDataZipLan=http://YOUR_IP:18080/data.zip`.
+**Cấu hình mạng / URL:** Gradle đọc **`takumi/server-next/.env`** (`TAKUMI_PUBLIC_HOST`, `TAKUMI_CONNECT_PORT`, `TAKUMI_DATA_ZIP_URL`, tuỳ chọn `TAKUMI_EMULATOR_DATA_ZIP_URL`). Override một lần build: `-PmuDataZipLan=...` / `-PmuBootstrapServerHost=...`. Chi tiết: `server-next/README.md`, `server-next/env.defaults`.
 
 Output: `app/build/outputs/apk/realDevicePreloadDefault/debug/` (APK name includes flavor segments; exact path may vary by AGP).
 
@@ -81,7 +94,7 @@ See `PORTING_TAKUMI_ANDROID.md` in `Source/android`. Prebuilt `.so` live under `
    - **Máy PC Windows** thật (LAN chung Wi‑Fi / cáp); hoặc
    - **VM Windows 11 ARM** trên Mac (**Parallels / UTM**) — copy **`takumi/MuServer`** vào guest, `Start_*.bat` Run as administrator, **đừng** dùng VM VMware x86 (`VMWare/BNS-2020`) trên Mac ARM.
 2. **Gán IP / mở port** sao cho điện thoại hoặc emulator trỏ được tới CS/JS/GS (theo `Mu.ini` / `ServerInfo` trong `Data` của client).
-3. **Build & cài APK** (lệnh phía trên), chỉnh IP server trong **`Source/5.Main/source/android_main.cpp`** / `GameConfig*` / `LauncherHelper` hoặc trong `Data` nạp theo `PreloadActivity` — khớp máy chủ bạn vừa bật.
+3. **Build & cài APK** (lệnh phía trên). **IP / cổng** lấy từ **`server-next/.env`** (Gradle → `BuildConfig` → native bootstrap) và **`GameConfig`/Data** trên máy; với **Takumi Server Next** không cần sửa tay IP trong `android_main.cpp`.
 
 ### Emulator trên Mac
 

@@ -163,6 +163,13 @@ message(STATUS "Game source files count: ${GAME_SOURCE_COUNT}")
 
 add_library(main SHARED ${GAME_SOURCES})
 
+if(DEFINED MU_LAN_DEFAULT_HOST_A AND NOT "${MU_LAN_DEFAULT_HOST_A}" STREQUAL "")
+    target_compile_definitions(main PRIVATE
+        MU_LAN_DEFAULT_SERVER_HOST_A=\"${MU_LAN_DEFAULT_HOST_A}\"
+        MU_LAN_DEFAULT_SERVER_HOST_W=L\"${MU_LAN_DEFAULT_HOST_A}\"
+    )
+endif()
+
 set(SDL2_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/SDL2/include")
 
 target_include_directories(main PRIVATE

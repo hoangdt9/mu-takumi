@@ -2,7 +2,7 @@
 #
 # Usage:
 #   cd takumi/server-next
-#   cp -n .env.lan.example .env   # set TAKUMI_PUBLIC_HOST to Mac LAN IP the phone uses
+#   cp -n .env.lan.example .env   # set TAKUMI_LAN_IP to this machine's LAN IP (same Wi‑Fi as the phone)
 #   docker compose up -d
 #   ./scripts/docker-up.sh        # same + sanity checks
 #
@@ -40,22 +40,24 @@ services:
     working_dir: /app
     volumes:
       - .:/app
-      # Default: server-next/keys/Dec2.dat (git-tracked). Override: TAKUMI_DEC2_HOST_DIR=../Other/Data
+      # Default: server-next/keys/Dec2.dat. Override: TAKUMI_DEC2_HOST_DIR=../ClientBuild/Data (or any host dir containing Dec2.dat)
       - ${TAKUMI_DEC2_HOST_DIR:-./keys}:/keys:ro
     ports:
-      - "${TAKUMI_CONNECT_PUBLISH:-44605}:44605"
-      - "${TAKUMI_LEGACY_LOGIN_PUBLISH:-44606}:44606"
+      - "${TAKUMI_CONNECT_PUBLISH:-44605}:${TAKUMI_CONNECT_PORT:-44605}"
+      - "${TAKUMI_LEGACY_LOGIN_PUBLISH:-44606}:${TAKUMI_LOGIN_PORT:-44606}"
     environment:
-      TAKUMI_LOGIN_PORT: "44606"
-      TAKUMI_CONNECT_PORT: "44605"
+      TAKUMI_LOGIN_PORT: "${TAKUMI_LOGIN_PORT:-44606}"
+      TAKUMI_CONNECT_PORT: "${TAKUMI_CONNECT_PORT:-44605}"
       # Always /keys/Dec2.dat (mounted volume). Do not use ${TAKUMI_DEC2_PATH} from host .env — paths
       # like /Users/... do not exist in the container and SimpleModulus falls back to wrong keys.
       TAKUMI_DEC2_PATH: /keys/Dec2.dat
+      TAKUMI_LAN_IP: "${TAKUMI_LAN_IP:-}"
       TAKUMI_PUBLIC_HOST: "${TAKUMI_PUBLIC_HOST:-}"
+      TAKUMI_CS_CONNECT_IDS: "${TAKUMI_CS_CONNECT_IDS:-}"
+      TAKUMI_CS_CONNECT_BASE: "${TAKUMI_CS_CONNECT_BASE:-}"
+      TAKUMI_CS_CONNECT_COUNT: "${TAKUMI_CS_CONNECT_COUNT:-}"
       TAKUMI_VERBOSE: "${TAKUMI_VERBOSE:-1}"
       DOTNET_ENVIRONMENT: "${DOTNET_ENVIRONMENT:-Development}"
-      # F4 06: when unset, default is 32 safe wire ids (max 15 slots per BMD group — Takumi SLM_MAX_SERVER_COUNT). Override: TAKUMI_CS_CONNECT_IDS or BASE+COUNT.
-      # Override with TAKUMI_CS_CONNECT_IDS=20,21,22 or TAKUMI_CS_CONNECT_BASE + TAKUMI_CS_CONNECT_COUNT (see Program.cs).
     # Build then run so a stale bin/Release from the host volume cannot mask Program.cs changes.
     command:
       - /bin/sh

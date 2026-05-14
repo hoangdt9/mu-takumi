@@ -1,6 +1,7 @@
 #ifdef __ANDROID__
 
 #include "stdafx.h"
+#include "GameConfig/MuLanDefaults.h"
 #include "APICB.h"
 #include "DSPlaySound.h"
 #include "WSctlc.h"
@@ -46,7 +47,7 @@ extern BOOL g_bGameServerConnected;
 char* szServerIpAddress = (char*)"127.0.0.1";
 std::string g_strSelectedML = "Eng";
 int m_SavePassOnOff = 0;
-unsigned short g_ServerPort = 63000;
+unsigned short g_ServerPort = MuLanDefaults::kDefaultFirstHopConnectPort;
 BYTE Version[5] = { '1' + 1, '0' + 2, '4' + 3, '0' + 4, '5' + 5 };
 BYTE Serial[17] = "TbYehR2hFUPBKgZj";
 char m_ID[11] = {};
@@ -275,7 +276,7 @@ namespace
 
     bool IsConnectServerPort(unsigned short port)
     {
-        return (port == g_ServerPort || port == 63000);
+        return (port == g_ServerPort || port == MuLanDefaults::kLegacyVmClassicConnectPort);
     }
 
     void CopyPacketKey(DWORD* target, const DWORD* source)

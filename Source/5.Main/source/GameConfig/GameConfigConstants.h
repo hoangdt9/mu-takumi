@@ -1,5 +1,7 @@
 #pragma once
 
+#include "MuLanDefaults.h"
+
 namespace CfgSections
 {
     inline constexpr wchar_t CfgSectionWindow[]     = L"Window";
@@ -55,6 +57,6 @@ namespace CfgDefaults
     inline constexpr wchar_t CfgDefaultEncryptedUsername[] = L"";
     inline constexpr wchar_t CfgDefaultEncryptedPassword[] = L"";
 
-    inline constexpr wchar_t CfgDefaultServerIP[] = L"192.168.0.174";
-    inline constexpr int CfgDefaultServerPort = 63000;
+    inline constexpr wchar_t CfgDefaultServerIP[] = MU_LAN_DEFAULT_SERVER_HOST_W;
+    inline constexpr int CfgDefaultServerPort = static_cast<int>(MuLanDefaults::kDefaultFirstHopConnectPort);
 }

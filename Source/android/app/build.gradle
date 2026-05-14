@@ -6,6 +6,41 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.Locale
 
+/** Reads TAKUMI_LAN_IP or (legacy) TAKUMI_PUBLIC_HOST from ../../server-next/.env — no ${…} expansion. */
+def readTakumiLanIpFromServerNextEnvFile() {
+    def f = file("${rootProject.projectDir}/../../server-next/.env")
+    if (!f.exists()) {
+        return ""
+    }
+    def map = new LinkedHashMap<String, String>()
+    f.eachLine { line ->
+        line = line.trim()
+        if (line.isEmpty() || line.startsWith("#")) {
+            return
+        }
+        def idx = line.indexOf('=')
+        if (idx <= 0) {
+            return
+        }
+        def k = line.substring(0, idx).trim()
+        def v = line.substring(idx + 1).trim()
+        if ((v.startsWith('"') && v.endsWith('"') && v.length() >= 2)
+                || (v.startsWith("'") && v.endsWith("'") && v.length() >= 2)) {
+            v = v.substring(1, v.length() - 1)
+        }
+        map[k] = v
+    }
+    def lan = (map["TAKUMI_LAN_IP"] ?: "").trim()
+    if (!lan.isEmpty()) {
+        return lan
+    }
+    def pub = (map["TAKUMI_PUBLIC_HOST"] ?: "").trim()
+    if (pub.contains("\${")) {
+        return ""
+    }
+    return pub
+}
+
 def requiredNativeLibs = [
     "libSDL2.so",
     "libSDL2_image.so",
@@ -268,6 +303,8 @@ def patchNativeDirTo16k = { File dir, String label ->
     }
 }
 
+def takumiLanFromEnvFile = readTakumiLanIpFromServerNextEnvFile()
+
 android {
     namespace 'com.muonline.client'
     compileSdk 34
@@ -284,15 +321,35 @@ android {
 
         manifestPlaceholders = [takumiAppLabel: "MU Online"]
 
+        def muLanIp = (project.findProperty("muLanIp") ?: "").toString().trim()
+        if (muLanIp.isEmpty()) {
+            muLanIp = takumiLanFromEnvFile
+        }
+        if (muLanIp.isEmpty()) {
+            muLanIp = "192.168.1.50"
+            println("TakumiMu: server-next/.env missing or has no TAKUMI_LAN_IP — using fallback ${muLanIp}. Set TAKUMI_LAN_IP in server-next/.env or -PmuLanIp=...")
+        } else {
+            println("TakumiMu: LAN IP for bootstrap / native defaults: ${muLanIp} (from server-next/.env or -PmuLanIp)")
+        }
+
         // First URL tried by PreloadActivity for data.zip (Docker static host on LAN).
-        // Override at build time: ./gradlew ... -PmuDataZipLan=http://10.0.2.2:18080/data.zip
-        def muDataZipLan = (project.findProperty("muDataZipLan") ?: "http://192.168.1.50:18080/data.zip").toString()
+        // Override full URL: ./gradlew ... -PmuDataZipLan=http://10.0.2.2:18080/data.zip
+        def muDataZipLanOverride = (project.findProperty("muDataZipLan") ?: "").toString().trim()
+        def muDataZipLan = muDataZipLanOverride.isEmpty()
+            ? "http://${muLanIp}:18080/data.zip"
+            : muDataZipLanOverride
         buildConfigField "String", "DATA_ZIP_URL_LAN", "\"${muDataZipLan}\""
+        // Optional second URL (e.g. public mirror). Default empty = LAN-only QA (see PreloadActivity).
+        def muDataZipFallback = (project.findProperty("muDataZipFallbackUrl") ?: "").toString().trim()
+        buildConfigField "String", "DATA_ZIP_URL_FALLBACK", muDataZipFallback.isEmpty()
+            ? "\"\""
+            : "\"${muDataZipFallback.replace('"', '\\"')}\""
 
         // Optional first-hop TCP target (Connect / CS). Set at build time, e.g.:
         //   ./gradlew ... -PmuBootstrapServerHost=192.168.0.10 -PmuBootstrapServerPort=44605
-        def muBootstrapHost = (project.findProperty("muBootstrapServerHost") ?: "").toString()
-        def muBootstrapPortRaw = (project.findProperty("muBootstrapServerPort") ?: "0").toString()
+        def muBootstrapHostOverride = (project.findProperty("muBootstrapServerHost") ?: "").toString().trim()
+        def muBootstrapHost = muBootstrapHostOverride.isEmpty() ? muLanIp : muBootstrapHostOverride
+        def muBootstrapPortRaw = (project.findProperty("muBootstrapServerPort") ?: "44605").toString()
         int muBootstrapPort = 0
         try {
             muBootstrapPort = muBootstrapPortRaw.toInteger()
@@ -311,7 +368,8 @@ android {
                 cppFlags muNativeCppFlags
                 arguments "-DANDROID_STL=c++_static",
                           "-DANDROID_PLATFORM=android-21",
-                          "-DMU_ENABLE_BGFX=" + (muEnableBgfx ? "ON" : "OFF")
+                          "-DMU_ENABLE_BGFX=" + (muEnableBgfx ? "ON" : "OFF"),
+                          "-DMU_LAN_DEFAULT_HOST_A=${muLanIp}"
             }
         }
 

@@ -19,15 +19,16 @@ using MUnique.OpenMU.Network.SimpleModulus;
 using MUnique.OpenMU.Network.Xor;
 using MUnique.OpenMU.PlugIns;
 using Pipelines.Sockets.Unofficial;
-
-const int DefaultPort = 44606;
+using Takumi.Server.Shared;
 
 // Wire bytes for ServerVersion = "1.04.05" using GameServerInfo indices [0],[2],[3],[5],[6] -> ASCII "10405".
 var defaultJoinVersion = Encoding.ASCII.GetBytes("10405");
 // GameServerInfo - Common.ini default in this repo (must match client Main / APK serial).
 var defaultServerSerial = Encoding.ASCII.GetBytes("TbYehR2hFUPBKgZj");
 
-var port = int.TryParse(Environment.GetEnvironmentVariable("TAKUMI_LOGIN_PORT"), out var p) ? p : DefaultPort;
+var port = int.TryParse(Environment.GetEnvironmentVariable("TAKUMI_LOGIN_PORT"), NumberStyles.Integer, CultureInfo.InvariantCulture, out var p)
+    ? p
+    : ListenPortFallbacks.LegacyLogin;
 var joinVersion = ParseHexOrAscii5(Environment.GetEnvironmentVariable("TAKUMI_JOIN_VERSION_HEX"))
                   ?? ParseHexOrAscii5(Environment.GetEnvironmentVariable("TAKUMI_JOIN_VERSION"))
                   ?? defaultJoinVersion;
@@ -57,9 +58,10 @@ var verbose = string.Equals(Environment.GetEnvironmentVariable("TAKUMI_VERBOSE")
               || string.Equals(Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT"), "Development", StringComparison.OrdinalIgnoreCase);
 
 // Minimal Connect Server (F4 06 / F4 03) for Android LAN QA. Set TAKUMI_CONNECT_PORT=0 to disable.
-var connectPort = 44605;
-if (!string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("TAKUMI_CONNECT_PORT"))
-    && int.TryParse(Environment.GetEnvironmentVariable("TAKUMI_CONNECT_PORT"), out var cpEnv))
+var connectPortEnv = Environment.GetEnvironmentVariable("TAKUMI_CONNECT_PORT");
+var connectPort = ListenPortFallbacks.ConnectServer;
+if (!string.IsNullOrWhiteSpace(connectPortEnv)
+    && int.TryParse(connectPortEnv, NumberStyles.Integer, CultureInfo.InvariantCulture, out var cpEnv))
 {
     connectPort = cpEnv;
 }
@@ -67,8 +69,13 @@ if (!string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("TAKUMI_CONNEC
 var publicHost = Environment.GetEnvironmentVariable("TAKUMI_PUBLIC_HOST")?.Trim();
 if (string.IsNullOrEmpty(publicHost))
 {
+    publicHost = Environment.GetEnvironmentVariable("TAKUMI_LAN_IP")?.Trim();
+}
+
+if (string.IsNullOrEmpty(publicHost))
+{
     Console.Error.WriteLine(
-        "[connect] WARNING: TAKUMI_PUBLIC_HOST unset — using 127.0.0.1. Phones on Wi‑Fi cannot reach that; set server-next/.env (LAN IP).");
+        "[connect] WARNING: TAKUMI_LAN_IP unset (optional override: TAKUMI_PUBLIC_HOST) — using 127.0.0.1. Phones on Wi‑Fi cannot reach that; set server-next/.env.");
     publicHost = "127.0.0.1";
 }
 
@@ -244,7 +251,7 @@ Console.WriteLine(
 if (connectPort > 0)
 {
     Console.WriteLine(
-        "Minimal Connect Server on *:{0} -> TAKUMI_PUBLIC_HOST={1} game/login port={2} (verbose={3})\n" +
+        "Minimal Connect Server on *:{0} -> public host for F4 03={1} (env: TAKUMI_PUBLIC_HOST or TAKUMI_LAN_IP) game/login port={2} (verbose={3})\n" +
         "  F4 06: {4}",
         connectPort,
         publicHost,
@@ -878,7 +885,7 @@ static byte[] BuildServerInfoPacket(string ip, ushort gamePort)
     var ipBytes = Encoding.ASCII.GetBytes(ip);
     if (ipBytes.Length > 16)
     {
-        throw new ArgumentException("TAKUMI_PUBLIC_HOST must be at most 16 ASCII characters for ServerInfo packet.", nameof(ip));
+        throw new ArgumentException("Connect ServerInfo host (TAKUMI_PUBLIC_HOST / TAKUMI_LAN_IP) must be at most 16 ASCII characters.", nameof(ip));
     }
 
     ipBytes.CopyTo(pkt.AsSpan(4));

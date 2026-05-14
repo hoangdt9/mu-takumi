@@ -28,6 +28,7 @@
 #include <thread>
 
 #include "Camera/CameraUtility.h"
+#include "GameConfig/MuLanDefaults.h"
 #include "Scenes/SceneManager.h"
 
 extern CUITextInputBox* g_pSingleTextInputBox;
@@ -53,8 +54,8 @@ short   g_shCameraLevel = 0;
 
 int g_iLengthAuthorityCode = 20;
 
-const wchar_t* szServerIpAddress = L"192.168.0.174";
-WORD g_ServerPort = 63000;
+const wchar_t* szServerIpAddress = MU_LAN_DEFAULT_SERVER_HOST_W;
+WORD g_ServerPort = MuLanDefaults::kDefaultFirstHopConnectPort;
 
 EGameScene  SceneFlag = WEBZEN_SCENE;
 

@@ -1,0 +1,80 @@
+# Takumi Server Next — **một container** (PostgreSQL + LegacyLoginHost + GameHost)
+#
+# Tương tự ý tưởng OpenMU all-in-one: một stack chạy trên một máy nhỏ; ở đây gộp DB + hai process .NET
+# (Connect 44605, login 44606, game TCP 55901) trong **một image** do supervisord giữ tiến trình.
+#
+# Build & chạy (từ thư mục `server-next/`):
+#   cp -n .env.lan.example .env   # TAKUMI_LAN_IP = IP LAN máy chạy Docker (điện thoại tới được)
+#   docker compose -f docker-compose.all-in-one.yml up -d --build
+#   docker compose -f docker-compose.all-in-one.yml logs -f
+#
+# Dừng: docker compose -f docker-compose.all-in-one.yml down
+#
+# Cổng publish (override qua .env giống compose cũ):
+#   54444 -> Postgres, 44605 Connect, 44606 login, 55901 game host
+#
+# Dec2: mount thư mục chứa Dec2.dat vào /keys (TAKUMI_DEC2_HOST_DIR). Mặc định TAKUMI_ALLOW_MISSING_DEC2=1 → container vẫn chạy nếu thiếu file (login sẽ fail tới khi có Dec2).
+# Mặc định mount ./keys (cùng server-next/keys/Dec2.dat như docker-compose.yml). Override: TAKUMI_DEC2_HOST_DIR=../ClientBuild/Data
+#
+# **Postgres:** không có container `postgres` riêng — PostgreSQL chạy **bên trong** `takumi-server-next-aio` (cổng trong container 5432 → host thường 54444).
+#
+# **data.zip:** không nằm trong image aio. Bật profile **`datazip`** (nginx) giống compose gốc:
+#   COMPOSE_PROFILES=datazip docker compose -f docker-compose.all-in-one.yml up -d --build
+#   hoặc: ./scripts/docker-up-all-in-one.sh --with-datazip
+#
+# Lưu ý: không chạy đồng thời compose mặc định (`docker-compose.yml`) nếu trùng publish port.
+# Nếu container từng crash lúc initdb: `docker compose -f docker-compose.all-in-one.yml down -v` rồi `up` lại (xóa volume PG hỏng).
+
+services:
+  takumi-aio:
+    build:
+      context: .
+      dockerfile: deploy/all-in-one/Dockerfile
+    image: takumi/server-next-aio:local
+    container_name: takumi-server-next-aio
+    restart: unless-stopped
+    shm_size: "256mb"
+    ports:
+      - "${TAKUMI_POSTGRES_PUBLISH_PORT:-54444}:5432"
+      - "${TAKUMI_CONNECT_PUBLISH:-44605}:${TAKUMI_CONNECT_PORT:-44605}"
+      - "${TAKUMI_LEGACY_LOGIN_PUBLISH:-44606}:${TAKUMI_LOGIN_PORT:-44606}"
+      - "${TAKUMI_GAME_PUBLISH:-55901}:${TAKUMI_GAME_PORT:-55901}"
+    volumes:
+      - takumi_aio_pgdata:/var/lib/postgresql/data
+      - ${TAKUMI_DEC2_HOST_DIR:-./keys}:/keys:ro
+    environment:
+      POSTGRES_USER: "${TAKUMI_PG_USER:-takumi}"
+      POSTGRES_PASSWORD: "${TAKUMI_PG_PASSWORD:-takumi}"
+      POSTGRES_DB: "${TAKUMI_PG_DATABASE:-takumi_runtime}"
+      TAKUMI_LOGIN_PORT: "${TAKUMI_LOGIN_PORT:-44606}"
+      TAKUMI_CONNECT_PORT: "${TAKUMI_CONNECT_PORT:-44605}"
+      TAKUMI_GAME_PORT: "${TAKUMI_GAME_PORT:-55901}"
+      TAKUMI_DEC2_PATH: /keys/Dec2.dat
+      TAKUMI_ALLOW_MISSING_DEC2: "${TAKUMI_ALLOW_MISSING_DEC2:-1}"
+      TAKUMI_LAN_IP: "${TAKUMI_LAN_IP:-}"
+      TAKUMI_PUBLIC_HOST: "${TAKUMI_PUBLIC_HOST:-}"
+      TAKUMI_CS_CONNECT_IDS: "${TAKUMI_CS_CONNECT_IDS:-}"
+      TAKUMI_CS_CONNECT_BASE: "${TAKUMI_CS_CONNECT_BASE:-}"
+      TAKUMI_CS_CONNECT_COUNT: "${TAKUMI_CS_CONNECT_COUNT:-}"
+      TAKUMI_VERBOSE: "${TAKUMI_VERBOSE:-1}"
+      DOTNET_ENVIRONMENT: "${DOTNET_ENVIRONMENT:-Development}"
+    healthcheck:
+      test: ["CMD-SHELL", "su postgres -s /bin/bash -c \"/usr/local/bin/pg_isready -q\""]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 120s
+
+  datazip:
+    profiles: ["datazip"]
+    image: nginx:alpine
+    container_name: takumi-next-datazip-aio
+    restart: unless-stopped
+    ports:
+      - "${DATA_ZIP_PUBLISH_PORT:-18080}:80"
+    volumes:
+      - ${TAKUMI_DATA_ZIP_HOST_DIR:-../docker/data-zip/host}:/srv/data:ro
+      - ${TAKUMI_DATA_ZIP_NGINX_CONF:-../docker/data-zip/default.conf}:/etc/nginx/conf.d/default.conf:ro
+
+volumes:
+  takumi_aio_pgdata:

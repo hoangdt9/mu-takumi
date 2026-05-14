@@ -1,10 +1,10 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
     <TargetFramework>net10.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Takumi.Server.Game</RootNamespace>
+    <Description>Takumi Season6 game TCP host bootstrap (parity with Source/4.GameServer accept + decrypt + join).</Description>
   </PropertyGroup>
 
   <ItemGroup>
@@ -14,5 +14,4 @@
   <ItemGroup>
     <ProjectReference Include="..\Takumi.Server.Shared\Takumi.Server.Shared.csproj" />
   </ItemGroup>
-
 </Project>

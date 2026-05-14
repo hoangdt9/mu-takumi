@@ -168,6 +168,7 @@ static void android_set_data_dir_early()
 
 // Game systems
 #include "GameConfig/GameConfig.h"
+#include "GameConfig/MuLanDefaults.h"
 #include "ZzzOpenglUtil.h"
 #include "ZzzTexture.h"
 #include "ZzzOpenData.h"
@@ -335,11 +336,11 @@ static void InitializeTakumiProtectState()
     auto applyFallbackMainInfo = []()
     {
         std::memset(&gProtect.m_MainInfo, 0, sizeof(gProtect.m_MainInfo));
-        gProtect.m_MainInfo.GSPortMin = 55901;
+        gProtect.m_MainInfo.GSPortMin = MuLanDefaults::kDefaultGameShardPortMin;
         gProtect.m_MainInfo.GSPortMax = 55999;
         std::strcpy(gProtect.m_MainInfo.CustomerName, "takumi12");
-        std::strcpy(gProtect.m_MainInfo.IpAddress, "192.168.0.174");
-        gProtect.m_MainInfo.IpAddressPort = 63000;
+        std::strcpy(gProtect.m_MainInfo.IpAddress, MU_LAN_DEFAULT_SERVER_HOST_A);
+        gProtect.m_MainInfo.IpAddressPort = MuLanDefaults::kDefaultFirstHopConnectPort;
         std::strcpy(gProtect.m_MainInfo.ClientVersion, "1.04.05");
         std::strcpy(gProtect.m_MainInfo.ClientSerial, "TbYehR2hFUPBKgZj");
         gProtect.LoadEncDec();
@@ -6873,13 +6874,13 @@ static bool InitializeAndroidGame()
     ApplyAndroidNetworkBootstrapOverrides(serverIP, configuredPort);
     if (serverIP.empty() || serverIP == L"127.127.127.127" || serverIP == L"192.168.1.33" || serverIP == L"192.168.99.200")
     {
-        serverIP = L"192.168.0.174";
+        serverIP = MU_LAN_DEFAULT_SERVER_HOST_W;
     }
     // Only remap invalid ports or a known-wrong first-hop (55901 = game shard in MuServer docs).
     // Keep OpenMU connect (44405/44406) and server-next (e.g. 44605/44606) exactly as in GameConfig.
-    if (configuredPort <= 0 || configuredPort == 55901)
+    if (configuredPort <= 0 || configuredPort == static_cast<int>(MuLanDefaults::kDefaultGameShardPortMin))
     {
-        configuredPort = 63000;
+        configuredPort = static_cast<int>(MuLanDefaults::kDefaultFirstHopConnectPort);
     }
     GameConfig::GetInstance().SetServerIP(serverIP);
     GameConfig::GetInstance().SetServerPort(configuredPort);
@@ -7646,13 +7647,13 @@ int SDL_main(int argc, char* argv[])
     ApplyAndroidNetworkBootstrapOverrides(serverIP, configuredPort);
     if (serverIP.empty() || serverIP == L"127.127.127.127" || serverIP == L"192.168.1.33" || serverIP == L"192.168.99.200")
     {
-        serverIP = L"192.168.0.174";
+        serverIP = MU_LAN_DEFAULT_SERVER_HOST_W;
     }
     // Only remap invalid ports or a known-wrong first-hop (55901 = game shard in MuServer docs).
     // Keep OpenMU connect (44405/44406) and server-next (e.g. 44605/44606) exactly as in GameConfig.
-    if (configuredPort <= 0 || configuredPort == 55901)
+    if (configuredPort <= 0 || configuredPort == static_cast<int>(MuLanDefaults::kDefaultGameShardPortMin))
     {
-        configuredPort = 63000;
+        configuredPort = static_cast<int>(MuLanDefaults::kDefaultFirstHopConnectPort);
     }
     GameConfig::GetInstance().SetServerIP(serverIP);
     GameConfig::GetInstance().SetServerPort(configuredPort);

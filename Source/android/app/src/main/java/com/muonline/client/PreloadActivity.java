@@ -1,7 +1,11 @@
 package com.muonline.client;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkCapabilities;
 import android.graphics.Color;
 import android.graphics.drawable.ClipDrawable;
 import android.graphics.drawable.Drawable;
@@ -58,7 +62,13 @@ public class PreloadActivity extends Activity {
                 urls.add(trimmed);
             }
         }
-        urls.add("http://update.daybreak.id.vn/update/data.zip");
+        String fallback = BuildConfig.DATA_ZIP_URL_FALLBACK;
+        if (fallback != null) {
+            String trimmedFb = fallback.trim();
+            if (!trimmedFb.isEmpty()) {
+                urls.add(trimmedFb);
+            }
+        }
         return urls.toArray(new String[0]);
     }
     private static final String BASIC_AUTH_USERNAME = "admin";
@@ -163,7 +173,7 @@ public class PreloadActivity extends Activity {
         configureWindow();
         buildUi();
         stageText.setText("Preparing preload...");
-        detailText.setText(DATA_ZIP_URL_CANDIDATES[0]);
+        detailText.setText(DATA_ZIP_URL_CANDIDATES.length > 0 ? DATA_ZIP_URL_CANDIDATES[0] : "(no data.zip URL)");
         timerText.setText("Waiting for network...");
         mainHandler.postDelayed(bannerSwitcher, BANNER_SWITCH_MS);
         ioExecutor.execute(this::runPreloadFlow);
@@ -332,11 +342,21 @@ public class PreloadActivity extends Activity {
 
     private void runPreloadFlow() {
         final long totalStartMs = SystemClock.elapsedRealtime();
+        Log.i(TAG, "runPreloadFlow: DATA_ZIP_URL_LAN=" + BuildConfig.DATA_ZIP_URL_LAN
+            + " DATA_ZIP_URL_FALLBACK=" + BuildConfig.DATA_ZIP_URL_FALLBACK
+            + " DEV_SKIP_DATA_ZIP=" + BuildConfig.DEV_SKIP_DATA_ZIP
+            + " candidates=" + java.util.Arrays.toString(DATA_ZIP_URL_CANDIDATES));
         List<File> dataRoots = collectDataRoots();
         File installRoot = null;
         File fallbackUsableRoot = null;
         try {
             checkCancelled();
+
+            if (DATA_ZIP_URL_CANDIDATES.length == 0) {
+                throw new IOException(
+                    "No data.zip URL configured. Set TAKUMI_LAN_IP in server-next/.env, rebuild APK, "
+                        + "and run Docker with datazip profile (port 18080), or pass -PmuDataZipLan / -PmuDataZipFallbackUrl.");
+            }
 
             for (File root : dataRoots) {
                 if (root == null) {
@@ -447,7 +467,7 @@ public class PreloadActivity extends Activity {
                 stageText.setText("Preload failed");
                 detailText.setText(ex.getMessage() != null ? ex.getMessage() : "Unknown error");
                 timerText.setText(
-                    "data.zip over HTTP/LAN failed. Fix muDataZipLan / static host, or copy Data (same as dataredl).");
+                    "LAN data.zip failed. adb logcat -s MuPreload:I — enable server-next datazip (18080), check TAKUMI_LAN_IP, or copy Data.");
             });
         }
     }
@@ -503,20 +523,30 @@ public class PreloadActivity extends Activity {
 
     private DownloadStats downloadZip(File outputZip) throws IOException {
         IOException lastError = null;
-        for (String urlCandidate : DATA_ZIP_URL_CANDIDATES) {
+        int n = DATA_ZIP_URL_CANDIDATES.length;
+        for (int i = 0; i < n; i++) {
+            String urlCandidate = DATA_ZIP_URL_CANDIDATES[i];
+            Log.i(TAG, "data.zip attempt " + (i + 1) + "/" + n + ": " + urlCandidate);
             try {
-                return downloadZipFromUrl(urlCandidate, false, outputZip);
+                DownloadStats stats = downloadZipFromUrl(urlCandidate, false, outputZip);
+                Log.i(TAG, "data.zip OK from " + urlCandidate + " bytes=" + stats.downloadedBytes);
+                return stats;
             } catch (HttpStatusException httpEx) {
                 if (httpEx.statusCode == 401) {
                     try {
-                        return downloadZipFromUrl(urlCandidate, true, outputZip);
+                        DownloadStats stats = downloadZipFromUrl(urlCandidate, true, outputZip);
+                        Log.i(TAG, "data.zip OK (Basic Auth) from " + urlCandidate + " bytes=" + stats.downloadedBytes);
+                        return stats;
                     } catch (IOException authEx) {
+                        Log.w(TAG, "data.zip auth retry failed for " + urlCandidate + ": " + authEx.getMessage());
                         lastError = authEx;
                     }
                 } else {
+                    Log.w(TAG, "data.zip HTTP error for " + urlCandidate + ": " + httpEx.getMessage());
                     lastError = httpEx;
                 }
             } catch (IOException ex) {
+                Log.w(TAG, "data.zip download failed for " + urlCandidate + ": " + ex.getMessage());
                 lastError = ex;
             }
         }
@@ -525,6 +555,80 @@ public class PreloadActivity extends Activity {
             throw lastError;
         }
         throw new IOException("Unable to download data.zip from all configured URLs.");
+    }
+
+    /**
+     * When mobile data is active, {@code URL.openConnection()} may not use Wi‑Fi for RFC1918 hosts,
+     * so TCP to the Mac LAN IP never completes — UI stays on "Connecting…". Bind to a Wi‑Fi
+     * {@link Network} when the host looks like a LAN address (API 23+).
+     */
+    private HttpURLConnection openHttpGetConnectionPreferWifiForLan(URL url) throws IOException {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            return (HttpURLConnection) url.openConnection();
+        }
+        String host = url.getHost();
+        if (!isRfc1918StyleLanHost(host)) {
+            Log.i(TAG, "HTTP: default network (host=" + host + ")");
+            return (HttpURLConnection) url.openConnection();
+        }
+        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (cm == null) {
+            Log.w(TAG, "HTTP: ConnectivityManager null — default network");
+            return (HttpURLConnection) url.openConnection();
+        }
+        Network wifiNet = findWifiNetworkWithInternet(cm);
+        if (wifiNet != null) {
+            Log.i(TAG, "HTTP: Wi‑Fi network for LAN host " + host + " (avoids cellular default route)");
+            return (HttpURLConnection) wifiNet.openConnection(url);
+        }
+        Log.w(TAG, "HTTP: no Wi‑Fi Network — default route (turn off mobile data if LAN download hangs)");
+        return (HttpURLConnection) url.openConnection();
+    }
+
+    private static boolean isRfc1918StyleLanHost(String host) {
+        if (host == null || host.isEmpty()) {
+            return false;
+        }
+        String h = host.trim().toLowerCase(Locale.ROOT);
+        if ("localhost".equals(h) || "127.0.0.1".equals(h)) {
+            return true;
+        }
+        if (h.startsWith("10.")) {
+            return true;
+        }
+        if (h.startsWith("192.168.")) {
+            return true;
+        }
+        if (h.startsWith("172.")) {
+            String[] parts = h.split("\\.");
+            if (parts.length >= 2) {
+                try {
+                    int oct2 = Integer.parseInt(parts[1]);
+                    return oct2 >= 16 && oct2 <= 31;
+                } catch (NumberFormatException ignored) {
+                    return false;
+                }
+            }
+        }
+        return false;
+    }
+
+    private static Network findWifiNetworkWithInternet(ConnectivityManager cm) {
+        Network fallback = null;
+        for (Network n : cm.getAllNetworks()) {
+            NetworkCapabilities caps = cm.getNetworkCapabilities(n);
+            if (caps == null || !caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
+                continue;
+            }
+            if (!caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)) {
+                continue;
+            }
+            if (caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)) {
+                return n;
+            }
+            fallback = n;
+        }
+        return fallback;
     }
 
     private DownloadStats downloadZipFromUrl(String urlText, boolean withAuth, File outputZip) throws IOException {
@@ -549,9 +653,11 @@ public class PreloadActivity extends Activity {
             });
 
             URL url = new URL(urlText);
-            connection = (HttpURLConnection) url.openConnection();
-            connection.setConnectTimeout(15000);
-            connection.setReadTimeout(25000);
+            connection = openHttpGetConnectionPreferWifiForLan(url);
+            connection.setConnectTimeout(20000);
+            // Large LAN data.zip (hundreds of MB): Wi‑Fi / Docker bridge can go >25s between reads —
+            // default read timeout would abort with SocketTimeoutException while progress looks "stuck".
+            connection.setReadTimeout(0);
             connection.setRequestProperty("Accept-Encoding", "identity");
             connection.setRequestProperty("User-Agent", "MuMain-Android-Preload/1.0");
             connection.setInstanceFollowRedirects(true);
@@ -571,6 +677,19 @@ public class PreloadActivity extends Activity {
             if (totalBytes == 0) {
                 throw new IOException("Server returned empty data.zip");
             }
+
+            final long reportedTotalBytes = totalBytes;
+            postUi(() -> {
+                if (cancelled) {
+                    return;
+                }
+                stageText.setText("Downloading data.zip…");
+                detailText.setText(urlText);
+                timerText.setText(
+                    reportedTotalBytes > 0
+                        ? "Size " + formatBytes(reportedTotalBytes) + " — keep screen on, Wi‑Fi can be slow"
+                        : "Streaming (unknown size) — keep screen on");
+            });
 
             try (InputStream rawStream = connection.getInputStream();
                  BufferedInputStream inputStream = new BufferedInputStream(rawStream, BUFFER_SIZE);

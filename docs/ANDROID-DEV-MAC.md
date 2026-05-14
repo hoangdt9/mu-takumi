@@ -36,7 +36,7 @@ chmod +x ./gradlew
   -PmuFailOnMissingRequiredAbis=true
 ```
 
-Optional: first-hop `data.zip` URL (Docker static host on LAN) — default `http://192.168.1.50:18080/data.zip`, override with `-PmuDataZipLan=http://YOUR_IP:18080/data.zip`.
+Optional: first-hop `data.zip` URL — Gradle reads **`server-next/.env`** (`TAKUMI_LAN_IP`) so the default is `http://<that-ip>:18080/data.zip`; override with `-PmuDataZipLan=http://YOUR_IP:18080/data.zip` or `-PmuLanIp=...`.
 
 Output: `app/build/outputs/apk/realDevicePreloadDefault/debug/` (APK name includes flavor segments; exact path may vary by AGP).
 
@@ -105,7 +105,7 @@ adb logcat -c && adb logcat -v threadtime MuPreload:I MuMain:I TakumiErrorReport
 
 ## Test Android với **Takumi Server Next** trên Mac (Docker tối thiểu)
 
-Khi client/APK trỏ tới **Connect/Login Takumi** (ví dụ cổng **`44605` / `44606`** trong `server-next/.env`, biến `TAKUMI_PUBLIC_HOST` = IP LAN máy Mac), chỉ cần chạy **một** stack server — tránh chạy song song **OpenMU** (`44505`/`55901`…) cùng lúc nếu không cần, để log và cấu hình client không lẫn cổng.
+Khi client/APK trỏ tới **Connect/Login Takumi** (ví dụ cổng **`44605` / `44606`** trong `server-next/.env`, biến **`TAKUMI_LAN_IP`** = IP LAN máy Mac), chỉ cần chạy **một** stack server — tránh chạy song song **OpenMU** (`44505`/`55901`…) cùng lúc nếu không cần, để log và cấu hình client không lẫn cổng.
 
 ### Docker Desktop: `server-next` stack (Postgres + LegacyLoginHost + tuỳ chọn data.zip)
 
@@ -120,7 +120,7 @@ Khi client/APK trỏ tới **Connect/Login Takumi** (ví dụ cổng **`44605` /
 ./server-next/scripts/check-takumi-ports.sh
 ```
 
-- **Server LAN trong Docker:** trong `server-next` chạy `docker compose up -d` hoặc `./scripts/docker-up.sh` — stack gồm **Postgres** và **LegacyLoginHost** (Connect **44605** + login **44606**). Cần `.env` với `TAKUMI_PUBLIC_HOST` = IP LAN Mac.
+- **Server LAN trong Docker:** trong `server-next` chạy `docker compose up -d` hoặc `./scripts/docker-up.sh` — stack gồm **Postgres** và **LegacyLoginHost** (Connect **44605** + login **44606**). Cần `.env` với **`TAKUMI_LAN_IP`** = IP LAN Mac.
 - **Lỗi `no configuration file provided`:** bạn đang gọi `docker compose` từ thư mục **không** chứa `docker-compose.yml` (thường là `Source/android` sau khi build APK). Cách nhanh: `cd` vào `server-next` rồi chạy lại, hoặc từ `Source/android`: `bash ../../scripts/docker-recreate-legacy-login.sh` (wrapper gọi compose trong `server-next`).
 
 ### LegacyLoginHost (.NET) vs cổng **44606**
@@ -159,7 +159,7 @@ GameServer C (`CGConnectAccountRecv`) chỉ gọi `PacketArgumentDecrypt` cho **
 
 ### Nên bật
 
-1. **`server-next`**: `cd server-next && docker compose up -d` (Postgres **54444** + LegacyLoginHost **44605**/**44606** trong Docker). Cần `.env` với `TAKUMI_PUBLIC_HOST` = IP LAN. Tuỳ chọn **`data.zip`**: `docker compose --profile datazip up -d` hoặc `./scripts/docker-up.sh --with-datazip` — URL `http://<LAN-IP>:18080/data.zip` (file `takumi/docker/data-zip/host/data.zip`). Chi tiết: `server-next/README.md`.
+1. **`server-next`**: `cd server-next && docker compose up -d` (Postgres **54444** + LegacyLoginHost **44605**/**44606** trong Docker). Cần `.env` với **`TAKUMI_LAN_IP`** = IP LAN. Tuỳ chọn **`data.zip`**: `docker compose --profile datazip up -d` hoặc `./scripts/docker-up.sh --with-datazip` — URL `http://<LAN-IP>:18080/data.zip` (file `takumi/docker/data-zip/host/data.zip`). Chi tiết: `server-next/README.md`.
 2. **`data.zip` chỉ qua `takumi/docker`** (khi không dùng profile trong `server-next`): từ `takumi/docker`:
 
    ```bash

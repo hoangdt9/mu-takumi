@@ -1561,8 +1561,10 @@ bool ExceptionCallback(_EXCEPTION_POINTERS* pExceptionInfo )
 	return true;
 }
 #endif
-char* szServerIpAddress = "192.168.0.174";
-WORD g_ServerPort = 63000;
+#include "GameConfig/MuLanDefaults.h"
+static char s_szServerIpAddressStorage[] = MU_LAN_DEFAULT_SERVER_HOST_A;
+char* szServerIpAddress = s_szServerIpAddressStorage;
+WORD g_ServerPort = MuLanDefaults::kDefaultFirstHopConnectPort;
 BYTE Version[SIZE_PROTOCOLVERSION] = { '1' + 1, '0' + 2, '4' + 3, '0' + 4, '5' + 5 };
 BYTE Serial[SIZE_PROTOCOLSERIAL + 1] = { "TbYehR2hFUPBKgZj" };
 #if (GetGPUUse)

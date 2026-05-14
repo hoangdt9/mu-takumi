@@ -1,0 +1,150 @@
+#!/usr/bin/env bash
+# Takumi server-next — pull image → up stack → (mặc định) tail log Docker.
+#
+# Stack mặc định: Postgres + LegacyLoginHost (44605/44606) + data.zip (profile datazip, nginx 18080).
+# Không chạy đồng thời ./scripts/run-legacy-login-host.sh (trùng cổng 44606).
+#
+# Usage:
+#   ./scripts/docker-stack.sh
+#   ./scripts/docker-stack.sh --detach
+#   ./scripts/docker-stack.sh --no-datazip
+#   ./scripts/docker-stack.sh --with-gamehost
+#   ./scripts/docker-stack.sh --recreate
+#   ./scripts/docker-stack.sh --host-build
+#
+# COMPOSE_PROFILES trong .env được tôn trọng; script chỉ bổ sung profile nếu thiếu.
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+cd "$ROOT"
+
+WITH_DATAZIP=1
+WITH_GAMEHOST=0
+RECREATE=0
+HOST_BUILD=0
+DETACH=0
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --no-datazip)
+      WITH_DATAZIP=0
+      ;;
+    --with-datazip) WITH_DATAZIP=1 ;;
+    --with-gamehost) WITH_GAMEHOST=1 ;;
+    --recreate) RECREATE=1 ;;
+    --host-build) HOST_BUILD=1 ;;
+    --detach) DETACH=1 ;;
+    -h|--help)
+      sed -n '1,50p' "$0"
+      exit 0
+      ;;
+    *)
+      echo "Unknown option: $1  (use --help)" >&2
+      exit 2
+      ;;
+  esac
+  shift
+done
+
+if [[ ! -f .env ]]; then
+  echo "== server-next: thiếu .env =="
+  echo "  cp .env.lan.example .env"
+  echo "  Chỉnh TAKUMI_LAN_IP / TAKUMI_PUBLIC_HOST (cùng Wi‑Fi với điện thoại)."
+  exit 1
+fi
+
+set -a
+# shellcheck disable=SC1091
+. "$ROOT/.env"
+set +a
+
+merge_profile() {
+  local p="$1"
+  local c=",${COMPOSE_PROFILES:-},"
+  if [[ "$c" == *",${p},"* ]]; then
+    return 0
+  fi
+  if [[ -n "${COMPOSE_PROFILES:-}" ]]; then
+    export COMPOSE_PROFILES="${COMPOSE_PROFILES},${p}"
+  else
+    export COMPOSE_PROFILES="$p"
+  fi
+}
+
+if [[ "$WITH_DATAZIP" -eq 1 ]]; then
+  merge_profile datazip
+fi
+if [[ "$WITH_GAMEHOST" -eq 1 ]]; then
+  merge_profile gamehost
+fi
+
+echo "== Takumi server-next: stack Docker =="
+echo "  cwd: $ROOT"
+echo "  COMPOSE_PROFILES=${COMPOSE_PROFILES:-<none>}"
+echo "  Lưu ý: không chạy ./scripts/run-legacy-login-host.sh đồng thời (trùng cổng 44606)."
+echo ""
+
+if [[ "$HOST_BUILD" -eq 1 ]]; then
+  if ! command -v dotnet >/dev/null 2>&1; then
+    echo "== Lỗi: --host-build nhưng không có lệnh dotnet trong PATH ==" >&2
+    exit 1
+  fi
+  echo "== dotnet build (host, Release) — kiểm tra dependency trước khi lên container =="
+  dotnet build "$ROOT/src/Takumi.Server.LegacyLoginHost/Takumi.Server.LegacyLoginHost.csproj" \
+    -c Release -nologo -v minimal
+  echo ""
+fi
+
+echo "== docker compose pull (postgres, sdk, nginx…) =="
+docker compose pull
+
+up_args=(up -d --pull always --remove-orphans)
+if [[ "$RECREATE" -eq 1 ]]; then
+  up_args+=(--force-recreate)
+fi
+
+echo "== docker compose ${up_args[*]} =="
+docker compose "${up_args[@]}"
+
+# Container cũ giữ PID — không chạy lại entrypoint (dotnet build) → C# mới (vd. F4 06 on-accept) không áp dụng.
+if [[ "$RECREATE" -eq 0 ]]; then
+  echo "== docker compose up -d --force-recreate --no-deps legacy-login (rebuild/run từ bind-mount; ~30–120s) =="
+  docker compose up -d --force-recreate --no-deps legacy-login
+fi
+
+echo ""
+docker compose ps
+echo ""
+echo "  Connect / game:  ${TAKUMI_CONNECT_PUBLISH:-44605} / ${TAKUMI_LEGACY_LOGIN_PUBLISH:-44606}"
+echo "  Postgres:        ${TAKUMI_POSTGRES_PUBLISH_PORT:-54444}"
+if [[ "$WITH_DATAZIP" -eq 1 ]]; then
+  dp="${DATA_ZIP_PUBLISH_PORT:-18080}"
+  if [[ -n "${TAKUMI_DATA_ZIP_URL:-}" ]]; then
+    echo "  data.zip:        ${TAKUMI_DATA_ZIP_URL}"
+  elif [[ -n "${TAKUMI_PUBLIC_HOST:-}" ]]; then
+    echo "  data.zip:        http://${TAKUMI_PUBLIC_HOST}:${dp}/data.zip"
+  else
+    echo "  data.zip:        http://<TAKUMI_PUBLIC_HOST>:${dp}/data.zip  (đặt TAKUMI_PUBLIC_HOST trong .env)"
+  fi
+fi
+if [[ "$WITH_GAMEHOST" -eq 1 ]]; then
+  echo "  game-host:       ${TAKUMI_GAME_PUBLISH:-55901} (F4 03 phải khớp .env)"
+fi
+echo ""
+
+if [[ "$DETACH" -eq 1 ]]; then
+  echo "== Detach (--detach): log =="
+  echo "  docker compose logs -f legacy-login postgres datazip"
+  exit 0
+fi
+
+echo "== Logs (Ctrl+C chỉ thoát tail; container vẫn chạy) =="
+LOG_SERVICES=(legacy-login postgres)
+if docker compose ps -q datazip 2>/dev/null | grep -q .; then
+  LOG_SERVICES+=(datazip)
+fi
+if docker compose ps -q game-host 2>/dev/null | grep -q .; then
+  LOG_SERVICES+=(game-host)
+fi
+exec docker compose logs -f "${LOG_SERVICES[@]}"

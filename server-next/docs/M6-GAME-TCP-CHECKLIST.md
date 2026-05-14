@@ -14,7 +14,7 @@ When **`TAKUMI_GAME_PORT`** differs from **`TAKUMI_LOGIN_PORT`**, the client fol
 - **Cause:** `.env` sets **`TAKUMI_GAME_PORT`** to a dedicated port, but only **`legacy-login`** is running (it still listens on **`TAKUMI_LOGIN_PORT`**, e.g. 44606). F4 03 advertised 55901 → client TCP to 55901 → refused.
 - **Fix (pick one):**
   1. **Single TCP (simplest):** remove **`TAKUMI_GAME_PORT`** / **`TAKUMI_GAME_PUBLISH`** from `.env` (or leave them unset). F4 03 then defaults to **`TAKUMI_LOGIN_PORT`**.
-  2. **Split stack:** keep **`TAKUMI_GAME_PORT=55901`** and start **`GameHost`** — e.g. `docker compose --profile gamehost up -d` or `./scripts/docker-up.sh --with-gamehost` — so something accepts TCP on the advertised port.
+  2. **Split stack:** keep **`TAKUMI_GAME_PORT=55901`** and start **`GameHost`** — e.g. `docker compose --profile gamehost up -d` or `./scripts/docker-stack.sh --detach --with-gamehost` — so something accepts TCP on the advertised port.
 
 ## Modes (`GameListenHost`)
 
@@ -77,7 +77,7 @@ Smoke (listen): after start, `lsof -nP -iTCP:55901 -sTCP:LISTEN` should show **`
 ```bash
 # .env must set TAKUMI_GAME_PORT=55901 (and legacy-login reads it for F4 03)
 docker compose --profile gamehost up -d
-# or: ./scripts/docker-up.sh --with-gamehost
+# or: ./scripts/docker-stack.sh --detach --with-gamehost
 ```
 
 ## QA Android (thiết bị thật) — checklist từng bước

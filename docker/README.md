@@ -26,7 +26,7 @@ Dùng khi muốn điện thoại/emulator tải `data.zip` từ máy bạn (LAN)
    ```bash
    cd takumi/server-next
    docker compose --profile datazip up -d
-   # hoặc: ./scripts/docker-up.sh --with-datazip
+   # hoặc: ./scripts/docker-stack.sh --detach
    ```
 
    **Không** bật **Cách A** và **Cách B** cùng lúc nếu cả hai publish **18080** trên host.

@@ -9,13 +9,9 @@ Project: `Source/android` (Gradle + CMake + JNI).
 - **NDK:** AGP 8.13 expects a recent NDK (often **27.x**). Install it in SDK Manager → *SDK Tools* → NDK; a missing NDK can also stall configure while the manager retries downloads.
 - **`local.properties`** in `Source/android` must set `sdk.dir=...` (see repo file; mac template included).
 
-## Fix Windows-only Gradle (if you cloned from PC)
+## Fix Windows-only or wrong `JAVA_HOME` (clone / VPN / shell JDK)
 
-Remove `org.gradle.java.home=...` from `gradle.properties` on Mac, or point it to Android Studio’s JBR, e.g.:
-
-`/Applications/Android Studio.app/Contents/jbr/Contents/Home`
-
-Uncomment the same line in `Source/android/gradle.properties` if your shell uses **JDK 24** but configure never finishes.
+`Source/android/gradle.properties` ships **without** a committed `org.gradle.java.home` (paths differ per machine). If you previously added a Windows `java.home` line, remove it on Mac or replace it with Android Studio’s JBR (see commented template at the top of that file), e.g. `/Applications/Android Studio.app/Contents/jbr/Contents/Home`.
 
 ### Gradle looks “stuck” at `50% CONFIGURING > :app`
 

@@ -918,6 +918,14 @@ MU_EXPORT void SendServerListRequest(int32_t handle)
 {
     const uint8_t packet[] = { 0xC1, 0x04, 0xF4, 0x06 };
     RawSend(handle, packet, sizeof(packet));
+    __android_log_print(
+        ANDROID_LOG_INFO,
+        "TakumiErrorReport",
+        "[AndroidLogin] sent C1 F4 06 server list request fd=%d (expect recv tcp C2… then Success Receive Server List)",
+        handle);
+    g_ErrorReport.Write(
+        "[AndroidLogin] sent C1 F4 06 server list request fd=%d (expect recv tcp C2… then Success Receive Server List)\r\n",
+        handle);
 }
 
 MU_EXPORT void SendConnectionInfoRequest075(int32_t handle, BYTE serverId)

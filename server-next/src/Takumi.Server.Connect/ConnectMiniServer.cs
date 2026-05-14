@@ -15,6 +15,14 @@ public sealed class ConnectMiniServerOptions
     /// <summary>Wire bytes for <c>C2 F4 06</c> server list (from <see cref="ConnectServerList602"/>).</summary>
     public required byte[] ServerList602 { get; init; }
 
+    /// <summary>When true, send <see cref="ServerList602"/> immediately after TCP accept (before reading client).</summary>
+    /// <remarks>
+    /// Some LAN / Docker paths delay or drop the first client→server <c>C1 F4 06</c>; the client recv thread then
+    /// blocks forever with no <c>C2 F4 06</c>. Pushing the list on accept matches many MU clients that only parse
+    /// inbound data. Set <c>TAKUMI_CONNECT_SEND_LIST_ON_ACCEPT=0</c> to restore request-only behavior.
+    /// </remarks>
+    public bool SendServerListOnAccept { get; init; } = true;
+
     /// <summary>When true, list requests receive <see cref="ConnectServerBusy602"/> instead of the list (QA).</summary>
     public bool ReturnBusy { get; init; }
 
@@ -72,6 +80,20 @@ public static class ConnectMiniServer
             tcp.NoDelay = true;
             ConnectTcpKeepAlive.TryApply(tcp.Client);
             await using var stream = tcp.GetStream();
+            if (options.SendServerListOnAccept && !options.ReturnBusy)
+            {
+                await stream.WriteAsync(options.ServerList602, ct).ConfigureAwait(false);
+                await stream.FlushAsync(ct).ConfigureAwait(false);
+                Console.WriteLine(
+                    "[connect] sent {0}: ServerList on-accept ({1} bytes) — client can recv before C1 F4 06 reaches server",
+                    remote,
+                    options.ServerList602.Length);
+                Console.Error.WriteLine(
+                    "[connect] sent {0}: ServerList on-accept ({1} bytes)",
+                    remote,
+                    options.ServerList602.Length);
+            }
+
             var buf = new byte[512];
             while (!ct.IsCancellationRequested)
             {

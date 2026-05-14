@@ -4,7 +4,8 @@
 #   cd takumi/server-next
 #   cp -n .env.lan.example .env   # set TAKUMI_LAN_IP to this machine's LAN IP (same Wi‑Fi as the phone)
 #   docker compose up -d
-#   ./scripts/docker-up.sh        # same + sanity checks
+#   ./scripts/docker-stack.sh              # pull + up (postgres + legacy-login + data.zip) + docker logs -f
+#   ./scripts/docker-stack.sh --detach     # same, không bám log
 #
 # After the first `up`, Docker Desktop restarts will bring containers back if they were running
 # (`restart: unless-stopped`). Stop explicitly: `docker compose down`.
@@ -13,7 +14,7 @@
 #
 # Optional LAN static `data.zip` (Android Preload): same stack, **different port** (default 18080):
 #   docker compose --profile datazip up -d
-#   # or: COMPOSE_PROFILES=datazip in .env, or ./scripts/docker-up.sh --with-datazip
+#   # or: COMPOSE_PROFILES=datazip in .env (docker-stack bật datazip mặc định)
 # Place file at ../docker/data-zip/host/data.zip → http://<LAN-IP>:18080/data.zip
 
 # Optional dedicated game TCP (M6): `docker compose --profile gamehost up -d`

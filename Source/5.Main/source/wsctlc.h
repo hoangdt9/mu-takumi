@@ -44,6 +44,12 @@ private :
 
 	CPacketQueue*	m_pPacketQueue;
 
+#if defined(__ANDROID__)
+	/// TCP target was the MU Connect Server (plaintext C1/C2). Skip client Bux XOR on recv/send even if
+	/// getpeername fails (some devices) and CheckSocketPort would otherwise corrupt C2 F4 06.
+	bool m_skipRecvBuxXor;
+#endif
+
 	BOOL ShutdownConnection(SOCKET sd);
 	
 public:

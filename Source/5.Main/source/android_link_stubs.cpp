@@ -279,7 +279,8 @@ namespace
 
     bool IsConnectServerPort(unsigned short port)
     {
-        return (port == g_ServerPort || port == MuLanDefaults::kLegacyVmClassicConnectPort);
+        return port == g_ServerPort || port == MuLanDefaults::kDefaultFirstHopConnectPort ||
+            port == MuLanDefaults::kLegacyVmClassicConnectPort;
     }
 
     /// True when the TCP peer is the MU Connect Server (plaintext C1/C2), not the game server.
@@ -395,6 +396,9 @@ CWsctlc::CWsctlc()
     m_bGame = FALSE;
     m_iMaxSockets = 0;
     m_socket = INVALID_SOCKET;
+#if defined(__ANDROID__)
+    m_skipRecvBuxXor = false;
+#endif
     std::memset(m_SendBuf, 0, sizeof(m_SendBuf));
     m_nSendBufLen = 0;
     std::memset(m_RecvBuf, 0, sizeof(m_RecvBuf));
@@ -481,7 +485,9 @@ void CWsctlc::AndroidOnPacket(int32_t handle, int32_t size, uint8_t* data)
     std::memcpy(client->m_RecvBuf + client->m_nRecvBufLen, data, static_cast<size_t>(size));
 
 #if(ENCRYPT_STATE==1)
-    if (!IsPeerConnectServerSocket(client->m_socket) && client->m_socket != INVALID_SOCKET &&
+    const bool skipBuxXor =
+        client->m_skipRecvBuxXor || IsPeerConnectServerSocket(client->m_socket);
+    if (!skipBuxXor && client->m_socket != INVALID_SOCKET &&
         client->m_socket != static_cast<SOCKET>(0) && gProtect.CheckSocketPort(client->m_socket) != 0)
     {
         gProtect.DecryptData(client->m_RecvBuf + client->m_nRecvBufLen, size);
@@ -678,6 +684,10 @@ BOOL CWsctlc::Close()
         ConnectionManager_Disconnect(handle);
     }
 
+#if defined(__ANDROID__)
+    m_skipRecvBuxXor = false;
+#endif
+
     return TRUE;
 }
 
@@ -744,6 +754,7 @@ BOOL CWsctlc::Connect(char* ipAddr, unsigned short port, DWORD)
     }
 
     m_socket = static_cast<SOCKET>(handle);
+    m_skipRecvBuxXor = IsConnectServerPort(port);
     g_ErrorReport.Write(
         "[Android Socket] connected ip=%s port=%d handle=%d [AndroidLogin] native CM ok\r\n",
         ipAddr,
@@ -777,7 +788,17 @@ int CWsctlc::sSend(SOCKET socket, char* buf, int len)
     std::vector<uint8_t> sendBuffer(reinterpret_cast<uint8_t*>(buf), reinterpret_cast<uint8_t*>(buf) + len);
 
 #if(ENCRYPT_STATE==1)
-    if (!IsPeerConnectServerSocket(socket) && gProtect.CheckSocketPort(socket) != 0)
+    bool skipBuxXor = IsPeerConnectServerSocket(socket);
+    if (!skipBuxXor)
+    {
+        std::lock_guard<std::mutex> lock(g_androidSocketMutex);
+        const auto it = g_androidSocketOwners.find(static_cast<int32_t>(socket));
+        if (it != g_androidSocketOwners.end() && it->second != nullptr && it->second->m_skipRecvBuxXor)
+        {
+            skipBuxXor = true;
+        }
+    }
+    if (!skipBuxXor && gProtect.CheckSocketPort(socket) != 0)
     {
         gProtect.EncryptData(sendBuffer.data(), len);
     }

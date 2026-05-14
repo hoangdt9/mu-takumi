@@ -196,6 +196,13 @@ if (byte.TryParse(
     connectBusyServerIndex = cbi;
 }
 
+var connectSendListOnAcceptRaw = Environment.GetEnvironmentVariable("TAKUMI_CONNECT_SEND_LIST_ON_ACCEPT")?.Trim();
+var connectSendListOnExplicitOff = !string.IsNullOrWhiteSpace(connectSendListOnAcceptRaw)
+    && (string.Equals(connectSendListOnAcceptRaw, "0", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(connectSendListOnAcceptRaw, "false", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(connectSendListOnAcceptRaw, "no", StringComparison.OrdinalIgnoreCase));
+var connectSendListOnAccept = !connectReturnBusy && !connectSendListOnExplicitOff;
+
 // SO_REUSEADDR can allow a *second* listener on the same port while an older host is still running (e.g. stray dotnet),
 // so phones may hit the old process and keep seeing C1 4A (33-byte slots). Default: strict bind (reuse off).
 var reuseSocketAddr = string.Equals(Environment.GetEnvironmentVariable("TAKUMI_REUSE_ADDR"), "1", StringComparison.OrdinalIgnoreCase);
@@ -259,6 +266,7 @@ if (connectPort > 0)
         GamePort = (ushort)advertisedGamePort,
         Verbose = verbose,
         ServerList602 = connectServerListPacket,
+        SendServerListOnAccept = connectSendListOnAccept,
         ReturnBusy = connectReturnBusy,
         BusyServerIndex = connectBusyServerIndex,
     };
@@ -302,10 +310,14 @@ if (connectPort > 0)
     var busyNote = connectReturnBusy
         ? $"  TAKUMI_CONNECT_RETURN_BUSY=1 -> list requests answer F4 05 busy (index={connectBusyServerIndex})\n"
         : string.Empty;
+    var onAcceptNote = connectReturnBusy
+        ? string.Empty
+        : $"  C2 F4 06 push on TCP accept: {(connectSendListOnAccept ? "yes" : "no")} (TAKUMI_CONNECT_SEND_LIST_ON_ACCEPT=0 disables)\n";
     Console.WriteLine(
         "Minimal Connect Server on *:{0} -> TAKUMI_PUBLIC_HOST={1} F4 03 game port={2} (listen/login={3}) (verbose={4})\n" +
         "  F4 02|06 list + F4 03 info + patch/version (C1 head 0x02 or main 0x05)\n" +
         "{6}" +
+        "{7}" +
         "  F4 06 payload: {5}",
         connectPort,
         publicHost,
@@ -313,7 +325,8 @@ if (connectPort > 0)
         port,
         verbose,
         connectListBootDesc,
-        busyNote);
+        busyNote,
+        onAcceptNote);
 }
 
 try

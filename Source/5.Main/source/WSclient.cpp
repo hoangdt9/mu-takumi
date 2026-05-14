@@ -373,28 +373,55 @@ void InitGuildWar()
 
 BOOL Util_CheckOption( char *lpszCommandLine, unsigned char cOption, char *lpszString);
 
-void ReceiveServerList( BYTE *ReceiveBuffer )
+void ReceiveServerList(BYTE* ReceiveBuffer, int Size)
 {
+	if (ReceiveBuffer == NULL || Size < 7)
+	{
+		return;
+	}
+
 	LPPHEADER_DEFAULT_SUBCODE_WORD Data = (LPPHEADER_DEFAULT_SUBCODE_WORD)ReceiveBuffer;
 	int Offset = sizeof(PHEADER_DEFAULT_SUBCODE_WORD);
-	
-	BYTE Value2 = *(ReceiveBuffer+Offset++);
+	BYTE Value2 = *(ReceiveBuffer + Offset++);
+
+	int totalDeclared = MAKEWORD(Value2, Data->Value);
+	const int entrySize = (int)sizeof(PRECEIVE_SERVER_LIST);
+	const int maxBySize = (Size - Offset) / entrySize;
+	if (maxBySize <= 0)
+	{
+		return;
+	}
+
+	if (totalDeclared < 0)
+	{
+		totalDeclared = 0;
+	}
+
+	if (totalDeclared > 32)
+	{
+		totalDeclared = 32;
+	}
+
+	if (totalDeclared > maxBySize)
+	{
+		totalDeclared = maxBySize;
+	}
 
 	g_ServerListManager->Release();
 
-	g_ServerListManager->SetTotalServer(MAKEWORD(Value2, Data->Value));
-	
-	for(int i=0 ; i<g_ServerListManager->GetTotalServer() ; i++)
+	g_ServerListManager->SetTotalServer(totalDeclared);
+
+	for (int i = 0; i < totalDeclared; i++)
 	{
-		LPPRECEIVE_SERVER_LIST Data2 = (LPPRECEIVE_SERVER_LIST)(ReceiveBuffer+Offset);
-		
+		LPPRECEIVE_SERVER_LIST Data2 = (LPPRECEIVE_SERVER_LIST)(ReceiveBuffer + Offset);
+
 		g_ServerListManager->InsertServerGroup(Data2->Index, Data2->Percent);
 
 		g_ConsoleDebug->Write(MCD_RECEIVE, "0xF4 [ReceiveServerList(%d %d %d)]", i, Data2->Index, Data2->Percent);
 
 		Offset += sizeof(PRECEIVE_SERVER_LIST);
 	}
-	
+
 	CUIMng& rUIMng = CUIMng::Instance();
 	if (!rUIMng.m_CreditWin.IsShow())
 	{
@@ -402,9 +429,9 @@ void ReceiveServerList( BYTE *ReceiveBuffer )
 		rUIMng.m_ServerSelWin.UpdateDisplay();
 		rUIMng.ShowWin(&rUIMng.m_LoginMainWin);
 	}
-	
-	g_ErrorReport.Write ( "Success Receive Server List.\r\n");
-		
+
+	g_ErrorReport.Write("Success Receive Server List.\r\n");
+
 	g_ConsoleDebug->Write(MCD_RECEIVE, "0xF4 [ReceiveServerList]");
 }
 void ReceiveServerConnect(BYTE* ReceiveBuffer) //Recebe informação do ConnectServer sobre a sala e envia a conexão para a sala escolhida
@@ -13819,7 +13846,7 @@ BOOL TranslateProtocol( int HeadCode, BYTE *ReceiveBuffer, int Size, BOOL bEncry
 			switch( subcode )
 			{
 			case 0x06:
-				ReceiveServerList(ReceiveBuffer);
+				ReceiveServerList(ReceiveBuffer, Size);
 				break;
 			case 0x03:
 				ReceiveServerConnect(ReceiveBuffer);

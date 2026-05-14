@@ -4,8 +4,9 @@ Project: `Source/android` (Gradle + CMake + JNI).
 
 ## Prerequisites
 
-- **JDK 17** (`java -version`).
+- **JDK for the Gradle daemon:** use **JDK 17 or 21** (`java -version`). Android Studio’s embedded JBR is fine. **JDK 24** as `JAVA_HOME` can leave the build sitting on **`CONFIGURING > :app`** (AGP/SDK components are validated against LTS JDKs first); if that happens, point Gradle at JBR explicitly (see below).
 - **Android SDK** (Android Studio → SDK Manager). Typical path: `~/Library/Android/sdk`.
+- **NDK:** AGP 8.13 expects a recent NDK (often **27.x**). Install it in SDK Manager → *SDK Tools* → NDK; a missing NDK can also stall configure while the manager retries downloads.
 - **`local.properties`** in `Source/android` must set `sdk.dir=...` (see repo file; mac template included).
 
 ## Fix Windows-only Gradle (if you cloned from PC)
@@ -13,6 +14,16 @@ Project: `Source/android` (Gradle + CMake + JNI).
 Remove `org.gradle.java.home=...` from `gradle.properties` on Mac, or point it to Android Studio’s JBR, e.g.:
 
 `/Applications/Android Studio.app/Contents/jbr/Contents/Home`
+
+Uncomment the same line in `Source/android/gradle.properties` if your shell uses **JDK 24** but configure never finishes.
+
+### Gradle looks “stuck” at `50% CONFIGURING > :app`
+
+That phase is mostly **Android plugin + SDK/NDK resolution**, not your `println` lines. Check:
+
+1. **Network:** SDK Manager fetching manifests or NDK (timeouts look like a hang). Run once with `./gradlew … --info` and watch for `Downloading` / `Waiting`.
+2. **NDK installed** for the version AGP requests (`sdkmanager --list` or Android Studio SDK Tools).
+3. **Daemon JDK 21:** `export JAVA_HOME=$(/usr/libexec/java_home -v 21)` before `./gradlew`, or set `org.gradle.java.home` in `gradle.properties` to Studio’s JBR path above.
 
 ## Build APK (real phone — ARM)
 

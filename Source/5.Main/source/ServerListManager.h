@@ -5,6 +5,7 @@
 #include "ServerGroup.h"
 
 #define SLM_MAX_SERVER_NAME_LENGTH	32
+// NonPVP bytes per group in ServerList.bmd (on-disk struct). Runtime uses MAX_SERVER_LOW (20) slots per group.
 #define SLM_MAX_SERVER_COUNT		15
 
 struct SServerGroupInfo

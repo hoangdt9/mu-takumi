@@ -6,6 +6,7 @@
 #include "SimpleModulusCrypt.h"
 #include "Utilities/Log/ErrorReport.h"
 #include "WSclient.h"
+#include "TcpKeepAlive.h"
 
 #include <android/log.h>
 #include <arpa/inet.h>
@@ -716,6 +717,8 @@ MU_EXPORT int32_t ConnectionManager_Connect(
         close(fd);
         return 0;
     }
+
+    TakumiNet::ApplyGameTcpKeepAlive(fd);
 
     auto* state = new AndroidConnState(isEncrypted != 0);
     {

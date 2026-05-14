@@ -74,6 +74,9 @@ if (string.IsNullOrEmpty(publicHost))
 
 // Connect-server list (C2 F4 06): Takumi maps connect index → ServerList.bmd group via (index/20) — see ServerListManager.cpp.
 // If every ID maps to a missing BMD group, InsertServerGroup drops the line → empty sub-server list.
+// Default F4 06 must not send >15 connect slots per BMD group: client InsertServer indexes
+// m_abyNonPvpServer[(connectIndex%20+1)-1] but SLM_MAX_SERVER_COUNT is 15 (ServerListManager.h) — ids with
+// connectIndex%20 >= 15 SIGSEGV. Safe pattern: per group g use wire ids g*20 .. g*20+14 only.
 // Override: TAKUMI_CS_CONNECT_IDS=…  OR  TAKUMI_CS_CONNECT_BASE + TAKUMI_CS_CONNECT_COUNT (sequential IDs).
 var csBaseRaw = Environment.GetEnvironmentVariable("TAKUMI_CS_CONNECT_BASE");
 var csCountRaw = Environment.GetEnvironmentVariable("TAKUMI_CS_CONNECT_COUNT");
@@ -123,16 +126,25 @@ else if (!string.IsNullOrWhiteSpace(csBaseRaw) || !string.IsNullOrWhiteSpace(csC
 }
 else
 {
-    // Default: one wire id per BMD group 0..31 (id = group*20 → first sub-slot in that group). Max 32 entries per F4 06.
+    // 32 F4 06 slots max: 15 safe ids per group (see SLM_MAX_SERVER_COUNT=15 vs %20 slot math in Takumi InsertServer).
+    // Group0: 0..14, group1: 20..34, group2: 40..41 — many subs without out-of-bounds NonPVP read.
     Span<int> preset = stackalloc int[32];
-    for (var g = 0; g < 32; g++)
+    var wi = 0;
+    for (var j = 0; j < 15; j++)
     {
-        preset[g] = g * 20;
+        preset[wi++] = j;
     }
 
+    for (var j = 0; j < 15; j++)
+    {
+        preset[wi++] = 20 + j;
+    }
+
+    preset[wi++] = 40;
+    preset[wi++] = 41;
     connectServerListPacket = ConnectWire.BuildServerList602FromIds(preset, loadPercent: 0x0A);
     connectListBootDesc =
-        "default F4 06: ids 0,20,40,…,620 (32×group slot-1); override with TAKUMI_CS_CONNECT_IDS or BASE+COUNT";
+        "default F4 06: 15+15+2 safe ids (0..14,20..34,40,41); never >15 slots/group (client SLM_MAX_SERVER_COUNT)";
 }
 
 // SO_REUSEADDR can allow a *second* listener on the same port while an older host is still running (e.g. stray dotnet),
@@ -221,7 +233,8 @@ Console.WriteLine(
     "  Join version (5 bytes wire): {1}\n" +
     "  Server serial (16 bytes):    {2}\n" +
     "  Accounts:                    {3}\n" +
-    "  SimpleModulus (server decrypt): {4}",
+    "  SimpleModulus (server decrypt): {4}\n" +
+    "  Game keepalive (post-login): TAKUMI_GAME_KEEPALIVE_SECONDS (default 25; 0=off)",
     port,
     Convert.ToHexString(joinVersion),
     Encoding.ASCII.GetString(serverSerial),
@@ -259,7 +272,7 @@ try
         Console.WriteLine(acceptMsg);
         Console.Error.WriteLine(acceptMsg);
 
-        _ = HandleClientAsync(tcp, joinVersion, serverSerial, accounts, serverDecryptKeys, cts.Token);
+        _ = HandleClientAsync(tcp, joinVersion, serverSerial, accounts, serverDecryptKeys, verbose, cts.Token);
     }
 }
 finally
@@ -330,12 +343,86 @@ static void DecodeTakumiStreamXor(Span<byte> buffer, int firstXorIndex)
     }
 }
 
+static TimeSpan ParseGameKeepAliveInterval()
+{
+    var raw = Environment.GetEnvironmentVariable("TAKUMI_GAME_KEEPALIVE_SECONDS");
+    if (string.IsNullOrWhiteSpace(raw)
+        || !int.TryParse(raw, NumberStyles.Integer, CultureInfo.InvariantCulture, out var sec))
+    {
+        return TimeSpan.FromSeconds(25);
+    }
+
+    if (sec <= 0)
+    {
+        return TimeSpan.Zero;
+    }
+
+    sec = Math.Clamp(sec, 5, 600);
+    return TimeSpan.FromSeconds(sec);
+}
+
+static async Task RunGamePortKeepAliveAsync(
+    Connection connection,
+    SemaphoreSlim packetGate,
+    LoginLatch loginLatch,
+    TcpClient tcp,
+    string remote,
+    bool verbose,
+    TimeSpan interval,
+    CancellationToken cancellationToken)
+{
+    try
+    {
+        // PeriodicTimer defers the first tick by a full interval — idle NATs can drop the session before any ping.
+        // Poll quickly until login, then send the first ping soon after login and every `interval` thereafter.
+        var pollWhenNotLoggedIn = TimeSpan.FromSeconds(3);
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            if (!loginLatch.IsLoggedIn || !tcp.Connected)
+            {
+                await Task.Delay(pollWhenNotLoggedIn, cancellationToken).ConfigureAwait(false);
+                continue;
+            }
+
+            await packetGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+            try
+            {
+                await connection.Output.WriteAsync(GamePortKeepAliveWire.PingRequest, cancellationToken).ConfigureAwait(false);
+                await connection.Output.FlushAsync(cancellationToken).ConfigureAwait(false);
+                if (verbose)
+                {
+                    Console.WriteLine("[{0}] keepalive sent C1 03 71 (ping request)", remote);
+                }
+            }
+            catch (ObjectDisposedException)
+            {
+                break;
+            }
+            finally
+            {
+                packetGate.Release();
+            }
+
+            await Task.Delay(interval, cancellationToken).ConfigureAwait(false);
+        }
+    }
+    catch (OperationCanceledException)
+    {
+        // expected when client disconnects or host shuts down
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine("[{0}] keepalive task error: {1}", remote, ex.Message);
+    }
+}
+
 static async Task HandleClientAsync(
     TcpClient tcp,
     byte[] joinVersion,
     byte[] serverSerial,
     IReadOnlyDictionary<string, string> accounts,
     SimpleModulusKeys serverDecryptKeys,
+    bool verbose,
     CancellationToken ct)
 {
     var remote = tcp.Client.RemoteEndPoint?.ToString() ?? "?";
@@ -343,6 +430,7 @@ static async Task HandleClientAsync(
     {
         tcp.NoDelay = true;
         var socket = tcp.Client;
+        SocketIdleHelpers.TryApplyGamePortTcpKeepAlive(socket);
         var socketConnection = SocketConnection.Create(socket);
         using var connection = new Connection(
             socketConnection,
@@ -358,17 +446,50 @@ static async Task HandleClientAsync(
         Console.WriteLine(joinMsg);
         Console.Error.WriteLine(joinMsg);
 
-        var loggedIn = false;
+        var loginLatch = new LoginLatch();
         string? loggedAccountId = null;
         var roster = new List<CharacterRosterEntry>();
         byte[]? sessionJoinCharacterName10 = null;
         // PacketReceived may invoke handlers concurrently before the previous async handler awaits;
-        // a follow-up 12-byte F3 request could run before loggedIn=true → list ignored. Serialize per connection.
+        // a follow-up 12-byte F3 request could run before SetLoggedIn() → list ignored. Serialize per connection.
         using var packetGate = new SemaphoreSlim(1, 1);
+
+        using var connectionCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        var keepAliveInterval = ParseGameKeepAliveInterval();
+        Task? keepAliveTask = null;
+        if (keepAliveInterval > TimeSpan.Zero)
+        {
+            keepAliveTask = RunGamePortKeepAliveAsync(
+                connection,
+                packetGate,
+                loginLatch,
+                tcp,
+                remote,
+                verbose,
+                keepAliveInterval,
+                connectionCts.Token);
+        }
 
         connection.PacketReceived += OnPacketAsync;
 
-        await connection.BeginReceiveAsync().ConfigureAwait(false);
+        try
+        {
+            await connection.BeginReceiveAsync().ConfigureAwait(false);
+        }
+        finally
+        {
+            connectionCts.Cancel();
+            if (keepAliveTask is not null)
+            {
+                try
+                {
+                    await keepAliveTask.ConfigureAwait(false);
+                }
+                catch
+                {
+                }
+            }
+        }
 
         async ValueTask OnPacketAsync(ReadOnlySequence<byte> packetSeq)
         {
@@ -384,7 +505,7 @@ static async Task HandleClientAsync(
             var t = packet[0];
             Console.WriteLine("[{0}] decrypted len={1} head=0x{2:X2}", remote, packet.Length, t);
 
-            if (loggedIn && packet.Length == 15 && packet[0] == 0xC1)
+            if (loginLatch.IsLoggedIn && packet.Length == 15 && packet[0] == 0xC1)
             {
                 Console.WriteLine(
                     "[{0}] trace C1×15 b1=0x{1:X2} b2=0x{2:X2} b3=0x{3:X2} hex={4}",
@@ -400,7 +521,7 @@ static async Task HandleClientAsync(
             // ReceiveCreateCharacter expects Data->Class = Season6 protocol (e.g. DK = 0x20) — see CharacterManager PROTO_CLASS_CODES.
             if (TryFindCreateCharacterRequest(packet, remote, out var createOff, out var nameCopy, out var packedClass))
             {
-                if (!loggedIn)
+                if (!loginLatch.IsLoggedIn)
                 {
                     Console.WriteLine("[{0}] create character (F3 01) before login — ignored", remote);
                     return;
@@ -428,11 +549,51 @@ static async Task HandleClientAsync(
                 return;
             }
 
+            // Join map BEFORE delete: Android join is C1 0E F3 15 + name (14 B). Delete is C1 22 F3 02 + … (34 B).
+            // XOR-based delete detection must not run first — it can mis-read a join C3 blob as F3 02 and ACK delete.
+            // Join map: desktop SendRequestJoinMapServer (F3 03) or Android SendSelectCharacter (F3 15) then ReceiveJoinMapServer.
+            if (TryFindCharacterJoinRequest(packet, out var joinOff, out var joinName10))
+            {
+                if (!loginLatch.IsLoggedIn)
+                {
+                    Console.WriteLine("[{0}] join map (F3 03/15) before login — ignored", remote);
+                    return;
+                }
+
+                var picked = FindRosterEntry(roster, joinName10);
+                if (picked is null)
+                {
+                    Console.WriteLine(
+                        "[{0}] join map ignored — no roster match for name='{1}' (roster={2}) hex={3}",
+                        remote,
+                        Encoding.ASCII.GetString(joinName10).TrimEnd('\0'),
+                        roster.Count,
+                        Convert.ToHexString(packet));
+                    return;
+                }
+
+                var joinPkt = BuildJoinMapServer602(picked);
+                await connection.Output.WriteAsync(joinPkt, ct).ConfigureAwait(false);
+                await connection.Output.FlushAsync(ct).ConfigureAwait(false);
+                sessionJoinCharacterName10 = new byte[10];
+                Buffer.BlockCopy(joinName10, 0, sessionJoinCharacterName10, 0, 10);
+                Console.WriteLine(
+                    "[{0}] sent join map (F3 03) map={1} xy=({2},{3}) name='{4}' rosterClass=0x{5:X2} frame@{6}",
+                    remote,
+                    joinPkt[6],
+                    joinPkt[4],
+                    joinPkt[5],
+                    Encoding.ASCII.GetString(picked.Name10).TrimEnd('\0'),
+                    picked.ServerClass,
+                    joinOff);
+                return;
+            }
+
             // Delete character F3 02: C1 22 F3 02 + name[10] + resident[20] (Takumi `SendRequestDeleteCharacter` in wsclientinline.h).
             // Without this handler the client stays on MESSAGE_WAIT forever after OK on the captcha dialog.
-            if (TryFindDeleteCharacterRequest(packet, remote, out var deleteOff, out var deleteName10, out _))
+            if (TryFindDeleteCharacterRequest(packet, out var deleteOff, out var deleteName10, out _))
             {
-                if (!loggedIn)
+                if (!loginLatch.IsLoggedIn)
                 {
                     Console.WriteLine("[{0}] delete character (F3 02) before login — ignored", remote);
                     return;
@@ -469,45 +630,7 @@ static async Task HandleClientAsync(
                 return;
             }
 
-            // Join map: desktop SendRequestJoinMapServer (F3 03) or Android SendSelectCharacter (F3 15) then ReceiveJoinMapServer.
-            if (TryFindCharacterJoinRequest(packet, out var joinOff, out var joinName10))
-            {
-                if (!loggedIn)
-                {
-                    Console.WriteLine("[{0}] join map (F3 03/15) before login — ignored", remote);
-                    return;
-                }
-
-                var picked = FindRosterEntry(roster, joinName10);
-                if (picked is null)
-                {
-                    Console.WriteLine(
-                        "[{0}] join map ignored — no roster match for name='{1}' (roster={2}) hex={3}",
-                        remote,
-                        Encoding.ASCII.GetString(joinName10).TrimEnd('\0'),
-                        roster.Count,
-                        Convert.ToHexString(packet));
-                    return;
-                }
-
-                var joinPkt = BuildJoinMapServer602(picked);
-                await connection.Output.WriteAsync(joinPkt, ct).ConfigureAwait(false);
-                await connection.Output.FlushAsync(ct).ConfigureAwait(false);
-                sessionJoinCharacterName10 = new byte[10];
-                Buffer.BlockCopy(joinName10, 0, sessionJoinCharacterName10, 0, 10);
-                Console.WriteLine(
-                    "[{0}] sent join map (F3 03) map={1} xy=({2},{3}) name='{4}' rosterClass=0x{5:X2} frame@{6}",
-                    remote,
-                    joinPkt[6],
-                    joinPkt[4],
-                    joinPkt[5],
-                    Encoding.ASCII.GetString(picked.Name10).TrimEnd('\0'),
-                    picked.ServerClass,
-                    joinOff);
-                return;
-            }
-
-            if (loggedIn && TryFindGameLogoutRequest(packet, out var logoutOff, out var logoutFlag))
+            if (loginLatch.IsLoggedIn && TryFindGameLogoutRequest(packet, out var logoutOff, out var logoutFlag))
             {
                 var ack = new byte[] { 0xC1, 0x05, 0xF1, 0x02, logoutFlag };
                 await connection.Output.WriteAsync(ack, ct).ConfigureAwait(false);
@@ -516,7 +639,7 @@ static async Task HandleClientAsync(
                 return;
             }
 
-            if (loggedIn
+            if (loginLatch.IsLoggedIn
                 && sessionJoinCharacterName10 is not null
                 && TryFindMoveMapRequest(packet, out var moveOff, out _, out var mapIdx))
             {
@@ -543,7 +666,7 @@ static async Task HandleClientAsync(
                 return;
             }
 
-            if (loggedIn
+            if (loginLatch.IsLoggedIn
                 && string.Equals(Environment.GetEnvironmentVariable("TAKUMI_VERBOSE"), "1", StringComparison.OrdinalIgnoreCase)
                 && packet.Length == 15
                 && packet[0] == 0xC1
@@ -568,7 +691,7 @@ static async Task HandleClientAsync(
             // Ref: takumi Source/5.Main/source/android/AndroidNetwork.cpp SendRequestCharacterList + SendGameEncrypted.
             var listReq = TryFindCharacterListRequest(packet, out var listFrameOffset);
             if (!listReq
-                && loggedIn
+                && loginLatch.IsLoggedIn
                 && packet.Length == 12
                 && packet[0] == 0xC3)
             {
@@ -583,7 +706,7 @@ static async Task HandleClientAsync(
 
             if (listReq)
             {
-                if (!loggedIn)
+                if (!loginLatch.IsLoggedIn)
                 {
                     Console.WriteLine("[{0}] F3 00 before login — ignored", remote);
                     return;
@@ -614,7 +737,7 @@ static async Task HandleClientAsync(
                 return;
             }
 
-            if (loggedIn && packet.Length <= 24)
+            if (loginLatch.IsLoggedIn && packet.Length <= 24)
             {
                 Console.WriteLine("[{0}] post-login unmatched hex={1}", remote, Convert.ToHexString(packet));
             }
@@ -643,7 +766,7 @@ static async Task HandleClientAsync(
             // Android plain layout: ... account[10] password[20] tick[4] version[5] serial[16] (59 bytes after C3 header).
             if (head != 0xF1 || sub != 0x01 || packet.Length < 59)
             {
-                if (loggedIn
+                if (loginLatch.IsLoggedIn
                     && packet.Length <= 48
                     && string.Equals(Environment.GetEnvironmentVariable("TAKUMI_VERBOSE"), "1", StringComparison.OrdinalIgnoreCase))
                 {
@@ -691,7 +814,7 @@ static async Task HandleClientAsync(
                 return;
             }
 
-            loggedIn = true;
+            loginLatch.SetLoggedIn();
             loggedAccountId = id;
             roster.Clear();
             LoadPersistedRoster(id, roster);
@@ -844,6 +967,7 @@ static async Task HandleMinimalConnectClientAsync(
     try
     {
         tcp.NoDelay = true;
+        SocketIdleHelpers.TryApplyGamePortTcpKeepAlive(tcp.Client);
         await using var stream = tcp.GetStream();
         var buf = new byte[512];
         while (!ct.IsCancellationRequested)
@@ -1412,7 +1536,7 @@ static bool TryFindCreateCharacterRequest(ReadOnlySpan<byte> packet, string remo
 static byte[] BuildDeleteCharacterResponse(byte value) => new byte[] { 0xC1, 0x05, 0xF3, 0x02, value };
 
 /// <summary>Find PMSG_REQUEST_DELETE_CHARACTER (F3/02): C1 + Size + F3 + 02 + id[10] + resident[20] (34 bytes after full decrypt).</summary>
-static bool TryFindDeleteCharacterRequest(ReadOnlySpan<byte> packet, string remote, out int frameOffset, out byte[] name10, out byte[] resident20)
+static bool TryFindDeleteCharacterRequest(ReadOnlySpan<byte> packet, out int frameOffset, out byte[] name10, out byte[] resident20)
 {
     frameOffset = -1;
     name10 = Array.Empty<byte>();
@@ -1427,19 +1551,12 @@ static bool TryFindDeleteCharacterRequest(ReadOnlySpan<byte> packet, string remo
             continue;
         }
 
-        // Fast path: logical F3/02 + id + resident already visible (Size may rarely disagree with 0x22).
-        if (packet[i + 2] == 0xF3 && packet[i + 3] == 0x02 && i + kFrameLen <= packet.Length)
+        // Fast path: plaintext delete — Takumi is always C1 0x22 (34 bytes). Reject C1 0E F3 15 (join) etc.
+        if (packet[i + 1] == kFrameLen
+            && packet[i + 2] == 0xF3
+            && packet[i + 3] == 0x02
+            && i + kFrameLen <= packet.Length)
         {
-            if (packet[i + 1] != kFrameLen)
-            {
-                Console.WriteLine(
-                    "[{0}] delete F3/02 plaintext fast path sizeByte=0x{1:X2} (expected 0x{2:X2}) frame@{3}",
-                    remote,
-                    packet[i + 1],
-                    kFrameLen,
-                    i);
-            }
-
             frameOffset = i;
             name10 = packet.Slice(i + 4, 10).ToArray();
             resident20 = packet.Slice(i + 14, 20).ToArray();
@@ -1457,18 +1574,10 @@ static bool TryFindDeleteCharacterRequest(ReadOnlySpan<byte> packet, string remo
             continue;
         }
 
-        // Takumi delete wire is always 34 bytes (PBMSG + F3/02 + id[10] + resident[20]). The Size field
-        // should be 0x22, but some decrypt/coalesce paths leave a mismatched size byte while the tail is
-        // still a valid delete frame — do not drop the handler on that alone.
+        // After XOR, require exact C1 length 0x22 — join/select is C1 0E (14); XOR must not yield a false delete.
         if (scratch[1] != kFrameLen)
         {
-            Console.WriteLine(
-                "[{0}] delete F3/02 sizeByte=0x{1:X2} (expected 0x{2:X2}) — still accepting frame@{3} hex={4}",
-                remote,
-                scratch[1],
-                kFrameLen,
-                i,
-                Convert.ToHexString(packet.Slice(i, kFrameLen)));
+            continue;
         }
 
         frameOffset = i;
@@ -1878,4 +1987,20 @@ file static class ConnectWire
 
         return p;
     }
+}
+
+/// <summary>Wire bytes for periodic game-port keepalive (see RunGamePortKeepAliveAsync).</summary>
+file static class GamePortKeepAliveWire
+{
+    internal static ReadOnlyMemory<byte> PingRequest { get; } = new byte[] { 0xC1, 0x03, 0x71 };
+}
+
+/// <summary>Thread-safe login flag for keepalive + packet gate (visibility across tasks).</summary>
+file sealed class LoginLatch
+{
+    private int _loggedIn;
+
+    public bool IsLoggedIn => Volatile.Read(ref this._loggedIn) != 0;
+
+    public void SetLoggedIn() => Volatile.Write(ref this._loggedIn, 1);
 }

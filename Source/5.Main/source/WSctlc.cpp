@@ -5,6 +5,7 @@
 #include "wsctlc_addon.h"
 #include "Protect.h"
 #include "Reconnect.h"
+#include "TcpKeepAlive.h"
 typedef struct
 {
 	BYTE c;
@@ -253,6 +254,8 @@ int CWsctlc::Connect(char *ip_addr, unsigned short port, DWORD WinMsgNum)
 		//cLogProc.Add("Client WSAAsyncSelect error %d", WSAGetLastError());
 		return FALSE;
     }
+
+	TakumiNet::ApplyGameTcpKeepAlive(m_socket);
 	return 1;
 }
 
@@ -427,7 +430,7 @@ void CWsctlc::LogHexPrintS( BYTE *buf, int size)
 		}		
 		fprintf(m_logfp, "S 0x%02x %d\n", buf[2], buf[3]);
 	} 
-	// 임시로 막음 else fprintf(m_logfp, "S 0x%02x %d\n", buf[3], buf[4]);
+	// ??÷? ???? else fprintf(m_logfp, "S 0x%02x %d\n", buf[3], buf[4]);
 
 	//fprintf(m_logfp, "S ");
 	//for( int n=0; n<size; n++) fprintf(m_logfp, "%02x ", buf[n]);

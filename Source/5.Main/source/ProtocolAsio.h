@@ -20,6 +20,8 @@
 #include <asio/ts/buffer.hpp>
 #include <asio/ts/internet.hpp>
 
+#include "TcpKeepAlive.h"
+
 
 namespace olc
 {
@@ -300,6 +302,11 @@ namespace olc
 						{
 							if (!ec)
 							{
+#if defined(_WIN32)
+								TakumiNet::ApplyGameTcpKeepAlive(reinterpret_cast<SOCKET>(m_socket.native_handle()));
+#else
+								TakumiNet::ApplyGameTcpKeepAlive(static_cast<int>(m_socket.native_handle()));
+#endif
 								//ReadHeader();
 
 								// First thing server will do is send packet to be validated

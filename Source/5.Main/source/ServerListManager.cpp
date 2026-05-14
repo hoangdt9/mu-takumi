@@ -128,13 +128,16 @@ void CServerListManager::InsertServerGroup(int iConnectIndex, int iServerPercent
 	else
 	{
 		pServerGroup = new CServerGroup;
-		
-		if( MakeServerGroup(iConnectIndex/20, pServerGroup) == false)
+
+		if (MakeServerGroup(iConnectIndex / 20, pServerGroup) == false)
+		{
+			delete pServerGroup;
 			return;
-		
+		}
+
 		m_mapServerGroup.insert(type_mapServerGroup::value_type(pServerGroup->m_iSequence, pServerGroup));
-	}	
-	
+	}
+
 	InsertServer(pServerGroup, iConnectIndex, iServerPercent);
 	
 	m_iterServerGroup = m_mapServerGroup.begin();
@@ -169,17 +172,43 @@ void CServerListManager::InsertServer(CServerGroup* pServerGroup, int iConnectIn
 {
 	CServerInfo* pServerInfo = new CServerInfo;
 	pServerInfo->m_iSequence = pServerGroup->GetServerSize();
-	pServerInfo->m_iIndex = (iConnectIndex%20)+1;
+
+	int mod = iConnectIndex % 20;
+	if (mod < 0)
+	{
+		mod += 20;
+	}
+
+	pServerInfo->m_iIndex = mod + 1;
+	if (pServerInfo->m_iIndex < 1)
+	{
+		pServerInfo->m_iIndex = 1;
+	}
+	else if (pServerInfo->m_iIndex > MAX_SERVER_LOW)
+	{
+		pServerInfo->m_iIndex = MAX_SERVER_LOW;
+	}
+
+	int idx = pServerInfo->m_iIndex - 1;
+	if (idx < 0)
+	{
+		idx = 0;
+	}
+	else if (idx >= MAX_SERVER_LOW)
+	{
+		idx = MAX_SERVER_LOW - 1;
+	}
+
 	pServerInfo->m_iConnectIndex = iConnectIndex;
 	pServerInfo->m_iPercent = iServerPercent;
-	pServerInfo->m_byNonPvP = pServerGroup->m_abyNonPvpServer[pServerInfo->m_iIndex-1];
+	pServerInfo->m_byNonPvP = pServerGroup->m_abyNonPvpServer[idx];
 
 	int iTextIndex;
 	if (iServerPercent >= 128)
 	{
 		iTextIndex = 560;
 	}
-	else if(iServerPercent >= 100)
+	else if (iServerPercent >= 100)
 	{
 		iTextIndex = 561;
 	}
@@ -188,29 +217,67 @@ void CServerListManager::InsertServer(CServerGroup* pServerGroup, int iConnectIn
 		iTextIndex = 562;
 	}
 
+	const char* loadText = GlobalText[iTextIndex];
+	if (loadText == NULL)
+	{
+		loadText = "";
+	}
+
+	const size_t nameCap = sizeof(pServerInfo->m_bName);
+
 	switch (pServerInfo->m_byNonPvP)
 	{
 	case 0:
-		sprintf(pServerInfo->m_bName, "%s-%d %s", pServerGroup->m_szName,
-			pServerInfo->m_iIndex, GlobalText[iTextIndex]);
+		snprintf(
+			pServerInfo->m_bName,
+			nameCap,
+			"%s-%d %s",
+			pServerGroup->m_szName,
+			pServerInfo->m_iIndex,
+			loadText);
 		break;
 
 	case 1:
-		sprintf(pServerInfo->m_bName, "%s-%d(Non-PVP) %s", pServerGroup->m_szName,
-			pServerInfo->m_iIndex, GlobalText[iTextIndex]);
+		snprintf(
+			pServerInfo->m_bName,
+			nameCap,
+			"%s-%d(Non-PVP) %s",
+			pServerGroup->m_szName,
+			pServerInfo->m_iIndex,
+			loadText);
 		break;
 
 	case 2:
-		sprintf(pServerInfo->m_bName, "%s-%d(Gold PVP) %s", pServerGroup->m_szName,
-			pServerInfo->m_iIndex, GlobalText[iTextIndex]);
+		snprintf(
+			pServerInfo->m_bName,
+			nameCap,
+			"%s-%d(Gold PVP) %s",
+			pServerGroup->m_szName,
+			pServerInfo->m_iIndex,
+			loadText);
 		break;
 
 	case 3:
-		sprintf(pServerInfo->m_bName, "%s-%d(Gold) %s", pServerGroup->m_szName,
-			pServerInfo->m_iIndex, GlobalText[iTextIndex]);
+		snprintf(
+			pServerInfo->m_bName,
+			nameCap,
+			"%s-%d(Gold) %s",
+			pServerGroup->m_szName,
+			pServerInfo->m_iIndex,
+			loadText);
+		break;
+
+	default:
+		snprintf(
+			pServerInfo->m_bName,
+			nameCap,
+			"%s-%d %s",
+			pServerGroup->m_szName,
+			pServerInfo->m_iIndex,
+			loadText);
 		break;
 	}
-	
+
 	pServerGroup->InsertServerInfo(pServerInfo);
 }
 

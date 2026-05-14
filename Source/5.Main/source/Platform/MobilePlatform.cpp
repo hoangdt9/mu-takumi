@@ -45,9 +45,7 @@ std::string MU_GetFirstExistingPath(std::initializer_list<const char*> candidate
 } // namespace
 
 #if defined(__ANDROID__)
-namespace
-{
-void MU_AndroidCallActivityVoidMethod(const char* methodName, const char* methodSig)
+static void MU_AndroidCallActivityVoidMethod(const char* methodName, const char* methodSig)
 {
     const void* pActivity = sapp_android_get_native_activity();
     if (pActivity == nullptr)
@@ -98,7 +96,73 @@ void MU_AndroidCallActivityVoidMethod(const char* methodName, const char* method
         vm->DetachCurrentThread();
     }
 }
-} // namespace
+
+void MU_AndroidPlayLoginIntroMoviePath(const char* utf8PathAbs)
+{
+    if (utf8PathAbs == nullptr || utf8PathAbs[0] == '\0')
+    {
+        return;
+    }
+
+    const void* pActivity = sapp_android_get_native_activity();
+    if (pActivity == nullptr)
+    {
+        return;
+    }
+
+    auto* nativeActivity = static_cast<ANativeActivity*>(const_cast<void*>(pActivity));
+    JavaVM* vm = nativeActivity->vm;
+    JNIEnv* env = nullptr;
+    const jint getEnvResult = vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6);
+    bool needDetach = false;
+    if (getEnvResult == JNI_EDETACHED)
+    {
+        if (vm->AttachCurrentThread(&env, nullptr) != JNI_OK || env == nullptr)
+        {
+            return;
+        }
+        needDetach = true;
+    }
+    else if (getEnvResult != JNI_OK || env == nullptr)
+    {
+        return;
+    }
+
+    jclass clazz = env->GetObjectClass(nativeActivity->clazz);
+    if (clazz != nullptr)
+    {
+        jmethodID mid = env->GetMethodID(clazz, "playLoginIntroMovie", "(Ljava/lang/String;)V");
+        if (mid == nullptr)
+        {
+            env->ExceptionClear();
+        }
+        else
+        {
+            jstring jPath = env->NewStringUTF(utf8PathAbs);
+            if (jPath != nullptr)
+            {
+                env->CallVoidMethod(nativeActivity->clazz, mid, jPath);
+                env->DeleteLocalRef(jPath);
+            }
+        }
+        if (env->ExceptionCheck())
+        {
+            env->ExceptionDescribe();
+            env->ExceptionClear();
+        }
+        env->DeleteLocalRef(clazz);
+    }
+
+    if (needDetach)
+    {
+        vm->DetachCurrentThread();
+    }
+}
+
+void MU_AndroidStopLoginIntroMovie()
+{
+    MU_AndroidCallActivityVoidMethod("stopLoginIntroMovie", "()V");
+}
 
 static void MU_AndroidSyncImeBridgeBounds(int x, int y, int w, int h)
 {

@@ -725,6 +725,13 @@ BOOL CWsctlc::Connect(char* ipAddr, unsigned short port, DWORD)
         Close();
     }
 
+#if defined(__ANDROID__)
+    // Must be set before ConnectionManager_Connect: the recv thread can deliver C2 F4 06 (connect
+    // server on-accept) before this function resumes. If m_skipRecvBuxXor is still false and getpeername
+    // fails transiently, gProtect.DecryptData corrupts plaintext and sub-server list never parses.
+    m_skipRecvBuxXor = IsConnectServerPort(port);
+#endif
+
     const std::wstring hostWide = ToWideString(ipAddr);
     const int32_t handle = ConnectionManager_Connect(
         hostWide.c_str(),
@@ -737,6 +744,9 @@ BOOL CWsctlc::Connect(char* ipAddr, unsigned short port, DWORD)
 
     if (handle <= 0)
     {
+#if defined(__ANDROID__)
+        m_skipRecvBuxXor = false;
+#endif
         const int32_t lastErr = ConnectionManager_GetLastConnectErrno();
         char errBuf[128] = {};
         if (lastErr != 0)
@@ -754,7 +764,6 @@ BOOL CWsctlc::Connect(char* ipAddr, unsigned short port, DWORD)
     }
 
     m_socket = static_cast<SOCKET>(handle);
-    m_skipRecvBuxXor = IsConnectServerPort(port);
     g_ErrorReport.Write(
         "[Android Socket] connected ip=%s port=%d handle=%d [AndroidLogin] native CM ok\r\n",
         ipAddr,

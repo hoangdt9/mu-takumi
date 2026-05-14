@@ -348,7 +348,7 @@ float CNewUINPCDialogue::GetLayerDepth()
 void CNewUINPCDialogue::LoadImages()
 {
 	LoadBitmap("Interface\\newui_msgbox_back.jpg", IMAGE_ND_BACK, GL_LINEAR);
-	LoadBitmap("Interface\\newui_item_back04.tga", IMAGE_ND_TOP, GL_LINEAR);
+	LoadBitmap("Interface\\newui_item_back01.tga", IMAGE_ND_TOP, GL_LINEAR);
 	LoadBitmap("Interface\\newui_item_back02-L.tga", IMAGE_ND_LEFT, GL_LINEAR);
 	LoadBitmap("Interface\\newui_item_back02-R.tga", IMAGE_ND_RIGHT, GL_LINEAR);
 	LoadBitmap("Interface\\newui_item_back03.tga", IMAGE_ND_BOTTOM, GL_LINEAR);

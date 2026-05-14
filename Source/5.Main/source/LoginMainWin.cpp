@@ -16,6 +16,11 @@
 #include "ZzzCharacter.h"
 #include "wsclientinline.h"
 
+#if defined(__ANDROID__)
+#include <unistd.h>
+#include "Platform/MobilePlatform.h"
+#endif
+
 #ifdef MOVIE_DIRECTSHOW
 #include <dshow.h>
 #include "MovieScene.h"
@@ -39,9 +44,9 @@ void CLoginMainWin::Create()
 {
 	for (int i = 0; i <= LMW_BTN_CREDIT; ++i)
 		m_aBtn[i].Create(54, 30, BITMAP_LOG_IN+4 + i, 3, 2, 1);
-#ifdef MOVIE_DIRECTSHOW
+#if defined(MOVIE_DIRECTSHOW) || defined(__ANDROID__)
 	m_aBtn[LMW_BTN_MOVIE].Create(54, 30, BITMAP_LOG_IN+15, 3, 2, 1);
-#endif	// MOVIE_DIRECTSHOW
+#endif
 
 	CWin::Create(CInput::Instance().GetScreenWidth() - 30 * 2,
 		m_aBtn[0].GetHeight(), -2);
@@ -65,10 +70,10 @@ void CLoginMainWin::SetPosition(int nXCoord, int nYCoord)
 	m_aBtn[LMW_BTN_CREDIT].SetPosition(
 		nXCoord + CWin::GetWidth() - m_aBtn[LMW_BTN_CREDIT].GetWidth(),
 		nYCoord);
-#ifdef MOVIE_DIRECTSHOW
+#if defined(MOVIE_DIRECTSHOW) || defined(__ANDROID__)
 	m_aBtn[LMW_BTN_MOVIE].SetPosition(m_aBtn[LMW_BTN_CREDIT].GetXPos()
 		- 10 - m_aBtn[LMW_BTN_MOVIE].GetWidth(), nYCoord);
-#endif	// MOVIE_DIRECTSHOW
+#endif
 	m_sprDeco.SetPosition(
 		m_aBtn[LMW_BTN_CREDIT].GetXPos(), m_aBtn[LMW_BTN_CREDIT].GetYPos());
 }
@@ -114,7 +119,7 @@ void CLoginMainWin::UpdateWhileActive(double dDeltaTick)
 		::StopMp3(g_lpszMp3[MUSIC_MAIN_THEME]);
 		::PlayMp3(g_lpszMp3[MUSIC_MUTHEME]);
 	}
-#ifdef MOVIE_DIRECTSHOW
+#if defined(MOVIE_DIRECTSHOW)
 	else if (m_aBtn[LMW_BTN_MOVIE].IsClick())
 	{
 		g_pMovieScene = new CMovieScene;
@@ -129,7 +134,39 @@ void CLoginMainWin::UpdateWhileActive(double dDeltaTick)
 		CUIMng& rUIMng = CUIMng::Instance();
 		rUIMng.SetMoving(true);
 	}
-#endif	// MOVIE_DIRECTSHOW
+#elif defined(__ANDROID__)
+	else if (m_aBtn[LMW_BTN_MOVIE].IsClick())
+	{
+		CUIMng& rUIMng = CUIMng::Instance();
+		if (rUIMng.IsMoving())
+		{
+			return;
+		}
+		// Same file as PC DirectShow path (LoginMainWin / MovieScene): MOVIE_FILE_WMV in _define.h
+		char pathRel[512];
+		{
+			const char* src = MOVIE_FILE_WMV;
+			size_t o = 0;
+			for (; src[o] && o + 1 < sizeof(pathRel); ++o)
+			{
+				const char c = src[o];
+				pathRel[o] = (c == '\\') ? '/' : c;
+			}
+			pathRel[o] = '\0';
+		}
+		char resolved[8192];
+		if (access(pathRel, F_OK) != 0 || realpath(pathRel, resolved) == nullptr)
+		{
+			g_ErrorReport.Write(
+				"[AndroidLogin] intro movie missing: use same asset as main client (%s).\r\n",
+				MOVIE_FILE_WMV);
+			return;
+		}
+		::StopMp3(g_lpszMp3[MUSIC_MAIN_THEME]);
+		rUIMng.SetMoving(true);
+		MU_AndroidPlayLoginIntroMoviePath(resolved);
+	}
+#endif
 }
 
 void CLoginMainWin::RenderControls()

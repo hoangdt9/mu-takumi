@@ -131,6 +131,10 @@ fi
 if [[ "$WITH_GAMEHOST" -eq 1 ]]; then
   echo "  game-host:       ${TAKUMI_GAME_PUBLISH:-55901} (F4 03 phải khớp .env)"
 fi
+echo "  LAN check:       ./scripts/check-lan-connect-ports.sh"
+echo "  Smoke C2 local:  ./scripts/smoke-connect-from-host.sh 127.0.0.1 ${TAKUMI_CONNECT_PUBLISH:-44605}"
+echo "  USB (AP isolation): ./scripts/adb-reverse-takumi-dev.sh  rồi build APK -PmuBootstrapAdbReverse=true"
+echo "  Nếu APK không recv C2: dừng container rồi chạy host (bỏ NAT Docker): docker compose stop legacy-login && ./scripts/run-legacy-login-host.sh"
 echo ""
 
 if [[ "$DETACH" -eq 1 ]]; then

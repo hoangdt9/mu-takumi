@@ -71,6 +71,7 @@
 #include "FatigueTimeSystem.h"
 #endif //PBG_ADD_SECRETBUFF
 #include "ServerListManager.h"
+#include "CameraMove.h"
 #ifdef PBG_ADD_NEWCHAR_MONK_SKILL
 #include "MonkSystem.h"
 
@@ -215,6 +216,21 @@ namespace
 		return false;
 	}
 
+	bool IsLoopbackIPv4(const char* address)
+	{
+		unsigned int a = 0;
+		unsigned int b = 0;
+		unsigned int c = 0;
+		unsigned int d = 0;
+
+		if (ParseIPv4Octets(address, a, b, c, d) == false)
+		{
+			return false;
+		}
+
+		return a == 127;
+	}
+
 	const char* ResolveServerConnectAddress(const char* address,char* output,size_t outputSize)
 	{
 		if(output == 0 || outputSize == 0)
@@ -231,6 +247,19 @@ namespace
 
 		strcpy_s(output,outputSize,address);
 
+#if defined(__ANDROID__) || defined(MU_IOS)
+		if (szServerIpAddress != 0 && szServerIpAddress[0] != '\0'
+			&& IsLoopbackIPv4(szServerIpAddress)
+			&& IsPrivateIPv4(address)
+			&& !IsLoopbackIPv4(address))
+		{
+			g_ErrorReport.Write(
+				"[NetworkFallback] CS via loopback; F4 03 private host %s -> 127.0.0.1 (adb reverse / same-host game hop)\r\n",
+				address);
+			strcpy_s(output, outputSize, "127.0.0.1");
+		}
+		else
+#endif
 		if(IsPrivateIPv4(address) != 0 && szServerIpAddress != 0 && szServerIpAddress[0] != 0 && IsPrivateIPv4(szServerIpAddress) == 0)
 		{
 			g_ErrorReport.Write("[NetworkFallback] rewrite private ip %s -> %s\r\n",address,szServerIpAddress);
@@ -440,6 +469,16 @@ void ReceiveServerList(BYTE* ReceiveBuffer, int Size)
 		rUIMng.ShowWin(&rUIMng.m_LoginMainWin);
 		rUIMng.ShowWin(&rUIMng.m_ServerSelWin);
 		rUIMng.m_ServerSelWin.UpdateDisplay();
+#if defined(__ANDROID__) || defined(MU_IOS)
+		// Login scene keeps a tour-camera + semi-transparent overlay while IsTourMode();
+		// once we have F4 06 data, drop tour so sub-server buttons are not stuck under the intro pass.
+#ifdef PJH_NEW_SERVER_SELECT_MAP
+		CCameraMove::GetInstancePtr()->SetTourMode(FALSE, FALSE, 0);
+#else
+		CCameraMove::GetInstancePtr()->SetTourMode(FALSE, FALSE);
+#endif
+		CCameraMove::GetInstancePtr()->StopCameraWalk(true);
+#endif
 	}
 
 	g_ErrorReport.Write("Success Receive Server List.\r\n");
@@ -482,6 +521,13 @@ void ReceiveServerConnect(BYTE* ReceiveBuffer) //Recebe informação do ConnectS
 				static_cast<int>(Data->Port));
 		}
 	}
+	else
+	{
+		g_ErrorReport.Write(
+			"[ReceiveServerConnect] CreateSocket failed rawIp=%s port=%d (check adb reverse game port vs .env)\r\n",
+			IP,
+			static_cast<int>(Data->Port));
+	}
 #else
 #if defined(__ANDROID__)
 	// NEW_PROTOCOL_SYSTEM builds use Asio CustomClient on PC; Android uses JNI + SocketClient for MU TCP.
@@ -502,6 +548,13 @@ void ReceiveServerConnect(BYTE* ReceiveBuffer) //Recebe informação do ConnectS
 				static_cast<unsigned int>(g_ServerPort),
 				static_cast<int>(Data->Port));
 		}
+	}
+	else
+	{
+		g_ErrorReport.Write(
+			"[ReceiveServerConnect] CreateSocket failed rawIp=%s port=%d (check adb reverse game port vs .env)\r\n",
+			IP,
+			static_cast<int>(Data->Port));
 	}
 #else
 	gProtocolSend.DisconnectServer();

@@ -249,7 +249,6 @@ if (connectPort > 0)
         connectListener.Start();
         var boundMsg = $"[connect] listening on *:{connectPort} (bound synchronously before game accept loop)";
         Console.WriteLine(boundMsg);
-        Console.Error.WriteLine(boundMsg);
     }
     catch (SocketException ex) when (ex.SocketErrorCode == SocketError.AddressAlreadyInUse)
     {

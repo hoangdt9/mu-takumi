@@ -197,6 +197,7 @@ static void android_set_data_dir_early()
 #include "UIMng.h"
 #include "UIManager.h"
 #include "UIMapName.h"
+#include "_enum.h"
 
 float GetAdaptiveEffectSpawnScale();
 bool ShouldThrottleAdaptiveEffectSpawn(int kind, int type, vec3_t Position, int SubType, float Scale, OBJECT* Owner);
@@ -258,6 +259,12 @@ extern BOOL g_bGameServerConnected;
 extern BYTE g_byPacketSerialSend;
 extern bool First;
 extern int FirstTime;
+extern char* g_lpszMp3[NUM_MUSIC];
+
+namespace
+{
+constexpr Sint32 kSdlUserEventLoginIntroMovieFinished = 9001;
+}
 
 static void UpdateAndroidScreenMetrics(int screenW, int screenH)
 {
@@ -3548,6 +3555,7 @@ static UITexture LoadUITextureAsset(const char* assetPath)
     stbi_set_flip_vertically_on_load(1);   // flip so (0,0) = bottom-left for GL
     int w = 0, h = 0, comp = 0;
     stbi_uc* pixels = stbi_load_from_memory(buf.data(), static_cast<int>(size), &w, &h, &comp, 4);
+    stbi_set_flip_vertically_on_load(0);   // do not leak flip flag into OZJ / GlobalBitmap
     if (!pixels)
     {
         LOGE("LoadUITextureAsset: stbi decode failed for '%s'", assetPath);
@@ -5757,6 +5765,14 @@ static void HandleSDLEvent(const SDL_Event& ev, int& screenW, int& screenH)
         Destroy = true;
         break;
 
+    case SDL_USEREVENT:
+        if (ev.user.code == kSdlUserEventLoginIntroMovieFinished)
+        {
+            CUIMng::Instance().SetMoving(false);
+            ::PlayMp3(g_lpszMp3[MUSIC_MAIN_THEME]);
+        }
+        break;
+
     case SDL_APP_WILLENTERBACKGROUND:
     case SDL_APP_DIDENTERBACKGROUND:
         g_bWndActive = false;
@@ -6712,6 +6728,17 @@ Java_com_muonline_client_MuMainNativeActivity_nativeOnImeEditorAction(JNIEnv*, j
     up.key.keysym.scancode = SDL_SCANCODE_RETURN;
     up.key.keysym.mod = KMOD_NONE;
     QueueSyntheticSDLEvent(up);
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_muonline_client_MuMainNativeActivity_nativeLoginMovieComplete(JNIEnv*, jobject)
+{
+    SDL_Event e {};
+    e.type = SDL_USEREVENT;
+    e.user.code = kSdlUserEventLoginIntroMovieFinished;
+    e.user.data1 = nullptr;
+    e.user.data2 = nullptr;
+    QueueSyntheticSDLEvent(e);
 }
 
 #if defined(__ANDROID__) || defined(MU_IOS)

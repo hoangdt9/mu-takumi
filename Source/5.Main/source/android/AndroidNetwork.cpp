@@ -3,6 +3,7 @@
 #include "stdafx.h"
 
 #include "AndroidNetwork.h"
+#include "GameConfig/MuLanDefaults.h"
 #include "SimpleModulusCrypt.h"
 #include "Utilities/Log/ErrorReport.h"
 #include "WSclient.h"
@@ -15,7 +16,9 @@
 #include <linux/tcp.h>
 #include <netinet/in.h>
 #include <poll.h>
+#include <sys/ioctl.h>
 #include <sys/socket.h>
+#include <sys/time.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -397,14 +400,25 @@ void RecvLoop(
                 continue;
             }
 
-            NET_LOGE("[fd=%d] recv failed: count=%d errno=%d", handle, count, errno);
+            const int recvErr = count < 0 ? errno : 0;
+            NET_LOGE("[fd=%d] recv failed: count=%d errno=%d", handle, count, recvErr);
             __android_log_print(
                 ANDROID_LOG_INFO,
                 "TakumiErrorReport",
                 "[AndroidLogin] recv closed/error fd=%d count=%d errno=%d",
                 handle,
                 count,
-                count < 0 ? errno : 0);
+                recvErr);
+            if (count < 0 && (recvErr == EAGAIN || recvErr == EWOULDBLOCK))
+            {
+                __android_log_print(
+                    ANDROID_LOG_ERROR,
+                    "TakumiErrorReport",
+                    "[AndroidLogin] recv EAGAIN/EWOULDBLOCK (likely SO_RCVTIMEO): no C2 from connect server. "
+                    "On Mac host: cd server-next && ./scripts/check-lan-connect-ports.sh && "
+                    "./scripts/smoke-connect-from-host.sh 127.0.0.1 44605 — if smoke fails, "
+                    "docker compose stop legacy-login && ./scripts/run-legacy-login-host.sh");
+            }
             break;
         }
 
@@ -722,6 +736,21 @@ MU_EXPORT int32_t ConnectionManager_Connect(
 
     TakumiNet::ApplyGameTcpKeepAlive(fd);
 
+    if (static_cast<std::uint16_t>(port) == MuLanDefaults::kDefaultFirstHopConnectPort)
+    {
+        timeval rcvTimeout {};
+        rcvTimeout.tv_sec = 15;
+        if (setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &rcvTimeout, sizeof(rcvTimeout)) != 0)
+        {
+            __android_log_print(
+                ANDROID_LOG_WARN,
+                "TakumiErrorReport",
+                "[AndroidLogin] SO_RCVTIMEO(fd=%d) failed errno=%d",
+                fd,
+                errno);
+        }
+    }
+
     auto* state = new AndroidConnState(isEncrypted != 0);
     {
         std::lock_guard<std::mutex> statsLock(state->statsMutex);
@@ -738,6 +767,23 @@ MU_EXPORT int32_t ConnectionManager_Connect(
     if (onSocketReady != nullptr)
     {
         onSocketReady(static_cast<int32_t>(fd), onSocketReadyUserData);
+    }
+
+    {
+        int queuedBytes = 0;
+        if (ioctl(fd, FIONREAD, &queuedBytes) == 0)
+        {
+            __android_log_print(
+                ANDROID_LOG_INFO,
+                "TakumiErrorReport",
+                "[AndroidLogin] after onSocketReady FIONREAD=%d fd=%d (if server pushed C2 on accept, often >0 before recv thread)",
+                queuedBytes,
+                fd);
+            g_ErrorReport.Write(
+                "[AndroidLogin] after onSocketReady FIONREAD=%d fd=%d\r\n",
+                queuedBytes,
+                fd);
+        }
     }
 
     const auto runningFlag = state->running;

@@ -4,6 +4,11 @@ import android.app.NativeActivity;
 import android.content.Context;
 import android.content.res.AssetManager;
 import android.graphics.Color;
+import android.graphics.SurfaceTexture;
+import android.media.MediaPlayer;
+import android.util.Log;
+import android.view.Surface;
+import android.view.TextureView;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.InputType;
@@ -43,7 +48,15 @@ public class MuMainNativeActivity extends NativeActivity {
     /** IME action bar (Done / Go / Next): same as pressing Return on a physical keyboard. */
     private static native void nativeOnImeEditorAction(int actionCode);
 
+    /** Called when Android intro video (MediaPlayer) ends or is dismissed — unblocks native login scene. */
+    private native void nativeLoginMovieComplete();
+
     private BridgeEditText imeBridge;
+
+    private static final String TAG_MOVIE = "TakumiLoginMovie";
+    private FrameLayout loginMovieOverlay;
+    private TextureView loginMovieTexture;
+    private MediaPlayer loginMoviePlayer;
 
     private void resetImeBridgeBuffer() {
         if (imeBridge == null) {
@@ -137,6 +150,106 @@ public class MuMainNativeActivity extends NativeActivity {
                     decor.requestFocus();
                 }
             });
+    }
+
+    /**
+     * JNI from native: same intro asset as main PC client ({@code Data/Movie/MU.wmv}, see {@code MOVIE_FILE_WMV}).
+     * Path is absolute on device storage after data unpack.
+     */
+    public void playLoginIntroMovie(String absolutePath) {
+        runOnUiThread(
+            () -> {
+                stopLoginIntroMovieInternal(false);
+                if (absolutePath == null || absolutePath.isEmpty()) {
+                    Log.w(TAG_MOVIE, "playLoginIntroMovie: empty path");
+                    return;
+                }
+                loginMovieOverlay = new FrameLayout(this);
+                loginMovieOverlay.setLayoutParams(
+                    new FrameLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+                loginMovieOverlay.setClickable(true);
+                loginMovieOverlay.setOnClickListener(v -> stopLoginIntroMovieInternal(true));
+
+                loginMovieTexture = new TextureView(this);
+                loginMovieTexture.setLayoutParams(
+                    new FrameLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+                loginMovieOverlay.addView(loginMovieTexture);
+                loginMovieOverlay.setBackgroundColor(Color.BLACK);
+
+                addContentView(
+                    loginMovieOverlay,
+                    new FrameLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+
+                loginMovieTexture.setSurfaceTextureListener(
+                    new TextureView.SurfaceTextureListener() {
+                        @Override
+                        public void onSurfaceTextureAvailable(SurfaceTexture surfaceTexture, int w, int h) {
+                            try {
+                                loginMoviePlayer = new MediaPlayer();
+                                loginMoviePlayer.setDataSource(absolutePath);
+                                loginMoviePlayer.setSurface(new Surface(surfaceTexture));
+                                loginMoviePlayer.setOnCompletionListener(
+                                    mp -> runOnUiThread(() -> stopLoginIntroMovieInternal(true)));
+                                loginMoviePlayer.setOnErrorListener(
+                                    (mp, what, extra) -> {
+                                        Log.e(TAG_MOVIE, "MediaPlayer error what=" + what + " extra=" + extra);
+                                        runOnUiThread(() -> stopLoginIntroMovieInternal(true));
+                                        return true;
+                                    });
+                                loginMoviePlayer.prepare();
+                                loginMoviePlayer.start();
+                            } catch (Exception e) {
+                                Log.e(TAG_MOVIE, "playLoginIntroMovie failed: " + e.getMessage());
+                                stopLoginIntroMovieInternal(true);
+                            }
+                        }
+
+                        @Override
+                        public void onSurfaceTextureSizeChanged(SurfaceTexture surfaceTexture, int w, int h) {}
+
+                        @Override
+                        public boolean onSurfaceTextureDestroyed(SurfaceTexture surfaceTexture) {
+                            stopLoginIntroMovieInternal(false);
+                            return true;
+                        }
+
+                        @Override
+                        public void onSurfaceTextureUpdated(SurfaceTexture surfaceTexture) {}
+                    });
+            });
+    }
+
+    public void stopLoginIntroMovie() {
+        runOnUiThread(() -> stopLoginIntroMovieInternal(true));
+    }
+
+    private void stopLoginIntroMovieInternal(boolean notifyNativeComplete) {
+        final boolean hadSomething = (loginMoviePlayer != null || loginMovieOverlay != null);
+        if (loginMoviePlayer != null) {
+            try {
+                loginMoviePlayer.stop();
+            } catch (Exception ignored) {
+            }
+            try {
+                loginMoviePlayer.release();
+            } catch (Exception ignored) {
+            }
+            loginMoviePlayer = null;
+        }
+        if (loginMovieOverlay != null) {
+            ViewGroup parent = (ViewGroup) loginMovieOverlay.getParent();
+            if (parent != null) {
+                parent.removeView(loginMovieOverlay);
+            }
+        }
+        loginMovieOverlay = null;
+        loginMovieTexture = null;
+        if (notifyNativeComplete && hadSomething) {
+            nativeLoginMovieComplete();
+        }
     }
 
     private final class BridgeEditText extends EditText {
@@ -327,6 +440,12 @@ public class MuMainNativeActivity extends NativeActivity {
                 | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                 | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
                 | View.SYSTEM_UI_FLAG_FULLSCREEN);
+    }
+
+    @Override
+    protected void onPause() {
+        stopLoginIntroMovieInternal(true);
+        super.onPause();
     }
 
     @Override

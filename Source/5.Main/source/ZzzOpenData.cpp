@@ -260,7 +260,7 @@ void OpenPlayers()
 		gLoadData.AccessModel( MODEL_BOOTS +34+i, "Data\\Player\\", "CW_BootMale",i+1);
 	}
 
-	//마검사는 제외하고 투구도 추가
+	//?????? ??????? ?????? ???
 	gLoadData.AccessModel( MODEL_HELM +34, "Data\\Player\\", "CW_HelmMale", 1);
 	gLoadData.AccessModel( MODEL_HELM +35, "Data\\Player\\", "CW_HelmMale", 2);
 	gLoadData.AccessModel( MODEL_HELM +36, "Data\\Player\\", "CW_HelmMale", 3);
@@ -2176,7 +2176,7 @@ void OpenNpc(int Type)
         gLoadData.OpenTexture(Type,"Npc\\");
 		break;
 
-    //  데비아스, 로랜시아 추가 상점 NPC
+    //  ??????, ???????? ??? ???? NPC
 	case MODEL_DEVIAS_TRADER:
 		gLoadData.AccessModel( MODEL_DEVIAS_TRADER, "Data\\Npc\\", "DeviasTrader", 1);
 		gLoadData.OpenTexture(Type, "Npc\\");
@@ -2188,12 +2188,12 @@ void OpenNpc(int Type)
 		gLoadData.OpenTexture ( MODEL_ANGEL, "Npc\\" );
 		break;
 #endif	// _PVP_ATTACK_GUARD
-    case MODEL_NPC_BREEDER:    //  조련사 NPC.
+    case MODEL_NPC_BREEDER:    //  ????? NPC.
         gLoadData.AccessModel ( MODEL_NPC_BREEDER, "Data\\Npc\\", "Breeder" );
         gLoadData.OpenTexture ( MODEL_NPC_BREEDER, "Npc\\" );
         break;
 #ifdef _PVP_MURDERER_HERO_ITEM
-	case MODEL_HERO_SHOP:	// 영웅 상점
+	case MODEL_HERO_SHOP:	// ???? ????
         gLoadData.AccessModel ( MODEL_HERO_SHOP, "Data\\Npc\\", "HeroNpc" );
         gLoadData.OpenTexture ( MODEL_HERO_SHOP, "Npc\\" );
 		break;
@@ -2471,7 +2471,7 @@ void OpenNpc(int Type)
 		break;
 #endif	// ASG_ADD_TIME_LIMIT_QUEST_NPC
 #ifdef ASG_ADD_KARUTAN_NPC
-	case MODEL_KARUTAN_NPC_REINA:	// 로랜시장 NPC 잡화상인 크리스틴과 동일.
+	case MODEL_KARUTAN_NPC_REINA:	// ???????? NPC ??????? ???????? ????.
 		gLoadData.AccessModel(MODEL_KARUTAN_NPC_REINA, "Data\\Npc\\", "UnitedMarketPlace_christine");
 		gLoadData.OpenTexture(MODEL_KARUTAN_NPC_REINA, "Npc\\");
 		break;
@@ -3690,7 +3690,7 @@ void OpenMonsterModel(int Type)
 		SetMonsterSound(MODEL_MONSTER01+Type,132,133,104,104,133);
         b->Actions[MONSTER01_ATTACK1].PlaySpeed = 0.5f;
         b->Actions[MONSTER01_ATTACK2].PlaySpeed = 0.5f;
-		b->BoneHead = 20;//인어
+		b->BoneHead = 20;//????
 		break;
 	case 35:
 		LoadWaveFile(SOUND_MONSTER+135,"Data\\Sound\\mValkyrie1.wav"   ,Channel,Enable);
@@ -4034,7 +4034,7 @@ void OpenMonsterModel(int Type)
 		LoadWaveFile ( SOUND_RAKLION_ICEGIANT_DEATH,		"Data\\Sound\\w58w59\\IceGiant_death.wav", 1 );
 		break;
 	case 148:
-		LoadWaveFile( SOUND_MONSTER+34,						"Data\\Sound\\m헬스파이더죽기.wav" ,1);
+		LoadWaveFile( SOUND_MONSTER+34,						"Data\\Sound\\m??????????.wav" ,1);
 		LoadWaveFile( SOUND_RAKLION_COOLERTIN_ATTACK,		"Data\\Sound\\w58w59\\Coolertin_attack.wav", 1 );
 		LoadWaveFile( SOUND_RAKLION_COOLERTIN_MOVE,			"Data\\Sound\\w58w59\\Coolertin_move.wav", 1 );
 		break;
@@ -4338,7 +4338,7 @@ void OpenSkills()
 	gLoadData.AccessModel(MODEL_MAGIC_CIRCLE1,"Data\\Skill\\","MagicCircle",1);
 	gLoadData.AccessModel(MODEL_ARROW_WING   ,"Data\\Skill\\","ArrowWing",1);
 	gLoadData.AccessModel(MODEL_ARROW_BOMB   ,"Data\\Skill\\","ArrowBomb",1);
-	gLoadData.AccessModel(MODEL_BALL         ,"Data\\Skill\\","Ball",1);//공
+	gLoadData.AccessModel(MODEL_BALL         ,"Data\\Skill\\","Ball",1);//??
 	Models[MODEL_BALL].Actions[0].PlaySpeed = 0.5f;
 	gLoadData.AccessModel(MODEL_SKILL_BLAST  ,"Data\\Skill\\","Blast",1);
 	gLoadData.AccessModel(MODEL_SKILL_INFERNO,"Data\\Skill\\","Inferno",1);
@@ -4710,7 +4710,7 @@ void OpenSkills()
 	LoadBitmap("Effect\\SwordEffor2_blur.jpg", BITMAP_SwordEffor2, GL_LINEAR, GL_CLAMP_TO_EDGE);
 	//==
 #ifdef ASG_ADD_KARUTAN_MONSTERS
-	// 콘드라 돌조각
+	// ???? ??????
 	gLoadData.AccessModel(MODEL_CONDRA_STONE, "Data\\Monster\\", "condra_7_stone" );
 	gLoadData.OpenTexture(MODEL_CONDRA_STONE, "Monster\\");
 	gLoadData.AccessModel(MODEL_CONDRA_STONE1, "Data\\Monster\\", "condra_7_stone_2" );
@@ -4787,7 +4787,7 @@ void OpenSounds()
     LoadWaveFile(SOUND_TOWER01		    ,"Data\\Sound\\aTower.wav",1);
     LoadWaveFile(SOUND_WATER01		    ,"Data\\Sound\\aWater.wav",1);
     LoadWaveFile(SOUND_DESERT01		    ,"Data\\Sound\\desert.wav",1);
-    //LoadWaveFile(SOUND_BOSS01		    ,"Data\\Sound\\a쿤둔.wav",1);
+    //LoadWaveFile(SOUND_BOSS01		    ,"Data\\Sound\\a???.wav",1);
     LoadWaveFile(SOUND_HUMAN_WALK_GROUND,"Data\\Sound\\pWalk(Soil).wav",2);
     LoadWaveFile(SOUND_HUMAN_WALK_GRASS	,"Data\\Sound\\pWalk(Grass).wav",2);
     LoadWaveFile(SOUND_HUMAN_WALK_SNOW	,"Data\\Sound\\pWalk(Snow).wav",2);
@@ -4830,7 +4830,7 @@ void OpenSounds()
     LoadWaveFile(SOUND_DROP_GOLD01      ,"Data\\Sound\\pDropMoney.wav",1); 
     LoadWaveFile(SOUND_JEWEL01	      	,"Data\\Sound\\eGem.wav",1); 
     LoadWaveFile(SOUND_GET_ITEM01		,"Data\\Sound\\pGetItem.wav",1); 
-    //LoadWaveFile(SOUND_SHOUT01    		,"Data\\Sound\\p기합.wav",1); 
+    //LoadWaveFile(SOUND_SHOUT01    		,"Data\\Sound\\p????.wav",1); 
 
 	//skill
     LoadWaveFile(SOUND_SKILL_DEFENSE    ,"Data\\Sound\\sKnightDefense.wav",1);
@@ -4846,13 +4846,13 @@ void OpenSounds()
     LoadWaveFile(SOUND_HELLFIRE         ,"Data\\Sound\\sHellFire.wav",2,Enable3DSound);
     LoadWaveFile(SOUND_ICE              ,"Data\\Sound\\sIce.wav",2,Enable3DSound);
     LoadWaveFile(SOUND_FLAME            ,"Data\\Sound\\sFlame.wav",2,Enable3DSound);
-    //LoadWaveFile(SOUND_FLASH            ,"Data\\Sound\\m히드라공격1.wav",2,Enable3DSound);
+    //LoadWaveFile(SOUND_FLASH            ,"Data\\Sound\\m????????1.wav",2,Enable3DSound);
     LoadWaveFile(SOUND_FLASH            ,"Data\\Sound\\sAquaFlash.wav",2,Enable3DSound);
 
     LoadWaveFile(SOUND_BREAK01	      	,"Data\\Sound\\eBreak.wav",1,Enable3DSound); 
     LoadWaveFile(SOUND_EXPLOTION01		,"Data\\Sound\\eExplosion.wav",1,Enable3DSound); 
     LoadWaveFile(SOUND_METEORITE01		,"Data\\Sound\\eMeteorite.wav",2,Enable3DSound); 
-    //LoadWaveFile(SOUND_METEORITE02	    ,"Data\\Sound\\e유성.wav",2,Enable3DSound);
+    //LoadWaveFile(SOUND_METEORITE02	    ,"Data\\Sound\\e????.wav",2,Enable3DSound);
     LoadWaveFile(SOUND_THUNDER01		,"Data\\Sound\\eThunder.wav",1,Enable3DSound); 
 
     LoadWaveFile(SOUND_BONE1	     	,"Data\\Sound\\mBone1.wav",2,Enable3DSound);
@@ -5127,10 +5127,11 @@ void OpenLogoSceneData()
 	::LoadBitmap("Interface\\server_ex01.tga", BITMAP_LOG_IN+12);
 	::LoadBitmap("Interface\\server_ex02.jpg", BITMAP_LOG_IN+13, GL_NEAREST, GL_REPEAT);
 	::LoadBitmap("Interface\\cr_mu_lo.tga", BITMAP_LOG_IN+14, GL_LINEAR);
-#ifdef MOVIE_DIRECTSHOW
-	::LoadBitmap("Interface\\movie_b_all.tga", BITMAP_LOG_IN+15);// 동영상 버튼.
-#endif	// MOVIE_DIRECTSHOW
-
+#if defined(MOVIE_DIRECTSHOW) || defined(__ANDROID__) || defined(MU_IOS)
+	// Android/iOS: LoginMainWin uses BITMAP_LOG_IN+15 for the movie button even without DirectShow.
+	// If this slot is empty, CSprite::Create used to crash on FindTexture(NULL)->Width (~0x104).
+	::LoadBitmap("Interface\\movie_b_all.tga", BITMAP_LOG_IN+15);// ?????? ???.
+#endif
 }
 
 void ReleaseLogoSceneData()
@@ -5344,7 +5345,12 @@ void OpenBasicData(HDC hDC)
 	LoadBitmap("Effect\\Shiny03.jpg"     	,BITMAP_SHINY+2   ,GL_LINEAR,GL_CLAMP_TO_EDGE);
 	LoadBitmap("Effect\\eye01.jpg"     	,BITMAP_SHINY+3   ,GL_LINEAR,GL_CLAMP_TO_EDGE);
 	LoadBitmap("Effect\\ring.jpg"     	,BITMAP_SHINY+4   ,GL_LINEAR,GL_CLAMP_TO_EDGE);
-	LoadBitmap("Effect\\Shiny04.jpg", BITMAP_SHINY+5, GL_LINEAR, GL_CLAMP_TO_EDGE);
+	// BITMAP_SHINY+5: PC historically loaded Shiny04 then Shiny05 into the same slot (unload + reload).
+	// If Shiny05 is missing, that leaves an invalid texture and GL can SIGSEGV later. Prefer one path.
+	if (!LoadBitmap("Effect\\Shiny05.jpg", BITMAP_SHINY+5, GL_LINEAR, GL_CLAMP_TO_EDGE, false))
+	{
+		LoadBitmap("Effect\\Shiny04.jpg", BITMAP_SHINY+5, GL_LINEAR, GL_CLAMP_TO_EDGE, false);
+	}
 	LoadBitmap("Effect\\Chrome01.jpg"     ,BITMAP_CHROME     ,GL_LINEAR,GL_REPEAT);
 	LoadBitmap("Effect\\blur01.jpg"       ,BITMAP_BLUR      ,GL_NEAREST,GL_CLAMP_TO_EDGE);
 	LoadBitmap("Effect\\bab2.jpg"          ,BITMAP_CHROME+1  ,GL_LINEAR,GL_REPEAT);
@@ -5391,7 +5397,6 @@ void OpenBasicData(HDC hDC)
 	LoadBitmap("Effect\\firecracker0005.jpg"	,BITMAP_FIRECRACKER0005, GL_NEAREST, GL_CLAMP_TO_EDGE);
 	LoadBitmap("Effect\\firecracker0006.jpg"	,BITMAP_FIRECRACKER0006, GL_NEAREST, GL_CLAMP_TO_EDGE);
 	LoadBitmap("Effect\\firecracker0007.jpg"	,BITMAP_FIRECRACKER0007, GL_NEAREST, GL_CLAMP_TO_EDGE);
-	LoadBitmap("Effect\\Shiny05.jpg"     	,BITMAP_SHINY+5   ,GL_LINEAR,GL_CLAMP_TO_EDGE);
 
 	LoadBitmap("Effect\\partCharge1\\bujuckline.jpg", BITMAP_LUCKY_SEAL_EFFECT, GL_LINEAR, GL_CLAMP_TO_EDGE);
 

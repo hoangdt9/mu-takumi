@@ -1517,7 +1517,10 @@ void NewMoveLogInScene()
 			SAFE_DELETE(g_pMovieScene);
 		}
 		CUIMng::Instance().SetMoving(false);
-#endif // MOVIE_DIRECTSHOW
+#elif defined(__ANDROID__)
+		MU_AndroidStopLoginIntroMovie();
+		CUIMng::Instance().SetMoving(false);
+#endif
 		g_ErrorReport.Write( "> Request Character list\r\n");
 
 		CCameraMove::GetInstancePtr()->SetTourMode(FALSE);
@@ -1535,12 +1538,12 @@ void NewMoveLogInScene()
 		ClearCharacters();
 	}
 
-#ifdef MOVIE_DIRECTSHOW
+#if defined(MOVIE_DIRECTSHOW) || defined(__ANDROID__)
 	if(CUIMng::Instance().IsMoving() == true)
 	{
 		return;
 	}
-#endif // MOVIE_DIRECTSHOW
+#endif
 	if (!CUIMng::Instance().m_CreditWin.IsShow())
 	{
 		InitTerrainLight();
@@ -1610,7 +1613,13 @@ bool NewRenderLogInScene(HDC hDC)
 		}
 		return true;
 	}
-#endif // MOVIE_DIRECTSHOW
+#elif defined(__ANDROID__)
+	if (CUIMng::Instance().IsMoving() == true)
+	{
+		// Intro video is a full-screen TextureView + MediaPlayer (see MuMainNativeActivity).
+		return true;
+	}
+#endif
 
 	vec3_t pos;
 	VectorCopy(CameraPosition, pos);

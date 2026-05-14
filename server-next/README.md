@@ -39,7 +39,7 @@ From `server-next/`:
 ./scripts/run-legacy-login-host.sh
 ```
 
-This loads `.env` if present, sets `TAKUMI_VERBOSE=1`, defaults `TAKUMI_DEC2_PATH` when **`keys/Dec2.dat`** or `../ClientBuild_192.168.99.200/Data/Dec2.dat` exists, then runs **`dotnet watch`** on `Takumi.Server.LegacyLoginHost` so you edit `Program.cs`, save, and the listener restarts — you only interact with the Android client.
+This loads `.env` if present, sets `TAKUMI_VERBOSE=1`, defaults `TAKUMI_DEC2_PATH` when **`keys/Dec2.dat`** exists (or the first path in **`TAKUMI_DEC2_FALLBACK_PATHS`** from `.env`), then runs **`dotnet watch`** on `Takumi.Server.LegacyLoginHost` so you edit `Program.cs`, save, and the listener restarts — you only interact with the Android client.
 
 **Second terminal — phone logs:**
 

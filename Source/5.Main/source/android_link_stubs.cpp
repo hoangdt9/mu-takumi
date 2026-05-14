@@ -14,6 +14,7 @@
 #include "ExternalObject/curl/curl.h"
 #include "TrayMode.h"
 #include "android/SimpleModulusCrypt.h"
+#include "GameConfigConstants.h"
 
 #include <SDL_mixer.h>
 #include <android/log.h>
@@ -43,10 +44,10 @@ extern "C" void SendServerListRequest(int32_t handle);
 
 extern BOOL g_bGameServerConnected;
 
-char* szServerIpAddress = (char*)"127.0.0.1";
+char* szServerIpAddress = const_cast<char*>(CfgDefaults::CfgDefaultServerIpNarrow);
 std::string g_strSelectedML = "Eng";
 int m_SavePassOnOff = 0;
-unsigned short g_ServerPort = 63000;
+unsigned short g_ServerPort = static_cast<unsigned short>(CfgDefaults::CfgDefaultServerPort);
 BYTE Version[5] = { '1' + 1, '0' + 2, '4' + 3, '0' + 4, '5' + 5 };
 BYTE Serial[17] = "TbYehR2hFUPBKgZj";
 char m_ID[11] = {};

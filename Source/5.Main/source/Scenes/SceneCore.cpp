@@ -2,6 +2,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include "stdafx.h"
+#include "GameConfigConstants.h"
 #include "ZzzOpenglUtil.h"
 #include "ZzzInfomation.h"
 #include "ZzzInterface.h"
@@ -53,8 +54,8 @@ short   g_shCameraLevel = 0;
 
 int g_iLengthAuthorityCode = 20;
 
-const wchar_t* szServerIpAddress = L"192.168.0.174";
-WORD g_ServerPort = 63000;
+const wchar_t* szServerIpAddress = CfgDefaults::CfgDefaultServerIP;
+WORD g_ServerPort = static_cast<WORD>(CfgDefaults::CfgDefaultServerPort);
 
 EGameScene  SceneFlag = WEBZEN_SCENE;
 

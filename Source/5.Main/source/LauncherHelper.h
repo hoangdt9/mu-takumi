@@ -31,10 +31,10 @@ bool wzPopLaunchInfo(WZLAUNCHINFO& LaunchInfo);
 /*
 	// example
 
-	//. Mu online launcher side
+	//. Mu online launcher side (set IP/port to match server-next/.env or your MU host)
 	WZLAUNCHINFO LaunchInfo;
-	LaunchInfo.ip = "192.168.0.174";
-	LaunchInfo.port = 63000;
+	LaunchInfo.ip = "127.0.0.1";
+	LaunchInfo.port = 44605;
 	if(wzPushLaunchInfo(LaunchInfo)) {		//. encryption management
 		//. success
 		//. launching Mu update application

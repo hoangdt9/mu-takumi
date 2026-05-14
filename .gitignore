@@ -6,6 +6,7 @@ MuServer/3.JoinServer/JoinServer.ini
 docker/.env
 .env
 .env.*
+!.env.lan.example
 
 # VMware / máy ảo cực lớn
 VMWare/

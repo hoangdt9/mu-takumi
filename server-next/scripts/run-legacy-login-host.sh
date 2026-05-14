@@ -19,10 +19,12 @@ export DOTNET_ENVIRONMENT="${DOTNET_ENVIRONMENT:-Development}"
 
 # Default Dec2 path (same client keys as APK); override in .env if your tree differs.
 if [[ -z "${TAKUMI_DEC2_PATH:-}" ]]; then
-  _dec2="$ROOT/../ClientBuild_192.168.99.200/Data/Dec2.dat"
-  if [[ -f "$_dec2" ]]; then
-    export TAKUMI_DEC2_PATH="$_dec2"
-  fi
+  for _dec2 in "$ROOT/keys/Dec2.dat" "$ROOT/../ClientBuild_192.168.99.200/Data/Dec2.dat"; do
+    if [[ -f "$_dec2" ]]; then
+      export TAKUMI_DEC2_PATH="$_dec2"
+      break
+    fi
+  done
 fi
 
 export TAKUMI_ACCOUNTS="${TAKUMI_ACCOUNTS:-test:test}"

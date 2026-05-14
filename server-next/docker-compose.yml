@@ -40,7 +40,8 @@ services:
     working_dir: /app
     volumes:
       - .:/app
-      - ${TAKUMI_DEC2_HOST_DIR:-../ClientBuild_192.168.99.200/Data}:/keys:ro
+      # Default: server-next/keys/Dec2.dat (git-tracked). Override: TAKUMI_DEC2_HOST_DIR=../Other/Data
+      - ${TAKUMI_DEC2_HOST_DIR:-./keys}:/keys:ro
     ports:
       - "${TAKUMI_CONNECT_PUBLISH:-44605}:44605"
       - "${TAKUMI_LEGACY_LOGIN_PUBLISH:-44606}:44606"

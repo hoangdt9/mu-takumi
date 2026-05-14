@@ -282,6 +282,26 @@ namespace
         return (port == g_ServerPort || port == MuLanDefaults::kLegacyVmClassicConnectPort);
     }
 
+    /// True when the TCP peer is the MU Connect Server (plaintext C1/C2), not the game server.
+    /// \c CProtect::CheckSocketPort uses GSPortMin/Max only — LAN ports like 44605 often fall inside that
+    /// range, so XOR Enc/Decrypt must be skipped here or C2 F4 06 is corrupted and no sub-servers appear.
+    bool IsPeerConnectServerSocket(SOCKET s)
+    {
+        if (s == INVALID_SOCKET || s == static_cast<SOCKET>(0))
+        {
+            return false;
+        }
+
+        SOCKADDR_IN addr {};
+        int addrLen = static_cast<int>(sizeof(addr));
+        if (getpeername(s, reinterpret_cast<sockaddr*>(&addr), &addrLen) != 0)
+        {
+            return false;
+        }
+
+        return IsConnectServerPort(ntohs(addr.sin_port));
+    }
+
     void CopyPacketKey(DWORD* target, const DWORD* source)
     {
         if (target && source)
@@ -461,8 +481,8 @@ void CWsctlc::AndroidOnPacket(int32_t handle, int32_t size, uint8_t* data)
     std::memcpy(client->m_RecvBuf + client->m_nRecvBufLen, data, static_cast<size_t>(size));
 
 #if(ENCRYPT_STATE==1)
-    if (client->m_socket != INVALID_SOCKET && client->m_socket != static_cast<SOCKET>(0) &&
-        gProtect.CheckSocketPort(client->m_socket) != 0)
+    if (!IsPeerConnectServerSocket(client->m_socket) && client->m_socket != INVALID_SOCKET &&
+        client->m_socket != static_cast<SOCKET>(0) && gProtect.CheckSocketPort(client->m_socket) != 0)
     {
         gProtect.DecryptData(client->m_RecvBuf + client->m_nRecvBufLen, size);
     }
@@ -757,7 +777,7 @@ int CWsctlc::sSend(SOCKET socket, char* buf, int len)
     std::vector<uint8_t> sendBuffer(reinterpret_cast<uint8_t*>(buf), reinterpret_cast<uint8_t*>(buf) + len);
 
 #if(ENCRYPT_STATE==1)
-    if (gProtect.CheckSocketPort(socket) != 0)
+    if (!IsPeerConnectServerSocket(socket) && gProtect.CheckSocketPort(socket) != 0)
     {
         gProtect.EncryptData(sendBuffer.data(), len);
     }

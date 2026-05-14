@@ -1,6 +1,6 @@
 # Takumi Server Next - Implementation Checklist
 
-Last updated: 2026-05-14 (Android IME + modal + delete-character client notes)
+Last updated: 2026-05-14 (env.defaults + Gradle `.env`; planned-next block)
 
 ## Repository vs checklist (read first)
 
@@ -16,8 +16,8 @@ Use this to avoid unnecessary rebuilds.
 
 | Change | Rebuild & reinstall APK? | Re-download `data.zip`? | Docker / ops |
 |--------|--------------------------|-------------------------|----------------|
-| Only `server-next` C#, compose, `.env`, SQL, keys on host | **No** | **No** | `docker compose` **up / recreate** the stack; set `TAKUMI_PUBLIC_HOST` (and published ports) to the IP the **phone** can reach (same LAN as `44605` / login port). |
-| Takumi client under `Source/5.Main` (C++), default IP/port in native code, `PreloadActivity` URL, JNI | **Yes** | Only if you changed what the zip contains or the preload contract | Same as above after APK points to the right host. |
+| Only `server-next` C#, compose, `.env`, `env.defaults`, SQL, keys on host | **No** | **No** | `docker compose` **up / recreate** the stack; `TAKUMI_PUBLIC_HOST` + URLs in **`.env`** (see `.env.lan.example`). Recreate legacy-login if you changed `.env` after first `up`. |
+| Takumi client under `Source/5.Main` (C++), `GameConfigConstants`, JNI bootstrap | **Yes** (if you touched native) | Only if zip contract/content changed | APK **Connect/bootstrap + `data.zip` LAN URL** are baked from **`server-next/.env`** at Gradle configure time (`BuildConfig`); rebuild after `.env` IP/URL change. |
 | In-client **server list / IP** edited in UI (if the build supports it) | **No** | **No** | Ensure Docker publishes the addresses the client will use after sub-select. |
 
 **`data.zip` / Preload:** the Android preload step usually **skips download** when `Android/data/.../files/Data` is already valid and the ready marker exists—no need to re-fetch for pure server-side iteration unless you wipe app storage or change the bundle URL/content.
@@ -67,6 +67,12 @@ Use this to avoid unnecessary rebuilds.
   - [x] select flow: `F3 15` + **131-byte** `F3 03` join map + `F3 10` inventory
   - [x] reject when not authenticated (`F3 00`)
   - [x] reject unknown character select (`F3 03`)
+- [x] **Reproducible LAN / dev env (no committed machine IP):**
+  - [x] Committed **`server-next/env.defaults`** (ports, join version, serial, `TAKUMI_ACCOUNTS` format) + gitignored **`server-next/.env`** from **`.env.lan.example`** (`YOUR_LAN_IP`).
+  - [x] **`RepoEnvLoader`**: load `env.defaults` (fill unset) then `.env` (override) before `LegacyLoginHost` reads configuration.
+  - [x] **Android Gradle** (`Source/android/app/build.gradle`): `BuildConfig.DATA_ZIP_URL_LAN` + `MU_BOOTSTRAP_SERVER_*` from **`../../server-next/.env`**; optional `-P` / `TAKUMI_EMULATOR_DATA_ZIP_URL`; **`gradle.properties`** keeps Mac VPN/timeout knobs only (no bootstrap IP).
+  - [x] **`docker-compose.yml`**: `TAKUMI_LOGIN_PORT` / `TAKUMI_CONNECT_PORT` interpolated from host `.env` with compose defaults.
+  - [x] **Docs:** `../../docs/ANDROID-DEV-MAC.md` (new Mac checklist), `../README.md` (env.defaults row), `run-legacy-login-host.sh` sources `env.defaults` then `.env`.
 
 ## In Progress
 
@@ -121,3 +127,16 @@ Use this to avoid unnecessary rebuilds.
   - [ ] focus/select character
   - [ ] enter game from character screen **without hardware keyboard** (double-tap on hero or ~0.5s hold on 3D viewport after selection — native `ZzzScene.cpp`; rebuild APK)
   - [ ] complete minimal transition after character selection (visible world, not black screen)
+
+---
+
+## Planned next steps (consolidated)
+
+Order is suggested dependency / risk reduction:
+
+1. **Device QA (unblocks “MVP done” perception):** real Android against Docker `server-next` — confirm **recv join** → **Translate F1** → select → **no black screen** after `LoadWorld`; capture `adb logcat` + host logs. Tie to **Exit criteria** above.
+2. **SimpleModulus CS key from `keys/Dec2.dat`:** replace hardcoded decrypt fallback in `Season6ClientToServerDecryptSession` (**In Progress** item); verify with same `Dec2.dat` as APK `Data/`.
+3. **Golden / pcap parity:** scripted or captured client RX/TX vs host (**In Progress**); extend tests for malformed length / oversized close (**Next High**).
+4. **Post-select game TCP:** if client leaves login socket or expects separate game port, minimal game listener (**Next High**) + document port handoff in this checklist + `ANDROID-DEV-MAC.md`.
+5. **Session ticket:** wire `session_ticket` persistence + enforcement (**Next High**).
+6. **Medium:** error codes for rejected character ops, rate limits, structured logging, client version flags.

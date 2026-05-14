@@ -31,9 +31,7 @@
 | Repo remote | **Đã push:** [github.com/hoangdt9/mu-takumi](https://github.com/hoangdt9/mu-takumi) — các manifest `# commit:` đồng bộ với HEAD sau `git push` (`git rev-parse HEAD`) |
 | §4–§14 — Parity OpenMU / migrate từng module | **Chưa** |
 | Phase 4.1 — Chỉ mục dispatcher packet (discovery) | **Khung** — [`protocol/TAKUMI-PROTOCOL-DISPATCH-INDEX.md`](protocol/TAKUMI-PROTOCOL-DISPATCH-INDEX.md) |
-| Ma trận gói tin (spike) | **Khung** — [`docs/protocol/COMPATIBILITY-MATRIX.md`](protocol/COMPATIBILITY-MATRIX.md) |
-
-### Cập nhật tiến độ client native (2026-05-12 — 2026-05-14)
+| Android Gradle + `server-next/.env` / `env.defaults` (BuildConfig bootstrap, `data.zip` URL) | **Xong (2026-05-14)** — `Source/android/app/build.gradle`, `docs/ANDROID-DEV-MAC.md` § chuyển Mac |
 
 | Mục | Trạng thái |
 |-----|------------|
@@ -100,7 +98,7 @@ TAK=/Users/hoangmac/Project/MU/takumi
 
 - [x] **`Source/Util/`** — `cryptopp`, `detours`, `lua`, `mapm`: **theo `.vcxproj` server** Join dùng `MD5.*`, Game dùng `CCRC32`/`Math`; các thư khác không được kéo trực tiếp — chi tiết [`SEASON-AND-DEFINES.md`](takumi-game-spec/SEASON-AND-DEFINES.md). (Backlog: grep thư viện ẩn nếu linker dùng `.lib` không khai trong vcxproj.)
 - [x] **`Source/_safety_backup/`** — chỉ benchmark / diff khi nghi có lệch bản vá; không đưa vào build OpenMU.
-- [ ] **`Source/android/`** — client; **chưa spike pcap** endpoint/cipher — checklist **§13b** (đồng bộ khi test thật).
+- [x] **`Source/android/`** — **LAN/bootstrap:** `BuildConfig` đọc `../../server-next/.env` (host, Connect port, `TAKUMI_DATA_ZIP_URL` / emulator URL); `gradle.properties` chỉ còn knob Mac (proxy/timeout), không IP máy. **Chưa spike pcap** endpoint/cipher — vẫn backlog **§13b**.
 - [x] **`Source/device_screen_*` / `latest_logcat*.txt`** — chỉ QA; không thuộc server port.
 
 ---
@@ -330,10 +328,11 @@ Danh sách **đầy đủ từng đường dẫn** nằm trong [`docs/takumi-man
 
 ### 13b. Android `Source/android/`
 
-- [ ] Gradle / `AndroidManifest.xml` — network cleartext, deep link.
-- [ ] Java entry: `MuMainActivity.java`, `MuMainNativeActivity.java`, `PreloadActivity.java`.
+- [x] **Gradle → `BuildConfig`:** `MU_BOOTSTRAP_SERVER_*`, `DATA_ZIP_URL_LAN` từ **`server-next/.env`** (và `-P…` khi CI); xem `app/build.gradle`.
+- [ ] `AndroidManifest.xml` — network cleartext / `networkSecurityConfig` audit theo môi trường deploy.
+- [ ] Java entry: `MuMainActivity.java`, `MuMainNativeActivity.java`, `PreloadActivity.java` — rà đủ luồng IME/Preload vs checklist IME (log 2026-05-14).
 - [ ] Bootstrap SDL bundle `org/libsdl/app/*.java` — không đổi trừ khi build break.
-- [ ] JNI / native MU core thường nằm trong artifact build (ngoài `main/java`) — locating `*.so` và **trace connect string** trong binary/patch.
+- [ ] JNI / native MU core thường nằm trong artifact build (ngoài `main/java`) — locating `*.so` và **trace connect string** trong binary/pcap (**§13b spike**).
 
 *(Client C++ **`Source/5.Main`** không liệt kê từng file ở đây — thuộc client build roadmap; chỉ **cần** khi sửa client hoặc khi chứng minh mismatch opcode.)*
 
@@ -407,4 +406,4 @@ Mẫu cột cho sheet/issue: **[`MANIFEST-TRACKER-TEMPLATE.md`](MANIFEST-TRACKER
 
 ---
 
-**Kết:** Checklist trong file này + **manifest** trong `docs/takumi-manifests/` là **bộ đầy đủ** để không bỏ sót artifact Takumi trong quá trình chuyển sang OpenMU. Lộ trình theo gate thời gian vẫn dùng [`TAKUMI-MIGRATION-OPENMU-CHECKLIST.md`](TAKUMI-MIGRATION-OPENMU-CHECKLIST.md); **§11 / Phase 2** (MSSQL restore, inspector, mapping CSV) giữ đồng bộ với checklist pha đó.
+**Kết:** Checklist trong file này + **manifest** trong `docs/takumi-manifests/` là **bộ đầy đủ** để không bỏ sót artifact Takumi trong quá trình chuyển sang OpenMU. Lộ trình theo gate thời gian vẫn dùng [`TAKUMI-MIGRATION-OPENMU-CHECKLIST.md`](TAKUMI-MIGRATION-OPENMU-CHECKLIST.md); **§11 / Phase 2** (MSSQL restore, inspector, mapping CSV) giữ đồng bộ với checklist pha đó. **Server Next (LegacyLoginHost) — bước kế tiếp ưu tiên QA/engineering:** xem [`server-next/docs/IMPLEMENTATION-CHECKLIST.md`](../server-next/docs/IMPLEMENTATION-CHECKLIST.md) mục **Planned next steps (consolidated)**.

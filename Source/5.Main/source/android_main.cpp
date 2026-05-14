@@ -169,6 +169,7 @@ static void android_set_data_dir_early()
 
 // Game systems
 #include "GameConfig/GameConfig.h"
+#include "GameConfig/MuLanDefaults.h"
 #include "ZzzOpenglUtil.h"
 #include "ZzzTexture.h"
 #include "ZzzOpenData.h"
@@ -336,7 +337,7 @@ static void InitializeTakumiProtectState()
     auto applyFallbackMainInfo = []()
     {
         std::memset(&gProtect.m_MainInfo, 0, sizeof(gProtect.m_MainInfo));
-        gProtect.m_MainInfo.GSPortMin = 55901;
+        gProtect.m_MainInfo.GSPortMin = MuLanDefaults::kDefaultGameShardPortMin;
         gProtect.m_MainInfo.GSPortMax = 55999;
         std::strcpy(gProtect.m_MainInfo.CustomerName, "takumi12");
         std::strcpy(gProtect.m_MainInfo.IpAddress, CfgDefaults::CfgDefaultServerIpNarrow);
@@ -6883,7 +6884,7 @@ static bool InitializeAndroidGame()
     }
     // Only remap invalid ports or a known-wrong first-hop (55901 = game shard in MuServer docs).
     // Keep OpenMU connect (44405/44406) and server-next (e.g. 44605/44606) exactly as in GameConfig.
-    if (configuredPort <= 0 || configuredPort == 55901)
+    if (configuredPort <= 0 || configuredPort == static_cast<int>(MuLanDefaults::kDefaultGameShardPortMin))
     {
         configuredPort = CfgDefaults::CfgDefaultServerPort;
     }
@@ -7656,7 +7657,7 @@ int SDL_main(int argc, char* argv[])
     }
     // Only remap invalid ports or a known-wrong first-hop (55901 = game shard in MuServer docs).
     // Keep OpenMU connect (44405/44406) and server-next (e.g. 44605/44606) exactly as in GameConfig.
-    if (configuredPort <= 0 || configuredPort == 55901)
+    if (configuredPort <= 0 || configuredPort == static_cast<int>(MuLanDefaults::kDefaultGameShardPortMin))
     {
         configuredPort = CfgDefaults::CfgDefaultServerPort;
     }

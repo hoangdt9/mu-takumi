@@ -35,6 +35,9 @@ if [[ -z "${TAKUMI_DEC2_PATH:-}" ]]; then
       fi
     done
   fi
+  for _dec2 in "$ROOT/../ClientBuild/Data/Dec2.dat" "$ROOT/../ClientBuild_192.168.99.200/Data/Dec2.dat"; do
+    _dec2_candidates+=("$_dec2")
+  done
   for _dec2 in "${_dec2_candidates[@]}"; do
     if [[ -f "$_dec2" ]]; then
       export TAKUMI_DEC2_PATH="$_dec2"
@@ -46,7 +49,8 @@ fi
 echo "== Takumi LegacyLoginHost (watch) =="
 echo "  cwd: $ROOT"
 echo "  TAKUMI_VERBOSE=$TAKUMI_VERBOSE"
-echo "  TAKUMI_PUBLIC_HOST=${TAKUMI_PUBLIC_HOST:-<unset — set in .env for phones>}"
+echo "  TAKUMI_LAN_IP=${TAKUMI_LAN_IP:-<unset — primary; phones use this>}"
+echo "  TAKUMI_PUBLIC_HOST=${TAKUMI_PUBLIC_HOST:-<unset — optional override for F4 03>}"
 echo "  TAKUMI_DEC2_PATH=${TAKUMI_DEC2_PATH:-<unset — login decrypt will fail>}"
 echo "  TAKUMI_CS_CONNECT_IDS=${TAKUMI_CS_CONNECT_IDS:-<unset — Program.cs multi-group preset>}"
 echo "  TAKUMI_CS_CONNECT_BASE=${TAKUMI_CS_CONNECT_BASE:-<unset>}"

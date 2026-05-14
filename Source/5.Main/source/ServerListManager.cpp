@@ -145,9 +145,34 @@ void CServerListManager::InsertServerGroup(int iConnectIndex, int iServerPercent
 
 bool CServerListManager::MakeServerGroup(IN int iServerGroupIndex, OUT CServerGroup* pServerGroup)
 {
-	const SServerGroupInfo* pServerGroupInfo = GetServerGroupInfoInScript(iServerGroupIndex);
+	const SServerGroupInfo* pServerGroupInfo = GetServerGroupInfoInScript((WORD)iServerGroupIndex);
 	if (NULL == pServerGroupInfo)
-		return false;
+	{
+		// Season20 (and other) ServerList.bmd often omit low group indices while LegacyLoginHost
+		// sends the default F4 06 preset (groups 0,1,2 from connect ids 0..14, 20..34, 40..41).
+		// Without a script row, InsertServerGroup dropped every line — empty server list on login UI.
+		char szBuf[SLM_MAX_SERVER_NAME_LENGTH];
+		snprintf(szBuf, sizeof(szBuf), "World %d", iServerGroupIndex);
+		::strcpy(pServerGroup->m_szName, szBuf);
+		pServerGroup->m_szDescription[0] = '\0';
+		pServerGroup->m_iSequence = iServerGroupIndex;
+		pServerGroup->m_iWidthPos = 0;
+		pServerGroup->m_iServerIndex = iServerGroupIndex;
+		pServerGroup->m_bPvPServer = true;
+		int j;
+		for (j = 0; j < SLM_MAX_SERVER_COUNT; ++j)
+		{
+			pServerGroup->m_abyNonPvpServer[j] = 0;
+		}
+		for (; j < MAX_SERVER_LOW; ++j)
+		{
+			pServerGroup->m_abyNonPvpServer[j] = 0;
+		}
+		g_ErrorReport.Write(
+			"[ServerList] ServerList.bmd missing group %d — synthesized group for F4 06 (LAN / default ids).\r\n",
+			iServerGroupIndex);
+		return true;
+	}
 
 	::strcpy(pServerGroup->m_szName, pServerGroupInfo->m_szName);
 	::strcpy(pServerGroup->m_szDescription, pServerGroupInfo->m_strDescript.c_str());

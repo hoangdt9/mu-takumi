@@ -11,7 +11,7 @@ cd "$ROOT"
 if [[ ! -f .env ]]; then
   echo "== server-next: missing .env =="
   echo "  cp .env.lan.example .env"
-  echo "  Then set TAKUMI_PUBLIC_HOST to this Mac's LAN IP (same Wi‑Fi as the phone)."
+  echo "  Then set TAKUMI_LAN_IP in .env to this Mac's LAN IP (same Wi‑Fi as the phone)."
   exit 1
 fi
 

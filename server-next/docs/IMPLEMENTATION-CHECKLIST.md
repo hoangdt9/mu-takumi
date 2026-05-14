@@ -24,7 +24,7 @@ Use this to avoid unnecessary rebuilds.
 
 **Parallel stacks:** if both `takumi-openmu` and `server-next` run, keep **host ports and client target** unambiguous (e.g. OpenMU `44505` vs Takumi `44605`) so QA logs match the stack under test.
 
-**Minimal Docker on Mac (Android QA):** for APK pointed at `server-next`, run **`cd server-next && docker compose up -d`** (or **`./scripts/docker-up.sh`**) — **Postgres** (default **54444**) and **LegacyLoginHost** (**44605** / **44606**) with `TAKUMI_PUBLIC_HOST` in `.env` = Mac LAN IP. **LAN `data.zip`:** `docker compose --profile datazip up -d` or **`./scripts/docker-up.sh --with-datazip`** (nginx on host **18080**, same `takumi/docker/data-zip/host/data.zip`); do **not** also run `takumi/docker` `datazip` on the same publish port. **Stop** the `takumi-openmu` compose group (and `docker` Wine/SQL profiles) while testing `server-next` to avoid port confusion and extra emulation load. See **`../../docs/ANDROID-DEV-MAC.md`** § *Takumi Server Next* and **`../README.md`**.
+**Minimal Docker on Mac (Android QA):** for APK pointed at `server-next`, run **`cd server-next && docker compose up -d`** (or **`./scripts/docker-up.sh`**) — **Postgres** (default **54444**) and **LegacyLoginHost** (**44605** / **44606**) with **`TAKUMI_LAN_IP`** in `.env` = Mac LAN IP. **LAN `data.zip`:** `docker compose --profile datazip up -d` or **`./scripts/docker-up.sh --with-datazip`** (nginx on host **18080**, same `takumi/docker/data-zip/host/data.zip`); do **not** also run `takumi/docker` `datazip` on the same publish port. **Stop** the `takumi-openmu` compose group (and `docker` Wine/SQL profiles) while testing `server-next` to avoid port confusion and extra emulation load. See **`../../docs/ANDROID-DEV-MAC.md`** § *Takumi Server Next* and **`../README.md`**.
 
 ## Done
 
@@ -82,6 +82,8 @@ Use this to avoid unnecessary rebuilds.
 
 ## Next (High Priority)
 
+- [ ] **M4–M5:** Persist **map + X/Y + angle** + join **ticket / game-port handoff** (see checklist **§ Lộ trình chuẩn**).  
+- [ ] **M6:** **`Takumi.Server.Game`** + **`Takumi.Server.GameHost`** — TCP listener + decrypt loop (parity `Source/4.GameServer` bootstrap); *not in this branch* (merge with `main` removed experimental projects). Planned: `dotnet run` on dedicated game port (e.g. **55901**, `TAKUMI_GAME_PORT`).  
 - [ ] Dedicated **game** TCP server after character select (minimal map/scope packets) if client leaves login socket or expects game port.
 - [ ] Persist and **enforce** session ticket / account session state in `TakumiLoginServer` (table `session_ticket` exists; not wired yet).
 - [ ] Extend integration tests: malformed C1 length, oversized packet close, rate limits.
@@ -101,6 +103,78 @@ Use this to avoid unnecessary rebuilds.
 - [x] Runtime `inventory_slot` table + staging `inventory_staging` + startup importer (minimal item fields).
 - [x] After `F3 03`, send Season 6 `F3 10` inventory from `inventory_slot` (extended item encoding; flat `ItemIndex` → group/number).
 - [ ] Extend staging→runtime mapping to skills, warehouse, guild/social domains.
+
+## Lộ trình chuẩn — `server-next` chạy tương đương `Source/` (đánh số module)
+
+**Mục tiêu:** Client `Source/5.Main` (và bản build Android) vẫn dùng **cùng giao thức / cổng / luồng** như khi nối tới stack C++ legacy (`Source/1.ConnectServer`, `3.JoinServer`, `4.GameServer`, `2.DataServer`, `6.GetMainInfo`), nhưng **dịch vụ .NET** trong `server-next` thay thế dần từng executable — không nhân đôi logic trong `Program.cs` một file.
+
+**Ánh xạ nhanh `Source/*.sln` → module `server-next`:**
+
+| Legacy (`Source/`) | Vai trò | Module / project đích (ưu tiên chuẩn) |
+|--------------------|---------|--------------------------------------|
+| `1.ConnectServer` | Danh sách server, patch info | **M2** `Takumi.Server.Connect` *(hoặc host gom)* — hiện gói trong `LegacyLoginHost` |
+| `3.JoinServer` | Chọn sub-server, chuyển client sang cổng GS | **M4** `Takumi.Server.Join` — ticket / chuyển TCP |
+| `4.GameServer` | Thế giới, quái, NPC, combat, lưu tọa độ | **M5–M9** `Takumi.Server.Game` (+ domain persistence) |
+| `2.DataServer` | Cache / truy vấn SQL cho GS | **M10** `Takumi.Server.Persistence` + adapter, hoặc gộp Postgres |
+| `6.GetMainInfo` | Version / download list | **M11** endpoint hoặc gói trong Connect |
+| `5.Main` | Client | **Không** thuộc `server-next`; chỉ dùng để **golden pcap / parity test** |
+
+---
+
+### Các bước có thứ tự (implement dần)
+
+1. **M1 — Giao thức & tài liệu parity**  
+   - [ ] Liệt kê opcode C1/C3/F3/… mà client `Source/5.Main` + GS C++ thực sự dùng sau khi vào map (từ `WSclient.h`, `Protocol.cpp`, v.v.).  
+   - [ ] Một bảng “legacy vs server-next” trong `docs/` (hoặc mở rộng `LOGIN-WIRE-FORMAT.md`).
+
+2. **M2 — `Takumi.Server.Protocol` (shared)**  
+   - [ ] Tách struct/builder join, inventory, list nhân vật khỏi `LegacyLoginHost/Program.cs` sang thư viện dùng chung.  
+   - [ ] Unit test so khớp byte với capture / golden vector.
+
+3. **M3 — Connect (`1.ConnectServer` parity)**  
+   - [ ] Đảm bảo F4 06/03/05 đồng hành với `ServerListManager` / BMD (đã phần nào trong host).  
+   - [ ] Tách process hoặc class library nếu cần scale riêng Connect.
+
+4. **M4 — Login + nhân vật + vị trí lưu thế giới**  
+   - [ ] Bảng / roster: `map_id`, `pos_x`, `pos_y`, `angle` (không hard-code Lorencia trong join).  
+   - [ ] Đồng bộ với client disconnect nếu vẫn một socket — hoặc chuyển sang M5 sau ticket.
+
+5. **M5 — Join handoff (`3.JoinServer` parity)**  
+   - [ ] Session ticket ký / timeout; client chuyển sang **cổng game** (hoặc cùng host nhưng trạng thái “in-game”).  
+   - [ ] Trả đúng địa chỉ GS mà `ServerList.bmd` / client mong đợi.
+
+6. **M6 — Game TCP host (`Takumi.Server.Game`) — skeleton `4.GameServer`**  
+   - [ ] Project `src/Takumi.Server.Game` (class library) + **`Takumi.Server.GameHost`** `dotnet run` listener: accept, SimpleModulus + Xor32 giống login, `BeginReceiveAsync` + log RX (bootstrap; chưa gameplay). *Chưa có trong tree hiện tại — ưu tiên compose `main` + LAN `.env`.*  
+   - [ ] Log packet head/sub (`event=decrypted_rx` + optional hex khi `TAKUMI_VERBOSE=1`).
+
+7. **M7 — Persistence vòng đời nhân vật**  
+   - [ ] Lưu/khôi phục HP/MP/zen/map/xy khi thoát / periodic save (parity `GameServer` save).  
+   - [ ] Migration EF / SQL trong `server-next` (hoặc repo migration riêng).
+
+8. **M8 — Dữ liệu tĩnh thế giới (ETL)**  
+   - [ ] Import `MuServer/4.GameServer/Data/Monster/MonsterSetBase*.txt` → bảng spawn.  
+   - [ ] Cửa / shop / custom từ `Data/Custom/` + nguồn C++ tham chiếu.
+
+9. **M9 — NPC & monster runtime**  
+   - [ ] Spawn theo map; regen; bảng monster id → stats (tối thiểu HP đứng yên).  
+   - [ ] Gói scope spawn tới client (opcode theo M1).
+
+10. **M10 — Movement & visibility**  
+    - [ ] Nhận move từ client; validate map; broadcast quanh player (stub trước).  
+    - [ ] Đồng bộ với M7 để không reset vị trí.
+
+11. **M11 — DataServer merge**  
+    - [ ] Quyết định: Postgres-only vs bridge tới MSSQL legacy; API nội bộ cho `Takumi.Server.Game`.
+
+12. **M12 — GetMainInfo / version**  
+    - [ ] Parity `6.GetMainInfo` nếu client vẫn gọi HTTP/TCP riêng.
+
+13. **M13 — Vận hành**  
+    - [x] `docker-compose.yml`: Postgres + LegacyLoginHost; optional profile **`datazip`** (`./scripts/docker-up.sh --with-datazip`).  
+    - [ ] Thêm service **`game`** riêng (TCP game port) *hoặc* mở rộng compose — tùy triển khai sau M6+.  
+    - [ ] CI: integration test client script hoặc pcap replay tới cổng đúng.
+
+**Ghi chú:** Cho đến khi **M6+** xong, client có thể vẫn **dính một TCP** như `LegacyLoginHost` hiện tại; “chuẩn” là tách **game port** và process giống `Source/`.
 
 ## Exit Criteria for "Login/Select MVP"
 

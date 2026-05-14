@@ -38,9 +38,24 @@ String readDotEnvValue(File envFile, String key) {
     return null
 }
 
+/** LAN/bootstrap host: TAKUMI_LAN_IP first, then TAKUMI_PUBLIC_HOST (no ${…} placeholders). */
+String readBootstrapHostFromServerNextEnv() {
+    File envFile = takumiServerNextEnvFile()
+    String lan = readDotEnvValue(envFile, "TAKUMI_LAN_IP")
+    if (lan != null && !lan.trim().isEmpty() && !lan.contains("\${")) {
+        return lan.trim()
+    }
+    String pub = readDotEnvValue(envFile, "TAKUMI_PUBLIC_HOST")
+    if (pub != null && !pub.trim().isEmpty() && !pub.contains("\${")) {
+        return pub.trim()
+    }
+    return ""
+}
+
 /**
  * Preload data.zip URL baked into BuildConfig.DATA_ZIP_URL_LAN.
- * Priority: -PmuDataZipLan → server-next/.env TAKUMI_DATA_ZIP_URL → TAKUMI_PUBLIC_HOST + DATA_ZIP_PUBLISH_PORT → emulator default.
+ * Priority: -PmuDataZipLan → TAKUMI_DATA_ZIP_URL → TAKUMI_LAN_IP + DATA_ZIP_PUBLISH_PORT →
+ * TAKUMI_PUBLIC_HOST + DATA_ZIP_PUBLISH_PORT → emulator default.
  */
 String resolveDataZipUrlForBuildConfig() {
     String cli = rootProject.findProperty("muDataZipLan")?.toString()?.trim()
@@ -52,17 +67,21 @@ String resolveDataZipUrlForBuildConfig() {
     if (explicit != null && !explicit.isEmpty()) {
         return explicit
     }
-    String host = readDotEnvValue(envFile, "TAKUMI_PUBLIC_HOST")
     String portStr = readDotEnvValue(envFile, "DATA_ZIP_PUBLISH_PORT")
-    if (host != null && !host.isEmpty()) {
-        int p = 18080
-        if (portStr != null && !portStr.isEmpty()) {
-            try {
-                p = Integer.parseInt(portStr.trim())
-            } catch (NumberFormatException ignored) {
-                p = 18080
-            }
+    int p = 18080
+    if (portStr != null && !portStr.isEmpty()) {
+        try {
+            p = Integer.parseInt(portStr.trim())
+        } catch (NumberFormatException ignored) {
+            p = 18080
         }
+    }
+    String lanHost = readDotEnvValue(envFile, "TAKUMI_LAN_IP")
+    if (lanHost != null && !lanHost.trim().isEmpty() && !lanHost.contains("\${")) {
+        return "http://${lanHost.trim()}:${p}/data.zip"
+    }
+    String host = readDotEnvValue(envFile, "TAKUMI_PUBLIC_HOST")
+    if (host != null && !host.isEmpty()) {
         return "http://${host}:${p}/data.zip"
     }
     String emu = readDotEnvValue(envFile, "TAKUMI_EMULATOR_DATA_ZIP_URL")
@@ -83,9 +102,7 @@ String resolveMuBootstrapServerHost() {
     if (cli) {
         return cli
     }
-    File envFile = takumiServerNextEnvFile()
-    String h = readDotEnvValue(envFile, "TAKUMI_PUBLIC_HOST")
-    return (h != null && !h.isEmpty()) ? h.trim() : ""
+    return readBootstrapHostFromServerNextEnv()
 }
 
 int resolveMuBootstrapServerPort() {
@@ -393,16 +410,33 @@ android {
 
         manifestPlaceholders = [takumiAppLabel: "MU Online"]
 
-        // First URL tried by PreloadActivity for data.zip (Docker nginx profile `datazip`).
-        // Single source of truth: server-next/.env → TAKUMI_DATA_ZIP_URL (or TAKUMI_PUBLIC_HOST + DATA_ZIP_PUBLISH_PORT).
-        // Override: ./gradlew ... -PmuDataZipLan=http://...
+        def muLanIp = (project.findProperty("muLanIp") ?: "").toString().trim()
+        if (muLanIp.isEmpty()) {
+            muLanIp = readBootstrapHostFromServerNextEnv()
+        }
+        if (muLanIp.isEmpty()) {
+            muLanIp = "10.0.2.2"
+            println("TakumiMu: server-next/.env missing TAKUMI_LAN_IP / TAKUMI_PUBLIC_HOST — using ${muLanIp} for CMake MU_LAN_DEFAULT_HOST_A (emulator). Set .env for devices.")
+        } else {
+            println("TakumiMu: native default host (CMake): ${muLanIp} (.env or -PmuLanIp)")
+        }
+
+        // Preload data.zip: resolveDataZipUrlForBuildConfig() (server-next/.env + -PmuDataZipLan override).
         def muDataZipLan = resolveDataZipUrlForBuildConfig()
         println("TakumiMu DATA_ZIP_URL_LAN (BuildConfig) = ${muDataZipLan}")
         buildConfigField "String", "DATA_ZIP_URL_LAN", "\"${muDataZipLan.replace("\\", "\\\\").replace("\"", "\\\"")}\""
 
-        // First-hop TCP (Connect / CS): server-next/.env TAKUMI_PUBLIC_HOST + TAKUMI_CONNECT_PORT, or -P / gradle.properties.
+        def muDataZipFallback = (project.findProperty("muDataZipFallbackUrl") ?: "").toString().trim()
+        buildConfigField "String", "DATA_ZIP_URL_FALLBACK", muDataZipFallback.isEmpty()
+            ? "\"\""
+            : "\"${muDataZipFallback.replace('"', '\\"')}\""
+
+        // First-hop TCP (Connect / CS): -P → .env (TAKUMI_LAN_IP / TAKUMI_PUBLIC_HOST, TAKUMI_CONNECT_PORT).
         def muBootstrapHost = resolveMuBootstrapServerHost()
         int muBootstrapPort = resolveMuBootstrapServerPort()
+        if (muBootstrapPort == 0 && !muBootstrapHost.isEmpty()) {
+            muBootstrapPort = 44605
+        }
         println("TakumiMu MU_BOOTSTRAP_SERVER (BuildConfig) = ${muBootstrapHost ?: '<empty>'}:${muBootstrapPort}")
         buildConfigField "String", "MU_BOOTSTRAP_SERVER_HOST", "\"${muBootstrapHost.replace('"', '\\"')}\""
         buildConfigField "int", "MU_BOOTSTRAP_SERVER_PORT", "${muBootstrapPort}"
@@ -413,7 +447,8 @@ android {
                 cppFlags muNativeCppFlags
                 arguments "-DANDROID_STL=c++_static",
                           "-DANDROID_PLATFORM=android-21",
-                          "-DMU_ENABLE_BGFX=" + (muEnableBgfx ? "ON" : "OFF")
+                          "-DMU_ENABLE_BGFX=" + (muEnableBgfx ? "ON" : "OFF"),
+                          "-DMU_LAN_DEFAULT_HOST_A=${muLanIp}"
             }
         }
 

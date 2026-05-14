@@ -32,7 +32,7 @@ Dùng khi muốn điện thoại/emulator tải `data.zip` từ máy bạn (LAN)
    **Không** bật **Cách A** và **Cách B** cùng lúc nếu cả hai publish **18080** trên host.
 
 4. Cổng host mặc định **`18080`** (đổi `DATA_ZIP_PUBLISH_PORT` trong `.env` của project đang chạy compose nếu cần).
-5. Build Android với URL đúng IP máy chạy Docker (mặc định Gradle: `http://192.168.1.50:18080/data.zip`), hoặc:
+5. Build Android: Gradle reads **`../../server-next/.env`** (`TAKUMI_LAN_IP`) for `DATA_ZIP_URL_LAN` and bootstrap host; override with `-PmuLanIp=...` / `-PmuDataZipLan=...`, hoặc:
 
    ```bash
    ./gradlew :app:assembleRealDevicePreloadDefaultDebug -PmuDataZipLan=http://YOUR_LAN_IP:18080/data.zip

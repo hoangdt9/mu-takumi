@@ -80,8 +80,13 @@ if (!string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("TAKUMI_CONNEC
 var publicHost = Environment.GetEnvironmentVariable("TAKUMI_PUBLIC_HOST")?.Trim();
 if (string.IsNullOrEmpty(publicHost))
 {
+    publicHost = Environment.GetEnvironmentVariable("TAKUMI_LAN_IP")?.Trim();
+}
+
+if (string.IsNullOrEmpty(publicHost))
+{
     Console.Error.WriteLine(
-        "[connect] WARNING: TAKUMI_PUBLIC_HOST unset — using 127.0.0.1. Phones on Wi‑Fi cannot reach that; set server-next/.env (LAN IP).");
+        "[connect] WARNING: TAKUMI_LAN_IP unset (optional override: TAKUMI_PUBLIC_HOST) — using 127.0.0.1. Phones on Wi‑Fi cannot reach that; set server-next/.env.");
     publicHost = "127.0.0.1";
 }
 

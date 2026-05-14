@@ -22,13 +22,9 @@ Project: `Source/android` (Gradle + CMake + JNI).
 - **NDK:** AGP 8.13 expects a recent NDK (often **27.x**). Install it in SDK Manager → *SDK Tools* → NDK; a missing NDK can also stall configure while the manager retries downloads.
 - **`local.properties`** in `Source/android` must set `sdk.dir=...` (see repo file; mac template included).
 
-## Fix Windows-only Gradle (if you cloned from PC)
+## Fix Windows-only or wrong `JAVA_HOME` (clone / VPN / shell JDK)
 
-Remove `org.gradle.java.home=...` from `gradle.properties` on Mac, or point it to Android Studio’s JBR, e.g.:
-
-`/Applications/Android Studio.app/Contents/jbr/Contents/Home`
-
-Uncomment the same line in `Source/android/gradle.properties` if your shell uses **JDK 24** but configure never finishes.
+`Source/android/gradle.properties` ships **without** a committed `org.gradle.java.home` (paths differ per machine). If you previously added a Windows `java.home` line, remove it on Mac or replace it with Android Studio’s JBR (see commented template at the top of that file), e.g. `/Applications/Android Studio.app/Contents/jbr/Contents/Home`.
 
 ### Gradle looks “stuck” at `50% CONFIGURING > :app`
 
@@ -118,7 +114,7 @@ adb logcat -c && adb logcat -v threadtime MuPreload:I MuMain:I TakumiErrorReport
 
 ## Test Android với **Takumi Server Next** trên Mac (Docker tối thiểu)
 
-Khi client/APK trỏ tới **Connect/Login Takumi** (ví dụ cổng **`44605` / `44606`** trong `server-next/.env`, biến `TAKUMI_PUBLIC_HOST` = IP LAN máy Mac), chỉ cần chạy **một** stack server — tránh chạy song song **OpenMU** (`44505`/`55901`…) cùng lúc nếu không cần, để log và cấu hình client không lẫn cổng.
+Khi client/APK trỏ tới **Connect/Login Takumi** (ví dụ cổng **`44605` / `44606`** trong `server-next/.env`, biến **`TAKUMI_LAN_IP`** = IP LAN máy Mac), chỉ cần chạy **một** stack server — tránh chạy song song **OpenMU** (`44505`/`55901`…) cùng lúc nếu không cần, để log và cấu hình client không lẫn cổng.
 
 ### Docker Desktop: `server-next` stack (Postgres + LegacyLoginHost + tuỳ chọn data.zip)
 
@@ -133,7 +129,7 @@ Khi client/APK trỏ tới **Connect/Login Takumi** (ví dụ cổng **`44605` /
 ./server-next/scripts/check-takumi-ports.sh
 ```
 
-- **Server LAN trong Docker:** trong `server-next` chạy `docker compose up -d` hoặc `./scripts/docker-up.sh` — stack gồm **Postgres** và **LegacyLoginHost** (Connect **44605** + login **44606**). Cần `.env` với `TAKUMI_PUBLIC_HOST` = IP LAN Mac.
+- **Server LAN trong Docker:** trong `server-next` chạy `docker compose up -d` hoặc `./scripts/docker-up.sh` — stack gồm **Postgres** và **LegacyLoginHost** (Connect **44605** + login **44606**). Cần `.env` với **`TAKUMI_LAN_IP`** = IP LAN Mac.
 - **Lỗi `no configuration file provided`:** bạn đang gọi `docker compose` từ thư mục **không** chứa `docker-compose.yml` (thường là `Source/android` sau khi build APK). Cách nhanh: `cd` vào `server-next` rồi chạy lại, hoặc từ `Source/android`: `bash ../../scripts/docker-recreate-legacy-login.sh` (wrapper gọi compose trong `server-next`).
 
 ### LegacyLoginHost (.NET) vs cổng **44606**
@@ -172,7 +168,7 @@ GameServer C (`CGConnectAccountRecv`) chỉ gọi `PacketArgumentDecrypt` cho **
 
 ### Nên bật
 
-1. **`server-next`**: `cd server-next && docker compose up -d` (Postgres **54444** + LegacyLoginHost **44605**/**44606** trong Docker). Cần `.env` với `TAKUMI_PUBLIC_HOST` = IP LAN. Tuỳ chọn **`data.zip`**: `docker compose --profile datazip up -d` hoặc `./scripts/docker-up.sh --with-datazip` — URL `http://<LAN-IP>:18080/data.zip` (file `takumi/docker/data-zip/host/data.zip`). Chi tiết: `server-next/README.md`.
+1. **`server-next`**: `cd server-next && docker compose up -d` (Postgres **54444** + LegacyLoginHost **44605**/**44606** trong Docker). Cần `.env` với **`TAKUMI_LAN_IP`** = IP LAN. Tuỳ chọn **`data.zip`**: `docker compose --profile datazip up -d` hoặc `./scripts/docker-up.sh --with-datazip` — URL `http://<LAN-IP>:18080/data.zip` (file `takumi/docker/data-zip/host/data.zip`). Chi tiết: `server-next/README.md`.
 2. **`data.zip` chỉ qua `takumi/docker`** (khi không dùng profile trong `server-next`): từ `takumi/docker`:
 
    ```bash

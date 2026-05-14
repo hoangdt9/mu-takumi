@@ -1,6 +1,7 @@
 #ifdef __ANDROID__
 
 #include "stdafx.h"
+#include "GameConfig/MuLanDefaults.h"
 #include "APICB.h"
 #include "DSPlaySound.h"
 #include "WSctlc.h"
@@ -276,7 +277,7 @@ namespace
 
     bool IsConnectServerPort(unsigned short port)
     {
-        return (port == g_ServerPort || port == 63000);
+        return (port == g_ServerPort || port == MuLanDefaults::kLegacyVmClassicConnectPort);
     }
 
     void CopyPacketKey(DWORD* target, const DWORD* source)

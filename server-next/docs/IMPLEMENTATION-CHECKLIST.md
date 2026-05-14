@@ -1,6 +1,6 @@
 # Takumi Server Next - Implementation Checklist
 
-Last updated: 2026-05-14 (env.defaults + Gradle `.env`; planned-next block)
+Last updated: 2026-05-14 (M1 protocol parity doc + `LOGIN-WIRE-FORMAT.md`)
 
 ## Repository vs checklist (read first)
 
@@ -123,9 +123,9 @@ Use this to avoid unnecessary rebuilds.
 
 ### Các bước có thứ tự (implement dần)
 
-1. **M1 — Giao thức & tài liệu parity**  
-   - [ ] Liệt kê opcode C1/C3/F3/… mà client `Source/5.Main` + GS C++ thực sự dùng sau khi vào map (từ `WSclient.h`, `Protocol.cpp`, v.v.).  
-   - [ ] Một bảng “legacy vs server-next” trong `docs/` (hoặc mở rộng `LOGIN-WIRE-FORMAT.md`).
+1. **M1 — Giao thức & tài liệu parity** *(baseline done — extend when `TranslateProtocol` / `ProtocolCoreEx` / host changes)*  
+   - [x] Liệt kê opcode / `HeadCode` / `F3` sub mà client `Source/5.Main` dùng sau login (**`WSclient.cpp` → `TranslateProtocol`**, macro TX trong **`wsclientinline.h`**, struct trong **`WSclient.h`**) + lớp **`Protocol.cpp` → `ProtocolCoreEx`**. Chi tiết: **`docs/M1-PROTOCOL-PARITY-MAP.md`**.  
+   - [x] Bảng “legacy vs server-next” + wire login ngắn: **`docs/M1-PROTOCOL-PARITY-MAP.md`** §1 và **`docs/LOGIN-WIRE-FORMAT.md`**. *(GameServer C++ đầy đủ nằm ngoài `server-next`; khi thêm vector từ `Source/4.GameServer`, bổ sung mục “GS TX” trong file M1.)*
 
 2. **M2 — `Takumi.Server.Protocol` (shared)**  
    - [ ] Tách struct/builder join, inventory, list nhân vật khỏi `LegacyLoginHost/Program.cs` sang thư viện dùng chung.  

@@ -6,6 +6,8 @@
 |------|---------|
 | `env.defaults` | **Committed** stack defaults (ports, join version, serial, test accounts). Loaded by `LegacyLoginHost` at startup; override in `.env`. |
 | `docs/IMPLEMENTATION-CHECKLIST.md` | Feature and QA checklist for Connect / Login / character flow. |
+| `docs/M1-PROTOCOL-PARITY-MAP.md` | **M1** inventory: client `TranslateProtocol` / `ProtocolCoreEx` vs `LegacyLoginHost` coverage. |
+| `docs/LOGIN-WIRE-FORMAT.md` | Encrypted login wire notes + link to M1 map. |
 | `.env.lan.example` | Copy to `.env` and set `TAKUMI_PUBLIC_HOST` / URLs (replace `YOUR_LAN_IP`). |
 | `docker-compose.yml` | **Postgres + LegacyLoginHost** in Docker (**54444**, **44605**, **44606**). Optional profile **`datazip`**: nginx serves `../docker/data-zip/host/data.zip` on host port **18080** (see `.env.lan.example`). |
 | `scripts/docker-up.sh` | `docker compose up -d` + `ps`. Pass **`--with-datazip`** to enable the `datazip` profile. |

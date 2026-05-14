@@ -581,6 +581,8 @@ MU_EXPORT int32_t ConnectionManager_Connect(
     const wchar_t* host,
     int32_t port,
     BYTE isEncrypted,
+    void (*onSocketReady)(int32_t handle, void* userData),
+    void* onSocketReadyUserData,
     void(*onPacket)(int32_t, int32_t, uint8_t*),
     void(*onDisconnect)(int32_t))
 {
@@ -729,6 +731,13 @@ MU_EXPORT int32_t ConnectionManager_Connect(
     {
         std::lock_guard<std::mutex> lock(g_connectionsMutex);
         g_connections[fd] = state;
+    }
+
+    // Call before recv thread: connect handlers (e.g. LegacyLoginHost) may send C2 F4 06 immediately on accept.
+    // CWsctlc must own the fd in g_androidSocketOwners before any AndroidOnPacket runs or those bytes are dropped.
+    if (onSocketReady != nullptr)
+    {
+        onSocketReady(static_cast<int32_t>(fd), onSocketReadyUserData);
     }
 
     const auto runningFlag = state->running;

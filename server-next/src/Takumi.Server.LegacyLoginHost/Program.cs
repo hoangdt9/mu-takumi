@@ -970,6 +970,16 @@ static async Task HandleMinimalConnectClientAsync(
         tcp.NoDelay = true;
         SocketIdleHelpers.TryApplyGamePortTcpKeepAlive(tcp.Client);
         await using var stream = tcp.GetStream();
+
+        // Send C2 F4 06 immediately so the client recv thread gets data even when C1 F4 06 is not observed
+        // on this path (some LAN / Docker / timing cases). F4 03 handling unchanged; duplicate F4 06 → skip resend.
+        var serverListSent = false;
+        await stream.WriteAsync(serverList602, ct).ConfigureAwait(false);
+        await stream.FlushAsync(ct).ConfigureAwait(false);
+        serverListSent = true;
+        Console.WriteLine("[connect] sent {0}: ServerList on-accept ({1} bytes)", remote, serverList602.Length);
+        Console.Error.WriteLine("[connect] sent {0}: ServerList on-accept ({1} bytes)", remote, serverList602.Length);
+
         var buf = new byte[512];
         while (!ct.IsCancellationRequested)
         {
@@ -989,9 +999,17 @@ static async Task HandleMinimalConnectClientAsync(
                     Console.WriteLine("[connect] F4 06 at offset {0} from {1} (non-zero prefix — check middleboxes / coalesced reads)", off06, remote);
                 }
 
-                await stream.WriteAsync(serverList602, ct).ConfigureAwait(false);
-                await stream.FlushAsync(ct).ConfigureAwait(false);
-                Console.WriteLine("[connect] sent {0}: ServerList ({1} bytes)", remote, serverList602.Length);
+                if (!serverListSent)
+                {
+                    await stream.WriteAsync(serverList602, ct).ConfigureAwait(false);
+                    await stream.FlushAsync(ct).ConfigureAwait(false);
+                    serverListSent = true;
+                    Console.WriteLine("[connect] sent {0}: ServerList ({1} bytes)", remote, serverList602.Length);
+                }
+                else
+                {
+                    Console.WriteLine("[connect] {0}: C1 F4 06 OK (list already sent on-accept, skip duplicate)", remote);
+                }
             }
             else if (TryFindC1F4Request(buf.AsSpan(0, n), 0x03, out var off03))
             {

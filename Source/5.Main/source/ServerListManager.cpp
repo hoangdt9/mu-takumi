@@ -156,7 +156,7 @@ bool CServerListManager::MakeServerGroup(IN int iServerGroupIndex, OUT CServerGr
 		::strcpy(pServerGroup->m_szName, szBuf);
 		pServerGroup->m_szDescription[0] = '\0';
 		pServerGroup->m_iSequence = iServerGroupIndex;
-		pServerGroup->m_iWidthPos = 0;
+		pServerGroup->m_iWidthPos = CServerGroup::SBP_LEFT;
 		pServerGroup->m_iServerIndex = iServerGroupIndex;
 		pServerGroup->m_bPvPServer = true;
 		int j;

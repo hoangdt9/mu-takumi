@@ -435,9 +435,11 @@ void ReceiveServerList(BYTE* ReceiveBuffer, int Size)
 	CUIMng& rUIMng = CUIMng::Instance();
 	if (!rUIMng.m_CreditWin.IsShow())
 	{
+		// Show login first, then server list — ShowWin() moves the window to the head as active.
+		// Previous order (server then login) left LoginMainWin on top and hid the sub-server column.
+		rUIMng.ShowWin(&rUIMng.m_LoginMainWin);
 		rUIMng.ShowWin(&rUIMng.m_ServerSelWin);
 		rUIMng.m_ServerSelWin.UpdateDisplay();
-		rUIMng.ShowWin(&rUIMng.m_LoginMainWin);
 	}
 
 	g_ErrorReport.Write("Success Receive Server List.\r\n");
@@ -12492,6 +12494,11 @@ void ProtocolCompiler( CWsctlc *pSocketClient, int iTranslation, int iParam)
 				}
 				break;
 			}
+#if defined(__ANDROID__)
+			// PopPacket moved this packet's CPacket into the garbage list; free only after Translate* finished
+			// with ReceiveBuffer (never ClearGarbage at GetReadMsg entry — re-entrancy / UAF destroyed mutex + lost F4 06).
+			pSocketClient->AndroidFlushPacketGarbage();
+#endif
 		}
 	}
 	wglMakeCurrent(nullptr, nullptr);

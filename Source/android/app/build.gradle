@@ -396,7 +396,7 @@ def patchNativeDirTo16k = { File dir, String label ->
 
 android {
     namespace 'com.muonline.client'
-    compileSdk 34
+    compileSdk 35
 
     // `preloadDatafresh` = separate applicationId → empty scoped storage → Preload always runs data.zip download.
     flavorDimensions 'target', 'preload'

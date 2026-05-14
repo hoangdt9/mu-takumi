@@ -36,6 +36,8 @@ extern "C" int32_t ConnectionManager_Connect(
     const wchar_t* host,
     int32_t port,
     BYTE isEncrypted,
+    void (*onSocketReady)(int32_t handle, void* userData),
+    void* onSocketReadyUserData,
     void(*onPacket)(int32_t, int32_t, uint8_t*),
     void(*onDisconnect)(int32_t));
 extern "C" int32_t ConnectionManager_GetLastConnectErrno(void);
@@ -404,6 +406,25 @@ void CWsctlc::AndroidClearPacketQueue()
     m_pPacketQueue->ClearGarbage();
 }
 
+static void CWsctlcRegisterSocketOwner(int32_t handle, void* userData)
+{
+    auto* self = static_cast<CWsctlc*>(userData);
+    if (self == nullptr || handle <= 0)
+    {
+        return;
+    }
+
+    std::lock_guard<std::mutex> lock(g_androidSocketMutex);
+    g_androidSocketOwners[handle] = self;
+    self->AndroidBindSocketHandle(handle);
+    self->AndroidClearPacketQueue();
+}
+
+void CWsctlc::AndroidBindSocketHandle(int32_t handle)
+{
+    m_socket = static_cast<SOCKET>(handle);
+}
+
 void CWsctlc::AndroidOnPacket(int32_t handle, int32_t size, uint8_t* data)
 {
     if (handle <= 0 || size <= 0 || data == nullptr)
@@ -440,7 +461,8 @@ void CWsctlc::AndroidOnPacket(int32_t handle, int32_t size, uint8_t* data)
     std::memcpy(client->m_RecvBuf + client->m_nRecvBufLen, data, static_cast<size_t>(size));
 
 #if(ENCRYPT_STATE==1)
-    if (gProtect.CheckSocketPort(client->m_socket) != 0)
+    if (client->m_socket != INVALID_SOCKET && client->m_socket != static_cast<SOCKET>(0) &&
+        gProtect.CheckSocketPort(client->m_socket) != 0)
     {
         gProtect.DecryptData(client->m_RecvBuf + client->m_nRecvBufLen, size);
     }
@@ -547,8 +569,6 @@ void CWsctlc::AndroidOnPacket(int32_t handle, int32_t size, uint8_t* data)
             break;
         }
     }
-
-    client->m_pPacketQueue->ClearGarbage();
 }
 
 void CWsctlc::AndroidOnDisconnect(int32_t handle)
@@ -680,6 +700,8 @@ BOOL CWsctlc::Connect(char* ipAddr, unsigned short port, DWORD)
         hostWide.c_str(),
         static_cast<int32_t>(port),
         0,
+        CWsctlcRegisterSocketOwner,
+        this,
         CWsctlc::AndroidOnPacket,
         CWsctlc::AndroidOnDisconnect);
 
@@ -699,12 +721,6 @@ BOOL CWsctlc::Connect(char* ipAddr, unsigned short port, DWORD)
             static_cast<int>(lastErr),
             errBuf[0] != 0 ? errBuf : "unknown");
         return FALSE;
-    }
-
-    {
-        std::lock_guard<std::mutex> lock(g_androidSocketMutex);
-        g_androidSocketOwners[handle] = this;
-        AndroidClearPacketQueue();
     }
 
     m_socket = static_cast<SOCKET>(handle);
@@ -773,6 +789,15 @@ BYTE* CWsctlc::GetReadMsg()
     }
 
     return g_wsctlcReadMessage[0] ? g_wsctlcReadMessage : NULL;
+}
+
+void CWsctlc::AndroidFlushPacketGarbage()
+{
+    std::lock_guard<std::mutex> lock(g_androidSocketMutex);
+    if (m_pPacketQueue != nullptr)
+    {
+        m_pPacketQueue->ClearGarbage();
+    }
 }
 
 void CWsctlc::LogPrint(char*, ...) {}

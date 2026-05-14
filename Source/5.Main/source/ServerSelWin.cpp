@@ -150,15 +150,19 @@ void CServerSelWin::SetServerBtnPosition()
 	if( m_iSelectServerBtnIndex == -1 )
 		return;
 
-	int nServerBtnPosX = m_aServerGroupBtn[1].GetXPos() + m_aServerGroupBtn[0].GetWidth() + SSW_GAP_WIDTH;
-	
+	// Middle column (subs): to the right of the *left-column* group button — use [1] width, not [0]
+	// (center row uses index 0; its width can differ and misplaces subs off-screen).
+	const int nServerBtnPosX = m_aServerGroupBtn[1].GetXPos() + m_aServerGroupBtn[1].GetWidth() + SSW_GAP_WIDTH;
+
 	int nServerBtnHeight = m_aServerBtn[0].GetHeight();
 
 	int nLServerGBtnHeightSum = m_aServerGroupBtn[1].GetHeight() * 10;
 
 	int nServerBtnHeightSum = nServerBtnHeight * m_icntServer;
 
-	int nLServerGBtnTop = m_aServerGroupBtn[1].GetYPos();
+	// Anchor vertical layout to the left column row; center btn (index 0) sits at the bottom — its Y stacks subs off-screen.
+	const int nYAnchorIndex = (m_iSelectServerBtnIndex == 0) ? 1 : m_iSelectServerBtnIndex;
+	const int nLServerGBtnTop = m_aServerGroupBtn[nYAnchorIndex].GetYPos();
 
 	int nServerBtnBasePosY = nLServerGBtnHeightSum > nServerBtnHeightSum ? nLServerGBtnTop : nLServerGBtnTop - (nServerBtnHeightSum - nLServerGBtnHeightSum);
 	

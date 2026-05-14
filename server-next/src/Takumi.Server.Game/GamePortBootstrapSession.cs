@@ -36,6 +36,9 @@ public sealed class GamePortListenOptions
 
     /// <summary>When <see cref="RequireLoginPostgresHandoff"/> is true, match <c>client_ip</c> stored at login (set <c>TAKUMI_GAME_HANDOFF_MATCH_IP=0</c> to disable).</summary>
     public bool LoginHandoffMatchClientIp { get; init; } = true;
+
+    /// <summary>When true, client must send <c>F1 0xA6</c> signed attach before <c>F1 01</c>; ticket is consumed on attach (not IP-only consume).</summary>
+    public bool RequireSignedSessionTicketWire { get; init; }
 }
 
 /// <summary>Join-only bootstrap (no login).</summary>

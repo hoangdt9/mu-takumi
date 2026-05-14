@@ -23,9 +23,18 @@
       "serverClass": 0,
       "level": 1,
       "mapId": 0,
-      "posX": 166,
-      "posY": 197,
-      "angle": 2
+      "posX": 50,
+      "posY": 93,
+      "angle": 6
+    },
+    {
+      "name": "rf001",
+      "serverClass": 192,
+      "level": 1,
+      "mapId": 0,
+      "posX": 118,
+      "posY": 140,
+      "angle": 5
     }
   ]
 }

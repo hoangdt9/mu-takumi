@@ -73,7 +73,7 @@ if (accounts is null || accounts.Count == 0)
     return 1;
 }
 
-var (serverDecryptKeys, decryptKeysTag) = Dec2ServerDecryptKeysLoader.Load();
+var (serverDecryptKeys, decryptKeysTag) = Season6ClientToServerDecryptSession.LoadServerDecryptKeysFromDec2OrEnv();
 
 var verbose = string.Equals(Environment.GetEnvironmentVariable("TAKUMI_VERBOSE"), "1", StringComparison.OrdinalIgnoreCase)
               || string.Equals(Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT"), "Development", StringComparison.OrdinalIgnoreCase);
@@ -474,6 +474,9 @@ static async Task HandleClientAsync(
         // PacketReceived may invoke handlers concurrently before the previous async handler awaits;
         // a follow-up 12-byte F3 request could run before SetLoggedIn() → list ignored. Serialize per connection.
         using var packetGate = new SemaphoreSlim(1, 1);
+        var maxDecryptedPacketBytes = DecryptedPacketSafety602.ParseMaxDecryptedPacketBytes();
+        var maxPacketsPerSecond = DecryptedPacketSafety602.ParseMaxPacketsPerSecond();
+        var decryptedPacketRateGate = new DecryptedPacketRateGate(maxPacketsPerSecond);
 
         using var connectionCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
         var keepAliveInterval = GamePortKeepAliveRunner.ParseIntervalSeconds();
@@ -547,6 +550,28 @@ static async Task HandleClientAsync(
             await packetGate.WaitAsync(ct).ConfigureAwait(false);
             try
             {
+            var plen = packetSeq.Length;
+            if (plen > maxDecryptedPacketBytes)
+            {
+                Console.WriteLine(
+                    "[{0}] closing: decrypted packet too large len={1} max={2}",
+                    remote,
+                    plen,
+                    maxDecryptedPacketBytes);
+                tcp.Dispose();
+                return;
+            }
+
+            if (maxPacketsPerSecond > 0 && !decryptedPacketRateGate.TryAllow(DateTimeOffset.UtcNow))
+            {
+                Console.WriteLine(
+                    "[{0}] closing: exceeded packet rate limit ({1}/s)",
+                    remote,
+                    maxPacketsPerSecond);
+                tcp.Dispose();
+                return;
+            }
+
             var packet = packetSeq.ToArray();
             if (packet.Length == 0)
             {
@@ -1028,6 +1053,19 @@ static async Task HandleClientAsync(
                 roster.Count);
             // 0x01 and 0x20 are both treated as success in Takumi WSclient TranslateProtocol.
             await WriteLoginResultAsync(connection, 0x01, ct).ConfigureAwait(false);
+
+            var hmacKeyPush = SessionTicketSignature602.ResolveHmacKeyFromEnv();
+            if (hmacKeyPush.Length >= 8 && TakumiPostgresMirror.SessionHandoff is not null)
+            {
+                var expUnix = issued.ExpiresUtc.ToUnixTimeSeconds();
+                Span<byte> acct10 = stackalloc byte[SessionTicketSignature602.AccountWireBytes];
+                SessionTicketSignature602.FormatAccount10(id, acct10);
+                var mac = SessionTicketSignature602.ComputeMacV1(hmacKeyPush, issued.TicketId, expUnix, acct10);
+                var push = SessionTicketWire602.BuildPushC1(issued.TicketId, expUnix, acct10, mac);
+                await connection.Output.WriteAsync(push, ct).ConfigureAwait(false);
+                await connection.Output.FlushAsync(ct).ConfigureAwait(false);
+                Console.WriteLine("[{0}] sent F1 A5 session-ticket (wire) len={1}", remote, push.Length);
+            }
 
             // Scene switches to character select and client sends F3 00; push list from disk (or empty) (disable with TAKUMI_SKIP_AUTO_CHARLIST=1).
             if (!string.Equals(Environment.GetEnvironmentVariable("TAKUMI_SKIP_AUTO_CHARLIST"), "1", StringComparison.Ordinal))

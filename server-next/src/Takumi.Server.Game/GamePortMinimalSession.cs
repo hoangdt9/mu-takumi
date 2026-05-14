@@ -32,6 +32,7 @@ public static class GamePortMinimalSession
         var verbose = options.Verbose;
 
         string? loggedAccountId = null;
+        string? wireVerifiedAccountNorm = null;
         var roster = new List<GameRosterEntry>();
         var rosterDirty = 0;
         var rosterDbMergeOverlay =
@@ -58,6 +59,9 @@ public static class GamePortMinimalSession
             Console.Error.WriteLine(joinMsg);
 
             using var packetGate = new SemaphoreSlim(1, 1);
+            var maxDecryptedPacketBytes = DecryptedPacketSafety602.ParseMaxDecryptedPacketBytes();
+            var maxPacketsPerSecond = DecryptedPacketSafety602.ParseMaxPacketsPerSecond();
+            var decryptedPacketRateGate = new DecryptedPacketRateGate(maxPacketsPerSecond);
             using var connectionCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
             var keepAliveInterval = GamePortKeepAliveRunner.ParseIntervalSeconds();
             Task? keepAliveTask = null;
@@ -131,6 +135,28 @@ public static class GamePortMinimalSession
                 await packetGate.WaitAsync(ct).ConfigureAwait(false);
                 try
                 {
+                    var plen = packetSeq.Length;
+                    if (plen > maxDecryptedPacketBytes)
+                    {
+                        Console.WriteLine(
+                            "[{0}] closing: decrypted packet too large len={1} max={2}",
+                            remote,
+                            plen,
+                            maxDecryptedPacketBytes);
+                        tcp.Dispose();
+                        return;
+                    }
+
+                    if (maxPacketsPerSecond > 0 && !decryptedPacketRateGate.TryAllow(DateTimeOffset.UtcNow))
+                    {
+                        Console.WriteLine(
+                            "[{0}] closing: exceeded packet rate limit ({1}/s)",
+                            remote,
+                            maxPacketsPerSecond);
+                        tcp.Dispose();
+                        return;
+                    }
+
                     var packet = packetSeq.ToArray();
                     if (packet.Length == 0)
                     {
@@ -139,6 +165,58 @@ public static class GamePortMinimalSession
 
                     var t = packet[0];
                     GameRxStructuredLog.DecryptedRx(remote, packet.Length, t, verbose);
+
+                    if (!loginLatch.IsLoggedIn
+                        && SessionTicketWire602.TryFindClientAttach(packet.AsSpan(), out var attachBody)
+                        && SessionTicketWire602.TryReadBody(attachBody, out var tidWire, out var expUnixWire, out var acct10Wire, out var mac32Wire))
+                    {
+                        if (!options.RequireSignedSessionTicketWire)
+                        {
+                            if (verbose)
+                            {
+                                Console.WriteLine("[{0}] F1 A6 session-ticket attach ignored (TAKUMI_GAME_TICKET_WIRE off)", remote);
+                            }
+
+                            return;
+                        }
+
+                        var hmacKeyAttach = SessionTicketSignature602.ResolveHmacKeyFromEnv();
+                        if (hmacKeyAttach.Length < 8)
+                        {
+                            Console.WriteLine("[{0}] F1 A6 rejected: TAKUMI_SESSION_TICKET_HMAC_KEY missing/short", remote);
+                            return;
+                        }
+
+                        if (TakumiPostgresMirror.SessionHandoff is not { } shWire)
+                        {
+                            Console.WriteLine("[{0}] F1 A6 rejected: session handoff DB not enabled", remote);
+                            return;
+                        }
+
+                        var acctFromAttach = Encoding.ASCII.GetString(acct10Wire).TrimEnd('\0', ' ');
+                        var okAttach = await shWire.TryConsumeSignedWireAttachAsync(
+                                tidWire,
+                                acctFromAttach,
+                                expUnixWire,
+                                mac32Wire.ToArray(),
+                                hmacKeyAttach.ToArray(),
+                                ct)
+                            .ConfigureAwait(false);
+                        if (!okAttach)
+                        {
+                            Console.WriteLine(
+                                "[{0}] F1 A6 attach rejected (MAC/row/expiry/account mismatch or already used)",
+                                remote);
+                            return;
+                        }
+
+                        wireVerifiedAccountNorm = CharacterRosterMerge.NormaliseName(acctFromAttach);
+                        Console.WriteLine(
+                            "[{0}] F1 A6 signed session-ticket verified accountNorm={1}",
+                            remote,
+                            wireVerifiedAccountNorm);
+                        return;
+                    }
 
                     if (GamePacketFinders.TryFindCreateCharacterRequest(packet, remote, verbose, out var createOff, out var nameCopy, out var packedClass))
                     {
@@ -410,7 +488,31 @@ public static class GamePortMinimalSession
                         return;
                     }
 
-                    if (options.RequireLoginPostgresHandoff)
+                    if (options.RequireSignedSessionTicketWire)
+                    {
+                        if (wireVerifiedAccountNorm is null)
+                        {
+                            Console.WriteLine(
+                                "[{0}] login rejected: F1 A6 signed attach required before F1 01 (TAKUMI_GAME_TICKET_WIRE)",
+                                remote);
+                            await WriteLoginResultAsync(connection, 0x00, ct).ConfigureAwait(false);
+                            return;
+                        }
+
+                        if (!string.Equals(
+                                CharacterRosterMerge.NormaliseName(id),
+                                wireVerifiedAccountNorm,
+                                StringComparison.Ordinal))
+                        {
+                            Console.WriteLine(
+                                "[{0}] login rejected: F1 01 id does not match verified wire attach account",
+                                remote);
+                            await WriteLoginResultAsync(connection, 0x00, ct).ConfigureAwait(false);
+                            return;
+                        }
+                    }
+
+                    if (options.RequireLoginPostgresHandoff && !options.RequireSignedSessionTicketWire)
                     {
                         if (TakumiPostgresMirror.SessionHandoff is not { } sh)
                         {

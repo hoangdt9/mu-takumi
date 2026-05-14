@@ -29,6 +29,8 @@ Align **Takumi `Source/5.Main`** behaviour after Connect Server **`C1 F4 03`** (
 | `TAKUMI_SESSION_HANDOFF_DB` | `1` / `true` = persist pending handoff rows to **`session_ticket`** after login on `LegacyLoginHost` (same PG connection env as roster). |
 | `TAKUMI_GAME_REQUIRE_LOGIN_HANDOFF` | On **GameHost** only: `1` = F1 01 success requires a consumable `session_ticket` row (login legacy first). |
 | `TAKUMI_GAME_HANDOFF_MATCH_IP` | Default match stored `client_ip`; set `0` to match account only (weaker). |
+| `TAKUMI_SESSION_TICKET_HMAC_KEY` | UTF-8 secret (≥8 bytes), same on Legacy + GameHost, for **`F1 A5`/`F1 A6`** signed ticket (see **`docs/M6-GAME-TCP-CHECKLIST.md`**). |
+| `TAKUMI_GAME_TICKET_WIRE` | On **GameHost**: `1` = require **`F1 A6`** before **`F1 01`**; consumes row on attach (not IP-only consume). |
 
 ## Operational note
 

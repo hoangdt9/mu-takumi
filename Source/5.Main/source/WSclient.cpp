@@ -294,6 +294,44 @@ void BuxConvert(BYTE *Buffer,int Size)
 		Buffer[i] ^= bBuxCode[i%3];
 }
 
+BYTE g_TakumiServerNextTicketPending[TAKUMI_SERVERNEXT_SESSION_TICKET_BYTES];
+bool g_TakumiServerNextTicketPendingValid = false;
+
+void Takumi_ClearServerNextSessionTicketPending()
+{
+	g_TakumiServerNextTicketPendingValid = false;
+	ZeroMemory( g_TakumiServerNextTicketPending, sizeof( g_TakumiServerNextTicketPending ) );
+}
+
+void ReceiveServerNextSessionTicket( BYTE* ReceiveBuffer, int Size )
+{
+	if ( ReceiveBuffer == NULL )
+		return;
+	if ( Size < 4 + TAKUMI_SERVERNEXT_SESSION_TICKET_BYTES )
+		return;
+	if ( ReceiveBuffer[0] != 0xC1 )
+		return;
+	if ( ReceiveBuffer[1] != (BYTE)( 4 + TAKUMI_SERVERNEXT_SESSION_TICKET_BYTES ) )
+		return;
+	if ( ReceiveBuffer[2] != 0xF1 || ReceiveBuffer[3] != 0xA5 )
+		return;
+	memcpy( g_TakumiServerNextTicketPending, ReceiveBuffer + 4, TAKUMI_SERVERNEXT_SESSION_TICKET_BYTES );
+	g_TakumiServerNextTicketPendingValid = true;
+	g_ErrorReport.Write( "[AndroidLogin] Received F1 A5 session-ticket push (Server Next wire)\r\n" );
+}
+
+void Takumi_SendSessionTicketAttachIfPending()
+{
+	if ( !g_TakumiServerNextTicketPendingValid )
+		return;
+	CStreamPacketEngine spe;
+	spe.Init( 0xC1, 0xF1 );
+	spe << (BYTE)0xA6;
+	spe.AddData( g_TakumiServerNextTicketPending, TAKUMI_SERVERNEXT_SESSION_TICKET_BYTES );
+	spe.Send( TRUE );
+	g_ErrorReport.Write( "[AndroidLogin] Sent F1 A6 session-ticket attach before login\r\n" );
+}
+
 
 int  LogIn = 0;
 char LogInID[MAX_ID_SIZE+1] = {0, };
@@ -13621,6 +13659,9 @@ BOOL TranslateProtocol( int HeadCode, BYTE *ReceiveBuffer, int Size, BOOL bEncry
 				bEncrypted);
 			switch( Data->SubCode )
 			{
+			case 0xA5:
+				ReceiveServerNextSessionTicket(ReceiveBuffer, Size);
+				break;
 			case 0x00: //receive join server
                 ReceiveJoinServer(ReceiveBuffer);
 				break;

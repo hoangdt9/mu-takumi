@@ -24,7 +24,7 @@ Use this to avoid unnecessary rebuilds.
 
 **Parallel stacks:** if both `takumi-openmu` and `server-next` run, keep **host ports and client target** unambiguous (e.g. OpenMU `44505` vs Takumi `44605`) so QA logs match the stack under test.
 
-**Minimal Docker on Mac (Android QA):** for APK pointed at `server-next`, run **`cd server-next && docker compose up -d`** (or **`./scripts/docker-up.sh`**) — **Postgres** (default **54444**) and **LegacyLoginHost** (**44605** / **44606**) with **`TAKUMI_LAN_IP`** in `.env` = Mac LAN IP. **LAN `data.zip`:** `docker compose --profile datazip up -d` or **`./scripts/docker-up.sh --with-datazip`** (nginx on host **18080**, same `takumi/docker/data-zip/host/data.zip`); do **not** also run `takumi/docker` `datazip` on the same publish port. **Stop** the `takumi-openmu` compose group (and `docker` Wine/SQL profiles) while testing `server-next` to avoid port confusion and extra emulation load. See **`../../docs/ANDROID-DEV-MAC.md`** § *Takumi Server Next* and **`../README.md`**.
+**Minimal Docker on Mac (Android QA):** for APK pointed at `server-next`, run **`cd server-next && docker compose up -d`** (or **`./scripts/docker-stack.sh --detach`** — mặc định kèm profile **datazip**) — **Postgres** (default **54444**) and **LegacyLoginHost** (**44605** / **44606**) with **`TAKUMI_LAN_IP`** in `.env` = Mac LAN IP. **LAN `data.zip`:** `docker compose --profile datazip up -d` or **`./scripts/docker-stack.sh --detach`** (nginx on host **18080**, same `takumi/docker/data-zip/host/data.zip`); do **not** also run `takumi/docker` `datazip` on the same publish port. **Stop** the `takumi-openmu` compose group (and `docker` Wine/SQL profiles) while testing `server-next` to avoid port confusion and extra emulation load. See **`../../docs/ANDROID-DEV-MAC.md`** § *Takumi Server Next* and **`../README.md`**.
 
 ## Done
 
@@ -176,8 +176,8 @@ Use this to avoid unnecessary rebuilds.
     - [ ] Parity `6.GetMainInfo` nếu client vẫn gọi HTTP/TCP riêng.
 
 13. **M13 — Vận hành**  
-    - [x] `docker-compose.yml`: Postgres + LegacyLoginHost; optional profile **`datazip`** (`./scripts/docker-up.sh --with-datazip`).  
-    - [x] Optional profile **`gamehost`** + **`./scripts/docker-up.sh --with-gamehost`** (M6 `game-host`).  
+    - [x] `docker-compose.yml`: Postgres + LegacyLoginHost; optional profile **`datazip`** (`./scripts/docker-stack.sh` mặc định; **`--no-datazip`** nếu không cần nginx).  
+    - [x] Optional profile **`gamehost`** + **`./scripts/docker-stack.sh --detach --with-gamehost`** (M6 `game-host`).  
     - [ ] CI: integration test client script hoặc pcap replay tới cổng đúng.
 
 **Ghi chú:** Cho đến khi **M6+** xong, client có thể vẫn **dính một TCP** như `LegacyLoginHost` hiện tại; “chuẩn” là tách **game port** và process giống `Source/`.

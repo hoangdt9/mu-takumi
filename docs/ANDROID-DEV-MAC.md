@@ -119,7 +119,7 @@ Khi client/APK trỏ tới **Connect/Login Takumi** (ví dụ cổng **`44605` /
 ### Docker Desktop: `server-next` stack (Postgres + LegacyLoginHost + tuỳ chọn data.zip)
 
 - **`server-next/docker-compose.yml`** chạy **Postgres** (host **54444**) và **LegacyLoginHost** (Connect **44605** + login **44606**) trong Docker. `lsof` có thể hiện **`com.docke`** — bình thường.
-- **Tuỳ chọn `data.zip` qua LAN:** cùng file compose, profile **`datazip`** — nginx publish cổng host **mặc định 18080** (khác **44605/44606/54444**). File đặt tại `takumi/docker/data-zip/host/data.zip`. Bật: `docker compose --profile datazip up -d` hoặc `./scripts/docker-up.sh --with-datazip`, hoặc `COMPOSE_PROFILES=datazip` trong `.env`. **Không** chạy đồng thời `datazip` của `server-next` và `takumi/docker` nếu cùng publish port **18080**.
+- **Tuỳ chọn `data.zip` qua LAN:** cùng file compose, profile **`datazip`** — nginx publish cổng host **mặc định 18080** (khác **44605/44606/54444**). File đặt tại `takumi/docker/data-zip/host/data.zip`. Bật: `docker compose --profile datazip up -d` hoặc `cd server-next && ./scripts/docker-stack.sh --detach` (mặc định đã gộp datazip), hoặc `COMPOSE_PROFILES=datazip` trong `.env`. **Không** chạy đồng thời `datazip` của `server-next` và `takumi/docker` nếu cùng publish port **18080**.
 - Container **`takumi-next-host`** (nếu còn trong máy bạn) là compose **cũ/riêng** — có thể xóa orphan hoặc `docker rm` nếu không dùng.
 - **Đừng `docker restart takumi-next-host` nhẹ nhàng** nếu CMD đang là `dotnet run --project src/Takumi.Server.Host` mà repo **chưa có** project Host đầy đủ: container sẽ **crash loop** (`Couldn't find a project to run`). Cần **sửa Dockerfile/CMD** hoặc mount đúng source trước khi restart.
 - Log kiểu **`[login] ignored unsupported MU packet`** trong container = server nhận **C3** nhưng **không xử lý** (decrypt/ghi không khớp hoặc handler thiếu) → client không có byte trả về.
@@ -129,7 +129,7 @@ Khi client/APK trỏ tới **Connect/Login Takumi** (ví dụ cổng **`44605` /
 ./server-next/scripts/check-takumi-ports.sh
 ```
 
-- **Server LAN trong Docker:** trong `server-next` chạy `docker compose up -d` hoặc `./scripts/docker-up.sh` — stack gồm **Postgres** và **LegacyLoginHost** (Connect **44605** + login **44606**). Cần `.env` với **`TAKUMI_LAN_IP`** = IP LAN Mac.
+- **Server LAN trong Docker:** trong `server-next` chạy `docker compose up -d` hoặc `./scripts/docker-stack.sh --detach` — stack gồm **Postgres** và **LegacyLoginHost** (Connect **44605** + login **44606**). Cần `.env` với **`TAKUMI_LAN_IP`** = IP LAN Mac.
 - **Lỗi `no configuration file provided`:** bạn đang gọi `docker compose` từ thư mục **không** chứa `docker-compose.yml` (thường là `Source/android` sau khi build APK). Cách nhanh: `cd` vào `server-next` rồi chạy lại, hoặc từ `Source/android`: `bash ../../scripts/docker-recreate-legacy-login.sh` (wrapper gọi compose trong `server-next`).
 
 ### LegacyLoginHost (.NET) vs cổng **44606**
@@ -168,7 +168,7 @@ GameServer C (`CGConnectAccountRecv`) chỉ gọi `PacketArgumentDecrypt` cho **
 
 ### Nên bật
 
-1. **`server-next`**: `cd server-next && docker compose up -d` (Postgres **54444** + LegacyLoginHost **44605**/**44606** trong Docker). Cần `.env` với **`TAKUMI_LAN_IP`** = IP LAN. Tuỳ chọn **`data.zip`**: `docker compose --profile datazip up -d` hoặc `./scripts/docker-up.sh --with-datazip` — URL `http://<LAN-IP>:18080/data.zip` (file `takumi/docker/data-zip/host/data.zip`). Chi tiết: `server-next/README.md`.
+1. **`server-next`**: `cd server-next && docker compose up -d` (Postgres **54444** + LegacyLoginHost **44605**/**44606** trong Docker). Cần `.env` với **`TAKUMI_LAN_IP`** = IP LAN. Tuỳ chọn **`data.zip`**: `docker compose --profile datazip up -d` hoặc `./scripts/docker-stack.sh --detach` — URL `http://<LAN-IP>:18080/data.zip` (file `takumi/docker/data-zip/host/data.zip`). Chi tiết: `server-next/README.md`.
 2. **`data.zip` chỉ qua `takumi/docker`** (khi không dùng profile trong `server-next`): từ `takumi/docker`:
 
    ```bash

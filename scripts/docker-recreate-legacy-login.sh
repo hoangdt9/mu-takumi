@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Wrapper: run server-next docker compose from repo root (works when cwd is Source/android).
+# Wrapper từ root repo (cwd có thể là Source/android): stack server-next + detach (legacy-login luôn được recreate).
 set -euo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-exec "$REPO/server-next/scripts/docker-recreate-legacy-login.sh" "$@"
+exec "$REPO/server-next/scripts/docker-stack.sh" --detach "$@"

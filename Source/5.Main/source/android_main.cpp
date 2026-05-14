@@ -15,6 +15,7 @@
 #ifdef __ANDROID__
 
 #include "stdafx.h"
+#include "GameConfigConstants.h"
 #ifdef min
 #undef min
 #endif
@@ -338,8 +339,8 @@ static void InitializeTakumiProtectState()
         gProtect.m_MainInfo.GSPortMin = 55901;
         gProtect.m_MainInfo.GSPortMax = 55999;
         std::strcpy(gProtect.m_MainInfo.CustomerName, "takumi12");
-        std::strcpy(gProtect.m_MainInfo.IpAddress, "192.168.0.174");
-        gProtect.m_MainInfo.IpAddressPort = 63000;
+        std::strcpy(gProtect.m_MainInfo.IpAddress, CfgDefaults::CfgDefaultServerIpNarrow);
+        gProtect.m_MainInfo.IpAddressPort = CfgDefaults::CfgDefaultServerPort;
         std::strcpy(gProtect.m_MainInfo.ClientVersion, "1.04.05");
         std::strcpy(gProtect.m_MainInfo.ClientSerial, "TbYehR2hFUPBKgZj");
         gProtect.LoadEncDec();
@@ -6594,6 +6595,28 @@ void TrimAsciiUtf8InPlace(std::string& s)
     }
 }
 
+static bool IsUnsetOrLegacyDevServerIp(const std::wstring& ip)
+{
+    if (ip.empty())
+    {
+        return true;
+    }
+    static const wchar_t* legacy[] = {
+        L"127.127.127.127",
+        L"192.168.1.33",
+        L"192.168.99.200",
+        L"192.168.0.174",
+    };
+    for (const wchar_t* marker : legacy)
+    {
+        if (ip == marker)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
 void ApplyAndroidNetworkBootstrapOverrides(std::wstring& serverIP, int& configuredPort)
 {
     if (!g_androidBootstrapServerIp.empty())
@@ -6871,15 +6894,15 @@ static bool InitializeAndroidGame()
     static std::wstring serverIP = GameConfig::GetInstance().GetServerIP();
     int configuredPort = GameConfig::GetInstance().GetServerPort();
     ApplyAndroidNetworkBootstrapOverrides(serverIP, configuredPort);
-    if (serverIP.empty() || serverIP == L"127.127.127.127" || serverIP == L"192.168.1.33" || serverIP == L"192.168.99.200")
+    if (IsUnsetOrLegacyDevServerIp(serverIP))
     {
-        serverIP = L"192.168.0.174";
+        serverIP = CfgDefaults::CfgDefaultServerIP;
     }
     // Only remap invalid ports or a known-wrong first-hop (55901 = game shard in MuServer docs).
     // Keep OpenMU connect (44405/44406) and server-next (e.g. 44605/44606) exactly as in GameConfig.
     if (configuredPort <= 0 || configuredPort == 55901)
     {
-        configuredPort = 63000;
+        configuredPort = CfgDefaults::CfgDefaultServerPort;
     }
     GameConfig::GetInstance().SetServerIP(serverIP);
     GameConfig::GetInstance().SetServerPort(configuredPort);
@@ -7644,15 +7667,15 @@ int SDL_main(int argc, char* argv[])
     static std::wstring serverIP = GameConfig::GetInstance().GetServerIP();
     int configuredPort = GameConfig::GetInstance().GetServerPort();
     ApplyAndroidNetworkBootstrapOverrides(serverIP, configuredPort);
-    if (serverIP.empty() || serverIP == L"127.127.127.127" || serverIP == L"192.168.1.33" || serverIP == L"192.168.99.200")
+    if (IsUnsetOrLegacyDevServerIp(serverIP))
     {
-        serverIP = L"192.168.0.174";
+        serverIP = CfgDefaults::CfgDefaultServerIP;
     }
     // Only remap invalid ports or a known-wrong first-hop (55901 = game shard in MuServer docs).
     // Keep OpenMU connect (44405/44406) and server-next (e.g. 44605/44606) exactly as in GameConfig.
     if (configuredPort <= 0 || configuredPort == 55901)
     {
-        configuredPort = 63000;
+        configuredPort = CfgDefaults::CfgDefaultServerPort;
     }
     GameConfig::GetInstance().SetServerIP(serverIP);
     GameConfig::GetInstance().SetServerPort(configuredPort);

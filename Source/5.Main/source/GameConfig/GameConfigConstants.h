@@ -55,6 +55,14 @@ namespace CfgDefaults
     inline constexpr wchar_t CfgDefaultEncryptedUsername[] = L"";
     inline constexpr wchar_t CfgDefaultEncryptedPassword[] = L"";
 
-    inline constexpr wchar_t CfgDefaultServerIP[] = L"192.168.0.174";
-    inline constexpr int CfgDefaultServerPort = 63000;
+    // Connection (defaults when Game.ini has no / stale values; Android build uses emulator→host).
+#if defined(__ANDROID__)
+    inline constexpr wchar_t CfgDefaultServerIP[] = L"10.0.2.2";
+    inline constexpr char CfgDefaultServerIpNarrow[] = "10.0.2.2";
+#else
+    inline constexpr wchar_t CfgDefaultServerIP[] = L"127.0.0.1";
+    inline constexpr char CfgDefaultServerIpNarrow[] = "127.0.0.1";
+#endif
+    /** server-next default Connect port (see server-next/.env TAKUMI_CONNECT_PORT). */
+    inline constexpr int CfgDefaultServerPort = 44605;
 }

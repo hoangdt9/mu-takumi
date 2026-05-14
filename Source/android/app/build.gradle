@@ -88,6 +88,45 @@ String resolveDataZipUrlForBuildConfig() {
     return "http://10.0.2.2:18080/data.zip"
 }
 
+/**
+ * Connect/CS bootstrap for {@code BuildConfig.MU_BOOTSTRAP_SERVER_HOST/PORT} (→ native).
+ * Priority: {@code -PmuBootstrapServerHost/Port} → {@code server-next/.env}
+ */
+String resolveMuBootstrapServerHost() {
+    String cli = rootProject.findProperty("muBootstrapServerHost")?.toString()?.trim()
+    if (cli) {
+        return cli
+    }
+    return readBootstrapHostFromServerNextEnv()
+}
+
+int resolveMuBootstrapServerPort() {
+    String cli = rootProject.findProperty("muBootstrapServerPort")?.toString()?.trim()
+    if (cli) {
+        try {
+            int v = Integer.parseInt(cli)
+            if (v > 0 && v <= 65535) {
+                return v
+            }
+        } catch (NumberFormatException ignored) {
+            // fall through
+        }
+    }
+    File envFile = takumiServerNextEnvFile()
+    String p = readDotEnvValue(envFile, "TAKUMI_CONNECT_PORT")
+    if (p != null && !p.trim().isEmpty()) {
+        try {
+            int v = Integer.parseInt(p.trim())
+            if (v > 0 && v <= 65535) {
+                return v
+            }
+        } catch (NumberFormatException ignored) {
+            // fall through
+        }
+    }
+    return 0
+}
+
 def requiredNativeLibs = [
     "libSDL2.so",
     "libSDL2_image.so",
@@ -387,25 +426,13 @@ android {
             ? "\"\""
             : "\"${muDataZipFallback.replace('"', '\\"')}\""
 
-        // Optional first-hop TCP target (Connect / CS). Set at build time, e.g.:
-        //   ./gradlew ... -PmuBootstrapServerHost=192.168.0.10 -PmuBootstrapServerPort=44605
-        def muBootstrapHostOverride = (project.findProperty("muBootstrapServerHost") ?: "").toString().trim()
-        def muBootstrapHost = muBootstrapHostOverride.isEmpty() ? readBootstrapHostFromServerNextEnv() : muBootstrapHostOverride
-        def muBootstrapPortRaw = (project.findProperty("muBootstrapServerPort") ?: "").toString().trim()
-        int muBootstrapPort = 0
-        if (!muBootstrapPortRaw.isEmpty()) {
-            try {
-                muBootstrapPort = muBootstrapPortRaw.toInteger()
-            } catch (NumberFormatException ignored) {
-                muBootstrapPort = 0
-            }
-        }
-        if (muBootstrapPort < 0 || muBootstrapPort > 65535) {
-            muBootstrapPort = 0
-        }
+        // First-hop TCP (Connect / CS): -P → .env (TAKUMI_LAN_IP / TAKUMI_PUBLIC_HOST, TAKUMI_CONNECT_PORT).
+        def muBootstrapHost = resolveMuBootstrapServerHost()
+        int muBootstrapPort = resolveMuBootstrapServerPort()
         if (muBootstrapPort == 0 && !muBootstrapHost.isEmpty()) {
             muBootstrapPort = 44605
         }
+        println("TakumiMu MU_BOOTSTRAP_SERVER (BuildConfig) = ${muBootstrapHost ?: '<empty>'}:${muBootstrapPort}")
         buildConfigField "String", "MU_BOOTSTRAP_SERVER_HOST", "\"${muBootstrapHost.replace('"', '\\"')}\""
         buildConfigField "int", "MU_BOOTSTRAP_SERVER_PORT", "${muBootstrapPort}"
 

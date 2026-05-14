@@ -4,10 +4,10 @@
 
 // Android NDK: Gradle passes -DMU_LAN_DEFAULT_HOST_A=… into CMake (see app/build.gradle). Fallbacks for other builds.
 #ifndef MU_LAN_DEFAULT_SERVER_HOST_A
-#define MU_LAN_DEFAULT_SERVER_HOST_A "192.168.1.50"
+#define MU_LAN_DEFAULT_SERVER_HOST_A "10.0.2.2"
 #endif
 #ifndef MU_LAN_DEFAULT_SERVER_HOST_W
-#define MU_LAN_DEFAULT_SERVER_HOST_W L"192.168.1.50"
+#define MU_LAN_DEFAULT_SERVER_HOST_W L"10.0.2.2"
 #endif
 
 namespace MuLanDefaults

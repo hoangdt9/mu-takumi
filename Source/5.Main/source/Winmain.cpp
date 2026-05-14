@@ -1,6 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 #include "stdafx.h"
+#include "GameConfigConstants.h"
 
 #define WIN32_LEAN_AND_MEAN
 #define WIN32_EXTRA_LEAN
@@ -1561,10 +1562,8 @@ bool ExceptionCallback(_EXCEPTION_POINTERS* pExceptionInfo )
 	return true;
 }
 #endif
-#include "GameConfig/MuLanDefaults.h"
-static char s_szServerIpAddressStorage[] = MU_LAN_DEFAULT_SERVER_HOST_A;
-char* szServerIpAddress = s_szServerIpAddressStorage;
-WORD g_ServerPort = MuLanDefaults::kDefaultFirstHopConnectPort;
+char* szServerIpAddress = const_cast<char*>(CfgDefaults::CfgDefaultServerIpNarrow);
+WORD g_ServerPort = static_cast<WORD>(CfgDefaults::CfgDefaultServerPort);
 BYTE Version[SIZE_PROTOCOLVERSION] = { '1' + 1, '0' + 2, '4' + 3, '0' + 4, '5' + 5 };
 BYTE Serial[SIZE_PROTOCOLSERIAL + 1] = { "TbYehR2hFUPBKgZj" };
 #if (GetGPUUse)

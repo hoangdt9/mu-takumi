@@ -2,6 +2,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include "stdafx.h"
+#include "GameConfigConstants.h"
 #include "ZzzOpenglUtil.h"
 #include "ZzzInfomation.h"
 #include "ZzzInterface.h"
@@ -28,7 +29,6 @@
 #include <thread>
 
 #include "Camera/CameraUtility.h"
-#include "GameConfig/MuLanDefaults.h"
 #include "Scenes/SceneManager.h"
 
 extern CUITextInputBox* g_pSingleTextInputBox;
@@ -54,8 +54,8 @@ short   g_shCameraLevel = 0;
 
 int g_iLengthAuthorityCode = 20;
 
-const wchar_t* szServerIpAddress = MU_LAN_DEFAULT_SERVER_HOST_W;
-WORD g_ServerPort = MuLanDefaults::kDefaultFirstHopConnectPort;
+const wchar_t* szServerIpAddress = CfgDefaults::CfgDefaultServerIP;
+WORD g_ServerPort = static_cast<WORD>(CfgDefaults::CfgDefaultServerPort);
 
 EGameScene  SceneFlag = WEBZEN_SCENE;
 

@@ -19,7 +19,19 @@ export DOTNET_ENVIRONMENT="${DOTNET_ENVIRONMENT:-Development}"
 
 # Default Dec2 path (same client keys as APK); override in .env if your tree differs.
 if [[ -z "${TAKUMI_DEC2_PATH:-}" ]]; then
-  for _dec2 in "$ROOT/keys/Dec2.dat" "$ROOT/../ClientBuild/Data/Dec2.dat" "$ROOT/../ClientBuild_192.168.99.200/Data/Dec2.dat"; do
+  _dec2_candidates=("$ROOT/keys/Dec2.dat")
+  if [[ -n "${TAKUMI_DEC2_FALLBACK_PATHS:-}" ]]; then
+    IFS=':' read -r -a _extra <<< "${TAKUMI_DEC2_FALLBACK_PATHS}"
+    for _p in "${_extra[@]}"; do
+      if [[ -n "${_p// /}" ]]; then
+        _dec2_candidates+=("$_p")
+      fi
+    done
+  fi
+  for _dec2 in "$ROOT/../ClientBuild/Data/Dec2.dat" "$ROOT/../ClientBuild_192.168.99.200/Data/Dec2.dat"; do
+    _dec2_candidates+=("$_dec2")
+  done
+  for _dec2 in "${_dec2_candidates[@]}"; do
     if [[ -f "$_dec2" ]]; then
       export TAKUMI_DEC2_PATH="$_dec2"
       break

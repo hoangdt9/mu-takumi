@@ -65,13 +65,18 @@ String resolveDataZipUrlForBuildConfig() {
         }
         return "http://${host}:${p}/data.zip"
     }
-    println("TakumiMu WARNING: server-next/.env missing TAKUMI_DATA_ZIP_URL and TAKUMI_PUBLIC_HOST — using http://10.0.2.2:18080/data.zip (emulator→host). Set .env for real devices.")
+    String emu = readDotEnvValue(envFile, "TAKUMI_EMULATOR_DATA_ZIP_URL")
+    if (emu != null && !emu.isEmpty()) {
+        println("TakumiMu WARNING: server-next/.env missing TAKUMI_DATA_ZIP_URL and TAKUMI_PUBLIC_HOST — using TAKUMI_EMULATOR_DATA_ZIP_URL for emulator.")
+        return emu
+    }
+    println("TakumiMu WARNING: server-next/.env missing TAKUMI_DATA_ZIP_URL, TAKUMI_PUBLIC_HOST, TAKUMI_EMULATOR_DATA_ZIP_URL — using http://10.0.2.2:18080/data.zip (Android emulator→host).")
     return "http://10.0.2.2:18080/data.zip"
 }
 
 /**
  * Connect/CS bootstrap for {@code BuildConfig.MU_BOOTSTRAP_SERVER_HOST/PORT} (→ native).
- * Priority: {@code -PmuBootstrapServerHost/Port} → {@code server-next/.env}
+ * Priority: {@code -PmuBootstrapServerHost/Port} → {@code server-next/.env} (no committed machine IP in gradle.properties).
  */
 String resolveMuBootstrapServerHost() {
     String cli = rootProject.findProperty("muBootstrapServerHost")?.toString()?.trim()
@@ -88,7 +93,7 @@ int resolveMuBootstrapServerPort() {
     if (cli) {
         try {
             int v = Integer.parseInt(cli)
-            if (v > 0 && v <= 65535) {
+            if (v >= 0 && v <= 65535) {
                 return v
             }
         } catch (NumberFormatException ignored) {
@@ -100,7 +105,7 @@ int resolveMuBootstrapServerPort() {
     if (p != null && !p.trim().isEmpty()) {
         try {
             int v = Integer.parseInt(p.trim())
-            if (v > 0 && v <= 65535) {
+            if (v >= 0 && v <= 65535) {
                 return v
             }
         } catch (NumberFormatException ignored) {

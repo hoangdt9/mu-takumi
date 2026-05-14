@@ -1,16 +1,23 @@
 #!/usr/bin/env bash
-# Auto-run Takumi LegacyLoginHost with sane LAN defaults: loads server-next/.env if present,
-# then `dotnet watch` rebuilds on every Program.cs change so you only keep the phone client open.
+# Auto-run Takumi LegacyLoginHost: sources server-next/env.defaults (committed) then .env (local),
+# then `dotnet watch` rebuilds on every Program.cs change. Program also loads those files at startup.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 cd "$ROOT"
 
-if [[ -f .env ]]; then
+if [[ -f "$ROOT/env.defaults" ]]; then
   set -a
   # shellcheck disable=SC1091
-  source .env
+  source "$ROOT/env.defaults"
+  set +a
+fi
+
+if [[ -f "$ROOT/.env" ]]; then
+  set -a
+  # shellcheck disable=SC1091
+  source "$ROOT/.env"
   set +a
 fi
 
@@ -35,8 +42,6 @@ if [[ -z "${TAKUMI_DEC2_PATH:-}" ]]; then
     fi
   done
 fi
-
-export TAKUMI_ACCOUNTS="${TAKUMI_ACCOUNTS:-test:test}"
 
 echo "== Takumi LegacyLoginHost (watch) =="
 echo "  cwd: $ROOT"

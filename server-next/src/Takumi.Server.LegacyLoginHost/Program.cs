@@ -19,37 +19,45 @@ using MUnique.OpenMU.Network.SimpleModulus;
 using MUnique.OpenMU.Network.Xor;
 using MUnique.OpenMU.PlugIns;
 using Pipelines.Sockets.Unofficial;
+using Takumi.Server.LegacyLoginHost;
 
-const int DefaultPort = 44606;
+RepoEnvLoader.ApplyDefaultsAndLocalEnv();
 
-// Wire bytes for ServerVersion = "1.04.05" using GameServerInfo indices [0],[2],[3],[5],[6] -> ASCII "10405".
-var defaultJoinVersion = Encoding.ASCII.GetBytes("10405");
-// GameServerInfo - Common.ini default in this repo (must match client Main / APK serial).
-var defaultServerSerial = Encoding.ASCII.GetBytes("TbYehR2hFUPBKgZj");
+if (!int.TryParse(
+        Environment.GetEnvironmentVariable("TAKUMI_LOGIN_PORT"),
+        NumberStyles.Integer,
+        CultureInfo.InvariantCulture,
+        out var port)
+    || port is <= 0 or > 65535)
+{
+    Console.Error.WriteLine(
+        "Missing or invalid TAKUMI_LOGIN_PORT. Set it in server-next/env.defaults (committed) or server-next/.env (local).");
+    return 1;
+}
 
-var port = int.TryParse(Environment.GetEnvironmentVariable("TAKUMI_LOGIN_PORT"), out var p) ? p : DefaultPort;
 var joinVersion = ParseHexOrAscii5(Environment.GetEnvironmentVariable("TAKUMI_JOIN_VERSION_HEX"))
-                  ?? ParseHexOrAscii5(Environment.GetEnvironmentVariable("TAKUMI_JOIN_VERSION"))
-                  ?? defaultJoinVersion;
-if (joinVersion.Length != 5)
+                  ?? ParseHexOrAscii5(Environment.GetEnvironmentVariable("TAKUMI_JOIN_VERSION"));
+if (joinVersion is null || joinVersion.Length != 5)
 {
-    Console.Error.WriteLine("Join version must be exactly 5 bytes (wire form = MainInfo ClientVersion mapping / server m_ServerVersion).");
+    Console.Error.WriteLine(
+        "Join version must be exactly 5 bytes (wire). Set TAKUMI_JOIN_VERSION=10405 or TAKUMI_JOIN_VERSION_HEX in server-next/env.defaults or .env.");
     return 1;
 }
 
-var serverSerial = ParseSerial(Environment.GetEnvironmentVariable("TAKUMI_SERVER_SERIAL")) ?? defaultServerSerial;
-if (serverSerial.Length != 16)
+var serverSerial = ParseSerial(Environment.GetEnvironmentVariable("TAKUMI_SERVER_SERIAL"));
+if (serverSerial is null || serverSerial.Length != 16)
 {
-    Console.Error.WriteLine("Server serial must be 16 bytes ASCII.");
+    Console.Error.WriteLine("Server serial must be 16 bytes ASCII. Set TAKUMI_SERVER_SERIAL in server-next/env.defaults or .env.");
     return 1;
 }
 
-var accounts = ParseAccounts(Environment.GetEnvironmentVariable("TAKUMI_ACCOUNTS"))
-               ?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-               {
-                   ["test"] = "test",
-                   ["admin"] = "admin",
-               };
+var accounts = ParseAccounts(Environment.GetEnvironmentVariable("TAKUMI_ACCOUNTS"));
+if (accounts is null || accounts.Count == 0)
+{
+    Console.Error.WriteLine(
+        "Missing TAKUMI_ACCOUNTS (user:pass pairs, use | or ; between pairs). Set in server-next/env.defaults or .env.");
+    return 1;
+}
 
 var (serverDecryptKeys, decryptKeysTag) = LoadDecryptKeysFromDec2OrDefault();
 
@@ -57,9 +65,14 @@ var verbose = string.Equals(Environment.GetEnvironmentVariable("TAKUMI_VERBOSE")
               || string.Equals(Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT"), "Development", StringComparison.OrdinalIgnoreCase);
 
 // Minimal Connect Server (F4 06 / F4 03) for Android LAN QA. Set TAKUMI_CONNECT_PORT=0 to disable.
-var connectPort = 44605;
+var connectPort = 0;
 if (!string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("TAKUMI_CONNECT_PORT"))
-    && int.TryParse(Environment.GetEnvironmentVariable("TAKUMI_CONNECT_PORT"), out var cpEnv))
+    && int.TryParse(
+        Environment.GetEnvironmentVariable("TAKUMI_CONNECT_PORT"),
+        NumberStyles.Integer,
+        CultureInfo.InvariantCulture,
+        out var cpEnv)
+    && cpEnv is >= 0 and <= 65535)
 {
     connectPort = cpEnv;
 }
@@ -183,7 +196,7 @@ catch (SocketException ex) when (ex.SocketErrorCode == SocketError.AddressAlread
 
 if (connectPort > 0)
 {
-    // Bind connect port on the main thread before any client can complete TCP handshake to 44605.
+    // Bind connect port on the main thread before any client can complete TCP handshake (see TAKUMI_CONNECT_PORT).
     // Previously Start() ran inside Task.Run, creating a short race where phones could connect before listen().
     try
     {

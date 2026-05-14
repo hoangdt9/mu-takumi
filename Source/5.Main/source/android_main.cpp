@@ -6597,24 +6597,7 @@ void TrimAsciiUtf8InPlace(std::string& s)
 
 static bool IsUnsetOrLegacyDevServerIp(const std::wstring& ip)
 {
-    if (ip.empty())
-    {
-        return true;
-    }
-    static const wchar_t* legacy[] = {
-        L"127.127.127.127",
-        L"192.168.1.33",
-        L"192.168.99.200",
-        L"192.168.0.174",
-    };
-    for (const wchar_t* marker : legacy)
-    {
-        if (ip == marker)
-        {
-            return true;
-        }
-    }
-    return false;
+    return ip.empty() || ip == L"127.127.127.127";
 }
 
 void ApplyAndroidNetworkBootstrapOverrides(std::wstring& serverIP, int& configuredPort)

@@ -46,8 +46,8 @@ services:
       - "${TAKUMI_CONNECT_PUBLISH:-44605}:44605"
       - "${TAKUMI_LEGACY_LOGIN_PUBLISH:-44606}:44606"
     environment:
-      TAKUMI_LOGIN_PORT: "44606"
-      TAKUMI_CONNECT_PORT: "44605"
+      TAKUMI_LOGIN_PORT: "${TAKUMI_LOGIN_PORT:-44606}"
+      TAKUMI_CONNECT_PORT: "${TAKUMI_CONNECT_PORT:-44605}"
       # Always /keys/Dec2.dat (mounted volume). Do not use ${TAKUMI_DEC2_PATH} from host .env — paths
       # like /Users/... do not exist in the container and SimpleModulus falls back to wrong keys.
       TAKUMI_DEC2_PATH: /keys/Dec2.dat

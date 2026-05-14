@@ -20,6 +20,7 @@ using MUnique.OpenMU.Network.Xor;
 using MUnique.OpenMU.PlugIns;
 using Pipelines.Sockets.Unofficial;
 using Takumi.Server.LegacyLoginHost;
+using Takumi.Server.Protocol;
 
 RepoEnvLoader.ApplyDefaultsAndLocalEnv();
 
@@ -104,7 +105,7 @@ byte[] connectServerListPacket;
 string connectListBootDesc;
 if (TryParseConnectIdsCsv(csIdsRaw, out var explicitConnectIds))
 {
-    connectServerListPacket = ConnectWire.BuildServerList602FromIds(explicitConnectIds, loadPercent: 0x0A);
+    connectServerListPacket = ConnectServerList602.BuildFromIds(explicitConnectIds, loadPercent: 0x0A);
     connectListBootDesc = $"TAKUMI_CS_CONNECT_IDS=[{string.Join(',', explicitConnectIds)}]";
 }
 else if (!string.IsNullOrWhiteSpace(csBaseRaw) || !string.IsNullOrWhiteSpace(csCountRaw))
@@ -139,7 +140,7 @@ else if (!string.IsNullOrWhiteSpace(csBaseRaw) || !string.IsNullOrWhiteSpace(csC
         csConnectCount = csc;
     }
 
-    connectServerListPacket = ConnectWire.BuildServerList602(csConnectBase, csConnectCount, loadPercent: 0x0A);
+    connectServerListPacket = ConnectServerList602.Build(csConnectBase, csConnectCount, loadPercent: 0x0A);
     connectListBootDesc = $"TAKUMI_CS_CONNECT_BASE={csConnectBase} TAKUMI_CS_CONNECT_COUNT={csConnectCount}";
 }
 else
@@ -160,7 +161,7 @@ else
 
     preset[wi++] = 40;
     preset[wi++] = 41;
-    connectServerListPacket = ConnectWire.BuildServerList602FromIds(preset, loadPercent: 0x0A);
+    connectServerListPacket = ConnectServerList602.BuildFromIds(preset, loadPercent: 0x0A);
     connectListBootDesc =
         "default F4 06: 15+15+2 safe ids (0..14,20..34,40,41); never >15 slots/group (client SLM_MAX_SERVER_COUNT)";
 }
@@ -456,7 +457,7 @@ static async Task HandleClientAsync(
             encryptionPipe: null,
             new NullLogger<Connection>());
 
-        var join = BuildJoinPacket(result: 1, index: 0, joinVersion);
+        var join = LoginAccountWire602.BuildJoinPacket(result: 1, index: 0, joinVersion);
         await connection.Output.WriteAsync(join, ct).ConfigureAwait(false);
         await connection.Output.FlushAsync(ct).ConfigureAwait(false);
         // Stderr too — easier to spot when stdout is buffered or mixed with other hosts.
@@ -545,10 +546,10 @@ static async Task HandleClientAsync(
                     return;
                 }
 
-                var serverClass = MapCreateCharacterPackedByteToServerProtocol(packedClass);
+                var serverClass = CharacterCreateWire602.MapPackedClassToServerProtocol(packedClass);
                 UpsertRoster(roster, nameCopy, serverClass, level: 1);
                 var slotByte = (byte)(roster.Count - 1);
-                var resp = BuildCreateCharacterSuccessPacket(nameCopy, slotByte, level: 1, serverClass: serverClass);
+                var resp = CharacterCreateWire602.BuildCreateSuccess(nameCopy, slotByte, level: 1, serverClass: serverClass);
                 await connection.Output.WriteAsync(resp, ct).ConfigureAwait(false);
                 await connection.Output.FlushAsync(ct).ConfigureAwait(false);
                 if (!string.IsNullOrEmpty(loggedAccountId))
@@ -590,7 +591,7 @@ static async Task HandleClientAsync(
                     return;
                 }
 
-                var joinPkt = BuildJoinMapServer602(picked);
+                var joinPkt = JoinMapServerWire602.Build(ToWire(picked));
                 await connection.Output.WriteAsync(joinPkt, ct).ConfigureAwait(false);
                 await connection.Output.FlushAsync(ct).ConfigureAwait(false);
                 sessionJoinCharacterName10 = new byte[10];
@@ -625,7 +626,7 @@ static async Task HandleClientAsync(
                         remote,
                         Encoding.ASCII.GetString(deleteName10).TrimEnd('\0'),
                         deleteOff);
-                    await connection.Output.WriteAsync(BuildDeleteCharacterResponse(2), ct).ConfigureAwait(false);
+                    await connection.Output.WriteAsync(CharacterCreateWire602.BuildDeleteResponse(2), ct).ConfigureAwait(false);
                     await connection.Output.FlushAsync(ct).ConfigureAwait(false);
                     return;
                 }
@@ -636,7 +637,7 @@ static async Task HandleClientAsync(
                     SavePersistedRoster(loggedAccountId, roster);
                 }
 
-                await connection.Output.WriteAsync(BuildDeleteCharacterResponse(1), ct).ConfigureAwait(false);
+                await connection.Output.WriteAsync(CharacterCreateWire602.BuildDeleteResponse(1), ct).ConfigureAwait(false);
                 await connection.Output.FlushAsync(ct).ConfigureAwait(false);
                 Console.WriteLine(
                     "[{0}] delete character OK removed={1} name='{2}' rosterCount={3} frame@{4}",
@@ -667,7 +668,7 @@ static async Task HandleClientAsync(
                 await connection.Output.FlushAsync(ct).ConfigureAwait(false);
                 if (pickedMove is not null)
                 {
-                    var joinPktMove = BuildJoinMapServer602(pickedMove, (byte)(mapIdx & 0xFF));
+                    var joinPktMove = JoinMapServerWire602.Build(ToWire(pickedMove), (byte)(mapIdx & 0xFF));
                     await connection.Output.WriteAsync(joinPktMove, ct).ConfigureAwait(false);
                     await connection.Output.FlushAsync(ct).ConfigureAwait(false);
                     Console.WriteLine(
@@ -730,7 +731,7 @@ static async Task HandleClientAsync(
                     return;
                 }
 
-                var list = roster.Count > 0 ? BuildCharacterList602(roster) : BuildEmptyCharacterList602();
+                var list = roster.Count > 0 ? CharacterListWire602.Build(MapRosterToWire(roster)) : CharacterListWire602.BuildEmpty();
                 LogCharacterListWire(remote, list, "on F3 00 request");
                 await connection.Output.WriteAsync(list, ct).ConfigureAwait(false);
                 await connection.Output.FlushAsync(ct).ConfigureAwait(false);
@@ -848,7 +849,7 @@ static async Task HandleClientAsync(
             // Scene switches to character select and client sends F3 00; push list from disk (or empty) (disable with TAKUMI_SKIP_AUTO_CHARLIST=1).
             if (!string.Equals(Environment.GetEnvironmentVariable("TAKUMI_SKIP_AUTO_CHARLIST"), "1", StringComparison.Ordinal))
             {
-                var list = roster.Count > 0 ? BuildCharacterList602(roster) : BuildEmptyCharacterList602();
+                var list = roster.Count > 0 ? CharacterListWire602.Build(MapRosterToWire(roster)) : CharacterListWire602.BuildEmpty();
                 LogCharacterListWire(remote, list, "after login (auto)");
                 await connection.Output.WriteAsync(list, ct).ConfigureAwait(false);
                 await connection.Output.FlushAsync(ct).ConfigureAwait(false);
@@ -884,24 +885,6 @@ static async Task HandleClientAsync(
     {
         tcp.Dispose();
     }
-}
-
-static byte[] BuildServerInfoPacket(string ip, ushort gamePort)
-{
-    var pkt = new byte[22];
-    pkt[0] = 0xC1;
-    pkt[1] = 22;
-    pkt[2] = 0xF4;
-    pkt[3] = 0x03;
-    var ipBytes = Encoding.ASCII.GetBytes(ip);
-    if (ipBytes.Length > 16)
-    {
-        throw new ArgumentException("TAKUMI_PUBLIC_HOST must be at most 16 ASCII characters for ServerInfo packet.", nameof(ip));
-    }
-
-    ipBytes.CopyTo(pkt.AsSpan(4));
-    BinaryPrimitives.WriteUInt16LittleEndian(pkt.AsSpan(20, 2), gamePort);
-    return pkt;
 }
 
 static async Task RunConnectAcceptLoopAsync(
@@ -1017,7 +1000,7 @@ static async Task HandleMinimalConnectClientAsync(
                     Console.WriteLine("[connect] F4 03 at offset {0} from {1}", off03, remote);
                 }
 
-                var pkt = BuildServerInfoPacket(publicHost, gamePort);
+                var pkt = ConnectServerInfo602.Build(publicHost, gamePort);
                 await stream.WriteAsync(pkt, ct).ConfigureAwait(false);
                 await stream.FlushAsync(ct).ConfigureAwait(false);
                 Console.WriteLine(
@@ -1041,32 +1024,6 @@ static async Task HandleMinimalConnectClientAsync(
     {
         Console.WriteLine("[connect] error {0}: {1}", remote, ex.Message);
     }
-}
-
-static byte[] BuildJoinPacket(byte result, ushort index, ReadOnlySpan<byte> version5)
-{
-    var p = new byte[12];
-    p[0] = 0xC1;
-    p[1] = 12;
-    p[2] = 0xF1;
-    p[3] = 0x00;
-    p[4] = result;
-    p[5] = (byte)((index >> 8) & 0xFF);
-    p[6] = (byte)(index & 0xFF);
-    version5.CopyTo(p.AsSpan(7));
-    return p;
-}
-
-static ReadOnlyMemory<byte> BuildLoginResultPacket(byte result)
-{
-    // PMSG_CONNECT_ACCOUNT_SEND: PSBMSG_HEAD (C1,size,F1,01) + result
-    return new byte[] { 0xC1, 0x05, 0xF1, 0x01, result };
-}
-
-static byte[] BuildEmptyCharacterList602()
-{
-    // PMSG_CHARACTER_LIST_SEND with ExtWarehouse (Season 6+ layout, 8 bytes total).
-    return new byte[] { 0xC1, 0x08, 0xF3, 0x00, 0x00, 0x00, 0x00, 0x00 };
 }
 
 static string GetRosterRoot()
@@ -1177,25 +1134,6 @@ static void SavePersistedRoster(string accountId, IReadOnlyList<CharacterRosterE
     }
 }
 
-/// <summary>Takumi PRECEIVE_CREATE_CHARACTER: PBMSG + SubCode + Result + ID[10] + Index + Level + Class (19 bytes).</summary>
-static ReadOnlyMemory<byte> BuildCreateCharacterSuccessPacket(byte[] name10, byte slot, ushort level, byte serverClass)
-{
-    var p = new byte[19];
-    p[0] = 0xC1;
-    p[1] = 19;
-    p[2] = 0xF3;
-    p[3] = 0x01;
-    p[4] = 1; // success — ReceiveCreateCharacter checks Result==1
-    var dst = p.AsSpan(5, 10);
-    dst.Clear();
-    Buffer.BlockCopy(name10, 0, p, 5, Math.Min(10, name10.Length));
-
-    p[15] = slot;
-    BinaryPrimitives.WriteUInt16LittleEndian(p.AsSpan(16, 2), level);
-    p[18] = serverClass;
-    return p;
-}
-
 static ReadOnlySpan<byte> TrimName10(ReadOnlySpan<byte> name10)
 {
     var len = Math.Min(10, name10.Length);
@@ -1238,6 +1176,19 @@ static CharacterRosterEntry? FindRosterEntry(List<CharacterRosterEntry> roster, 
     }
 
     return null;
+}
+
+static CharacterRosterWire ToWire(CharacterRosterEntry e) => new(e.Name10, e.ServerClass, e.Level);
+
+static List<CharacterRosterWire> MapRosterToWire(List<CharacterRosterEntry> roster)
+{
+    var list = new List<CharacterRosterWire>(roster.Count);
+    foreach (var e in roster)
+    {
+        list.Add(ToWire(e));
+    }
+
+    return list;
 }
 
 /// <summary>
@@ -1385,115 +1336,12 @@ static void LogCharacterListWire(string remote, byte[] list, string tag)
     }
 }
 
-/// <summary>Character list F3 00 with one or more Takumi PRECEIVE_CHARACTER_LIST entries (WSclient.h).</summary>
-/// <remarks>
-/// MSVC lays out <c>PRECEIVE_CHARACTER_LIST</c> with 1 padding byte after <c>ID[10]</c> before <c>WORD Level</c>
-/// (WORD alignment) → <c>sizeof</c> is 34, not 33. Omitting that byte shifts Class/Equipment and corrupts select models.
-/// </remarks>
-static byte[] BuildCharacterList602(List<CharacterRosterEntry> roster)
-{
-    const int headerSize = 8;
-    const int entrySize = 34;
-    var n = roster.Count;
-    var total = headerSize + n * entrySize;
-    var p = new byte[total];
-    p[0] = 0xC1;
-    p[1] = (byte)total;
-    p[2] = 0xF3;
-    p[3] = 0x00;
-    p[4] = 7; // MaxClass
-    p[5] = 0; // MoveCount
-    p[6] = (byte)n;
-    p[7] = 0; // ExtWarehouse
-
-    var off = headerSize;
-    for (var i = 0; i < n; i++)
-    {
-        var e = roster[i];
-        p[off++] = (byte)i;
-        e.Name10.AsSpan(0, 10).CopyTo(p.AsSpan(off));
-        off += 10;
-        p[off++] = 0; // struct padding before Level (matches MSVC PRECEIVE_CHARACTER_LIST)
-        BinaryPrimitives.WriteUInt16LittleEndian(p.AsSpan(off), e.Level);
-        off += 2;
-        p[off++] = 0; // CtlCode
-        p[off++] = e.ServerClass;
-        for (var k = 0; k < 17; k++)
-        {
-            p[off++] = 0xFF;
-        }
-
-        // G_NONE = (BYTE)-1 — client CharSelMainWin / guild UI treat 0 as "in guild" (G_PERSON).
-        p[off++] = 0xFF;
-    }
-
-    return p;
-}
-
-/// <summary><c>PRECEIVE_JOIN_MAP_SERVER</c> (Takumi WSclient.h) — plain C1, same as other host→client stubs here.</summary>
-static byte[] BuildJoinMapServer602(CharacterRosterEntry r, byte mapId = 0)
-{
-    // Wire layout must match packed <see cref="PRECEIVE_JOIN_MAP_SERVER"/> (131 bytes, 16 trailing DWORD "view" fields).
-    const int totalLen = 131;
-    var p = new byte[totalLen];
-    p[0] = 0xC1;
-    p[1] = (byte)totalLen;
-    p[2] = 0xF3;
-    p[3] = 0x03;
-    // Lorencia (0) — safe starter tile near center.
-    p[4] = 135;
-    p[5] = 122;
-    p[6] = mapId;
-    p[7] = 1; // angle byte 1 → 0° in client ((Angle-1)*45)
-
-    _ = r; // roster ignored for stub: empty new-character sheet
-    BinaryPrimitives.WriteUInt64BigEndian(p.AsSpan(8), 0UL);
-    BinaryPrimitives.WriteUInt64BigEndian(p.AsSpan(16), 0UL);
-
-    BinaryPrimitives.WriteUInt16LittleEndian(p.AsSpan(24), 0);
-    for (var i = 26; i < 50; i += 2)
-    {
-        BinaryPrimitives.WriteUInt16LittleEndian(p.AsSpan(i), 0);
-    }
-
-    BinaryPrimitives.WriteUInt32LittleEndian(p.AsSpan(50), 0);
-    p[54] = 0; // PK — neutral
-    p[55] = 0;
-    BinaryPrimitives.WriteInt16LittleEndian(p.AsSpan(56), 0);
-    BinaryPrimitives.WriteInt16LittleEndian(p.AsSpan(58), 0);
-    BinaryPrimitives.WriteUInt16LittleEndian(p.AsSpan(60), 0);
-    BinaryPrimitives.WriteUInt16LittleEndian(p.AsSpan(62), 0);
-    BinaryPrimitives.WriteUInt16LittleEndian(p.AsSpan(64), 0);
-    p[66] = 0;
-    p.AsSpan(67, 64).Clear();
-    return p;
-}
-
-/// <summary>
-/// Maps client create packet byte <c>(CLASS_TYPE &lt;&lt; 4) | skin</c> to Season 6 wire class (Takumi <c>PROTO_CLASS_CODES</c> / DB group * 0x10).
-/// </summary>
-static byte MapCreateCharacterPackedByteToServerProtocol(byte packed)
-{
-    var jobNibble = (byte)(packed >> 4);
-    return jobNibble switch
-    {
-        0 => 0x00, // Dark Wizard
-        1 => 0x20, // Dark Knight
-        2 => 0x40, // Fairy Elf
-        3 => 0x60, // Magic Gladiator
-        4 => 0x80, // Dark Lord
-        5 => 0xA0, // Summoner
-        6 => 0xC0, // Rage Fighter
-        _ => 0x00,
-    };
-}
-
 /// <summary>Find PMSG_CREATE_CHARACTER (F3/01).</summary>
 /// <remarks>
 /// C++ path: StreamPacketEngine XOR (StreamPacketEngine.h) then SendGameEncrypted applies mu::Xor32Encrypt from index 3
 /// (SimpleModulusCrypt.h — same 32-byte table). Client send log shows sub 0x0C for logical 0x01.
 /// PipelinedDecryptor may leave bytes still obfuscated or fully logical; run Takumi decode only when subcode is not yet 0x01.
-/// Last byte out param is the <b>packed</b> (UI job &lt;&lt; 4)|skin — map with <see cref="MapCreateCharacterPackedByteToServerProtocol"/> before roster/response.
+/// Last byte out param is the <b>packed</b> (UI job &lt;&lt; 4)|skin — map with <see cref="CharacterCreateWire602.MapPackedClassToServerProtocol"/> before roster/response.
 /// </remarks>
 static bool TryFindCreateCharacterRequest(ReadOnlySpan<byte> packet, string remote, out int frameOffset, out byte[] name10, out byte packedClass)
 {
@@ -1550,10 +1398,8 @@ static bool TryFindCreateCharacterRequest(ReadOnlySpan<byte> packet, string remo
     return false;
 }
 
-/// <summary>PRECEIVE delete character: <see cref="PHEADER_DEFAULT_SUBCODE"/> — Value 1=success, 2=resident wrong, 0=guild, 3=item block (WSclient.cpp ReceiveDeleteCharacter).</summary>
-static byte[] BuildDeleteCharacterResponse(byte value) => new byte[] { 0xC1, 0x05, 0xF3, 0x02, value };
-
 /// <summary>Find PMSG_REQUEST_DELETE_CHARACTER (F3/02): C1 + Size + F3 + 02 + id[10] + resident[20] (34 bytes after full decrypt).</summary>
+/// <remarks>Delete ACK wire: <see cref="CharacterCreateWire602.BuildDeleteResponse"/>.</remarks>
 static bool TryFindDeleteCharacterRequest(ReadOnlySpan<byte> packet, out int frameOffset, out byte[] name10, out byte[] resident20)
 {
     frameOffset = -1;
@@ -1703,7 +1549,7 @@ static bool TryFindCharacterListRequest(ReadOnlySpan<byte> packet, out int frame
 
 static Task WriteLoginResultAsync(Connection connection, byte result, CancellationToken ct)
 {
-    var pkt = BuildLoginResultPacket(result);
+    var pkt = LoginAccountWire602.BuildLoginResult(result);
     return WriteAsync(connection, pkt, ct);
 }
 
@@ -1928,89 +1774,6 @@ file sealed class RosterPersistChar
     public string Name { get; set; } = "";
     public byte ServerClass { get; set; }
     public ushort Level { get; set; }
-}
-
-file static class ConnectWire
-{
-    /// <summary>
-    /// Season 6 connect-server list (C2 F4 06). Layout matches Takumi WSclient ReceiveServerList / OpenMU ServerListResponse.
-    /// Each entry is 4 bytes: server id (LE), load %, padding. Client maps id → ServerList.bmd via index/20 (ServerListManager.cpp).
-    /// </summary>
-    public static byte[] BuildServerList602(int connectBase, int serverCount, byte loadPercent)
-    {
-        if (connectBase < 0 || connectBase > 65535)
-        {
-            throw new ArgumentOutOfRangeException(nameof(connectBase));
-        }
-
-        if (serverCount is < 1 or > 32)
-        {
-            throw new ArgumentOutOfRangeException(nameof(serverCount));
-        }
-
-        var len = 7 + serverCount * 4;
-        var p = new byte[len];
-        p[0] = 0xC2;
-        BinaryPrimitives.WriteUInt16BigEndian(p.AsSpan(1, 2), (ushort)len);
-        p[3] = 0xF4;
-        p[4] = 0x06;
-        BinaryPrimitives.WriteUInt16BigEndian(p.AsSpan(5, 2), (ushort)serverCount);
-        var off = 7;
-        for (var i = 0; i < serverCount; i++)
-        {
-            var id = connectBase + i;
-            if (id > 65535)
-            {
-                throw new ArgumentException("connectBase + count exceeds ushort server id range.", nameof(connectBase));
-            }
-
-            BinaryPrimitives.WriteUInt16LittleEndian(p.AsSpan(off, 2), (ushort)id);
-            p[off + 2] = loadPercent;
-            p[off + 3] = 0;
-            off += 4;
-        }
-
-        return p;
-    }
-
-    /// <summary>Same wire as <see cref="BuildServerList602"/> but with an explicit list of connect indices (F4 06 entries).</summary>
-    public static byte[] BuildServerList602FromIds(ReadOnlySpan<int> connectIds, byte loadPercent)
-    {
-        if (connectIds.Length is < 1 or > 32)
-        {
-            throw new ArgumentOutOfRangeException(nameof(connectIds));
-        }
-
-        var len = 7 + connectIds.Length * 4;
-        var p = new byte[len];
-        p[0] = 0xC2;
-        BinaryPrimitives.WriteUInt16BigEndian(p.AsSpan(1, 2), (ushort)len);
-        p[3] = 0xF4;
-        p[4] = 0x06;
-        BinaryPrimitives.WriteUInt16BigEndian(p.AsSpan(5, 2), (ushort)connectIds.Length);
-        var off = 7;
-        for (var i = 0; i < connectIds.Length; i++)
-        {
-            var id = connectIds[i];
-            if (id is < 0 or > 65535)
-            {
-                throw new ArgumentOutOfRangeException(nameof(connectIds));
-            }
-
-            BinaryPrimitives.WriteUInt16LittleEndian(p.AsSpan(off, 2), (ushort)id);
-            p[off + 2] = loadPercent;
-            p[off + 3] = 0;
-            off += 4;
-        }
-
-        return p;
-    }
-}
-
-/// <summary>Wire bytes for periodic game-port keepalive (see RunGamePortKeepAliveAsync).</summary>
-file static class GamePortKeepAliveWire
-{
-    internal static ReadOnlyMemory<byte> PingRequest { get; } = new byte[] { 0xC1, 0x03, 0x71 };
 }
 
 /// <summary>Thread-safe login flag for keepalive + packet gate (visibility across tasks).</summary>

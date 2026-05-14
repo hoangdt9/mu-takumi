@@ -1,6 +1,6 @@
 # Takumi Server Next - Implementation Checklist
 
-Last updated: 2026-05-14 (M1 protocol parity doc + `LOGIN-WIRE-FORMAT.md`)
+Last updated: 2026-05-14 (M2 Protocol extraction + golden tests)
 
 ## Repository vs checklist (read first)
 
@@ -127,9 +127,9 @@ Use this to avoid unnecessary rebuilds.
    - [x] Liệt kê opcode / `HeadCode` / `F3` sub mà client `Source/5.Main` dùng sau login (**`WSclient.cpp` → `TranslateProtocol`**, macro TX trong **`wsclientinline.h`**, struct trong **`WSclient.h`**) + lớp **`Protocol.cpp` → `ProtocolCoreEx`**. Chi tiết: **`docs/M1-PROTOCOL-PARITY-MAP.md`**.  
    - [x] Bảng “legacy vs server-next” + wire login ngắn: **`docs/M1-PROTOCOL-PARITY-MAP.md`** §1 và **`docs/LOGIN-WIRE-FORMAT.md`**. *(GameServer C++ đầy đủ nằm ngoài `server-next`; khi thêm vector từ `Source/4.GameServer`, bổ sung mục “GS TX” trong file M1.)*
 
-2. **M2 — `Takumi.Server.Protocol` (shared)**  
-   - [ ] Tách struct/builder join, inventory, list nhân vật khỏi `LegacyLoginHost/Program.cs` sang thư viện dùng chung.  
-   - [ ] Unit test so khớp byte với capture / golden vector.
+2. **M2 — `Takumi.Server.Protocol` (shared)** *(done 2026-05-14 — extend when join/list wire changes)*  
+   - [x] Tách struct/builder join, inventory, list nhân vật khỏi `LegacyLoginHost/Program.cs` sang **`src/Takumi.Server.Protocol/`** (`CharacterListWire602`, `JoinMapServerWire602`, `CharacterCreateWire602`, `LoginAccountWire602`, `ConnectServerList602`, `ConnectServerInfo602`, `CharacterRosterWire`, …).  
+   - [x] Unit test golden vectors: **`src/Takumi.Server.Tests/CharacterWireGolden602Tests.cs`** (`dotnet test src/Takumi.Server.Tests/Takumi.Server.Tests.csproj`).
 
 3. **M3 — Connect (`1.ConnectServer` parity)**  
    - [ ] Đảm bảo F4 06/03/05 đồng hành với `ServerListManager` / BMD (đã phần nào trong host).  

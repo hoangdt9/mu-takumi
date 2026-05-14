@@ -172,7 +172,7 @@ Runs **before** `TranslateProtocol`. Examples from `Protocol.cpp` (non-exhaustiv
 
 | Milestone | Action |
 |-----------|--------|
-| **M2** | Move join / inventory / list builders from `LegacyLoginHost/Program.cs` into `Takumi.Server.Protocol`; cite **byte sizes** from `WSclient.h` in XMLDoc. |
+| **M2** | ~~Move join / inventory / list builders from `LegacyLoginHost/Program.cs` into `Takumi.Server.Protocol`~~ **Done** (`CharacterListWire602`, `JoinMapServerWire602`, …; tests in `Takumi.Server.Tests`). |
 | **M6** | For each **must-have** world packet, map a row from §2 → C# handler + test vector. |
 | **Golden pcap** | Label captures with **client build flags** and **Dec2** identity. |
 

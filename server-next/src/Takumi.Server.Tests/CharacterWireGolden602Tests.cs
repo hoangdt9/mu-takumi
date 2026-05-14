@@ -30,7 +30,7 @@ public sealed class CharacterWireGolden602Tests
     }
 
     [Fact]
-    public void Join_map_131_bytes_header_and_coords_match_stub()
+    public void Join_map_131_bytes_header_and_coords_match_default_spawn()
     {
         var name = new byte[10];
         System.Text.Encoding.ASCII.GetBytes("HERO").AsSpan().CopyTo(name);
@@ -44,6 +44,45 @@ public sealed class CharacterWireGolden602Tests
         Assert.Equal(122, pkt[5]);
         Assert.Equal(0, pkt[6]); // default map id
         Assert.Equal(1, pkt[7]); // angle
+        var life = pkt[34] | (pkt[35] << 8);
+        Assert.True(life > 0, "Life LE @34 should be non-zero for client world bootstrap");
+    }
+
+    [Fact]
+    public void Join_map_custom_spawn_overrides_defaults()
+    {
+        var name = new byte[10];
+        System.Text.Encoding.ASCII.GetBytes("X").AsSpan().CopyTo(name);
+        var spawn = new JoinMapSpawnWire(3, 40, 50, 2);
+        var pkt = JoinMapServerWire602.Build(new CharacterRosterWire(name, serverClass: 0x00, level: 10), spawn);
+        Assert.Equal(3, pkt[6]);
+        Assert.Equal(40, pkt[4]);
+        Assert.Equal(50, pkt[5]);
+        Assert.Equal(2, pkt[7]);
+    }
+
+    [Fact]
+    public void Inventory_F3_10_empty_is_C4_with_zero_count()
+    {
+        var pkt = InventoryListWire602.BuildEmpty();
+        Assert.Equal(6, pkt.Length);
+        Assert.Equal(new byte[] { 0xC4, 0x00, 0x06, 0xF3, 0x10, 0x00 }, pkt);
+    }
+
+    [Fact]
+    public void Inventory_F3_10_one_slot_matches_GameServer_layout()
+    {
+        var payload = new byte[13];
+        payload[0] = 12; // slot index (main inventory region in Takumi client)
+        for (var i = 0; i < 12; i++)
+        {
+            payload[1 + i] = (byte)(0x10 + i);
+        }
+
+        var pkt = InventoryListWire602.Build(payload);
+        Assert.Equal(6 + 13, pkt.Length);
+        Assert.Equal(new byte[] { 0xC4, 0x00, 0x13, 0xF3, 0x10, 0x01 }, pkt.AsSpan(0, 6).ToArray());
+        Assert.Equal(payload, pkt.AsSpan(6).ToArray());
     }
 
     [Fact]

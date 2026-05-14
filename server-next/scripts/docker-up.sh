@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Bring up Postgres + LegacyLoginHost (same as `docker compose up -d` in server-next).
 # Optional: ./scripts/docker-up.sh --with-datazip  → also starts nginx for LAN data.zip on port 18080.
+# Optional: ./scripts/docker-up.sh --with-gamehost → also starts M6 `game-host` (profile gamehost; set TAKUMI_GAME_PORT in .env).
 # Or set COMPOSE_PROFILES=datazip in .env (Compose reads it automatically).
 set -euo pipefail
 
@@ -17,9 +18,12 @@ fi
 
 compose_args=()
 with_datazip=0
+with_gamehost=0
 for arg in "$@"; do
   if [[ "$arg" == "--with-datazip" ]]; then
     with_datazip=1
+  elif [[ "$arg" == "--with-gamehost" ]]; then
+    with_gamehost=1
   else
     compose_args+=("$arg")
   fi
@@ -31,6 +35,16 @@ if [[ "$with_datazip" -eq 1 ]]; then
       export COMPOSE_PROFILES="${COMPOSE_PROFILES},datazip"
     else
       export COMPOSE_PROFILES="datazip"
+    fi
+  fi
+fi
+
+if [[ "$with_gamehost" -eq 1 ]]; then
+  if [[ ",${COMPOSE_PROFILES:-}," != *",gamehost,"* ]] && [[ "${COMPOSE_PROFILES:-}" != "gamehost" ]]; then
+    if [[ -n "${COMPOSE_PROFILES:-}" ]]; then
+      export COMPOSE_PROFILES="${COMPOSE_PROFILES},gamehost"
+    else
+      export COMPOSE_PROFILES="gamehost"
     fi
   fi
 fi
@@ -67,6 +81,10 @@ if [[ -n "${COMPOSE_PROFILES:-}" ]] && [[ "${COMPOSE_PROFILES}" == *"datazip"* ]
   else
     echo "  data.zip HTTP:   port ${dp} → GET /data.zip (set TAKUMI_DATA_ZIP_URL or TAKUMI_PUBLIC_HOST in .env for APK)"
   fi
+fi
+if [[ -n "${COMPOSE_PROFILES:-}" ]] && [[ "${COMPOSE_PROFILES}" == *"gamehost"* ]]; then
+  gp="${TAKUMI_GAME_PUBLISH:-55901}"
+  echo "  M6 game-host:    host port ${gp} → container TAKUMI_GAME_PORT (see docs/M6-GAME-TCP-CHECKLIST.md; F4 03 must match)"
 fi
 echo "  Logs:           docker compose logs -f legacy-login"
 echo "  Stop:           docker compose down"

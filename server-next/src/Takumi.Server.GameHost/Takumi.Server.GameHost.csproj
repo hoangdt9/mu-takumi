@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -8,15 +8,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="MUnique.OpenMU.Network" Version="0.9.9" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\Takumi.Server.Game\Takumi.Server.Game.csproj" />
-    <ProjectReference Include="..\Takumi.Server.Join\Takumi.Server.Join.csproj" />
-    <ProjectReference Include="..\Takumi.Server.Connect\Takumi.Server.Connect.csproj" />
     <ProjectReference Include="..\Takumi.Server.Persistence\Takumi.Server.Persistence.csproj" />
-    <ProjectReference Include="..\Takumi.Server.Protocol\Takumi.Server.Protocol.csproj" />
   </ItemGroup>
 
 </Project>

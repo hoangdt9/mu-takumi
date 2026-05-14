@@ -16,6 +16,10 @@
 #   # or: COMPOSE_PROFILES=datazip in .env, or ./scripts/docker-up.sh --with-datazip
 # Place file at ../docker/data-zip/host/data.zip → http://<LAN-IP>:18080/data.zip
 
+# Optional dedicated game TCP (M6): `docker compose --profile gamehost up -d`
+# Set TAKUMI_GAME_PORT (e.g. 55901) in .env to match ConnectServer F4 03; publish with TAKUMI_GAME_PUBLISH.
+# LegacyLoginHost must advertise the same port (empty TAKUMI_GAME_PORT in legacy-login = login port only).
+
 services:
   postgres:
     image: postgres:16-alpine
@@ -29,6 +33,8 @@ services:
       - "${TAKUMI_POSTGRES_PUBLISH_PORT:-54444}:5432"
     volumes:
       - takumi_next_pgdata:/var/lib/postgresql/data
+      # First-time DB init only (empty volume): roster table for M4b JSON↔Postgres sync.
+      - ./sql/init:/docker-entrypoint-initdb.d:ro
 
   # No `build:` here — image is plain dotnet/sdk; your repo is bind-mounted to /app and compiled on each start.
   # First lines in logs appear only after `dotnet build` (~1–3 min). Use: docker compose logs -f legacy-login
@@ -37,6 +43,8 @@ services:
     image: mcr.microsoft.com/dotnet/sdk:10.0
     container_name: takumi-legacy-login
     restart: unless-stopped
+    depends_on:
+      - postgres
     working_dir: /app
     volumes:
       - .:/app
@@ -48,6 +56,8 @@ services:
     environment:
       TAKUMI_LOGIN_PORT: "${TAKUMI_LOGIN_PORT:-44606}"
       TAKUMI_CONNECT_PORT: "${TAKUMI_CONNECT_PORT:-44605}"
+      TAKUMI_GAME_PORT: "${TAKUMI_GAME_PORT:-}"
+      TAKUMI_SESSION_TICKET_TTL_MINUTES: "${TAKUMI_SESSION_TICKET_TTL_MINUTES:-}"
       # Always /keys/Dec2.dat (mounted volume). Do not use ${TAKUMI_DEC2_PATH} from host .env — paths
       # like /Users/... do not exist in the container and SimpleModulus falls back to wrong keys.
       TAKUMI_DEC2_PATH: /keys/Dec2.dat
@@ -67,6 +77,33 @@ services:
         && dotnet build src/Takumi.Server.LegacyLoginHost/Takumi.Server.LegacyLoginHost.csproj -c Release -nologo -v q
         && echo "[legacy-login] build OK — exec LegacyLoginHost (44605 connect + TAKUMI_LOGIN_PORT game)…"
         && exec dotnet run --project src/Takumi.Server.LegacyLoginHost/Takumi.Server.LegacyLoginHost.csproj -c Release --no-build
+
+  # M6 — optional second process: minimal GameServer bootstrap (C1 F1 00 + decrypt RX log). Profile **gamehost**.
+  game-host:
+    profiles: ["gamehost"]
+    image: mcr.microsoft.com/dotnet/sdk:10.0
+    container_name: takumi-game-host
+    restart: unless-stopped
+    working_dir: /app
+    volumes:
+      - .:/app
+      - ${TAKUMI_DEC2_HOST_DIR:-./keys}:/keys:ro
+    ports:
+      - "${TAKUMI_GAME_PUBLISH:-55901}:${TAKUMI_GAME_PORT:-55901}"
+    environment:
+      TAKUMI_GAME_PORT: "${TAKUMI_GAME_PORT:-55901}"
+      TAKUMI_DEC2_PATH: /keys/Dec2.dat
+      TAKUMI_JOIN_VERSION: "${TAKUMI_JOIN_VERSION:-10405}"
+      TAKUMI_VERBOSE: "${TAKUMI_VERBOSE:-1}"
+      DOTNET_ENVIRONMENT: "${DOTNET_ENVIRONMENT:-Development}"
+    command:
+      - /bin/sh
+      - -c
+      - >-
+        echo "[game-host] bind-mount /app — build GameHost (~1 min)…"
+        && dotnet build src/Takumi.Server.GameHost/Takumi.Server.GameHost.csproj -c Release -nologo -v q
+        && echo "[game-host] listening on *:${TAKUMI_GAME_PORT:-55901} (F4 03 target)…"
+        && exec dotnet run --project src/Takumi.Server.GameHost/Takumi.Server.GameHost.csproj -c Release --no-build
 
   # Static HTTP for Android Preload `data.zip` (nginx). Host port **defaults to 18080** — not 44605/44606.
   datazip:

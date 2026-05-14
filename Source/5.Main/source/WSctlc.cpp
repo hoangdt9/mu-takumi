@@ -430,7 +430,7 @@ void CWsctlc::LogHexPrintS( BYTE *buf, int size)
 		}		
 		fprintf(m_logfp, "S 0x%02x %d\n", buf[2], buf[3]);
 	} 
-	// ??¡À? ???? else fprintf(m_logfp, "S 0x%02x %d\n", buf[3], buf[4]);
+	// ??ï¿½ï¿½? ???? else fprintf(m_logfp, "S 0x%02x %d\n", buf[3], buf[4]);
 
 	//fprintf(m_logfp, "S ");
 	//for( int n=0; n<size; n++) fprintf(m_logfp, "%02x ", buf[n]);

@@ -1,14 +1,12 @@
-// OS-level TCP keepalive for LegacyLoginHost sockets (NAT / idle middleboxes).
-// Complements application-level C1 03 71 pings (see RunGamePortKeepAliveAsync in Program.cs).
-
 using System.Net.Sockets;
 
-internal static class SocketIdleHelpers
+namespace Takumi.Server.Connect;
+
+/// <summary>OS-level TCP keepalive for connect-server sockets (NAT / idle middleboxes).</summary>
+public static class ConnectTcpKeepAlive
 {
-    /// <summary>
-    /// Best-effort: enables SO_KEEPALIVE and short idle probes where the runtime/OS supports it.
-    /// </summary>
-    internal static void TryApplyGamePortTcpKeepAlive(Socket socket)
+    /// <summary>Best-effort: enables SO_KEEPALIVE and short idle probes where the runtime/OS supports it.</summary>
+    public static void TryApply(Socket socket)
     {
         try
         {
@@ -21,7 +19,6 @@ internal static class SocketIdleHelpers
 
         try
         {
-            // .NET 6+ — values are in seconds on Linux/macOS; milliseconds on Windows (runtime maps as needed).
             socket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.TcpKeepAliveTime, 25);
             socket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.TcpKeepAliveInterval, 8);
             socket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.TcpKeepAliveRetryCount, 5);

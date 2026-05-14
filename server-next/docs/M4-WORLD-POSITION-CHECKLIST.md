@@ -1,0 +1,97 @@
+# M4 — World position & roster — checklist (chỉ tick [x] khi đã làm xong trong repo)
+
+**Quy ước:** Mỗi dòng `[ ]` / `[x]` phải khớp trạng thái thật trong git. Cập nhật file này khi merge PR / hoàn thành bước.
+
+**Tham chiếu code:** `JoinMapSpawnWire`, `JoinMapServerWire602` (`Takumi.Server.Protocol`); roster JSON + **`TakumiPostgresMirror`** (`Takumi.Server.Persistence`, gọi từ `LegacyLoginHost/Program.cs` và `GameHost/Program.cs`); SQL `sql/init/001_character_roster.sql`, **`002_inventory_slot.sql`**.
+
+**QA thiết bị (2026-05-14):** `docker compose` + Android LAN — sau khi đi trong map và vào lại, log host cho thấy **`F3 03`** với `xy` khớp roster (ví dụ từ spawn mặc định Lorencia sang tọa độ đã walk).
+
+---
+
+## M4a — Wire + JSON roster (`LegacyLoginHost`)
+
+- [x] `JoinMapSpawnWire` + `JoinMapServerWire602` (131 byte, stats tối thiểu).
+- [x] JSON `takumi-roster/<account>.json` (`mapId`, `posX`, `posY`, `angle`).
+- [x] Migrate roster cũ (thiếu tọa độ) → default spawn.
+- [x] Join / move-map stub / flush khi disconnect.
+- [x] Cập nhật tọa độ từ gói **walk** (`0xD4` / `0x10`) + **instant move** (`0x15`) trên cùng TCP login/game minimal (roster in-memory → JSON/DB khi disconnect).
+
+---
+
+## M4b — Postgres + nối JSON ↔ DB
+
+### Schema & vận hành DB
+
+- [x] Script tạo bảng `public.character_roster` (`sql/init/001_character_roster.sql`).
+- [x] Script tạo bảng **`public.inventory_slot`** (`sql/init/002_inventory_slot.sql`) — `item` BYTEA đúng 12 byte (wire Season 6).
+- [x] Docker Postgres mount `./sql/init` → `/docker-entrypoint-initdb.d` (**chỉ** chạy khi volume DB trống lần đầu).
+- [x] Ghi rõ trong `server-next/README.md` (hoặc ops doc) lệnh `psql` áp migration cho **DB đã tồn tại** (volume cũ không chạy lại init).
+- [x] (Tuỳ chọn) Job CI / script `scripts/apply-sql.sh` idempotent.
+
+### Code Persistence
+
+- [x] Project `Takumi.Server.Persistence` + package **Npgsql**.
+- [x] `PostgresCharacterRosterRepository` (`LoadByAccountAsync`, `ReplaceAccountRosterAsync`, `DeleteCharacterAsync`).
+- [x] **`PostgresInventorySlotRepository`** + **`JoinInventoryPacket602`** (đọc `inventory_slot` cho **`F3 10`** sau join / move-map khi `TAKUMI_ROSTER_DB_SYNC`).
+- [x] **`TakumiPostgresMirror.InitIfEnabled()`** — khởi tạo cả roster + inventory readers (thay `RosterDbRuntime`).
+- [x] `PostgresCharacterRosterRepository.BuildConnectionStringFromEnv()` (`TAKUMI_PG_CONNECTION_STRING` hoặc `TAKUMI_PG_HOST` + port/user/password/database).
+- [x] `CharacterRosterMerge.ApplyDbOverlay` (merge DB → bản ghi in-memory theo tên).
+- [x] Smoke test gated env: **`TEST_PG_CONNECTION_STRING`** → `PostgresEnvSmokeTests` (`dotnet test`; bỏ qua khi biến trống).
+
+### `LegacyLoginHost` — hành vi nối JSON ↔ DB
+
+- [x] `TAKUMI_ROSTER_DB_SYNC=1` / `true` → `TakumiPostgresMirror.InitIfEnabled()` tạo **`PostgresCharacterRosterRepository`** + **`PostgresInventorySlotRepository`** (cùng connection string).
+- [x] Sau login: load JSON → **merge** hàng từ DB khi **`TAKUMI_ROSTER_DB_MERGE_MODE`** không phải `json` (DB overlay `map/xy/angle/level/class` nếu trùng tên); **`json`** = giữ roster từ file JSON.
+- [x] Sau mỗi `SavePersistedRoster` (ghi JSON xong): **upsert** async toàn bộ roster account lên DB (`DELETE` account + `INSERT` batch).
+- [x] Cấu hình merge **`TAKUMI_ROSTER_DB_MERGE_MODE`**: mặc định / `overlay` = overlay DB sau JSON khi login; **`json`** = bỏ overlay (JSON thắng hoàn toàn).
+- [x] `DeleteCharacterAsync` gọi **await** khi xóa nhân vật (`F3 02`) trước `SavePersistedRoster` / `SaveRoster` (sau đó vẫn replace full account — an toàn; có thể tối ưu sau).
+- [x] Đợi / flush DB upsert tối thiểu: **`CharacterRosterMirrorWriter.TryDrainPendingUpserts`** sau flush disconnect (`LegacyLoginHost`, `GamePortMinimalSession`).
+- [ ] Health log / metric: merge fail vs upsert fail count.
+
+### Importer / bảng `takumi_runtime.character` “chuẩn”
+
+- [ ] Bảng domain `character` (hoặc đồng bộ từ JSON) có `map_id`, `pos_x`, `pos_y`, `angle` + FK account.
+- [ ] Importer `takumi_legacy` → runtime cho các cột world (nếu staging có dữ liệu).
+- [ ] Quyết định một nguồn sự thật (SSOT): chỉ DB / chỉ JSON / JSON+DB (hiện: **JSON + mirror DB**, SSOT thực tế vẫn là JSON file).
+
+---
+
+## M4c — Vị trí từ game TCP (phụ thuộc M6–M7)
+
+- [x] `LegacyLoginHost` + `GamePortMinimalSession`: cập nhật roster in-memory từ **walk** `C1 … 0xD4` / `0x10` và **instant move** `C1 05 15` (decode bước đi giống OpenMU); **ghi JSON + DB** vẫn theo `SavePersistedRoster` khi disconnect (và các chỗ save khác).
+- [x] Periodic save / save throttled giữa phiên: **`TAKUMI_ROSTER_PERIODIC_SAVE_SECONDS`** (5–3600) → flush JSON + mirror khi có **walk / instant move** (cờ dirty; `LegacyLoginHost` + `GamePortMinimalSession`).
+- [ ] Chuẩn hóa tile BYTE vs tọa độ float world.
+- [ ] Listener **process** game-only (M6 `GameHost`) parity đầy đủ với `GameServer` (scope, broadcast, …).
+
+---
+
+## M5+ (liên quan, không thuộc M4)
+
+- [x] Session ticket + handoff cổng game (**M5**) — **`docs/M5-JOIN-HANDOFF-CHECKLIST.md`** (`TAKUMI_GAME_PORT`, `Takumi.Server.Join`).
+- [x] `F3 10` sau join / move-map: **`JoinInventoryPacket602`** đọc **`inventory_slot`** khi DB sync bật; nếu không có bảng hoặc không có row → gói **rỗng** (6 byte). Cột `character_name` phải khớp tên đã chuẩn hoá giống roster (`CharacterRosterMerge.NormaliseName`).
+
+---
+
+## Kiểm thử đã có trong repo
+
+- [x] `dotnet test` — golden wire + `CharacterRosterMergeTests`.
+- [x] Test tích hợp Postgres tùy chọn: **`TEST_PG_CONNECTION_STRING`** (xem `PostgresEnvSmokeTests`).
+
+---
+
+## Gợi ý `.env` (Docker compose)
+
+Trong container `legacy-login`, Postgres service name là **`postgres`**, cổng **5432**:
+
+```bash
+TAKUMI_ROSTER_DB_SYNC=1
+TAKUMI_PG_CONNECTION_STRING=Host=postgres;Port=5432;Username=takumi;Password=takumi;Database=takumi_runtime
+```
+
+Trên host `dotnet run` (Postgres publish `54444`):
+
+```bash
+TAKUMI_ROSTER_DB_SYNC=1
+TAKUMI_PG_HOST=127.0.0.1
+TAKUMI_PG_PORT=54444
+```

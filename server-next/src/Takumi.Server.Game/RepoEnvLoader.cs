@@ -1,10 +1,10 @@
-namespace Takumi.Server.LegacyLoginHost;
+namespace Takumi.Server.Game;
 
 /// <summary>
 /// Loads <c>server-next/env.defaults</c> (committed, machine-agnostic) then <c>server-next/.env</c> (local, gitignored).
 /// Defaults only set variables that are not already present in the process environment; .env always applies non-empty values.
 /// </summary>
-internal static class RepoEnvLoader
+public static class RepoEnvLoader
 {
     public static void ApplyDefaultsAndLocalEnv()
     {

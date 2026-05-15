@@ -4,6 +4,7 @@
 using System.Globalization;
 using System.Net.Sockets;
 using Takumi.Server.Game;
+using Takumi.Server.Hosting;
 using Takumi.Server.Persistence;
 using Takumi.Server.Protocol;
 

@@ -15,6 +15,9 @@ public sealed class ConnectMiniServerOptions
     /// <summary>Wire bytes for <c>C2 F4 06</c> server list (from <see cref="ConnectServerList602"/>).</summary>
     public required byte[] ServerList602 { get; init; }
 
+    /// <summary>When true, send <see cref="ServerList602"/> immediately after TCP accept (before reading client).</summary>
+    public bool SendServerListOnAccept { get; init; } = true;
+
     /// <summary>When true, list requests receive <see cref="ConnectServerBusy602"/> instead of the list (QA).</summary>
     public bool ReturnBusy { get; init; }
 
@@ -72,6 +75,18 @@ public static class ConnectMiniServer
             tcp.NoDelay = true;
             ConnectTcpKeepAlive.TryApply(tcp.Client);
             await using var stream = tcp.GetStream();
+            var sentListOnAccept = false;
+            if (options.SendServerListOnAccept && !options.ReturnBusy)
+            {
+                stream.Write(options.ServerList602, 0, options.ServerList602.Length);
+                stream.Flush();
+                sentListOnAccept = true;
+                Console.WriteLine(
+                    "[connect] sent {0}: ServerList on-accept ({1} bytes)",
+                    remote,
+                    options.ServerList602.Length);
+            }
+
             var buf = new byte[512];
             while (!ct.IsCancellationRequested)
             {
@@ -125,7 +140,7 @@ public static class ConnectMiniServer
                             options.BusyServerIndex,
                             busy.Length);
                     }
-                    else
+                    else if (!sentListOnAccept)
                     {
                         await stream.WriteAsync(options.ServerList602, ct).ConfigureAwait(false);
                         await stream.FlushAsync(ct).ConfigureAwait(false);

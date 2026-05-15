@@ -1,6 +1,6 @@
 # M5 — Join handoff (Connect → game port) + session ticket
 
-Last updated: 2026-05-14 (Postgres `session_ticket` handoff + GameHost consume gate)
+Last updated: 2026-05-15 (split processes: LoginHost + ConnectHost)
 
 ## Goal
 
@@ -13,7 +13,8 @@ Align **Takumi `Source/5.Main`** behaviour after Connect Server **`C1 F4 03`** (
 - [x] **`TAKUMI_SESSION_TICKET_TTL_MINUTES`** (default **120**, clamp 5..10080) — TTL for ticket validity (M6 game listener will call `TryValidate`).
 - [x] Unit tests for ticket store (`SessionTicketStoreTests`).
 - [x] **Postgres `session_ticket`** — `sql/init/003_session_ticket.sql` + **`PostgresSessionHandoffRepository`** (`TakumiPostgresMirror.InitSessionHandoffIfEnabled`, env **`TAKUMI_SESSION_HANDOFF_DB`**). Optional strict game login: **`TAKUMI_GAME_REQUIRE_LOGIN_HANDOFF`** (see **`docs/IMPLEMENTATION-CHECKLIST.md`** High Priority). In-memory **`InMemorySessionTicketStore`** unchanged for TTL/Touch on login TCP.
-- [ ] **Signed ticket on wire** / dedicated `TakumiLoginServer` executable — future.
+- [x] **Split processes (M5):** `Takumi.Server.LoginHost` (login/game TCP, `LoginTcpOnly`) + `Takumi.Server.ConnectHost` (F4 only). Shared logic: `Takumi.Server.LegacyLoginHost.Runner` + `ConnectServerHostRunner`. Docker profile **`splitstack`**; host scripts `./scripts/run-login-host.sh` + `./scripts/run-connect-host.sh`. Combined single process remains `Takumi.Server.LegacyLoginHost`.
+- [ ] **Signed ticket on wire** — implemented (see M6 checklist); optional hardening only.
 
 ## Client reference
 

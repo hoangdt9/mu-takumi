@@ -8,9 +8,11 @@
 
 ## M8 — Dữ liệu tĩnh thế giới (ETL)
 
-- [ ] Import `MonsterSetBase*.txt` (hoặc nguồn tương đương) → bảng spawn Postgres (schema + script trong `sql/init/` hoặc tool riêng).
-- [ ] Cửa / shop / `Data/Custom/` — quyết định format lưu (JSON vs bảng) + tài liệu nguồn C++ tham chiếu.
-- [ ] Liên kết với `Takumi.Server.Persistence` (reader API cho `Takumi.Server.Game`).
+- [x] Schema **`sql/init/005_monster_spawn.sql`** (`monster_spawn` — parity `MONSTER_SET_BASE_INFO`).
+- [x] ETL: **`MonsterSpawnDbImporter`** + **`scripts/import-monster-spawn.sh`** (cần `TEST_PG` / `TAKUMI_PG_*` + `TAKUMI_MONSTER_SET_BASE_PATH`).
+- [x] Reader: **`PostgresMonsterSpawnRepository`** + **`TakumiPostgresMirror.InitMonsterSpawnIfEnabled`** (`TAKUMI_MONSTER_SPAWN_DB=1`).
+- [x] Runtime: **`MapMonsterWorld`** ưu tiên DB khi bảng có dữ liệu; fallback file / Lorencia như M9.
+- [ ] Cửa / shop / `Data/Custom/` — **deferred:** JSON blob hoặc bảng riêng; tham chiếu `CMapServer` / shop tables C++ (chưa ETL).
 
 ---
 

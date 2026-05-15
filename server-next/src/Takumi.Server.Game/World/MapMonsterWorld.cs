@@ -1,4 +1,5 @@
 using System.Globalization;
+using Takumi.Server.Persistence;
 
 namespace Takumi.Server.Game.World;
 
@@ -26,26 +27,29 @@ public static class MapMonsterWorld
                 return;
             }
 
-            var setPath = ResolvePath(
-                "TAKUMI_MONSTER_SET_BASE_PATH",
-                "Monster/MonsterSetBase.txt");
+            if (!TryLoadSetBaseFromPostgres(out var setPath))
+            {
+                setPath = ResolvePath(
+                    "TAKUMI_MONSTER_SET_BASE_PATH",
+                    "Monster/MonsterSetBase.txt");
+                if (setPath is not null && File.Exists(setPath))
+                {
+                    _setBase = MonsterSetBaseLoader.LoadFromFile(setPath);
+                    Console.WriteLine("[m9] loaded MonsterSetBase {0} entries from {1}", _setBase.Count, setPath);
+                }
+                else
+                {
+                    _setBase = BuildLorenciaFallback();
+                    Console.WriteLine(
+                        "[m9] MonsterSetBase missing ({0}) — using built-in Lorencia fallback ({1} spawns)",
+                        setPath ?? "(unset)",
+                        _setBase.Count);
+                }
+            }
+
             var monsterPath = ResolvePath(
                 "TAKUMI_MONSTER_INFO_PATH",
                 "Monster/Monster.txt");
-
-            if (setPath is not null && File.Exists(setPath))
-            {
-                _setBase = MonsterSetBaseLoader.LoadFromFile(setPath);
-                Console.WriteLine("[m9] loaded MonsterSetBase {0} entries from {1}", _setBase.Count, setPath);
-            }
-            else
-            {
-                _setBase = BuildLorenciaFallback();
-                Console.WriteLine(
-                    "[m9] MonsterSetBase missing ({0}) — using built-in Lorencia fallback ({1} spawns)",
-                    setPath ?? "(unset)",
-                    _setBase.Count);
-            }
 
             if (monsterPath is not null && File.Exists(monsterPath))
             {
@@ -82,6 +86,39 @@ public static class MapMonsterWorld
         }
 
         return list;
+    }
+
+    static bool TryLoadSetBaseFromPostgres(out string? fileFallbackPath)
+    {
+        fileFallbackPath = null;
+        var repo = TakumiPostgresMirror.MonsterSpawn;
+        if (repo is null)
+        {
+            return false;
+        }
+
+        try
+        {
+            var rows = repo.LoadAllAsync().GetAwaiter().GetResult();
+            if (rows.Count == 0)
+            {
+                Console.WriteLine("[m8] monster_spawn table empty — falling back to file");
+                return false;
+            }
+
+            _setBase = rows.Select(MonsterSpawnRowMapping.FromRow).ToList();
+            fileFallbackPath = null;
+            Console.WriteLine("[m8] loaded {0} monster spawns from Postgres (monster_spawn)", _setBase.Count);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("[m8] Postgres monster_spawn load failed ({0}) — falling back to file", ex.Message);
+            fileFallbackPath = ResolvePath(
+                "TAKUMI_MONSTER_SET_BASE_PATH",
+                "Monster/MonsterSetBase.txt");
+            return false;
+        }
     }
 
     static void RebuildInstances()

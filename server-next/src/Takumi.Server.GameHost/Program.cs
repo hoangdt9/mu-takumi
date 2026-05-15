@@ -11,6 +11,7 @@ using Takumi.Server.Protocol;
 RepoEnvLoader.ApplyDefaultsAndLocalEnv();
 TakumiPostgresMirror.InitIfEnabled();
 TakumiPostgresMirror.InitSessionHandoffIfEnabled();
+TakumiPostgresMirror.InitMonsterSpawnIfEnabled();
 
 if (!int.TryParse(
         Environment.GetEnvironmentVariable("TAKUMI_GAME_PORT"),

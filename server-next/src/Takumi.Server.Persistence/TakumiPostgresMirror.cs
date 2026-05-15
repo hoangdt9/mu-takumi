@@ -10,6 +10,9 @@ public static class TakumiPostgresMirror
     /// <summary>Optional <c>session_ticket</c> rows for login→game handoff when <c>TAKUMI_SESSION_HANDOFF_DB</c> is on.</summary>
     public static PostgresSessionHandoffRepository? SessionHandoff { get; private set; }
 
+    /// <summary>Optional <c>monster_spawn</c> reader when <c>TAKUMI_MONSTER_SPAWN_DB</c> is on (M8).</summary>
+    public static PostgresMonsterSpawnRepository? MonsterSpawn { get; private set; }
+
     /// <summary>Reads <c>TAKUMI_ROSTER_DB_SYNC</c> and connection env; no-op when disabled or misconfigured.</summary>
     public static void InitIfEnabled()
     {
@@ -75,6 +78,40 @@ public static class TakumiPostgresMirror
         {
             Console.Error.WriteLine("[session-handoff-db] init failed: {0}", ex.Message);
             SessionHandoff = null;
+        }
+    }
+
+    /// <summary>
+    /// Enables <see cref="MonsterSpawn"/> when <c>TAKUMI_MONSTER_SPAWN_DB=1</c> (or <c>true</c>) and a Postgres connection string is set.
+    /// Requires <c>sql/init/005_monster_spawn.sql</c> applied; populate via <c>MonsterSpawnDbImporter</c> / <c>scripts/import-monster-spawn.sh</c>.
+    /// </summary>
+    public static void InitMonsterSpawnIfEnabled()
+    {
+        MonsterSpawn = null;
+        var on = string.Equals(Environment.GetEnvironmentVariable("TAKUMI_MONSTER_SPAWN_DB"), "1", StringComparison.OrdinalIgnoreCase)
+                 || string.Equals(Environment.GetEnvironmentVariable("TAKUMI_MONSTER_SPAWN_DB"), "true", StringComparison.OrdinalIgnoreCase);
+        if (!on)
+        {
+            return;
+        }
+
+        var cs = PostgresCharacterRosterRepository.BuildConnectionStringFromEnv();
+        if (string.IsNullOrEmpty(cs))
+        {
+            Console.Error.WriteLine(
+                "[monster-spawn-db] TAKUMI_MONSTER_SPAWN_DB is set but no connection string: set TAKUMI_PG_CONNECTION_STRING or TAKUMI_PG_HOST (+ user/password/database).");
+            return;
+        }
+
+        try
+        {
+            MonsterSpawn = new PostgresMonsterSpawnRepository(cs);
+            Console.Error.WriteLine("[monster-spawn-db] monster_spawn reader enabled (MapMonsterWorld prefers DB over file).");
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine("[monster-spawn-db] init failed: {0}", ex.Message);
+            MonsterSpawn = null;
         }
     }
 }

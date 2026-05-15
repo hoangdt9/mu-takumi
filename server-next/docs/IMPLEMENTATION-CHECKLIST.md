@@ -172,18 +172,16 @@ Use this to avoid unnecessary rebuilds.
    - [x] Gates / shops / Custom: **`006_map_gate_npc_shop_custom.sql`**, ETL + **`MapGateCatalog`** / **`NpcShopCatalog`**; env **`TAKUMI_WORLD_STATIC_DB=1`** (hoặc từng flag `TAKUMI_MAP_GATE_DB`, `TAKUMI_NPC_SHOP_DB`, `TAKUMI_CUSTOM_WORLD_DB`).  
    - [ ] Wire handlers: gate teleport `0x1C`, shop list `0x31` (catalogs loaded at host boot).
 
-9. **M9 — NPC & monster runtime** *(done stub — **`docs/M9-NPC-MONSTER-CHECKLIST.md`**)*  
-   - [x] Spawn theo map từ **MonsterSetBase.txt** + **Monster.txt** stats (view-range filter).  
-   - [x] Gói **`C2 0x13`** scope spawn sau join + incremental on walk (`MonsterViewportWire602`, `MonsterViewportTracker`).  
-   - [x] Regen delay từ `Monster.txt` (`MapMonsterInstance.TryRegen`).  
-   - [x] Combat stub: `C1 0x11` hit / `0x19` skill → damage, `C1 0x14` destroy, `C1 0x16` die (`MonsterCombatHandler`).  
-   - [x] Viewport destroy khi rời range (`MonsterViewportTracker.SyncView`); damage trừ Defense từ `Monster.txt`.  
-   - [ ] Full combat (AoE, PvP) + AI — **M10c / M9b**; stub hit/skill/miss trên `mac-m4` WIP.
+9. **M9 — NPC & monster runtime** *(**`docs/M9-NPC-MONSTER-CHECKLIST.md`**, **`docs/WORKSTREAM-OWNERSHIP.md`**)*  
+   - [x] Spawn theo map (file + **Postgres** khi `TAKUMI_MONSTER_SPAWN_DB=1`).  
+   - [x] **`C2 0x13`** sau join + incremental walk; **`C1 0x14`** destroy khi rời view.  
+   - [x] Regen + combat stub (`MonsterCombatHandler`, Defense từ `Monster.txt`).  
+   - [ ] AoE / PvP / AI — **M10c / M9b**.
 
 10. **M10 — Movement & visibility** — cùng file §M10; owner: **`docs/WORKSTREAM-OWNERSHIP.md`**  
-    - [x] Nhận **walk / instant move** → roster tile (`LegacyLoginHost`, `GamePortMinimalSession`).  
-    - [ ] **WIP `mac-m4`:** broadcast `C1 0x15` / `0x18` tới player khác cùng map (`GameMapPresenceRegistry`).  
-    - [ ] Player viewport `C2 0x12`; đồng bộ sâu vitals mid-combat (M7).
+    - [x] Walk / instant move → roster tile.  
+    - [x] **M10a:** broadcast `C1 0x15` / `0x18` cùng map (`GameMapPresenceRegistry`).  
+    - [ ] Player viewport `C2 0x12`; vitals mid-combat (M7).
 
 11. **M11 — DataServer merge**  
     - [ ] Quyết định: Postgres-only vs bridge tới MSSQL legacy; API nội bộ cho `Takumi.Server.Game`.

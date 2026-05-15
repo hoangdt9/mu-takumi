@@ -13,10 +13,10 @@ Last updated: 2026-05-16
 - [x] **Combat stub** — `C1 0x11` hit / `0x19` skill → damage, `MarkDead`, `C1 0x16` die, `C1 0x14` destroy.
 - [x] **Destroy on leave view** — `SyncView` + `C1 0x14` when walk out of range (parity `DestroyViewportMonster1`).
 - [x] **Damage vs Defense** — `MonsterCombatCalculator` + `Monster.txt` `Defense` column.
+- [x] **M10a (mac-m4):** map presence `C1 0x15` / `0x18`, miss, skill % (`GameMapPresenceRegistry`).
 - [ ] **Full combat** (AoE, PvP) — **M10c** (xem **`WORKSTREAM-OWNERSHIP.md`**).
-- [ ] **M10 partial (WIP trên `mac-m4`):** map presence `0x15`/`0x18`, miss, skill % — chưa merge `main`.
-- [ ] **AI** / NPC shop rows — post-M9 (shop data **main** `8c1758b`; wire chưa).
-- [x] **M8 ETL** spawn Postgres — trên **`main`** (`b33d890`); `MapMonsterWorld` fallback file khi DB trống.
+- [ ] **AI** / NPC shop wire — shop data **main** `8c1758b`; handlers `0x31` chưa.
+- [x] **M8 ETL** spawn Postgres — **`main`** (`b33d890`); `MapMonsterWorld` fallback file khi DB trống.
 
 ## Legacy reference (`Source/4.GameServer`)
 
@@ -47,6 +47,9 @@ Last updated: 2026-05-16
 | `TAKUMI_MONSTER_VIEWPORT_MOVE_TILES` | `4` Manhattan tiles before rescan on walk |
 | `TAKUMI_COMBAT_STUB_DAMAGE` | `50` damage per hit |
 | `TAKUMI_COMBAT_MELEE_RANGE` | `3` tiles (Manhattan) |
+| `TAKUMI_MAP_PRESENCE_ENABLED` | `1` (set `0` to disable M10 broadcast) |
+| `TAKUMI_COMBAT_MISS_RATE_PCT` | `0` |
+| `TAKUMI_COMBAT_SKILL_DAMAGE_PCT` | `150` |
 
 If set-base file is missing, a small **Lorencia fallback** spawn set is used for QA.
 

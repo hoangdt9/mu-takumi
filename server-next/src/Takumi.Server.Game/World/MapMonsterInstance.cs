@@ -133,6 +133,19 @@ public sealed class MapMonsterInstance
             return false;
         }
 
+        var pathSteps = ParseIntEnv("TAKUMI_MONSTER_PATHFIND_MAX_STEPS", 12, 1, 32);
+        if (MapTilePathfinder.TryFindNextStep(mapId, X, Y, targetX, targetY, pathSteps, out var px, out var py)
+            && IsWithinLeash(px, py))
+        {
+            nextX = px;
+            nextY = py;
+            nextDir = DirectionFromDelta((int)px - X, (int)py - Y);
+            X = nextX;
+            Y = nextY;
+            Dir = nextDir;
+            return true;
+        }
+
         var found = false;
         var bestNext = bestDist;
         byte bx = X, by = Y, bdir = Dir;
@@ -145,8 +158,7 @@ public sealed class MapMonsterInstance
                 continue;
             }
 
-            var leash = Math.Max(WanderLeash, MoveRange);
-            if (Math.Abs(nx - SpawnX) + Math.Abs(ny - SpawnY) > leash)
+            if (!IsWithinLeash((byte)nx, (byte)ny))
             {
                 continue;
             }
@@ -211,7 +223,7 @@ public sealed class MapMonsterInstance
                 continue;
             }
 
-            if (Math.Abs(nx - SpawnX) + Math.Abs(ny - SpawnY) > leash)
+            if (!IsWithinLeash((byte)nx, (byte)ny))
             {
                 continue;
             }
@@ -271,5 +283,23 @@ public sealed class MapMonsterInstance
         }
 
         return 7;
+    }
+
+    bool IsWithinLeash(byte x, byte y)
+    {
+        var leash = Math.Max(WanderLeash, MoveRange);
+        return Math.Abs(x - SpawnX) + Math.Abs(y - SpawnY) <= leash;
+    }
+
+    static int ParseIntEnv(string key, int defaultValue, int min, int max)
+    {
+        var raw = Environment.GetEnvironmentVariable(key);
+        if (string.IsNullOrWhiteSpace(raw)
+            || !int.TryParse(raw, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out var v))
+        {
+            return defaultValue;
+        }
+
+        return Math.Clamp(v, min, max);
     }
 }

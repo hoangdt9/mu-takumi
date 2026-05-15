@@ -24,7 +24,7 @@ public sealed class MapMonsterChaseTests
         };
         m.InitializeAtSpawn(50, 50, 0);
 
-        Assert.True(m.TryChaseStep(55, 50, mapId: 0, out _, out _, out _));
-        Assert.True(m.ManhattanTo(55, 50) < 5);
+        Assert.True(m.TryChaseStep(52, 50, mapId: 99, out _, out _, out _));
+        Assert.True(m.ManhattanTo(52, 50) < 3);
     }
 }

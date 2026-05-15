@@ -53,10 +53,10 @@ Last updated: 2026-05-16
 
 | # | Item | Legacy | Status | Notes |
 |---|------|--------|--------|-------|
-| P2.1 | Load `Terrain.att` per map | `MapManager` / `*.att` | [~] | `MapAttWalkability`, `TAKUMI_ATT_DATA_ROOT` (plain ATT; EncTerrain TBD) |
+| P2.1 | Load `Terrain.att` per map | `MapManager` / `*.att` | [x] | `MapAttWalkability`, Docker `TAKUMI_ATT_DATA_ROOT=/att-data` |
 | P2.2 | Block `NoMove` / `NoGround` tiles | `TWFlags` | [x] | `CanWalk(map,x,y)` used in wander/chase |
-| P2.3 | PathFinding2/4 multi-step path | `gMap[].PathFinding*` | [ ] | greedy 1-step first; full A* later |
-| P2.4 | Safe zone: no mob aggro | attribute | [ ] | needs safe tiles from ATT |
+| P2.3 | PathFinding2/4 multi-step path | `gMap[].PathFinding*` | [x] | `MapTilePathfinder` greedy first step + fallback (`TAKUMI_MONSTER_PATHFIND_MAX_STEPS`) |
+| P2.4 | Safe zone: no mob aggro | attribute | [x] | `IsSafeZone` — no chase/attack in safe tiles |
 | P2.5 | Encrypted `EncTerrain*.att` | client maps | [ ] | decrypt parity with client |
 
 ---
@@ -65,7 +65,7 @@ Last updated: 2026-05-16
 
 | # | Item | Legacy | Status |
 |---|------|--------|--------|
-| P3.1 | `MonsterSkillManager` / magic attack | `gObjMonsterMagicAttack` | [ ] |
+| P3.1 | `MonsterSkillManager` / magic attack | `gObjMonsterMagicAttack` | [~] | `AttackType>=100` → `SkillAttack` + higher dmg stub |
 | P3.2 | Element / resist | `Monster.txt` cols | [ ] |
 | P3.3 | Party exp / top damage user | `gObjMonsterGetTopHitDamageUser` | [ ] |
 | P3.4 | Invasion / event spawns (type 3/4) | `SetMonsterData` | [ ] |
@@ -77,9 +77,10 @@ Last updated: 2026-05-16
 
 | # | Item | Legacy | Status |
 |---|------|--------|--------|
-| P4.1 | NPC shop list `0x31` | `NpcTalk` | [ ] |
-| P4.2 | Gate teleport `0x1C` | `MoveGate` | [ ] (M8 catalog loaded) |
-| P4.3 | Bot buffer / quest NPC scripts | various | [ ] |
+| P4.1 | NPC shop list `0x31` | `NpcTalk` | [x] | `0x30` talk → `NpcShopWire602` (`NpcShopCatalog`) |
+| P4.2 | Gate teleport `0x1C` | `MoveGate` | [x] | `WorldGameplayHandlers` + `MapGateService` (`TAKUMI_GATE_SKIP_PROXIMITY`) |
+| P4.3 | Shop buy/sell/repair `0x32`–`0x34` | `CGItemBuy/Sell/Repair` | [~] | `ShopCommerceHandler` stub zen + bag (`TAKUMI_SHOP_*`) |
+| P4.4 | Bot buffer / quest NPC scripts | various | [ ] |
 
 ---
 

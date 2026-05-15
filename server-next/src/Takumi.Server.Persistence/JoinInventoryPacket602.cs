@@ -33,14 +33,14 @@ public static class JoinInventoryPacket602
             return InventoryListWire602.BuildEmpty();
         }
 
+        var rows = await LoadRowsAsync(inventoryRepo, accountLogin, characterName10, ct).ConfigureAwait(false);
+        if (rows.Count == 0)
+        {
+            return InventoryListWire602.BuildEmpty();
+        }
+
         try
         {
-            var rows = await inventoryRepo.LoadByCharacterAsync(accountLogin, charName, ct).ConfigureAwait(false);
-            if (rows.Count == 0)
-            {
-                return InventoryListWire602.BuildEmpty();
-            }
-
             var buf = new byte[rows.Count * 13];
             var o = 0;
             foreach (var r in rows)
@@ -52,17 +52,45 @@ public static class JoinInventoryPacket602
 
             return InventoryListWire602.Build(buf);
         }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine("[inventory-db] build packet failed: {0}", ex.Message);
+            return InventoryListWire602.BuildEmpty();
+        }
+    }
+
+    public static async Task<IReadOnlyList<InventorySlotRow>> LoadRowsAsync(
+        PostgresInventorySlotRepository? inventoryRepo,
+        string? accountLogin,
+        byte[]? characterName10,
+        CancellationToken ct)
+    {
+        if (inventoryRepo is null || string.IsNullOrEmpty(accountLogin) || characterName10 is null || characterName10.Length < 10)
+        {
+            return Array.Empty<InventorySlotRow>();
+        }
+
+        var charName = CharacterRosterMerge.NormaliseName(Encoding.ASCII.GetString(characterName10.AsSpan(0, 10)));
+        if (charName.Length == 0)
+        {
+            return Array.Empty<InventorySlotRow>();
+        }
+
+        try
+        {
+            return await inventoryRepo.LoadByCharacterAsync(accountLogin, charName, ct).ConfigureAwait(false);
+        }
         catch (PostgresException ex) when (ex.SqlState == "42P01")
         {
             Console.Error.WriteLine(
                 "[inventory-db] table inventory_slot missing — apply sql/init/002_inventory_slot.sql ({0})",
                 ex.Message);
-            return InventoryListWire602.BuildEmpty();
+            return Array.Empty<InventorySlotRow>();
         }
         catch (Exception ex)
         {
             Console.Error.WriteLine("[inventory-db] load failed for account={0} char={1}: {2}", accountLogin, charName, ex.Message);
-            return InventoryListWire602.BuildEmpty();
+            return Array.Empty<InventorySlotRow>();
         }
     }
 }

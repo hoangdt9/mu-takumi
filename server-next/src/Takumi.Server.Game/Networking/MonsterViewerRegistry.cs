@@ -219,6 +219,7 @@ public static class MonsterViewerRegistry
         byte mapId,
         byte monsterX,
         byte monsterY,
+        int damagePercent,
         CancellationToken ct)
     {
         if (!Sessions.TryGetValue(targetSessionId, out var session) || session.PlayerObjectKey == 0)
@@ -226,7 +227,8 @@ public static class MonsterViewerRegistry
             return;
         }
 
-        var dmg = ParseIntEnv("TAKUMI_MONSTER_TO_PLAYER_DAMAGE", 15, 1, 2000);
+        var baseDmg = ParseIntEnv("TAKUMI_MONSTER_TO_PLAYER_DAMAGE", 15, 1, 2000);
+        var dmg = Math.Max(1, baseDmg * Math.Clamp(damagePercent, 50, 500) / 100);
         var maxHp = Math.Max(1, session.MaxHp);
         session.CurrentHp = Math.Max(0, session.CurrentHp - dmg);
         session.OnVitalsChanged?.Invoke(session.CurrentHp, maxHp);

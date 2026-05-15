@@ -16,7 +16,7 @@
 - [x] **Shops:** `npc_shop` + `npc_shop_item` — **`ShopManagerLoader`** + **`ShopItemLoader`**, ETL **`NpcShopDbImporter`**, catalog **`NpcShopCatalog`** (`TAKUMI_NPC_SHOP_DB`).
 - [x] **Custom:** `custom_world_config` (JSONB table/raw snapshot) — **`CustomWorldConfigDbImporter`** (`Custom/*.txt` + `.ini`/`.xml` raw); `TAKUMI_CUSTOM_WORLD_DB`.
 - [x] Script gộp: **`scripts/import-world-static-data.sh`** (cần `TAKUMI_GAMESERVER_DATA_PATH` hoặc auto-detect MuServer Data).
-- [ ] Runtime gameplay: `C1 0x1C` teleport / `C2 0x31` shop list wire (catalogs sẵn; handler chưa nối).
+- [x] Runtime gameplay: `C1 0x1C` teleport / `C2 0x31` shop list (`WorldGameplayHandlers`, `MapGateService`, `NpcShopWire602`).
 
 ---
 

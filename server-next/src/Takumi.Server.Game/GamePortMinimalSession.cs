@@ -577,6 +577,26 @@ public static class GamePortMinimalSession
                         return;
                     }
 
+                    if (loginLatch.IsLoggedIn
+                        && sessionJoinCharacterName10 is not null
+                        && FindRosterEntry(roster, sessionJoinCharacterName10) is { } pickedGate)
+                    {
+                        if (await MapGateTeleportHandler.TryHandleAsync(
+                                packet,
+                                pickedGate,
+                                monsterViewportTracker,
+                                presenceSessionId,
+                                connection,
+                                protect,
+                                remote,
+                                verbose,
+                                ct).ConfigureAwait(false))
+                        {
+                            Volatile.Write(ref rosterDirty, 1);
+                            return;
+                        }
+                    }
+
                     if (loginLatch.IsLoggedIn && GamePacketFinders.TryFindGameLogoutRequest(packet, out var logoutOff, out var logoutFlag))
                     {
                         var ack = new byte[] { 0xC1, 0x05, 0xF1, 0x02, logoutFlag };

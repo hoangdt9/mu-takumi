@@ -111,6 +111,16 @@ public static class MapGateCatalog
         }
     }
 
+    /// <summary>Replaces catalog contents (unit tests only).</summary>
+    public static void LoadForTests(IReadOnlyList<MapGateEntry> gates)
+    {
+        lock (InitLock)
+        {
+            Rebuild(gates);
+            _initialized = true;
+        }
+    }
+
     static string? ResolveGatePath()
     {
         var env = Environment.GetEnvironmentVariable("TAKUMI_GATE_PATH")?.Trim();

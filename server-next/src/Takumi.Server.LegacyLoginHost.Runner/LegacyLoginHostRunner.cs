@@ -1046,6 +1046,26 @@ public static class LegacyLoginHostRunner
                 }
 
                 if (loginLatch.IsLoggedIn
+                    && sessionJoinCharacterName10 is not null
+                    && FindRosterEntry(roster, sessionJoinCharacterName10) is { } pickedGate)
+                {
+                    if (await MapGateTeleportHandler.TryHandleAsync(
+                            packet,
+                            pickedGate,
+                            monsterViewportTracker,
+                            presenceSessionId,
+                            connection,
+                            clientProtectOutbound: null,
+                            remote,
+                            verbose,
+                            ct).ConfigureAwait(false))
+                    {
+                        Volatile.Write(ref rosterDirty, 1);
+                        return;
+                    }
+                }
+
+                if (loginLatch.IsLoggedIn
                     && string.Equals(Environment.GetEnvironmentVariable("TAKUMI_VERBOSE"), "1", StringComparison.OrdinalIgnoreCase)
                     && packet.Length == 15
                     && packet[0] == 0xC1

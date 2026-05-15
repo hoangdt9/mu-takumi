@@ -295,6 +295,51 @@ public static class GamePacketFinders
         return false;
     }
 
+    /// <summary>Gate teleport (<c>PMSG_TELEPORT_RECV</c> / head <c>0x1C</c>, gate &gt; 0).</summary>
+    public static bool TryFindTeleportGateRequest(
+        ReadOnlySpan<byte> packet,
+        out int gateIndex,
+        out byte requestX,
+        out byte requestY)
+    {
+        gateIndex = 0;
+        requestX = 0;
+        requestY = 0;
+
+        for (var i = 0; i <= packet.Length - 5; i++)
+        {
+            var lead = packet[i];
+            if (lead is not (0xC1 or 0xC3))
+            {
+                continue;
+            }
+
+            var size = packet[i + 1];
+            if (size < 5 || i + size > packet.Length || packet[i + 2] != 0x1C)
+            {
+                continue;
+            }
+
+            if (lead == 0xC3 && size == 6)
+            {
+                gateIndex = packet[i + 3];
+                requestX = packet[i + 4];
+                requestY = packet[i + 5];
+                return gateIndex > 0;
+            }
+
+            if (size >= 7)
+            {
+                gateIndex = packet[i + 3] | (packet[i + 4] << 8);
+                requestX = packet[i + 5];
+                requestY = packet[i + 6];
+                return gateIndex > 0;
+            }
+        }
+
+        return false;
+    }
+
     /// <summary>PMSG_CREATE_CHARACTER (<c>F3 01</c>): <c>C1 0F F3 …</c> + name[10] + packed class.</summary>
     public static bool TryFindCreateCharacterRequest(
         ReadOnlySpan<byte> packet,

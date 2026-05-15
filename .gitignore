@@ -64,3 +64,4 @@ Source/*.png
 # OS
 .DS_Store
 Thumbs.db
+docker/data-zip/host/Data/*

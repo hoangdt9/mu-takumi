@@ -5,9 +5,9 @@
       "serverClass": 32,
       "level": 1,
       "mapId": 0,
-      "posX": 134,
-      "posY": 99,
-      "angle": 6
+      "posX": 171,
+      "posY": 82,
+      "angle": 2
     },
     {
       "name": "ef001",
@@ -23,9 +23,9 @@
       "serverClass": 0,
       "level": 1,
       "mapId": 0,
-      "posX": 162,
-      "posY": 206,
-      "angle": 6
+      "posX": 213,
+      "posY": 234,
+      "angle": 2
     }
   ]
 }

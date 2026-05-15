@@ -4,6 +4,7 @@ import android.app.NativeActivity;
 import android.content.Context;
 import android.content.res.AssetManager;
 import android.graphics.Color;
+import android.graphics.PixelFormat;
 import android.graphics.SurfaceTexture;
 import android.media.MediaPlayer;
 import android.util.Log;
@@ -51,12 +52,18 @@ public class MuMainNativeActivity extends NativeActivity {
     /** Called when Android intro video (MediaPlayer) ends or is dismissed — unblocks native login scene. */
     private native void nativeLoginMovieComplete();
 
+    private static native void nativeLoginBackgroundMovieStopped();
+
     private BridgeEditText imeBridge;
 
     private static final String TAG_MOVIE = "TakumiLoginMovie";
     private FrameLayout loginMovieOverlay;
     private TextureView loginMovieTexture;
     private MediaPlayer loginMoviePlayer;
+
+    /** Login loop video: MediaPlayer -> SurfaceTexture bound to native GL_TEXTURE_EXTERNAL_OES (see MobilePlatform). */
+    private SurfaceTexture loginBgGlSurfaceTexture;
+    private MediaPlayer loginBgGlMediaPlayer;
 
     private void resetImeBridgeBuffer() {
         if (imeBridge == null) {
@@ -220,6 +227,92 @@ public class MuMainNativeActivity extends NativeActivity {
                         public void onSurfaceTextureUpdated(SurfaceTexture surfaceTexture) {}
                     });
             });
+    }
+
+    /**
+     * Called from the render thread with the current EGL context. Binds {@code textureId} as
+     * GL_TEXTURE_EXTERNAL_OES and attaches a looping muted {@link MediaPlayer}.
+     */
+    public boolean bindLoginBackgroundMovieToGlTexture(int textureId, String absolutePath) {
+        releaseLoginBackgroundMovieGlInternal();
+        if (absolutePath == null || absolutePath.isEmpty()) {
+            Log.w(TAG_MOVIE, "bindLoginBackgroundMovieToGlTexture: empty path");
+            return false;
+        }
+        try {
+            loginBgGlSurfaceTexture = new SurfaceTexture(textureId);
+            loginBgGlSurfaceTexture.setDefaultBufferSize(2, 2);
+            loginBgGlMediaPlayer = new MediaPlayer();
+            loginBgGlMediaPlayer.setSurface(new Surface(loginBgGlSurfaceTexture));
+            loginBgGlMediaPlayer.setLooping(true);
+            loginBgGlMediaPlayer.setVolume(0f, 0f);
+            loginBgGlMediaPlayer.setOnPreparedListener(
+                mp -> {
+                    try {
+                        int w = mp.getVideoWidth();
+                        int h = mp.getVideoHeight();
+                        if (w > 0 && h > 0 && loginBgGlSurfaceTexture != null) {
+                            loginBgGlSurfaceTexture.setDefaultBufferSize(w, h);
+                        }
+                    } catch (Exception ignored) {
+                    }
+                });
+            loginBgGlMediaPlayer.setOnErrorListener(
+                (mp, what, extra) -> {
+                    Log.e(TAG_MOVIE, "login bg GL MediaPlayer error what=" + what + " extra=" + extra);
+                    nativeLoginBackgroundMovieStopped();
+                    releaseLoginBackgroundMovieGlInternal();
+                    return true;
+                });
+            loginBgGlMediaPlayer.setDataSource(absolutePath);
+            loginBgGlMediaPlayer.prepare();
+            loginBgGlMediaPlayer.start();
+            return true;
+        } catch (Exception e) {
+            Log.e(TAG_MOVIE, "bindLoginBackgroundMovieToGlTexture failed: " + e.getMessage());
+            releaseLoginBackgroundMovieGlInternal();
+            return false;
+        }
+    }
+
+    public void updateLoginBackgroundMovieTexture() {
+        if (loginBgGlSurfaceTexture != null) {
+            try {
+                loginBgGlSurfaceTexture.updateTexImage();
+            } catch (Exception e) {
+                Log.e(TAG_MOVIE, "updateLoginBackgroundMovieTexture: " + e.getMessage());
+            }
+        }
+    }
+
+    private void releaseLoginBackgroundMovieGlInternal() {
+        if (loginBgGlMediaPlayer != null) {
+            try {
+                loginBgGlMediaPlayer.stop();
+            } catch (Exception ignored) {
+            }
+            try {
+                loginBgGlMediaPlayer.release();
+            } catch (Exception ignored) {
+            }
+            loginBgGlMediaPlayer = null;
+        }
+        if (loginBgGlSurfaceTexture != null) {
+            try {
+                loginBgGlSurfaceTexture.release();
+            } catch (Exception ignored) {
+            }
+            loginBgGlSurfaceTexture = null;
+        }
+    }
+
+    /** Release MediaPlayer/SurfaceTexture only. Native performs glDeleteTextures (render thread or deferred). */
+    public void releaseLoginBackgroundMovieGl() {
+        releaseLoginBackgroundMovieGlInternal();
+    }
+
+    public void stopLoginBackgroundMovie() {
+        releaseLoginBackgroundMovieGl();
     }
 
     public void stopLoginIntroMovie() {
@@ -429,6 +522,7 @@ public class MuMainNativeActivity extends NativeActivity {
 
         getWindow().setStatusBarColor(Color.TRANSPARENT);
         getWindow().setNavigationBarColor(Color.TRANSPARENT);
+        getWindow().setFormat(PixelFormat.TRANSLUCENT);
         applyImmersiveFlags();
     }
 
@@ -445,6 +539,8 @@ public class MuMainNativeActivity extends NativeActivity {
     @Override
     protected void onPause() {
         stopLoginIntroMovieInternal(true);
+        nativeLoginBackgroundMovieStopped();
+        releaseLoginBackgroundMovieGl();
         super.onPause();
     }
 

@@ -15,6 +15,7 @@
 #ifdef __ANDROID__
 
 #include "stdafx.h"
+#include "MobilePlatform.h"
 #include "GameConfigConstants.h"
 #ifdef min
 #undef min
@@ -6739,6 +6740,12 @@ Java_com_muonline_client_MuMainNativeActivity_nativeLoginMovieComplete(JNIEnv*, 
     e.user.data1 = nullptr;
     e.user.data2 = nullptr;
     QueueSyntheticSDLEvent(e);
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_muonline_client_MuMainNativeActivity_nativeLoginBackgroundMovieStopped(JNIEnv*, jclass)
+{
+    MU_AndroidMarkLoginBackgroundMovieStopped();
 }
 
 #if defined(__ANDROID__) || defined(MU_IOS)

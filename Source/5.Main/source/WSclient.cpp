@@ -504,7 +504,11 @@ void ReceiveServerConnect(BYTE* ReceiveBuffer) //Recebe informação do ConnectS
 		// Enable Login UI when CS redirects to the game/login endpoint (game port != connect-server port),
 		// not only when the game port is exactly 44606.
 #if defined(__ANDROID__)
-		const bool enableLoginUiFallback = (static_cast<unsigned short>(Data->Port) != g_ServerPort);
+		// server-next / docker legacy-login often answers F4 03 with the same host:port as the connect
+		// server (single listener). Port-inequality was always false, so LoginWin never opened after
+		// ServerSelWin hid itself in ConnectServerButtonIndex(). Always open login UI once the game
+		// TCP socket is up; ReceiveJoinServer can still refine state if the server sends it.
+		const bool enableLoginUiFallback = true;
 #else
 		const bool enableLoginUiFallback = (Data->Port == 44606);
 #endif
@@ -516,7 +520,7 @@ void ReceiveServerConnect(BYTE* ReceiveBuffer) //Recebe informação do ConnectS
 			HeroKey = 0;
 			CurrentProtocolState = RECEIVE_JOIN_SERVER_SUCCESS;
 			g_ErrorReport.Write(
-				"[AndroidLogin] Post-CS redirect: bypass join handshake wait, enable login UI (csPort=%u gamePort=%d)\r\n",
+				"[ReceiveServerConnect] enable login UI after game socket (csPort=%u gamePort=%d)\r\n",
 				static_cast<unsigned int>(g_ServerPort),
 				static_cast<int>(Data->Port));
 		}
@@ -535,7 +539,7 @@ void ReceiveServerConnect(BYTE* ReceiveBuffer) //Recebe informação do ConnectS
 	{
 		g_bGameServerConnected = TRUE;
 		g_ConsoleDebug->Write(MCD_NORMAL, " > Android CreateSocket (login/data port)");
-		const bool enableLoginUiFallback = (static_cast<unsigned short>(Data->Port) != g_ServerPort);
+		const bool enableLoginUiFallback = true;
 		if (enableLoginUiFallback)
 		{
 			CUIMng& rUIMng = CUIMng::Instance();
@@ -544,7 +548,7 @@ void ReceiveServerConnect(BYTE* ReceiveBuffer) //Recebe informação do ConnectS
 			HeroKey = 0;
 			CurrentProtocolState = RECEIVE_JOIN_SERVER_SUCCESS;
 			g_ErrorReport.Write(
-				"[AndroidLogin] Post-CS redirect: bypass join handshake wait, enable login UI (csPort=%u gamePort=%d)\r\n",
+				"[ReceiveServerConnect] Android NEW_PROTOCOL: enable login UI (csPort=%u gamePort=%d)\r\n",
 				static_cast<unsigned int>(g_ServerPort),
 				static_cast<int>(Data->Port));
 		}

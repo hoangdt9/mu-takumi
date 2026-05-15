@@ -1489,6 +1489,10 @@ void CreateLogInScene()
 	
 	::PlayMp3(g_lpszMp3[MUSIC_LOGIN_THEME]);
 
+#if defined(__ANDROID__)
+	MU_AndroidTryStartLoginBackgroundMovie();
+#endif
+
 	g_ErrorReport.Write( "> Login Scene init success.\r\n");
 }
 
@@ -1519,6 +1523,7 @@ void NewMoveLogInScene()
 		CUIMng::Instance().SetMoving(false);
 #elif defined(__ANDROID__)
 		MU_AndroidStopLoginIntroMovie();
+		MU_AndroidStopLoginBackgroundMovie();
 		CUIMng::Instance().SetMoving(false);
 #endif
 		g_ErrorReport.Write( "> Request Character list\r\n");
@@ -1584,6 +1589,13 @@ bool NewRenderLogInScene(HDC hDC)
 	if(!InitLogIn) return false;
 
 	FogEnable = false;
+
+#if defined(__ANDROID__)
+	if (!CUIMng::Instance().IsMoving())
+	{
+		MU_AndroidLoginBgVideoRenderTick();
+	}
+#endif
 // 	extern GLfloat FogColor[4];
 // 	FogColor[0] = 178.f/256.f; FogColor[1] = 178.f/256.f; FogColor[2] = 178.f/256.f; FogColor[3] = 0.f;
 // 	glFogf(GL_FOG_START, 3700.0f);
@@ -1627,6 +1639,12 @@ bool NewRenderLogInScene(HDC hDC)
     MoveMainCamera();
 	const bool skipNonEssentialPasses = SkipNonEssentialMobilePasses();
 
+#if defined(__ANDROID__)
+	const bool androidLoginBgVideo = MU_AndroidIsLoginBackgroundMovieActive();
+#else
+	const bool androidLoginBgVideo = false;
+#endif
+
 	int Width,Height;
 
 	glColor3f(1.f,1.f,1.f);
@@ -1656,6 +1674,10 @@ bool NewRenderLogInScene(HDC hDC)
 
 	if (!CUIMng::Instance().m_CreditWin.IsShow())
 	{
+#if defined(__ANDROID__)
+		if (!androidLoginBgVideo)
+		{
+#endif
 		CameraViewFar = 330.f * CCameraMove::GetInstancePtr()->GetCurrentCameraDistanceLevel();
 #ifndef PJH_NEW_SERVER_SELECT_MAP
 		BeginOpengl();
@@ -1679,6 +1701,9 @@ bool NewRenderLogInScene(HDC hDC)
 		}
 		RenderObjects_AfterCharacter();
 		ThePetProcess().RenderPets();
+#if defined(__ANDROID__)
+		}
+#endif
 	}
 
 	BeginSprite();

@@ -38,6 +38,9 @@
 #include "CameraMove.h"
 #include "w_MapHeaders.h"
 #include "QuestMng.h"
+#if defined(__ANDROID__)
+#include "MobilePlatform.h"
+#endif
 #include "ServerListManager.h"
 #ifdef PBG_ADD_NEWCHAR_MONK
 #include "MonkSystem.h"
@@ -5136,6 +5139,9 @@ void OpenLogoSceneData()
 
 void ReleaseLogoSceneData()
 {
+#if defined(__ANDROID__)
+	MU_AndroidStopLoginBackgroundMovie();
+#endif
 	for (int i = BITMAP_LOG_IN; i <= BITMAP_LOG_IN_END; ++i)
 		::DeleteBitmap(i);
 	for(int i=BITMAP_TEMP;i<BITMAP_TEMP+30;i++)

@@ -996,6 +996,34 @@ public static class LegacyLoginHostRunner
                 if (loginLatch.IsLoggedIn
                     && sessionJoinCharacterName10 is not null)
                 {
+                    var pickedGameplay = FindRosterEntry(roster, sessionJoinCharacterName10);
+                    if (pickedGameplay is not null)
+                    {
+                        var gameRoster = ToGameRosterEntry(pickedGameplay);
+                        if (await WorldGameplayHandlers.TryHandlePacketAsync(
+                                gameRoster,
+                                monsterViewportTracker,
+                                connection: null,
+                                clientProtectOutbound: null,
+                                loggedAccountId,
+                                sessionJoinCharacterName10,
+                                presenceSessionId,
+                                packet,
+                                remote,
+                                (m, _) => WriteOutboundAsync(m),
+                                () => Volatile.Write(ref rosterDirty, 1),
+                                ct).ConfigureAwait(false))
+                        {
+                            CopyGameRosterBack(pickedGameplay, gameRoster);
+                            await connection.Output.FlushAsync(ct).ConfigureAwait(false);
+                            return;
+                        }
+                    }
+                }
+
+                if (loginLatch.IsLoggedIn
+                    && sessionJoinCharacterName10 is not null)
+                {
                     var pickedCombat = FindRosterEntry(roster, sessionJoinCharacterName10);
                     if (pickedCombat is not null
                         && await MonsterCombatHandler.TryHandleCombatPacketAsync(
@@ -1207,15 +1235,6 @@ public static class LegacyLoginHostRunner
                     && packet[0] == 0xC1
                     && packet[1] == 0x03
                     && packet[2] == 0x71)
-                {
-                    return;
-                }
-
-                if (loginLatch.IsLoggedIn
-                    && packet.Length == 3
-                    && packet[0] == 0xC1
-                    && packet[1] == 0x03
-                    && packet[2] == 0x31)
                 {
                     return;
                 }
@@ -1783,6 +1802,36 @@ public static class LegacyLoginHostRunner
 
     static CharacterRosterWire ToWire(CharacterRosterEntry e) =>
         new(e.Name10, e.ServerClass, e.Level, CharacterRosterVitals.FromInts(e.CurrentHp, e.MaxHp, e.CurrentMp, e.MaxMp, e.Zen));
+
+    static GameRosterEntry ToGameRosterEntry(CharacterRosterEntry e) =>
+        new()
+        {
+            Name10 = e.Name10,
+            ServerClass = e.ServerClass,
+            Level = e.Level,
+            MapId = e.MapId,
+            PosX = e.PosX,
+            PosY = e.PosY,
+            Angle = e.Angle,
+            CurrentHp = e.CurrentHp,
+            MaxHp = e.MaxHp,
+            CurrentMp = e.CurrentMp,
+            MaxMp = e.MaxMp,
+            Zen = e.Zen,
+        };
+
+    static void CopyGameRosterBack(CharacterRosterEntry dst, GameRosterEntry src)
+    {
+        dst.MapId = src.MapId;
+        dst.PosX = src.PosX;
+        dst.PosY = src.PosY;
+        dst.Angle = src.Angle;
+        dst.CurrentHp = src.CurrentHp;
+        dst.MaxHp = src.MaxHp;
+        dst.CurrentMp = src.CurrentMp;
+        dst.MaxMp = src.MaxMp;
+        dst.Zen = src.Zen;
+    }
 
     static List<CharacterRosterWire> MapRosterToWire(List<CharacterRosterEntry> roster)
     {

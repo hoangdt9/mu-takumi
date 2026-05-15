@@ -7,6 +7,7 @@ public enum MonsterAiEventKind
 {
     Walk,
     Attack,
+    SkillAttack,
     Regen,
 }
 
@@ -77,6 +78,7 @@ public static class MonsterAiLoop
                                 .ConfigureAwait(false);
                             break;
                         case MonsterAiEventKind.Attack:
+                        case MonsterAiEventKind.SkillAttack:
                             await MonsterViewerRegistry.BroadcastMonsterActionAsync(
                                     ev.ObjectKey,
                                     ev.MapId,
@@ -89,12 +91,16 @@ public static class MonsterAiLoop
                                 .ConfigureAwait(false);
                             if (ev.TargetSessionId != Guid.Empty)
                             {
+                                var skillMult = ev.Kind == MonsterAiEventKind.SkillAttack
+                                    ? ParseIntEnv("TAKUMI_MONSTER_SKILL_DAMAGE_PCT", 150, 50, 500)
+                                    : 100;
                                 await MonsterViewerRegistry.ApplyMonsterHitToPlayerAsync(
                                         ev.TargetSessionId,
                                         ev.ObjectKey,
                                         ev.MapId,
                                         ev.X,
                                         ev.Y,
+                                        skillMult,
                                         ct)
                                     .ConfigureAwait(false);
                             }

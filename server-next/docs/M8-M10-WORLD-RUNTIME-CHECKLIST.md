@@ -16,7 +16,7 @@
 - [x] **Shops:** `npc_shop` + `npc_shop_item` — **`ShopManagerLoader`** + **`ShopItemLoader`**, ETL **`NpcShopDbImporter`**, catalog **`NpcShopCatalog`** (`TAKUMI_NPC_SHOP_DB`).
 - [x] **Custom:** `custom_world_config` (JSONB table/raw snapshot) — **`CustomWorldConfigDbImporter`** (`Custom/*.txt` + `.ini`/`.xml` raw); `TAKUMI_CUSTOM_WORLD_DB`.
 - [x] Script gộp: **`scripts/import-world-static-data.sh`** (cần `TAKUMI_GAMESERVER_DATA_PATH` hoặc auto-detect MuServer Data).
-- [x] Runtime gameplay: `C1 0x1C` teleport (`MapGateTeleportHandler`) / NPC shop `0x30` + `C2 0x31` (`NpcShopHandler`).
+- [x] Runtime gameplay: `C1 0x1C` teleport / `C2 0x31` shop list (`WorldGameplayHandlers`, `MapGateService`, `NpcShopWire602`).
 
 ---
 
@@ -30,9 +30,8 @@
 ## M10 — Movement & visibility
 
 - [x] Walk / instant move trên TCP minimal → cập nhật **tile** roster (**M4c** — `LegacyLoginHost`, `GamePortMinimalSession`).
-- [x] **Broadcast** xung quanh player (`GameMapPresenceRegistry` `0x15`/`0x18`).
-- [x] Anti-flood broadcast: `TAKUMI_PRESENCE_MAX_BROADCASTS_PER_SECOND`.
-- [ ] Đồng bộ sâu vitals mid-combat (M7).
+- [ ] **Broadcast** xung quanh player (không chỉ self); đồng bộ với **M7** (vitals / trạng thái khi cần).
+- [ ] Anti-flood / rate giữ broadcast (có thể tái sử dụng `TAKUMI_MAX_PACKETS_PER_SECOND` pattern).
 
 ---
 

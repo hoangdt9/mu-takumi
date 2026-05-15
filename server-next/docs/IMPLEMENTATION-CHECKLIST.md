@@ -170,7 +170,7 @@ Use this to avoid unnecessary rebuilds.
    - [x] **`sql/init/005_monster_spawn.sql`** + **`PostgresMonsterSpawnRepository`** + **`MonsterSpawnDbImporter`** / **`scripts/import-monster-spawn.sh`**.  
    - [x] Runtime: **`TAKUMI_MONSTER_SPAWN_DB=1`** → **`MapMonsterWorld`** đọc Postgres (fallback file).  
    - [x] Gates / shops / Custom: **`006_map_gate_npc_shop_custom.sql`**, ETL + **`MapGateCatalog`** / **`NpcShopCatalog`**; env **`TAKUMI_WORLD_STATIC_DB=1`** (hoặc từng flag `TAKUMI_MAP_GATE_DB`, `TAKUMI_NPC_SHOP_DB`, `TAKUMI_CUSTOM_WORLD_DB`).  
-   - [x] Wire handlers: gate teleport `0x1C` (`MapGateTeleportHandler`), NPC shop `0x30` + `C2 0x31` (`NpcShopHandler`).
+   - [x] Wire handlers: gate teleport `0x1C`, NPC talk → shop `0x31` (`WorldGameplayHandlers`, `MapGateService`, `NpcShopWire602`).
 
 9. **M9 — NPC & monster runtime** *(**`docs/M9-NPC-MONSTER-CHECKLIST.md`**, **`docs/M9-MONSTER-AI-PORT-CHECKLIST.md`**, **`docs/WORKSTREAM-OWNERSHIP.md`**)*  
    - [x] Spawn theo map từ **MonsterSetBase.txt** + **Monster.txt** (file + **Postgres** khi `TAKUMI_MONSTER_SPAWN_DB=1`).  
@@ -182,8 +182,7 @@ Use this to avoid unnecessary rebuilds.
 
 10. **M10 — Movement & visibility** — cùng file §M10; owner: **`docs/WORKSTREAM-OWNERSHIP.md`**  
     - [x] Nhận **walk / instant move** → roster tile (`LegacyLoginHost`, `GamePortMinimalSession`).  
-    - [x] Broadcast `C1 0x15` / `0x18` tới player khác cùng map (`GameMapPresenceRegistry`).
-    - [x] Anti-flood outbound broadcast: `TAKUMI_PRESENCE_MAX_BROADCASTS_PER_SECOND`.
+    - [ ] **WIP `mac-m4`:** broadcast `C1 0x15` / `0x18` tới player khác cùng map (`GameMapPresenceRegistry`).  
     - [ ] Player viewport `C2 0x12`; đồng bộ sâu vitals mid-combat (M7).
 
 11. **M11 — DataServer merge**  

@@ -97,10 +97,18 @@ public static class MapGateCatalog
 
     static void Rebuild(IReadOnlyList<MapGateEntry> gates)
     {
-        _byIndex = gates.ToDictionary(g => g.GateIndex);
+        _byIndex = new Dictionary<int, MapGateEntry>(gates.Count);
         _byMap = new Dictionary<byte, List<MapGateEntry>>();
+        var duplicateKeys = 0;
         foreach (var g in gates)
         {
+            if (_byIndex.ContainsKey(g.GateIndex))
+            {
+                duplicateKeys++;
+            }
+
+            _byIndex[g.GateIndex] = g;
+
             if (!_byMap.TryGetValue(g.MapId, out var bucket))
             {
                 bucket = new List<MapGateEntry>();
@@ -108,6 +116,13 @@ public static class MapGateCatalog
             }
 
             bucket.Add(g);
+        }
+
+        if (duplicateKeys > 0)
+        {
+            Console.WriteLine(
+                "[m8] MapGateCatalog: {0} duplicate GateIndex row(s) in source — last row wins (parity custom Gate.txt)",
+                duplicateKeys);
         }
     }
 

@@ -425,6 +425,24 @@ public static class GamePortMinimalSession
                             await GameMapPresenceRegistry.NotifyJoinAsync(presenceJoin, remote, ct).ConfigureAwait(false);
                         }
 
+                        MonsterViewerRegistry.Register(
+                            presenceSessionId,
+                            connection,
+                            protect,
+                            picked.MapId,
+                            picked.PosX,
+                            picked.PosY,
+                            monsterViewportTracker,
+                            playerObjectKey: presenceJoin?.ObjectKey ?? 0,
+                            currentHp: picked.CurrentHp,
+                            maxHp: picked.MaxHp,
+                            onVitalsChanged: (hp, max) =>
+                            {
+                                picked.CurrentHp = hp;
+                                picked.MaxHp = max;
+                                Volatile.Write(ref rosterDirty, 1);
+                            });
+
                         Console.WriteLine(
                             "[{0}] sent join map (F3 03) + inventory (F3 10 len={5}) map={1} xy=({2},{3}) name='{4}'",
                             remote,
@@ -480,6 +498,24 @@ public static class GamePortMinimalSession
                                     .ConfigureAwait(false);
                             }
 
+                            MonsterViewerRegistry.Register(
+                                presenceSessionId,
+                                connection,
+                                protect,
+                                pickedMove.MapId,
+                                pickedMove.PosX,
+                                pickedMove.PosY,
+                                monsterViewportTracker,
+                                playerObjectKey: presenceMove?.ObjectKey ?? 0,
+                                currentHp: pickedMove.CurrentHp,
+                                maxHp: pickedMove.MaxHp,
+                                onVitalsChanged: (hp, max) =>
+                                {
+                                    pickedMove.CurrentHp = hp;
+                                    pickedMove.MaxHp = max;
+                                    Volatile.Write(ref rosterDirty, 1);
+                                });
+
                             Console.WriteLine("[{0}] move map + F3 03 + F3 10 len={2} mapId={1} frame@{3}", remote, mapIdx, invMove.Length, moveOff);
                         }
 
@@ -527,6 +563,7 @@ public static class GamePortMinimalSession
                                 instY,
                                 remote,
                                 ct).ConfigureAwait(false);
+                            MonsterViewerRegistry.UpdatePosition(presenceSessionId, pickedInst.MapId, instX, instY);
                             await GameMapPresenceRegistry.BroadcastPositionAsync(
                                     presenceSessionId,
                                     pickedInst.MapId,
@@ -560,6 +597,7 @@ public static class GamePortMinimalSession
                                     walkY,
                                     remote,
                                     ct).ConfigureAwait(false);
+                                MonsterViewerRegistry.UpdatePosition(presenceSessionId, pickedWalk.MapId, walkX, walkY);
                                 await GameMapPresenceRegistry.BroadcastPositionAsync(
                                         presenceSessionId,
                                         pickedWalk.MapId,
@@ -871,6 +909,7 @@ public static class GamePortMinimalSession
             CharacterRosterMirrorWriter.TryDrainPendingUpserts(TimeSpan.FromMilliseconds(900));
 
             GameMapPresenceRegistry.Unregister(presenceSessionId);
+            MonsterViewerRegistry.Unregister(presenceSessionId);
 
             try
             {

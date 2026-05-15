@@ -15,44 +15,109 @@ public sealed class MonsterStatCatalog
             return cat;
         }
 
-        foreach (var raw in File.ReadAllLines(path))
+        var loaded = 0;
+        var skipped = 0;
+        foreach (var parts in GameDataTextTableLoader.ReadDataRows(path))
         {
-            var line = raw.Trim();
-            if (line.Length == 0 || line.StartsWith("//", StringComparison.Ordinal))
+            if (!TryParseRow(parts, out var stat))
             {
+                skipped++;
                 continue;
             }
 
-            if (string.Equals(line, "end", StringComparison.OrdinalIgnoreCase))
-            {
-                break;
-            }
-
-            var parts = line.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
-            if (parts.Length < 4)
-            {
-                continue;
-            }
-
-            var index = int.Parse(parts[0], CultureInfo.InvariantCulture);
-            var level = int.Parse(parts[3], CultureInfo.InvariantCulture);
-            var life = int.Parse(parts[4], CultureInfo.InvariantCulture);
-            var damageMin = parts.Length > 6 ? int.Parse(parts[6], CultureInfo.InvariantCulture) : 0;
-            var damageMax = parts.Length > 7 ? int.Parse(parts[7], CultureInfo.InvariantCulture) : damageMin;
-            var defense = parts.Length > 8 ? int.Parse(parts[8], CultureInfo.InvariantCulture) : 0;
-            var regenSeconds = parts.Length > 18
-                ? int.Parse(parts[18], CultureInfo.InvariantCulture)
-                : 10;
-            cat._byClass[index] = new MonsterStat(index, level, life, damageMin, damageMax, defense, regenSeconds);
+            cat._byClass[stat.Index] = stat;
+            loaded++;
         }
 
+        Console.WriteLine("[m9] loaded Monster.txt: {0} classes ({1} rows skipped) from {2}", loaded, skipped, path);
         return cat;
+    }
+
+    /// <summary>Parses one data row; supports quoted names with spaces (<c>"Bull Fighter"</c>).</summary>
+    internal static bool TryParseRow(string[] parts, out MonsterStat stat)
+    {
+        stat = default;
+        if (parts.Length < 8 || !int.TryParse(parts[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out var index))
+        {
+            return false;
+        }
+
+        var col = 2;
+        if (col >= parts.Length)
+        {
+            return false;
+        }
+
+        if (parts[col].StartsWith("\"", StringComparison.Ordinal))
+        {
+            if (parts[col].EndsWith("\"", StringComparison.Ordinal) && parts[col].Length > 1)
+            {
+                col++;
+            }
+            else
+            {
+                while (col < parts.Length && !parts[col].EndsWith("\"", StringComparison.Ordinal))
+                {
+                    col++;
+                }
+
+                col++;
+            }
+        }
+        else
+        {
+            col++;
+        }
+
+        if (col + 5 >= parts.Length)
+        {
+            return false;
+        }
+
+        if (!int.TryParse(parts[col], NumberStyles.Integer, CultureInfo.InvariantCulture, out var level)
+            || !int.TryParse(parts[col + 1], NumberStyles.Integer, CultureInfo.InvariantCulture, out var life))
+        {
+            return false;
+        }
+
+        var damageMin = col + 3 < parts.Length
+            && int.TryParse(parts[col + 3], NumberStyles.Integer, CultureInfo.InvariantCulture, out var dmin)
+            ? dmin
+            : 0;
+        var damageMax = col + 4 < parts.Length
+            && int.TryParse(parts[col + 4], NumberStyles.Integer, CultureInfo.InvariantCulture, out var dmax)
+            ? dmax
+            : damageMin;
+        var defense = col + 5 < parts.Length
+            && int.TryParse(parts[col + 5], NumberStyles.Integer, CultureInfo.InvariantCulture, out var def)
+            ? def
+            : 0;
+        var moveRange = col + 12 < parts.Length
+            && int.TryParse(parts[col + 12], NumberStyles.Integer, CultureInfo.InvariantCulture, out var mr)
+            ? mr
+            : 3;
+        var regenCol = col + 17;
+        var regenSeconds = regenCol < parts.Length
+            && int.TryParse(parts[regenCol], NumberStyles.Integer, CultureInfo.InvariantCulture, out var regen)
+            ? regen
+            : 10;
+
+        stat = new MonsterStat(index, level, life, damageMin, damageMax, defense, moveRange, regenSeconds);
+        return true;
     }
 
     public MonsterStat GetOrDefault(int monsterClass) =>
         _byClass.TryGetValue(monsterClass, out var s)
             ? s
-            : new MonsterStat(monsterClass, Level: 1, Life: 100, DamageMin: 5, DamageMax: 10, Defense: 0, RegenTimeSeconds: 10);
+            : new MonsterStat(
+                monsterClass,
+                Level: 1,
+                Life: 100,
+                DamageMin: 5,
+                DamageMax: 10,
+                Defense: 0,
+                MoveRange: 3,
+                RegenTimeSeconds: 10);
 }
 
 public readonly record struct MonsterStat(
@@ -62,4 +127,5 @@ public readonly record struct MonsterStat(
     int DamageMin,
     int DamageMax,
     int Defense,
+    int MoveRange,
     int RegenTimeSeconds);

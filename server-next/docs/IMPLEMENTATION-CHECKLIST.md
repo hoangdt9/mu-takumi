@@ -172,13 +172,13 @@ Use this to avoid unnecessary rebuilds.
    - [x] Gates / shops / Custom: **`006_map_gate_npc_shop_custom.sql`**, ETL + **`MapGateCatalog`** / **`NpcShopCatalog`**; env **`TAKUMI_WORLD_STATIC_DB=1`** (hoặc từng flag `TAKUMI_MAP_GATE_DB`, `TAKUMI_NPC_SHOP_DB`, `TAKUMI_CUSTOM_WORLD_DB`).  
    - [ ] Wire handlers: gate teleport `0x1C`, shop list `0x31` (catalogs loaded at host boot).
 
-9. **M9 — NPC & monster runtime** *(done stub — **`docs/M9-NPC-MONSTER-CHECKLIST.md`**)*  
-   - [x] Spawn theo map từ **MonsterSetBase.txt** + **Monster.txt** stats (view-range filter).  
-   - [x] Gói **`C2 0x13`** scope spawn sau join + incremental on walk (`MonsterViewportWire602`, `MonsterViewportTracker`).  
+9. **M9 — NPC & monster runtime** *(**`docs/M9-NPC-MONSTER-CHECKLIST.md`**, **`docs/M9-MONSTER-AI-PORT-CHECKLIST.md`**, **`docs/WORKSTREAM-OWNERSHIP.md`**)*  
+   - [x] Spawn theo map từ **MonsterSetBase.txt** + **Monster.txt** (file + **Postgres** khi `TAKUMI_MONSTER_SPAWN_DB=1`).  
+   - [x] Gói **`C2 0x13`** scope spawn sau join + incremental on walk (`MonsterViewportWire602`, `MonsterViewportTracker`); **`C1 0x14`** destroy khi rời view.  
    - [x] Regen delay từ `Monster.txt` (`MapMonsterInstance.TryRegen`).  
-   - [x] Combat stub: `C1 0x11` hit / `0x19` skill → damage, `C1 0x14` destroy, `C1 0x16` die (`MonsterCombatHandler`).  
-   - [x] Viewport destroy khi rời range (`MonsterViewportTracker.SyncView`); damage trừ Defense từ `Monster.txt`.  
-   - [ ] Full combat (AoE, PvP) + AI — **M10c / M9b**; stub hit/skill/miss trên `mac-m4` WIP.
+   - [x] Combat stub: `C1 0x11` hit / `0x19` skill → damage, `C1 0x14` destroy, `C1 0x16` die (`MonsterCombatHandler`); damage trừ Defense từ `Monster.txt`.  
+   - [~] **M9b AI:** wander/chase/`0xD4`/`0x18`, player damage stub, periodic viewport 1s, regen broadcast — **`docs/M9-MONSTER-AI-PORT-CHECKLIST.md`**.  
+   - [ ] AoE / PvP / full pathfinding — **M10c / M9b P2–P3**.
 
 10. **M10 — Movement & visibility** — cùng file §M10; owner: **`docs/WORKSTREAM-OWNERSHIP.md`**  
     - [x] Nhận **walk / instant move** → roster tile (`LegacyLoginHost`, `GamePortMinimalSession`).  

@@ -52,14 +52,15 @@ public sealed class MonsterViewportTrackerTests
             ObjectKey = key,
             MonsterClass = cls,
             Map = 0,
-            X = x,
-            Y = y,
-            Dir = 3,
+            SpawnX = x,
+            SpawnY = y,
+            WanderLeash = 3,
+            MoveRange = 3,
             MaxLife = 100,
             Level = 1,
             RegenDelayMs = 10_000,
         };
-        m.InitializeLife();
+        m.InitializeAtSpawn(x, y, 3);
         return m;
     }
 }

@@ -43,6 +43,8 @@ public static class LegacyLoginHostRunner
         TakumiPostgresMirror.InitWorldStaticDataIfEnabled();
         MapGateCatalog.EnsureInitialized();
         NpcShopCatalog.EnsureInitialized();
+        MapMonsterWorld.EnsureInitialized();
+        MonsterAiLoop.Start(appCancellationToken);
 
         if (!int.TryParse(
                 Environment.GetEnvironmentVariable("TAKUMI_LOGIN_PORT"),
@@ -746,6 +748,16 @@ public static class LegacyLoginHostRunner
                         picked.CurrentMp,
                         picked.MaxMp,
                         ct).ConfigureAwait(false);
+                    await connection.Output.FlushAsync(ct).ConfigureAwait(false);
+                    Console.WriteLine(
+                        "[{0}] sent join map (F3 03) + inventory (F3 10 len={1}) map={2} xy=({3},{4}) ang={5} name='{6}' — flushed before viewport",
+                        remote,
+                        invPkt.Length,
+                        joinPkt[6],
+                        joinPkt[4],
+                        joinPkt[5],
+                        joinPkt[7],
+                        Encoding.ASCII.GetString(picked.Name10).TrimEnd('\0'));
                     await MapMonsterScopeSender.TrySendAfterJoinAsync(
                         monsterViewportTracker,
                         connection,
@@ -768,18 +780,30 @@ public static class LegacyLoginHostRunner
                         await GameMapPresenceRegistry.NotifyJoinAsync(presenceJoin, remote, ct).ConfigureAwait(false);
                     }
 
+                    MonsterViewerRegistry.Register(
+                        presenceSessionId,
+                        connection,
+                        protect: null,
+                        picked.MapId,
+                        picked.PosX,
+                        picked.PosY,
+                        monsterViewportTracker,
+                        playerObjectKey: presenceJoin?.ObjectKey ?? 0,
+                        currentHp: picked.CurrentHp,
+                        maxHp: picked.MaxHp,
+                        onVitalsChanged: (hp, max) =>
+                        {
+                            picked.CurrentHp = hp;
+                            picked.MaxHp = max;
+                            Volatile.Write(ref rosterDirty, 1);
+                        });
+
                     await connection.Output.FlushAsync(ct).ConfigureAwait(false);
                     Console.WriteLine(
-                        "[{0}] sent join map (F3 03) + inventory (F3 10 len={8}) map={1} xy=({2},{3}) ang={4} name='{5}' rosterClass=0x{6:X2} frame@{7}",
+                        "[{0}] join viewport/presence done rosterClass=0x{1:X2} frame@{2}",
                         remote,
-                        joinPkt[6],
-                        joinPkt[4],
-                        joinPkt[5],
-                        joinPkt[7],
-                        Encoding.ASCII.GetString(picked.Name10).TrimEnd('\0'),
                         picked.ServerClass,
-                        joinOff,
-                        invPkt.Length);
+                        joinOff);
                     if (connectionSessionTicket is { } tJoin)
                     {
                         sessionTicketStore.Touch(tJoin, sessionTicketTtl);
@@ -919,6 +943,24 @@ public static class LegacyLoginHostRunner
                             await GameMapPresenceRegistry.NotifyJoinAsync(presenceMove, remote, ct).ConfigureAwait(false);
                         }
 
+                        MonsterViewerRegistry.Register(
+                            presenceSessionId,
+                            connection,
+                            protect: null,
+                            pickedMove.MapId,
+                            pickedMove.PosX,
+                            pickedMove.PosY,
+                            monsterViewportTracker,
+                            playerObjectKey: presenceMove?.ObjectKey ?? 0,
+                            currentHp: pickedMove.CurrentHp,
+                            maxHp: pickedMove.MaxHp,
+                            onVitalsChanged: (hp, max) =>
+                            {
+                                pickedMove.CurrentHp = hp;
+                                pickedMove.MaxHp = max;
+                                Volatile.Write(ref rosterDirty, 1);
+                            });
+
                         await connection.Output.FlushAsync(ct).ConfigureAwait(false);
                         Console.WriteLine(
                             "[{0}] stub move map: 8E 03 ok + F3 03 + F3 10 len={1} mapId={2} frame@{3}",
@@ -993,6 +1035,7 @@ public static class LegacyLoginHostRunner
                             instY,
                             remote,
                             ct).ConfigureAwait(false);
+                        MonsterViewerRegistry.UpdatePosition(presenceSessionId, pickedInst.MapId, instX, instY);
                         await GameMapPresenceRegistry.BroadcastPositionAsync(
                                 presenceSessionId,
                                 pickedInst.MapId,
@@ -1027,6 +1070,7 @@ public static class LegacyLoginHostRunner
                                 walkY,
                                 remote,
                                 ct).ConfigureAwait(false);
+                            MonsterViewerRegistry.UpdatePosition(presenceSessionId, pickedWalk.MapId, walkX, walkY);
                             await GameMapPresenceRegistry.BroadcastPositionAsync(
                                     presenceSessionId,
                                     pickedWalk.MapId,
@@ -1129,6 +1173,24 @@ public static class LegacyLoginHostRunner
                             packet[listFrameOffset]);
                     }
 
+                    return;
+                }
+
+                if (loginLatch.IsLoggedIn
+                    && packet.Length == 3
+                    && packet[0] == 0xC1
+                    && packet[1] == 0x03
+                    && packet[2] == 0x71)
+                {
+                    return;
+                }
+
+                if (loginLatch.IsLoggedIn
+                    && packet.Length == 3
+                    && packet[0] == 0xC1
+                    && packet[1] == 0x03
+                    && packet[2] == 0x31)
+                {
                     return;
                 }
 
@@ -1363,6 +1425,7 @@ public static class LegacyLoginHostRunner
         finally
         {
             GameMapPresenceRegistry.Unregister(presenceSessionId);
+            MonsterViewerRegistry.Unregister(presenceSessionId);
 
             if (connectionSessionTicket is { } tid)
             {

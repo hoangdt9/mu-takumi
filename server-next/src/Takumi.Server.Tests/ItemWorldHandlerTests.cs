@@ -1,4 +1,5 @@
 using System.Text;
+using Takumi.Server.Game;
 using Takumi.Server.Game.World;
 using Takumi.Server.Protocol;
 using Xunit;
@@ -74,6 +75,33 @@ public sealed class ItemWorldHandlerTests
         Assert.Equal(0x34, pkt[4]);
         Assert.Equal(0x56, pkt[7]);
         Assert.Equal(0x78, pkt[8]);
+    }
+
+    [Fact]
+    public void InventoryEquipRules_allows_sword_to_weapon_slots()
+    {
+        var item = new byte[ItemWire602.WireBytes];
+        ItemWire602.WriteSeason6Item(item, 0, 0, 0, 40, false, false, 0, 0);
+        Assert.True(InventoryEquipRules.CanEquipToWearSlot(0, item));
+        Assert.True(InventoryEquipRules.CanMoveBetweenSlots(12, 0, item));
+    }
+
+    [Fact]
+    public void InventoryEquipRules_rejects_zen_to_wear()
+    {
+        var zen = new byte[ItemWire602.WireBytes];
+        ItemWire602.WriteSeason6Item(zen, 14, 15, 0, 1, false, false, 0, 0);
+        Assert.False(InventoryEquipRules.CanEquipToWearSlot(0, zen));
+    }
+
+    [Fact]
+    public void PlayerVitalsState_dead_until_revive_delay()
+    {
+        var id = Guid.NewGuid();
+        PlayerVitalsState.MarkDead(id, TimeSpan.FromSeconds(30));
+        Assert.True(PlayerVitalsState.IsDead(id));
+        PlayerVitalsState.TryClearDead(id);
+        Assert.False(PlayerVitalsState.IsDead(id));
     }
 
     [Fact]

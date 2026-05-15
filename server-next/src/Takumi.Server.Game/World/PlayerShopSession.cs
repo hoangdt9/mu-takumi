@@ -198,7 +198,7 @@ public static class PlayerShopSession
     public static bool TryMoveInventorySlot(Guid sessionId, byte sourceSlot, byte targetSlot, out byte[] targetItem12)
     {
         targetItem12 = Array.Empty<byte>();
-        if (!IsInventorySlot(sourceSlot) || !IsInventorySlot(targetSlot) || sourceSlot == targetSlot)
+        if (sourceSlot == targetSlot || sourceSlot > ItemWire602.LastBagSlot || targetSlot > ItemWire602.LastBagSlot)
         {
             return false;
         }
@@ -207,6 +207,11 @@ public static class PlayerShopSession
         s.Slots.TryGetValue(sourceSlot, out var sourceItem);
         sourceItem ??= Array.Empty<byte>();
         if (ItemWire602.IsEmpty(sourceItem))
+        {
+            return false;
+        }
+
+        if (!InventoryEquipRules.CanMoveBetweenSlots(sourceSlot, targetSlot, sourceItem))
         {
             return false;
         }
@@ -227,6 +232,37 @@ public static class PlayerShopSession
 
         targetItem12 = s.Slots[targetSlot];
         return true;
+    }
+
+    public static bool TryStackIntoBag(Guid sessionId, byte[] item12, out byte resultSlot)
+    {
+        resultSlot = 0;
+        if (ItemWire602.IsEmpty(item12) || ItemWire602.IsZenItem(item12))
+        {
+            return false;
+        }
+
+        if (!Sessions.TryGetValue(sessionId, out var s))
+        {
+            return false;
+        }
+
+        foreach (var kv in s.Slots)
+        {
+            if (!ItemWire602.IsBagSlot(kv.Key) || !ItemWire602.ItemsStackable(kv.Value, item12))
+            {
+                continue;
+            }
+
+            var merged = kv.Value.ToArray();
+            var sum = Math.Min(255, (int)merged[2] + Math.Max(1, (int)item12[2]));
+            ItemWire602.SetDurability(merged, (byte)sum);
+            s.Slots[kv.Key] = merged;
+            resultSlot = kv.Key;
+            return true;
+        }
+
+        return false;
     }
 
     public static bool TryFindEmptyBagSlot(Guid sessionId, out byte slot)

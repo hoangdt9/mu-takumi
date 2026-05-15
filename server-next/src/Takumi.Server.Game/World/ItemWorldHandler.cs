@@ -1,3 +1,4 @@
+using Takumi.Server.Game;
 using Takumi.Server.Protocol;
 
 namespace Takumi.Server.Game.World;
@@ -5,7 +6,8 @@ namespace Takumi.Server.Game.World;
 /// <summary>Item pick/drop/move (<c>0x22</c>–<c>0x24</c>) — inventory bag + ground items.</summary>
 public static class ItemWorldHandler
 {
-    static bool IsAlive(GameRosterEntry player) => player.MaxHp <= 0 || player.CurrentHp > 0;
+    static bool CanUseItems(GameRosterEntry player, Guid presenceSessionId) =>
+        !PlayerVitalsState.IsDead(presenceSessionId) && (player.MaxHp <= 0 || player.CurrentHp > 0);
 
     public static async Task<bool> TryHandlePacketAsync(
         GameRosterEntry player,
@@ -18,11 +20,6 @@ public static class ItemWorldHandler
         Action? onRosterDirty,
         CancellationToken ct)
     {
-        if (!IsAlive(player))
-        {
-            return false;
-        }
-
         if (ClientGameplayPackets602.TryFindItemMoveRequest(
                 packet,
                 out _,
@@ -93,6 +90,12 @@ public static class ItemWorldHandler
         string remote,
         CancellationToken ct)
     {
+        if (!CanUseItems(player, presenceSessionId))
+        {
+            await writeAsync(ItemWorldWire602.BuildMoveFail(dstSlot), ct).ConfigureAwait(false);
+            return true;
+        }
+
         if (srcFlag != 0 || dstFlag != 0)
         {
             await writeAsync(ItemWorldWire602.BuildMoveFail(dstSlot), ct).ConfigureAwait(false);
@@ -129,6 +132,12 @@ public static class ItemWorldHandler
         string remote,
         CancellationToken ct)
     {
+        if (!CanUseItems(player, presenceSessionId))
+        {
+            await writeAsync(ItemWorldWire602.BuildDropFail(slot), ct).ConfigureAwait(false);
+            return true;
+        }
+
         await PlayerShopSession.EnsureInventoryLoadedAsync(presenceSessionId, accountId, characterName10, ct)
             .ConfigureAwait(false);
 
@@ -172,6 +181,12 @@ public static class ItemWorldHandler
         string remote,
         CancellationToken ct)
     {
+        if (!CanUseItems(player, presenceSessionId))
+        {
+            await writeAsync(ItemWorldWire602.BuildPickFail(), ct).ConfigureAwait(false);
+            return true;
+        }
+
         if (mapItemIndex == 0)
         {
             await writeAsync(ItemWorldWire602.BuildPickFail(), ct).ConfigureAwait(false);
@@ -187,6 +202,29 @@ public static class ItemWorldHandler
 
         await PlayerShopSession.EnsureInventoryLoadedAsync(presenceSessionId, accountId, characterName10, ct)
             .ConfigureAwait(false);
+
+        if (ItemWire602.IsZenItem(item12))
+        {
+            var zenGain = Math.Max(1, (int)item12[2]);
+            player.Zen += zenGain;
+            onRosterDirty?.Invoke();
+            var zenBuf = new byte[ItemWire602.WireBytes];
+            ItemWire602.WriteZenPickTotal(zenBuf, player.Zen);
+            await writeAsync(ItemWorldWire602.BuildPick(ItemWorldWire602.PickZen, zenBuf), ct).ConfigureAwait(false);
+            await writeAsync(ItemViewportWire602.BuildDeleteSingle(mapItemIndex), ct).ConfigureAwait(false);
+            Console.WriteLine("[m7] item pick zen +{0} total={1} {2}", zenGain, player.Zen, remote);
+            return true;
+        }
+
+        if (PlayerShopSession.TryStackIntoBag(presenceSessionId, item12, out var stackSlot)
+            && PlayerShopSession.TryGetSlot(presenceSessionId, stackSlot, out var stacked))
+        {
+            PlayerShopSession.PersistSlotToMirror(accountId, characterName10, stackSlot, stacked);
+            await writeAsync(ItemWorldWire602.BuildPick(ItemWorldWire602.PickStack, stacked), ct).ConfigureAwait(false);
+            await writeAsync(ItemViewportWire602.BuildDeleteSingle(mapItemIndex), ct).ConfigureAwait(false);
+            Console.WriteLine("[m7] item pick stack slot={0} {1}", stackSlot, remote);
+            return true;
+        }
 
         if (!PlayerShopSession.TryFindEmptyBagSlot(presenceSessionId, out var bagSlot))
         {

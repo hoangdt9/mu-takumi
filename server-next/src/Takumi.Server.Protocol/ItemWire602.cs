@@ -5,12 +5,61 @@ public static class ItemWire602
 {
     public const int WireBytes = 12;
 
+    public const byte FirstWearSlot = 0;
+
+    public const byte LastWearSlot = 11;
+
     public const byte FirstBagSlot = 12;
 
     public const byte LastBagSlot = 75;
 
-    public static bool IsEmpty(ReadOnlySpan<byte> item12) =>
-        item12.Length < WireBytes || (item12[0] == 0 && item12[1] == 0) || item12[0] == 0xFF;
+    public const int ZenItemIndex = (14 * 512) + 15;
+
+    public static bool IsEmpty(ReadOnlySpan<byte> item12)
+    {
+        if (item12.Length < WireBytes || item12[0] == 0xFF)
+        {
+            return true;
+        }
+
+        for (var i = 0; i < WireBytes; i++)
+        {
+            if (item12[i] != 0)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public static int DecodeItemIndex(ReadOnlySpan<byte> item12)
+    {
+        if (item12.Length < WireBytes)
+        {
+            return -1;
+        }
+
+        return item12[0]
+               + ((item12[3] & 0x80) << 1)
+               + ((item12[5] & 0xF0) << 5);
+    }
+
+    public static int DecodeLevel(ReadOnlySpan<byte> item12) =>
+        item12.Length >= 2 ? (item12[1] >> 3) & 0x0F : 0;
+
+    public static bool IsZenItem(ReadOnlySpan<byte> item12) => DecodeItemIndex(item12) == ZenItemIndex;
+
+    public static bool IsWearSlot(byte slot) => slot <= LastWearSlot;
+
+    public static bool IsBagSlot(byte slot) => slot >= FirstBagSlot && slot <= LastBagSlot;
+
+    public static bool ItemsStackable(ReadOnlySpan<byte> a, ReadOnlySpan<byte> b) =>
+        !IsEmpty(a)
+        && !IsEmpty(b)
+        && DecodeItemIndex(a) == DecodeItemIndex(b)
+        && DecodeLevel(a) == DecodeLevel(b)
+        && !IsZenItem(a);
 
     public static void WriteSeason6Item(
         Span<byte> dest,
@@ -69,5 +118,21 @@ public static class ItemWire602
         {
             item12[2] = durability;
         }
+    }
+
+    /// <summary>Encode total zen for <c>GET_ITEM_ZEN</c> pick response (<c>PRECEIVE_GET_ITEM</c>).</summary>
+    public static void WriteZenPickTotal(Span<byte> dest, long zen)
+    {
+        if (dest.Length < 4)
+        {
+            return;
+        }
+
+        dest.Clear();
+        var z = (uint)Math.Clamp(zen, 0, uint.MaxValue);
+        dest[0] = (byte)((z >> 24) & 0xFF);
+        dest[1] = (byte)((z >> 16) & 0xFF);
+        dest[2] = (byte)((z >> 8) & 0xFF);
+        dest[3] = (byte)(z & 0xFF);
     }
 }

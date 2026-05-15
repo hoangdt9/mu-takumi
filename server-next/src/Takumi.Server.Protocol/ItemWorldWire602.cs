@@ -8,6 +8,8 @@ public static class ItemWorldWire602
     public const byte HeadMove = 0x24;
 
     public const byte PickFail = 0xFF;
+    public const byte PickZen = 0xFE;
+    public const byte PickStack = 0xFD;
     public const byte MoveFail = 0xFF;
 
     public const int MovePacketLength = 17;

@@ -16,6 +16,22 @@ public static class ShopCommerceHandler
         Action? onRosterDirty,
         CancellationToken ct)
     {
+        if (ClientGameplayPackets602.TryFindBuyConfirmRequest(packet, out _, out var confirmSlot))
+        {
+            return await HandleBuyAsync(
+                    player,
+                    presenceSessionId,
+                    accountId,
+                    characterName10,
+                    confirmSlot,
+                    writeAsync,
+                    onRosterDirty,
+                    remote,
+                    ct,
+                    fromConfirm: true)
+                .ConfigureAwait(false);
+        }
+
         if (ClientGameplayPackets602.TryFindBuyRequest(packet, out _, out var shopSlot))
         {
             return await HandleBuyAsync(
@@ -27,7 +43,8 @@ public static class ShopCommerceHandler
                     writeAsync,
                     onRosterDirty,
                     remote,
-                    ct)
+                    ct,
+                    fromConfirm: false)
                 .ConfigureAwait(false);
         }
 
@@ -73,8 +90,38 @@ public static class ShopCommerceHandler
         Func<ReadOnlyMemory<byte>, CancellationToken, Task> writeAsync,
         Action? onRosterDirty,
         string remote,
-        CancellationToken ct)
+        CancellationToken ct,
+        bool fromConfirm = false)
     {
+        if (!fromConfirm && IsShopBuyConfirmEnabled())
+        {
+            if (!PlayerShopSession.TryGetShopIndex(presenceSessionId, out var shopIndexForPrompt))
+            {
+                await writeAsync(ShopCommerceWire602.BuildBuy(ShopCommerceWire602.BuyShopClosedIndex, stackalloc byte[ItemWire602.WireBytes]), ct)
+                    .ConfigureAwait(false);
+                return true;
+            }
+
+            if (!NpcShopCatalog.TryGetShopItem(shopIndexForPrompt, shopSlot, out var preview) || preview is null)
+            {
+                await writeAsync(ShopCommerceWire602.BuildBuyFail(), ct).ConfigureAwait(false);
+                return true;
+            }
+
+            PlayerShopSession.SetPendingBuy(presenceSessionId, shopSlot);
+            await writeAsync(ShopBuyConfirmWire602.Build(shopSlot), ct).ConfigureAwait(false);
+            Console.WriteLine("[m8] shop buy confirm prompt slot={0} shop={1} {2}", shopSlot, shopIndexForPrompt, remote);
+            return true;
+        }
+
+        if (fromConfirm && PlayerShopSession.TryGetPendingBuy(presenceSessionId, out var pending) && pending != shopSlot)
+        {
+            await writeAsync(ShopCommerceWire602.BuildBuyFail(), ct).ConfigureAwait(false);
+            return true;
+        }
+
+        PlayerShopSession.ClearPendingBuy(presenceSessionId);
+
         if (!PlayerShopSession.TryGetShopIndex(presenceSessionId, out var shopIndex))
         {
             await writeAsync(ShopCommerceWire602.BuildBuy(ShopCommerceWire602.BuyShopClosedIndex, stackalloc byte[ItemWire602.WireBytes]), ct)
@@ -132,6 +179,18 @@ public static class ShopCommerceHandler
             player.Zen,
             remote);
         return true;
+    }
+
+    static bool IsShopBuyConfirmEnabled()
+    {
+        var raw = Environment.GetEnvironmentVariable("TAKUMI_SHOP_BUY_CONFIRM");
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return false;
+        }
+
+        return !string.Equals(raw.Trim(), "0", StringComparison.OrdinalIgnoreCase)
+               && !string.Equals(raw.Trim(), "false", StringComparison.OrdinalIgnoreCase);
     }
 
     static async Task<bool> HandleSellAsync(

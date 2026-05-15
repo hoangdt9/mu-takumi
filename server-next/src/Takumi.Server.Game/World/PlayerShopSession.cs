@@ -10,19 +10,51 @@ public static class PlayerShopSession
 {
     static readonly ConcurrentDictionary<Guid, SessionState> Sessions = new();
 
-    public readonly record struct SessionState(int ShopIndex, Dictionary<byte, byte[]> Slots);
+    public readonly record struct SessionState(int ShopIndex, byte? PendingBuySlot, Dictionary<byte, byte[]> Slots);
 
     public static void OpenShop(Guid sessionId, int shopIndex) =>
         Sessions.AddOrUpdate(
             sessionId,
-            _ => new SessionState(shopIndex, new Dictionary<byte, byte[]>()),
-            (_, existing) => existing with { ShopIndex = shopIndex });
+            _ => new SessionState(shopIndex, null, new Dictionary<byte, byte[]>()),
+            (_, existing) => existing with { ShopIndex = shopIndex, PendingBuySlot = null });
+
+    public static void SetPendingBuy(Guid sessionId, byte shopSlot)
+    {
+        if (!Sessions.TryGetValue(sessionId, out var s))
+        {
+            return;
+        }
+
+        Sessions[sessionId] = s with { PendingBuySlot = shopSlot };
+    }
+
+    public static void ClearPendingBuy(Guid sessionId)
+    {
+        if (!Sessions.TryGetValue(sessionId, out var s))
+        {
+            return;
+        }
+
+        Sessions[sessionId] = s with { PendingBuySlot = null };
+    }
+
+    public static bool TryGetPendingBuy(Guid sessionId, out byte shopSlot)
+    {
+        if (Sessions.TryGetValue(sessionId, out var s) && s.PendingBuySlot is { } slot)
+        {
+            shopSlot = slot;
+            return true;
+        }
+
+        shopSlot = 0;
+        return false;
+    }
 
     public static void CloseShop(Guid sessionId)
     {
         if (Sessions.TryGetValue(sessionId, out var s))
         {
-            Sessions[sessionId] = s with { ShopIndex = -1 };
+            Sessions[sessionId] = s with { ShopIndex = -1, PendingBuySlot = null };
         }
     }
 
@@ -46,7 +78,7 @@ public static class PlayerShopSession
     {
         if (!Sessions.TryGetValue(sessionId, out var s))
         {
-            s = new SessionState(-1, new Dictionary<byte, byte[]>());
+            s = new SessionState(-1, null, new Dictionary<byte, byte[]>());
             Sessions[sessionId] = s;
         }
 
@@ -83,7 +115,7 @@ public static class PlayerShopSession
 
     public static void SetSlot(Guid sessionId, byte slot, byte[] item12)
     {
-        var s = Sessions.GetOrAdd(sessionId, _ => new SessionState(-1, new Dictionary<byte, byte[]>()));
+        var s = Sessions.GetOrAdd(sessionId, _ => new SessionState(-1, null, new Dictionary<byte, byte[]>()));
         if (ItemWire602.IsEmpty(item12))
         {
             s.Slots.Remove(slot);

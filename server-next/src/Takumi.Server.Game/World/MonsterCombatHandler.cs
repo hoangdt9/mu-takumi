@@ -287,10 +287,17 @@ public static class MonsterCombatHandler
         var stat = MapMonsterWorld.GetMonsterStat(monster.MonsterClass);
         var fallback = ParseIntEnv("TAKUMI_COMBAT_STUB_DAMAGE", 50, 1, 65_000);
         var skillPct = isSkill ? ParseIntEnv("TAKUMI_COMBAT_SKILL_DAMAGE_PCT", 150, 50, 500) : 100;
-        var damage = MonsterCombatCalculator.RollDamageToMonster(playerLevel, stat, fallback, skillPct);
+        var attackElement = MonsterCombatCalculator.ResolveAttackElement();
+        var damage = MonsterCombatCalculator.RollDamageToMonster(
+            playerLevel,
+            stat,
+            fallback,
+            skillPct,
+            attackElement);
         if (presenceSessionId is { } aggroSid && GameMapPresenceRegistry.TryGetObjectKey(aggroSid, out var playerKey))
         {
             monster.SetAggro(playerKey);
+            monster.RecordHit(playerKey, damage);
         }
 
         var died = monster.ApplyDamage(damage);
@@ -319,13 +326,30 @@ public static class MonsterCombatHandler
         await MonsterViewportBroadcast.BroadcastDestroyAsync(monster, ct).ConfigureAwait(false);
         var destroyPkt = MonsterViewportDestroyWire602.Build([monster.ObjectKey]);
         await GamePortOutboundWire.WriteAsync(connection, clientProtectOutbound, destroyPkt, ct).ConfigureAwait(false);
-        var expStub = (ushort)Math.Clamp(monster.Level * 10, 1, 5000);
+        var expStub = ComputeKillExperience(monster);
         var diePkt = MonsterDieWire602.Build(monster.ObjectKey, expStub, damage);
         await GamePortOutboundWire.WriteAsync(connection, clientProtectOutbound, diePkt, ct).ConfigureAwait(false);
         Console.WriteLine(
             "[{0}] [m9] monster died key={1} sent C1 0x14 destroy + C1 0x16 die",
             remote,
             monster.ObjectKey);
+    }
+
+    static ushort ComputeKillExperience(MapMonsterInstance monster)
+    {
+        var baseExp = Math.Clamp(monster.Level * 10, 1, 5000);
+        if (!monster.TryGetTopDamagePlayerKey(out _, out _))
+        {
+            return (ushort)baseExp;
+        }
+
+        var bonusPct = ParseIntEnv("TAKUMI_COMBAT_TOP_DAMAGE_EXP_BONUS_PCT", 0, 0, 200);
+        if (bonusPct > 0)
+        {
+            baseExp = Math.Clamp(baseExp + (baseExp * bonusPct / 100), 1, 65_000);
+        }
+
+        return (ushort)Math.Clamp(baseExp, 1, ushort.MaxValue);
     }
 
     static int ParseIntEnv(string key, int defaultValue, int min, int max)

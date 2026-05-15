@@ -28,4 +28,20 @@ public sealed class MonsterCombatCalculatorTests
         var dmg = MonsterCombatCalculator.RollDamageToMonster(playerLevel: 1, stat, fallbackDamage: 5);
         Assert.Equal(1, dmg);
     }
+
+    [Fact]
+    public void ApplyResistance_reduces_damage_by_percent()
+    {
+        var stat = new MonsterStat(1, 1, 10, 0, 0, 0, 3, 0, 1, 5, 10, Resistance0: 50);
+        var dmg = MonsterCombatCalculator.ApplyResistance(100, attackElement: 0, stat);
+        Assert.Equal(50, dmg);
+    }
+
+    [Fact]
+    public void ApplyElemental_subtracts_elemental_defense_when_matched()
+    {
+        var stat = new MonsterStat(1, 1, 10, 0, 0, 0, 3, 0, 1, 5, 10, ElementalAttribute: 2, ElementalDefense: 20);
+        var dmg = MonsterCombatCalculator.ApplyElemental(100, attackElement: 2, stat);
+        Assert.Equal(80, dmg);
+    }
 }

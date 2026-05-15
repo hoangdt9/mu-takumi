@@ -174,6 +174,34 @@ public static class ClientGameplayPackets602
         return false;
     }
 
+    public static bool TryFindBuyConfirmRequest(ReadOnlySpan<byte> packet, out int frameOffset, out byte shopSlot)
+    {
+        frameOffset = -1;
+        shopSlot = 0;
+        for (var i = 0; i <= packet.Length - 5; i++)
+        {
+            if (packet[i] is not (0xC1 or 0xC3))
+            {
+                continue;
+            }
+
+            var headOff = i + 2;
+            if (headOff + 1 >= packet.Length)
+            {
+                continue;
+            }
+
+            if (packet[headOff] == ShopBuyConfirmWire602.Head && packet[headOff + 1] == ShopBuyConfirmWire602.Sub)
+            {
+                frameOffset = i;
+                shopSlot = packet[headOff + 2];
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public static bool TryFindShopExitRequest(ReadOnlySpan<byte> packet, out int frameOffset)
     {
         frameOffset = -1;

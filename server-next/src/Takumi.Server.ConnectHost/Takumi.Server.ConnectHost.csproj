@@ -5,11 +5,11 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <RootNamespace>Takumi.Server.ConnectHost</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Takumi.Server.Hosting\Takumi.Server.Hosting.csproj" />
-    <ProjectReference Include="..\Takumi.Server.LegacyLoginHost.Runner\Takumi.Server.LegacyLoginHost.Runner.csproj" />
+    <ProjectReference Include="..\Takumi.Server.Connect\Takumi.Server.Connect.csproj" />
   </ItemGroup>
 
 </Project>

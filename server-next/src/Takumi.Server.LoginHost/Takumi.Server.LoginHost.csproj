@@ -1,15 +1,16 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <OutputType>Exe</OutputType>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <RootNamespace>Takumi.Server.Connect</RootNamespace>
+    <RootNamespace>Takumi.Server.LoginHost</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Takumi.Server.Hosting\Takumi.Server.Hosting.csproj" />
-    <ProjectReference Include="..\Takumi.Server.Protocol\Takumi.Server.Protocol.csproj" />
+    <ProjectReference Include="..\Takumi.Server.LegacyLoginHost.Runner\Takumi.Server.LegacyLoginHost.Runner.csproj" />
   </ItemGroup>
 
 </Project>

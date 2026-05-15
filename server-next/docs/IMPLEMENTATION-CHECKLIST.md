@@ -1,9 +1,10 @@
 # Takumi Server Next - Implementation Checklist
 
-Last updated: 2026-05-15 (M4b roster health counters + handoff doc; checklist sync)
+Last updated: 2026-05-15 (roster JSON vs DB clarification in checklist)
 
 ## Repository vs checklist (read first)
 
+- **Roster / tọa độ nhân vật (`mapId`, `posX`, `posY`, `angle`) — tại sao lại thấy trong JSON (`takumi-roster/*.json`, ví dụ `test.json`)?** Đây **không phải** “lưu vào code”; đó là **file persistence tối thiểu của M4a** do `LegacyLoginHost` / `GamePortMinimalSession` ghi khi chạy (`TAKUMI_ROSTER_DIR` hoặc mặc định `./takumi-roster/<accountId>.json`). Mục đích: dev/QA nhanh, tái join đúng tile sau walk, **cùng layout** với mirror Postgres `character_roster` khi bật `TAKUMI_ROSTER_DB_SYNC`. **Nguồn sự thật cuối (SSOT) chỉ Postgres** vẫn là hạng mục **mở** — xem **`## Next (High Priority)`** mục **M4b–M5b Postgres-first roster SSOT** và **`docs/M4-WORLD-POSITION-CHECKLIST.md`** §M4b (dòng *SSOT thực tế vẫn là JSON file*) / §Importer. Khi SSOT xong, host sẽ đọc/ghi world position chủ yếu qua DB + domain `character`, JSON (nếu còn) chỉ còn tuỳ chọn import/export hoặc bị loại bỏ.
 - **`server-next/README.md`** describes what is actually in tree: **`server-next/docker-compose.yml`** starts **PostgreSQL** and **LegacyLoginHost** in Docker (Connect **44605**, login **44606**; Postgres **54444** by default). When connect env vars are unset, **LegacyLoginHost** sends a **multi-ID F4 06** default so `ServerList.bmd` usually shows sub-servers (group = connectId/20); override with **`TAKUMI_CS_CONNECT_IDS`** or **BASE+COUNT**. The .NET host can still be run on the host with `dotnet watch` when you prefer hot reload — **do not** bind the same ports while Docker publishes them.
 - The **`## Done`** section below is the **intended / previously implemented** feature set. Treat unchecked **Exit criteria** and **`## In Progress`** as the current engineering truth for QA; do not assume every `[x]` is verifiable without a compilable solution in git.
 - **Native client (C++) session notes**
@@ -51,7 +52,7 @@ Use this to avoid unnecessary rebuilds.
 - [x] Login/character-select packet handling:
   - [x] `F1 01` login request parsing (username/password from fixed fields)
   - [x] `F1 01` login response (`C1 F1 01`)
-  - [x] `F3 00` character list request response (Takumi `PHEADER_DEFAULT_CHARACTER_LIST` + `PRECEIVE_CHARACTER_LIST` 34 bytes/slot in `server-next`; JSON roster / future DB)
+  - [x] `F3 00` character list request response (Takumi `PHEADER_DEFAULT_CHARACTER_LIST` + `PRECEIVE_CHARACTER_LIST` 34 bytes/slot in `server-next`; nguồn roster hiện **JSON `takumi-roster/<account>.json` + merge mirror DB** khi bật sync — SSOT Postgres-only: **`## Next (High Priority)`** + **`docs/M4-WORLD-POSITION-CHECKLIST.md`**)
   - [x] `F3 01` character create request response (persist to DB)
   - [x] `F3 02` character delete request response (persist to DB)
   - [x] `F3 15` focus character request response
@@ -84,10 +85,10 @@ Use this to avoid unnecessary rebuilds.
 ## Next (High Priority)
 
 - [x] **M4b observability:** `CharacterRosterMirrorHealth` — merge/upsert success+fail counts; upsert errors log `[roster-health] …` snapshot; **`TAKUMI_ROSTER_HEALTH_LOG`** logs snapshot after **`TryDrainPendingUpserts`** (`docs/M4-WORLD-POSITION-CHECKLIST.md`).
-- [ ] **M4b–M5b (remaining):** Postgres-first roster **SSOT** beyond JSON mirror (domain `character` sync, importer world columns) — see **`docs/M4-WORLD-POSITION-CHECKLIST.md`** §Importer / SSOT; does **not** block M5 join/ticket work.
+- [ ] **M4b–M5b (remaining):** Postgres-first roster **SSOT** beyond JSON mirror — **đóng đúng câu hỏi “sao không chỉ DB”**: bỏ phụ thuộc chỉnh tay / rebuild từ `takumi-roster/*.json` cho `posX`/`posY`/`mapId`; đồng bộ domain `character` + importer world columns — see **`docs/M4-WORLD-POSITION-CHECKLIST.md`** §Importer / SSOT (M4b §*SSOT Postgres-only*); does **not** block M5 join/ticket work.
 - [ ] **M6+ / M7–M9:** Full **`Takumi.Server.Game`** protocol after join (map/scope/combat) when client uses **only** game TCP.
 - [x] **Split-stack login handoff (Postgres):** `sql/init/003_session_ticket.sql` + **`PostgresSessionHandoffRepository`**; **`TAKUMI_SESSION_HANDOFF_DB=1`** → `LegacyLoginHost` persists pending row after F1 01; optional **`TAKUMI_GAME_REQUIRE_LOGIN_HANDOFF=1`** on **GameHost** consumes one row before F1 01 success (**IP match** default on, override with **`TAKUMI_GAME_HANDOFF_MATCH_IP=0`**). Optional **signed wire path:** **`TAKUMI_SESSION_TICKET_HMAC_KEY`** + **`TAKUMI_GAME_TICKET_WIRE=1`** — Legacy pushes **`F1 A5`**, client **`F1 A6`** before game **`F1 01`**, consume on attach (see **`docs/M6-GAME-TCP-CHECKLIST.md`**). Plain IP handoff does not send ticket bytes on wire.
-- [ ] **`TakumiLoginServer` process** (if split from `LegacyLoginHost`) + signed ticket on wire / shared secret — not implemented; name in checklist = future exe only.
+- [x] **M5 split processes:** `Takumi.Server.LoginHost` + `Takumi.Server.ConnectHost` (shared `LegacyLoginHost.Runner` / `ConnectServerHostRunner`); Docker profile **`splitstack`**; scripts `run-login-host.sh` / `run-connect-host.sh`. Combined `LegacyLoginHost` unchanged for default Docker.
 - [x] **Protocol tests (partial):** `C1DeclaredLength602` guards + **`SessionHandoffPostgresTests`** when **`TEST_PG_CONNECTION_STRING`**. **TCP hardening (partial):** max decrypted frame + optional **`DecryptedPacketRateGate`** (`DecryptedPacketSafety602Tests`). Still open: golden pcap loop, transport-level framing audit vs OpenMU `Connection`, richer rate policy.
 
 ## Next (Medium Priority)
@@ -139,7 +140,7 @@ Use this to avoid unnecessary rebuilds.
    - [x] Tách process hoặc class library nếu cần scale riêng Connect (`Takumi.Server.Connect`; xem **`docs/M3-CONNECT-BMD.md`**).
 
 4. **M4 — Login + nhân vật + vị trí lưu thế giới** *(M4a + M4c walk + periodic save + **M4b mirror + merge health metrics** — SSOT Postgres-only + tile/float still open; see **`docs/M4-WORLD-POSITION-CHECKLIST.md`** §Handoff M5)*  
-   - [x] Bảng / roster: `map_id`, `pos_x`, `pos_y`, `angle` (JSON roster per account; join dùng `JoinMapSpawnWire`, không hard-code trong `Program` ngoài env default).  
+   - [x] Bảng / roster: `map_id`, `pos_x`, `pos_y`, `angle` — **M4a:** file **`server-next/takumi-roster/<accountId>.json`** (vd. `test.json` cho account `test`); **M4b:** mirror bảng `character_roster` khi `TAKUMI_ROSTER_DB_SYNC`; join dùng `JoinMapSpawnWire`, không hard-code trong `Program` ngoài env default. *(Thuộc mục này — không phải bug; SSOT chỉ DB = mục `[ ]` trong **`## Next (High Priority)`**.)*  
    - [x] Đồng bộ khi disconnect (flush roster), khi đổi map stub (`8E 02` → cập nhật `MapId` + save); **walk** `C1 … 0xD4`/`0x10` + **instant move** `C1 05 15` cập nhật `posX`/`posY`/`angle` in-memory → flush cùng disconnect (log thực tế: join lần hai tại tile đã đi, ví dụ `xy=(140,193)` sau khi rời map).  
    - [x] **M4b:** merge/upsert health counters + optional **`TAKUMI_ROSTER_HEALTH_LOG`** (`CharacterRosterMirrorHealth`).  
    - [ ] **M4b/M4c + SSOT Postgres:** importer / `character` domain sync / tile vs float / full GS listener parity — **`docs/M4-WORLD-POSITION-CHECKLIST.md`** (owner M7+ where noted).
@@ -147,7 +148,7 @@ Use this to avoid unnecessary rebuilds.
 5. **M5 — Join handoff (`3.JoinServer` parity)** *(partial — see **`docs/M5-JOIN-HANDOFF-CHECKLIST.md`**)*  
    - [x] **F4 03** advertised port (`TAKUMI_GAME_PORT`) + in-memory session ticket TTL / Touch / Revoke.  
    - [x] Postgres **`session_ticket`** pending row + optional GameHost consume (**`TAKUMI_SESSION_HANDOFF_DB`**, **`TAKUMI_GAME_REQUIRE_LOGIN_HANDOFF`**) + signed wire **`F1 A5` / `F1 A6`** (**`TAKUMI_SESSION_TICKET_HMAC_KEY`**, **`TAKUMI_GAME_TICKET_WIRE`**).  
-   - [ ] Standalone `TakumiLoginServer` process.
+   - [x] Standalone processes: **`Takumi.Server.LoginHost`** + **`Takumi.Server.ConnectHost`** (profile **`splitstack`**); combined **`LegacyLoginHost`** for single-container QA.
 
 6. **M6 — Game TCP host (`Takumi.Server.Game`) — skeleton `4.GameServer`** *(bootstrap + split-port minimal-login — **`docs/M6-GAME-TCP-CHECKLIST.md`**)*  
    - [x] Project `src/Takumi.Server.Game` + **`Takumi.Server.GameHost`**: accept, decrypt, join, **minimal-login** (F1 01 + roster JSON + F3 00 + **F3 01/02** + F3 03 join + move stub + walk roster + **`GamePortKeepAliveRunner`** + F1 02 ack) khi có `TAKUMI_ACCOUNTS` + serial.  
@@ -206,7 +207,7 @@ Use this to avoid unnecessary rebuilds.
 - [ ] Real Takumi client can:
   - [ ] request server list
   - [ ] login with real account
-  - [ ] receive non-synthetic character list from database
+  - [ ] receive non-synthetic character list from database *(hiện roster có thể lấy từ JSON + overlay DB theo `TAKUMI_ROSTER_DB_MERGE_MODE`; “chỉ DB” = sau mục **M4b–M5b SSOT** ở trên)*
   - [ ] focus/select character
   - [ ] enter game from character screen **without hardware keyboard** (double-tap on hero or ~0.5s hold on 3D viewport after selection — native `ZzzScene.cpp`; rebuild APK)
   - [ ] complete minimal transition after character selection (visible world, not black screen)

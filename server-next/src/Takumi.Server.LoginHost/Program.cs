@@ -1,4 +1,4 @@
-﻿// Combined Connect (F4) + login/game TCP — same as legacy single-process Docker service.
+﻿// M5: login/game TCP only (no Connect on TAKUMI_CONNECT_PORT). Pair with Takumi.Server.ConnectHost.
 using Takumi.Server.Hosting;
 using Takumi.Server.LegacyLoginHost;
 
@@ -8,5 +8,5 @@ using var cts = new CancellationTokenSource();
 Console.CancelKeyPress += (_, e) => { e.Cancel = true; cts.Cancel(); };
 
 return await LegacyLoginHostRunner.RunAsync(
-    new LegacyLoginHostRunOptions(LegacyLoginHostListenMode.RespectEnvironment),
+    new LegacyLoginHostRunOptions(LegacyLoginHostListenMode.LoginTcpOnly),
     cts.Token).ConfigureAwait(false);

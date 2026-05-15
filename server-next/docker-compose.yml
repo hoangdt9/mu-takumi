@@ -79,6 +79,68 @@ services:
         && echo "[legacy-login] build OK — exec LegacyLoginHost (44605 connect + TAKUMI_LOGIN_PORT game)…"
         && exec dotnet run --project src/Takumi.Server.LegacyLoginHost/Takumi.Server.LegacyLoginHost.csproj -c Release --no-build
 
+  # M5 — split Connect + Login (parity Source/1.ConnectServer + 3.JoinServer). Profile **splitstack**.
+  # Replaces legacy-login for QA when you want two processes; do not run legacy-login at the same time (same ports).
+  connect-host:
+    profiles: ["splitstack"]
+    image: mcr.microsoft.com/dotnet/sdk:10.0
+    container_name: takumi-connect-host
+    restart: unless-stopped
+    working_dir: /app
+    volumes:
+      - .:/app
+    ports:
+      - "${TAKUMI_CONNECT_PUBLISH:-44605}:${TAKUMI_CONNECT_PORT:-44605}"
+    environment:
+      TAKUMI_CONNECT_PORT: "${TAKUMI_CONNECT_PORT:-44605}"
+      TAKUMI_LOGIN_PORT: "${TAKUMI_LOGIN_PORT:-44606}"
+      TAKUMI_GAME_PORT: "${TAKUMI_GAME_PORT:-}"
+      TAKUMI_LAN_IP: "${TAKUMI_LAN_IP:-}"
+      TAKUMI_PUBLIC_HOST: "${TAKUMI_PUBLIC_HOST:-}"
+      TAKUMI_CS_CONNECT_IDS: "${TAKUMI_CS_CONNECT_IDS:-}"
+      TAKUMI_CS_CONNECT_BASE: "${TAKUMI_CS_CONNECT_BASE:-}"
+      TAKUMI_CS_CONNECT_COUNT: "${TAKUMI_CS_CONNECT_COUNT:-}"
+      TAKUMI_VERBOSE: "${TAKUMI_VERBOSE:-1}"
+    command:
+      - /bin/sh
+      - -c
+      - >-
+        dotnet build src/Takumi.Server.ConnectHost/Takumi.Server.ConnectHost.csproj -c Release -nologo -v q
+        && exec dotnet run --project src/Takumi.Server.ConnectHost/Takumi.Server.ConnectHost.csproj -c Release --no-build
+
+  login-host:
+    profiles: ["splitstack"]
+    image: mcr.microsoft.com/dotnet/sdk:10.0
+    container_name: takumi-login-host
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    working_dir: /app
+    volumes:
+      - .:/app
+      - ${TAKUMI_DEC2_HOST_DIR:-./keys}:/keys:ro
+    ports:
+      - "${TAKUMI_LEGACY_LOGIN_PUBLISH:-44606}:${TAKUMI_LOGIN_PORT:-44606}"
+    environment:
+      TAKUMI_LOGIN_PORT: "${TAKUMI_LOGIN_PORT:-44606}"
+      TAKUMI_GAME_PORT: "${TAKUMI_GAME_PORT:-}"
+      TAKUMI_SESSION_TICKET_TTL_MINUTES: "${TAKUMI_SESSION_TICKET_TTL_MINUTES:-}"
+      TAKUMI_SESSION_HANDOFF_DB: "${TAKUMI_SESSION_HANDOFF_DB:-}"
+      TAKUMI_SESSION_TICKET_HMAC_KEY: "${TAKUMI_SESSION_TICKET_HMAC_KEY:-}"
+      TAKUMI_DEC2_PATH: /keys/Dec2.dat
+      TAKUMI_ACCOUNTS: "${TAKUMI_ACCOUNTS:-test:test;admin:admin}"
+      TAKUMI_SERVER_SERIAL: "${TAKUMI_SERVER_SERIAL:-TbYehR2hFUPBKgZj}"
+      TAKUMI_JOIN_VERSION: "${TAKUMI_JOIN_VERSION:-10405}"
+      TAKUMI_ROSTER_DB_SYNC: "${TAKUMI_ROSTER_DB_SYNC:-}"
+      TAKUMI_VERBOSE: "${TAKUMI_VERBOSE:-1}"
+      DOTNET_ENVIRONMENT: "${DOTNET_ENVIRONMENT:-Development}"
+    command:
+      - /bin/sh
+      - -c
+      - >-
+        dotnet build src/Takumi.Server.LoginHost/Takumi.Server.LoginHost.csproj -c Release -nologo -v q
+        && exec dotnet run --project src/Takumi.Server.LoginHost/Takumi.Server.LoginHost.csproj -c Release --no-build
+
   # M6 — optional second process: minimal GameServer bootstrap (C1 F1 00 + decrypt RX log). Profile **gamehost**.
   game-host:
     profiles: ["gamehost"]

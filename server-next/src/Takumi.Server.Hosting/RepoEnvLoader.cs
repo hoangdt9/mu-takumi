@@ -1,4 +1,4 @@
-namespace Takumi.Server.Game;
+namespace Takumi.Server.Hosting;
 
 /// <summary>
 /// Loads <c>server-next/env.defaults</c> (committed, machine-agnostic) then <c>server-next/.env</c> (local, gitignored).

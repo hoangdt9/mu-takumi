@@ -1,10 +1,14 @@
 <Solution>
+  <Project Path="src/Takumi.Server.Hosting/Takumi.Server.Hosting.csproj" />
   <Project Path="src/Takumi.Server.Game/Takumi.Server.Game.csproj" />
   <Project Path="src/Takumi.Server.GameHost/Takumi.Server.GameHost.csproj" />
   <Project Path="src/Takumi.Server.Join/Takumi.Server.Join.csproj" />
   <Project Path="src/Takumi.Server.Connect/Takumi.Server.Connect.csproj" />
+  <Project Path="src/Takumi.Server.ConnectHost/Takumi.Server.ConnectHost.csproj" />
+  <Project Path="src/Takumi.Server.LoginHost/Takumi.Server.LoginHost.csproj" />
   <Project Path="src/Takumi.Server.Protocol/Takumi.Server.Protocol.csproj" />
   <Project Path="src/Takumi.Server.Persistence/Takumi.Server.Persistence.csproj" />
+  <Project Path="src/Takumi.Server.LegacyLoginHost.Runner/Takumi.Server.LegacyLoginHost.Runner.csproj" />
   <Project Path="src/Takumi.Server.LegacyLoginHost/Takumi.Server.LegacyLoginHost.csproj" />
   <Project Path="src/Takumi.Server.Tests/Takumi.Server.Tests.csproj" />
 </Solution>

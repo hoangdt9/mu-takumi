@@ -22,6 +22,8 @@ public static class JoinMapVitalsSeed
         var lifeMax = BinaryPrimitives.ReadUInt16LittleEndian(joinPkt.Slice(36));
         var mana = BinaryPrimitives.ReadUInt16LittleEndian(joinPkt.Slice(38));
         var manaMax = BinaryPrimitives.ReadUInt16LittleEndian(joinPkt.Slice(40));
+        var shield = BinaryPrimitives.ReadUInt16LittleEndian(joinPkt.Slice(42));
+        var shieldMax = BinaryPrimitives.ReadUInt16LittleEndian(joinPkt.Slice(44));
         var gold = BinaryPrimitives.ReadUInt32LittleEndian(joinPkt.Slice(50));
 
         if (lifeMax == 0)
@@ -30,7 +32,23 @@ public static class JoinMapVitalsSeed
         }
 
         vitals = CharacterRosterVitals.FromInts(life, lifeMax, mana, manaMax, gold);
+        _ = shield;
+        _ = shieldMax;
         return true;
+    }
+
+    public static bool TryReadShieldFromJoinPacket(ReadOnlySpan<byte> joinPkt, out int currentShield, out int maxShield)
+    {
+        currentShield = 0;
+        maxShield = 0;
+        if (joinPkt.Length < JoinMapServerWire602.PacketLength)
+        {
+            return false;
+        }
+
+        maxShield = BinaryPrimitives.ReadUInt16LittleEndian(joinPkt.Slice(44));
+        currentShield = BinaryPrimitives.ReadUInt16LittleEndian(joinPkt.Slice(42));
+        return maxShield > 0;
     }
 
     /// <summary>When <paramref name="maxHpAlreadySet"/> is false, reads join wire stats into <paramref name="vitals"/>.</summary>

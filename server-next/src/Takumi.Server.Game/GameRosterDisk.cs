@@ -25,6 +25,11 @@ public sealed class GameRosterEntry
     public int MaxMp { get; set; }
 
     public long Zen { get; set; }
+
+    /// <summary>Session SD (not persisted to roster DB yet).</summary>
+    public int CurrentShield { get; set; }
+
+    public int MaxShield { get; set; }
 }
 
 public static class GameSpawnEnv

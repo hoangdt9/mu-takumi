@@ -24,13 +24,15 @@ On save, Postgres upsert still runs. JSON export is skipped unless **`TAKUMI_ROS
 
 Implementation: **`CharacterRosterBootstrap`**, **`CharacterRosterHostLoad`** (game TCP).
 
-## What “Postgres-only SSOT” would require later
+## Postgres-only path (minimal hosts, 2026-05-16)
 
-- Single writer API used by **both** `LegacyLoginHost` / `GamePortMinimalSession` and any importer.
-- Conflict rules between **JSON**, **`character_roster`**, and **`character`** domain rows.
-- Backfill / cutover plan for existing LAN QA machines (volumes with JSON only).
+When **`TAKUMI_ROSTER_DB_PRIMARY=1`** + **`TAKUMI_CHARACTER_DOMAIN_SYNC=1`**:
 
-Track implementation under **`docs/M4-WORLD-POSITION-CHECKLIST.md`** §Importer / **`IMPLEMENTATION-CHECKLIST.md`** §Next High — **not** a prerequisite for **M5** join/ticket work (`docs/M5-JOIN-HANDOFF-CHECKLIST.md`).
+1. Load order: `character_roster` → `character_domain` (if roster empty) → JSON fallback.
+2. Save: upsert `character_roster` → async mirror `character_domain` (`CharacterDomainMirrorWriter`).
+3. Optional staging: **`TAKUMI_IMPORT_CHARACTER_STAGING=1`** fills both tables from `character_staging` at startup.
+
+EF **`takumi_runtime.character`** (full `Takumi.Server.Host`) remains a separate product path.
 
 ## Related
 

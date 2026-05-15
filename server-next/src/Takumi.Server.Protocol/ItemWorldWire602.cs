@@ -6,6 +6,8 @@ public static class ItemWorldWire602
     public const byte HeadPick = 0x22;
     public const byte HeadDrop = 0x23;
     public const byte HeadMove = 0x24;
+    public const byte HeadItemDelete = 0x28;
+    public const byte HeadItemDur = 0x2A;
 
     public const byte PickFail = 0xFF;
     public const byte PickZen = 0xFE;
@@ -76,4 +78,29 @@ public static class ItemWorldWire602
 
     public static byte[] BuildMoveSuccess(byte targetSlot, ReadOnlySpan<byte> item12) =>
         BuildMove(0, targetSlot, item12);
+
+    /// <summary><c>GCItemDeleteSend</c> — C1:28 slot + flag.</summary>
+    public static byte[] BuildItemDelete(byte slot, byte flag = 1)
+    {
+        var buf = new byte[5];
+        buf[0] = 0xC1;
+        buf[1] = 5;
+        buf[2] = HeadItemDelete;
+        buf[3] = slot;
+        buf[4] = flag;
+        return buf;
+    }
+
+    /// <summary><c>GCItemDurSend</c> — C1:2A slot + durability + flag.</summary>
+    public static byte[] BuildItemDur(byte slot, byte durability, byte flag = 0)
+    {
+        var buf = new byte[6];
+        buf[0] = 0xC1;
+        buf[1] = 6;
+        buf[2] = HeadItemDur;
+        buf[3] = slot;
+        buf[4] = durability;
+        buf[5] = flag;
+        return buf;
+    }
 }

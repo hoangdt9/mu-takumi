@@ -304,6 +304,71 @@ public static class ClientGameplayPackets602
         return false;
     }
 
+    public const int ItemUseFrameLengthC1 = 5;
+
+    public const int ItemUseFrameLengthC3 = 6;
+
+    /// <summary><c>CGItemUseRecv</c> — C1/C3:26 source/target slot (optional type on C3).</summary>
+    public static bool TryFindItemUseRequest(
+        ReadOnlySpan<byte> packet,
+        out int frameOffset,
+        out byte sourceSlot,
+        out byte targetSlot)
+    {
+        frameOffset = -1;
+        sourceSlot = 0;
+        targetSlot = 0;
+        for (var i = 0; i <= packet.Length - ItemUseFrameLengthC1; i++)
+        {
+            if (packet[i] is not (0xC1 or 0xC3))
+            {
+                continue;
+            }
+
+            var len = packet[i + 1];
+            if (packet[i] == 0xC1)
+            {
+                if (len != ItemUseFrameLengthC1 || i + len > packet.Length)
+                {
+                    continue;
+                }
+            }
+            else if (len != ItemUseFrameLengthC3 || i + len > packet.Length)
+            {
+                continue;
+            }
+
+            var headOff = i + 2;
+            if (packet[headOff] != 0x26)
+            {
+                continue;
+            }
+
+            frameOffset = i;
+            sourceSlot = packet[headOff + 1];
+            targetSlot = packet[headOff + 2];
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>Map client inventory index to server slot (wear 0–11, bag 12–75).</summary>
+    public static byte NormalizeItemUseSlot(byte wireSlot)
+    {
+        if (wireSlot >= ItemWire602.FirstBagSlot)
+        {
+            return wireSlot;
+        }
+
+        if (wireSlot < ItemWire602.FirstWearSlot + (ItemWire602.LastBagSlot - ItemWire602.FirstBagSlot + 1))
+        {
+            return (byte)(wireSlot + ItemWire602.FirstBagSlot);
+        }
+
+        return wireSlot;
+    }
+
     public static bool TryFindShopExitRequest(ReadOnlySpan<byte> packet, out int frameOffset)
     {
         frameOffset = -1;

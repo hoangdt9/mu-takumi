@@ -34,6 +34,7 @@ public static class CharacterRosterMirrorWriter
                 try
                 {
                     await repo.ReplaceAccountRosterAsync(accountId, captured, CancellationToken.None).ConfigureAwait(false);
+                    CharacterDomainMirrorWriter.ScheduleReplaceAccount(accountId, captured);
                     CharacterRosterMirrorHealth.RecordUpsertSuccess();
                 }
                 catch (Exception ex)

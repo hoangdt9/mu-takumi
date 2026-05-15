@@ -88,7 +88,7 @@ Use this to avoid unnecessary rebuilds.
 ## Next (High Priority)
 
 - [x] **M4b observability:** `CharacterRosterMirrorHealth` — merge/upsert success+fail counts; upsert errors log `[roster-health] …` snapshot; **`TAKUMI_ROSTER_HEALTH_LOG`** logs snapshot after **`TryDrainPendingUpserts`** (`docs/M4-WORLD-POSITION-CHECKLIST.md`).
-- [ ] **M4b–M5b (remaining):** Postgres-first roster **SSOT** beyond JSON mirror — bỏ phụ thuộc chỉnh tay `takumi-roster/*.json` cho world/vitals; đồng bộ domain `character` + importer — **`docs/M4-WORLD-POSITION-CHECKLIST.md`** §Importer / SSOT; does **not** block M5 join/ticket work.
+- [x] **M4b SSOT (minimal hosts):** `TAKUMI_ROSTER_DB_PRIMARY`, `character_domain` mirror, `character_staging` importer — **`docs/M4-WORLD-POSITION-CHECKLIST.md`**, **`docs/M4-ROSTER-SSOT.md`**. EF full host / warehouse item move vẫn backlog.
 - [ ] **M6+ / M7–M10:** Full **`Takumi.Server.Game`** protocol after join (map/scope/combat) when client uses **only** game TCP — **`docs/M7-CHARACTER-PERSISTENCE-CHECKLIST.md`**, **`docs/M8-M10-WORLD-RUNTIME-CHECKLIST.md`**.
 - [x] **Split-stack login handoff (Postgres):** `sql/init/003_session_ticket.sql` + **`PostgresSessionHandoffRepository`**; **`TAKUMI_SESSION_HANDOFF_DB=1`** → `LegacyLoginHost` persists pending row after F1 01; optional **`TAKUMI_GAME_REQUIRE_LOGIN_HANDOFF=1`** on **GameHost** consumes one row before F1 01 success (**IP match** default on, override with **`TAKUMI_GAME_HANDOFF_MATCH_IP=0`**). Optional **signed wire path:** **`TAKUMI_SESSION_TICKET_HMAC_KEY`** + **`TAKUMI_GAME_TICKET_WIRE=1`** — Legacy pushes **`F1 A5`**, client **`F1 A6`** before game **`F1 01`**, consume on attach (see **`docs/M6-GAME-TCP-CHECKLIST.md`**). Plain IP handoff does not send ticket bytes on wire.
 - [x] **M5 split processes:** `Takumi.Server.LoginHost` + `Takumi.Server.ConnectHost` (shared `LegacyLoginHost.Runner` / `ConnectServerHostRunner`); Docker profile **`splitstack`**; scripts `run-login-host.sh` / `run-connect-host.sh`. Combined `LegacyLoginHost` unchanged for default Docker.
@@ -147,7 +147,7 @@ Use this to avoid unnecessary rebuilds.
    - [x] Đồng bộ disconnect / move-map stub / **walk** + **instant move** → flush JSON + DB mirror.  
    - [x] **M4b:** `CharacterRosterMirrorHealth` + **`TAKUMI_ROSTER_HEALTH_LOG`**. Tile-only: **`docs/M4-TILE-AND-COORDINATES.md`**, **`docs/M4-ROSTER-SSOT.md`**.  
    - [x] **`inventory_slot` write** sau shop buy/sell/repair — `InventorySlotMirrorWriter` (đọc `F3 10` đã có từ trước).
-   - [~] **M4b SSOT Postgres-only** — **`TAKUMI_ROSTER_DB_PRIMARY`** (DB-first load); item `0x22`–`0x24` — **`ItemWorldHandler`** (bag+wear).
+   - [x] **M4b SSOT Postgres-only (minimal hosts)** — **`TAKUMI_ROSTER_DB_PRIMARY`**, **`character_domain`** mirror (`TAKUMI_CHARACTER_DOMAIN_SYNC`); item `0x22`–`0x24` + potion **`0x26`** — **`ItemWorldHandler`**.
 
 5. **M5 — Join handoff (`3.JoinServer` parity)** *(partial — see **`docs/M5-JOIN-HANDOFF-CHECKLIST.md`**)*  
    - [x] **F4 03** advertised port (`TAKUMI_GAME_PORT`) + in-memory session ticket TTL / Touch / Revoke.  
@@ -164,7 +164,7 @@ Use this to avoid unnecessary rebuilds.
    - [x] SQL prep: **`004_character_roster_vitals.sql`**.  
    - [x] **M7b–c:** vitals trên roster + join **`F3 03`**; tests **`JoinMapVitals602Tests`**.  
    - [x] **M7d (partial):** `JoinMapVitalsSeed`, `LifeManaWire602`, `RosterVitalsOutboundTracker`, **`TAKUMI_SEND_LIFE_MANA_AFTER_JOIN`**.  
-   - [~] **M7d:** combat — hit/die/revive (`PlayerVitalsLoop`, `0x26` on monster hit), HP regen, vitals DB upsert; PvP/heal items **OPEN**.  
+   - [x] **M7d (minimal hosts):** combat hit/die/revive, HP regen, vitals DB upsert, potion use (`ItemWorldHandler`); trade/warehouse/PvP **OPEN** (M8+).  
    - [x] **M7 + M4:** `inventory_slot` upsert sau buy/sell/repair — `InventorySlotMirrorWriter`.  
    - [ ] Migration EF bổ sung (nếu dùng song song với `sql/init`).
 

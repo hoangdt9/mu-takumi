@@ -58,6 +58,18 @@ public static class CharacterRosterBootstrap
         try
         {
             var rows = await repo.LoadByAccountAsync(accountId, ct).ConfigureAwait(false);
+            if (rows.Count == 0 && TakumiPostgresMirror.CharacterDomain is { } domainRepo)
+            {
+                rows = await domainRepo.LoadByAccountAsync(accountId, ct).ConfigureAwait(false);
+                if (rows.Count > 0)
+                {
+                    Console.WriteLine(
+                        "[roster] db-primary: loaded {0} character(s) from character_domain for account={1}",
+                        rows.Count,
+                        accountId);
+                }
+            }
+
             if (rows.Count == 0)
             {
                 Console.WriteLine(

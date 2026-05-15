@@ -56,6 +56,7 @@
 - [x] **`F3 10`** đọc `inventory_slot` (12-byte) — `JoinInventoryPacket602` (xem M4 checklist §M5+).
 - [x] **Ghi** `inventory_slot` sau buy/sell/repair — `InventorySlotMirrorWriter` + `PostgresInventorySlotRepository` (upsert/delete/replace); disconnect flush `PlayerShopSession.FlushInventoryMirrorOnDisconnect`. Cần **`TAKUMI_ROSTER_DB_SYNC=1`**.
 - [x] Port `ItemManager` pick/drop/move (`0x22`–`0x24`) từ `Source/4.GameServer` — `ItemWorldHandler` (bag + wear slot 0–11, storage flag 0); trade/warehouse flags **OPEN**.
+- [x] **M7d (partial):** potion use `CGItemUseRecv` (`C1`/`C3` `0x26`) — `ItemWorldHandler` + `InventoryConsumableRules` (HP/MP/SD potions); `0x28` delete / `0x2A` durability; SD session trên `GameRosterEntry` (chưa persist DB). Trade/warehouse/scroll **OPEN**.
 
 ---
 

@@ -107,7 +107,7 @@ Use this to avoid unnecessary rebuilds.
 - [x] Add ETL/staging import pipeline entrypoint from `takumi_legacy` tables at host startup.
 - [x] Map staging data into runtime schema (`takumi_runtime`) for account + character domain (startup importer).
 - [x] Runtime **`inventory_slot`** table (`sql/init/002_inventory_slot.sql`) + **`PostgresInventorySlotRepository`** / **`JoinInventoryPacket602`** (12-byte `item` wire blobs; apply SQL on existing volumes via **`./scripts/apply-sql.sh`**).
-- [ ] Staging **`inventory_staging`** + startup importer (flat `ItemIndex` → 12-byte encoding / parity `ItemByteConvert`).
+- [x] Staging **`inventory_staging`** + importer (`InventoryStagingImporter`, `008_inventory_staging.sql`, `TAKUMI_IMPORT_INVENTORY_STAGING=1`).
 - [x] After `F3 03` (and move-map restub), send Season 6 **`F3 10`** from **`inventory_slot`** when **`TAKUMI_ROSTER_DB_SYNC`** is on; otherwise empty list.
 - [ ] Extend staging→runtime mapping to skills, warehouse, guild/social domains.
 

@@ -6,15 +6,15 @@ using Takumi.Server.Persistence;
 RepoEnvLoader.ApplyDefaultsAndLocalEnv();
 TakumiPostgresMirror.InitIfEnabled();
 
-if (CharacterRosterJsonMigrator.IsMigrateOnlyMode())
+if (CharacterDataMigrator.IsMigrateOnlyMode())
 {
-    await CharacterRosterJsonMigrator.MigrateAllJsonFilesAsync().ConfigureAwait(false);
+    await CharacterDataMigrator.MigrateAllAsync().ConfigureAwait(false);
     return 0;
 }
 
-if (CharacterRosterJsonMigrator.IsMigrateOnStartupEnabled())
+if (CharacterDataMigrator.ShouldMigrateRosterJson() || InventoryStagingImporter.IsEnabled())
 {
-    await CharacterRosterJsonMigrator.MigrateAllJsonFilesAsync().ConfigureAwait(false);
+    await CharacterDataMigrator.MigrateAllAsync().ConfigureAwait(false);
 }
 
 using var cts = new CancellationTokenSource();

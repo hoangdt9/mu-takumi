@@ -48,7 +48,8 @@
 - [x] **`CharacterRosterJsonMigrator`** — quét `takumi-roster/*.json`, mỗi file = một account, **mọi** entry trong `characters[]` → `character_roster` (+ `character_domain` khi sync bật).
 - [x] Script **`./scripts/migrate-roster-json-to-db.sh`** (`TAKUMI_MIGRATE_ROSTER_JSON_ONLY=1`).
 - [x] Startup tùy chọn: **`TAKUMI_MIGRATE_ROSTER_JSON=1`** trước khi host listen (Legacy + GameHost).
-- [ ] **`inventory_slot`** bulk từ JSON (chưa có field trong roster JSON) — cần ETL riêng / lưu in-game.
+- [x] **`inventory_slot`** bulk từ **`inventory_staging`** (`008_inventory_staging.sql`, `InventoryStagingImporter`) — Postgres SSOT, không qua roster JSON.
+- [x] **`CharacterRosterDiscovery`** — liệt kê nhân vật từ `character_roster` / `character_domain` / `inventory_slot` (không cần JSON).
 
 ---
 

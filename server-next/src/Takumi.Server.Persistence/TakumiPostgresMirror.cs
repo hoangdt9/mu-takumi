@@ -55,6 +55,7 @@ public static class TakumiPostgresMirror
                 "[postgres-mirror] roster + inventory_slot enabled; character_domain={0}",
                 CharacterDomain is not null);
             _ = CharacterLegacyWorldImporter.TryImportAsync();
+            _ = InventoryStagingImporter.TryImportAsync();
         }
         catch (Exception ex)
         {

@@ -4,13 +4,17 @@ Last updated: 2026-05-16
 
 ## Decision (frozen for current `server-next` iteration)
 
-1. **Authoritative roster for accounts we fully control:** **`takumi-roster/<account>.json`** on disk (or `TAKUMI_ROSTER_DIR`). The hosts read/write this file on login, character ops, walk/move, and disconnect flush.
+1. **Runtime SSOT (khuyến nghị):** Postgres **`character_roster`** + **`inventory_slot`** when `TAKUMI_ROSTER_DB_SYNC=1` and `TAKUMI_ROSTER_DB_PRIMARY=1`. Host load DB trước; JSON không bắt buộc.
 
-2. **Postgres `public.character_roster`:** a **mirror** of the JSON snapshot:
+2. **Dev cache (tuỳ chọn):** **`takumi-roster/<account>.json`** — backfill một lần qua `TAKUMI_MIGRATE_ROSTER_JSON=1`, không phải nguồn bắt buộc lúc chạy production.
+
+3. **Postgres `public.character_roster`:** mirror / primary store:
    - **Upsert** (replace-all rows per account) after successful JSON save (`CharacterRosterMirrorWriter`).
    - **Optional overlay on login** when `TAKUMI_ROSTER_DB_SYNC=1` and `TAKUMI_ROSTER_DB_MERGE_MODE` is not `json` (`CharacterRosterMerge.ApplyDbOverlay`).
 
-3. **Runtime EF / `takumi_runtime.character`:** may exist for broader product goals (see `IMPLEMENTATION-CHECKLIST.md` §Done); it is **not** the roster SSOT for minimal login hosts until an explicit migration project wires **one** write path.
+4. **Inventory SSOT:** **`inventory_slot`** (12-byte wire). Import bulk từ **`inventory_staging`** (`TAKUMI_IMPORT_INVENTORY_STAGING=1`) — **không** đọc từ roster JSON.
+
+5. **Runtime EF / `takumi_runtime.character`:** may exist for broader product goals; minimal hosts dùng `character_roster` + `character_domain`.
 
 ### Vitals overlay (M7)
 

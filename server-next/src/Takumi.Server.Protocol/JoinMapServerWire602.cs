@@ -174,13 +174,53 @@ file sealed class JoinMapStatWire
         }
 
         var life = (ushort)Math.Min(ushort.MaxValue, 55 + vit * 2 + lv * 3);
-        var mana = (ushort)Math.Min(ushort.MaxValue, 40 + ene * 2 + lv * 2);
+        var v = r.Vitals;
+        if (v.HasHp)
+        {
+            life = v.ClampU16(v.MaxHp);
+            var cur = v.ClampU16(v.CurrentHp > 0 ? v.CurrentHp : v.MaxHp);
+            if (cur > life)
+            {
+                cur = life;
+            }
+
+            life = cur;
+        }
+
+        ushort lifeMax;
+        if (v.HasHp)
+        {
+            lifeMax = v.ClampU16(v.MaxHp);
+        }
+        else
+        {
+            lifeMax = (ushort)Math.Min(ushort.MaxValue, 55 + vit * 2 + lv * 3);
+        }
+
+        ushort manaCur;
+        ushort manaMax;
+        if (v.HasMp)
+        {
+            manaMax = v.ClampU16(v.MaxMp);
+            manaCur = v.ClampU16(v.CurrentMp > 0 ? v.CurrentMp : v.MaxMp);
+            if (manaCur > manaMax)
+            {
+                manaCur = manaMax;
+            }
+        }
+        else
+        {
+            manaMax = (ushort)Math.Min(ushort.MaxValue, 40 + ene * 2 + lv * 2);
+            manaCur = manaMax;
+        }
+
+        var gold = v.Zen > 0 ? v.ClampGold() : 0u;
         var view = new ViewDwordBlock
         {
             ViewCurHp = life,
-            ViewMaxHp = life,
-            ViewCurMp = mana,
-            ViewMaxMp = mana,
+            ViewMaxHp = lifeMax,
+            ViewCurMp = manaCur,
+            ViewMaxMp = manaMax,
             ViewCurSd = 0,
             ViewMaxSd = 0,
             ViewStrength = str,
@@ -197,15 +237,15 @@ file sealed class JoinMapStatWire
             Vitality = vit,
             Energy = ene,
             Life = life,
-            LifeMax = life,
-            Mana = mana,
-            ManaMax = mana,
+            LifeMax = lifeMax,
+            Mana = manaCur,
+            ManaMax = manaMax,
             Shield = 0,
             ShieldMax = 0,
-            SkillMana = mana,
-            SkillManaMax = mana,
+            SkillMana = manaCur,
+            SkillManaMax = manaMax,
             LevelUpPoint = 0,
-            Gold = 0,
+            Gold = gold,
             Pk = 0,
             CtlCode = 0,
             AddPoint = 0,

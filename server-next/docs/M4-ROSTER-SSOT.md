@@ -12,6 +12,10 @@ Last updated: 2026-05-16
 
 3. **Runtime EF / `takumi_runtime.character`:** may exist for broader product goals (see `IMPLEMENTATION-CHECKLIST.md` §Done); it is **not** the roster SSOT for minimal login hosts until an explicit migration project wires **one** write path.
 
+### Vitals overlay (M7)
+
+When `TAKUMI_ROSTER_DB_SYNC=1` and merge mode is not `json`, login merge copies **`current_hp` / `max_hp` / `current_mp` / `max_mp` / `zen`** from `character_roster` into the in-memory roster (same pass as map/xy). JSON file remains written first on save; Postgres upsert follows the JSON snapshot. **First join** with unset vitals (`max_hp == 0`): hosts seed from the **`F3 03`** wire they just sent (`JoinMapVitalsSeed`) so disconnect / periodic flush persist non-zero stats.
+
 ## What “Postgres-only SSOT” would require later
 
 - Single writer API used by **both** `LegacyLoginHost` / `GamePortMinimalSession` and any importer.

@@ -1,3 +1,5 @@
+using Takumi.Server.Protocol;
+
 namespace Takumi.Server.Persistence;
 
 /// <summary>
@@ -19,4 +21,19 @@ public sealed class CharacterRosterRow
     public byte PosY { get; set; }
 
     public byte Angle { get; set; }
+
+    /// <summary>M7: 0 = unset (join uses stub). See <c>sql/init/004_character_roster_vitals.sql</c>.</summary>
+    public int CurrentHp { get; set; }
+
+    public int MaxHp { get; set; }
+
+    public int CurrentMp { get; set; }
+
+    public int MaxMp { get; set; }
+
+    public long Zen { get; set; }
+
+    public CharacterRosterVitals ToVitals() =>
+        CharacterRosterVitals.FromInts(this.CurrentHp, this.MaxHp, this.CurrentMp, this.MaxMp, this.Zen);
 }
+

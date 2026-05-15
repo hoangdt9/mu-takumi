@@ -655,6 +655,18 @@ static async Task HandleClientAsync(
                 await connection.Output.WriteAsync(joinPkt, ct).ConfigureAwait(false);
                 await connection.Output.WriteAsync(invPkt, ct).ConfigureAwait(false);
                 await connection.Output.FlushAsync(ct).ConfigureAwait(false);
+                if (JoinMapVitalsSeed.TryApplyFromJoinPacketIfUnset(picked.MaxHp > 0, joinPkt, out var joinVitals))
+                {
+                    RosterVitalsLifecycle.ApplyVitals(
+                        joinVitals,
+                        ref picked.CurrentHp,
+                        ref picked.MaxHp,
+                        ref picked.CurrentMp,
+                        ref picked.MaxMp,
+                        ref picked.Zen);
+                    Volatile.Write(ref rosterDirty, 1);
+                }
+
                 sessionJoinCharacterName10 = new byte[10];
                 Buffer.BlockCopy(joinName10, 0, sessionJoinCharacterName10, 0, 10);
                 Console.WriteLine(
@@ -762,13 +774,26 @@ static async Task HandleClientAsync(
                 if (pickedMove is not null)
                 {
                     pickedMove.MapId = (byte)(mapIdx & 0xFF);
+
+                    var mvSpawn = new JoinMapSpawnWire(pickedMove.MapId, pickedMove.PosX, pickedMove.PosY, pickedMove.Angle);
+                    var joinPktMove = JoinMapServerWire602.Build(ToWire(pickedMove), mvSpawn);
+                    if (JoinMapVitalsSeed.TryApplyFromJoinPacketIfUnset(pickedMove.MaxHp > 0, joinPktMove, out var moveVitals))
+                    {
+                        RosterVitalsLifecycle.ApplyVitals(
+                            moveVitals,
+                            ref pickedMove.CurrentHp,
+                            ref pickedMove.MaxHp,
+                            ref pickedMove.CurrentMp,
+                            ref pickedMove.MaxMp,
+                            ref pickedMove.Zen);
+                        Volatile.Write(ref rosterDirty, 1);
+                    }
+
                     if (!string.IsNullOrEmpty(loggedAccountId))
                     {
                         SavePersistedRoster(loggedAccountId, roster);
                     }
 
-                    var mvSpawn = new JoinMapSpawnWire(pickedMove.MapId, pickedMove.PosX, pickedMove.PosY, pickedMove.Angle);
-                    var joinPktMove = JoinMapServerWire602.Build(ToWire(pickedMove), mvSpawn);
                     var invMove = await JoinInventoryPacket602.BuildAsync(TakumiPostgresMirror.InventorySlots, loggedAccountId, sessionJoinCharacterName10, ct).ConfigureAwait(false);
                     await connection.Output.WriteAsync(joinPktMove, ct).ConfigureAwait(false);
                     await connection.Output.WriteAsync(invMove, ct).ConfigureAwait(false);
@@ -1062,6 +1087,11 @@ static async Task HandleClientAsync(
                             e.Angle = d.Angle;
                             e.Level = d.Level;
                             e.ServerClass = d.ServerClass;
+                            e.CurrentHp = d.CurrentHp;
+                            e.MaxHp = d.MaxHp;
+                            e.CurrentMp = d.CurrentMp;
+                            e.MaxMp = d.MaxMp;
+                            e.Zen = d.Zen;
                         });
                     CharacterRosterMirrorHealth.RecordMergeSuccess();
                 }
@@ -1296,6 +1326,11 @@ static void LoadPersistedRoster(string accountId, List<CharacterRosterEntry> ros
                 PosX = c.PosX,
                 PosY = c.PosY,
                 Angle = c.Angle,
+                CurrentHp = c.CurrentHp,
+                MaxHp = c.MaxHp,
+                CurrentMp = c.CurrentMp,
+                MaxMp = c.MaxMp,
+                Zen = c.Zen,
             };
             ApplyLegacySpawnIfUnset(entry);
             roster.Add(entry);
@@ -1328,6 +1363,11 @@ static void SavePersistedRoster(string accountId, IReadOnlyList<CharacterRosterE
                 PosX = e.PosX,
                 PosY = e.PosY,
                 Angle = e.Angle,
+                CurrentHp = e.CurrentHp,
+                MaxHp = e.MaxHp,
+                CurrentMp = e.CurrentMp,
+                MaxMp = e.MaxMp,
+                Zen = e.Zen,
             });
     }
 
@@ -1369,16 +1409,19 @@ static void ScheduleRosterDbUpsert(string accountId, IReadOnlyList<CharacterRost
             }
 
             list.Add(
-                new CharacterRosterRow
-                {
-                    Name = name,
-                    ServerClass = e.ServerClass,
-                    Level = e.Level,
-                    MapId = e.MapId,
-                    PosX = e.PosX,
-                    PosY = e.PosY,
-                    Angle = e.Angle,
-                });
+                CharacterRosterRowMapping.ToRow(
+                    name,
+                    e.ServerClass,
+                    e.Level,
+                    e.MapId,
+                    e.PosX,
+                    e.PosY,
+                    e.Angle,
+                    e.CurrentHp,
+                    e.MaxHp,
+                    e.CurrentMp,
+                    e.MaxMp,
+                    e.Zen));
         }
 
         snapshot = list.ToArray();
@@ -1446,7 +1489,8 @@ static CharacterRosterEntry? FindRosterEntry(List<CharacterRosterEntry> roster, 
     return null;
 }
 
-static CharacterRosterWire ToWire(CharacterRosterEntry e) => new(e.Name10, e.ServerClass, e.Level);
+static CharacterRosterWire ToWire(CharacterRosterEntry e) =>
+    new(e.Name10, e.ServerClass, e.Level, CharacterRosterVitals.FromInts(e.CurrentHp, e.MaxHp, e.CurrentMp, e.MaxMp, e.Zen));
 
 static List<CharacterRosterWire> MapRosterToWire(List<CharacterRosterEntry> roster)
 {
@@ -1895,6 +1939,12 @@ file sealed class CharacterRosterEntry
 
     /// <summary>1-based wire angle (client uses <c>(Angle-1)*45</c> degrees).</summary>
     public byte Angle;
+
+    public int CurrentHp;
+    public int MaxHp;
+    public int CurrentMp;
+    public int MaxMp;
+    public long Zen;
 }
 
 file sealed class RosterPersistRoot
@@ -1912,6 +1962,16 @@ file sealed class RosterPersistChar
     public byte PosX { get; set; }
     public byte PosY { get; set; }
     public byte Angle { get; set; }
+
+    public int CurrentHp { get; set; }
+
+    public int MaxHp { get; set; }
+
+    public int CurrentMp { get; set; }
+
+    public int MaxMp { get; set; }
+
+    public long Zen { get; set; }
 }
 
 /// <summary>Thread-safe login flag for keepalive + packet gate (visibility across tasks).</summary>

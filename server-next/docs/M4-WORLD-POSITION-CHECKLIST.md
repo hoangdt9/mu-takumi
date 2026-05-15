@@ -2,7 +2,9 @@
 
 **Quy ước:** Mỗi dòng `[ ]` / `[x]` phải khớp trạng thái thật trong git. Cập nhật file này khi merge PR / hoàn thành bước.
 
-**Tham chiếu code:** `JoinMapSpawnWire`, `JoinMapServerWire602` (`Takumi.Server.Protocol`); roster JSON + **`TakumiPostgresMirror`** (`Takumi.Server.Persistence`, gọi từ `LegacyLoginHost/Program.cs` và `GameHost/Program.cs`); SQL `sql/init/001_character_roster.sql`, **`002_inventory_slot.sql`**. **Hợp đồng tọa độ / SSOT:** `docs/M4-TILE-AND-COORDINATES.md`, **`docs/M4-ROSTER-SSOT.md`**.
+**Tham chiếu code:** `JoinMapSpawnWire`, `JoinMapServerWire602` (`Takumi.Server.Protocol`); roster JSON + **`TakumiPostgresMirror`** (`Takumi.Server.Persistence`, gọi từ `LegacyLoginHost/Program.cs` và `GameHost/Program.cs`); SQL `sql/init/001_character_roster.sql`, **`002_inventory_slot.sql`**, **`003_session_ticket.sql`**, **`004_character_roster_vitals.sql`** (M7a — cột vitals; C# đọc/ghi xem **`docs/M7-CHARACTER-PERSISTENCE-CHECKLIST.md`**). **Hợp đồng tọa độ / SSOT:** `docs/M4-TILE-AND-COORDINATES.md`, **`docs/M4-ROSTER-SSOT.md`**.
+
+**Định tuyến M7+ (không thuộc close M4):** HP/MP/zen persist + join wire từ DB/JSON → **`docs/M7-CHARACTER-PERSISTENCE-CHECKLIST.md`**. ETL thế giới tĩnh, NPC, broadcast scope → **`docs/M8-M10-WORLD-RUNTIME-CHECKLIST.md`**. M4 giữ vai trò **roster vị thế + mirror + walk tile**; các mục `[ ]` còn lại ở đây là SSOT Postgres-only / `character` domain / listener GS đầy đủ.
 
 **QA thiết bị (2026-05-14):** `docker compose` + Android LAN — sau khi đi trong map và vào lại, log host cho thấy **`F3 03`** với `xy` khớp roster (ví dụ từ spawn mặc định Lorencia sang tọa độ đã walk).
 
@@ -52,7 +54,7 @@
 
 ### Importer / bảng `takumi_runtime.character` “chuẩn” — **owner: backlog / M7+ (không chặn M5)**
 
-- [ ] Bảng domain `character` (hoặc đồng bộ từ JSON) có `map_id`, `pos_x`, `pos_y`, `angle` + FK account — *`IMPLEMENTATION-CHECKLIST` §Done đã có entity runtime; cần bài toán đồng bộ với `character_roster` / JSON nếu muốn SSOT DB-only.*
+- [ ] Bảng domain `character` (hoặc đồng bộ từ JSON) có `map_id`, `pos_x`, `pos_y`, `angle` + FK account — *`IMPLEMENTATION-CHECKLIST` §Done đã có entity runtime; cần bài toán đồng bộ với `character_roster` / JSON nếu muốn SSOT DB-only.* Chi tiết từng bước: **`docs/M7-CHARACTER-PERSISTENCE-CHECKLIST.md`** (M7b–M7d) + **`docs/M8-M10-WORLD-RUNTIME-CHECKLIST.md`** §M8.
 - [ ] Importer `takumi_legacy` → runtime cho các cột world (nếu staging có dữ liệu).
 - [x] **Quyết định SSOT (tài liệu, M4 freeze):** JSON authoritative + Postgres mirror + overlay merge — không Postgres-only cho tới khi có dự án riêng; **`docs/M4-ROSTER-SSOT.md`**. Dev **M5** có thể làm ticket/handoff trước khi SSOT code xong.
 - [ ] **Triển khai SSOT Postgres-only** (một đường ghi, bỏ JSON hoặc JSON chỉ cache): hạng mục lớn — xem `IMPLEMENTATION-CHECKLIST.md` §Next High.
@@ -63,8 +65,8 @@
 
 - [x] `LegacyLoginHost` + `GamePortMinimalSession`: cập nhật roster in-memory từ **walk** `C1 … 0xD4` / `0x10` và **instant move** `C1 05 15` (decode bước đi giống OpenMU); **ghi JSON + DB** vẫn theo `SavePersistedRoster` khi disconnect (và các chỗ save khác).
 - [x] Periodic save / save throttled giữa phiên: **`TAKUMI_ROSTER_PERIODIC_SAVE_SECONDS`** (5–3600) → flush JSON + mirror khi có **walk / instant move** (cờ dirty; `LegacyLoginHost` + `GamePortMinimalSession`).
-- [x] Chuẩn hóa tile BYTE vs tọa độ float world — **hợp đồng M4:** toàn bộ wire + roster + `character_roster` dùng **tile 0–255** (`byte` / cast `smallint`); float / sub-tile **ngoài phạm vi** tới khi **M7**; tài liệu **`docs/M4-TILE-AND-COORDINATES.md`** + XML doc `CharacterRosterRow` / `JoinMapSpawnWire` / `ClientWalkPackets602`.
-- [ ] Listener **process** game-only (M6 `GameHost`) parity đầy đủ với `GameServer` (scope, broadcast, …) — **owner: M6+–M9**, không gộp vào close M4.
+- [x] Chuẩn hóa tile BYTE vs tọa độ float world — **hợp đồng M4:** toàn bộ wire + roster + `character_roster` dùng **tile 0–255** (`byte` / cast `smallint`); float / sub-tile **ngoài phạm vi** roster iteration này; tài liệu **`docs/M4-TILE-AND-COORDINATES.md`** + XML doc `CharacterRosterRow` / `JoinMapSpawnWire` / `ClientWalkPackets602`. **Vitals / zen** trên join wire: **`docs/M7-CHARACTER-PERSISTENCE-CHECKLIST.md`**.
+- [ ] Listener **process** game-only (M6 `GameHost`) parity đầy đủ với `GameServer` (scope, broadcast, …) — **owner: M6+ / M8–M10** — **`docs/M8-M10-WORLD-RUNTIME-CHECKLIST.md`** §M9–M10; không gộp vào close M4.
 
 ---
 
@@ -74,7 +76,7 @@ M4 **đã đủ** cho: vị trí trên roster, JSON flush, mirror **`character_r
 
 **M5 làm tiếp (không chờ M4 SSOT):** `Takumi.Server.Join`, **`TAKUMI_GAME_PORT`**, Postgres **`session_ticket`**, **`TAKUMI_SESSION_HANDOFF_DB`**, optional **`F1 A5`/`F1 A6`** — chi tiết **`docs/M5-JOIN-HANDOFF-CHECKLIST.md`**. Android split TCP smoke: **`docs/M6-GAME-TCP-CHECKLIST.md`**.
 
-**Không nằm trong M5:** bảng `character` “chuẩn” + importer world-only, broadcast scope — backlog / **M7–M10**. **Tile vs float:** đã chốt hợp đồng tile-only trong **`docs/M4-TILE-AND-COORDINATES.md`** (M4 không dùng float world).
+**Không nằm trong M5:** bảng `character` “chuẩn” + importer world-only, broadcast scope — **`docs/M7-CHARACTER-PERSISTENCE-CHECKLIST.md`** + **`docs/M8-M10-WORLD-RUNTIME-CHECKLIST.md`**. **Tile vs float:** đã chốt hợp đồng tile-only trong **`docs/M4-TILE-AND-COORDINATES.md`** (M4 không dùng float world).
 
 ---
 

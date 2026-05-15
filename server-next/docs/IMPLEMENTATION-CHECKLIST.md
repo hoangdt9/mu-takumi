@@ -1,6 +1,6 @@
 # Takumi Server Next - Implementation Checklist
 
-Last updated: 2026-05-16 (M4 tile/SSOT decision docs; checklist sync)
+Last updated: 2026-05-16 (M4 routing → M7/M8–M10 checklists; `004_character_roster_vitals.sql` M7a)
 
 ## Repository vs checklist (read first)
 
@@ -85,7 +85,7 @@ Use this to avoid unnecessary rebuilds.
 
 - [x] **M4b observability:** `CharacterRosterMirrorHealth` — merge/upsert success+fail counts; upsert errors log `[roster-health] …` snapshot; **`TAKUMI_ROSTER_HEALTH_LOG`** logs snapshot after **`TryDrainPendingUpserts`** (`docs/M4-WORLD-POSITION-CHECKLIST.md`).
 - [ ] **M4b–M5b (remaining):** Postgres-first roster **SSOT** beyond JSON mirror (domain `character` sync, importer world columns) — see **`docs/M4-WORLD-POSITION-CHECKLIST.md`** §Importer / SSOT; does **not** block M5 join/ticket work.
-- [ ] **M6+ / M7–M9:** Full **`Takumi.Server.Game`** protocol after join (map/scope/combat) when client uses **only** game TCP.
+- [ ] **M6+ / M7–M10:** Full **`Takumi.Server.Game`** protocol after join (map/scope/combat) when client uses **only** game TCP — **`docs/M7-CHARACTER-PERSISTENCE-CHECKLIST.md`**, **`docs/M8-M10-WORLD-RUNTIME-CHECKLIST.md`**.
 - [x] **Split-stack login handoff (Postgres):** `sql/init/003_session_ticket.sql` + **`PostgresSessionHandoffRepository`**; **`TAKUMI_SESSION_HANDOFF_DB=1`** → `LegacyLoginHost` persists pending row after F1 01; optional **`TAKUMI_GAME_REQUIRE_LOGIN_HANDOFF=1`** on **GameHost** consumes one row before F1 01 success (**IP match** default on, override with **`TAKUMI_GAME_HANDOFF_MATCH_IP=0`**). Optional **signed wire path:** **`TAKUMI_SESSION_TICKET_HMAC_KEY`** + **`TAKUMI_GAME_TICKET_WIRE=1`** — Legacy pushes **`F1 A5`**, client **`F1 A6`** before game **`F1 01`**, consume on attach (see **`docs/M6-GAME-TCP-CHECKLIST.md`**). Plain IP handoff does not send ticket bytes on wire.
 - [ ] **`TakumiLoginServer` process** (if split from `LegacyLoginHost`) + signed ticket on wire / shared secret — not implemented; name in checklist = future exe only.
 - [x] **Protocol tests (partial):** `C1DeclaredLength602` guards + **`SessionHandoffPostgresTests`** when **`TEST_PG_CONNECTION_STRING`**. **TCP hardening (partial):** max decrypted frame + optional **`DecryptedPacketRateGate`** (`DecryptedPacketSafety602Tests`). Still open: golden pcap loop, transport-level framing audit vs OpenMU `Connection`, richer rate policy.
@@ -138,7 +138,7 @@ Use this to avoid unnecessary rebuilds.
    - [x] Đảm bảo F4 06/03/05 đồng hành với `ServerListManager` / BMD (đã phần nào trong host).  
    - [x] Tách process hoặc class library nếu cần scale riêng Connect (`Takumi.Server.Connect`; xem **`docs/M3-CONNECT-BMD.md`**).
 
-4. **M4 — Login + nhân vật + vị trí lưu thế giới** *(M4a + M4c walk + periodic save + **M4b mirror + merge health metrics** — SSOT Postgres-only + tile/float still open; see **`docs/M4-WORLD-POSITION-CHECKLIST.md`** §Handoff M5)*  
+4. **M4 — Login + nhân vật + vị trí lưu thế giới** *(M4a + M4c walk + periodic save + **M4b mirror + merge health metrics** — SSOT Postgres-only + tile/float still open; see **`docs/M4-WORLD-POSITION-CHECKLIST.md`** §Handoff M5; vitals schema prep **`004_character_roster_vitals.sql`** → **`docs/M7-CHARACTER-PERSISTENCE-CHECKLIST.md`**)*  
    - [x] Bảng / roster: `map_id`, `pos_x`, `pos_y`, `angle` (JSON roster per account; join dùng `JoinMapSpawnWire`, không hard-code trong `Program` ngoài env default).  
    - [x] Đồng bộ khi disconnect (flush roster), khi đổi map stub (`8E 02` → cập nhật `MapId` + save); **walk** `C1 … 0xD4`/`0x10` + **instant move** `C1 05 15` cập nhật `posX`/`posY`/`angle` in-memory → flush cùng disconnect (log thực tế: join lần hai tại tile đã đi, ví dụ `xy=(140,193)` sau khi rời map).  
    - [x] **M4b:** merge/upsert health counters + optional **`TAKUMI_ROSTER_HEALTH_LOG`** (`CharacterRosterMirrorHealth`). **Tile vs float:** hợp đồng tile-only + **SSOT tài liệu** — `docs/M4-TILE-AND-COORDINATES.md`, `docs/M4-ROSTER-SSOT.md`.  
@@ -155,19 +155,21 @@ Use this to avoid unnecessary rebuilds.
    - [x] Structured log **`[event=decrypted_rx]`** (`TAKUMI_VERBOSE` hoặc **`TAKUMI_STRUCTURED_LOG`**); mirror **`character_roster`** khi save (cùng `CharacterRosterMirrorWriter` như Legacy).  
    - [x] Cross-process session ticket on wire / signed (**`SessionTicketWire602`**, **`PostgresSessionHandoffRepository.TryConsumeSignedWireAttachAsync`**); Postgres consume for IP-only handoff remains **`TAKUMI_GAME_REQUIRE_LOGIN_HANDOFF`** (skipped when **`TAKUMI_GAME_TICKET_WIRE`** is on).
 
-7. **M7 — Persistence vòng đời nhân vật**  
-   - [ ] Lưu/khôi phục HP/MP/zen/map/xy khi thoát / periodic save (parity `GameServer` save).  
-   - [ ] Migration EF / SQL trong `server-next` (hoặc repo migration riêng).
+7. **M7 — Persistence vòng đời nhân vật** — **`docs/M7-CHARACTER-PERSISTENCE-CHECKLIST.md`**  
+   - [x] SQL prep: **`sql/init/004_character_roster_vitals.sql`** (`current_hp`, `max_hp`, `current_mp`, `max_mp`, `zen` on `character_roster`; apply via **`./scripts/apply-sql.sh`** on existing volumes).  
+   - [x] **M7b–c (partial):** `CharacterRosterRow` / JSON / Postgres mirror + **`CharacterRosterVitals`** on join **`F3 03`** when `max_hp`/`max_mp` &gt; 0; tests **`JoinMapVitals602Tests`**.  
+   - [x] **M7d (partial):** seed vitals từ **`F3 03`** sau join/move-map + disconnect/periodic flush (`JoinMapVitalsSeed`, `RosterVitalsLifecycle`). **Open:** mid-session vitals từ combat / `GCLifeSend`.  
+   - [ ] Migration EF bổ sung (nếu dùng song song với `sql/init`).
 
-8. **M8 — Dữ liệu tĩnh thế giới (ETL)**  
+8. **M8 — Dữ liệu tĩnh thế giới (ETL)** — **`docs/M8-M10-WORLD-RUNTIME-CHECKLIST.md`** §M8  
    - [ ] Import `MuServer/4.GameServer/Data/Monster/MonsterSetBase*.txt` → bảng spawn.  
    - [ ] Cửa / shop / custom từ `Data/Custom/` + nguồn C++ tham chiếu.
 
-9. **M9 — NPC & monster runtime**  
+9. **M9 — NPC & monster runtime** — cùng file §M9  
    - [ ] Spawn theo map; regen; bảng monster id → stats (tối thiểu HP đứng yên).  
    - [ ] Gói scope spawn tới client (opcode theo M1).
 
-10. **M10 — Movement & visibility**  
+10. **M10 — Movement & visibility** — cùng file §M10  
     - [x] Nhận **walk / instant move** trên TCP login tối thiểu (`LegacyLoginHost`, `GamePortMinimalSession`) → cập nhật roster tile (chưa broadcast scope).  
     - [ ] Broadcast quanh player; đồng bộ sâu với M7.
 

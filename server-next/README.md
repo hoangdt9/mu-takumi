@@ -13,12 +13,14 @@
 | `docs/M4-ROSTER-SSOT.md` | **M4** quyết định nguồn sự thật roster (JSON + mirror Postgres; Postgres-only = backlog). |
 | `docs/M5-JOIN-HANDOFF-CHECKLIST.md` | **M5** F4 03 advertised game port + in-memory session ticket (prep for M6). |
 | `docs/M6-GAME-TCP-CHECKLIST.md` | **M6** dedicated game TCP scaffold (`GameListenHost`, `GameHost`, compose profile `gamehost`). |
+| `docs/M7-CHARACTER-PERSISTENCE-CHECKLIST.md` | **M7** HP/MP/zen + join restore; SQL `004_*` + roadmap C#/JSON. |
+| `docs/M8-M10-WORLD-RUNTIME-CHECKLIST.md` | **M8–M10** ETL thế giới, NPC, movement/broadcast (sau login). |
 | `src/Takumi.Server.Game/` | **M6** shared bootstrap: env loader, Dec2 keys, `GameListenHost`. |
 | `src/Takumi.Server.GameHost/` | **M6** executable listening on **`TAKUMI_GAME_PORT`**. |
 | `src/Takumi.Server.Protocol/` | **M2** shared Season 6 wire builders (character list, join map, login/connect packets). |
 | `src/Takumi.Server.Join/` | **M5** session ticket store (in-memory; validate from future game TCP). |
 | `src/Takumi.Server.Persistence/` | **M4b** Npgsql: `character_roster` + **`inventory_slot`** (`PostgresCharacterRosterRepository`, **`PostgresInventorySlotRepository`**, **`TakumiPostgresMirror`**, **`JoinInventoryPacket602`**) when **`TAKUMI_ROSTER_DB_SYNC=1`**. |
-| `sql/init/` | Postgres **first-init** scripts (`001_character_roster.sql`, **`002_inventory_slot.sql`**). **Existing DB volume:** re-apply with **`./scripts/apply-sql.sh`** or `psql` (see **Postgres migrations** below). |
+| `sql/init/` | Postgres **first-init** scripts: `001_character_roster.sql`, **`002_inventory_slot.sql`**, **`003_session_ticket.sql`**, **`004_character_roster_vitals.sql`** (M7 vitals columns). **Existing DB volume:** re-apply with **`./scripts/apply-sql.sh`** (runs `*.sql` in **lexical** order) or `psql` (see **Postgres migrations** below). |
 | `scripts/apply-sql.sh` | Runs every `sql/init/*.sql` against a **libpq** URI (`postgresql://user:pass@host:port/db`). |
 | `src/Takumi.Server.Tests/` | **M2** golden-byte xUnit tests for `Takumi.Server.Protocol`. |
 | `.env.lan.example` | Copy to `.env` and set `TAKUMI_PUBLIC_HOST` / URLs (replace `YOUR_LAN_IP`). |

@@ -3,6 +3,7 @@ namespace Takumi.Server.Protocol;
 /// <summary>
 /// Client walk / instant-move wire used by Takumi Android (<c>SendWalkRequest</c> / <c>SendInstantMoveRequest</c>).
 /// End tile decoding matches OpenMU CharacterWalkBaseHandlerPlugIn walk decode + path deltas.
+/// Decoded X/Y are **tile indices** (stored as <see cref="byte"/> in roster / join spawn); see <c>docs/M4-TILE-AND-COORDINATES.md</c>.
 /// </summary>
 public static class ClientWalkPackets602
 {

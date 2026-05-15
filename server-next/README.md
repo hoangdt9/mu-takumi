@@ -9,6 +9,8 @@
 | `docs/M1-PROTOCOL-PARITY-MAP.md` | **M1** inventory: client `TranslateProtocol` / `ProtocolCoreEx` vs `LegacyLoginHost` coverage. |
 | `docs/LOGIN-WIRE-FORMAT.md` | Encrypted login wire notes + link to M1 map. |
 | `docs/M4-WORLD-POSITION-CHECKLIST.md` | **M4** world spawn + JSON ↔ Postgres roster (tick từng mục khi xong). |
+| `docs/M4-TILE-AND-COORDINATES.md` | **M4** hợp đồng tọa độ: tile `byte` / wire walk — không float world trong iteration này. |
+| `docs/M4-ROSTER-SSOT.md` | **M4** quyết định nguồn sự thật roster (JSON + mirror Postgres; Postgres-only = backlog). |
 | `docs/M5-JOIN-HANDOFF-CHECKLIST.md` | **M5** F4 03 advertised game port + in-memory session ticket (prep for M6). |
 | `docs/M6-GAME-TCP-CHECKLIST.md` | **M6** dedicated game TCP scaffold (`GameListenHost`, `GameHost`, compose profile `gamehost`). |
 | `src/Takumi.Server.Game/` | **M6** shared bootstrap: env loader, Dec2 keys, `GameListenHost`. |

@@ -1,7 +1,8 @@
 # Takumi Server Next - Implementation Checklist
 
-Last updated: 2026-05-16 (M9 combat stub + destroy viewport; M7 vitals prep)
-Last updated: 2026-05-16 (M7 vitals + M5 split Connect/Login hosts; M4 routing → M7/M8–M10 checklists)
+Last updated: 2026-05-16 (`mac-m4`: M9 monster/combat + merge `main` M8 ETL / M7 vitals wire)
+
+**Phân vùng dev (tránh conflict):** xem **`docs/WORKSTREAM-OWNERSHIP.md`** — ai làm file/hạng mục nào trên nhánh nào.
 
 ## Repository vs checklist (read first)
 
@@ -162,12 +163,14 @@ Use this to avoid unnecessary rebuilds.
 7. **M7 — Persistence vòng đời nhân vật** — **`docs/M7-CHARACTER-PERSISTENCE-CHECKLIST.md`**  
    - [x] SQL prep: **`sql/init/004_character_roster_vitals.sql`** (`current_hp`, `max_hp`, `current_mp`, `max_mp`, `zen` on `character_roster`; apply via **`./scripts/apply-sql.sh`** on existing volumes).  
    - [x] **M7b–c (partial):** `CharacterRosterRow` / JSON / Postgres mirror + **`CharacterRosterVitals`** on join **`F3 03`** when `max_hp`/`max_mp` &gt; 0; tests **`JoinMapVitals602Tests`**.  
-   - [x] **M7d (partial):** seed vitals từ **`F3 03`** sau join/move-map + disconnect/periodic flush (`JoinMapVitalsSeed`, `RosterVitalsLifecycle`). **Open:** mid-session vitals từ combat / `GCLifeSend`.  
+   - [x] **M7d (partial):** seed vitals + outbound `0x26`/`0x27` track + `TAKUMI_SEND_LIFE_MANA_AFTER_JOIN` (`LifeManaWire602`, `RosterVitalsLifecycle`). **Open:** combat-driven `GCLifeSend` đầy đủ.  
    - [ ] Migration EF bổ sung (nếu dùng song song với `sql/init`).
 
 8. **M8 — Dữ liệu tĩnh thế giới (ETL)** — **`docs/M8-M10-WORLD-RUNTIME-CHECKLIST.md`** §M8  
-   - [ ] Import `MuServer/4.GameServer/Data/Monster/MonsterSetBase*.txt` → bảng spawn.  
-   - [ ] Cửa / shop / custom từ `Data/Custom/` + nguồn C++ tham chiếu.
+   - [x] **`sql/init/005_monster_spawn.sql`** + **`PostgresMonsterSpawnRepository`** + **`MonsterSpawnDbImporter`** / **`scripts/import-monster-spawn.sh`**.  
+   - [x] Runtime: **`TAKUMI_MONSTER_SPAWN_DB=1`** → **`MapMonsterWorld`** đọc Postgres (fallback file).  
+   - [x] Gates / shops / Custom: **`006_map_gate_npc_shop_custom.sql`**, ETL + **`MapGateCatalog`** / **`NpcShopCatalog`**; env **`TAKUMI_WORLD_STATIC_DB=1`** (hoặc từng flag `TAKUMI_MAP_GATE_DB`, `TAKUMI_NPC_SHOP_DB`, `TAKUMI_CUSTOM_WORLD_DB`).  
+   - [ ] Wire handlers: gate teleport `0x1C`, shop list `0x31` (catalogs loaded at host boot).
 
 9. **M9 — NPC & monster runtime** *(done stub — **`docs/M9-NPC-MONSTER-CHECKLIST.md`**)*  
    - [x] Spawn theo map từ **MonsterSetBase.txt** + **Monster.txt** stats (view-range filter).  

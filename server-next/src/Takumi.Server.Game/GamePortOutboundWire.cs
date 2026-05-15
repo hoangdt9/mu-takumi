@@ -10,8 +10,10 @@ public static class GamePortOutboundWire
         Connection connection,
         (byte K1, byte K2)? clientProtectOutbound,
         ReadOnlyMemory<byte> pkt,
-        CancellationToken ct)
+        CancellationToken ct,
+        Action<ReadOnlySpan<byte>>? trackOutbound = null)
     {
+        trackOutbound?.Invoke(pkt.Span);
         if (clientProtectOutbound is { } k)
         {
             var tmp = new byte[pkt.Length];

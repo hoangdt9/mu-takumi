@@ -18,6 +18,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="Fixtures\**\*" CopyToOutputDirectory="PreserveNewest" LinkBase="Fixtures" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Takumi.Server.Game\Takumi.Server.Game.csproj" />
     <ProjectReference Include="..\Takumi.Server.Join\Takumi.Server.Join.csproj" />
     <ProjectReference Include="..\Takumi.Server.Connect\Takumi.Server.Connect.csproj" />

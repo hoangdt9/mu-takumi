@@ -38,6 +38,10 @@ public static class LegacyLoginHostRunner
     {
         TakumiPostgresMirror.InitIfEnabled();
         TakumiPostgresMirror.InitSessionHandoffIfEnabled();
+        TakumiPostgresMirror.InitMonsterSpawnIfEnabled();
+        TakumiPostgresMirror.InitWorldStaticDataIfEnabled();
+        MapGateCatalog.EnsureInitialized();
+        NpcShopCatalog.EnsureInitialized();
 
         if (!int.TryParse(
                 Environment.GetEnvironmentVariable("TAKUMI_LOGIN_PORT"),
@@ -504,6 +508,37 @@ public static class LegacyLoginHostRunner
             // PacketReceived may invoke handlers concurrently before the previous async handler awaits;
             // a follow-up 12-byte F3 request could run before SetLoggedIn() → list ignored. Serialize per connection.
             using var packetGate = new SemaphoreSlim(1, 1);
+
+            void TrackVitalsOutbound(ReadOnlySpan<byte> span)
+            {
+                if (sessionJoinCharacterName10 is null)
+                {
+                    return;
+                }
+
+                var active = FindRosterEntry(roster, sessionJoinCharacterName10);
+                if (active is null)
+                {
+                    return;
+                }
+
+                if (RosterVitalsLifecycle.TryApplyOutbound(
+                        span,
+                        ref active.CurrentHp,
+                        ref active.MaxHp,
+                        ref active.CurrentMp,
+                        ref active.MaxMp))
+                {
+                    Volatile.Write(ref rosterDirty, 1);
+                }
+            }
+
+            async Task WriteOutboundAsync(ReadOnlyMemory<byte> data)
+            {
+                TrackVitalsOutbound(data.Span);
+                await connection.Output.WriteAsync(data, ct).ConfigureAwait(false);
+            }
+
             var maxDecryptedPacketBytes = DecryptedPacketSafety602.ParseMaxDecryptedPacketBytes();
             var maxPacketsPerSecond = DecryptedPacketSafety602.ParseMaxPacketsPerSecond();
             var decryptedPacketRateGate = new DecryptedPacketRateGate(maxPacketsPerSecond);
@@ -682,18 +717,8 @@ public static class LegacyLoginHostRunner
                     var spawn = new JoinMapSpawnWire(picked.MapId, picked.PosX, picked.PosY, picked.Angle);
                     var joinPkt = JoinMapServerWire602.Build(ToWire(picked), spawn);
                     var invPkt = await JoinInventoryPacket602.BuildAsync(TakumiPostgresMirror.InventorySlots, loggedAccountId, joinName10, ct).ConfigureAwait(false);
-                    await connection.Output.WriteAsync(joinPkt, ct).ConfigureAwait(false);
-                    await connection.Output.WriteAsync(invPkt, ct).ConfigureAwait(false);
-                    await MapMonsterScopeSender.TrySendAfterJoinAsync(
-                        monsterViewportTracker,
-                        connection,
-                        clientProtectOutbound: null,
-                        picked.MapId,
-                        picked.PosX,
-                        picked.PosY,
-                        remote,
-                        ct).ConfigureAwait(false);
-                    await connection.Output.FlushAsync(ct).ConfigureAwait(false);
+                    await WriteOutboundAsync(joinPkt);
+                    await WriteOutboundAsync(invPkt);
                     if (JoinMapVitalsSeed.TryApplyFromJoinPacketIfUnset(picked.MaxHp > 0, joinPkt, out var joinVitals))
                     {
                         RosterVitalsLifecycle.ApplyVitals(
@@ -708,6 +733,27 @@ public static class LegacyLoginHostRunner
 
                     sessionJoinCharacterName10 = new byte[10];
                     Buffer.BlockCopy(joinName10, 0, sessionJoinCharacterName10, 0, 10);
+                    await RosterVitalsLifecycle.TrySendLifeManaSyncAsync(
+                        async (m, t) =>
+                        {
+                            TrackVitalsOutbound(m.Span);
+                            await connection.Output.WriteAsync(m, t).ConfigureAwait(false);
+                        },
+                        picked.CurrentHp,
+                        picked.MaxHp,
+                        picked.CurrentMp,
+                        picked.MaxMp,
+                        ct).ConfigureAwait(false);
+                    await MapMonsterScopeSender.TrySendAfterJoinAsync(
+                        monsterViewportTracker,
+                        connection,
+                        clientProtectOutbound: null,
+                        picked.MapId,
+                        picked.PosX,
+                        picked.PosY,
+                        remote,
+                        ct).ConfigureAwait(false);
+                    await connection.Output.FlushAsync(ct).ConfigureAwait(false);
                     Console.WriteLine(
                         "[{0}] sent join map (F3 03) + inventory (F3 10 len={8}) map={1} xy=({2},{3}) ang={4} name='{5}' rosterClass=0x{6:X2} frame@{7}",
                         remote,
@@ -834,8 +880,8 @@ public static class LegacyLoginHostRunner
                         }
 
                         var invMove = await JoinInventoryPacket602.BuildAsync(TakumiPostgresMirror.InventorySlots, loggedAccountId, sessionJoinCharacterName10, ct).ConfigureAwait(false);
-                        await connection.Output.WriteAsync(joinPktMove, ct).ConfigureAwait(false);
-                        await connection.Output.WriteAsync(invMove, ct).ConfigureAwait(false);
+                        await WriteOutboundAsync(joinPktMove);
+                        await WriteOutboundAsync(invMove);
                         await MapMonsterScopeSender.TrySendAfterJoinAsync(
                             monsterViewportTracker,
                             connection,

@@ -1,0 +1,4 @@
+//Index   Npc	Map	X	Y	Comment
+0         251	*	*	*	//Hanzo
+1         255	0	120	130	//Liaman
+end

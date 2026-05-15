@@ -41,12 +41,33 @@ public static class GameListenHost
             var remote = tcp.Client.RemoteEndPoint?.ToString() ?? "?";
             if (useMinimal)
             {
-                _ = GamePortMinimalSession.RunAsync(tcp, remote, options, cancellationToken);
+                _ = ObserveSessionAsync(
+                    remote,
+                    cancellationToken,
+                    GamePortMinimalSession.RunAsync(tcp, remote, options, cancellationToken));
             }
             else
             {
-                _ = GamePortBootstrapSession.RunAsync(tcp, remote, options, cancellationToken);
+                _ = ObserveSessionAsync(
+                    remote,
+                    cancellationToken,
+                    GamePortBootstrapSession.RunAsync(tcp, remote, options, cancellationToken));
             }
+        }
+    }
+
+    static async Task ObserveSessionAsync(string remote, CancellationToken stopping, Task session)
+    {
+        try
+        {
+            await session.ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (stopping.IsCancellationRequested)
+        {
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine("[game-host] session fault remote={0}: {1}", remote, ex);
         }
     }
 }

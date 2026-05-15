@@ -1,0 +1,12 @@
+<Project>
+  <!-- Only the Docker **game-host** service sets TAKUMI_DOCKER_GAMEHOST=1. -->
+  <!-- Keeps obj/bin off the bind-mounted repo: avoids NETSDK1064 (host NuGet paths vs Linux) -->
+  <!-- and avoids deleting shared src/*/obj used by legacy-login on the same volume. -->
+  <PropertyGroup Condition="'$(TAKUMI_DOCKER_GAMEHOST)' == '1'">
+    <BaseIntermediateOutputPath>/tmp/takumi-gamehost/obj/$(MSBuildProjectName)/</BaseIntermediateOutputPath>
+    <BaseOutputPath>/tmp/takumi-gamehost/bin/$(MSBuildProjectName)/</BaseOutputPath>
+    <!-- BaseIntermediateOutputPath is outside the repo: SDK excludes only /tmp/obj/**, not bind-mounted **/obj/**. -->
+    <!-- Stale *.AssemblyInfo.cs under src/*/obj then compile twice with freshly generated files in /tmp → CS0579. -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);$(MSBuildProjectDirectory)/obj/**;$(MSBuildProjectDirectory)/bin/**</DefaultItemExcludes>
+  </PropertyGroup>
+</Project>

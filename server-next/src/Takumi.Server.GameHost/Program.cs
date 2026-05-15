@@ -66,6 +66,23 @@ var handoffMatchIp = !string.Equals(Environment.GetEnvironmentVariable("TAKUMI_G
 
 var requireSignedSessionTicketWire = string.Equals(Environment.GetEnvironmentVariable("TAKUMI_GAME_TICKET_WIRE"), "1", StringComparison.OrdinalIgnoreCase)
                                    || string.Equals(Environment.GetEnvironmentVariable("TAKUMI_GAME_TICKET_WIRE"), "true", StringComparison.OrdinalIgnoreCase);
+
+var protectWireRaw = Environment.GetEnvironmentVariable("TAKUMI_GAME_CLIENT_PROTECT_WIRE");
+var protectCustomer = Environment.GetEnvironmentVariable("TAKUMI_PROTECT_CUSTOMER_NAME");
+var protectOutbound = GameWireEnv.ResolveClientProtectOutboundKeys(protectWireRaw, protectCustomer, serverSerial);
+
+// Android (ENCRYPT_STATE): CheckSocketPort + DecryptData on recv for GS-range peer ports — plain C1 on wire becomes garbage (logcat: packet sync lost).
+if (protectOutbound is null
+    && gamePort is >= 55901 and <= 55999
+    && !string.Equals(protectWireRaw?.Trim(), "0", StringComparison.OrdinalIgnoreCase)
+    && !string.Equals(protectWireRaw?.Trim(), "false", StringComparison.OrdinalIgnoreCase))
+{
+    Console.Error.WriteLine(
+        "[game-host] WARN: client protect wire is OFF on port {0} (typical Android GS range). " +
+        "Unset TAKUMI_GAME_CLIENT_PROTECT_WIRE or set to 1; plain join will break Android recv (packet sync lost / intro hang).",
+        gamePort);
+}
+
 if (requireSignedSessionTicketWire)
 {
     if (TakumiPostgresMirror.SessionHandoff is null)
@@ -97,6 +114,7 @@ var options = new GamePortListenOptions
     RequireLoginPostgresHandoff = requireLoginHandoff,
     LoginHandoffMatchClientIp = handoffMatchIp,
     RequireSignedSessionTicketWire = requireSignedSessionTicketWire,
+    ClientProtectOutboundKeys = protectOutbound,
 };
 
 using var cts = new CancellationTokenSource();
@@ -112,6 +130,7 @@ Console.WriteLine(
     "  verbose RX:    {5}\n" +
     "  handoff DB:    {6} (match IP: {7})\n" +
     "  ticket wire:   {8}\n" +
+    "  client protect wire (Android GS port): {9}\n" +
     "Ctrl+C to stop.",
     gamePort,
     joinIndex,
@@ -121,7 +140,8 @@ Console.WriteLine(
     verbose,
     requireLoginHandoff,
     handoffMatchIp,
-    requireSignedSessionTicketWire);
+    requireSignedSessionTicketWire,
+    protectOutbound is null ? "off" : "on");
 
 try
 {

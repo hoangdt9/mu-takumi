@@ -2,13 +2,15 @@
 # Takumi server-next — pull image → up stack → (mặc định) tail log Docker.
 #
 # Stack mặc định: Postgres + LegacyLoginHost (44605/44606) + data.zip (profile datazip, nginx 18080).
+# M6: nếu .env có TAKUMI_GAME_PORT (số > 0) thì tự thêm profile **gamehost** — một lệnh đủ Connect + GameHost.
 # Không chạy đồng thời ./scripts/run-legacy-login-host.sh (trùng cổng 44606).
 #
 # Usage:
 #   ./scripts/docker-stack.sh
 #   ./scripts/docker-stack.sh --detach
 #   ./scripts/docker-stack.sh --no-datazip
-#   ./scripts/docker-stack.sh --with-gamehost
+#   ./scripts/docker-stack.sh --with-gamehost   # bật game-host kể cả khi chưa set TAKUMI_GAME_PORT
+#   ./scripts/docker-stack.sh --no-gamehost     # tắt auto game-host dù .env có TAKUMI_GAME_PORT
 #   ./scripts/docker-stack.sh --recreate
 #   ./scripts/docker-stack.sh --host-build
 #
@@ -21,6 +23,7 @@ cd "$ROOT"
 
 WITH_DATAZIP=1
 WITH_GAMEHOST=0
+NO_GAMEHOST=0
 RECREATE=0
 HOST_BUILD=0
 DETACH=0
@@ -32,6 +35,7 @@ while [[ $# -gt 0 ]]; do
       ;;
     --with-datazip) WITH_DATAZIP=1 ;;
     --with-gamehost) WITH_GAMEHOST=1 ;;
+    --no-gamehost) NO_GAMEHOST=1 ;;
     --recreate) RECREATE=1 ;;
     --host-build) HOST_BUILD=1 ;;
     --detach) DETACH=1 ;;
@@ -75,9 +79,24 @@ merge_profile() {
 if [[ "$WITH_DATAZIP" -eq 1 ]]; then
   merge_profile datazip
 fi
-if [[ "$WITH_GAMEHOST" -eq 1 ]]; then
-  merge_profile gamehost
+
+# GameHost (M6): explicit flag, hoặc .env đã cấu hình cổng game (Android F4 03).
+if [[ "$NO_GAMEHOST" -eq 0 ]]; then
+  if [[ "$WITH_GAMEHOST" -eq 1 ]]; then
+    merge_profile gamehost
+  elif [[ -n "${TAKUMI_GAME_PORT:-}" ]] && [[ "${TAKUMI_GAME_PORT}" =~ ^[0-9]+$ ]] && [[ "${TAKUMI_GAME_PORT}" -gt 0 ]]; then
+    merge_profile gamehost
+  fi
 fi
+
+compose_profiles_has_gamehost() {
+  local raw="${COMPOSE_PROFILES:-}"
+  [[ "$raw" == "gamehost" ]] && return 0
+  [[ "$raw" == gamehost,* ]] && return 0
+  [[ "$raw" == *,gamehost ]] && return 0
+  [[ "$raw" == *,gamehost,* ]] && return 0
+  return 1
+}
 
 echo "== Takumi server-next: stack Docker =="
 echo "  cwd: $ROOT"
@@ -108,9 +127,14 @@ echo "== docker compose ${up_args[*]} =="
 docker compose "${up_args[@]}"
 
 # Container cũ giữ PID — không chạy lại entrypoint (dotnet build) → C# mới (vd. F4 06 on-accept) không áp dụng.
+# game-host cũng vậy: nếu chỉ recreate legacy-login, takumi-game-host có thể vẫn process cũ (hàng giờ) dù source đã đổi.
 if [[ "$RECREATE" -eq 0 ]]; then
   echo "== docker compose up -d --force-recreate --no-deps legacy-login (rebuild/run từ bind-mount; ~30–120s) =="
   docker compose up -d --force-recreate --no-deps legacy-login
+  if compose_profiles_has_gamehost; then
+    echo "== docker compose up -d --force-recreate --no-deps game-host (M6; bind-mount rebuild) =="
+    docker compose up -d --force-recreate --no-deps game-host
+  fi
 fi
 
 echo ""
@@ -128,14 +152,18 @@ if [[ "$WITH_DATAZIP" -eq 1 ]]; then
     echo "  data.zip:        http://<TAKUMI_PUBLIC_HOST>:${dp}/data.zip  (đặt TAKUMI_PUBLIC_HOST trong .env)"
   fi
 fi
-if [[ "$WITH_GAMEHOST" -eq 1 ]]; then
-  echo "  game-host:       ${TAKUMI_GAME_PUBLISH:-55901} (F4 03 phải khớp .env)"
+if compose_profiles_has_gamehost; then
+  echo "  game-host:       ${TAKUMI_GAME_PUBLISH:-55901} (F4 03 phải khớp .env; vừa force-recreate nếu không dùng --recreate toàn stack)"
 fi
 echo ""
+if compose_profiles_has_gamehost; then
+  echo "  M6 tip: đợi legacy-login log \"build OK\" rồi mới mở app — nếu không thấy dòng sub-server, xem legacy-login có \"sent … ServerList\" không; BMD/ids: TAKUMI_CS_CONNECT_* (docs/M3-CONNECT-BMD.md)."
+  echo ""
+fi
 
 if [[ "$DETACH" -eq 1 ]]; then
   echo "== Detach (--detach): log =="
-  echo "  docker compose logs -f legacy-login postgres datazip"
+  echo "  docker compose logs -f legacy-login postgres datazip game-host"
   exit 0
 fi
 

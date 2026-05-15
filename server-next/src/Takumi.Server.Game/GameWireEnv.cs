@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using Takumi.Server.Protocol;
 
 namespace Takumi.Server.Game;
 
@@ -86,5 +87,36 @@ public static class GameWireEnv
         }
 
         return d.Count > 0 ? d : null;
+    }
+
+    /// <summary>
+    /// Android <c>ENCRYPT_STATE</c>: when the game TCP peer port is in GS range, recv applies <c>gProtect.DecryptData</c>.
+    /// Server must XOR outbound with <see cref="TakumiClientProtectWire602.EncryptInPlace"/>.
+    /// Disabled when <paramref name="wireEnv"/> is <c>0</c> or <c>false</c>; enabled by default when unset (split <c>TAKUMI_GAME_PORT</c> + Takumi Android).
+    /// </summary>
+    public static (byte EncDecKey1, byte EncDecKey2)? ResolveClientProtectOutboundKeys(
+        string? wireEnv,
+        string? customerName,
+        byte[]? serverSerial16)
+    {
+        if (string.Equals(wireEnv?.Trim(), "0", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(wireEnv?.Trim(), "false", StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        var serial = serverSerial16 ?? ParseSerial16("TbYehR2hFUPBKgZj");
+        if (serial is not { Length: 16 })
+        {
+            return null;
+        }
+
+        var cn = string.IsNullOrWhiteSpace(customerName) ? "takumi12" : customerName.Trim();
+        if (cn.Length > 32)
+        {
+            cn = cn[..32];
+        }
+
+        return TakumiClientProtectWire602.DeriveKeys(cn, serial);
     }
 }

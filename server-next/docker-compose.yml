@@ -91,8 +91,14 @@ services:
     ports:
       - "${TAKUMI_GAME_PUBLISH:-55901}:${TAKUMI_GAME_PORT:-55901}"
     environment:
+      # Redirects all GameHost graph obj/bin to /tmp (see server-next/Directory.Build.props).
+      TAKUMI_DOCKER_GAMEHOST: "1"
       TAKUMI_GAME_PORT: "${TAKUMI_GAME_PORT:-55901}"
       TAKUMI_DEC2_PATH: /keys/Dec2.dat
+      # Android ENCRYPT_STATE: recv on GS-range ports runs gProtect.DecryptData — outbound must be XOR'd.
+      # Quoted "1" avoids YAML boolean quirks; override with TAKUMI_GAME_CLIENT_PROTECT_WIRE=0 in .env only for non-Android clients.
+      TAKUMI_GAME_CLIENT_PROTECT_WIRE: "${TAKUMI_GAME_CLIENT_PROTECT_WIRE:-1}"
+      TAKUMI_PROTECT_CUSTOMER_NAME: "${TAKUMI_PROTECT_CUSTOMER_NAME:-takumi12}"
       # Match server-next/env.defaults so GameHost always enters minimal-login even if RepoEnvLoader
       # cannot resolve server-next (cwd/mount edge cases). Override in .env if needed.
       TAKUMI_ACCOUNTS: "${TAKUMI_ACCOUNTS:-test:test;admin:admin}"
@@ -100,22 +106,10 @@ services:
       TAKUMI_JOIN_VERSION: "${TAKUMI_JOIN_VERSION:-10405}"
       TAKUMI_VERBOSE: "${TAKUMI_VERBOSE:-1}"
       DOTNET_ENVIRONMENT: "${DOTNET_ENVIRONMENT:-Development}"
-    # Bind-mount mixes host obj/bin (macOS/Windows paths) with Linux SDK → NETSDK1064 missing packages.
-    # Drop Takumi.Server.* build artifacts then restore inside the container before build.
+    # Bind-mount + host obj → NETSDK1064; script uses TAKUMI_DOCKER_GAMEHOST + Directory.Build.props for /tmp outputs (no shared rm).
     command:
       - /bin/sh
-      - -c
-      - |
-          set -e
-          echo "[game-host] bind-mount /app — clean Takumi.Server.*/{obj,bin} then restore+build (~1–3 min)…"
-          find /app/src -maxdepth 2 -type d \( -name obj -o -name bin \) | while IFS= read -r d; do
-            b=$$(basename "$$(dirname "$$d")")
-            case "$$b" in Takumi.Server.*) rm -rf "$$d" ;; esac
-          done
-          dotnet restore src/Takumi.Server.GameHost/Takumi.Server.GameHost.csproj -c Release --force-evaluate -nologo -v q
-          dotnet build src/Takumi.Server.GameHost/Takumi.Server.GameHost.csproj -c Release --no-restore -nologo -v q
-          echo "[game-host] listening on *:$${TAKUMI_GAME_PORT:-55901} (F4 03 target)…"
-          exec dotnet run --project src/Takumi.Server.GameHost/Takumi.Server.GameHost.csproj -c Release --no-build
+      - /app/scripts/docker-game-host-boot.sh
 
   # Static HTTP for Android Preload `data.zip` (nginx). Host port **defaults to 18080** — not 44605/44606.
   datazip:

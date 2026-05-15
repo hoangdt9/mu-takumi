@@ -34,6 +34,7 @@ public static class GamePortKeepAliveRunner
         string remote,
         bool verbose,
         TimeSpan interval,
+        (byte EncDecKey1, byte EncDecKey2)? clientProtectOutbound,
         CancellationToken cancellationToken)
     {
         try
@@ -50,8 +51,7 @@ public static class GamePortKeepAliveRunner
                 await packetGate.WaitAsync(cancellationToken).ConfigureAwait(false);
                 try
                 {
-                    await connection.Output.WriteAsync(GamePortKeepAliveWire.PingRequest, cancellationToken).ConfigureAwait(false);
-                    await connection.Output.FlushAsync(cancellationToken).ConfigureAwait(false);
+                    await GamePortOutboundWire.WriteAsync(connection, clientProtectOutbound, GamePortKeepAliveWire.PingRequest, cancellationToken).ConfigureAwait(false);
                     if (verbose)
                     {
                         Console.WriteLine("[{0}] keepalive sent C1 03 71 (ping request)", remote);

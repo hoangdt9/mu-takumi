@@ -1,0 +1,15 @@
+#!/bin/sh
+# GameHost entry for docker-compose bind-mount: Linux container must not reuse host obj/bin
+# (macOS/Windows NuGet paths → NETSDK1064). Do NOT rm shared src/*/obj — legacy-login uses it.
+# Directory.Build.props + TAKUMI_DOCKER_GAMEHOST=1 redirect obj/bin to /tmp/takumi-gamehost/…
+set -e
+cd /app
+
+echo "[game-host] bind-mount /app — isolated /tmp/takumi-gamehost obj+bin, restore+build (~1–3 min)…"
+rm -rf /tmp/takumi-gamehost 2>/dev/null || true
+
+dotnet restore src/Takumi.Server.GameHost/Takumi.Server.GameHost.csproj --force-evaluate -nologo -v q
+dotnet build src/Takumi.Server.GameHost/Takumi.Server.GameHost.csproj -c Release --no-restore -nologo -v q
+
+echo "[game-host] listening on *:${TAKUMI_GAME_PORT:-55901} (F4 03 target)…"
+exec dotnet run --project src/Takumi.Server.GameHost/Takumi.Server.GameHost.csproj -c Release --no-build

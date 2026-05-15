@@ -1,9 +1,10 @@
 using System.Buffers;
+using System.IO.Pipelines;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
-using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Logging;
 using MUnique.OpenMU.Network;
 using MUnique.OpenMU.Network.SimpleModulus;
 using MUnique.OpenMU.Network.Xor;
@@ -39,21 +40,59 @@ public static class GamePortMinimalSession
             !string.Equals(Environment.GetEnvironmentVariable("TAKUMI_ROSTER_DB_MERGE_MODE")?.Trim(), "json", StringComparison.OrdinalIgnoreCase);
         byte[]? sessionJoinCharacterName10 = null;
         var loginLatch = new LoginLatch();
+        Task? protectInboundPumpTask = null;
+        CancellationTokenSource? protectInboundPumpCts = null;
 
         try
         {
+            // Stdout marker: visible in `docker compose logs` even when stderr is noisy; bump suffix after RX-wire changes.
+            Console.WriteLine(
+                "[{0}] m6_minimal_session_begin hasClientProtectKeys={1} rxBuild=M6-2026-05-15c",
+                remote,
+                options.ClientProtectOutboundKeys.HasValue);
             tcp.NoDelay = true;
             ConnectTcpKeepAlive.TryApply(tcp.Client);
             var socketConnection = SocketConnection.Create(tcp.Client);
+            PipeReader pipelinedDecryptInput = socketConnection.Input;
+            if (options.ClientProtectOutboundKeys is { } wireProtectKeys)
+            {
+                // Android CWsctlc::sSend: SimpleModulus (SendPacket bEncrypt) builds C3 on the buffer, then
+                // gProtect.EncryptData on the whole wire before RawSend — outer gProtect, inner SM. Strip gProtect
+                // on raw TCP chunks before PipelinedDecryptor (SM then Xor32).
+                protectInboundPumpCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+                var inboundPipe = new Pipe();
+                pipelinedDecryptInput = inboundPipe.Reader;
+                protectInboundPumpTask = TakumiClientProtectInboundPump.RunAsync(
+                    socketConnection.Input,
+                    inboundPipe.Writer,
+                    wireProtectKeys.EncDecKey1,
+                    wireProtectKeys.EncDecKey2,
+                    protectInboundPumpCts.Token);
+                var pumpMsg = "[{0}] protect_inbound_pump on (gProtect strip before SM+XOR)";
+                Console.WriteLine(pumpMsg, remote);
+                Console.Error.WriteLine(pumpMsg, remote);
+            }
+
+            using var connLogFactory = LoggerFactory.Create(b =>
+            {
+                b.AddSimpleConsole(o =>
+                {
+                    o.SingleLine = true;
+                    o.TimestampFormat = "HH:mm:ss ";
+                });
+                b.SetMinimumLevel(verbose ? LogLevel.Information : LogLevel.Warning);
+            });
+            var connectionLogger = connLogFactory.CreateLogger<Connection>();
+
             using var connection = new Connection(
                 socketConnection,
-                new PipelinedDecryptor(socketConnection.Input, options.ServerDecryptKeys, DefaultKeys.Xor32Key),
+                new PipelinedDecryptor(pipelinedDecryptInput, options.ServerDecryptKeys, DefaultKeys.Xor32Key),
                 encryptionPipe: null,
-                new NullLogger<Connection>());
+                connectionLogger);
 
+            var protect = options.ClientProtectOutboundKeys;
             var join = LoginAccountWire602.BuildJoinPacket(result: 1, options.JoinWireIndex, joinVersion);
-            await connection.Output.WriteAsync(join, ct).ConfigureAwait(false);
-            await connection.Output.FlushAsync(ct).ConfigureAwait(false);
+            await GamePortOutboundWire.WriteAsync(connection, protect, join, ct).ConfigureAwait(false);
             var joinMsg = $"[{remote}] sent join C1 F1 00 ({join.Length} bytes) index={options.JoinWireIndex} (minimal-login)";
             Console.WriteLine(joinMsg);
             Console.Error.WriteLine(joinMsg);
@@ -75,6 +114,7 @@ public static class GamePortMinimalSession
                     remote,
                     verbose,
                     keepAliveInterval,
+                    protect,
                     connectionCts.Token);
             }
 
@@ -98,13 +138,18 @@ public static class GamePortMinimalSession
             }
 
             connection.PacketReceived += OnPacketAsync;
+            connection.Disconnected += OnConnDisconnectedAsync;
 
             try
             {
                 await connection.BeginReceiveAsync().ConfigureAwait(false);
+                Console.Error.WriteLine(
+                    "[{0}] OpenMU BeginReceiveAsync returned (socket closed or decrypt loop stopped without exception)",
+                    remote);
             }
             finally
             {
+                connection.Disconnected -= OnConnDisconnectedAsync;
                 connection.PacketReceived -= OnPacketAsync;
                 connectionCts.Cancel();
                 if (keepAliveTask is not null)
@@ -128,6 +173,14 @@ public static class GamePortMinimalSession
                     {
                     }
                 }
+            }
+
+            ValueTask OnConnDisconnectedAsync()
+            {
+                Console.Error.WriteLine(
+                    "[{0}] OpenMU Connection.Disconnected (invalid header / SM checksum / reset — see OpenMU log lines above)",
+                    remote);
+                return default;
             }
 
             async ValueTask OnPacketAsync(ReadOnlySequence<byte> packetSeq)
@@ -230,8 +283,7 @@ public static class GamePortMinimalSession
                         GameRosterMutations.UpsertNewCharacter(roster, nameCopy, serverClass, level: 1);
                         var slotByte = (byte)(roster.Count - 1);
                         var resp = CharacterCreateWire602.BuildCreateSuccess(nameCopy, slotByte, level: 1, serverClass: serverClass);
-                        await connection.Output.WriteAsync(resp, ct).ConfigureAwait(false);
-                        await connection.Output.FlushAsync(ct).ConfigureAwait(false);
+                        await GamePortOutboundWire.WriteAsync(connection, protect, resp, ct).ConfigureAwait(false);
                         if (!string.IsNullOrEmpty(loggedAccountId))
                         {
                             SaveRoster(loggedAccountId, roster);
@@ -262,8 +314,7 @@ public static class GamePortMinimalSession
                                 remote,
                                 Encoding.ASCII.GetString(deleteName10).TrimEnd('\0'),
                                 deleteOff);
-                            await connection.Output.WriteAsync(CharacterCreateWire602.BuildDeleteResponse(2), ct).ConfigureAwait(false);
-                            await connection.Output.FlushAsync(ct).ConfigureAwait(false);
+                            await GamePortOutboundWire.WriteAsync(connection, protect, CharacterCreateWire602.BuildDeleteResponse(2), ct).ConfigureAwait(false);
                             return;
                         }
 
@@ -286,8 +337,7 @@ public static class GamePortMinimalSession
                             SaveRoster(loggedAccountId, roster);
                         }
 
-                        await connection.Output.WriteAsync(CharacterCreateWire602.BuildDeleteResponse(1), ct).ConfigureAwait(false);
-                        await connection.Output.FlushAsync(ct).ConfigureAwait(false);
+                        await GamePortOutboundWire.WriteAsync(connection, protect, CharacterCreateWire602.BuildDeleteResponse(1), ct).ConfigureAwait(false);
                         Console.WriteLine(
                             "[{0}] delete character OK removed={1} name='{2}' rosterCount={3} frame@{4}",
                             remote,
@@ -314,9 +364,8 @@ public static class GamePortMinimalSession
                         var spawn = new JoinMapSpawnWire(picked.MapId, picked.PosX, picked.PosY, picked.Angle);
                         var joinPkt = JoinMapServerWire602.Build(ToWire(picked), spawn);
                         var invPkt = await JoinInventoryPacket602.BuildAsync(TakumiPostgresMirror.InventorySlots, loggedAccountId, joinName10, ct).ConfigureAwait(false);
-                        await connection.Output.WriteAsync(joinPkt, ct).ConfigureAwait(false);
-                        await connection.Output.WriteAsync(invPkt, ct).ConfigureAwait(false);
-                        await connection.Output.FlushAsync(ct).ConfigureAwait(false);
+                        await GamePortOutboundWire.WriteAsync(connection, protect, joinPkt, ct).ConfigureAwait(false);
+                        await GamePortOutboundWire.WriteAsync(connection, protect, invPkt, ct).ConfigureAwait(false);
                         sessionJoinCharacterName10 = new byte[10];
                         Buffer.BlockCopy(joinName10, 0, sessionJoinCharacterName10, 0, 10);
                         Console.WriteLine(
@@ -336,8 +385,7 @@ public static class GamePortMinimalSession
                     {
                         var pickedMove = FindRosterEntry(roster, sessionJoinCharacterName10);
                         var ackMove = new byte[] { 0xC1, 0x05, 0x8E, 0x03, 0x01 };
-                        await connection.Output.WriteAsync(ackMove, ct).ConfigureAwait(false);
-                        await connection.Output.FlushAsync(ct).ConfigureAwait(false);
+                        await GamePortOutboundWire.WriteAsync(connection, protect, ackMove, ct).ConfigureAwait(false);
                         if (pickedMove is not null)
                         {
                             pickedMove.MapId = (byte)(mapIdx & 0xFF);
@@ -345,9 +393,8 @@ public static class GamePortMinimalSession
                             var mvSpawn = new JoinMapSpawnWire(pickedMove.MapId, pickedMove.PosX, pickedMove.PosY, pickedMove.Angle);
                             var joinPktMove = JoinMapServerWire602.Build(ToWire(pickedMove), mvSpawn);
                             var invMove = await JoinInventoryPacket602.BuildAsync(TakumiPostgresMirror.InventorySlots, loggedAccountId, sessionJoinCharacterName10, ct).ConfigureAwait(false);
-                            await connection.Output.WriteAsync(joinPktMove, ct).ConfigureAwait(false);
-                            await connection.Output.WriteAsync(invMove, ct).ConfigureAwait(false);
-                            await connection.Output.FlushAsync(ct).ConfigureAwait(false);
+                            await GamePortOutboundWire.WriteAsync(connection, protect, joinPktMove, ct).ConfigureAwait(false);
+                            await GamePortOutboundWire.WriteAsync(connection, protect, invMove, ct).ConfigureAwait(false);
                             Console.WriteLine("[{0}] move map + F3 03 + F3 10 len={2} mapId={1} frame@{3}", remote, mapIdx, invMove.Length, moveOff);
                         }
 
@@ -392,13 +439,16 @@ public static class GamePortMinimalSession
                     if (loginLatch.IsLoggedIn && GamePacketFinders.TryFindGameLogoutRequest(packet, out var logoutOff, out var logoutFlag))
                     {
                         var ack = new byte[] { 0xC1, 0x05, 0xF1, 0x02, logoutFlag };
-                        await connection.Output.WriteAsync(ack, ct).ConfigureAwait(false);
-                        await connection.Output.FlushAsync(ct).ConfigureAwait(false);
+                        await GamePortOutboundWire.WriteAsync(connection, protect, ack, ct).ConfigureAwait(false);
                         Console.WriteLine("[{0}] ack game logout F1 02 value=0x{1:X2} frame@{2}", remote, logoutFlag, logoutOff);
                         return;
                     }
 
-                    var listReq = GamePacketFinders.TryFindCharacterListRequest(packet, out var listFrameOffset);
+                    // F3 00 list: only after auth. Heuristics can match byte pairs inside large C3 F1:01 login (~90 B) and
+                    // must not return early — otherwise the client never receives F1 01 / character list (M6 split port).
+                    var listFrameOffset = 0;
+                    var listReq = loginLatch.IsLoggedIn
+                        && GamePacketFinders.TryFindCharacterListRequest(packet, out listFrameOffset);
                     if (!listReq
                         && loginLatch.IsLoggedIn
                         && packet.Length == 12
@@ -410,32 +460,44 @@ public static class GamePortMinimalSession
 
                     if (listReq)
                     {
-                        if (!loginLatch.IsLoggedIn)
-                        {
-                            Console.WriteLine("[{0}] F3 00 before login — ignored", remote);
-                            return;
-                        }
-
                         var list = roster.Count > 0 ? CharacterListWire602.Build(MapRosterToWire(roster)) : CharacterListWire602.BuildEmpty();
                         LogCharacterListWire(remote, list, "F3 00");
-                        await connection.Output.WriteAsync(list, ct).ConfigureAwait(false);
-                        await connection.Output.FlushAsync(ct).ConfigureAwait(false);
+                        await GamePortOutboundWire.WriteAsync(connection, protect, list, ct).ConfigureAwait(false);
                         return;
+                    }
+
+                    // F1 01 account login: C3 envelope + stream XOR (Android) or C1 peel — shared with LegacyLoginHost via GamePacketFinders.
+                    var loginFrame = packet;
+                    if (!loginLatch.IsLoggedIn
+                        && GamePacketFinders.TryUnpackAccountLoginFrame(packet, out var unpackedLogin)
+                        && unpackedLogin.Length >= 59)
+                    {
+                        loginFrame = unpackedLogin;
+                    }
+                    else if (!loginLatch.IsLoggedIn && packet.Length >= 59 && packet[0] == 0xC1 && packet[2] == 0xF1)
+                    {
+                        loginFrame = (byte[])packet.Clone();
+                        var span = loginFrame.AsSpan();
+                        for (var peel = 0; peel < 8 && span[3] != 0x01; peel++)
+                        {
+                            TakumiStreamXorCodec.DecodeTakumiStreamXor(span, 3);
+                        }
                     }
 
                     byte head;
                     byte sub;
                     int payloadOffset;
-                    if (t == 0xC3 && packet.Length >= 4)
+                    var tl = loginFrame[0];
+                    if (tl == 0xC3 && loginFrame.Length >= 4)
                     {
-                        head = packet[2];
-                        sub = packet[3];
+                        head = loginFrame[2];
+                        sub = loginFrame[3];
                         payloadOffset = 4;
                     }
-                    else if (t == 0xC1 && packet.Length >= 4)
+                    else if (tl == 0xC1 && loginFrame.Length >= 4)
                     {
-                        head = packet[2];
-                        sub = packet[3];
+                        head = loginFrame[2];
+                        sub = loginFrame[3];
                         payloadOffset = 4;
                     }
                     else
@@ -443,48 +505,59 @@ public static class GamePortMinimalSession
                         return;
                     }
 
-                    if (head != 0xF1 || sub != 0x01 || packet.Length < 59)
+                    if (head != 0xF1 || sub != 0x01 || loginFrame.Length < 59)
                     {
-                        if (loginLatch.IsLoggedIn && packet.Length <= 48 && verbose)
+                        if (loginLatch.IsLoggedIn && loginFrame.Length <= 48 && verbose)
                         {
                             Console.WriteLine(
                                 "[{0}] not login pkt — hex={1} head=0x{2:X2} sub=0x{3:X2}",
                                 remote,
-                                Convert.ToHexString(packet),
+                                Convert.ToHexString(loginFrame),
                                 head,
                                 sub);
+                        }
+                        else if (!loginLatch.IsLoggedIn && loginFrame.Length >= 40 && loginFrame[0] == 0xC1 && loginFrame[2] == 0xF1)
+                        {
+                            var previewLen = Math.Min(40, loginFrame.Length);
+                            Console.WriteLine(
+                                "[{0}] pre-login F1 frame not login (post-peel): sub@3=0x{1:X2} len={2} preview={3}",
+                                remote,
+                                loginFrame[3],
+                                loginFrame.Length,
+                                Convert.ToHexString(loginFrame.AsSpan(0, previewLen)));
                         }
 
                         return;
                     }
 
-                    var idEnc = packet.AsSpan(payloadOffset, 10).ToArray();
-                    var passEnc = packet.AsSpan(payloadOffset + 10, 10).ToArray();
+                    // Wire matches Source/5.Main wsclientinline.h SendRequestLogIn: id[10] password[20] tick[4] version[5] serial[16].
+                    var idEnc = loginFrame.AsSpan(payloadOffset, 10).ToArray();
+                    var passEnc = loginFrame.AsSpan(payloadOffset + 10, 20).ToArray();
                     BuxXor(idEnc);
                     BuxXor(passEnc);
                     var id = Encoding.ASCII.GetString(idEnc).TrimEnd('\0', ' ');
                     var pass = Encoding.ASCII.GetString(passEnc).TrimEnd('\0', ' ');
-                    var clientVer = packet.AsSpan(payloadOffset + 34, 5);
-                    var clientSer = packet.AsSpan(payloadOffset + 39, 16);
+                    var clientVer = loginFrame.AsSpan(payloadOffset + 34, 5);
+                    var clientSer = loginFrame.AsSpan(payloadOffset + 39, 16);
 
                     if (!clientVer.SequenceEqual(joinVersion))
                     {
                         Console.WriteLine("[{0}] login rejected: version mismatch", remote);
-                        await WriteLoginResultAsync(connection, 0x06, ct).ConfigureAwait(false);
+                        await WriteLoginResultAsync(connection, protect, 0x06, ct).ConfigureAwait(false);
                         return;
                     }
 
                     if (!clientSer.SequenceEqual(serverSerial))
                     {
                         Console.WriteLine("[{0}] login rejected: serial mismatch", remote);
-                        await WriteLoginResultAsync(connection, 0x06, ct).ConfigureAwait(false);
+                        await WriteLoginResultAsync(connection, protect, 0x06, ct).ConfigureAwait(false);
                         return;
                     }
 
                     if (!accounts.TryGetValue(id, out var okPass) || okPass != pass)
                     {
                         Console.WriteLine("[{0}] login rejected: bad credentials '{1}'", remote, id);
-                        await WriteLoginResultAsync(connection, 0x00, ct).ConfigureAwait(false);
+                        await WriteLoginResultAsync(connection, protect, 0x00, ct).ConfigureAwait(false);
                         return;
                     }
 
@@ -495,7 +568,7 @@ public static class GamePortMinimalSession
                             Console.WriteLine(
                                 "[{0}] login rejected: F1 A6 signed attach required before F1 01 (TAKUMI_GAME_TICKET_WIRE)",
                                 remote);
-                            await WriteLoginResultAsync(connection, 0x00, ct).ConfigureAwait(false);
+                            await WriteLoginResultAsync(connection, protect, 0x00, ct).ConfigureAwait(false);
                             return;
                         }
 
@@ -507,7 +580,7 @@ public static class GamePortMinimalSession
                             Console.WriteLine(
                                 "[{0}] login rejected: F1 01 id does not match verified wire attach account",
                                 remote);
-                            await WriteLoginResultAsync(connection, 0x00, ct).ConfigureAwait(false);
+                            await WriteLoginResultAsync(connection, protect, 0x00, ct).ConfigureAwait(false);
                             return;
                         }
                     }
@@ -519,7 +592,7 @@ public static class GamePortMinimalSession
                             Console.WriteLine(
                                 "[{0}] login rejected: TAKUMI_GAME_REQUIRE_LOGIN_HANDOFF but session DB not enabled (set TAKUMI_SESSION_HANDOFF_DB=1 + PG connection)",
                                 remote);
-                            await WriteLoginResultAsync(connection, 0x00, ct).ConfigureAwait(false);
+                            await WriteLoginResultAsync(connection, protect, 0x00, ct).ConfigureAwait(false);
                             return;
                         }
 
@@ -531,7 +604,7 @@ public static class GamePortMinimalSession
                                 "[{0}] login rejected: no consumable session_ticket for account '{1}' (login on legacy port first, or disable TAKUMI_GAME_REQUIRE_LOGIN_HANDOFF)",
                                 remote,
                                 id);
-                            await WriteLoginResultAsync(connection, 0x00, ct).ConfigureAwait(false);
+                            await WriteLoginResultAsync(connection, protect, 0x00, ct).ConfigureAwait(false);
                             return;
                         }
                     }
@@ -566,14 +639,13 @@ public static class GamePortMinimalSession
                     }
 
                     Console.WriteLine("[{0}] login ok id={1} rosterCount={2}", remote, id, roster.Count);
-                    await WriteLoginResultAsync(connection, 0x01, ct).ConfigureAwait(false);
+                    await WriteLoginResultAsync(connection, protect, 0x01, ct).ConfigureAwait(false);
 
                     if (!options.SkipAutoCharacterList)
                     {
                         var list = roster.Count > 0 ? CharacterListWire602.Build(MapRosterToWire(roster)) : CharacterListWire602.BuildEmpty();
                         LogCharacterListWire(remote, list, "after login (auto)");
-                        await connection.Output.WriteAsync(list, ct).ConfigureAwait(false);
-                        await connection.Output.FlushAsync(ct).ConfigureAwait(false);
+                        await GamePortOutboundWire.WriteAsync(connection, protect, list, ct).ConfigureAwait(false);
                     }
                 }
                 finally
@@ -591,6 +663,31 @@ public static class GamePortMinimalSession
         }
         finally
         {
+            if (protectInboundPumpCts is not null)
+            {
+                try
+                {
+                    protectInboundPumpCts.Cancel();
+                }
+                catch
+                {
+                }
+            }
+
+            if (protectInboundPumpTask is not null)
+            {
+                try
+                {
+                    await protectInboundPumpTask.ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    Console.Error.WriteLine("[{0}] protect inbound pump fault: {1}", remote, ex);
+                }
+            }
+
+            protectInboundPumpCts?.Dispose();
+
             if (!string.IsNullOrEmpty(loggedAccountId) && roster.Count > 0)
             {
                 try
@@ -752,16 +849,14 @@ public static class GamePortMinimalSession
         }
     }
 
-    static Task WriteLoginResultAsync(Connection connection, byte result, CancellationToken ct)
+    static Task WriteLoginResultAsync(
+        Connection connection,
+        (byte EncDecKey1, byte EncDecKey2)? clientProtectOutbound,
+        byte result,
+        CancellationToken ct)
     {
         var pkt = LoginAccountWire602.BuildLoginResult(result);
-        return WriteAsync(connection, pkt, ct);
-    }
-
-    static async Task WriteAsync(Connection connection, ReadOnlyMemory<byte> pkt, CancellationToken ct)
-    {
-        await connection.Output.WriteAsync(pkt, ct).ConfigureAwait(false);
-        await connection.Output.FlushAsync(ct).ConfigureAwait(false);
+        return GamePortOutboundWire.WriteAsync(connection, clientProtectOutbound, pkt, ct);
     }
 
     sealed class LoginLatch

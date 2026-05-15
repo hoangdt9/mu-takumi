@@ -699,7 +699,13 @@ void ReceiveCharacterList( BYTE *ReceiveBuffer )
 			entrySize = remainder / count;
 		}
 	}
-	if (entrySize != 33 && entrySize != 34)
+	// Empty roster (server C1 F3 00 … count=0, total=header only): remainder is 0 so entrySize stays 0.
+	// Still a valid packet — allow the loop below to run 0 times (takumi server-next CharacterListWire602.BuildEmpty).
+	if (count == 0)
+	{
+		entrySize = 34;
+	}
+	else if (entrySize != 33 && entrySize != 34)
 	{
 		g_ErrorReport.Write(
 			"[ReceiveCharacterList] unsupported layout total=%d header=%d count=%d (entrySize inferred=%d)\r\n",

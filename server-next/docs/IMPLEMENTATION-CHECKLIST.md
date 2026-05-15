@@ -147,7 +147,7 @@ Use this to avoid unnecessary rebuilds.
    - [x] Đồng bộ disconnect / move-map stub / **walk** + **instant move** → flush JSON + DB mirror.  
    - [x] **M4b:** `CharacterRosterMirrorHealth` + **`TAKUMI_ROSTER_HEALTH_LOG`**. Tile-only: **`docs/M4-TILE-AND-COORDINATES.md`**, **`docs/M4-ROSTER-SSOT.md`**.  
    - [x] **`inventory_slot` write** sau shop buy/sell/repair — `InventorySlotMirrorWriter` (đọc `F3 10` đã có từ trước).
-   - [~] **M4b SSOT Postgres-only** (still open) + item pick/drop/move `0x22`–`0x24` — **`ItemWorldHandler`** (partial).
+   - [~] **M4b SSOT Postgres-only** — **`TAKUMI_ROSTER_DB_PRIMARY`** (DB-first load); item `0x22`–`0x24` — **`ItemWorldHandler`** (bag+wear).
 
 5. **M5 — Join handoff (`3.JoinServer` parity)** *(partial — see **`docs/M5-JOIN-HANDOFF-CHECKLIST.md`**)*  
    - [x] **F4 03** advertised port (`TAKUMI_GAME_PORT`) + in-memory session ticket TTL / Touch / Revoke.  
@@ -164,7 +164,7 @@ Use this to avoid unnecessary rebuilds.
    - [x] SQL prep: **`004_character_roster_vitals.sql`**.  
    - [x] **M7b–c:** vitals trên roster + join **`F3 03`**; tests **`JoinMapVitals602Tests`**.  
    - [x] **M7d (partial):** `JoinMapVitalsSeed`, `LifeManaWire602`, `RosterVitalsOutboundTracker`, **`TAKUMI_SEND_LIFE_MANA_AFTER_JOIN`**.  
-   - [~] **M7d:** combat — hit/die/revive (`PlayerVitalsLoop`, `F3 04`), HP regen, vitals DB upsert; PvP/heal items **OPEN**.  
+   - [~] **M7d:** combat — hit/die/revive (`PlayerVitalsLoop`, `0x26` on monster hit), HP regen, vitals DB upsert; PvP/heal items **OPEN**.  
    - [x] **M7 + M4:** `inventory_slot` upsert sau buy/sell/repair — `InventorySlotMirrorWriter`.  
    - [ ] Migration EF bổ sung (nếu dùng song song với `sql/init`).
 

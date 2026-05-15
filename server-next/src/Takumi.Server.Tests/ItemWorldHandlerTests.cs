@@ -28,6 +28,27 @@ public sealed class ItemWorldHandlerTests
     }
 
     [Fact]
+    public void TryMoveInventorySlot_equips_sword_to_wear_slot()
+    {
+        var sid = Guid.NewGuid();
+        var sword = new byte[ItemWire602.WireBytes];
+        ItemWire602.WriteSeason6Item(sword, 0, 5, 0, 40, false, false, 0, 0);
+        PlayerShopSession.SetSlot(sid, 12, sword);
+
+        Assert.True(PlayerShopSession.TryMoveInventorySlot(sid, 12, 0, out _));
+        Assert.True(PlayerShopSession.TryGetSlot(sid, 0, out var worn));
+        Assert.Equal(sword[0], worn[0]);
+        Assert.False(PlayerShopSession.TryGetSlot(sid, 12, out _));
+    }
+
+    [Fact]
+    public void IsSupportedItemStorage_allows_main_inventory_only()
+    {
+        Assert.True(ClientGameplayPackets602.IsSupportedItemStorage(0));
+        Assert.False(ClientGameplayPackets602.IsSupportedItemStorage(1));
+    }
+
+    [Fact]
     public void TryMoveInventorySlot_swaps_two_bag_slots()
     {
         var sid = Guid.NewGuid();

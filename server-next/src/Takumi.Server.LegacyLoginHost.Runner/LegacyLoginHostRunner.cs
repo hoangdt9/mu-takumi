@@ -1332,39 +1332,7 @@ public static class LegacyLoginHostRunner
                         issued.TicketId);
                 }
 
-                roster.Clear();
-                LoadPersistedRoster(id, roster);
-                if (rosterDbMergeOverlay && TakumiPostgresMirror.CharacterRoster is not null)
-                {
-                    try
-                    {
-                        var dbRows = await TakumiPostgresMirror.CharacterRoster.LoadByAccountAsync(id, ct).ConfigureAwait(false);
-                        CharacterRosterMerge.ApplyDbOverlay(
-                            roster,
-                            dbRows,
-                            static e => Encoding.ASCII.GetString(e.Name10).TrimEnd('\0', ' '),
-                            static (e, d) =>
-                            {
-                                e.MapId = d.MapId;
-                                e.PosX = d.PosX;
-                                e.PosY = d.PosY;
-                                e.Angle = d.Angle;
-                                e.Level = d.Level;
-                                e.ServerClass = d.ServerClass;
-                                e.CurrentHp = d.CurrentHp;
-                                e.MaxHp = d.MaxHp;
-                                e.CurrentMp = d.CurrentMp;
-                                e.MaxMp = d.MaxMp;
-                                e.Zen = d.Zen;
-                            });
-                        CharacterRosterMirrorHealth.RecordMergeSuccess();
-                    }
-                    catch (Exception ex)
-                    {
-                        CharacterRosterMirrorHealth.RecordMergeFail();
-                        Console.WriteLine("[roster-db] merge after login failed for {0}: {1}", id, ex.Message);
-                    }
-                }
+                await LoadPersistedRosterAsync(id, roster, rosterDbMergeOverlay, ct).ConfigureAwait(false);
 
                 Console.WriteLine(
                     "[{0}] login ok id={1} rosterPersisted={2} rosterCount={3}",
@@ -1553,7 +1521,85 @@ public static class LegacyLoginHostRunner
         e.Angle = d.Angle;
     }
 
-    static void LoadPersistedRoster(string accountId, List<CharacterRosterEntry> roster)
+    static async Task LoadPersistedRosterAsync(
+        string accountId,
+        List<CharacterRosterEntry> roster,
+        bool rosterDbMergeOverlay,
+        CancellationToken ct)
+    {
+        roster.Clear();
+        var dbPrimary = new List<CharacterRosterRow>();
+        if (await CharacterRosterBootstrap.TryLoadDbPrimaryAsync(accountId, dbPrimary, ct).ConfigureAwait(false))
+        {
+            foreach (var row in dbPrimary)
+            {
+                roster.Add(FromRosterRow(row));
+            }
+
+            return;
+        }
+
+        LoadPersistedRosterFromJson(accountId, roster);
+        if (!rosterDbMergeOverlay || TakumiPostgresMirror.CharacterRoster is null)
+        {
+            return;
+        }
+
+        try
+        {
+            var dbRows = await TakumiPostgresMirror.CharacterRoster.LoadByAccountAsync(accountId, ct).ConfigureAwait(false);
+            CharacterRosterMerge.ApplyDbOverlay(
+                roster,
+                dbRows,
+                static e => Encoding.ASCII.GetString(e.Name10).TrimEnd('\0', ' '),
+                static (e, d) =>
+                {
+                    e.MapId = d.MapId;
+                    e.PosX = d.PosX;
+                    e.PosY = d.PosY;
+                    e.Angle = d.Angle;
+                    e.Level = d.Level;
+                    e.ServerClass = d.ServerClass;
+                    e.CurrentHp = d.CurrentHp;
+                    e.MaxHp = d.MaxHp;
+                    e.CurrentMp = d.CurrentMp;
+                    e.MaxMp = d.MaxMp;
+                    e.Zen = d.Zen;
+                });
+            CharacterRosterMirrorHealth.RecordMergeSuccess();
+        }
+        catch (Exception ex)
+        {
+            CharacterRosterMirrorHealth.RecordMergeFail();
+            Console.WriteLine("[roster-db] merge after login failed for {0}: {1}", accountId, ex.Message);
+        }
+    }
+
+    static CharacterRosterEntry FromRosterRow(CharacterRosterRow row)
+    {
+        var nm = new byte[10];
+        var enc = Encoding.ASCII.GetBytes(row.Name.Trim());
+        Buffer.BlockCopy(enc, 0, nm, 0, Math.Min(10, enc.Length));
+        var entry = new CharacterRosterEntry
+        {
+            Name10 = nm,
+            ServerClass = row.ServerClass,
+            Level = row.Level,
+            MapId = row.MapId,
+            PosX = row.PosX,
+            PosY = row.PosY,
+            Angle = row.Angle,
+            CurrentHp = row.CurrentHp,
+            MaxHp = row.MaxHp,
+            CurrentMp = row.CurrentMp,
+            MaxMp = row.MaxMp,
+            Zen = row.Zen,
+        };
+        ApplyLegacySpawnIfUnset(entry);
+        return entry;
+    }
+
+    static void LoadPersistedRosterFromJson(string accountId, List<CharacterRosterEntry> roster)
     {
         roster.Clear();
         var path = GetRosterFilePath(accountId);
@@ -1640,24 +1686,27 @@ public static class LegacyLoginHostRunner
                 });
         }
 
-        var path = GetRosterFilePath(accountId);
-        try
+        if (!CharacterRosterBootstrap.ShouldSkipJsonExportOnSave())
         {
-            var dir = Path.GetDirectoryName(path);
-            if (!string.IsNullOrEmpty(dir))
+            var path = GetRosterFilePath(accountId);
+            try
             {
-                Directory.CreateDirectory(dir);
-            }
+                var dir = Path.GetDirectoryName(path);
+                if (!string.IsNullOrEmpty(dir))
+                {
+                    Directory.CreateDirectory(dir);
+                }
 
-            var json = JsonSerializer.Serialize(root, RosterIo.Json);
-            lock (RosterIo.Lock)
-            {
-                File.WriteAllText(path, json);
+                var json = JsonSerializer.Serialize(root, RosterIo.Json);
+                lock (RosterIo.Lock)
+                {
+                    File.WriteAllText(path, json);
+                }
             }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine("[roster] save failed {0}: {1}", path, ex.Message);
+            catch (Exception ex)
+            {
+                Console.WriteLine("[roster] save failed {0}: {1}", path, ex.Message);
+            }
         }
 
         ScheduleRosterDbUpsert(accountId, roster);

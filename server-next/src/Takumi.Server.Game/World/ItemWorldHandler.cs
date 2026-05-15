@@ -96,7 +96,8 @@ public static class ItemWorldHandler
             return true;
         }
 
-        if (srcFlag != 0 || dstFlag != 0)
+        if (!ClientGameplayPackets602.IsSupportedItemStorage(srcFlag)
+            || !ClientGameplayPackets602.IsSupportedItemStorage(dstFlag))
         {
             await writeAsync(ItemWorldWire602.BuildMoveFail(dstSlot), ct).ConfigureAwait(false);
             return true;

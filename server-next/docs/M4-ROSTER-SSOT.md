@@ -16,6 +16,14 @@ Last updated: 2026-05-16
 
 When `TAKUMI_ROSTER_DB_SYNC=1` and merge mode is not `json`, login merge copies **`current_hp` / `max_hp` / `current_mp` / `max_mp` / `zen`** from `character_roster` into the in-memory roster (same pass as map/xy). JSON file remains written first on save; Postgres upsert follows the JSON snapshot. **First join** with unset vitals (`max_hp == 0`): hosts seed from the **`F3 03`** wire they just sent (`JoinMapVitalsSeed`) so disconnect / periodic flush persist non-zero stats.
 
+## Optional: Postgres-first load (`TAKUMI_ROSTER_DB_PRIMARY=1`)
+
+Requires **`TAKUMI_ROSTER_DB_SYNC=1`**. On login, hosts load **`character_roster`** first; if the account has rows, JSON is not read and DB overlay is skipped. If DB is empty, behavior falls back to JSON + optional overlay (`TAKUMI_ROSTER_DB_MERGE_MODE`).
+
+On save, Postgres upsert still runs. JSON export is skipped unless **`TAKUMI_ROSTER_JSON_EXPORT=1`** (useful as a local cache for QA).
+
+Implementation: **`CharacterRosterBootstrap`**, **`CharacterRosterHostLoad`** (game TCP).
+
 ## What “Postgres-only SSOT” would require later
 
 - Single writer API used by **both** `LegacyLoginHost` / `GamePortMinimalSession` and any importer.

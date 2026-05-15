@@ -204,6 +204,9 @@ public static class ClientGameplayPackets602
 
     public const int ItemMoveFrameLength = 19;
 
+    /// <summary>Main inventory + equipment (<c>fromStorage</c>/<c>toStorage</c> = 0 on Android).</summary>
+    public static bool IsSupportedItemStorage(byte storageFlag) => storageFlag == 0;
+
     public static bool TryFindItemPickRequest(ReadOnlySpan<byte> packet, out int frameOffset, out ushort mapItemIndex)
     {
         frameOffset = -1;

@@ -58,7 +58,7 @@
 - [ ] Bảng domain `character` (hoặc đồng bộ từ JSON) có `map_id`, `pos_x`, `pos_y`, `angle` + FK account — *`IMPLEMENTATION-CHECKLIST` §Done đã có entity runtime; cần bài toán đồng bộ với `character_roster` / JSON nếu muốn SSOT DB-only.* Chi tiết từng bước: **`docs/M7-CHARACTER-PERSISTENCE-CHECKLIST.md`** (M7b–M7d) + **`docs/M8-M10-WORLD-RUNTIME-CHECKLIST.md`** §M8.
 - [ ] Importer `takumi_legacy` → runtime cho các cột world (nếu staging có dữ liệu).
 - [x] **Quyết định SSOT (tài liệu, M4 freeze):** JSON authoritative + Postgres mirror + overlay merge — không Postgres-only cho tới khi có dự án riêng; **`docs/M4-ROSTER-SSOT.md`**. Dev **M5** có thể làm ticket/handoff trước khi SSOT code xong.
-- [ ] **Triển khai SSOT Postgres-only** (một đường ghi, bỏ JSON hoặc JSON chỉ cache): hạng mục lớn — xem `IMPLEMENTATION-CHECKLIST.md` §Next High.
+- [~] **Triển khai SSOT Postgres-only** (một đường ghi, bỏ JSON hoặc JSON chỉ cache): **`TAKUMI_ROSTER_DB_PRIMARY=1`** + **`TAKUMI_ROSTER_DB_SYNC=1`** — load DB trước, JSON fallback khi DB trống; **`TAKUMI_ROSTER_JSON_EXPORT=1`** để vẫn ghi file cache. Còn: domain `character` + importer.
 
 ---
 

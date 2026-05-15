@@ -1,6 +1,7 @@
 # Takumi Server Next - Implementation Checklist
 
 Last updated: 2026-05-16 (M9 combat stub + destroy viewport; M7 vitals prep)
+Last updated: 2026-05-16 (M7 vitals + M5 split Connect/Login hosts; M4 routing → M7/M8–M10 checklists)
 
 ## Repository vs checklist (read first)
 
@@ -85,7 +86,7 @@ Use this to avoid unnecessary rebuilds.
 ## Next (High Priority)
 
 - [x] **M4b observability:** `CharacterRosterMirrorHealth` — merge/upsert success+fail counts; upsert errors log `[roster-health] …` snapshot; **`TAKUMI_ROSTER_HEALTH_LOG`** logs snapshot after **`TryDrainPendingUpserts`** (`docs/M4-WORLD-POSITION-CHECKLIST.md`).
-- [ ] **M4b–M5b (remaining):** Postgres-first roster **SSOT** beyond JSON mirror (domain `character` sync, importer world columns) — see **`docs/M4-WORLD-POSITION-CHECKLIST.md`** §Importer / SSOT; does **not** block M5 join/ticket work.
+- [ ] **M4b–M5b (remaining):** Postgres-first roster **SSOT** beyond JSON mirror — bỏ phụ thuộc chỉnh tay `takumi-roster/*.json` cho world/vitals; đồng bộ domain `character` + importer — **`docs/M4-WORLD-POSITION-CHECKLIST.md`** §Importer / SSOT; does **not** block M5 join/ticket work.
 - [ ] **M6+ / M7–M10:** Full **`Takumi.Server.Game`** protocol after join (map/scope/combat) when client uses **only** game TCP — **`docs/M7-CHARACTER-PERSISTENCE-CHECKLIST.md`**, **`docs/M8-M10-WORLD-RUNTIME-CHECKLIST.md`**.
 - [x] **Split-stack login handoff (Postgres):** `sql/init/003_session_ticket.sql` + **`PostgresSessionHandoffRepository`**; **`TAKUMI_SESSION_HANDOFF_DB=1`** → `LegacyLoginHost` persists pending row after F1 01; optional **`TAKUMI_GAME_REQUIRE_LOGIN_HANDOFF=1`** on **GameHost** consumes one row before F1 01 success (**IP match** default on, override with **`TAKUMI_GAME_HANDOFF_MATCH_IP=0`**). Optional **signed wire path:** **`TAKUMI_SESSION_TICKET_HMAC_KEY`** + **`TAKUMI_GAME_TICKET_WIRE=1`** — Legacy pushes **`F1 A5`**, client **`F1 A6`** before game **`F1 01`**, consume on attach (see **`docs/M6-GAME-TCP-CHECKLIST.md`**). Plain IP handoff does not send ticket bytes on wire.
 - [x] **M5 split processes:** `Takumi.Server.LoginHost` + `Takumi.Server.ConnectHost` (shared `LegacyLoginHost.Runner` / `ConnectServerHostRunner`); Docker profile **`splitstack`**; scripts `run-login-host.sh` / `run-connect-host.sh`. Combined `LegacyLoginHost` unchanged for default Docker.
@@ -141,6 +142,8 @@ Use this to avoid unnecessary rebuilds.
 
 4. **M4 — Login + nhân vật + vị trí lưu thế giới** *(M4a + M4c walk + periodic save + **M4b mirror + merge health metrics** — SSOT Postgres-only + tile/float still open; see **`docs/M4-WORLD-POSITION-CHECKLIST.md`** §Handoff M5; vitals schema prep **`004_character_roster_vitals.sql`** → **`docs/M7-CHARACTER-PERSISTENCE-CHECKLIST.md`**)*  
    - [x] Bảng / roster: `map_id`, `pos_x`, `pos_y`, `angle` — **M4a:** file **`server-next/takumi-roster/<accountId>.json`**; **M4b:** mirror `character_roster` khi `TAKUMI_ROSTER_DB_SYNC`; join dùng `JoinMapSpawnWire`.
+4. **M4 — Login + nhân vật + vị trí lưu thế giới** *(M4a + M4c walk + periodic save + **M4b mirror + merge health metrics** — SSOT Postgres-only + tile/float still open; see **`docs/M4-WORLD-POSITION-CHECKLIST.md`** §Handoff M5; vitals **`004_character_roster_vitals.sql`** → **`docs/M7-CHARACTER-PERSISTENCE-CHECKLIST.md`**)*  
+   - [x] Bảng / roster: `map_id`, `pos_x`, `pos_y`, `angle` — **M4a:** `takumi-roster/<accountId>.json`; **M4b:** mirror `character_roster` khi `TAKUMI_ROSTER_DB_SYNC`; join dùng `JoinMapSpawnWire` (`LegacyLoginHostRunner` / `GamePortMinimalSession`). *(SSOT chỉ DB = mục `[ ]` trong **`## Next (High Priority)`**.)*  
    - [x] Đồng bộ khi disconnect (flush roster), khi đổi map stub (`8E 02` → cập nhật `MapId` + save); **walk** `C1 … 0xD4`/`0x10` + **instant move** `C1 05 15` cập nhật `posX`/`posY`/`angle` in-memory → flush cùng disconnect (log thực tế: join lần hai tại tile đã đi, ví dụ `xy=(140,193)` sau khi rời map).  
    - [x] **M4b:** merge/upsert health counters + optional **`TAKUMI_ROSTER_HEALTH_LOG`** (`CharacterRosterMirrorHealth`). **Tile vs float:** hợp đồng tile-only + **SSOT tài liệu** — `docs/M4-TILE-AND-COORDINATES.md`, `docs/M4-ROSTER-SSOT.md`.  
    - [ ] **M4b/M4c + code SSOT Postgres-only:** importer / `character` domain sync / full GS listener parity — **`docs/M4-WORLD-POSITION-CHECKLIST.md`** (owner M7+ where noted).
@@ -172,6 +175,10 @@ Use this to avoid unnecessary rebuilds.
    - [x] Regen delay từ `Monster.txt` (`MapMonsterInstance.TryRegen`).  
    - [x] Combat stub: `C1 0x11` hit / `0x19` skill → damage, `C1 0x14` destroy, `C1 0x16` die (`MonsterCombatHandler`).  
    - [ ] Full combat (defense, skills, AoE) + AI; broadcast scope (M10).
+9. **M9 — NPC & monster runtime** *(scope A — **`docs/M9-NPC-MONSTER-CHECKLIST.md`**, **`docs/M8-M10-WORLD-RUNTIME-CHECKLIST.md`** §M9)*  
+   - [x] Spawn theo map từ **MonsterSetBase.txt** + **Monster.txt** stats (đứng yên; view-range filter).  
+   - [x] Gói **`C2 0x13`** scope spawn sau join (`MonsterViewportWire602`, hook Legacy + GamePort).  
+   - [ ] Regen; AI; broadcast khi di chuyển (M10).
 
 10. **M10 — Movement & visibility** — cùng file §M10  
     - [x] Nhận **walk / instant move** trên TCP login tối thiểu (`LegacyLoginHost`, `GamePortMinimalSession`) → cập nhật roster tile (chưa broadcast scope).  

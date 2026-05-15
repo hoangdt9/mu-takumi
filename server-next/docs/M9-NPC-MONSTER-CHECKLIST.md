@@ -12,6 +12,7 @@ Last updated: 2026-05-15
 - [x] **Regen timer** from `Monster.txt` `RegenTime` (`MapMonsterInstance.TryRegen` on viewport scan).
 - [x] **Combat stub** — `C1 0x11` hit / `0x19` skill → damage, `MarkDead`, `C1 0x16` die, `C1 0x14` destroy.
 - [ ] **Full combat** (defense, skills, broadcast to others) — post-M9.
+- [ ] **Regen** / AI / combat — M9 later.
 - [ ] **M8 ETL** to Postgres spawn table — optional; file path env for now.
 
 ## Legacy reference (`Source/4.GameServer`)

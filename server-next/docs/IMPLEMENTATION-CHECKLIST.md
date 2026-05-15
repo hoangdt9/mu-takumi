@@ -172,7 +172,7 @@ Use this to avoid unnecessary rebuilds.
    - [x] Gates / shops / Custom: **`006_map_gate_npc_shop_custom.sql`**, ETL + **`MapGateCatalog`** / **`NpcShopCatalog`**; env **`TAKUMI_WORLD_STATIC_DB=1`** (hoặc từng flag `TAKUMI_MAP_GATE_DB`, `TAKUMI_NPC_SHOP_DB`, `TAKUMI_CUSTOM_WORLD_DB`).  
    - [ ] Wire handlers: gate teleport `0x1C`, shop list `0x31` (catalogs loaded at host boot).
 
-9. **M9 — NPC & monster runtime** *(**`docs/M9-NPC-MONSTER-CHECKLIST.md`**, **`docs/M9-MONSTER-AI-PORT-CHECKLIST.md`**, **`docs/WORKSTREAM-OWNERSHIP.md`**)*  
+9. **M9 — NPC & monster runtime** *(**`docs/M9-NPC-MONSTER-CHECKLIST.md`**, **`docs/M9-MONSTER-AI-PORT-CHECKLIST.md`**, **`server-next/test/M9-monster-combat-qa.md`**, **`docs/WORKSTREAM-OWNERSHIP.md`**)*  
    - [x] Spawn theo map (file + **Postgres** khi `TAKUMI_MONSTER_SPAWN_DB=1`).  
    - [x] **`C2 0x13`** sau join + incremental walk; **`C1 0x14`** destroy khi rời view.  
    - [x] Regen + combat stub (`MonsterCombatHandler`, Defense từ `Monster.txt`).  
@@ -180,7 +180,7 @@ Use this to avoid unnecessary rebuilds.
    - [ ] AoE / PvP / full pathfinding — **M10c / M9b P2–P3**.
 
 10. **M10 — Movement & visibility** — cùng file §M10; owner: **`docs/WORKSTREAM-OWNERSHIP.md`**  
-    - [x] Walk / instant move → roster tile.  
+    - [x] Walk / instant move → roster tile (`LegacyLoginHost`, `GamePortMinimalSession`).  
     - [x] **M10a:** broadcast `C1 0x15` / `0x18` cùng map (`GameMapPresenceRegistry`).  
     - [ ] Player viewport `C2 0x12`; vitals mid-combat (M7).
 

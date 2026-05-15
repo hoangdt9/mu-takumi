@@ -141,7 +141,11 @@ public static class MonsterViewerRegistry
         }
     }
 
-    public static void Unregister(Guid sessionId) => Sessions.TryRemove(sessionId, out _);
+    public static void Unregister(Guid sessionId)
+    {
+        Sessions.TryRemove(sessionId, out _);
+        PlayerVitalsState.Unregister(sessionId);
+    }
 
     public static bool TryGetSession(Guid sessionId, out MonsterViewerSession session) =>
         Sessions.TryGetValue(sessionId, out session!);
@@ -262,6 +266,11 @@ public static class MonsterViewerRegistry
             return;
         }
 
+        if (PlayerVitalsState.IsDead(targetSessionId))
+        {
+            return;
+        }
+
         var baseDmg = ParseIntEnv("TAKUMI_MONSTER_TO_PLAYER_DAMAGE", 15, 1, 2000);
         var dmg = Math.Max(1, baseDmg * Math.Clamp(damagePercent, 50, 500) / 100);
         var maxHp = Math.Max(1, session.MaxHp);
@@ -294,6 +303,7 @@ public static class MonsterViewerRegistry
 
         if (session.CurrentHp <= 0)
         {
+            PlayerVitalsState.MarkDead(targetSessionId, PlayerVitalsState.ReviveDelayFromEnv());
             var diePkt = PlayerDieWire602.Build(session.PlayerObjectKey, monsterObjectKey);
             await GamePortOutboundWire.WriteAsync(session.Connection, session.Protect, diePkt, ct).ConfigureAwait(false);
         }

@@ -45,6 +45,7 @@ public static class LegacyLoginHostRunner
         NpcShopCatalog.EnsureInitialized();
         MapMonsterWorld.EnsureInitialized();
         MonsterAiLoop.Start(appCancellationToken);
+        PlayerVitalsLoop.Start(appCancellationToken);
 
         if (!int.TryParse(
                 Environment.GetEnvironmentVariable("TAKUMI_LOGIN_PORT"),

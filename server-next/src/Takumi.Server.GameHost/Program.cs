@@ -21,6 +21,7 @@ using var cts = new CancellationTokenSource();
 Console.CancelKeyPress += (_, e) => { e.Cancel = true; cts.Cancel(); };
 MapMonsterWorld.EnsureInitialized();
 MonsterAiLoop.Start(cts.Token);
+PlayerVitalsLoop.Start(cts.Token);
 
 if (!int.TryParse(
         Environment.GetEnvironmentVariable("TAKUMI_GAME_PORT"),

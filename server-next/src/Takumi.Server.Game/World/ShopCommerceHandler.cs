@@ -1,3 +1,4 @@
+using Takumi.Server.Game;
 using Takumi.Server.Protocol;
 
 namespace Takumi.Server.Game.World;
@@ -16,6 +17,11 @@ public static class ShopCommerceHandler
         Action? onRosterDirty,
         CancellationToken ct)
     {
+        if (PlayerVitalsState.IsDead(presenceSessionId))
+        {
+            return false;
+        }
+
         if (ClientGameplayPackets602.TryFindBuyRequest(packet, out _, out var shopSlot))
         {
             return await HandleBuyAsync(

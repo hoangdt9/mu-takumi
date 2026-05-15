@@ -164,7 +164,7 @@ Use this to avoid unnecessary rebuilds.
    - [x] SQL prep: **`004_character_roster_vitals.sql`**.  
    - [x] **M7b–c:** vitals trên roster + join **`F3 03`**; tests **`JoinMapVitals602Tests`**.  
    - [x] **M7d (partial):** `JoinMapVitalsSeed`, `LifeManaWire602`, `RosterVitalsOutboundTracker`, **`TAKUMI_SEND_LIFE_MANA_AFTER_JOIN`**.  
-   - [~] **M7d:** combat stub — monster hit → `0x26` + `0x17` die + `UpsertVitalsAsync`; heal/revive/PvP **OPEN**.  
+   - [~] **M7d:** combat — hit/die/revive (`PlayerVitalsLoop`, `F3 04`), HP regen, vitals DB upsert; PvP/heal items **OPEN**.  
    - [x] **M7 + M4:** `inventory_slot` upsert sau buy/sell/repair — `InventorySlotMirrorWriter`.  
    - [ ] Migration EF bổ sung (nếu dùng song song với `sql/init`).
 

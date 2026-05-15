@@ -126,18 +126,18 @@ public static class PlayerVitalsLoop
                 .ConfigureAwait(false);
         }
 
-        // Soft teleport to town (0x1C flag=0): client ReceiveTeleport moves hero without ClearCharacters.
-        var tele = TeleportWire602.Build(0, town.Map, town.PositionX, town.PositionY, town.Angle);
-        await GamePortOutboundWire.WriteAsync(session.Connection, session.Protect, tele, ct).ConfigureAwait(false);
-
+        // Town respawn: C1 F3 04 (ReceiveRevival) — matches client PRECEIVE_REVIVAL (SubCode + tile XY).
+        // Do not use C1 0x1C flag=0 here: client struct has no SubCode and misreads XY as (tileY, angle).
         var hp = (ushort)Math.Min(session.CurrentHp, ushort.MaxValue);
         var mp = (ushort)Math.Min(session.CurrentMp, ushort.MaxValue);
-        var hpMax = (ushort)Math.Min(maxHp, ushort.MaxValue);
-        var mpMax = (ushort)Math.Min(maxMp, ushort.MaxValue);
-        await GamePortOutboundWire.WriteAsync(session.Connection, session.Protect, LifeManaWire602.BuildLife(LifeManaWire602.TypeCurrent, hp), ct).ConfigureAwait(false);
-        await GamePortOutboundWire.WriteAsync(session.Connection, session.Protect, LifeManaWire602.BuildLife(LifeManaWire602.TypeMax, hpMax), ct).ConfigureAwait(false);
-        await GamePortOutboundWire.WriteAsync(session.Connection, session.Protect, LifeManaWire602.BuildMana(LifeManaWire602.TypeCurrent, mp), ct).ConfigureAwait(false);
-        await GamePortOutboundWire.WriteAsync(session.Connection, session.Protect, LifeManaWire602.BuildMana(LifeManaWire602.TypeMax, mpMax), ct).ConfigureAwait(false);
+        var regen = CharacterRegenWire602.Build(
+            town.Map,
+            town.PositionX,
+            town.PositionY,
+            town.Angle,
+            hp,
+            mp);
+        await GamePortOutboundWire.WriteAsync(session.Connection, session.Protect, regen, ct).ConfigureAwait(false);
 
         Console.WriteLine(
             "[m7d] player revived key={0} hp={1}/{2} town map={3} xy=({4},{5})",

@@ -635,6 +635,28 @@ public static class GamePortMinimalSession
                         }
                     }
 
+                    if (loginLatch.IsLoggedIn
+                        && sessionJoinCharacterName10 is not null
+                        && FindRosterEntry(roster, sessionJoinCharacterName10) is { } pickedShop)
+                    {
+                        if (NpcShopHandler.TryHandleShopClose(packet))
+                        {
+                            return;
+                        }
+
+                        if (await NpcShopHandler.TryHandleTalkAsync(
+                                packet,
+                                pickedShop,
+                                connection,
+                                protect,
+                                remote,
+                                verbose,
+                                ct).ConfigureAwait(false))
+                        {
+                            return;
+                        }
+                    }
+
                     if (loginLatch.IsLoggedIn && GamePacketFinders.TryFindGameLogoutRequest(packet, out var logoutOff, out var logoutFlag))
                     {
                         var ack = new byte[] { 0xC1, 0x05, 0xF1, 0x02, logoutFlag };

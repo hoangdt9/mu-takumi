@@ -1093,18 +1093,44 @@ public static class LegacyLoginHostRunner
                     && sessionJoinCharacterName10 is not null
                     && FindRosterEntry(roster, sessionJoinCharacterName10) is { } pickedGate)
                 {
+                    var gateWire = ToGameRosterEntry(pickedGate);
                     if (await MapGateTeleportHandler.TryHandleAsync(
                             packet,
-                            pickedGate,
+                            gateWire,
                             monsterViewportTracker,
                             presenceSessionId,
                             connection,
-                            clientProtectOutbound: null,
+                            protect: null,
                             remote,
                             verbose,
                             ct).ConfigureAwait(false))
                     {
+                        ApplyGameRosterEntry(pickedGate, gateWire);
                         Volatile.Write(ref rosterDirty, 1);
+                        return;
+                    }
+                }
+
+                if (loginLatch.IsLoggedIn
+                    && sessionJoinCharacterName10 is not null
+                    && FindRosterEntry(roster, sessionJoinCharacterName10) is { } pickedShop)
+                {
+                    if (NpcShopHandler.TryHandleShopClose(packet))
+                    {
+                        return;
+                    }
+
+                    var shopWire = ToGameRosterEntry(pickedShop);
+                    if (await NpcShopHandler.TryHandleTalkAsync(
+                            packet,
+                            shopWire,
+                            connection,
+                            protect: null,
+                            remote,
+                            verbose,
+                            ct).ConfigureAwait(false))
+                    {
+                        ApplyGameRosterEntry(pickedShop, shopWire);
                         return;
                     }
                 }
@@ -2178,6 +2204,36 @@ public static class LegacyLoginHostRunner
         }
 
         return d.Count > 0 ? d : null;
+    }
+
+    static GameRosterEntry ToGameRosterEntry(CharacterRosterEntry c) =>
+        new()
+        {
+            Name10 = c.Name10,
+            ServerClass = c.ServerClass,
+            Level = c.Level,
+            MapId = c.MapId,
+            PosX = c.PosX,
+            PosY = c.PosY,
+            Angle = c.Angle,
+            CurrentHp = c.CurrentHp,
+            MaxHp = c.MaxHp,
+            CurrentMp = c.CurrentMp,
+            MaxMp = c.MaxMp,
+            Zen = c.Zen,
+        };
+
+    static void ApplyGameRosterEntry(CharacterRosterEntry c, GameRosterEntry g)
+    {
+        c.MapId = g.MapId;
+        c.PosX = g.PosX;
+        c.PosY = g.PosY;
+        c.Angle = g.Angle;
+        c.CurrentHp = g.CurrentHp;
+        c.MaxHp = g.MaxHp;
+        c.CurrentMp = g.CurrentMp;
+        c.MaxMp = g.MaxMp;
+        c.Zen = g.Zen;
     }
 }
 

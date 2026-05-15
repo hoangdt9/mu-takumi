@@ -340,6 +340,45 @@ public static class GamePacketFinders
         return false;
     }
 
+    /// <summary>PMSG_NPC_TALK_RECV (<c>C1/C3 0x30</c>): object key in bytes 3–4 (WORD).</summary>
+    public static bool TryFindNpcTalkRequest(ReadOnlySpan<byte> packet, out int objectKey)
+    {
+        objectKey = 0;
+
+        for (var i = 0; i <= packet.Length - 5; i++)
+        {
+            if (packet[i] is not (0xC1 or 0xC3) || packet[i + 2] != 0x30)
+            {
+                continue;
+            }
+
+            var size = packet[i + 1];
+            if (size < 5 || i + size > packet.Length)
+            {
+                continue;
+            }
+
+            objectKey = packet[i + 3] | (packet[i + 4] << 8);
+            return objectKey > 0;
+        }
+
+        return false;
+    }
+
+    /// <summary>Shop close (<c>SendExitInventory</c> / <c>C1 0x31</c> len 3).</summary>
+    public static bool TryFindShopCloseRequest(ReadOnlySpan<byte> packet)
+    {
+        for (var i = 0; i <= packet.Length - 3; i++)
+        {
+            if (packet[i] == 0xC1 && packet[i + 1] == 0x03 && packet[i + 2] == 0x31)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /// <summary>PMSG_CREATE_CHARACTER (<c>F3 01</c>): <c>C1 0F F3 …</c> + name[10] + packed class.</summary>
     public static bool TryFindCreateCharacterRequest(
         ReadOnlySpan<byte> packet,

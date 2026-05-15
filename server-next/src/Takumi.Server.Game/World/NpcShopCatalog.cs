@@ -43,6 +43,8 @@ public static class NpcShopCatalog
     public static int ResolveShopIndex(int monsterClass, byte mapId, byte x, byte y)
     {
         EnsureInitialized();
+        var bestScore = -1;
+        var bestIndex = -1;
         foreach (var s in _shops.Values)
         {
             if (s.MonsterClass != monsterClass)
@@ -65,10 +67,40 @@ public static class NpcShopCatalog
                 continue;
             }
 
-            return s.ShopIndex;
+            var score = 0;
+            if (s.MapId is not null)
+            {
+                score += 4;
+            }
+
+            if (s.PosX is not null)
+            {
+                score += 2;
+            }
+
+            if (s.PosY is not null)
+            {
+                score += 1;
+            }
+
+            if (score > bestScore)
+            {
+                bestScore = score;
+                bestIndex = s.ShopIndex;
+            }
         }
 
-        return -1;
+        return bestIndex;
+    }
+
+    public static void LoadForTests(IReadOnlyList<NpcShopEntry> shops, IReadOnlyList<NpcShopItemEntry> items)
+    {
+        lock (InitLock)
+        {
+            _shops = shops.ToDictionary(s => s.ShopIndex);
+            _itemsByShop = items.GroupBy(i => i.ShopIndex).ToDictionary(g => g.Key, g => g.ToList());
+            _initialized = true;
+        }
     }
 
     public static IReadOnlyList<NpcShopItemEntry> GetItems(int shopIndex)

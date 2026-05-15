@@ -37,6 +37,9 @@ docker compose logs -f legacy-login postgres datazip game-host
 
 # Log Android
 ./scripts/watch-android-takumi-log.sh
+
+# USB adb reverse (skip APK rebuild after server changes; one-time APK -PmuBootstrapAdbReverse=true)
+./scripts/adb-reverse.sh
 ```
 
 ## Không cần rebuild APK khi

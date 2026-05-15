@@ -56,7 +56,8 @@ Last updated: 2026-05-16
 | PvP / player vs player damage | M10c | `MonsterCombatHandler` (chỉ mob) |
 | AoE skill / nhiều target | M10c | `ClientHitPackets602` |
 | Monster AI / pathing | M9b hoặc M11 | `MapMonsterInstance` state machine |
-| NPC shop wire sau join | M8/M9 | Gate/shop tables từ main |
+| NPC viewport + shop list + gate + buy/sell/repair stub | **mac-m4** (`docs/M9-M8-NPC-GAMEPLAY-OWNERSHIP.md`) | Đừng sửa `WorldGameplayHandlers` / `ShopCommerceHandler` trừ fix bug |
+| ItemValue / persist inventory sau shop | M8 + M4b | `ShopCommerceHandler` |
 | M4b SSOT Postgres-only roster | M4/M7 | `takumi-roster/*.json` merge logic |
 
 ---

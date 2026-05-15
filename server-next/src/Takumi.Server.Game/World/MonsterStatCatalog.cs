@@ -92,17 +92,29 @@ public sealed class MonsterStatCatalog
             && int.TryParse(parts[col + 5], NumberStyles.Integer, CultureInfo.InvariantCulture, out var def)
             ? def
             : 0;
-        var moveRange = col + 12 < parts.Length
-            && int.TryParse(parts[col + 12], NumberStyles.Integer, CultureInfo.InvariantCulture, out var mr)
+        var moveRange = col + 9 < parts.Length
+            && int.TryParse(parts[col + 9], NumberStyles.Integer, CultureInfo.InvariantCulture, out var mr)
             ? mr
             : 3;
-        var regenCol = col + 17;
+        var attackType = col + 10 < parts.Length
+            && int.TryParse(parts[col + 10], NumberStyles.Integer, CultureInfo.InvariantCulture, out var at)
+            ? at
+            : 0;
+        var attackRange = col + 11 < parts.Length
+            && int.TryParse(parts[col + 11], NumberStyles.Integer, CultureInfo.InvariantCulture, out var ar)
+            ? ar
+            : 1;
+        var viewRange = col + 12 < parts.Length
+            && int.TryParse(parts[col + 12], NumberStyles.Integer, CultureInfo.InvariantCulture, out var vr)
+            ? vr
+            : 5;
+        var regenCol = col + 15;
         var regenSeconds = regenCol < parts.Length
             && int.TryParse(parts[regenCol], NumberStyles.Integer, CultureInfo.InvariantCulture, out var regen)
             ? regen
             : 10;
 
-        stat = new MonsterStat(index, level, life, damageMin, damageMax, defense, moveRange, regenSeconds);
+        stat = new MonsterStat(index, level, life, damageMin, damageMax, defense, moveRange, attackType, attackRange, viewRange, regenSeconds);
         return true;
     }
 
@@ -117,6 +129,9 @@ public sealed class MonsterStatCatalog
                 DamageMax: 10,
                 Defense: 0,
                 MoveRange: 3,
+                AttackType: 0,
+                AttackRange: 1,
+                ViewRange: 5,
                 RegenTimeSeconds: 10);
 }
 
@@ -128,4 +143,10 @@ public readonly record struct MonsterStat(
     int DamageMax,
     int Defense,
     int MoveRange,
-    int RegenTimeSeconds);
+    int AttackType,
+    int AttackRange,
+    int ViewRange,
+    int RegenTimeSeconds)
+{
+    public bool UsesRangedOrMagic => AttackType >= 100;
+}

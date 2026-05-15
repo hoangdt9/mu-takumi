@@ -88,6 +88,7 @@ public static class MapMonsterWorld
                 instCount,
                 mapCount,
                 sw.ElapsedMilliseconds);
+            MapAttWalkability.PreloadMaps(_byMap.Keys);
             _initialized = true;
         }
     }
@@ -200,8 +201,23 @@ public static class MapMonsterWorld
                 continue;
             }
 
+            if (MapAttWalkability.IsSafeZone(m.Map, m.X, m.Y))
+            {
+                if (rng.Next(100) < wanderPct && m.TryRollWander(rng, m.Map, out var szX, out var szY, out var szDir))
+                {
+                    events.Add(new MonsterAiEvent(MonsterAiEventKind.Walk, m.ObjectKey, m.Map, szX, szY, szDir, 0));
+                }
+
+                continue;
+            }
+
+            var stat = GetMonsterStat(m.MonsterClass);
+            var mobAttackRange = Math.Max(attackRange, stat.AttackRange > 0 ? stat.AttackRange : attackRange);
+            var mobChaseRange = Math.Max(chaseRange, stat.ViewRange > 0 ? stat.ViewRange : chaseRange);
+
             MonsterViewerTarget? target = null;
-            if (MonsterViewerRegistry.TryFindNearestTarget(m.Map, m.X, m.Y, chaseRange, out var found))
+            if (MonsterViewerRegistry.TryFindNearestTarget(m.Map, m.X, m.Y, mobChaseRange, out var found)
+                && !MapAttWalkability.IsSafeZone(m.Map, found.X, found.Y))
             {
                 target = found;
                 m.SetAggro(found.PlayerObjectKey);
@@ -214,7 +230,7 @@ public static class MapMonsterWorld
             if (target is { } t)
             {
                 var dist = m.ManhattanTo(t.X, t.Y);
-                if (dist > attackRange)
+                if (dist > mobAttackRange)
                 {
                     if (m.TryChaseStep(t.X, t.Y, m.Map, out var cx, out var cy, out var cdir))
                     {
@@ -227,9 +243,10 @@ public static class MapMonsterWorld
 
                 if (rng.Next(100) < attackPct)
                 {
+                    var useSkill = stat.UsesRangedOrMagic && rng.Next(100) < ParseIntEnv("TAKUMI_MONSTER_SKILL_CHANCE_PCT", 35, 0, 100);
                     events.Add(
                         new MonsterAiEvent(
-                            MonsterAiEventKind.Attack,
+                            useSkill ? MonsterAiEventKind.SkillAttack : MonsterAiEventKind.Attack,
                             m.ObjectKey,
                             m.Map,
                             m.X,

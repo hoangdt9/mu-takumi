@@ -12,6 +12,14 @@ public static class MapAttWalkability
     static readonly Dictionary<byte, byte[]> WalkableByMap = new();
     static string? _dataRoot;
 
+    public static void PreloadMaps(IEnumerable<byte> mapIds)
+    {
+        foreach (var mapId in mapIds)
+        {
+            EnsureMapLoaded(mapId);
+        }
+    }
+
     /// <summary>True when tile is walkable or ATT not loaded (permissive fallback).</summary>
     public static bool CanWalk(byte mapId, byte x, byte y)
     {
@@ -22,6 +30,16 @@ public static class MapAttWalkability
 
         const ushort blocked = 0x0004 | 0x0008; // NoMove | NoGround
         return (flags & blocked) == 0;
+    }
+
+    public static bool IsSafeZone(byte mapId, byte x, byte y)
+    {
+        if (!TryGetFlags(mapId, x, y, out var flags))
+        {
+            return false;
+        }
+
+        return (flags & 0x0001) != 0; // TWFlags.SafeZone
     }
 
     static bool TryGetFlags(byte mapId, byte x, byte y, out ushort flags)
@@ -104,7 +122,9 @@ public static class MapAttWalkability
         {
             Path.Combine(Environment.CurrentDirectory, "Data"),
             Path.Combine(Environment.CurrentDirectory, "..", "docker", "data-zip", "host", "Data"),
+            Path.Combine(Environment.CurrentDirectory, "..", "..", "docker", "data-zip", "host", "Data"),
             Path.Combine(Environment.CurrentDirectory, "..", "MuServer", "Data"),
+            Path.Combine(Environment.CurrentDirectory, "..", "MuServer", "4.GameServer", "Data"),
         };
 
         foreach (var c in candidates)

@@ -16,7 +16,7 @@ Last updated: 2026-05-16
 - [x] **M10a (mac-m4):** map presence `C1 0x15` / `0x18`, miss, skill % (`GameMapPresenceRegistry`).
 - [ ] **Full combat** (AoE, PvP) — **M10c** (xem **`WORKSTREAM-OWNERSHIP.md`**).
 - [~] **AI (M9b):** wander, chase, `0xD4`/`0x18`, player dmg stub, periodic viewport, regen broadcast — see **`docs/M9-MONSTER-AI-PORT-CHECKLIST.md`**.
-- [ ] **NPC shop wire** — shop data **main** `8c1758b`; handlers `0x31` chưa.
+- [x] **NPC shop wire** — `0x30` talk → `C2 0x31` (`WorldGameplayHandlers`, `NpcShopCatalog`).
 - [x] **M8 ETL** spawn Postgres — **`main`** (`b33d890`); `MapMonsterWorld` fallback file khi DB trống.
 
 ## Legacy reference (`Source/4.GameServer`)

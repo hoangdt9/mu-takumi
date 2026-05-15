@@ -525,6 +525,29 @@ public static class GamePortMinimalSession
                     if (loginLatch.IsLoggedIn
                         && sessionJoinCharacterName10 is not null)
                     {
+                        var pickedGameplay = FindRosterEntry(roster, sessionJoinCharacterName10);
+                        if (pickedGameplay is not null
+                            && await WorldGameplayHandlers.TryHandlePacketAsync(
+                                pickedGameplay,
+                                monsterViewportTracker,
+                                connection,
+                                protect,
+                                loggedAccountId,
+                                sessionJoinCharacterName10,
+                                presenceSessionId,
+                                packet,
+                                remote,
+                                async (m, t) => await GamePortOutboundWire.WriteAsync(connection, protect, m, t, TrackVitalsOutbound).ConfigureAwait(false),
+                                () => Volatile.Write(ref rosterDirty, 1),
+                                ct).ConfigureAwait(false))
+                        {
+                            return;
+                        }
+                    }
+
+                    if (loginLatch.IsLoggedIn
+                        && sessionJoinCharacterName10 is not null)
+                    {
                         var pickedCombat = FindRosterEntry(roster, sessionJoinCharacterName10);
                         if (pickedCombat is not null
                             && await MonsterCombatHandler.TryHandleCombatPacketAsync(

@@ -53,6 +53,8 @@ services:
       - ${TAKUMI_DEC2_HOST_DIR:-./keys}:/keys:ro
       # MuServer Data (MonsterSetBase, gates, shops). Override TAKUMI_GAMESERVER_DATA_HOST if your tree differs.
       - ${TAKUMI_GAMESERVER_DATA_HOST:-../MuServer/4.GameServer/Data}:/muserver-data:ro
+      # Client terrain ATT (Lorencia/Terrain.att, …) for monster pathfinding. Default: docker data.zip host Data.
+      - ${TAKUMI_ATT_DATA_HOST:-../docker/data-zip/host/Data}:/att-data:ro
     ports:
       - "${TAKUMI_CONNECT_PUBLISH:-44605}:${TAKUMI_CONNECT_PORT:-44605}"
       - "${TAKUMI_LEGACY_LOGIN_PUBLISH:-44606}:${TAKUMI_LOGIN_PORT:-44606}"
@@ -73,6 +75,7 @@ services:
       TAKUMI_GAMESERVER_DATA_PATH: "${TAKUMI_GAMESERVER_DATA_PATH:-/muserver-data}"
       TAKUMI_MONSTER_SET_BASE_PATH: "${TAKUMI_MONSTER_SET_BASE_PATH:-/muserver-data/Monster/MonsterSetBase.txt}"
       TAKUMI_MONSTER_INFO_PATH: "${TAKUMI_MONSTER_INFO_PATH:-/muserver-data/Monster/Monster.txt}"
+      TAKUMI_ATT_DATA_ROOT: "${TAKUMI_ATT_DATA_ROOT:-/att-data}"
       DOTNET_ENVIRONMENT: "${DOTNET_ENVIRONMENT:-Development}"
     # Build then run so a stale bin/Release from the host volume cannot mask Program.cs changes.
     command:

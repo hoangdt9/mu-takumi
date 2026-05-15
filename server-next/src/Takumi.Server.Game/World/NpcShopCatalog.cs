@@ -77,6 +77,27 @@ public static class NpcShopCatalog
         return _itemsByShop.TryGetValue(shopIndex, out var list) ? list : Array.Empty<NpcShopItemEntry>();
     }
 
+    public static bool TryGetShopItem(int shopIndex, byte shopSlot, out NpcShopItemEntry? item)
+    {
+        EnsureInitialized();
+        item = null;
+        if (!_itemsByShop.TryGetValue(shopIndex, out var list))
+        {
+            return false;
+        }
+
+        foreach (var row in list)
+        {
+            if (row.Slot == shopSlot)
+            {
+                item = row;
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     static bool TryLoadFromPostgres()
     {
         var repo = TakumiPostgresMirror.NpcShop;

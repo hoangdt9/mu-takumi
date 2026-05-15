@@ -63,6 +63,12 @@ public static class RosterVitalsLifecycle
         entry.CurrentMp = v.CurrentMp;
         entry.MaxMp = v.MaxMp;
         entry.Zen = v.Zen;
+        if (JoinMapVitalsSeed.TryReadShieldFromJoinPacket(joinPkt, out var curSd, out var maxSd))
+        {
+            entry.CurrentShield = curSd;
+            entry.MaxShield = maxSd;
+        }
+
         return true;
     }
 

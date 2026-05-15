@@ -1,4 +1,6 @@
+using System.Text;
 using Takumi.Server.Game;
+using Takumi.Server.Game.Networking;
 using Takumi.Server.Protocol;
 
 namespace Takumi.Server.Game.World;
@@ -74,6 +76,22 @@ public static class ItemWorldHandler
                 .ConfigureAwait(false);
         }
 
+        if (ClientGameplayPackets602.TryFindItemUseRequest(packet, out _, out var useSlot, out var useTarget))
+        {
+            return await HandleUseAsync(
+                    player,
+                    presenceSessionId,
+                    accountId,
+                    characterName10,
+                    useSlot,
+                    useTarget,
+                    writeAsync,
+                    onRosterDirty,
+                    remote,
+                    ct)
+                .ConfigureAwait(false);
+        }
+
         return false;
     }
 
@@ -96,7 +114,8 @@ public static class ItemWorldHandler
             return true;
         }
 
-        if (srcFlag != 0 || dstFlag != 0)
+        if (!ClientGameplayPackets602.IsSupportedItemStorage(srcFlag)
+            || !ClientGameplayPackets602.IsSupportedItemStorage(dstFlag))
         {
             await writeAsync(ItemWorldWire602.BuildMoveFail(dstSlot), ct).ConfigureAwait(false);
             return true;
@@ -240,6 +259,132 @@ public static class ItemWorldHandler
         await writeAsync(ItemViewportWire602.BuildDeleteSingle(mapItemIndex), ct).ConfigureAwait(false);
         Console.WriteLine("[m7] item pick idx={0} → inv={1} map={2} {3}", mapItemIndex, bagSlot, player.MapId, remote);
         return true;
+    }
+
+    static async Task<bool> HandleUseAsync(
+        GameRosterEntry player,
+        Guid presenceSessionId,
+        string? accountId,
+        byte[] characterName10,
+        byte sourceSlotWire,
+        byte targetSlot,
+        Func<ReadOnlyMemory<byte>, CancellationToken, Task> writeAsync,
+        Action? onRosterDirty,
+        string remote,
+        CancellationToken ct)
+    {
+        _ = targetSlot;
+        if (!CanUseItems(player, presenceSessionId))
+        {
+            return true;
+        }
+
+        var sourceSlot = ClientGameplayPackets602.NormalizeItemUseSlot(sourceSlotWire);
+        if (sourceSlot == targetSlot || !ItemWire602.IsBagSlot(sourceSlot))
+        {
+            return true;
+        }
+
+        await PlayerShopSession.EnsureInventoryLoadedAsync(presenceSessionId, accountId, characterName10, ct)
+            .ConfigureAwait(false);
+
+        if (!PlayerShopSession.TryGetSlot(presenceSessionId, sourceSlot, out var blob) || ItemWire602.IsEmpty(blob))
+        {
+            return true;
+        }
+
+        var itemIndex = ItemWire602.DecodeItemIndex(blob);
+        var maxHp = Math.Max(1, player.MaxHp);
+        var maxMp = Math.Max(1, player.MaxMp);
+        player.MaxShield = InventoryConsumableRules.EnsureMaxShield(maxHp, player.MaxShield);
+        var maxShield = player.MaxShield;
+        if (!InventoryConsumableRules.TryGetPotionHeal(itemIndex, maxHp, maxMp, maxShield, out var heal))
+        {
+            Console.WriteLine("[m7] item use unsupported idx={0} slot={1} {2}", itemIndex, sourceSlot, remote);
+            return true;
+        }
+
+        if (heal.Hp > 0 || heal.Shield > 0)
+        {
+            if (heal.Hp > 0)
+            {
+                var cur = player.CurrentHp > 0 ? player.CurrentHp : maxHp;
+                player.CurrentHp = Math.Min(maxHp, cur + heal.Hp);
+            }
+
+            if (heal.Shield > 0)
+            {
+                var curSd = player.CurrentShield > 0 ? player.CurrentShield : 0;
+                player.CurrentShield = Math.Min(maxShield, curSd + heal.Shield);
+            }
+
+            await writeAsync(
+                    LifeManaWire602.BuildLife(
+                        LifeManaWire602.TypeCurrent,
+                        (ushort)Math.Clamp(player.CurrentHp, 0, ushort.MaxValue),
+                        (ushort)Math.Clamp(player.CurrentShield, 0, ushort.MaxValue)),
+                    ct)
+                .ConfigureAwait(false);
+        }
+
+        if (heal.Mp > 0)
+        {
+            var curMp = player.CurrentMp > 0 ? player.CurrentMp : maxMp;
+            player.CurrentMp = Math.Min(maxMp, curMp + heal.Mp);
+            await writeAsync(
+                    LifeManaWire602.BuildMana(
+                        LifeManaWire602.TypeCurrent,
+                        (ushort)Math.Clamp(player.CurrentMp, 0, ushort.MaxValue)),
+                    ct)
+                .ConfigureAwait(false);
+        }
+
+        onRosterDirty?.Invoke();
+        SyncViewerVitals(presenceSessionId, player);
+        var charName = Encoding.ASCII.GetString(characterName10.AsSpan(0, 10)).TrimEnd('\0');
+        RosterVitalsCombat.ScheduleVitalsMirror(accountId, charName, player);
+
+        var dur = ItemWire602.DecodeDurability(blob);
+        if (dur <= 1)
+        {
+            var empty = new byte[ItemWire602.WireBytes];
+            PlayerShopSession.SetSlot(presenceSessionId, sourceSlot, empty);
+            PlayerShopSession.PersistSlotToMirror(accountId, characterName10, sourceSlot, empty);
+            await writeAsync(ItemWorldWire602.BuildItemDelete(sourceSlot), ct).ConfigureAwait(false);
+        }
+        else
+        {
+            var nextDur = (byte)(dur - 1);
+            ItemWire602.SetDurability(blob, nextDur);
+            PlayerShopSession.SetSlot(presenceSessionId, sourceSlot, blob);
+            PlayerShopSession.PersistSlotToMirror(accountId, characterName10, sourceSlot, blob);
+            await writeAsync(ItemWorldWire602.BuildItemDur(sourceSlot, nextDur), ct).ConfigureAwait(false);
+        }
+
+        Console.WriteLine(
+            "[m7] item use potion slot={0} idx={1} hp={2}/{3} mp={4}/{5} {6}",
+            sourceSlot,
+            itemIndex,
+            player.CurrentHp,
+            player.MaxHp,
+            player.CurrentMp,
+            player.MaxMp,
+            remote);
+        return true;
+    }
+
+    static void SyncViewerVitals(Guid presenceSessionId, GameRosterEntry player)
+    {
+        if (!MonsterViewerRegistry.TryGetSession(presenceSessionId, out var session))
+        {
+            return;
+        }
+
+        session.CurrentHp = player.CurrentHp;
+        session.MaxHp = player.MaxHp;
+        session.CurrentMp = player.CurrentMp;
+        session.MaxMp = player.MaxMp;
+        session.OnVitalsChanged?.Invoke(player.CurrentHp, player.MaxHp);
     }
 
     static void PersistSlotMirror(Guid sessionId, string? accountId, byte[] characterName10, byte slot)

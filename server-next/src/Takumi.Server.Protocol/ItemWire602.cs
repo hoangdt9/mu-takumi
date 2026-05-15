@@ -48,6 +48,9 @@ public static class ItemWire602
     public static int DecodeLevel(ReadOnlySpan<byte> item12) =>
         item12.Length >= 2 ? (item12[1] >> 3) & 0x0F : 0;
 
+    public static byte DecodeDurability(ReadOnlySpan<byte> item12) =>
+        item12.Length >= 3 ? item12[2] : (byte)0;
+
     public static bool IsZenItem(ReadOnlySpan<byte> item12) => DecodeItemIndex(item12) == ZenItemIndex;
 
     public static bool IsWearSlot(byte slot) => slot <= LastWearSlot;

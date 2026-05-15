@@ -678,19 +678,21 @@ public static class GamePortMinimalSession
                         return;
                     }
 
+                    if (loginLatch.IsLoggedIn && GamePacketFinders.TryFindPingResponse(packet, out var pingOff))
+                    {
+                        if (verbose)
+                        {
+                            Console.WriteLine("[{0}] ping reply 0x71 frame@{1} (no response)", remote, pingOff);
+                        }
+
+                        return;
+                    }
+
                     // F3 00 list: only after auth. Heuristics can match byte pairs inside large C3 F1:01 login (~90 B) and
                     // must not return early — otherwise the client never receives F1 01 / character list (M6 split port).
                     var listFrameOffset = 0;
                     var listReq = loginLatch.IsLoggedIn
                         && GamePacketFinders.TryFindCharacterListRequest(packet, out listFrameOffset);
-                    if (!listReq
-                        && loginLatch.IsLoggedIn
-                        && packet.Length == 12
-                        && packet[0] == 0xC3)
-                    {
-                        listReq = true;
-                        listFrameOffset = 0;
-                    }
 
                     if (listReq)
                     {
@@ -845,39 +847,7 @@ public static class GamePortMinimalSession
 
                     loginLatch.SetLoggedIn();
                     loggedAccountId = id;
-                    roster.Clear();
-                    roster.AddRange(GameRosterDisk.LoadEntries(id));
-                    if (rosterDbMergeOverlay && TakumiPostgresMirror.CharacterRoster is not null)
-                    {
-                        try
-                        {
-                            var dbRows = await TakumiPostgresMirror.CharacterRoster.LoadByAccountAsync(id, ct).ConfigureAwait(false);
-                            CharacterRosterMerge.ApplyDbOverlay(
-                                roster,
-                                dbRows,
-                                static e => Encoding.ASCII.GetString(e.Name10).TrimEnd('\0', ' '),
-                                static (e, d) =>
-                                {
-                                    e.MapId = d.MapId;
-                                    e.PosX = d.PosX;
-                                    e.PosY = d.PosY;
-                                    e.Angle = d.Angle;
-                                    e.Level = d.Level;
-                                    e.ServerClass = d.ServerClass;
-                                    e.CurrentHp = d.CurrentHp;
-                                    e.MaxHp = d.MaxHp;
-                                    e.CurrentMp = d.CurrentMp;
-                                    e.MaxMp = d.MaxMp;
-                                    e.Zen = d.Zen;
-                                });
-                            CharacterRosterMirrorHealth.RecordMergeSuccess();
-                        }
-                        catch (Exception ex)
-                        {
-                            CharacterRosterMirrorHealth.RecordMergeFail();
-                            Console.WriteLine("[roster-db] merge after login failed for {0}: {1}", id, ex.Message);
-                        }
-                    }
+                    await CharacterRosterHostLoad.LoadOnLoginAsync(id, roster, rosterDbMergeOverlay, ct).ConfigureAwait(false);
 
                     Console.WriteLine("[{0}] login ok id={1} rosterCount={2}", remote, id, roster.Count);
                     await WriteLoginResultAsync(connection, protect, 0x01, ct).ConfigureAwait(false);
@@ -988,17 +958,20 @@ public static class GamePortMinimalSession
                 });
         }
 
-        var path = GameRosterDisk.GetRosterFilePath(accountId);
-        var dir = Path.GetDirectoryName(path);
-        if (!string.IsNullOrEmpty(dir))
+        if (!CharacterRosterBootstrap.ShouldSkipJsonExportOnSave())
         {
-            Directory.CreateDirectory(dir);
-        }
+            var path = GameRosterDisk.GetRosterFilePath(accountId);
+            var dir = Path.GetDirectoryName(path);
+            if (!string.IsNullOrEmpty(dir))
+            {
+                Directory.CreateDirectory(dir);
+            }
 
-        var json = JsonSerializer.Serialize(root, GameRosterDisk.JsonOptions);
-        lock (GameRosterDisk.JsonFileLock)
-        {
-            File.WriteAllText(path, json);
+            var json = JsonSerializer.Serialize(root, GameRosterDisk.JsonOptions);
+            lock (GameRosterDisk.JsonFileLock)
+            {
+                File.WriteAllText(path, json);
+            }
         }
 
         CharacterRosterMirrorWriter.ScheduleReplaceAccountRoster(accountId, BuildCharacterRosterRows(roster));

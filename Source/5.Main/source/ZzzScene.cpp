@@ -1611,8 +1611,11 @@ bool NewRenderLogInScene(HDC hDC)
 	FogEnable = false;
 
 #if defined(__ANDROID__)
-	// Video background (Data/Movie/MU.wmv) draws under 3D cinematic and login UI.
-	MU_AndroidLoginBgVideoRenderTick();
+	// Video background under 3D cinematic/login UI; skip while cinematic camera is moving.
+	if (!CUIMng::Instance().IsMoving())
+	{
+		MU_AndroidLoginBgVideoRenderTick();
+	}
 #endif
 // 	extern GLfloat FogColor[4];
 // 	FogColor[0] = 178.f/256.f; FogColor[1] = 178.f/256.f; FogColor[2] = 178.f/256.f; FogColor[3] = 0.f;

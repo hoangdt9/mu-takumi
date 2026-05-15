@@ -198,7 +198,9 @@ public static class PlayerShopSession
     public static bool TryMoveInventorySlot(Guid sessionId, byte sourceSlot, byte targetSlot, out byte[] targetItem12)
     {
         targetItem12 = Array.Empty<byte>();
-        if (sourceSlot == targetSlot || sourceSlot > ItemWire602.LastBagSlot || targetSlot > ItemWire602.LastBagSlot)
+        if (sourceSlot == targetSlot
+            || sourceSlot > ItemWire602.LastBagSlot
+            || targetSlot > ItemWire602.LastBagSlot)
         {
             return false;
         }

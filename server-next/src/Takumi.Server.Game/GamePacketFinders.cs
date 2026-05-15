@@ -81,23 +81,129 @@ public static class GamePacketFinders
             }
         }
 
-        if (packet.Length <= 16)
+        // Takumi+OpenMU: post-decrypt list/ping are often 12-byte C3 frames; XOR peel to logical C1 05 F3 00.
+        if (packet.Length <= 16 && TryPeelCharacterListControl(packet, out frameOffset))
         {
-            var skipSubstringScan = packet.Length == 15
-                && packet[0] == 0xC1
-                && packet[1] == 0x0F
-                && packet[2] == 0xF3;
-            if (!skipSubstringScan)
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>Client ping reply to server <c>C1 03 71</c> keepalive (desktop or encrypted C3 ~12 B).</summary>
+    public static bool TryFindPingResponse(ReadOnlySpan<byte> packet, out int frameOffset)
+    {
+        frameOffset = -1;
+        for (var i = 0; i < packet.Length; i++)
+        {
+            if (packet[i] is not (0xC1 or 0xC3))
             {
-                for (var j = 0; j <= packet.Length - 2; j++)
-                {
-                    if (packet[j] == 0xF3 && packet[j + 1] == 0x00)
-                    {
-                        frameOffset = j >= 2 ? j - 2 : 0;
-                        return true;
-                    }
-                }
+                continue;
             }
+
+            var size = (int)packet[i + 1];
+            if (size is < 3 or > 16 || i + size > packet.Length)
+            {
+                continue;
+            }
+
+            if (TryPeelPingControl(packet.Slice(i, size)))
+            {
+                frameOffset = i;
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    static bool TryPeelCharacterListControl(ReadOnlySpan<byte> frame, out int frameOffset)
+    {
+        frameOffset = -1;
+        if (frame.Length is 0 or > 16)
+        {
+            return false;
+        }
+
+        Span<byte> work = stackalloc byte[16];
+        frame.CopyTo(work[..frame.Length]);
+        var span = work[..frame.Length];
+        for (var pass = 0; pass < 8; pass++)
+        {
+            if (IsCharacterListControl(span))
+            {
+                frameOffset = 0;
+                return true;
+            }
+
+            if (!TryAdvanceXorPeel(span))
+            {
+                break;
+            }
+        }
+
+        return false;
+    }
+
+    static bool TryPeelPingControl(ReadOnlySpan<byte> frame)
+    {
+        if (frame.Length is 0 or > 16)
+        {
+            return false;
+        }
+
+        Span<byte> work = stackalloc byte[16];
+        frame.CopyTo(work[..frame.Length]);
+        var span = work[..frame.Length];
+        for (var pass = 0; pass < 8; pass++)
+        {
+            if (IsPingControl(span))
+            {
+                return true;
+            }
+
+            if (!TryAdvanceXorPeel(span))
+            {
+                break;
+            }
+        }
+
+        return false;
+    }
+
+    static bool IsCharacterListControl(ReadOnlySpan<byte> span)
+    {
+        if (span[0] == 0xC1 && span.Length >= 5 && span[1] >= 5 && span[2] == 0xF3 && span[3] == 0x00)
+        {
+            return true;
+        }
+
+        return span[0] == 0xC3 && span.Length >= 5 && span[3] == 0xF3 && span[4] == 0x00;
+    }
+
+    static bool IsPingControl(ReadOnlySpan<byte> span)
+    {
+        if (span[0] == 0xC1 && span.Length >= 3 && span[1] == 0x03 && span[2] == 0x71)
+        {
+            return true;
+        }
+
+        // C3: size at +1, serial at +2, head at +3 (ping head 0x71).
+        return span[0] == 0xC3 && span.Length >= 4 && span[3] == 0x71 && span[2] != 0xF3;
+    }
+
+    static bool TryAdvanceXorPeel(Span<byte> span)
+    {
+        if (span[0] == 0xC1 && span.Length >= 4)
+        {
+            TakumiStreamXorCodec.DecodeTakumiStreamXor(span, firstXorIndex: 2);
+            return true;
+        }
+
+        if (span[0] == 0xC3 && span.Length >= 5)
+        {
+            TakumiStreamXorCodec.DecodeTakumiStreamXor(span, firstXorIndex: 3);
+            return true;
         }
 
         return false;

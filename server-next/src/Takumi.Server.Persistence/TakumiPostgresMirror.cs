@@ -5,6 +5,8 @@ public static class TakumiPostgresMirror
 {
     public static PostgresCharacterRosterRepository? CharacterRoster { get; private set; }
 
+    public static PostgresCharacterDomainRepository? CharacterDomain { get; private set; }
+
     public static PostgresInventorySlotRepository? InventorySlots { get; private set; }
 
     /// <summary>Optional <c>session_ticket</c> rows for login→game handoff when <c>TAKUMI_SESSION_HANDOFF_DB</c> is on.</summary>
@@ -23,6 +25,7 @@ public static class TakumiPostgresMirror
     public static void InitIfEnabled()
     {
         CharacterRoster = null;
+        CharacterDomain = null;
         InventorySlots = null;
         var sync = string.Equals(Environment.GetEnvironmentVariable("TAKUMI_ROSTER_DB_SYNC"), "1", StringComparison.OrdinalIgnoreCase)
                    || string.Equals(Environment.GetEnvironmentVariable("TAKUMI_ROSTER_DB_SYNC"), "true", StringComparison.OrdinalIgnoreCase);
@@ -42,13 +45,22 @@ public static class TakumiPostgresMirror
         try
         {
             CharacterRoster = new PostgresCharacterRosterRepository(cs);
+            if (CharacterDomainMirrorWriter.IsEnabled())
+            {
+                CharacterDomain = new PostgresCharacterDomainRepository(cs);
+            }
+
             InventorySlots = new PostgresInventorySlotRepository(cs);
-            Console.Error.WriteLine("[postgres-mirror] roster + inventory_slot readers enabled (JSON roster still authoritative for list).");
+            Console.Error.WriteLine(
+                "[postgres-mirror] roster + inventory_slot enabled; character_domain={0}",
+                CharacterDomain is not null);
+            _ = CharacterLegacyWorldImporter.TryImportAsync();
         }
         catch (Exception ex)
         {
             Console.Error.WriteLine("[postgres-mirror] init failed (JSON-only): {0}", ex.Message);
             CharacterRoster = null;
+            CharacterDomain = null;
             InventorySlots = null;
         }
     }

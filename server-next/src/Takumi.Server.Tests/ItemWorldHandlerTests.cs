@@ -28,6 +28,27 @@ public sealed class ItemWorldHandlerTests
     }
 
     [Fact]
+    public void TryMoveInventorySlot_equips_sword_to_wear_slot()
+    {
+        var sid = Guid.NewGuid();
+        var sword = new byte[ItemWire602.WireBytes];
+        ItemWire602.WriteSeason6Item(sword, 0, 5, 0, 40, false, false, 0, 0);
+        PlayerShopSession.SetSlot(sid, 12, sword);
+
+        Assert.True(PlayerShopSession.TryMoveInventorySlot(sid, 12, 0, out _));
+        Assert.True(PlayerShopSession.TryGetSlot(sid, 0, out var worn));
+        Assert.Equal(sword[0], worn[0]);
+        Assert.False(PlayerShopSession.TryGetSlot(sid, 12, out _));
+    }
+
+    [Fact]
+    public void IsSupportedItemStorage_allows_main_inventory_only()
+    {
+        Assert.True(ClientGameplayPackets602.IsSupportedItemStorage(0));
+        Assert.False(ClientGameplayPackets602.IsSupportedItemStorage(1));
+    }
+
+    [Fact]
     public void TryMoveInventorySlot_swaps_two_bag_slots()
     {
         var sid = Guid.NewGuid();
@@ -102,6 +123,50 @@ public sealed class ItemWorldHandlerTests
         Assert.True(PlayerVitalsState.IsDead(id));
         PlayerVitalsState.TryClearDead(id);
         Assert.False(PlayerVitalsState.IsDead(id));
+    }
+
+    [Fact]
+    public void TryFindItemUseRequest_parses_C1_0x26()
+    {
+        var pkt = new byte[] { 0xC1, 0x05, 0x26, 14, 0 };
+        Assert.True(ClientGameplayPackets602.TryFindItemUseRequest(pkt, out _, out var src, out var tgt));
+        Assert.Equal((byte)14, src);
+        Assert.Equal((byte)0, tgt);
+    }
+
+    [Fact]
+    public void NormalizeItemUseSlot_maps_relative_bag_index()
+    {
+        Assert.Equal((byte)14, ClientGameplayPackets602.NormalizeItemUseSlot(2));
+        Assert.Equal((byte)20, ClientGameplayPackets602.NormalizeItemUseSlot(20));
+    }
+
+    [Fact]
+    public void InventoryConsumableRules_apple_heals_hp()
+    {
+        Assert.True(InventoryConsumableRules.TryGetPotionHeal((14 * 512) + 0, 1000, 500, 500, out var heal));
+        Assert.Equal(1000, heal.Hp);
+        Assert.Equal(0, heal.Mp);
+        Assert.Equal(0, heal.Shield);
+    }
+
+    [Fact]
+    public void InventoryConsumableRules_sd_potion_heals_shield()
+    {
+        Assert.True(InventoryConsumableRules.TryGetPotionHeal((14 * 512) + 35, 1000, 500, 800, out var heal));
+        Assert.Equal(0, heal.Hp);
+        Assert.Equal(400, heal.Shield);
+    }
+
+    [Fact]
+    public void ItemWorldWire602_item_delete_and_dur_layout()
+    {
+        var del = ItemWorldWire602.BuildItemDelete(14);
+        Assert.Equal(0x28, del[2]);
+        Assert.Equal((byte)14, del[3]);
+        var dur = ItemWorldWire602.BuildItemDur(14, 9);
+        Assert.Equal(0x2A, dur[2]);
+        Assert.Equal((byte)9, dur[4]);
     }
 
     [Fact]

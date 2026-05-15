@@ -30,7 +30,11 @@
 #include <mutex>
 #include <string>
 #include <unordered_map>
+#include <vector>
 #include <string.h>
+
+#include <sys/ioctl.h>
+#include <unistd.h>
 
 extern "C" int32_t ConnectionManager_Connect(
     const wchar_t* host,
@@ -286,9 +290,17 @@ namespace
             port == MuLanDefaults::kLegacyVmClassicConnectPort;
     }
 
-    /// True when the TCP peer is the MU Connect Server (plaintext C1/C2), not the game server.
-    /// \c CProtect::CheckSocketPort uses GSPortMin/Max only — LAN ports like 44605 often fall inside that
-    /// range, so XOR Enc/Decrypt must be skipped here or C2 F4 06 is corrupted and no sub-servers appear.
+    /// server-next LegacyLoginHost login listener (SM + XOR32 only — no client gProtect outer layer).
+    constexpr unsigned short kTakumiLegacyLoginGamePort = 44606u;
+
+    bool SkipClientProtectXorForPort(unsigned short port)
+    {
+        return IsConnectServerPort(port) || port == kTakumiLegacyLoginGamePort;
+    }
+
+    /// True when the TCP peer is Connect CS or Takumi legacy login (plaintext / SM-only wire).
+    /// \c CProtect::CheckSocketPort uses GSPortMin/Max only — LAN ports like 44605/44606 often fall inside that
+    /// range, so XOR Enc/Decrypt must be skipped here or C2 F4 06 / F1 join+login are corrupted.
     bool IsPeerConnectServerSocket(SOCKET s)
     {
         if (s == INVALID_SOCKET || s == static_cast<SOCKET>(0))
@@ -303,7 +315,7 @@ namespace
             return false;
         }
 
-        return IsConnectServerPort(ntohs(addr.sin_port));
+        return SkipClientProtectXorForPort(ntohs(addr.sin_port));
     }
 
     void CopyPacketKey(DWORD* target, const DWORD* source)
@@ -450,6 +462,35 @@ static void CWsctlcRegisterSocketOwner(int32_t handle, void* userData)
 void CWsctlc::AndroidBindSocketHandle(int32_t handle)
 {
     m_socket = static_cast<SOCKET>(handle);
+}
+
+void CWsctlc::AndroidSyncPollRecvPending()
+{
+    if (m_socket == INVALID_SOCKET || static_cast<int>(m_socket) <= 0)
+    {
+        return;
+    }
+
+    const int32_t handle = static_cast<int32_t>(m_socket);
+    int queuedBytes = 0;
+    if (ioctl(m_socket, FIONREAD, &queuedBytes) != 0 || queuedBytes <= 0)
+    {
+        return;
+    }
+
+    std::vector<uint8_t> buffer(static_cast<size_t>(queuedBytes));
+    const int received = recv(m_socket, reinterpret_cast<char*>(buffer.data()), queuedBytes, 0);
+    if (received <= 0)
+    {
+        return;
+    }
+
+    g_ErrorReport.Write(
+        "[AndroidLogin] sync poll drained fd=%d nbytes=%d (on-accept / queued before recv thread)\r\n",
+        handle,
+        received);
+
+    AndroidOnPacket(handle, received, buffer.data());
 }
 
 void CWsctlc::AndroidOnPacket(int32_t handle, int32_t size, uint8_t* data)
@@ -732,7 +773,7 @@ BOOL CWsctlc::Connect(char* ipAddr, unsigned short port, DWORD)
     // Must be set before ConnectionManager_Connect: the recv thread can deliver C2 F4 06 (connect
     // server on-accept) before this function resumes. If m_skipRecvBuxXor is still false and getpeername
     // fails transiently, gProtect.DecryptData corrupts plaintext and sub-server list never parses.
-    m_skipRecvBuxXor = IsConnectServerPort(port);
+    m_skipRecvBuxXor = SkipClientProtectXorForPort(port);
 #endif
 
     const std::wstring hostWide = ToWideString(ipAddr);
@@ -775,6 +816,8 @@ BOOL CWsctlc::Connect(char* ipAddr, unsigned short port, DWORD)
         ipAddr,
         port,
         handle);
+
+    AndroidSyncPollRecvPending();
 
     if (IsConnectServerPort(port))
     {

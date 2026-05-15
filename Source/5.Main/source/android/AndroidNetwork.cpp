@@ -400,7 +400,7 @@ void RecvLoop(
                 continue;
             }
 
-            const int recvErr = count < 0 ? errno : 0;
+            const int recvErr = (count < 0) ? errno : 0;
             NET_LOGE("[fd=%d] recv failed: count=%d errno=%d", handle, count, recvErr);
             __android_log_print(
                 ANDROID_LOG_INFO,
@@ -411,13 +411,7 @@ void RecvLoop(
                 recvErr);
             if (count < 0 && (recvErr == EAGAIN || recvErr == EWOULDBLOCK))
             {
-                __android_log_print(
-                    ANDROID_LOG_ERROR,
-                    "TakumiErrorReport",
-                    "[AndroidLogin] recv EAGAIN/EWOULDBLOCK (likely SO_RCVTIMEO): no C2 from connect server. "
-                    "On Mac host: cd server-next && ./scripts/check-lan-connect-ports.sh && "
-                    "./scripts/smoke-connect-from-host.sh 127.0.0.1 44605 — if smoke fails, "
-                    "docker compose stop legacy-login && ./scripts/run-legacy-login-host.sh");
+                continue;
             }
             break;
         }

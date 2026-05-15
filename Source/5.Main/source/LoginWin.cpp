@@ -358,7 +358,11 @@ void CLoginWin::RequestLogin()
 	}
 	else
 	{
+#if !defined(__ANDROID__)
 		CUIMng::Instance().HideWin(this);
+#else
+		CUIMng::Instance().PopUpMsgWin(MESSAGE_WAIT);
+#endif
 #if(UseReconnect)
 		memcpy(g_pReconnect->s_Data.ReconnectAccount, szID, 11);  //Add
 		memcpy(g_pReconnect->s_Data.ReconnectPassword, szPass, 11);  //Add

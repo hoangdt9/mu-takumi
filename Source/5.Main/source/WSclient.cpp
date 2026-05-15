@@ -35,6 +35,9 @@
 #include "CComGem.h"
 #include "UIMapName.h" // rozy
 #include "UIMng.h"
+#if defined(__ANDROID__)
+#include "Platform/MobilePlatform.h"
+#endif
 #include "GMCrywolf1st.h"
 #include "CDirection.h"
 #include "GM_Kanturu_3rd.h"
@@ -502,12 +505,15 @@ void ReceiveServerList(BYTE* ReceiveBuffer, int Size)
 	CUIMng& rUIMng = CUIMng::Instance();
 	if (!rUIMng.m_CreditWin.IsShow())
 	{
+#if defined(__ANDROID__)
+		MU_AndroidRevealLoginServerUi();
+#else
 		// Show login first, then server list — ShowWin() moves the window to the head as active.
 		// Previous order (server then login) left LoginMainWin on top and hid the sub-server column.
 		rUIMng.ShowWin(&rUIMng.m_LoginMainWin);
 		rUIMng.ShowWin(&rUIMng.m_ServerSelWin);
 		rUIMng.m_ServerSelWin.UpdateDisplay();
-#if defined(__ANDROID__) || defined(MU_IOS)
+#if defined(MU_IOS)
 		// Login scene keeps a tour-camera + semi-transparent overlay while IsTourMode();
 		// once we have F4 06 data, drop tour so sub-server buttons are not stuck under the intro pass.
 #ifdef PJH_NEW_SERVER_SELECT_MAP
@@ -516,6 +522,7 @@ void ReceiveServerList(BYTE* ReceiveBuffer, int Size)
 		CCameraMove::GetInstancePtr()->SetTourMode(FALSE, FALSE);
 #endif
 		CCameraMove::GetInstancePtr()->StopCameraWalk(true);
+#endif
 #endif
 	}
 
@@ -561,6 +568,13 @@ void ReceiveServerConnect(BYTE* ReceiveBuffer) //Recebe informação do ConnectS
 				"[ReceiveServerConnect] enable login UI after game socket (csPort=%u gamePort=%d)\r\n",
 				static_cast<unsigned int>(g_ServerPort),
 				static_cast<int>(Data->Port));
+#if defined(__ANDROID__)
+			for (int drainPass = 0; drainPass < 12; ++drainPass)
+			{
+				SocketClient.AndroidSyncPollRecvPending();
+				ProtocolCompiler();
+			}
+#endif
 		}
 	}
 	else
@@ -589,6 +603,11 @@ void ReceiveServerConnect(BYTE* ReceiveBuffer) //Recebe informação do ConnectS
 				"[ReceiveServerConnect] Android NEW_PROTOCOL: enable login UI (csPort=%u gamePort=%d)\r\n",
 				static_cast<unsigned int>(g_ServerPort),
 				static_cast<int>(Data->Port));
+			for (int drainPass = 0; drainPass < 12; ++drainPass)
+			{
+				SocketClient.AndroidSyncPollRecvPending();
+				ProtocolCompiler();
+			}
 		}
 	}
 	else
@@ -12476,8 +12495,20 @@ void ProtocolCompiler( CWsctlc *pSocketClient, int iTranslation, int iParam)
 	//if(CurrentProtocolState >= RECEIVE_JOIN_MAP_SERVER)
 	//	return;
 	//== Fix FPS
+#if defined(__ANDROID__)
+	// ReceiveServerConnect (F4 03) drains with nested ProtocolCompiler(); SpinLock is not reentrant.
+	static thread_local int s_protocolCompilerDepth = 0;
+	const bool outerCall = (s_protocolCompilerDepth == 0);
+	if (outerCall)
+	{
+		g_protocol_lock->lock();
+		wglMakeCurrent(g_hDC, g_hRC);
+	}
+	++s_protocolCompilerDepth;
+#else
 	g_protocol_lock->lock();
 	wglMakeCurrent(g_hDC, g_hRC);
+#endif
 	int HeadCode;
 	int Size = 0;
 	
@@ -12602,8 +12633,17 @@ void ProtocolCompiler( CWsctlc *pSocketClient, int iTranslation, int iParam)
 #endif
 		}
 	}
+#if defined(__ANDROID__)
+	--s_protocolCompilerDepth;
+	if (outerCall)
+	{
+		wglMakeCurrent(nullptr, nullptr);
+		g_protocol_lock->unlock();
+	}
+#else
 	wglMakeCurrent(nullptr, nullptr);
 	g_protocol_lock->unlock();
+#endif
 }
 
 bool ReceiveRegistedLuckyCoin(BYTE* ReceiveBuffer)
@@ -13745,6 +13785,13 @@ BOOL TranslateProtocol( int HeadCode, BYTE *ReceiveBuffer, int Size, BOOL bEncry
 				case 0x20:
 					CurrentProtocolState = RECEIVE_LOG_IN_SUCCESS;
 					LogIn = 2;
+#if defined(__ANDROID__)
+					{
+						CUIMng& rUIMng = CUIMng::Instance();
+						rUIMng.HideWin(&rUIMng.m_LoginWin);
+						rUIMng.HideWin(&rUIMng.m_MsgWin);
+					}
+#endif
                     CheckHack();
 					break;
 				case 0x00:
@@ -13753,6 +13800,13 @@ BOOL TranslateProtocol( int HeadCode, BYTE *ReceiveBuffer, int Size, BOOL bEncry
 				case 0x01:
 					CurrentProtocolState = RECEIVE_LOG_IN_SUCCESS;
 					LogIn = 2;
+#if defined(__ANDROID__)
+					{
+						CUIMng& rUIMng = CUIMng::Instance();
+						rUIMng.HideWin(&rUIMng.m_LoginWin);
+						rUIMng.HideWin(&rUIMng.m_MsgWin);
+					}
+#endif
                     CheckHack();
 					break;
 				case 0x02:
@@ -13812,6 +13866,15 @@ BOOL TranslateProtocol( int HeadCode, BYTE *ReceiveBuffer, int Size, BOOL bEncry
 					CUIMng::Instance().PopUpMsgWin(RECEIVE_LOG_IN_FAIL_INVALID_IP);
 					break;
 				}
+#if defined(__ANDROID__)
+				if (CurrentProtocolState != RECEIVE_LOG_IN_SUCCESS)
+				{
+					CUIMng& rUIMng = CUIMng::Instance();
+					rUIMng.HideWin(&rUIMng.m_MsgWin);
+					rUIMng.ShowWin(&rUIMng.m_LoginWin);
+					CurrentProtocolState = RECEIVE_JOIN_SERVER_SUCCESS;
+				}
+#endif
 				break;
 				case 0x02:
 					if ( !ReceiveLogOut(ReceiveBuffer, bEncrypted))

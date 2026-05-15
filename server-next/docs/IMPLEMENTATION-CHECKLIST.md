@@ -174,18 +174,21 @@ Use this to avoid unnecessary rebuilds.
    - [x] Gates / shops / Custom: **`006_map_gate_npc_shop_custom.sql`**, ETL + **`MapGateCatalog`** / **`NpcShopCatalog`**; env **`TAKUMI_WORLD_STATIC_DB=1`** (hoặc từng flag `TAKUMI_MAP_GATE_DB`, `TAKUMI_NPC_SHOP_DB`, `TAKUMI_CUSTOM_WORLD_DB`).  
    - [x] Wire handlers: gate teleport `0x1C`, NPC talk → shop `0x31` (`WorldGameplayHandlers`, `MapGateService`, `NpcShopWire602`).
 
-9. **M9 — NPC & monster runtime** *(**`docs/M9-NPC-MONSTER-CHECKLIST.md`**, **`docs/M9-MONSTER-AI-PORT-CHECKLIST.md`**, **`docs/WORKSTREAM-OWNERSHIP.md`**)*  
+9. **M9 — NPC & monster runtime** *(**`docs/M9-NPC-MONSTER-CHECKLIST.md`**, **`docs/M9-MONSTER-AI-PORT-CHECKLIST.md`**, **`docs/M9-M8-NPC-GAMEPLAY-OWNERSHIP.md`**, **`server-next/test/M9-monster-combat-qa.md`**, **`docs/WORKSTREAM-OWNERSHIP.md`**)*  
    - [x] Spawn theo map từ **MonsterSetBase.txt** + **Monster.txt** (file + **Postgres** khi `TAKUMI_MONSTER_SPAWN_DB=1`).  
    - [x] Gói **`C2 0x13`** scope spawn sau join + incremental on walk (`MonsterViewportWire602`, `MonsterViewportTracker`); **`C1 0x14`** destroy khi rời view.  
    - [x] Regen delay từ `Monster.txt` (`MapMonsterInstance.TryRegen`).  
    - [x] Combat stub: `C1 0x11` hit / `0x19` skill → damage, `C1 0x14` destroy, `C1 0x16` die (`MonsterCombatHandler`); damage trừ Defense từ `Monster.txt`.  
+   - [x] Gate / NPC shop / buy-sell-repair stub (`MapGateService`, `WorldGameplayHandlers`, `ShopCommerceHandler`).
    - [~] **M9b AI:** wander/chase/`0xD4`/`0x18`, player damage stub, periodic viewport 1s, regen broadcast — **`docs/M9-MONSTER-AI-PORT-CHECKLIST.md`**.  
-   - [ ] AoE / PvP / full pathfinding — **M10c / M9b P2–P3**.
+   - [~] **M9c:** `ItemValue.txt` + `GCItemValueSend` (`C2 F3 E9`), AoE `0xDB`, PvP stub, quest NPC dialog stub (P4.4 partial).  
+   - [ ] Element/exp/invasion (P3.2–P4), pathfinding BFS đầy đủ — **M9b P2.3+**.
 
-10. **M10 — Movement & visibility** — **`docs/M8-M10-WORLD-RUNTIME-CHECKLIST.md`** §M10  
-    - [x] Nhận **walk / instant move** → roster tile (`LegacyLoginHost`, `GamePortMinimalSession`).  
-    - [x] Broadcast `C1 0x15` / `0x18` + rate-limit (`GameMapPresenceRegistry`, `TAKUMI_PRESENCE_MAX_BROADCASTS_PER_SECOND`).  
-    - [ ] Player viewport `C2 0x12`; đồng bộ sâu vitals mid-combat (M7).
+10. **M10 — Movement & visibility** — **`docs/M8-M10-WORLD-RUNTIME-CHECKLIST.md`** §M10; owner: **`docs/WORKSTREAM-OWNERSHIP.md`**  
+    - [x] Walk / instant move → roster tile (`LegacyLoginHost`, `GamePortMinimalSession`).  
+    - [x] **M10a:** broadcast `C1 0x15` / `0x18` + rate-limit (`GameMapPresenceRegistry`, `TAKUMI_PRESENCE_MAX_BROADCASTS_PER_SECOND`).  
+    - [x] **M10b:** player viewport `C2 0x12` on join + walk view range + `0x14` on leave/disconnect (`PlayerViewportWire602`, `PlayerViewportTracker`, `TAKUMI_PLAYER_VIEWPORT_*`).  
+    - [ ] Vitals mid-combat broadcast đầy đủ (M7).
 
 11. **M11 — DataServer merge**  
     - [ ] Quyết định: Postgres-only vs bridge tới MSSQL legacy; API nội bộ cho `Takumi.Server.Game`.

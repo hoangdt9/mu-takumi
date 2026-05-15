@@ -45,11 +45,17 @@ public static class NpcShopCatalog
         EnsureInitialized();
         var bestScore = -1;
         var bestIndex = -1;
+        var byClassOnly = -1;
         foreach (var s in _shops.Values)
         {
             if (s.MonsterClass != monsterClass)
             {
                 continue;
+            }
+
+            if (byClassOnly < 0)
+            {
+                byClassOnly = s.ShopIndex;
             }
 
             if (s.MapId is not null && s.MapId.Value != mapId)
@@ -90,7 +96,7 @@ public static class NpcShopCatalog
             }
         }
 
-        return bestIndex;
+        return bestIndex >= 0 ? bestIndex : byClassOnly;
     }
 
     public static void LoadForTests(IReadOnlyList<NpcShopEntry> shops, IReadOnlyList<NpcShopItemEntry> items)

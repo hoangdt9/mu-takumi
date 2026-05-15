@@ -1,7 +1,7 @@
 # Workstream ownership (tránh conflict giữa dev / nhánh)
 
 Last updated: 2026-05-16  
-**Nhánh tích hợp hiện tại:** `main` @ `0fee99a` (M8/M9 gameplay + M7 vitals + M10 presence + M6 game-host data mount)
+**Nhánh tích hợp hiện tại:** `mac-m4` (đã merge `origin/main` — M4/M7 item + M8 ETL + M9 gameplay + M10 presence/viewport)
 
 **M4 / M7 (nhân vật + item):** migration map + ownership — **`docs/M4-M7-CHARACTER-ITEM-MIGRATION.md`** (owner đề xuất: **`mac-m1`**).
 
@@ -29,7 +29,7 @@ Last updated: 2026-05-16
 
 ---
 
-## Đã xong trên `main` (M9 — viewport / combat / AI)
+## Đã xong trên `main` / `mac-m4` (M9 — viewport / combat / AI / gameplay stub)
 
 | Hạng mục | Trạng thái | File chính (owner M9) |
 |----------|------------|------------------------|
@@ -40,10 +40,21 @@ Last updated: 2026-05-16
 | Combat stub `0x11` / `0x19` → damage / die / destroy | Done | `MonsterCombatHandler.cs`, `ClientHitPackets602.cs`, wire `MonsterDamageWire602` |
 | Destroy khi rời view `0x14` | Done | `MonsterViewportTracker.SyncView` |
 | Defense trong damage | Done | `MonsterCombatCalculator.cs` |
+| Gate / NPC shop / buy-sell-repair stub | Done | `MapGateService`, `WorldGameplayHandlers`, `ShopCommerceHandler` — xem `docs/M9-M8-NPC-GAMEPLAY-OWNERSHIP.md` |
 
 **Không sửa** logic spawn DB trên M9 branch trừ khi fix bug — spawn Postgres thuộc **M8 owner** (`MapMonsterWorld` init path).
 
 ---
+
+## Đã xong (M10 — map presence + viewport)
+
+| Hạng mục | Trạng thái | File (chỉ M10 touch) |
+|----------|------------|----------------------|
+| Map presence registry | Done | `Game/Networking/GameMapPresenceRegistry.cs` |
+| Broadcast tile `C1 0x15` + rate-limit | Done | `PlayerPositionWire602.cs`, `TAKUMI_PRESENCE_MAX_BROADCASTS_PER_SECOND` |
+| Broadcast action `C1 0x18` | Done | `PlayerActionWire602.cs` + `MonsterCombatHandler` |
+| Player viewport `C2 0x12` on walk | Done | `PlayerViewportWire602`, `PlayerViewportTracker` |
+| PvP / AoE stub | Done | `MonsterCombatHandler`, `ClientHitPackets602` |
 
 ## Đang làm / WIP — **M4 + M7** (owner: `mac-m1`)
 
@@ -51,7 +62,7 @@ Last updated: 2026-05-16
 |----------|------------|----------------|
 | Postgres-only roster SSOT | **OPEN** | `docs/M4-ROSTER-SSOT.md`, `character` domain — **đừng** song song 2 writer |
 | `inventory_slot` **write** sau shop buy/sell | **Done** | `InventorySlotMirrorWriter`, `PostgresInventorySlotRepository` — **`TAKUMI_ROSTER_DB_SYNC=1`** |
-| Item pick/drop/move `0x22`–`0x24` | **OPEN** | Port từ `ItemManager.cpp` — PR riêng |
+| Item pick/drop/move `0x22`–`0x24` | **OPEN** | `ItemWorldHandler` — PR riêng |
 | Combat-driven `GCLifeSend` / vitals mid-fight | **OPEN** | M7d — `RosterVitalsOutboundTracker` mở rộng |
 | `inventory_staging` ETL → 12-byte | **OPEN** | `IMPLEMENTATION-CHECKLIST` §Data & Migration |
 
@@ -59,10 +70,9 @@ Last updated: 2026-05-16
 
 | Hạng mục | Gợi ý owner | Tránh đụng |
 |----------|-------------|------------|
-| Player viewport `C2 0x12` | M10b | `MonsterViewportWire602` |
-| PvP / AoE | M10c | `MonsterCombatHandler` |
-| NPC shop/gate/commerce | **main** (done) | `WorldGameplayHandlers` — **`docs/M9-M8-NPC-GAMEPLAY-OWNERSHIP.md`** |
-| Monster AI pathing nâng cao | M9b | `MapTilePathfinder` (đã có trên main) |
+| Warehouse DB load (class 240) | M8 + M4b | `NpcTalkService`, `WarehouseWire602` |
+| Monster AI pathing nâng cao | M9b | `MapTilePathfinder` |
+| Element/exp/invasion đầy đủ | M9c | `MonsterStatCatalog`, invasion spawns |
 
 ---
 
@@ -74,6 +84,7 @@ Last updated: 2026-05-16
 | `GamePortMinimalSession.cs` | M6, M7, **M9**, **M10** | Giống Legacy; thêm `protect` + `TrackVitalsOutbound` |
 | `MapMonsterWorld.cs` | **M8** (main), M9 read-only | Chỉ M8 thêm ETL/DB; M9 dùng API public |
 | `World/Monster*.cs` (trừ MapMonsterWorld init DB) | **M9** | An toàn cho M9 PR |
+| `World/WorldGameplayHandlers.cs`, `ShopCommerceHandler.cs` | **M9/M8** | Đừng sửa trừ fix bug — xem `M9-M8-NPC-GAMEPLAY-OWNERSHIP.md` |
 | `Game/Networking/GameMapPresenceRegistry.cs` | **M10** | File mới — ít conflict |
 | `Protocol/Player*Wire602.cs` | **M10** | File mới |
 | `sql/init/*.sql` | **M7/M8** | Một PR một migration |
@@ -87,12 +98,13 @@ Last updated: 2026-05-16
 |--------|------|
 | M8 DB spawn | `TAKUMI_MONSTER_SPAWN_DB`, ETL paths (xem README / M8 checklist) |
 | M9 file fallback | `TAKUMI_MONSTER_SET_BASE_PATH`, `TAKUMI_MONSTER_INFO_PATH`, `TAKUMI_MONSTER_VIEW_*`, `TAKUMI_COMBAT_*` |
-| M10 presence | `TAKUMI_MAP_PRESENCE_ENABLED` (`0` = tắt), `TAKUMI_COMBAT_MISS_RATE_PCT`, `TAKUMI_COMBAT_SKILL_DAMAGE_PCT` |
+| M9 gameplay | `TAKUMI_GATE_SKIP_PROXIMITY`, `TAKUMI_SHOP_*` (xem `env.defaults`) |
+| M10 presence | `TAKUMI_MAP_PRESENCE_ENABLED` (`0` = tắt), `TAKUMI_PLAYER_VIEWPORT_WIRE` (`0` = chỉ `0x15`), `TAKUMI_COMBAT_MISS_RATE_PCT`, `TAKUMI_COMBAT_SKILL_DAMAGE_PCT` |
 
 ---
 
-## Tiếp theo trên `main`
+## Tiếp theo
 
 1. Giữ bảng **“Đã xong trên main”** cập nhật khi merge PR.  
-2. **M4/M7:** làm theo thứ tự trong **`docs/M4-M7-CHARACTER-ITEM-MIGRATION.md`** — ưu tiên `inventory_slot` write + SSOT design trước item world ops.  
-3. M10: player viewport `C2 0x12`, PvP, AoE — PR riêng; presence broadcast **đã** trên main.
+2. **M4/M7:** làm theo thứ tự trong **`docs/M4-M7-CHARACTER-ITEM-MIGRATION.md`** — ưu tiên SSOT design + item world ops.  
+3. Sau khi `mac-m4` → `main` ổn định: feature branch mới rebase `origin/main`.

@@ -114,7 +114,8 @@ public static class MapMonsterScopeSender
         var monsters = MapMonsterWorld.GetViewportEntities(mapId, playerX, playerY, viewRange, maxNpcs, maxMobs);
         var (fresh, left) = tracker.SyncView(monsters);
         tracker.NoteAnchor(mapId, playerX, playerY);
-        await SendDestroyAsync(connection, clientProtectOutbound, left, remote, ct).ConfigureAwait(false);
+        var destroyKeys = FilterViewportDestroyKeys(left);
+        await SendDestroyAsync(connection, clientProtectOutbound, destroyKeys, remote, ct).ConfigureAwait(false);
         await SendPacketAsync(connection, clientProtectOutbound, mapId, playerX, playerY, fresh, remote, "move", ct)
             .ConfigureAwait(false);
     }
@@ -172,6 +173,39 @@ public static class MapMonsterScopeSender
             count,
             mapId,
             pkt.Length);
+    }
+
+    internal static IReadOnlyList<int> FilterViewportDestroyKeysForPeriodic(IReadOnlyList<int> objectKeys) =>
+        FilterViewportDestroyKeys(objectKeys);
+
+    /// <summary>Town NPCs stay visible — only field mobs get <c>0x14</c> on walk (parity client safe-zone vendors).</summary>
+    static IReadOnlyList<int> FilterViewportDestroyKeys(IReadOnlyList<int> objectKeys)
+    {
+        if (objectKeys.Count == 0)
+        {
+            return objectKeys;
+        }
+
+        if (string.Equals(
+                Environment.GetEnvironmentVariable("TAKUMI_MONSTER_VIEWPORT_DESTROY_NPC")?.Trim(),
+                "1",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return objectKeys;
+        }
+
+        var filtered = new List<int>(objectKeys.Count);
+        foreach (var key in objectKeys)
+        {
+            if (MapMonsterWorld.TryGetMonster(key, out var mob) && mob is { IsNpc: true })
+            {
+                continue;
+            }
+
+            filtered.Add(key);
+        }
+
+        return filtered;
     }
 
     static int ParseIntEnv(string key, int defaultValue, int min, int max)

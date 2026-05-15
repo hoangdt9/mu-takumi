@@ -65,6 +65,55 @@ public static class ClientHitPackets602
         return false;
     }
 
+    /// <summary><c>C1 … 0xDB skill[BE] x y serial count (key[BE] skillSerial)*</c>.</summary>
+    public static bool TryFindMagicAttack(
+        ReadOnlySpan<byte> packet,
+        out int frameOffset,
+        out ushort skillId,
+        out byte x,
+        out byte y,
+        out List<ushort> targetIds)
+    {
+        frameOffset = -1;
+        skillId = 0;
+        x = y = 0;
+        targetIds = [];
+        for (var i = 0; i <= packet.Length - 8; i++)
+        {
+            if (packet[i] != 0xC1 || packet[i + 2] != 0xDB)
+            {
+                continue;
+            }
+
+            var len = packet[i + 1];
+            if (len < 8 || i + len > packet.Length)
+            {
+                continue;
+            }
+
+            skillId = ReadUInt16Be(packet, i + 3);
+            x = packet[i + 5];
+            y = packet[i + 6];
+            var count = packet[i + 8];
+            var need = 9 + count * 3;
+            if (len < need)
+            {
+                continue;
+            }
+
+            frameOffset = i;
+            for (var t = 0; t < count; t++)
+            {
+                var off = i + 9 + t * 3;
+                targetIds.Add(ReadUInt16Be(packet, off));
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
     static ushort ReadUInt16Be(ReadOnlySpan<byte> packet, int offset) =>
         (ushort)((packet[offset] << 8) | packet[offset + 1]);
 }

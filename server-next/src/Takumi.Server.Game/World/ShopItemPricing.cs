@@ -7,9 +7,14 @@ public static class ShopItemPricing
 {
     public static long BuyPrice(NpcShopItemEntry item)
     {
+        var index = (item.ItemGroup * 512) + item.ItemIndex;
+        if (ItemValueCatalog.TryGetBuySell(index, item.ItemLevel, item.ExcOpt, out var buy, out _))
+        {
+            return buy;
+        }
+
         var basePrice = ParseLongEnv("TAKUMI_SHOP_BUY_BASE", 1200);
         var perLevel = ParseLongEnv("TAKUMI_SHOP_BUY_PER_LEVEL", 400);
-        var index = (item.ItemGroup * 512) + item.ItemIndex;
         return basePrice + (item.ItemLevel * perLevel) + (index % 17) * 10;
     }
 
@@ -20,9 +25,16 @@ public static class ShopItemPricing
             return 0;
         }
 
+        var index = item12[0] | ((item12[3] & 0x80) << 1);
+        var level = (item12[1] >> 3) & 0x0F;
+        var exc = item12[3] & 0x3F;
+        if (ItemValueCatalog.TryGetBuySell(index, level, exc, out _, out var sell))
+        {
+            return sell;
+        }
+
         var buy = ParseLongEnv("TAKUMI_SHOP_BUY_BASE", 1200);
         var pct = ParseIntEnv("TAKUMI_SHOP_SELL_PCT", 33, 1, 100);
-        var level = (item12[1] >> 3) & 0x0F;
         var estimate = buy + level * 200;
         return Math.Max(1, estimate * pct / 100);
     }

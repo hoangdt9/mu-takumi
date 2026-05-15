@@ -34,18 +34,18 @@ public sealed class MonsterViewportTrackerTests
     {
         var tracker = new MonsterViewportTracker();
         tracker.ResetForMap(0, 100, 100);
-        var near = Make(12001, 3, 105, 105);
-        var far = Make(12002, 2, 200, 200);
+        var near = Make(880_001, 3, 105, 105, isNpc: false);
+        var far = Make(880_002, 2, 200, 200, isNpc: false);
         tracker.TakeNewInView(new[] { near, far });
 
         var (entered, left) = tracker.SyncView(new[] { near });
 
         Assert.Empty(entered);
-        Assert.Equal([12002], left);
+        Assert.Equal([880_002], left);
         Assert.True(tracker.TakeNewInView(new[] { far }).Count == 1);
     }
 
-    static MapMonsterInstance Make(int key, int cls, byte x, byte y)
+    static MapMonsterInstance Make(int key, int cls, byte x, byte y, bool isNpc = false)
     {
         var m = new MapMonsterInstance
         {
@@ -59,6 +59,7 @@ public sealed class MonsterViewportTrackerTests
             MaxLife = 100,
             Level = 1,
             RegenDelayMs = 10_000,
+            IsNpc = isNpc,
         };
         m.InitializeAtSpawn(x, y, 3);
         return m;

@@ -71,6 +71,7 @@
 #include "FatigueTimeSystem.h"
 #endif //PBG_ADD_SECRETBUFF
 #include "ServerListManager.h"
+#include "CameraMove.h"
 #ifdef PBG_ADD_NEWCHAR_MONK_SKILL
 #include "MonkSystem.h"
 
@@ -215,6 +216,21 @@ namespace
 		return false;
 	}
 
+	bool IsLoopbackIPv4(const char* address)
+	{
+		unsigned int a = 0;
+		unsigned int b = 0;
+		unsigned int c = 0;
+		unsigned int d = 0;
+
+		if (ParseIPv4Octets(address, a, b, c, d) == false)
+		{
+			return false;
+		}
+
+		return a == 127;
+	}
+
 	const char* ResolveServerConnectAddress(const char* address,char* output,size_t outputSize)
 	{
 		if(output == 0 || outputSize == 0)
@@ -231,6 +247,19 @@ namespace
 
 		strcpy_s(output,outputSize,address);
 
+#if defined(__ANDROID__) || defined(MU_IOS)
+		if (szServerIpAddress != 0 && szServerIpAddress[0] != '\0'
+			&& IsLoopbackIPv4(szServerIpAddress)
+			&& IsPrivateIPv4(address)
+			&& !IsLoopbackIPv4(address))
+		{
+			g_ErrorReport.Write(
+				"[NetworkFallback] CS via loopback; F4 03 private host %s -> 127.0.0.1 (adb reverse / same-host game hop)\r\n",
+				address);
+			strcpy_s(output, outputSize, "127.0.0.1");
+		}
+		else
+#endif
 		if(IsPrivateIPv4(address) != 0 && szServerIpAddress != 0 && szServerIpAddress[0] != 0 && IsPrivateIPv4(szServerIpAddress) == 0)
 		{
 			g_ErrorReport.Write("[NetworkFallback] rewrite private ip %s -> %s\r\n",address,szServerIpAddress);
@@ -473,9 +502,21 @@ void ReceiveServerList(BYTE* ReceiveBuffer, int Size)
 	CUIMng& rUIMng = CUIMng::Instance();
 	if (!rUIMng.m_CreditWin.IsShow())
 	{
+		// Show login first, then server list — ShowWin() moves the window to the head as active.
+		// Previous order (server then login) left LoginMainWin on top and hid the sub-server column.
+		rUIMng.ShowWin(&rUIMng.m_LoginMainWin);
 		rUIMng.ShowWin(&rUIMng.m_ServerSelWin);
 		rUIMng.m_ServerSelWin.UpdateDisplay();
-		rUIMng.ShowWin(&rUIMng.m_LoginMainWin);
+#if defined(__ANDROID__) || defined(MU_IOS)
+		// Login scene keeps a tour-camera + semi-transparent overlay while IsTourMode();
+		// once we have F4 06 data, drop tour so sub-server buttons are not stuck under the intro pass.
+#ifdef PJH_NEW_SERVER_SELECT_MAP
+		CCameraMove::GetInstancePtr()->SetTourMode(FALSE, FALSE, 0);
+#else
+		CCameraMove::GetInstancePtr()->SetTourMode(FALSE, FALSE);
+#endif
+		CCameraMove::GetInstancePtr()->StopCameraWalk(true);
+#endif
 	}
 
 	g_ErrorReport.Write("Success Receive Server List.\r\n");
@@ -501,7 +542,11 @@ void ReceiveServerConnect(BYTE* ReceiveBuffer) //Recebe informação do ConnectS
 		// Enable Login UI when CS redirects to the game/login endpoint (game port != connect-server port),
 		// not only when the game port is exactly 44606.
 #if defined(__ANDROID__)
-		const bool enableLoginUiFallback = (static_cast<unsigned short>(Data->Port) != g_ServerPort);
+		// server-next / docker legacy-login often answers F4 03 with the same host:port as the connect
+		// server (single listener). Port-inequality was always false, so LoginWin never opened after
+		// ServerSelWin hid itself in ConnectServerButtonIndex(). Always open login UI once the game
+		// TCP socket is up; ReceiveJoinServer can still refine state if the server sends it.
+		const bool enableLoginUiFallback = true;
 #else
 		const bool enableLoginUiFallback = (Data->Port == 44606);
 #endif
@@ -513,10 +558,17 @@ void ReceiveServerConnect(BYTE* ReceiveBuffer) //Recebe informação do ConnectS
 			HeroKey = 0;
 			CurrentProtocolState = RECEIVE_JOIN_SERVER_SUCCESS;
 			g_ErrorReport.Write(
-				"[AndroidLogin] Post-CS redirect: bypass join handshake wait, enable login UI (csPort=%u gamePort=%d)\r\n",
+				"[ReceiveServerConnect] enable login UI after game socket (csPort=%u gamePort=%d)\r\n",
 				static_cast<unsigned int>(g_ServerPort),
 				static_cast<int>(Data->Port));
 		}
+	}
+	else
+	{
+		g_ErrorReport.Write(
+			"[ReceiveServerConnect] CreateSocket failed rawIp=%s port=%d (check adb reverse game port vs .env)\r\n",
+			IP,
+			static_cast<int>(Data->Port));
 	}
 #else
 #if defined(__ANDROID__)
@@ -525,7 +577,7 @@ void ReceiveServerConnect(BYTE* ReceiveBuffer) //Recebe informação do ConnectS
 	{
 		g_bGameServerConnected = TRUE;
 		g_ConsoleDebug->Write(MCD_NORMAL, " > Android CreateSocket (login/data port)");
-		const bool enableLoginUiFallback = (static_cast<unsigned short>(Data->Port) != g_ServerPort);
+		const bool enableLoginUiFallback = true;
 		if (enableLoginUiFallback)
 		{
 			CUIMng& rUIMng = CUIMng::Instance();
@@ -534,10 +586,17 @@ void ReceiveServerConnect(BYTE* ReceiveBuffer) //Recebe informação do ConnectS
 			HeroKey = 0;
 			CurrentProtocolState = RECEIVE_JOIN_SERVER_SUCCESS;
 			g_ErrorReport.Write(
-				"[AndroidLogin] Post-CS redirect: bypass join handshake wait, enable login UI (csPort=%u gamePort=%d)\r\n",
+				"[ReceiveServerConnect] Android NEW_PROTOCOL: enable login UI (csPort=%u gamePort=%d)\r\n",
 				static_cast<unsigned int>(g_ServerPort),
 				static_cast<int>(Data->Port));
 		}
+	}
+	else
+	{
+		g_ErrorReport.Write(
+			"[ReceiveServerConnect] CreateSocket failed rawIp=%s port=%d (check adb reverse game port vs .env)\r\n",
+			IP,
+			static_cast<int>(Data->Port));
 	}
 #else
 	gProtocolSend.DisconnectServer();
@@ -12536,6 +12595,11 @@ void ProtocolCompiler( CWsctlc *pSocketClient, int iTranslation, int iParam)
 				}
 				break;
 			}
+#if defined(__ANDROID__)
+			// PopPacket moved this packet's CPacket into the garbage list; free only after Translate* finished
+			// with ReceiveBuffer (never ClearGarbage at GetReadMsg entry — re-entrancy / UAF destroyed mutex + lost F4 06).
+			pSocketClient->AndroidFlushPacketGarbage();
+#endif
 		}
 	}
 	wglMakeCurrent(nullptr, nullptr);

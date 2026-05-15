@@ -101,6 +101,18 @@ public sealed class PostgresInventorySlotRepository : IAsyncDisposable
         await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
     }
 
+    public async Task ReplaceCharacterSlotsAsync(
+        string accountLogin,
+        string characterName,
+        IReadOnlyDictionary<byte, byte[]> slots,
+        CancellationToken ct = default)
+    {
+        var rows = slots
+            .Select(kv => new InventorySlotRow { Slot = kv.Key, Item12 = kv.Value })
+            .ToList();
+        await ReplaceCharacterSlotsAsync(accountLogin, characterName, rows, ct).ConfigureAwait(false);
+    }
+
     /// <summary>Replace all slots for one character (matches in-memory bag after shop session).</summary>
     public async Task ReplaceCharacterSlotsAsync(
         string accountLogin,
@@ -147,4 +159,3 @@ public sealed class PostgresInventorySlotRepository : IAsyncDisposable
 
     public async ValueTask DisposeAsync() => await this._dataSource.DisposeAsync().ConfigureAwait(false);
 }
-

@@ -32,6 +32,8 @@ public sealed class MapMonsterInstance
 
     public int? AggroTargetKey { get; private set; }
 
+    readonly Dictionary<int, int> _damageByPlayerKey = new();
+
     public int CurrentLife { get; private set; }
     public bool IsAlive { get; private set; } = true;
     DateTimeOffset? _diedAtUtc;
@@ -44,7 +46,41 @@ public sealed class MapMonsterInstance
         InitializeLife();
     }
 
-    public void InitializeLife() => CurrentLife = MaxLife;
+    public void InitializeLife()
+    {
+        CurrentLife = MaxLife;
+        ClearDamageLedger();
+    }
+
+    public void RecordHit(int playerObjectKey, int amount)
+    {
+        if (IsNpc || !IsAlive || amount <= 0 || playerObjectKey <= 0)
+        {
+            return;
+        }
+
+        _damageByPlayerKey[playerObjectKey] = _damageByPlayerKey.GetValueOrDefault(playerObjectKey) + amount;
+    }
+
+    public bool TryGetTopDamagePlayerKey(out int playerObjectKey, out int totalDamage)
+    {
+        playerObjectKey = 0;
+        totalDamage = 0;
+        foreach (var (key, dmg) in _damageByPlayerKey)
+        {
+            if (dmg <= totalDamage)
+            {
+                continue;
+            }
+
+            totalDamage = dmg;
+            playerObjectKey = key;
+        }
+
+        return totalDamage > 0;
+    }
+
+    public void ClearDamageLedger() => _damageByPlayerKey.Clear();
 
     /// <returns><see langword="true"/> if the monster died from this hit.</returns>
     public bool ApplyDamage(int amount)
@@ -108,6 +144,7 @@ public sealed class MapMonsterInstance
         X = SpawnX;
         Y = SpawnY;
         AggroTargetKey = null;
+        ClearDamageLedger();
     }
 
     public void SetAggro(int targetObjectKey) => AggroTargetKey = targetObjectKey;

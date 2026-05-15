@@ -22,16 +22,20 @@
 
 ## M9 — NPC & monster runtime
 
-- [ ] Spawn theo `map_id` + tọa độ; bảng `monster_id` → stats tối thiểu (HP).
-- [ ] Gói **scope** tới client (opcode theo **M1**); chỉ gửi cho session đã join hợp lệ.
+Chi tiết: **`docs/M9-NPC-MONSTER-CHECKLIST.md`**, **`docs/M9-MONSTER-AI-PORT-CHECKLIST.md`**.
+
+- [x] Spawn theo `map_id` + tọa độ; `Monster.txt` stats; Postgres khi `TAKUMI_MONSTER_SPAWN_DB=1`.
+- [x] Scope `C2 0x13` / destroy `0x14`; AI wander/chase; combat stub; gate/shop/commerce stub.
+- [ ] Port còn lại từ `Source/4.GameServer`: encrypted ATT, skill/element, invasion spawns, quest NPC — xem P2.5–P4 trong AI port checklist.
 
 ---
 
 ## M10 — Movement & visibility
 
-- [x] Walk / instant move trên TCP minimal → cập nhật **tile** roster (**M4c** — `LegacyLoginHost`, `GamePortMinimalSession`).
-- [ ] **Broadcast** xung quanh player (không chỉ self); đồng bộ với **M7** (vitals / trạng thái khi cần).
-- [ ] Anti-flood / rate giữ broadcast (có thể tái sử dụng `TAKUMI_MAX_PACKETS_PER_SECOND` pattern).
+- [x] Walk / instant move → roster tile (**M4c**).
+- [x] Broadcast `C1 0x15` / `0x18` peers cùng map (`GameMapPresenceRegistry`).
+- [x] `C2 0x12` player viewport on join + walk view range + `0x14` on leave (`PlayerViewportWire602`, `PlayerViewportTracker`).
+- [ ] Anti-flood broadcast; vitals mid-combat (M7).
 
 ---
 

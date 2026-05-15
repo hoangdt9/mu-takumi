@@ -155,6 +155,10 @@ fi
 if compose_profiles_has_gamehost; then
   echo "  game-host:       ${TAKUMI_GAME_PUBLISH:-55901} (F4 03 phải khớp .env; vừa force-recreate nếu không dùng --recreate toàn stack)"
 fi
+echo "  LAN check:       ./scripts/check-lan-connect-ports.sh"
+echo "  Smoke C2 local:  ./scripts/smoke-connect-from-host.sh 127.0.0.1 ${TAKUMI_CONNECT_PUBLISH:-44605}"
+echo "  USB (AP isolation): ./scripts/adb-reverse-takumi-dev.sh  rồi build APK -PmuBootstrapAdbReverse=true"
+echo "  Nếu APK không recv C2: dừng container rồi chạy host (bỏ NAT Docker): docker compose stop legacy-login && ./scripts/run-legacy-login-host.sh"
 echo ""
 if compose_profiles_has_gamehost; then
   echo "  M6 tip: đợi legacy-login log \"build OK\" rồi mới mở app — nếu không thấy dòng sub-server, xem legacy-login có \"sent … ServerList\" không; BMD/ids: TAKUMI_CS_CONNECT_* (docs/M3-CONNECT-BMD.md)."

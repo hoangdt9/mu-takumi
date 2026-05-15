@@ -113,8 +113,58 @@ public sealed class MonsterStatCatalog
             && int.TryParse(parts[regenCol], NumberStyles.Integer, CultureInfo.InvariantCulture, out var regen)
             ? regen
             : 10;
+        var attribute = col + 16 < parts.Length
+            && int.TryParse(parts[col + 16], NumberStyles.Integer, CultureInfo.InvariantCulture, out var attr)
+            ? attr
+            : 0;
+        var resist0 = col + 21 < parts.Length
+            && int.TryParse(parts[col + 21], NumberStyles.Integer, CultureInfo.InvariantCulture, out var r0)
+            ? Math.Clamp(r0, 0, 255)
+            : 0;
+        var resist1 = col + 22 < parts.Length
+            && int.TryParse(parts[col + 22], NumberStyles.Integer, CultureInfo.InvariantCulture, out var r1)
+            ? Math.Clamp(r1, 0, 255)
+            : 0;
+        var resist2 = col + 23 < parts.Length
+            && int.TryParse(parts[col + 23], NumberStyles.Integer, CultureInfo.InvariantCulture, out var r2)
+            ? Math.Clamp(r2, 0, 255)
+            : 0;
+        var resist3 = col + 24 < parts.Length
+            && int.TryParse(parts[col + 24], NumberStyles.Integer, CultureInfo.InvariantCulture, out var r3)
+            ? Math.Clamp(r3, 0, 255)
+            : 0;
+        var elementalAttribute = 0;
+        var elementalDefense = 0;
+        if (col + 25 < parts.Length
+            && int.TryParse(parts[col + 25], NumberStyles.Integer, CultureInfo.InvariantCulture, out var elemAttr))
+        {
+            elementalAttribute = elemAttr;
+            if (col + 27 < parts.Length
+                && int.TryParse(parts[col + 27], NumberStyles.Integer, CultureInfo.InvariantCulture, out var elemDef))
+            {
+                elementalDefense = Math.Max(0, elemDef);
+            }
+        }
 
-        stat = new MonsterStat(index, level, life, damageMin, damageMax, defense, moveRange, attackType, attackRange, viewRange, regenSeconds);
+        stat = new MonsterStat(
+            index,
+            level,
+            life,
+            damageMin,
+            damageMax,
+            defense,
+            moveRange,
+            attackType,
+            attackRange,
+            viewRange,
+            regenSeconds,
+            attribute,
+            resist0,
+            resist1,
+            resist2,
+            resist3,
+            elementalAttribute,
+            elementalDefense);
         return true;
     }
 
@@ -132,7 +182,14 @@ public sealed class MonsterStatCatalog
                 AttackType: 0,
                 AttackRange: 1,
                 ViewRange: 5,
-                RegenTimeSeconds: 10);
+                RegenTimeSeconds: 10,
+                Attribute: 0,
+                Resistance0: 0,
+                Resistance1: 0,
+                Resistance2: 0,
+                Resistance3: 0,
+                ElementalAttribute: 0,
+                ElementalDefense: 0);
 }
 
 public readonly record struct MonsterStat(
@@ -146,7 +203,14 @@ public readonly record struct MonsterStat(
     int AttackType,
     int AttackRange,
     int ViewRange,
-    int RegenTimeSeconds)
+    int RegenTimeSeconds,
+    int Attribute = 0,
+    int Resistance0 = 0,
+    int Resistance1 = 0,
+    int Resistance2 = 0,
+    int Resistance3 = 0,
+    int ElementalAttribute = 0,
+    int ElementalDefense = 0)
 {
     public bool UsesRangedOrMagic => AttackType >= 100;
 }

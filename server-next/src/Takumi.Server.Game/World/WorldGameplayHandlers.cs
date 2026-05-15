@@ -216,11 +216,33 @@ public static class WorldGameplayHandlers
             return false;
         }
 
+        if (NpcTalkService.TryGetTalkResult(mob.MonsterClass, out var talkResult))
+        {
+            if (talkResult == NpcTalkService.TalkResultWarehouse)
+            {
+                await NpcTalkService.TryOpenWarehouseAsync(player, writeAsync, ct).ConfigureAwait(false);
+                Console.WriteLine("[m8] warehouse open npc class={0} {1}", mob.MonsterClass, remote);
+                return true;
+            }
+
+            if (talkResult == NpcTalkService.TalkResultDuelNpc)
+            {
+                await NpcTalkService.TryOpenDuelNpcAsync(writeAsync, ct).ConfigureAwait(false);
+                Console.WriteLine("[m8] duel npc talk class={0} {1}", mob.MonsterClass, remote);
+                return true;
+            }
+        }
+
         var shopIndex = NpcShopCatalog.ResolveShopIndex(mob.MonsterClass, mob.Map, mob.X, mob.Y);
         if (shopIndex < 0)
         {
+            if (NpcQuestCatalog.IsQuestNpc(mob.MonsterClass))
+            {
+                return await TryHandleQuestNpcTalkAsync(writeAsync, mob.MonsterClass, remote, ct).ConfigureAwait(false);
+            }
+
             Console.WriteLine(
-                "[m8] npc talk class={0} map={1} xy=({2},{3}) no shop {4}",
+                "[m8] npc talk class={0} map={1} xy=({2},{3}) unhandled {4}",
                 mob.MonsterClass,
                 mob.Map,
                 mob.X,
@@ -250,10 +272,35 @@ public static class WorldGameplayHandlers
             wireItems.Add(new NpcShopWire602.ShopItemWire((byte)item.Slot, blob));
         }
 
+        await writeAsync(NpcTalkWire602.Build(NpcTalkService.TalkResultShop), ct).ConfigureAwait(false);
         var pkt = NpcShopWire602.Build(wireItems);
         await writeAsync(pkt, ct).ConfigureAwait(false);
         PlayerShopSession.OpenShop(presenceSessionId, shopIndex);
+
+        if (PlayerShopSession.TryGetSessionSlots(presenceSessionId, out var bagSlots))
+        {
+            var valuePkt = ShopItemValueSender.BuildForShop(items, bagSlots);
+            if (valuePkt.Length > 0)
+            {
+                await writeAsync(valuePkt, ct).ConfigureAwait(false);
+            }
+        }
+
         Console.WriteLine("[m8] sent shop 0x31 index={0} count={1} npc={2} {3}", shopIndex, wireItems.Count, mob.MonsterClass, remote);
+        return true;
+    }
+
+    static async Task<bool> TryHandleQuestNpcTalkAsync(
+        Func<ReadOnlyMemory<byte>, CancellationToken, Task> writeAsync,
+        int monsterClass,
+        string remote,
+        CancellationToken ct)
+    {
+        var questIndex = NpcQuestCatalog.DefaultQuestIndexForClass(monsterClass);
+        await writeAsync(QuestWire602.BuildQuestInfo(), ct).ConfigureAwait(false);
+        await writeAsync(QuestWire602.BuildQuestState(questIndex, 0), ct).ConfigureAwait(false);
+        await writeAsync(NpcTalkWire602.Build(1), ct).ConfigureAwait(false);
+        Console.WriteLine("[m9] quest npc talk class={0} quest={1} {2}", monsterClass, questIndex, remote);
         return true;
     }
 

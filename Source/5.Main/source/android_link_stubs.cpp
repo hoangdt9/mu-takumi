@@ -36,6 +36,8 @@ extern "C" int32_t ConnectionManager_Connect(
     const wchar_t* host,
     int32_t port,
     BYTE isEncrypted,
+    void (*onSocketReady)(int32_t handle, void* userData),
+    void* onSocketReadyUserData,
     void(*onPacket)(int32_t, int32_t, uint8_t*),
     void(*onDisconnect)(int32_t));
 extern "C" int32_t ConnectionManager_GetLastConnectErrno(void);
@@ -280,7 +282,28 @@ namespace
 
     bool IsConnectServerPort(unsigned short port)
     {
-        return (port == g_ServerPort || port == MuLanDefaults::kLegacyVmClassicConnectPort);
+        return port == g_ServerPort || port == MuLanDefaults::kDefaultFirstHopConnectPort ||
+            port == MuLanDefaults::kLegacyVmClassicConnectPort;
+    }
+
+    /// True when the TCP peer is the MU Connect Server (plaintext C1/C2), not the game server.
+    /// \c CProtect::CheckSocketPort uses GSPortMin/Max only — LAN ports like 44605 often fall inside that
+    /// range, so XOR Enc/Decrypt must be skipped here or C2 F4 06 is corrupted and no sub-servers appear.
+    bool IsPeerConnectServerSocket(SOCKET s)
+    {
+        if (s == INVALID_SOCKET || s == static_cast<SOCKET>(0))
+        {
+            return false;
+        }
+
+        SOCKADDR_IN addr {};
+        int addrLen = static_cast<int>(sizeof(addr));
+        if (getpeername(s, reinterpret_cast<sockaddr*>(&addr), &addrLen) != 0)
+        {
+            return false;
+        }
+
+        return IsConnectServerPort(ntohs(addr.sin_port));
     }
 
     void CopyPacketKey(DWORD* target, const DWORD* source)
@@ -376,6 +399,9 @@ CWsctlc::CWsctlc()
     m_bGame = FALSE;
     m_iMaxSockets = 0;
     m_socket = INVALID_SOCKET;
+#if defined(__ANDROID__)
+    m_skipRecvBuxXor = false;
+#endif
     std::memset(m_SendBuf, 0, sizeof(m_SendBuf));
     m_nSendBufLen = 0;
     std::memset(m_RecvBuf, 0, sizeof(m_RecvBuf));
@@ -405,6 +431,25 @@ void CWsctlc::AndroidClearPacketQueue()
     }
 
     m_pPacketQueue->ClearGarbage();
+}
+
+static void CWsctlcRegisterSocketOwner(int32_t handle, void* userData)
+{
+    auto* self = static_cast<CWsctlc*>(userData);
+    if (self == nullptr || handle <= 0)
+    {
+        return;
+    }
+
+    std::lock_guard<std::mutex> lock(g_androidSocketMutex);
+    g_androidSocketOwners[handle] = self;
+    self->AndroidBindSocketHandle(handle);
+    self->AndroidClearPacketQueue();
+}
+
+void CWsctlc::AndroidBindSocketHandle(int32_t handle)
+{
+    m_socket = static_cast<SOCKET>(handle);
 }
 
 void CWsctlc::AndroidOnPacket(int32_t handle, int32_t size, uint8_t* data)
@@ -443,7 +488,10 @@ void CWsctlc::AndroidOnPacket(int32_t handle, int32_t size, uint8_t* data)
     std::memcpy(client->m_RecvBuf + client->m_nRecvBufLen, data, static_cast<size_t>(size));
 
 #if(ENCRYPT_STATE==1)
-    if (gProtect.CheckSocketPort(client->m_socket) != 0)
+    const bool skipBuxXor =
+        client->m_skipRecvBuxXor || IsPeerConnectServerSocket(client->m_socket);
+    if (!skipBuxXor && client->m_socket != INVALID_SOCKET &&
+        client->m_socket != static_cast<SOCKET>(0) && gProtect.CheckSocketPort(client->m_socket) != 0)
     {
         gProtect.DecryptData(client->m_RecvBuf + client->m_nRecvBufLen, size);
     }
@@ -550,8 +598,6 @@ void CWsctlc::AndroidOnPacket(int32_t handle, int32_t size, uint8_t* data)
             break;
         }
     }
-
-    client->m_pPacketQueue->ClearGarbage();
 }
 
 void CWsctlc::AndroidOnDisconnect(int32_t handle)
@@ -641,6 +687,10 @@ BOOL CWsctlc::Close()
         ConnectionManager_Disconnect(handle);
     }
 
+#if defined(__ANDROID__)
+    m_skipRecvBuxXor = false;
+#endif
+
     return TRUE;
 }
 
@@ -678,16 +728,28 @@ BOOL CWsctlc::Connect(char* ipAddr, unsigned short port, DWORD)
         Close();
     }
 
+#if defined(__ANDROID__)
+    // Must be set before ConnectionManager_Connect: the recv thread can deliver C2 F4 06 (connect
+    // server on-accept) before this function resumes. If m_skipRecvBuxXor is still false and getpeername
+    // fails transiently, gProtect.DecryptData corrupts plaintext and sub-server list never parses.
+    m_skipRecvBuxXor = IsConnectServerPort(port);
+#endif
+
     const std::wstring hostWide = ToWideString(ipAddr);
     const int32_t handle = ConnectionManager_Connect(
         hostWide.c_str(),
         static_cast<int32_t>(port),
         0,
+        CWsctlcRegisterSocketOwner,
+        this,
         CWsctlc::AndroidOnPacket,
         CWsctlc::AndroidOnDisconnect);
 
     if (handle <= 0)
     {
+#if defined(__ANDROID__)
+        m_skipRecvBuxXor = false;
+#endif
         const int32_t lastErr = ConnectionManager_GetLastConnectErrno();
         char errBuf[128] = {};
         if (lastErr != 0)
@@ -702,12 +764,6 @@ BOOL CWsctlc::Connect(char* ipAddr, unsigned short port, DWORD)
             static_cast<int>(lastErr),
             errBuf[0] != 0 ? errBuf : "unknown");
         return FALSE;
-    }
-
-    {
-        std::lock_guard<std::mutex> lock(g_androidSocketMutex);
-        g_androidSocketOwners[handle] = this;
-        AndroidClearPacketQueue();
     }
 
     m_socket = static_cast<SOCKET>(handle);
@@ -747,7 +803,17 @@ int CWsctlc::sSend(SOCKET socket, char* buf, int len)
     std::vector<uint8_t> sendBuffer(reinterpret_cast<uint8_t*>(buf), reinterpret_cast<uint8_t*>(buf) + len);
 
 #if(ENCRYPT_STATE==1)
-    if (gProtect.CheckSocketPort(socket) != 0)
+    bool skipBuxXor = IsPeerConnectServerSocket(socket);
+    if (!skipBuxXor)
+    {
+        std::lock_guard<std::mutex> lock(g_androidSocketMutex);
+        const auto it = g_androidSocketOwners.find(static_cast<int32_t>(socket));
+        if (it != g_androidSocketOwners.end() && it->second != nullptr && it->second->m_skipRecvBuxXor)
+        {
+            skipBuxXor = true;
+        }
+    }
+    if (!skipBuxXor && gProtect.CheckSocketPort(socket) != 0)
     {
         gProtect.EncryptData(sendBuffer.data(), len);
     }
@@ -779,6 +845,15 @@ BYTE* CWsctlc::GetReadMsg()
     }
 
     return g_wsctlcReadMessage[0] ? g_wsctlcReadMessage : NULL;
+}
+
+void CWsctlc::AndroidFlushPacketGarbage()
+{
+    std::lock_guard<std::mutex> lock(g_androidSocketMutex);
+    if (m_pPacketQueue != nullptr)
+    {
+        m_pPacketQueue->ClearGarbage();
+    }
 }
 
 void CWsctlc::LogPrint(char*, ...) {}

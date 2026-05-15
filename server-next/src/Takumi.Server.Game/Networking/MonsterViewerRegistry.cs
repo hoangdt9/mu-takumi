@@ -150,6 +150,52 @@ public static class MonsterViewerRegistry
     public static bool TryGetSession(Guid sessionId, out MonsterViewerSession session) =>
         Sessions.TryGetValue(sessionId, out session!);
 
+    public static bool TryGetByPlayerKey(int playerKey, out MonsterViewerSession session)
+    {
+        foreach (var s in Sessions.Values)
+        {
+            if (s.PlayerObjectKey == playerKey)
+            {
+                session = s;
+                return true;
+            }
+        }
+
+        session = null!;
+        return false;
+    }
+
+    public static async Task ApplyPvPHitAsync(
+        int attackerPlayerKey,
+        int victimPlayerKey,
+        byte mapId,
+        int damage,
+        CancellationToken ct)
+    {
+        if (!TryGetByPlayerKey(victimPlayerKey, out var victim) || victim.MapId != mapId)
+        {
+            return;
+        }
+
+        var maxHp = Math.Max(1, victim.MaxHp);
+        var dmg = Math.Max(1, damage);
+        victim.CurrentHp = Math.Max(0, victim.CurrentHp - dmg);
+        victim.OnVitalsChanged?.Invoke(victim.CurrentHp, maxHp);
+
+        var dmgPkt = MonsterDamageWire602.Build(victim.PlayerObjectKey, dmg, victim.CurrentHp, hitSuccess: true);
+        await GamePortOutboundWire.WriteAsync(victim.Connection, victim.Protect, dmgPkt, ct).ConfigureAwait(false);
+        var lifePkt = LifeManaWire602.BuildLife(LifeManaWire602.TypeCurrent, (ushort)Math.Min(victim.CurrentHp, ushort.MaxValue));
+        await GamePortOutboundWire.WriteAsync(victim.Connection, victim.Protect, lifePkt, ct).ConfigureAwait(false);
+
+        Console.WriteLine(
+            "[m10c] pvp hit victim={0} dmg={1} hp={2}/{3} from={4}",
+            victim.PlayerObjectKey,
+            dmg,
+            victim.CurrentHp,
+            maxHp,
+            attackerPlayerKey);
+    }
+
     public static IReadOnlyCollection<MonsterViewerSession> GetAllSessions() => Sessions.Values.ToArray();
 
     public static bool TryFindNearestTarget(

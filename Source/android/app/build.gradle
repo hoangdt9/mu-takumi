@@ -53,6 +53,15 @@ String readBootstrapHostFromServerNextEnv() {
 }
 
 /**
+ * USB dev: {@code ./gradlew -PmuBootstrapAdbReverse=true} bakes 127.0.0.1 cho TCP + data.zip
+ * sau khi chạy {@code server-next/scripts/adb-reverse-takumi-dev.sh} (bỏ qua Wi‑Fi / AP isolation).
+ */
+boolean isMuBootstrapAdbReverseEnabled() {
+    String v = rootProject.findProperty("muBootstrapAdbReverse")?.toString()?.trim()
+    return v != null && !v.isEmpty() && !v.equalsIgnoreCase("false") && !v.equals("0")
+}
+
+/**
  * Preload data.zip URL baked into BuildConfig.DATA_ZIP_URL_LAN.
  * Priority: -PmuDataZipLan → TAKUMI_DATA_ZIP_URL → TAKUMI_LAN_IP + DATA_ZIP_PUBLISH_PORT →
  * TAKUMI_PUBLIC_HOST + DATA_ZIP_PUBLISH_PORT → emulator default.
@@ -79,6 +88,20 @@ String resolveDataZipUrlForBuildConfig() {
     String cli = rootProject.findProperty("muDataZipLan")?.toString()?.trim()
     if (cli) {
         return cli
+    }
+    if (isMuBootstrapAdbReverseEnabled()) {
+        File envFile = takumiServerNextEnvFile()
+        String portStr = readDotEnvValue(envFile, "DATA_ZIP_PUBLISH_PORT")
+        int p = 18080
+        if (portStr != null && !portStr.isEmpty()) {
+            try {
+                p = Integer.parseInt(portStr.trim())
+            } catch (NumberFormatException ignored) {
+                p = 18080
+            }
+        }
+        println("TakumiMu: -PmuBootstrapAdbReverse=true → DATA_ZIP_URL_LAN = http://127.0.0.1:${p}/data.zip (adb reverse tcp:${p}); override with -PmuDataZipLan=...")
+        return "http://127.0.0.1:${p}/data.zip"
     }
     File envFile = takumiServerNextEnvFile()
     String explicit = readDotEnvValue(envFile, "TAKUMI_DATA_ZIP_URL")
@@ -123,6 +146,10 @@ String resolveMuBootstrapServerHost() {
     String cli = rootProject.findProperty("muBootstrapServerHost")?.toString()?.trim()
     if (cli) {
         return cli
+    }
+    if (isMuBootstrapAdbReverseEnabled()) {
+        println("TakumiMu: -PmuBootstrapAdbReverse=true → MU_BOOTSTRAP_SERVER host = 127.0.0.1 (USB adb reverse); run server-next/scripts/adb-reverse-takumi-dev.sh")
+        return "127.0.0.1"
     }
     return readBootstrapHostFromServerNextEnv()
 }
@@ -418,7 +445,7 @@ def patchNativeDirTo16k = { File dir, String label ->
 
 android {
     namespace 'com.muonline.client'
-    compileSdk 34
+    compileSdk 35
 
     // `preloadDatafresh` = separate applicationId → empty scoped storage → Preload always runs data.zip download.
     flavorDimensions 'target', 'preload'

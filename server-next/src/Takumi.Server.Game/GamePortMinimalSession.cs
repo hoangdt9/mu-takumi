@@ -44,6 +44,25 @@ public static class GamePortMinimalSession
         Task? protectInboundPumpTask = null;
         CancellationTokenSource? protectInboundPumpCts = null;
 
+        void TrackVitalsOutbound(ReadOnlySpan<byte> span)
+        {
+            if (sessionJoinCharacterName10 is null)
+            {
+                return;
+            }
+
+            var active = FindRosterEntry(roster, sessionJoinCharacterName10);
+            if (active is null)
+            {
+                return;
+            }
+
+            if (RosterVitalsOutboundTracker.TryApplyToGameEntry(active, span))
+            {
+                Volatile.Write(ref rosterDirty, 1);
+            }
+        }
+
         try
         {
             // Stdout marker: visible in `docker compose logs` even when stderr is noisy; bump suffix after RX-wire changes.
@@ -365,12 +384,22 @@ public static class GamePortMinimalSession
                         var spawn = new JoinMapSpawnWire(picked.MapId, picked.PosX, picked.PosY, picked.Angle);
                         var joinPkt = JoinMapServerWire602.Build(ToWire(picked), spawn);
                         var invPkt = await JoinInventoryPacket602.BuildAsync(TakumiPostgresMirror.InventorySlots, loggedAccountId, joinName10, ct).ConfigureAwait(false);
-                        await GamePortOutboundWire.WriteAsync(connection, protect, joinPkt, ct).ConfigureAwait(false);
-                        await GamePortOutboundWire.WriteAsync(connection, protect, invPkt, ct).ConfigureAwait(false);
+                        await GamePortOutboundWire.WriteAsync(connection, protect, joinPkt, ct, TrackVitalsOutbound).ConfigureAwait(false);
+                        await GamePortOutboundWire.WriteAsync(connection, protect, invPkt, ct, TrackVitalsOutbound).ConfigureAwait(false);
                         if (RosterVitalsLifecycle.TrySeedGameEntryFromJoin(picked, joinPkt))
                         {
                             Volatile.Write(ref rosterDirty, 1);
                         }
+
+                        sessionJoinCharacterName10 = new byte[10];
+                        Buffer.BlockCopy(joinName10, 0, sessionJoinCharacterName10, 0, 10);
+                        await RosterVitalsLifecycle.TrySendLifeManaSyncAsync(
+                            async (m, t) => await GamePortOutboundWire.WriteAsync(connection, protect, m, t, TrackVitalsOutbound).ConfigureAwait(false),
+                            picked.CurrentHp,
+                            picked.MaxHp,
+                            picked.CurrentMp,
+                            picked.MaxMp,
+                            ct).ConfigureAwait(false);
 
                         await MapMonsterScopeSender.TrySendAfterJoinAsync(
                             connection,
@@ -380,8 +409,6 @@ public static class GamePortMinimalSession
                             picked.PosY,
                             remote,
                             ct).ConfigureAwait(false);
-                        sessionJoinCharacterName10 = new byte[10];
-                        Buffer.BlockCopy(joinName10, 0, sessionJoinCharacterName10, 0, 10);
                         Console.WriteLine(
                             "[{0}] sent join map (F3 03) + inventory (F3 10 len={5}) map={1} xy=({2},{3}) name='{4}'",
                             remote,

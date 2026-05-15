@@ -159,7 +159,7 @@ Use this to avoid unnecessary rebuilds.
 7. **M7 — Persistence vòng đời nhân vật** — **`docs/M7-CHARACTER-PERSISTENCE-CHECKLIST.md`**  
    - [x] SQL prep: **`sql/init/004_character_roster_vitals.sql`** (`current_hp`, `max_hp`, `current_mp`, `max_mp`, `zen` on `character_roster`; apply via **`./scripts/apply-sql.sh`** on existing volumes).  
    - [x] **M7b–c (partial):** `CharacterRosterRow` / JSON / Postgres mirror + **`CharacterRosterVitals`** on join **`F3 03`** when `max_hp`/`max_mp` &gt; 0; tests **`JoinMapVitals602Tests`**.  
-   - [x] **M7d (partial):** seed vitals từ **`F3 03`** sau join/move-map + disconnect/periodic flush (`JoinMapVitalsSeed`, `RosterVitalsLifecycle`). **Open:** mid-session vitals từ combat / `GCLifeSend`.  
+   - [x] **M7d (partial):** seed vitals + outbound `0x26`/`0x27` track + `TAKUMI_SEND_LIFE_MANA_AFTER_JOIN` (`LifeManaWire602`, `RosterVitalsLifecycle`). **Open:** combat-driven `GCLifeSend` đầy đủ.  
    - [ ] Migration EF bổ sung (nếu dùng song song với `sql/init`).
 
 8. **M8 — Dữ liệu tĩnh thế giới (ETL)** — **`docs/M8-M10-WORLD-RUNTIME-CHECKLIST.md`** §M8  

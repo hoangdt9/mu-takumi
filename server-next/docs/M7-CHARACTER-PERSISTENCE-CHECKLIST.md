@@ -38,7 +38,7 @@
 - [x] Lưu vitals khi **disconnect** (cùng `SavePersistedRoster` / `SaveRoster` — đã ghi field vitals; cần seed trước, xem dưới).
 - [x] **Seed sau join / move-map:** `JoinMapVitalsSeed` + `RosterVitalsLifecycle` — copy HP/MP/zen từ **`F3 03`** vào roster khi `max_hp == 0`; `rosterDirty` cho **`TAKUMI_ROSTER_PERIODIC_SAVE_SECONDS`**.
 - [x] **Cả hai host:** `LegacyLoginHost` + `GamePortMinimalSession`.
-- [ ] Cập nhật vitals **giữa phiên** từ gói client hoặc khi GS gửi `0x26`/`0x27` — *minimal host không nhận life/mana từ client (M1: server TX); cần `GCLifeSend` parity trong **M6+** / combat.*
+- [x] **Giữa phiên (partial):** `LifeManaWire602` + `RosterVitalsOutboundTracker` — quét outbound `C1 0x26`/`0x27` (type `0xFF`/`0xFE`) cập nhật roster + `rosterDirty`; gửi sync sau join khi `TAKUMI_SEND_LIFE_MANA_AFTER_JOIN` (mặc định bật). **Open:** combat gửi life/mana thường xuyên hơn (full `GCLifeSend` parity).
 
 ---
 
@@ -46,6 +46,7 @@
 
 - [x] Unit test: JSON vitals — **`GameRosterVitalsJsonTests`**; seed join — **`JoinMapVitalsSeedTests`**.
 - [x] `TEST_PG_CONNECTION_STRING`: vitals round-trip — **`CharacterRosterPostgresVitalsTests`** (cần `004_character_roster_vitals.sql` đã apply).
+- [x] **`LifeManaWire602Tests`** — build/parse 0x26/0x27.
 
 ---
 

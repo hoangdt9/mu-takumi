@@ -26,9 +26,9 @@ public static class MapGroundItemStore
         return 0;
     }
 
-    public static bool TryPeek(byte mapId, ushort index, out GroundItem item)
+    public static bool TryPeek(byte mapId, ushort index, out GroundItem? item)
     {
-        item = null!;
+        item = null;
         if (index == 0 || index > MaxIndex)
         {
             return false;

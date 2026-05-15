@@ -52,6 +52,43 @@ public static class CharacterRosterMirrorWriter
             });
     }
 
+    public static void ScheduleVitalsUpsert(
+        string accountId,
+        string characterName,
+        int currentHp,
+        int maxHp,
+        int currentMp,
+        int maxMp)
+    {
+        var repo = TakumiPostgresMirror.CharacterRoster;
+        if (repo is null || string.IsNullOrEmpty(accountId) || string.IsNullOrWhiteSpace(characterName))
+        {
+            return;
+        }
+
+        var name = CharacterRosterMerge.NormaliseName(characterName);
+        Interlocked.Increment(ref _pendingUpserts);
+        _ = Task.Run(
+            async () =>
+            {
+                try
+                {
+                    await repo.UpsertVitalsAsync(accountId, name, currentHp, maxHp, currentMp, maxMp, CancellationToken.None)
+                        .ConfigureAwait(false);
+                    CharacterRosterMirrorHealth.RecordUpsertSuccess();
+                }
+                catch (Exception ex)
+                {
+                    CharacterRosterMirrorHealth.RecordUpsertFail();
+                    Console.WriteLine("[roster-db] vitals upsert failed for {0}/{1}: {2}", accountId, name, ex.Message);
+                }
+                finally
+                {
+                    Interlocked.Decrement(ref _pendingUpserts);
+                }
+            });
+    }
+
     /// <summary>Best-effort wait for fire-and-forget upserts (M4b shutdown / disconnect).</summary>
     public static void TryDrainPendingUpserts(TimeSpan maxWait)
     {

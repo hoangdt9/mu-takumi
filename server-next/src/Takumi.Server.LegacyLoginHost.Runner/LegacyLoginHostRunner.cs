@@ -791,6 +791,10 @@ public static class LegacyLoginHostRunner
                         playerObjectKey: presenceJoin?.ObjectKey ?? 0,
                         currentHp: picked.CurrentHp,
                         maxHp: picked.MaxHp,
+                        currentMp: picked.CurrentMp,
+                        maxMp: picked.MaxMp,
+                        accountLogin: loggedAccountId,
+                        characterName: Encoding.ASCII.GetString(picked.Name10).TrimEnd('\0'),
                         onVitalsChanged: (hp, max) =>
                         {
                             picked.CurrentHp = hp;
@@ -954,6 +958,10 @@ public static class LegacyLoginHostRunner
                             playerObjectKey: presenceMove?.ObjectKey ?? 0,
                             currentHp: pickedMove.CurrentHp,
                             maxHp: pickedMove.MaxHp,
+                            currentMp: pickedMove.CurrentMp,
+                            maxMp: pickedMove.MaxMp,
+                            accountLogin: loggedAccountId,
+                            characterName: Encoding.ASCII.GetString(pickedMove.Name10).TrimEnd('\0'),
                             onVitalsChanged: (hp, max) =>
                             {
                                 pickedMove.CurrentHp = hp;

@@ -5,6 +5,8 @@ namespace Takumi.Server.Game.World;
 /// <summary>Item pick/drop/move (<c>0x22</c>–<c>0x24</c>) — inventory bag + ground items.</summary>
 public static class ItemWorldHandler
 {
+    static bool IsAlive(GameRosterEntry player) => player.MaxHp <= 0 || player.CurrentHp > 0;
+
     public static async Task<bool> TryHandlePacketAsync(
         GameRosterEntry player,
         Guid presenceSessionId,
@@ -16,6 +18,11 @@ public static class ItemWorldHandler
         Action? onRosterDirty,
         CancellationToken ct)
     {
+        if (!IsAlive(player))
+        {
+            return false;
+        }
+
         if (ClientGameplayPackets602.TryFindItemMoveRequest(
                 packet,
                 out _,

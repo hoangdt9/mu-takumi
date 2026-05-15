@@ -64,6 +64,19 @@ public sealed class ItemWorldHandlerTests
     }
 
     [Fact]
+    public void PlayerDieWire602_layout_matches_GCUserDieSend()
+    {
+        var pkt = PlayerDieWire602.Build(victimObjectKey: 0x1234, killerObjectKey: 0x5678, skill: 0);
+        Assert.Equal(0xC1, pkt[0]);
+        Assert.Equal(PlayerDieWire602.PacketLength, pkt[1]);
+        Assert.Equal((byte)0x17, pkt[2]);
+        Assert.Equal(0x12, pkt[3]);
+        Assert.Equal(0x34, pkt[4]);
+        Assert.Equal(0x56, pkt[7]);
+        Assert.Equal(0x78, pkt[8]);
+    }
+
+    [Fact]
     public void ItemViewportWire602_create_sets_fresh_drop_high_bit()
     {
         var item = new byte[ItemWire602.WireBytes];

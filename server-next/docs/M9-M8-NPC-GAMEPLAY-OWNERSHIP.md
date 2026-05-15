@@ -20,13 +20,13 @@ Last updated: 2026-05-16 · Branch: **`mac-m4`** (chưa merge main)
 
 | # | Tính năng | Gợi ý owner |
 |---|-----------|-------------|
-| H | `0xDB` / `0x19` magic skill wire đầy đủ | M9c / M10 |
+| H | ~~`0xDB` / `0x19` magic AoE~~ | Done (stub) |
 | I | Buy confirm `F3 ED`, coin shop | M8 |
-| J | `GCItemValueSend` / giá từng item client | M8 |
-| K | Persist `inventory_slot` upsert sau mỗi buy/sell | M4b + M8 |
-| L | Encrypted `EncTerrain*.att` | M9b |
+| J | ~~`GCItemValueSend` / `ItemValue.txt`~~ | Done (`ItemValueWire602` after `0x31`) |
+| K | ~~Persist `inventory_slot`~~ | Done (`InventorySlotPersist`) |
+| L | ~~Encrypted `EncTerrain*.att`~~ | Done (`ModulusCryptor` in `MapAttWalkability`) |
 | M | NPC quest / warehouse / guild NPC | M11+ |
-| N | Player viewport `C2 0x12` | M10b |
+| N | ~~Player viewport walk `C2 0x12`~~ | Done (`PlayerViewportTracker` + M10b) |
 
 ## File chỉ touch khi sửa NPC gameplay
 

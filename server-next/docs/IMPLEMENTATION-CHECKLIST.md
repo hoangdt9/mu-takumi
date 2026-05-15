@@ -179,12 +179,14 @@ Use this to avoid unnecessary rebuilds.
    - [x] Combat stub: `C1 0x11` hit / `0x19` skill → damage, `C1 0x14` destroy, `C1 0x16` die (`MonsterCombatHandler`); damage trừ Defense từ `Monster.txt`.  
    - [x] Gate / NPC shop / buy-sell-repair stub (`MapGateService`, `WorldGameplayHandlers`, `ShopCommerceHandler`).
    - [~] **M9b AI:** wander/chase/`0xD4`/`0x18`, player damage stub, periodic viewport 1s, regen broadcast — **`docs/M9-MONSTER-AI-PORT-CHECKLIST.md`**.  
-   - [ ] AoE / PvP / full pathfinding — **M10c / M9b P2–P3**.
+   - [~] **M9c:** `ItemValue.txt` + `GCItemValueSend` (`C2 F3 E9`), AoE `0xDB`, PvP stub, quest NPC dialog stub (P4.4 partial).  
+   - [ ] Element/exp/invasion (P3.2–P4), pathfinding BFS đầy đủ — **M9b P2.3+**.
 
 10. **M10 — Movement & visibility** — cùng file §M10; owner: **`docs/WORKSTREAM-OWNERSHIP.md`**  
     - [x] Walk / instant move → roster tile (`LegacyLoginHost`, `GamePortMinimalSession`).  
     - [x] **M10a:** broadcast `C1 0x15` / `0x18` cùng map (`GameMapPresenceRegistry`).  
-    - [ ] Player viewport `C2 0x12`; vitals mid-combat (M7).
+    - [x] **M10b:** player viewport `C2 0x12` on join + walk view range + `0x14` on leave/disconnect (`PlayerViewportWire602`, `PlayerViewportTracker`, `TAKUMI_PLAYER_VIEWPORT_*`).  
+    - [ ] Vitals mid-combat broadcast đầy đủ (M7).
 
 11. **M11 — DataServer merge**  
     - [ ] Quyết định: Postgres-only vs bridge tới MSSQL legacy; API nội bộ cho `Takumi.Server.Game`.

@@ -57,7 +57,7 @@ Last updated: 2026-05-16
 | P2.2 | Block `NoMove` / `NoGround` tiles | `TWFlags` | [x] | `CanWalk(map,x,y)` used in wander/chase |
 | P2.3 | PathFinding2/4 multi-step path | `gMap[].PathFinding*` | [x] | `MapTilePathfinder` greedy first step + fallback (`TAKUMI_MONSTER_PATHFIND_MAX_STEPS`) |
 | P2.4 | Safe zone: no mob aggro | attribute | [x] | `IsSafeZone` — no chase/attack in safe tiles |
-| P2.5 | Encrypted `EncTerrain*.att` | client maps | [ ] | decrypt parity with client |
+| P2.5 | Encrypted `EncTerrain*.att` | client maps | [x] | `ModulusCryptor` + `TakumiFileCryptor`; prefers `EncTerrain{N}.att` |
 
 ---
 
@@ -65,11 +65,12 @@ Last updated: 2026-05-16
 
 | # | Item | Legacy | Status |
 |---|------|--------|--------|
-| P3.1 | `MonsterSkillManager` / magic attack | `gObjMonsterMagicAttack` | [~] | `AttackType>=100` → `SkillAttack` + higher dmg stub |
+| P3.1 | `MonsterSkillManager` / magic attack | `gObjMonsterMagicAttack` | [x] | `0xDB` AoE + `0x19` skill (`ClientHitPackets602`, `MonsterCombatHandler`) |
 | P3.2 | Element / resist | `Monster.txt` cols | [ ] |
 | P3.3 | Party exp / top damage user | `gObjMonsterGetTopHitDamageUser` | [ ] |
 | P3.4 | Invasion / event spawns (type 3/4) | `SetMonsterData` | [ ] |
 | P3.5 | Kalima / special regen | `gObjMonsterRegen` branches | [ ] |
+| P3.6 | PvP player damage | `gAttack` PvP | [~] | `TAKUMI_COMBAT_PVP_ENABLED`, `ApplyPvPHitAsync` |
 
 ---
 
@@ -79,8 +80,8 @@ Last updated: 2026-05-16
 |---|------|--------|--------|
 | P4.1 | NPC shop list `0x31` | `NpcTalk` | [x] | `0x30` talk → `NpcShopWire602` (`NpcShopCatalog`) |
 | P4.2 | Gate teleport `0x1C` | `MoveGate` | [x] | `WorldGameplayHandlers` + `MapGateService` (`TAKUMI_GATE_SKIP_PROXIMITY`) |
-| P4.3 | Shop buy/sell/repair `0x32`–`0x34` | `CGItemBuy/Sell/Repair` | [~] | `ShopCommerceHandler` stub zen + bag (`TAKUMI_SHOP_*`) |
-| P4.4 | Bot buffer / quest NPC scripts | various | [ ] |
+| P4.3 | Shop buy/sell/repair `0x32`–`0x34` | `CGItemBuy/Sell/Repair` | [x] | `ShopCommerceHandler` + persist `inventory_slot`/`zen` when `TAKUMI_ROSTER_DB_SYNC` |
+| P4.4 | Bot buffer / quest NPC scripts | various | [~] | `NpcQuestCatalog` + `QuestWire602` / `NpcTalkWire602` stub |
 
 ---
 

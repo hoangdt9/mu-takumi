@@ -55,7 +55,7 @@ Last updated: 2026-05-16
 
 | Hạng mục | Gợi ý owner / nhánh | Tránh đụng |
 |----------|---------------------|------------|
-| Player viewport `C2 0x12` (model) | M10b | `MonsterViewportWire602` layout |
+| Player viewport `C2 0x12` on walk / view range | M10b | `PlayerViewportWire602` (join-only done) |
 | PvP / player vs player damage | M10c | `MonsterCombatHandler` (chỉ mob) |
 | AoE skill / nhiều target | M10c | `ClientHitPackets602` |
 | Monster AI / pathing P2–P3 | M9b hoặc M11 | `MapMonsterInstance` state machine |
@@ -87,7 +87,7 @@ Last updated: 2026-05-16
 | M8 DB spawn | `TAKUMI_MONSTER_SPAWN_DB`, ETL paths (xem README / M8 checklist) |
 | M9 file fallback | `TAKUMI_MONSTER_SET_BASE_PATH`, `TAKUMI_MONSTER_INFO_PATH`, `TAKUMI_MONSTER_VIEW_*`, `TAKUMI_COMBAT_*` |
 | M9 gameplay | `TAKUMI_GATE_SKIP_PROXIMITY`, `TAKUMI_SHOP_*` (xem `env.defaults`) |
-| M10 presence | `TAKUMI_MAP_PRESENCE_ENABLED` (`0` = tắt), `TAKUMI_COMBAT_MISS_RATE_PCT`, `TAKUMI_COMBAT_SKILL_DAMAGE_PCT` |
+| M10 presence | `TAKUMI_MAP_PRESENCE_ENABLED` (`0` = tắt), `TAKUMI_PLAYER_VIEWPORT_WIRE` (`0` = chỉ `0x15`), `TAKUMI_COMBAT_MISS_RATE_PCT`, `TAKUMI_COMBAT_SKILL_DAMAGE_PCT` |
 
 ---
 

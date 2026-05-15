@@ -116,6 +116,26 @@ public sealed class PostgresCharacterRosterRepository : IAsyncDisposable
         await tx.CommitAsync(ct).ConfigureAwait(false);
     }
 
+    public async Task UpdateZenAsync(
+        string accountLogin,
+        string characterName,
+        long zen,
+        CancellationToken ct = default)
+    {
+        await using var conn = await this._dataSource.OpenConnectionAsync(ct).ConfigureAwait(false);
+        await using var cmd = new NpgsqlCommand(
+            """
+            UPDATE character_roster
+            SET zen = $3, updated_at = now()
+            WHERE account_login = $1 AND character_name = $2
+            """,
+            conn);
+        cmd.Parameters.Add(new NpgsqlParameter("a", NpgsqlDbType.Text) { Value = accountLogin });
+        cmd.Parameters.Add(new NpgsqlParameter("n", NpgsqlDbType.Text) { Value = CharacterRosterMerge.NormaliseName(characterName) });
+        cmd.Parameters.Add(new NpgsqlParameter("z", NpgsqlDbType.Bigint) { Value = zen });
+        await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+    }
+
     public async Task DeleteCharacterAsync(string accountLogin, string characterName, CancellationToken ct = default)
     {
         await using var conn = await this._dataSource.OpenConnectionAsync(ct).ConfigureAwait(false);

@@ -21,6 +21,12 @@ public static class MapMonsterWorld
         return _byObjectKey.TryGetValue(objectKey, out monster);
     }
 
+    public static IReadOnlyList<MapMonsterInstance> GetMonstersOnMap(byte mapId)
+    {
+        EnsureInitialized();
+        return _byMap.TryGetValue(mapId, out var list) ? list : Array.Empty<MapMonsterInstance>();
+    }
+
     public static MonsterStat GetMonsterStat(int monsterClass)
     {
         EnsureInitialized();

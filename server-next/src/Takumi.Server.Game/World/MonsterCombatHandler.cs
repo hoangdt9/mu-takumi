@@ -68,7 +68,145 @@ public static class MonsterCombatHandler
             return true;
         }
 
+        if (ClientHitPackets602.TryFindMagicAttack(packet, out _, out _, out var skillX, out var skillY, out var magicTargets))
+        {
+            await HandleMagicAttackAsync(
+                    tracker,
+                    connection,
+                    clientProtectOutbound,
+                    mapId,
+                    playerX,
+                    playerY,
+                    skillX,
+                    skillY,
+                    magicTargets,
+                    remote,
+                    ct,
+                    playerLevel,
+                    presenceSessionId)
+                .ConfigureAwait(false);
+            return true;
+        }
+
         return false;
+    }
+
+    static async Task HandleMagicAttackAsync(
+        MonsterViewportTracker tracker,
+        Connection connection,
+        (byte K1, byte K2)? clientProtectOutbound,
+        byte mapId,
+        byte playerX,
+        byte playerY,
+        byte skillX,
+        byte skillY,
+        List<ushort> targetIds,
+        string remote,
+        CancellationToken ct,
+        int playerLevel,
+        Guid? presenceSessionId)
+    {
+        var aoeRange = ParseIntEnv("TAKUMI_COMBAT_AOE_RANGE", 3, 1, 8);
+        var skillPct = ParseIntEnv("TAKUMI_COMBAT_SKILL_DAMAGE_PCT", 150, 50, 500);
+        var processed = new HashSet<int>();
+
+        foreach (var tid in targetIds)
+        {
+            var tk = tid & 0x7FFF;
+            if (MonsterViewerRegistry.TryGetByPlayerKey(tk, out _))
+            {
+                await TryHandlePvPAsync(tk, mapId, playerLevel, skillPct, presenceSessionId, remote, ct).ConfigureAwait(false);
+                processed.Add(tk);
+                continue;
+            }
+
+            await HandleHitAsync(
+                    tracker,
+                    connection,
+                    clientProtectOutbound,
+                    mapId,
+                    playerX,
+                    playerY,
+                    tid,
+                    remote,
+                    ct,
+                    playerLevel,
+                    isSkill: true,
+                    attackAnimation: 0,
+                    lookingDirection: 0,
+                    presenceSessionId)
+                .ConfigureAwait(false);
+            processed.Add(tid & 0x7FFF);
+        }
+
+        MapMonsterWorld.EnsureInitialized();
+        foreach (var mob in MapMonsterWorld.GetMonstersOnMap(mapId))
+        {
+            if (!mob.IsAlive || mob.IsNpc || processed.Contains(mob.ObjectKey))
+            {
+                continue;
+            }
+
+            if (Math.Abs(mob.X - skillX) + Math.Abs(mob.Y - skillY) > aoeRange)
+            {
+                continue;
+            }
+
+            await HandleHitAsync(
+                    tracker,
+                    connection,
+                    clientProtectOutbound,
+                    mapId,
+                    playerX,
+                    playerY,
+                    (ushort)mob.ObjectKey,
+                    remote,
+                    ct,
+                    playerLevel,
+                    isSkill: true,
+                    attackAnimation: 0,
+                    lookingDirection: 0,
+                    presenceSessionId)
+                .ConfigureAwait(false);
+        }
+
+        Console.WriteLine(
+            "[{0}] [m9] magic aoe xy=({1},{2}) targets={3} map={4}",
+            remote,
+            skillX,
+            skillY,
+            targetIds.Count,
+            mapId);
+    }
+
+    static async Task<bool> TryHandlePvPAsync(
+        int targetPlayerKey,
+        byte mapId,
+        int playerLevel,
+        int skillPct,
+        Guid? presenceSessionId,
+        string remote,
+        CancellationToken ct)
+    {
+        if (string.Equals(Environment.GetEnvironmentVariable("TAKUMI_COMBAT_PVP_ENABLED")?.Trim(), "0", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        if (!MonsterViewerRegistry.TryGetByPlayerKey(targetPlayerKey, out var victim) || victim.MapId != mapId)
+        {
+            return false;
+        }
+
+        if (presenceSessionId is { } sid && GameMapPresenceRegistry.TryGetObjectKey(sid, out var atkKey) && atkKey == targetPlayerKey)
+        {
+            return false;
+        }
+
+        var dmg = Math.Max(1, playerLevel * skillPct / 100);
+        await MonsterViewerRegistry.ApplyPvPHitAsync(0, targetPlayerKey, mapId, dmg, ct).ConfigureAwait(false);
+        Console.WriteLine("[{0}] [m10c] pvp skillPct={1} dmg={2} target={3}", remote, skillPct, dmg, targetPlayerKey);
+        return true;
     }
 
     static async Task HandleHitAsync(
@@ -87,6 +225,12 @@ public static class MonsterCombatHandler
         byte lookingDirection,
         Guid? presenceSessionId)
     {
+        var targetKey = targetId & 0x7FFF;
+        if (await TryHandlePvPAsync(targetKey, mapId, playerLevel, skillPct: isSkill ? ParseIntEnv("TAKUMI_COMBAT_SKILL_DAMAGE_PCT", 150, 50, 500) : 100, presenceSessionId, remote, ct).ConfigureAwait(false))
+        {
+            return;
+        }
+
         MapMonsterWorld.EnsureInitialized();
         if (!MapMonsterWorld.TryGetMonster(targetId, out var monster) || monster is null || !monster.IsAlive)
         {

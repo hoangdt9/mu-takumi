@@ -1,4 +1,6 @@
 using System.Globalization;
+using Takumi.Server.Game.Crypto;
+using Takumi.Server.Game.Crypto.ModulusCryptor;
 
 namespace Takumi.Server.Game.World;
 
@@ -108,7 +110,14 @@ public static class MapAttWalkability
             world = $"World{mapId}";
         }
 
-        return Path.Combine(root, world, "Terrain.att");
+        var dir = Path.Combine(root, world);
+        var enc = Path.Combine(dir, $"EncTerrain{mapId}.att");
+        if (File.Exists(enc))
+        {
+            return enc;
+        }
+
+        return Path.Combine(dir, "Terrain.att");
     }
 
     static string? ResolveDefaultDataRoot()
@@ -164,7 +173,11 @@ public static class MapAttWalkability
         {
             var enc = new byte[buffer.Length - 4];
             Buffer.BlockCopy(buffer, 4, enc, 0, enc.Length);
-            buffer = TakumiAttDecrypt(enc);
+            buffer = Crypto.ModulusCryptor.ModulusCryptor.Decrypt(enc);
+        }
+        else
+        {
+            buffer = TakumiFileCryptor.Decrypt(buffer);
         }
 
         for (var i = 0; i < buffer.Length; i++)
@@ -200,7 +213,4 @@ public static class MapAttWalkability
 
         return walls;
     }
-
-    /// <summary>Placeholder — encrypted ATT on disk may need full Modulus decrypt; unencrypted ATT works.</summary>
-    static byte[] TakumiAttDecrypt(byte[] enc) => enc;
 }

@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Text;
 using Takumi.Server.Persistence;
 using Takumi.Server.Protocol;
 
@@ -115,4 +116,37 @@ public static class PlayerShopSession
     }
 
     public static void RemoveSession(Guid sessionId) => Sessions.TryRemove(sessionId, out _);
+
+    public static bool TryGetSessionSlots(Guid sessionId, out IReadOnlyDictionary<byte, byte[]> slots)
+    {
+        if (Sessions.TryGetValue(sessionId, out var s))
+        {
+            slots = s.Slots;
+            return true;
+        }
+
+        slots = new Dictionary<byte, byte[]>();
+        return false;
+    }
+
+    public static async Task PersistAsync(
+        Guid sessionId,
+        string? accountId,
+        byte[] characterName10,
+        long zen,
+        CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(accountId) || !Sessions.TryGetValue(sessionId, out var s))
+        {
+            return;
+        }
+
+        await InventorySlotPersist.SaveSlotsAsync(accountId, characterName10, s.Slots, ct).ConfigureAwait(false);
+        await InventorySlotPersist.SaveZenAsync(accountId, characterName10, zen, ct).ConfigureAwait(false);
+        Console.WriteLine(
+            "[m8] shop persist slots={0} zen={1} char={2}",
+            s.Slots.Count,
+            zen,
+            Encoding.ASCII.GetString(characterName10).TrimEnd('\0'));
+    }
 }

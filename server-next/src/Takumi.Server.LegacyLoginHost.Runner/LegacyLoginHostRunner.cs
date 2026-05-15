@@ -774,7 +774,12 @@ public static class LegacyLoginHostRunner
                         picked.MapId,
                         picked.PosX,
                         picked.PosY,
-                        picked.Angle);
+                        picked.Angle,
+                        new PlayerPresenceAppearance
+                        {
+                            Name10 = picked.Name10,
+                            ServerClass = picked.ServerClass,
+                        });
                     if (presenceJoin is not null)
                     {
                         await GameMapPresenceRegistry.NotifyJoinAsync(presenceJoin, remote, ct).ConfigureAwait(false);
@@ -937,7 +942,12 @@ public static class LegacyLoginHostRunner
                             pickedMove.MapId,
                             pickedMove.PosX,
                             pickedMove.PosY,
-                            pickedMove.Angle);
+                            pickedMove.Angle,
+                            new PlayerPresenceAppearance
+                            {
+                                Name10 = pickedMove.Name10,
+                                ServerClass = pickedMove.ServerClass,
+                            });
                         if (presenceMove is not null)
                         {
                             await GameMapPresenceRegistry.NotifyJoinAsync(presenceMove, remote, ct).ConfigureAwait(false);
@@ -1423,7 +1433,7 @@ public static class LegacyLoginHostRunner
         }
         finally
         {
-            GameMapPresenceRegistry.Unregister(presenceSessionId);
+            await GameMapPresenceRegistry.UnregisterAsync(presenceSessionId, ct).ConfigureAwait(false);
             MonsterViewerRegistry.Unregister(presenceSessionId);
 
             if (connectionSessionTicket is { } tid)

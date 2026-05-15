@@ -122,6 +122,8 @@ public static class ShopCommerceHandler
         PlayerShopSession.SetSlot(presenceSessionId, bagSlot, blob);
 
         await writeAsync(ShopCommerceWire602.BuildBuy(bagSlot, blob), ct).ConfigureAwait(false);
+        await PlayerShopSession.PersistAsync(presenceSessionId, accountId, characterName10, player.Zen, ct)
+            .ConfigureAwait(false);
         Console.WriteLine(
             "[m8] shop buy shop={0} slot={1} → inv={2} zen={3} {4}",
             shopIndex,
@@ -164,6 +166,8 @@ public static class ShopCommerceHandler
         PlayerShopSession.SetSlot(presenceSessionId, invSlot, new byte[ItemWire602.WireBytes]);
 
         await writeAsync(ShopCommerceWire602.BuildSell(1, (uint)Math.Clamp(player.Zen, 0, uint.MaxValue)), ct)
+            .ConfigureAwait(false);
+        await PlayerShopSession.PersistAsync(presenceSessionId, accountId, characterName10, player.Zen, ct)
             .ConfigureAwait(false);
         Console.WriteLine("[m8] shop sell inv={0} +{1} zen={2} {3}", invSlot, price, player.Zen, remote);
         return true;
@@ -233,6 +237,12 @@ public static class ShopCommerceHandler
 
         await writeAsync(ShopCommerceWire602.BuildRepair((uint)Math.Clamp(player.Zen, 0, uint.MaxValue)), ct)
             .ConfigureAwait(false);
+        if (totalCost > 0)
+        {
+            await PlayerShopSession.PersistAsync(presenceSessionId, accountId, characterName10, player.Zen, ct)
+                .ConfigureAwait(false);
+        }
+
         Console.WriteLine("[m8] shop repair slot={0} cost={1} zen={2} {3}", slot, totalCost, player.Zen, remote);
         return true;
     }

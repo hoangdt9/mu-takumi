@@ -14,6 +14,7 @@ using Pipelines.Sockets.Unofficial;
 using Takumi.Server.Connect;
 using Takumi.Server.Join;
 using Takumi.Server.Game;
+using Takumi.Server.Game.Networking;
 using Takumi.Server.Game.World;
 using Takumi.Server.Persistence;
 using Takumi.Server.Protocol;
@@ -483,6 +484,7 @@ public static class LegacyLoginHostRunner
             !string.Equals(Environment.GetEnvironmentVariable("TAKUMI_ROSTER_DB_MERGE_MODE")?.Trim(), "json", StringComparison.OrdinalIgnoreCase);
         byte[]? sessionJoinCharacterName10 = null;
         var monsterViewportTracker = new MonsterViewportTracker();
+        var presenceSessionId = Guid.NewGuid();
         try
         {
             tcp.NoDelay = true;
@@ -753,6 +755,19 @@ public static class LegacyLoginHostRunner
                         picked.PosY,
                         remote,
                         ct).ConfigureAwait(false);
+                    var presenceJoin = GameMapPresenceRegistry.Register(
+                        presenceSessionId,
+                        connection,
+                        clientProtectOutbound: null,
+                        picked.MapId,
+                        picked.PosX,
+                        picked.PosY,
+                        picked.Angle);
+                    if (presenceJoin is not null)
+                    {
+                        await GameMapPresenceRegistry.NotifyJoinAsync(presenceJoin, remote, ct).ConfigureAwait(false);
+                    }
+
                     await connection.Output.FlushAsync(ct).ConfigureAwait(false);
                     Console.WriteLine(
                         "[{0}] sent join map (F3 03) + inventory (F3 10 len={8}) map={1} xy=({2},{3}) ang={4} name='{5}' rosterClass=0x{6:X2} frame@{7}",
@@ -891,6 +906,19 @@ public static class LegacyLoginHostRunner
                             pickedMove.PosY,
                             remote,
                             ct).ConfigureAwait(false);
+                        var presenceMove = GameMapPresenceRegistry.Register(
+                            presenceSessionId,
+                            connection,
+                            clientProtectOutbound: null,
+                            pickedMove.MapId,
+                            pickedMove.PosX,
+                            pickedMove.PosY,
+                            pickedMove.Angle);
+                        if (presenceMove is not null)
+                        {
+                            await GameMapPresenceRegistry.NotifyJoinAsync(presenceMove, remote, ct).ConfigureAwait(false);
+                        }
+
                         await connection.Output.FlushAsync(ct).ConfigureAwait(false);
                         Console.WriteLine(
                             "[{0}] stub move map: 8E 03 ok + F3 03 + F3 10 len={1} mapId={2} frame@{3}",
@@ -938,7 +966,8 @@ public static class LegacyLoginHostRunner
                             packet,
                             remote,
                             ct,
-                            pickedCombat.Level).ConfigureAwait(false))
+                            pickedCombat.Level,
+                            presenceSessionId).ConfigureAwait(false))
                     {
                         await connection.Output.FlushAsync(ct).ConfigureAwait(false);
                         return;
@@ -964,6 +993,14 @@ public static class LegacyLoginHostRunner
                             instY,
                             remote,
                             ct).ConfigureAwait(false);
+                        await GameMapPresenceRegistry.BroadcastPositionAsync(
+                                presenceSessionId,
+                                pickedInst.MapId,
+                                instX,
+                                instY,
+                                remote,
+                                ct)
+                            .ConfigureAwait(false);
                         await connection.Output.FlushAsync(ct).ConfigureAwait(false);
                     }
 
@@ -990,6 +1027,14 @@ public static class LegacyLoginHostRunner
                                 walkY,
                                 remote,
                                 ct).ConfigureAwait(false);
+                            await GameMapPresenceRegistry.BroadcastPositionAsync(
+                                    presenceSessionId,
+                                    pickedWalk.MapId,
+                                    walkX,
+                                    walkY,
+                                    remote,
+                                    ct)
+                                .ConfigureAwait(false);
                             await connection.Output.FlushAsync(ct).ConfigureAwait(false);
                         }
 
@@ -1297,6 +1342,8 @@ public static class LegacyLoginHostRunner
         }
         finally
         {
+            GameMapPresenceRegistry.Unregister(presenceSessionId);
+
             if (connectionSessionTicket is { } tid)
             {
                 if (TakumiPostgresMirror.SessionHandoff is { } shFin)

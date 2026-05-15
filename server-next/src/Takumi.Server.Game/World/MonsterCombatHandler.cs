@@ -1,10 +1,11 @@
 using System.Globalization;
 using MUnique.OpenMU.Network;
+using Takumi.Server.Game.Networking;
 using Takumi.Server.Protocol;
 
 namespace Takumi.Server.Game.World;
 
-/// <summary>M9 combat stub: melee hit / targeted skill vs map monsters, damage + die + destroy viewport.</summary>
+/// <summary>M9 combat stub + M10 map broadcast: melee/skill vs monsters, damage, die, action to peers.</summary>
 public static class MonsterCombatHandler
 {
     public static async Task<bool> TryHandleCombatPacketAsync(
@@ -17,12 +18,31 @@ public static class MonsterCombatHandler
         byte[] packet,
         string remote,
         CancellationToken ct,
-        int playerLevel = 1)
+        int playerLevel = 1,
+        Guid? presenceSessionId = null)
     {
-        if (ClientHitPackets602.TryFindHitRequest(packet, out _, out var targetId, out _, out _))
+        if (ClientHitPackets602.TryFindHitRequest(
+                packet,
+                out _,
+                out var targetId,
+                out var attackAnimation,
+                out var lookingDirection))
         {
             await HandleHitAsync(
-                    tracker, connection, clientProtectOutbound, mapId, playerX, playerY, targetId, remote, ct, playerLevel)
+                    tracker,
+                    connection,
+                    clientProtectOutbound,
+                    mapId,
+                    playerX,
+                    playerY,
+                    targetId,
+                    remote,
+                    ct,
+                    playerLevel,
+                    isSkill: false,
+                    attackAnimation,
+                    lookingDirection,
+                    presenceSessionId)
                 .ConfigureAwait(false);
             return true;
         }
@@ -30,7 +50,20 @@ public static class MonsterCombatHandler
         if (ClientHitPackets602.TryFindTargetedSkill(packet, out _, out var skillTargetId))
         {
             await HandleHitAsync(
-                    tracker, connection, clientProtectOutbound, mapId, playerX, playerY, skillTargetId, remote, ct, playerLevel)
+                    tracker,
+                    connection,
+                    clientProtectOutbound,
+                    mapId,
+                    playerX,
+                    playerY,
+                    skillTargetId,
+                    remote,
+                    ct,
+                    playerLevel,
+                    isSkill: true,
+                    attackAnimation: 0,
+                    lookingDirection: 0,
+                    presenceSessionId)
                 .ConfigureAwait(false);
             return true;
         }
@@ -48,7 +81,11 @@ public static class MonsterCombatHandler
         ushort targetId,
         string remote,
         CancellationToken ct,
-        int playerLevel = 1)
+        int playerLevel,
+        bool isSkill,
+        byte attackAnimation,
+        byte lookingDirection,
+        Guid? presenceSessionId)
     {
         MapMonsterWorld.EnsureInitialized();
         if (!MapMonsterWorld.TryGetMonster(targetId, out var monster) || monster is null || !monster.IsAlive)
@@ -67,9 +104,41 @@ public static class MonsterCombatHandler
             return;
         }
 
+        if (presenceSessionId is { } sid)
+        {
+            var action = attackAnimation != 0 ? attackAnimation : (byte)(isSkill ? 0x02 : 0x00);
+            var dir = lookingDirection;
+            await GameMapPresenceRegistry.BroadcastActionAsync(
+                    sid,
+                    mapId,
+                    dir,
+                    action,
+                    monster.ObjectKey,
+                    remote,
+                    ct)
+                .ConfigureAwait(false);
+        }
+
+        var missRate = ParseIntEnv("TAKUMI_COMBAT_MISS_RATE_PCT", 0, 0, 100);
+        if (MonsterCombatCalculator.RollMiss(missRate))
+        {
+            var missPkt = MonsterDamageWire602.Build(
+                monster.ObjectKey,
+                damage: 0,
+                monster.CurrentLife,
+                hitSuccess: false);
+            await GamePortOutboundWire.WriteAsync(connection, clientProtectOutbound, missPkt, ct).ConfigureAwait(false);
+            Console.WriteLine(
+                "[{0}] [m9] combat miss key={1}",
+                remote,
+                monster.ObjectKey);
+            return;
+        }
+
         var stat = MapMonsterWorld.GetMonsterStat(monster.MonsterClass);
         var fallback = ParseIntEnv("TAKUMI_COMBAT_STUB_DAMAGE", 50, 1, 65_000);
-        var damage = MonsterCombatCalculator.RollDamageToMonster(playerLevel, stat, fallback);
+        var skillPct = isSkill ? ParseIntEnv("TAKUMI_COMBAT_SKILL_DAMAGE_PCT", 150, 50, 500) : 100;
+        var damage = MonsterCombatCalculator.RollDamageToMonster(playerLevel, stat, fallback, skillPct);
         var died = monster.ApplyDamage(damage);
         var dmgPkt = MonsterDamageWire602.Build(
             monster.ObjectKey,
@@ -78,12 +147,14 @@ public static class MonsterCombatHandler
             hitSuccess: true);
         await GamePortOutboundWire.WriteAsync(connection, clientProtectOutbound, dmgPkt, ct).ConfigureAwait(false);
         Console.WriteLine(
-            "[{0}] [m9] combat hit key={1} dmg={2} hp={3} died={4}",
+            "[{0}] [m9] combat {6} key={1} dmg={2} hp={3} died={4} skillPct={5}",
             remote,
             monster.ObjectKey,
             damage,
             monster.CurrentLife,
-            died);
+            died,
+            skillPct,
+            isSkill ? "skill" : "hit");
 
         if (!died)
         {

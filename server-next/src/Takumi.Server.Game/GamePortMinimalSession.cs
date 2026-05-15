@@ -10,6 +10,7 @@ using MUnique.OpenMU.Network.SimpleModulus;
 using MUnique.OpenMU.Network.Xor;
 using Pipelines.Sockets.Unofficial;
 using Takumi.Server.Connect;
+using Takumi.Server.Game.Networking;
 using Takumi.Server.Game.World;
 using Takumi.Server.Persistence;
 using Takumi.Server.Protocol;
@@ -41,6 +42,7 @@ public static class GamePortMinimalSession
             !string.Equals(Environment.GetEnvironmentVariable("TAKUMI_ROSTER_DB_MERGE_MODE")?.Trim(), "json", StringComparison.OrdinalIgnoreCase);
         byte[]? sessionJoinCharacterName10 = null;
         var monsterViewportTracker = new MonsterViewportTracker();
+        var presenceSessionId = Guid.NewGuid();
         var loginLatch = new LoginLatch();
         Task? protectInboundPumpTask = null;
         CancellationTokenSource? protectInboundPumpCts = null;
@@ -410,6 +412,19 @@ public static class GamePortMinimalSession
                             picked.PosY,
                             remote,
                             ct).ConfigureAwait(false);
+                        var presenceJoin = GameMapPresenceRegistry.Register(
+                            presenceSessionId,
+                            connection,
+                            protect,
+                            picked.MapId,
+                            picked.PosX,
+                            picked.PosY,
+                            picked.Angle);
+                        if (presenceJoin is not null)
+                        {
+                            await GameMapPresenceRegistry.NotifyJoinAsync(presenceJoin, remote, ct).ConfigureAwait(false);
+                        }
+
                         Console.WriteLine(
                             "[{0}] sent join map (F3 03) + inventory (F3 10 len={5}) map={1} xy=({2},{3}) name='{4}'",
                             remote,
@@ -451,6 +466,20 @@ public static class GamePortMinimalSession
                                 pickedMove.PosY,
                                 remote,
                                 ct).ConfigureAwait(false);
+                            var presenceMove = GameMapPresenceRegistry.Register(
+                                presenceSessionId,
+                                connection,
+                                protect,
+                                pickedMove.MapId,
+                                pickedMove.PosX,
+                                pickedMove.PosY,
+                                pickedMove.Angle);
+                            if (presenceMove is not null)
+                            {
+                                await GameMapPresenceRegistry.NotifyJoinAsync(presenceMove, remote, ct)
+                                    .ConfigureAwait(false);
+                            }
+
                             Console.WriteLine("[{0}] move map + F3 03 + F3 10 len={2} mapId={1} frame@{3}", remote, mapIdx, invMove.Length, moveOff);
                         }
 
@@ -472,7 +501,8 @@ public static class GamePortMinimalSession
                                 packet,
                                 remote,
                                 ct,
-                                pickedCombat.Level).ConfigureAwait(false))
+                                pickedCombat.Level,
+                                presenceSessionId).ConfigureAwait(false))
                         {
                             return;
                         }
@@ -497,6 +527,14 @@ public static class GamePortMinimalSession
                                 instY,
                                 remote,
                                 ct).ConfigureAwait(false);
+                            await GameMapPresenceRegistry.BroadcastPositionAsync(
+                                    presenceSessionId,
+                                    pickedInst.MapId,
+                                    instX,
+                                    instY,
+                                    remote,
+                                    ct)
+                                .ConfigureAwait(false);
                         }
 
                         return;
@@ -522,6 +560,14 @@ public static class GamePortMinimalSession
                                     walkY,
                                     remote,
                                     ct).ConfigureAwait(false);
+                                await GameMapPresenceRegistry.BroadcastPositionAsync(
+                                        presenceSessionId,
+                                        pickedWalk.MapId,
+                                        walkX,
+                                        walkY,
+                                        remote,
+                                        ct)
+                                    .ConfigureAwait(false);
                             }
 
                             pickedWalk.Angle = walkAng;
@@ -803,6 +849,8 @@ public static class GamePortMinimalSession
             }
 
             CharacterRosterMirrorWriter.TryDrainPendingUpserts(TimeSpan.FromMilliseconds(900));
+
+            GameMapPresenceRegistry.Unregister(presenceSessionId);
 
             try
             {

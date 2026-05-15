@@ -411,13 +411,7 @@ void RecvLoop(
                 recvErr);
             if (count < 0 && (recvErr == EAGAIN || recvErr == EWOULDBLOCK))
             {
-                __android_log_print(
-                    ANDROID_LOG_ERROR,
-                    "TakumiErrorReport",
-                    "[AndroidLogin] recv EAGAIN/EWOULDBLOCK (likely SO_RCVTIMEO): no C2 from connect server. "
-                    "On Mac host: cd server-next && ./scripts/check-lan-connect-ports.sh && "
-                    "./scripts/smoke-connect-from-host.sh 127.0.0.1 44605 — if smoke fails, "
-                    "docker compose stop legacy-login && ./scripts/run-legacy-login-host.sh");
+                continue;
             }
             break;
         }
@@ -735,21 +729,6 @@ MU_EXPORT int32_t ConnectionManager_Connect(
     }
 
     TakumiNet::ApplyGameTcpKeepAlive(fd);
-
-    if (static_cast<std::uint16_t>(port) == MuLanDefaults::kDefaultFirstHopConnectPort)
-    {
-        timeval rcvTimeout {};
-        rcvTimeout.tv_sec = 15;
-        if (setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &rcvTimeout, sizeof(rcvTimeout)) != 0)
-        {
-            __android_log_print(
-                ANDROID_LOG_WARN,
-                "TakumiErrorReport",
-                "[AndroidLogin] SO_RCVTIMEO(fd=%d) failed errno=%d",
-                fd,
-                errno);
-        }
-    }
 
     auto* state = new AndroidConnState(isEncrypted != 0);
     {

@@ -1456,7 +1456,22 @@ void CreateLogInScene()
 	CUIMng::Instance().CreateLoginScene();
 
 	CurrentProtocolState = REQUEST_JOIN_SERVER;
+#if defined(__ANDROID__)
+	MU_AndroidResetLoginSceneConnectFallback();
+	// Title/connect may already hold a live Connect Server socket with C2 F4 06 queued.
+	// Re-connecting here drops that list and leaves only the cinematic with no sub UI.
+	if (SocketClient.GetSocket() == INVALID_SOCKET || static_cast<int>(SocketClient.GetSocket()) <= 0)
+	{
+		CreateSocket(szServerIpAddress, g_ServerPort);
+	}
+	else
+	{
+		SocketClient.AndroidSyncPollRecvPending();
+		ProtocolCompiler();
+	}
+#else
     CreateSocket(szServerIpAddress,g_ServerPort);
+#endif
     EnableSocket = true;
 
 	GuildInputEnable = false;
@@ -1564,6 +1579,11 @@ void NewMoveLogInScene()
 		MoveCamera();
 	}
 
+#if defined(__ANDROID__)
+	MU_AndroidTickLoginSceneConnectFallback();
+	MU_AndroidTickLoginAfterServerPickFallback();
+#endif
+
 	if (CInput::Instance().IsKeyDown(VK_ESCAPE))
 	{
 		CUIMng& rUIMng = CUIMng::Instance();
@@ -1591,10 +1611,8 @@ bool NewRenderLogInScene(HDC hDC)
 	FogEnable = false;
 
 #if defined(__ANDROID__)
-	if (!CUIMng::Instance().IsMoving())
-	{
-		MU_AndroidLoginBgVideoRenderTick();
-	}
+	// Video background (Data/Movie/MU.wmv) draws under 3D cinematic and login UI.
+	MU_AndroidLoginBgVideoRenderTick();
 #endif
 // 	extern GLfloat FogColor[4];
 // 	FogColor[0] = 178.f/256.f; FogColor[1] = 178.f/256.f; FogColor[2] = 178.f/256.f; FogColor[3] = 0.f;
@@ -1714,6 +1732,17 @@ bool NewRenderLogInScene(HDC hDC)
 
 	if (CCameraMove::GetInstancePtr()->IsTourMode())
 	{
+#if defined(__ANDROID__)
+		const bool loginUiVisible =
+			CUIMng::Instance().m_ServerSelWin.IsShow() && CUIMng::Instance().m_LoginMainWin.IsShow();
+		if (loginUiVisible)
+		{
+			// Keep throne cinematic / GL video as background; skip intro letterbox that hid sub buttons.
+			g_fMULogoAlpha = (g_fMULogoAlpha > 1.f) ? 1.f : g_fMULogoAlpha;
+		}
+		else
+#endif
+		{
 #ifndef PJH_NEW_SERVER_SELECT_MAP
 		// È­¸é Èå¸®±â
 		EnableAlphaBlend4();
@@ -1787,6 +1816,9 @@ bool NewRenderLogInScene(HDC hDC)
 #else //PBG_ADD_MUBLUE_LOGO
 		RenderBitmap(BITMAP_LOG_IN+16, DisplayWinMid -128.0f*0.8f,25.0f, 256.0f*0.8f,128.0f*0.8f);
 #endif //PBG_ADD_MUBLUE_LOGO
+#endif
+#if defined(__ANDROID__)
+		}
 #endif
 	}
 

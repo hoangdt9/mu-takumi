@@ -4,6 +4,9 @@
 
 #include "stdafx.h"
 #include "ServerSelWin.h"
+#if defined(__ANDROID__)
+#include "Platform/MobilePlatform.h"
+#endif
 #include "Input.h"
 #include "UIMng.h"
 #include "local.h"
@@ -403,6 +406,10 @@ bool CServerSelWin::ConnectServerButtonIndex(int iIndex)
 		iCensorshipIndex,
 		pServerInfo->m_byNonPvP,
 		bTestServer);
+
+#if defined(__ANDROID__)
+	MU_AndroidNotifyServerSubPickStarted();
+#endif
 
 	return true;
 }

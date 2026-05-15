@@ -450,6 +450,13 @@ public static class GamePortMinimalSession
                                 picked.CurrentHp = hp;
                                 picked.MaxHp = max;
                                 Volatile.Write(ref rosterDirty, 1);
+                            },
+                            onRosterPositionChanged: (map, x, y) =>
+                            {
+                                picked.MapId = map;
+                                picked.PosX = x;
+                                picked.PosY = y;
+                                Volatile.Write(ref rosterDirty, 1);
                             });
 
                         Console.WriteLine(
@@ -531,6 +538,13 @@ public static class GamePortMinimalSession
                                 {
                                     pickedMove.CurrentHp = hp;
                                     pickedMove.MaxHp = max;
+                                    Volatile.Write(ref rosterDirty, 1);
+                                },
+                                onRosterPositionChanged: (map, x, y) =>
+                                {
+                                    pickedMove.MapId = map;
+                                    pickedMove.PosX = x;
+                                    pickedMove.PosY = y;
                                     Volatile.Write(ref rosterDirty, 1);
                                 });
 

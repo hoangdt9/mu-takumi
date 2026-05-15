@@ -403,6 +403,7 @@ bool CServerSelWin::ConnectServerButtonIndex(int iIndex)
 	g_ServerListManager->SetSelectServerInfo(
 		m_pSelectServerGroup->m_szName,
 		pServerInfo->m_iIndex,
+		pServerInfo->m_iConnectIndex,
 		iCensorshipIndex,
 		pServerInfo->m_byNonPvP,
 		bTestServer);

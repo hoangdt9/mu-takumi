@@ -1,5 +1,6 @@
 using System.Globalization;
 using Takumi.Server.Game.Networking;
+using Takumi.Server.Game.World;
 using Takumi.Server.Protocol;
 
 namespace Takumi.Server.Game;
@@ -103,28 +104,49 @@ public static class PlayerVitalsLoop
             session.CurrentMp,
             maxMp);
 
-        var regenPkt = CharacterRegenWire602.Build(
-            session.MapId,
-            session.X,
-            session.Y,
-            dir: 0,
-            life: (ushort)Math.Clamp(session.CurrentHp, 0, ushort.MaxValue),
-            mana: (ushort)Math.Clamp(session.CurrentMp, 0, ushort.MaxValue));
-        await GamePortOutboundWire.WriteAsync(session.Connection, session.Protect, regenPkt, ct).ConfigureAwait(false);
-        await GamePortOutboundWire.WriteAsync(
-                session.Connection,
-                session.Protect,
-                LifeManaWire602.BuildLife(LifeManaWire602.TypeCurrent, (ushort)Math.Min(session.CurrentHp, ushort.MaxValue)),
-                ct)
-            .ConfigureAwait(false);
-        await GamePortOutboundWire.WriteAsync(
-                session.Connection,
-                session.Protect,
-                LifeManaWire602.BuildMana(LifeManaWire602.TypeCurrent, (ushort)Math.Min(session.CurrentMp, ushort.MaxValue)),
-                ct)
-            .ConfigureAwait(false);
+        var town = MapRespawnCatalog.GetTownRespawn(session.MapId);
+        session.MapId = town.Map;
+        session.X = town.PositionX;
+        session.Y = town.PositionY;
+        MonsterViewerRegistry.UpdatePosition(session.SessionId, town.Map, town.PositionX, town.PositionY);
+        session.OnRosterPositionChanged?.Invoke(town.Map, town.PositionX, town.PositionY);
 
-        Console.WriteLine("[m7d] player revived key={0} hp={1}", session.PlayerObjectKey, session.CurrentHp);
+        if (session.ViewportTracker is not null)
+        {
+            session.ViewportTracker.ResetForMap(town.Map, town.PositionX, town.PositionY);
+            await MapMonsterScopeSender.TrySendAfterJoinAsync(
+                    session.ViewportTracker,
+                    session.Connection,
+                    session.Protect,
+                    town.Map,
+                    town.PositionX,
+                    town.PositionY,
+                    "revive",
+                    ct)
+                .ConfigureAwait(false);
+        }
+
+        // Soft teleport to town (0x1C flag=0): client ReceiveTeleport moves hero without ClearCharacters.
+        var tele = TeleportWire602.Build(0, town.Map, town.PositionX, town.PositionY, town.Angle);
+        await GamePortOutboundWire.WriteAsync(session.Connection, session.Protect, tele, ct).ConfigureAwait(false);
+
+        var hp = (ushort)Math.Min(session.CurrentHp, ushort.MaxValue);
+        var mp = (ushort)Math.Min(session.CurrentMp, ushort.MaxValue);
+        var hpMax = (ushort)Math.Min(maxHp, ushort.MaxValue);
+        var mpMax = (ushort)Math.Min(maxMp, ushort.MaxValue);
+        await GamePortOutboundWire.WriteAsync(session.Connection, session.Protect, LifeManaWire602.BuildLife(LifeManaWire602.TypeCurrent, hp), ct).ConfigureAwait(false);
+        await GamePortOutboundWire.WriteAsync(session.Connection, session.Protect, LifeManaWire602.BuildLife(LifeManaWire602.TypeMax, hpMax), ct).ConfigureAwait(false);
+        await GamePortOutboundWire.WriteAsync(session.Connection, session.Protect, LifeManaWire602.BuildMana(LifeManaWire602.TypeCurrent, mp), ct).ConfigureAwait(false);
+        await GamePortOutboundWire.WriteAsync(session.Connection, session.Protect, LifeManaWire602.BuildMana(LifeManaWire602.TypeMax, mpMax), ct).ConfigureAwait(false);
+
+        Console.WriteLine(
+            "[m7d] player revived key={0} hp={1}/{2} town map={3} xy=({4},{5})",
+            session.PlayerObjectKey,
+            session.CurrentHp,
+            maxHp,
+            town.Map,
+            town.PositionX,
+            town.PositionY);
     }
 
     static int ParseIntEnv(string key, int defaultValue, int min, int max)

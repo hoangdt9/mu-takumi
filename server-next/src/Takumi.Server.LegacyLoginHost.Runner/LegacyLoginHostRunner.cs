@@ -806,6 +806,13 @@ public static class LegacyLoginHostRunner
                             picked.CurrentHp = hp;
                             picked.MaxHp = max;
                             Volatile.Write(ref rosterDirty, 1);
+                        },
+                        onRosterPositionChanged: (map, x, y) =>
+                        {
+                            picked.MapId = map;
+                            picked.PosX = x;
+                            picked.PosY = y;
+                            Volatile.Write(ref rosterDirty, 1);
                         });
 
                     await connection.Output.FlushAsync(ct).ConfigureAwait(false);
@@ -977,6 +984,13 @@ public static class LegacyLoginHostRunner
                             {
                                 pickedMove.CurrentHp = hp;
                                 pickedMove.MaxHp = max;
+                                Volatile.Write(ref rosterDirty, 1);
+                            },
+                            onRosterPositionChanged: (map, x, y) =>
+                            {
+                                pickedMove.MapId = map;
+                                pickedMove.PosX = x;
+                                pickedMove.PosY = y;
                                 Volatile.Write(ref rosterDirty, 1);
                             });
 
@@ -1164,10 +1178,13 @@ public static class LegacyLoginHostRunner
                 var listReq = loginLatch.IsLoggedIn && TryFindCharacterListRequest(packet, out listFrameOffset);
                 if (!listReq
                     && loginLatch.IsLoggedIn
+                    && sessionJoinCharacterName10 is null
                     && packet.Length == 12
                     && packet[0] == 0xC3)
                 {
-                    // Last resort: Takumi+OpenMU pipeline often yields 12-byte C3 frames where Head/Sub follow a serial byte (not at +2/+3).
+                    // Last resort before join map only: many in-game C3 frames are also 12 bytes (encrypted
+                    // F3 0E select / focus / UI). Treating them as F3 00 spams character list during combat,
+                    // which makes the client run ReceiveCharacterList in MAIN_SCENE and wipes viewport entities.
                     Console.WriteLine(
                         "[{0}] treating len=12 C3 as character-list req (hex={1})",
                         remote,

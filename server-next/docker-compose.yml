@@ -45,7 +45,8 @@ services:
     container_name: takumi-legacy-login
     restart: unless-stopped
     depends_on:
-      - postgres
+      postgres:
+        condition: service_started
     working_dir: /app
     volumes:
       - .:/app
@@ -76,6 +77,20 @@ services:
       TAKUMI_MONSTER_SET_BASE_PATH: "${TAKUMI_MONSTER_SET_BASE_PATH:-/muserver-data/Monster/MonsterSetBase.txt}"
       TAKUMI_MONSTER_INFO_PATH: "${TAKUMI_MONSTER_INFO_PATH:-/muserver-data/Monster/Monster.txt}"
       TAKUMI_ATT_DATA_ROOT: "${TAKUMI_ATT_DATA_ROOT:-/att-data}"
+      # In-container Postgres (overrides TAKUMI_PG_HOST from .env for host-side scripts)
+      TAKUMI_PG_CONNECTION_STRING: "Host=postgres;Port=5432;Username=${TAKUMI_PG_USER:-takumi};Password=${TAKUMI_PG_PASSWORD:-takumi};Database=${TAKUMI_PG_DATABASE:-takumi_runtime}"
+      TAKUMI_ROSTER_DB_SYNC: "${TAKUMI_ROSTER_DB_SYNC:-1}"
+      TAKUMI_ROSTER_DB_PRIMARY: "${TAKUMI_ROSTER_DB_PRIMARY:-1}"
+      TAKUMI_CHARACTER_DOMAIN_SYNC: "${TAKUMI_CHARACTER_DOMAIN_SYNC:-1}"
+      TAKUMI_SESSION_HANDOFF_DB: "${TAKUMI_SESSION_HANDOFF_DB:-1}"
+      TAKUMI_SEND_LIFE_MANA_AFTER_JOIN: "${TAKUMI_SEND_LIFE_MANA_AFTER_JOIN:-1}"
+      TAKUMI_MAP_PRESENCE_ENABLED: "${TAKUMI_MAP_PRESENCE_ENABLED:-1}"
+      TAKUMI_ROSTER_PERIODIC_SAVE_SECONDS: "${TAKUMI_ROSTER_PERIODIC_SAVE_SECONDS:-60}"
+      TAKUMI_MIGRATE_ROSTER_JSON: "${TAKUMI_MIGRATE_ROSTER_JSON:-0}"
+      TAKUMI_IMPORT_INVENTORY_STAGING: "${TAKUMI_IMPORT_INVENTORY_STAGING:-0}"
+      TAKUMI_ACCOUNTS: "${TAKUMI_ACCOUNTS:-test:test|admin:admin}"
+      TAKUMI_SERVER_SERIAL: "${TAKUMI_SERVER_SERIAL:-TbYehR2hFUPBKgZj}"
+      TAKUMI_JOIN_VERSION: "${TAKUMI_JOIN_VERSION:-10405}"
       DOTNET_ENVIRONMENT: "${DOTNET_ENVIRONMENT:-Development}"
     # Build then run so a stale bin/Release from the host volume cannot mask Program.cs changes.
     command:
@@ -155,11 +170,15 @@ services:
     image: mcr.microsoft.com/dotnet/sdk:10.0
     container_name: takumi-game-host
     restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_started
     working_dir: /app
     volumes:
       - .:/app
       - ${TAKUMI_DEC2_HOST_DIR:-./keys}:/keys:ro
       - ${TAKUMI_GAMESERVER_DATA_HOST:-../MuServer/4.GameServer/Data}:/muserver-data:ro
+      - ${TAKUMI_ATT_DATA_HOST:-../docker/data-zip/host/Data}:/att-data:ro
     ports:
       - "${TAKUMI_GAME_PUBLISH:-55901}:${TAKUMI_GAME_PORT:-55901}"
     environment:
@@ -180,6 +199,19 @@ services:
       TAKUMI_GAMESERVER_DATA_PATH: "${TAKUMI_GAMESERVER_DATA_PATH:-/muserver-data}"
       TAKUMI_MONSTER_SET_BASE_PATH: "${TAKUMI_MONSTER_SET_BASE_PATH:-/muserver-data/Monster/MonsterSetBase.txt}"
       TAKUMI_MONSTER_INFO_PATH: "${TAKUMI_MONSTER_INFO_PATH:-/muserver-data/Monster/Monster.txt}"
+      TAKUMI_ATT_DATA_ROOT: "${TAKUMI_ATT_DATA_ROOT:-/att-data}"
+      TAKUMI_PG_CONNECTION_STRING: "Host=postgres;Port=5432;Username=${TAKUMI_PG_USER:-takumi};Password=${TAKUMI_PG_PASSWORD:-takumi};Database=${TAKUMI_PG_DATABASE:-takumi_runtime}"
+      TAKUMI_ROSTER_DB_SYNC: "${TAKUMI_ROSTER_DB_SYNC:-1}"
+      TAKUMI_ROSTER_DB_PRIMARY: "${TAKUMI_ROSTER_DB_PRIMARY:-1}"
+      TAKUMI_CHARACTER_DOMAIN_SYNC: "${TAKUMI_CHARACTER_DOMAIN_SYNC:-1}"
+      TAKUMI_SESSION_HANDOFF_DB: "${TAKUMI_SESSION_HANDOFF_DB:-1}"
+      TAKUMI_GAME_REQUIRE_LOGIN_HANDOFF: "${TAKUMI_GAME_REQUIRE_LOGIN_HANDOFF:-1}"
+      TAKUMI_GAME_HANDOFF_MATCH_IP: "${TAKUMI_GAME_HANDOFF_MATCH_IP:-0}"
+      TAKUMI_SEND_LIFE_MANA_AFTER_JOIN: "${TAKUMI_SEND_LIFE_MANA_AFTER_JOIN:-1}"
+      TAKUMI_MAP_PRESENCE_ENABLED: "${TAKUMI_MAP_PRESENCE_ENABLED:-1}"
+      TAKUMI_ROSTER_PERIODIC_SAVE_SECONDS: "${TAKUMI_ROSTER_PERIODIC_SAVE_SECONDS:-60}"
+      TAKUMI_MIGRATE_ROSTER_JSON: "${TAKUMI_MIGRATE_ROSTER_JSON:-0}"
+      TAKUMI_IMPORT_INVENTORY_STAGING: "${TAKUMI_IMPORT_INVENTORY_STAGING:-0}"
       DOTNET_ENVIRONMENT: "${DOTNET_ENVIRONMENT:-Development}"
     # Bind-mount + host obj → NETSDK1064; script uses TAKUMI_DOCKER_GAMEHOST + Directory.Build.props for /tmp outputs (no shared rm).
     command:

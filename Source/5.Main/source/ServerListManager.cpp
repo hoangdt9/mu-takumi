@@ -11,6 +11,7 @@ CServerListManager::CServerListManager()
 	m_iTotalServer = 0;
 	m_szSelectServerName[0] = '\0';
 	m_iSelectServerIndex = -1;
+	m_iSelectConnectIndex = -1;
 }
 
 CServerListManager::~CServerListManager()
@@ -347,10 +348,11 @@ CServerGroup* CServerListManager::GetServerGroupByBtnPos(int iBtnPos)
 	return NULL;
 }
 
-void CServerListManager::SetSelectServerInfo(unicode::t_char* pszName, int iIndex, int iCensorshipIndex, BYTE byNonPvP, bool bTestServer)
+void CServerListManager::SetSelectServerInfo(unicode::t_char* pszName, int iIndex, int iConnectIndex, int iCensorshipIndex, BYTE byNonPvP, bool bTestServer)
 {
 	strcpy(m_szSelectServerName, pszName);
 	m_iSelectServerIndex = iIndex;
+	m_iSelectConnectIndex = iConnectIndex;
 	m_iCensorshipIndex = iCensorshipIndex;
 	m_byNonPvP = byNonPvP;
 	m_bTestServer = bTestServer;
@@ -364,6 +366,11 @@ unicode::t_char* CServerListManager::GetSelectServerName()
 int CServerListManager::GetSelectServerIndex()
 {
 	return m_iSelectServerIndex;
+}
+
+int CServerListManager::GetSelectServerConnectIndex() const
+{
+	return m_iSelectConnectIndex;
 }
 
 int CServerListManager::GetCensorshipIndex()

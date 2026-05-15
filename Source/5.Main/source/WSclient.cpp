@@ -759,6 +759,13 @@ void ReceiveChangePassword( BYTE *ReceiveBuffer )
 
 void ReceiveCharacterList( BYTE *ReceiveBuffer )
 {
+	// Takumi server-next: ignore stray F3 00 in-world (would rebuild select-scene heroes and wipe viewport).
+	if (SceneFlag == MAIN_SCENE)
+	{
+		CurrentProtocolState = RECEIVE_CHARACTERS_LIST;
+		return;
+	}
+
 	InitGuildWar();
 #if(UseReconnect)	
 	g_pReconnect->ReconnectOnCharacterList();  //Add
@@ -1447,8 +1454,41 @@ void ReceiveRevival( BYTE *ReceiveBuffer )
 	//return;
 	MouseLButton = false;
 	Teleport = false;
-	Hero->Object.Live = false;
 	LPPRECEIVE_REVIVAL Data = (LPPRECEIVE_REVIVAL)ReceiveBuffer;
+
+	// Takumi server-next: town respawn uses 0x1C flag=0 + 0x26/0x27; F3 04 is legacy town regen (full reset).
+	// Only use lite path when server explicitly sends regen at safe coords (future); default full path for other maps.
+	if (false && SceneFlag == MAIN_SCENE && gMapManager.WorldActive == Data->Map)
+	{
+		CharacterAttribute->Life = Data->Life;
+		CharacterAttribute->Mana = Data->Mana;
+		CharacterAttribute->Shield = Data->Shield;
+		CharacterAttribute->SkillMana = Data->SkillMana;
+
+		CHARACTER* c = Hero;
+		OBJECT* o = &c->Object;
+		c->PositionX = Data->PositionX;
+		c->PositionY = Data->PositionY;
+		c->TargetX = Data->PositionX;
+		c->TargetY = Data->PositionY;
+		c->Dead = false;
+		c->Movement = false;
+		o->Live = true;
+		o->m_bActionStart = false;
+		o->Position[0] = ((float)Data->PositionX + 0.5f) * TERRAIN_SCALE;
+		o->Position[1] = ((float)Data->PositionY + 0.5f) * TERRAIN_SCALE;
+		o->Position[2] = RequestTerrainHeight(o->Position[0], o->Position[1]);
+		SetPlayerStop(c);
+		g_ErrorReport.Write(
+			"[ReceiveRevival] in-place map=%d xy=(%d,%d) (no viewport wipe)\r\n",
+			Data->Map,
+			Data->PositionX,
+			Data->PositionY);
+		g_ConsoleDebug->Write(MCD_RECEIVE, "0x04 [ReceiveRevival in-place map=%d xy=(%d,%d)]", Data->Map, Data->PositionX, Data->PositionY);
+		return;
+	}
+
+	Hero->Object.Live = false;
 	
 	CharacterAttribute->Life       = Data->Life;
 	CharacterAttribute->Mana       = Data->Mana;
@@ -2217,6 +2257,12 @@ BOOL ReceiveTeleport(BYTE *ReceiveBuffer, BOOL bEncrypted)
 	{
         CreateTeleportEnd(o);
 		Teleport = false;
+		if (Hero->Dead)
+		{
+			Hero->Dead = false;
+			o->Live = true;
+			g_ErrorReport.Write("[ReceiveTeleport] town revive flag=0 map=%d xy=(%d,%d)\r\n", Data->Map, Data->PositionX, Data->PositionY);
+		}
 	}
 	else
 	{
@@ -6974,6 +7020,16 @@ void ReceiveLife( BYTE *ReceiveBuffer )
 	case 0xff:
 		CharacterAttribute->Life = ((WORD)(Data->Life[0]) << 8) + Data->Life[1];
 		CharacterAttribute->Shield = ((WORD)(Data->Life[3]) << 8) + Data->Life[4];
+		// Takumi m7d field revive: server sends 0x26 after death without F3 04 (avoids ClearCharacters).
+		if (SceneFlag == MAIN_SCENE && Hero != nullptr && Hero->Dead)
+		{
+			Hero->Dead = false;
+			Hero->Movement = false;
+			Hero->Object.Live = true;
+			Hero->Object.m_bActionStart = false;
+			SetPlayerStop(Hero);
+			g_ErrorReport.Write("[ReceiveLife] field revive hp=%u\r\n", CharacterAttribute->Life);
+		}
 		break;
 	case 0xfe:
 		if (gCharacterManager.IsMasterLevel(Hero->Class) == true)
@@ -7014,8 +7070,12 @@ void ReceiveMana( BYTE *ReceiveBuffer )
 	case 0xff:
 		CharacterAttribute->Mana = ((WORD)(Data->Life[0])<<8) + Data->Life[1];
 		CharacterAttribute->SkillMana = ((WORD)(Data->Life[2])<<8) + Data->Life[3];
-		CharacterAttribute->PrintPlayer.ViewCurMP = Data->ViewHP;
-		CharacterAttribute->PrintPlayer.ViewCurBP = Data->ViewSD;
+		// Takumi 9-byte 0x27 wire has no ViewHP/ViewSD — reading them caused garbage UI (e.g. 16777215).
+		if (ReceiveBuffer[1] > 9)
+		{
+			CharacterAttribute->PrintPlayer.ViewCurMP = Data->ViewHP;
+			CharacterAttribute->PrintPlayer.ViewCurBP = Data->ViewSD;
+		}
 		break;
 	case 0xfe:
 		if(gCharacterManager.IsMasterLevel(Hero->Class) == true)

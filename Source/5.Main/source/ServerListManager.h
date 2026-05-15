@@ -39,10 +39,12 @@ public:
 
 	int GetServerGroupSize();
 
-	void SetSelectServerInfo(unicode::t_char* pszName, int iIndex, int iCensorshipIndex,
+	void SetSelectServerInfo(unicode::t_char* pszName, int iIndex, int iConnectIndex, int iCensorshipIndex,
 		BYTE byNonPvP, bool bTestServer);
 	unicode::t_char* GetSelectServerName();
 	int	GetSelectServerIndex();
+	/** Wire id for C1 F4 03 (may differ from UI slot index). */
+	int GetSelectServerConnectIndex() const;
 	int GetCensorshipIndex();
 	BYTE GetNonPVPInfo();
 	bool IsNonPvP();
@@ -63,6 +65,7 @@ public:
 	int				m_iTotalServer;
 	unicode::t_char m_szSelectServerName[MAX_TEXT_LENGTH];
 	int				m_iSelectServerIndex;
+	int				m_iSelectConnectIndex;
 	int				m_iCensorshipIndex;
 	BYTE			m_byNonPvP;
 	bool			m_bTestServer;

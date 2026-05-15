@@ -34,6 +34,8 @@ public sealed class MonsterViewerSession
     public string? CharacterName { get; set; }
     public MonsterViewportTracker? ViewportTracker { get; set; }
     public Action<int, int>? OnVitalsChanged { get; set; }
+
+    public Action<byte, byte, byte>? OnRosterPositionChanged { get; set; }
 }
 
 public readonly record struct MonsterViewerTarget(
@@ -67,7 +69,8 @@ public static class MonsterViewerRegistry
         int maxMp = 0,
         string? accountLogin = null,
         string? characterName = null,
-        Action<int, int>? onVitalsChanged = null)
+        Action<int, int>? onVitalsChanged = null,
+        Action<byte, byte, byte>? onRosterPositionChanged = null)
     {
         if (Sessions.TryGetValue(sessionId, out var existing))
         {
@@ -111,6 +114,7 @@ public static class MonsterViewerRegistry
             }
 
             existing.OnVitalsChanged = onVitalsChanged ?? existing.OnVitalsChanged;
+            existing.OnRosterPositionChanged = onRosterPositionChanged ?? existing.OnRosterPositionChanged;
             return;
         }
 
@@ -128,6 +132,7 @@ public static class MonsterViewerRegistry
             AccountLogin = accountLogin,
             CharacterName = characterName,
             OnVitalsChanged = onVitalsChanged,
+            OnRosterPositionChanged = onRosterPositionChanged,
         };
     }
 

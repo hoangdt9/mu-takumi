@@ -169,7 +169,7 @@ void MU_AndroidTickLoginAfterServerPickFallback()
     if (nowMs - s_lastF403RetryMs >= kF403RetryIntervalMs)
     {
         s_lastF403RetryMs = nowMs;
-        const int connectIndex = g_ServerListManager->GetSelectServerIndex();
+        const int connectIndex = g_ServerListManager->GetSelectServerConnectIndex();
         if (connectIndex >= 0 && fd != INVALID_SOCKET && static_cast<int>(fd) > 0)
         {
             SendRequestServerAddress(connectIndex);
@@ -190,7 +190,9 @@ void MU_AndroidTickLoginAfterServerPickFallback()
     rUIMng.ShowWin(&rUIMng.m_ServerSelWin);
     rUIMng.PopUpMsgWin(MESSAGE_SERVER_LOST);
     g_ErrorReport.Write(
-        "[TakumiLoginBg] F4 03 timeout after %u ms — no game socket / LoginWin (check server docker logs)\r\n",
+        "[TakumiLoginBg] F4 03 timeout after %u ms — no game socket / LoginWin. "
+        "If logcat shows 192.168.x and no recv tcp: run server-next/scripts/adb-reverse-takumi-dev.sh "
+        "then rebuild APK with -PmuBootstrapAdbReverse=true (127.0.0.1).\r\n",
         elapsedMs);
 }
 

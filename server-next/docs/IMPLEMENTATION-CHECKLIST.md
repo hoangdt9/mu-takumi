@@ -167,6 +167,8 @@ Use this to avoid unnecessary rebuilds.
 9. **M9 — NPC & monster runtime** *(scope A — **`docs/M9-NPC-MONSTER-CHECKLIST.md`**)*  
    - [x] Spawn theo map từ **MonsterSetBase.txt** + **Monster.txt** stats (đứng yên; view-range filter).  
    - [x] Gói **`C2 0x13`** scope spawn sau join (`MonsterViewportWire602`, hook Legacy + GamePort).  
+   - [x] Gửi thêm monster mới khi đi bộ / teleport tile (`MonsterViewportTracker`).  
+   - [x] Regen delay từ `Monster.txt` (chưa có combat → chưa gọi `MarkDead`).  
    - [ ] Regen; AI; broadcast khi di chuyển (M10).
 
 10. **M10 — Movement & visibility**  

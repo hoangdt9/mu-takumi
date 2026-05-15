@@ -69,6 +69,18 @@ public static class MapMonsterWorld
         var list = new List<MapMonsterInstance>(Math.Min(maxCount, all.Count));
         foreach (var m in all)
         {
+            if (!m.IsAlive)
+            {
+                if (m.TryRegen())
+                {
+                    // Respawned — may enter view this tick.
+                }
+                else
+                {
+                    continue;
+                }
+            }
+
             if (Math.Abs(m.X - px) + Math.Abs(m.Y - py) > viewRange)
             {
                 continue;
@@ -96,6 +108,7 @@ public static class MapMonsterWorld
             }
 
             var stat = _stats.GetOrDefault(e.MonsterClass);
+            var regenMs = Math.Max(1, stat.RegenTimeSeconds) * 1000;
             var inst = new MapMonsterInstance
             {
                 ObjectKey = key++,
@@ -106,6 +119,7 @@ public static class MapMonsterWorld
                 Dir = e.Dir,
                 Life = stat.Life,
                 Level = stat.Level,
+                RegenDelayMs = regenMs,
             };
 
             if (!_byMap.TryGetValue(inst.Map, out var bucket))

@@ -20,8 +20,35 @@ public static class MapMonsterScopeSender
         MapMonsterWorld.EnsureInitialized();
 
         var viewRange = ParseIntEnv("TAKUMI_MONSTER_VIEW_RANGE", 15, 1, 32);
-        var maxCount = ParseIntEnv("TAKUMI_MONSTER_VIEWPORT_MAX", 64, 1, 120);
-        var monsters = onlyNew ?? MapMonsterWorld.GetMonstersNear(mapId, playerX, playerY, viewRange, maxCount);
+        var maxNpcs = ParseIntEnv("TAKUMI_MONSTER_VIEWPORT_MAX_NPC", 32, 1, 80);
+        var maxMobs = ParseIntEnv("TAKUMI_MONSTER_VIEWPORT_MAX_MOB", 48, 1, 80);
+        var monsters = onlyNew
+            ?? MapMonsterWorld.GetViewportEntities(mapId, playerX, playerY, viewRange, maxNpcs, maxMobs);
+        if (monsters.Count == 0)
+        {
+            return null;
+        }
+
+        var entries = new List<MonsterViewportEntry>(monsters.Count);
+        foreach (var m in monsters)
+        {
+            entries.Add(
+                new MonsterViewportEntry(
+                    m.ObjectKey,
+                    m.MonsterClass,
+                    m.X,
+                    m.Y,
+                    m.X,
+                    m.Y,
+                    m.Dir,
+                    CreateFlag: true));
+        }
+
+        return MonsterViewportWire602.Build(entries);
+    }
+
+    public static byte[]? BuildViewportPacketForInstances(IReadOnlyList<MapMonsterInstance> monsters)
+    {
         if (monsters.Count == 0)
         {
             return null;
@@ -57,8 +84,9 @@ public static class MapMonsterScopeSender
     {
         tracker.ResetForMap(mapId, playerX, playerY);
         var viewRange = ParseIntEnv("TAKUMI_MONSTER_VIEW_RANGE", 15, 1, 32);
-        var maxCount = ParseIntEnv("TAKUMI_MONSTER_VIEWPORT_MAX", 64, 1, 120);
-        var monsters = MapMonsterWorld.GetMonstersNear(mapId, playerX, playerY, viewRange, maxCount);
+        var maxNpcs = ParseIntEnv("TAKUMI_MONSTER_VIEWPORT_MAX_NPC", 32, 1, 80);
+        var maxMobs = ParseIntEnv("TAKUMI_MONSTER_VIEWPORT_MAX_MOB", 48, 1, 80);
+        var monsters = MapMonsterWorld.GetViewportEntities(mapId, playerX, playerY, viewRange, maxNpcs, maxMobs);
         var fresh = tracker.TakeNewInView(monsters);
         await SendPacketAsync(connection, clientProtectOutbound, mapId, playerX, playerY, fresh, remote, "join", ct)
             .ConfigureAwait(false);
@@ -81,8 +109,9 @@ public static class MapMonsterScopeSender
         }
 
         var viewRange = ParseIntEnv("TAKUMI_MONSTER_VIEW_RANGE", 15, 1, 32);
-        var maxCount = ParseIntEnv("TAKUMI_MONSTER_VIEWPORT_MAX", 64, 1, 120);
-        var monsters = MapMonsterWorld.GetMonstersNear(mapId, playerX, playerY, viewRange, maxCount);
+        var maxNpcs = ParseIntEnv("TAKUMI_MONSTER_VIEWPORT_MAX_NPC", 32, 1, 80);
+        var maxMobs = ParseIntEnv("TAKUMI_MONSTER_VIEWPORT_MAX_MOB", 48, 1, 80);
+        var monsters = MapMonsterWorld.GetViewportEntities(mapId, playerX, playerY, viewRange, maxNpcs, maxMobs);
         var (fresh, left) = tracker.SyncView(monsters);
         tracker.NoteAnchor(mapId, playerX, playerY);
         await SendDestroyAsync(connection, clientProtectOutbound, left, remote, ct).ConfigureAwait(false);

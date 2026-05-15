@@ -14,9 +14,10 @@ Last updated: 2026-05-16
 - [x] **Destroy on leave view** — `SyncView` + `C1 0x14` when walk out of range (parity `DestroyViewportMonster1`).
 - [x] **Damage vs Defense** — `MonsterCombatCalculator` + `Monster.txt` `Defense` column.
 - [ ] **Full combat** (AoE, PvP) — **M10c** (xem **`WORKSTREAM-OWNERSHIP.md`**).
-- [ ] **M10 partial (WIP trên `mac-m4`):** map presence `0x15`/`0x18`, miss, skill % — chưa merge `main`.
-- [ ] **AI** / NPC shop rows — post-M9 (shop data **main** `8c1758b`; wire chưa).
-- [x] **M8 ETL** spawn Postgres — trên **`main`** (`b33d890`); `MapMonsterWorld` fallback file khi DB trống.
+- [~] **AI (M9b):** wander, chase, `0xD4`/`0x18`, player dmg stub, periodic viewport, regen broadcast — see **`docs/M9-MONSTER-AI-PORT-CHECKLIST.md`**.
+- [ ] **M10 partial:** map presence `0x15`/`0x18` broadcast tới player khác (`GameMapPresenceRegistry` trên `main`); miss/skill % WIP.
+- [ ] **NPC shop wire** — shop data **main** `8c1758b`; handlers `0x31` chưa.
+- [x] **M8 ETL** spawn Postgres — **`main`** (`b33d890`); `MapMonsterWorld` fallback file khi DB trống.
 
 ## Legacy reference (`Source/4.GameServer`)
 

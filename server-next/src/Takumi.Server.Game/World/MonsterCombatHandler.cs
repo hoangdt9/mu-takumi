@@ -93,6 +93,11 @@ public static class MonsterCombatHandler
             return;
         }
 
+        if (monster.IsNpc)
+        {
+            return;
+        }
+
         if (monster.Map != mapId)
         {
             return;
@@ -139,6 +144,11 @@ public static class MonsterCombatHandler
         var fallback = ParseIntEnv("TAKUMI_COMBAT_STUB_DAMAGE", 50, 1, 65_000);
         var skillPct = isSkill ? ParseIntEnv("TAKUMI_COMBAT_SKILL_DAMAGE_PCT", 150, 50, 500) : 100;
         var damage = MonsterCombatCalculator.RollDamageToMonster(playerLevel, stat, fallback, skillPct);
+        if (presenceSessionId is { } aggroSid && GameMapPresenceRegistry.TryGetObjectKey(aggroSid, out var playerKey))
+        {
+            monster.SetAggro(playerKey);
+        }
+
         var died = monster.ApplyDamage(damage);
         var dmgPkt = MonsterDamageWire602.Build(
             monster.ObjectKey,
@@ -162,6 +172,7 @@ public static class MonsterCombatHandler
         }
 
         tracker.Forget(monster.ObjectKey);
+        await MonsterViewportBroadcast.BroadcastDestroyAsync(monster, ct).ConfigureAwait(false);
         var destroyPkt = MonsterViewportDestroyWire602.Build([monster.ObjectKey]);
         await GamePortOutboundWire.WriteAsync(connection, clientProtectOutbound, destroyPkt, ct).ConfigureAwait(false);
         var expStub = (ushort)Math.Clamp(monster.Level * 10, 1, 5000);

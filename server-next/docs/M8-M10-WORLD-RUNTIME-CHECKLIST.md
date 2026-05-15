@@ -12,7 +12,11 @@
 - [x] ETL: **`MonsterSpawnDbImporter`** + **`scripts/import-monster-spawn.sh`** (cần `TEST_PG` / `TAKUMI_PG_*` + `TAKUMI_MONSTER_SET_BASE_PATH`).
 - [x] Reader: **`PostgresMonsterSpawnRepository`** + **`TakumiPostgresMirror.InitMonsterSpawnIfEnabled`** (`TAKUMI_MONSTER_SPAWN_DB=1`).
 - [x] Runtime: **`MapMonsterWorld`** ưu tiên DB khi bảng có dữ liệu; fallback file / Lorencia như M9.
-- [ ] Cửa / shop / `Data/Custom/` — **deferred:** JSON blob hoặc bảng riêng; tham chiếu `CMapServer` / shop tables C++ (chưa ETL).
+- [x] **Gates:** `sql/init/006` → `map_gate` — loader **`GateLoader`** (`Move/Gate.txt`, parity **`CGate`**), ETL **`MapGateDbImporter`**, catalog **`MapGateCatalog`** (`TAKUMI_MAP_GATE_DB` / `TAKUMI_WORLD_STATIC_DB`).
+- [x] **Shops:** `npc_shop` + `npc_shop_item` — **`ShopManagerLoader`** + **`ShopItemLoader`**, ETL **`NpcShopDbImporter`**, catalog **`NpcShopCatalog`** (`TAKUMI_NPC_SHOP_DB`).
+- [x] **Custom:** `custom_world_config` (JSONB table/raw snapshot) — **`CustomWorldConfigDbImporter`** (`Custom/*.txt` + `.ini`/`.xml` raw); `TAKUMI_CUSTOM_WORLD_DB`.
+- [x] Script gộp: **`scripts/import-world-static-data.sh`** (cần `TAKUMI_GAMESERVER_DATA_PATH` hoặc auto-detect MuServer Data).
+- [ ] Runtime gameplay: `C1 0x1C` teleport / `C2 0x31` shop list wire (catalogs sẵn; handler chưa nối).
 
 ---
 

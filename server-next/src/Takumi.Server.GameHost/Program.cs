@@ -4,6 +4,7 @@
 using System.Globalization;
 using System.Net.Sockets;
 using Takumi.Server.Game;
+using Takumi.Server.Game.World;
 using Takumi.Server.Hosting;
 using Takumi.Server.Persistence;
 using Takumi.Server.Protocol;
@@ -12,6 +13,9 @@ RepoEnvLoader.ApplyDefaultsAndLocalEnv();
 TakumiPostgresMirror.InitIfEnabled();
 TakumiPostgresMirror.InitSessionHandoffIfEnabled();
 TakumiPostgresMirror.InitMonsterSpawnIfEnabled();
+TakumiPostgresMirror.InitWorldStaticDataIfEnabled();
+MapGateCatalog.EnsureInitialized();
+NpcShopCatalog.EnsureInitialized();
 
 if (!int.TryParse(
         Environment.GetEnvironmentVariable("TAKUMI_GAME_PORT"),

@@ -1,0 +1,3 @@
+//Group	Index	Level	Dur	Skill	Luck	Option	ExcOpt	Anc	JoH	Oex	Socket1	Socket2	Socket3	Socket4	Socket5	ItemName
+0	20	9	0	1	1	7	63	0	0	0	255	255	255	255	255	//Sword
+end

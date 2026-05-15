@@ -39,6 +39,9 @@ public static class LegacyLoginHostRunner
         TakumiPostgresMirror.InitIfEnabled();
         TakumiPostgresMirror.InitSessionHandoffIfEnabled();
         TakumiPostgresMirror.InitMonsterSpawnIfEnabled();
+        TakumiPostgresMirror.InitWorldStaticDataIfEnabled();
+        MapGateCatalog.EnsureInitialized();
+        NpcShopCatalog.EnsureInitialized();
 
         if (!int.TryParse(
                 Environment.GetEnvironmentVariable("TAKUMI_LOGIN_PORT"),

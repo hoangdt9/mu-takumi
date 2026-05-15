@@ -13,6 +13,12 @@ public static class TakumiPostgresMirror
     /// <summary>Optional <c>monster_spawn</c> reader when <c>TAKUMI_MONSTER_SPAWN_DB</c> is on (M8).</summary>
     public static PostgresMonsterSpawnRepository? MonsterSpawn { get; private set; }
 
+    public static PostgresMapGateRepository? MapGate { get; private set; }
+
+    public static PostgresNpcShopRepository? NpcShop { get; private set; }
+
+    public static PostgresCustomWorldConfigRepository? CustomWorld { get; private set; }
+
     /// <summary>Reads <c>TAKUMI_ROSTER_DB_SYNC</c> and connection env; no-op when disabled or misconfigured.</summary>
     public static void InitIfEnabled()
     {
@@ -114,4 +120,68 @@ public static class TakumiPostgresMirror
             MonsterSpawn = null;
         }
     }
+
+    /// <summary>
+    /// Enables map_gate / npc_shop / custom_world_config readers when <c>TAKUMI_WORLD_STATIC_DB=1</c>
+    /// or individual <c>TAKUMI_MAP_GATE_DB</c>, <c>TAKUMI_NPC_SHOP_DB</c>, <c>TAKUMI_CUSTOM_WORLD_DB</c> flags are set.
+    /// Requires <c>sql/init/006_map_gate_npc_shop_custom.sql</c> applied.
+    /// </summary>
+    public static void InitWorldStaticDataIfEnabled()
+    {
+        MapGate = null;
+        NpcShop = null;
+        CustomWorld = null;
+
+        var all = EnvOn("TAKUMI_WORLD_STATIC_DB");
+        var gateOn = all || EnvOn("TAKUMI_MAP_GATE_DB");
+        var shopOn = all || EnvOn("TAKUMI_NPC_SHOP_DB");
+        var customOn = all || EnvOn("TAKUMI_CUSTOM_WORLD_DB");
+        if (!gateOn && !shopOn && !customOn)
+        {
+            return;
+        }
+
+        var cs = PostgresCharacterRosterRepository.BuildConnectionStringFromEnv();
+        if (string.IsNullOrEmpty(cs))
+        {
+            Console.Error.WriteLine(
+                "[world-static-db] world static DB is enabled but no connection string: set TAKUMI_PG_CONNECTION_STRING or TAKUMI_PG_HOST.");
+            return;
+        }
+
+        try
+        {
+            if (gateOn)
+            {
+                MapGate = new PostgresMapGateRepository(cs);
+            }
+
+            if (shopOn)
+            {
+                NpcShop = new PostgresNpcShopRepository(cs);
+            }
+
+            if (customOn)
+            {
+                CustomWorld = new PostgresCustomWorldConfigRepository(cs);
+            }
+
+            Console.Error.WriteLine(
+                "[world-static-db] enabled gate={0} shop={1} custom={2}",
+                gateOn,
+                shopOn,
+                customOn);
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine("[world-static-db] init failed: {0}", ex.Message);
+            MapGate = null;
+            NpcShop = null;
+            CustomWorld = null;
+        }
+    }
+
+    static bool EnvOn(string key) =>
+        string.Equals(Environment.GetEnvironmentVariable(key), "1", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(Environment.GetEnvironmentVariable(key), "true", StringComparison.OrdinalIgnoreCase);
 }

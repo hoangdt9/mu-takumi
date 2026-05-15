@@ -1,6 +1,6 @@
 # Takumi Server Next - Implementation Checklist
 
-Last updated: 2026-05-16 (M7 vitals + M5 split Connect/Login hosts; M4 routing → M7/M8–M10 checklists)
+Last updated: 2026-05-15 (M8 gates/shops/custom ETL; M7 vitals; M5 split hosts)
 
 ## Repository vs checklist (read first)
 
@@ -165,7 +165,8 @@ Use this to avoid unnecessary rebuilds.
 8. **M8 — Dữ liệu tĩnh thế giới (ETL)** — **`docs/M8-M10-WORLD-RUNTIME-CHECKLIST.md`** §M8  
    - [x] **`sql/init/005_monster_spawn.sql`** + **`PostgresMonsterSpawnRepository`** + **`MonsterSpawnDbImporter`** / **`scripts/import-monster-spawn.sh`**.  
    - [x] Runtime: **`TAKUMI_MONSTER_SPAWN_DB=1`** → **`MapMonsterWorld`** đọc Postgres (fallback file).  
-   - [ ] Cửa / shop / custom từ `Data/Custom/` + nguồn C++ tham chiếu.
+   - [x] Gates / shops / Custom: **`006_map_gate_npc_shop_custom.sql`**, ETL + **`MapGateCatalog`** / **`NpcShopCatalog`**; env **`TAKUMI_WORLD_STATIC_DB=1`** (hoặc từng flag `TAKUMI_MAP_GATE_DB`, `TAKUMI_NPC_SHOP_DB`, `TAKUMI_CUSTOM_WORLD_DB`).  
+   - [ ] Wire handlers: gate teleport `0x1C`, shop list `0x31` (catalogs loaded at host boot).
 
 9. **M9 — NPC & monster runtime** *(scope A — **`docs/M9-NPC-MONSTER-CHECKLIST.md`**, **`docs/M8-M10-WORLD-RUNTIME-CHECKLIST.md`** §M9)*  
    - [x] Spawn theo map từ **MonsterSetBase.txt** + **Monster.txt** stats (đứng yên; view-range filter).  

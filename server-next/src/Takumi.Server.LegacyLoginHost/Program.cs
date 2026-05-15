@@ -1063,9 +1063,11 @@ static async Task HandleClientAsync(
                             e.Level = d.Level;
                             e.ServerClass = d.ServerClass;
                         });
+                    CharacterRosterMirrorHealth.RecordMergeSuccess();
                 }
                 catch (Exception ex)
                 {
+                    CharacterRosterMirrorHealth.RecordMergeFail();
                     Console.WriteLine("[roster-db] merge after login failed for {0}: {1}", id, ex.Message);
                 }
             }

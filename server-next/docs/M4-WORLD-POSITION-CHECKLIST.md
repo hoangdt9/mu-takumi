@@ -6,6 +6,8 @@
 
 **QA thiết bị (2026-05-14):** `docker compose` + Android LAN — sau khi đi trong map và vào lại, log host cho thấy **`F3 03`** với `xy` khớp roster (ví dụ từ spawn mặc định Lorencia sang tọa độ đã walk).
 
+**M4b health (2026-05-15):** `CharacterRosterMirrorHealth` đếm **merge** (sau login, `LoadByAccountAsync` + `ApplyDbOverlay`) và **upsert** (async `ReplaceAccountRosterAsync`). Mỗi lỗi upsert log kèm snapshot; bật **`TAKUMI_ROSTER_HEALTH_LOG=1`** để sau **`TryDrainPendingUpserts`** (disconnect) in một dòng **`[roster-health] merge_ok=…`** ra stderr.
+
 ---
 
 ## M4a — Wire + JSON roster (`LegacyLoginHost`)
@@ -46,13 +48,13 @@
 - [x] Cấu hình merge **`TAKUMI_ROSTER_DB_MERGE_MODE`**: mặc định / `overlay` = overlay DB sau JSON khi login; **`json`** = bỏ overlay (JSON thắng hoàn toàn).
 - [x] `DeleteCharacterAsync` gọi **await** khi xóa nhân vật (`F3 02`) trước `SavePersistedRoster` / `SaveRoster` (sau đó vẫn replace full account — an toàn; có thể tối ưu sau).
 - [x] Đợi / flush DB upsert tối thiểu: **`CharacterRosterMirrorWriter.TryDrainPendingUpserts`** sau flush disconnect (`LegacyLoginHost`, `GamePortMinimalSession`).
-- [ ] Health log / metric: merge fail vs upsert fail count.
+- [x] Health log / metric: merge fail vs upsert fail count — **`CharacterRosterMirrorHealth`** (`RecordMergeSuccess` / `RecordMergeFail` / `RecordUpsertSuccess` / `RecordUpsertFail`), snapshot trên lỗi upsert + **`TAKUMI_ROSTER_HEALTH_LOG`** sau drain; test **`CharacterRosterMirrorHealthTests`**.
 
-### Importer / bảng `takumi_runtime.character` “chuẩn”
+### Importer / bảng `takumi_runtime.character` “chuẩn” — **owner: backlog / M7+ (không chặn M5)**
 
-- [ ] Bảng domain `character` (hoặc đồng bộ từ JSON) có `map_id`, `pos_x`, `pos_y`, `angle` + FK account.
+- [ ] Bảng domain `character` (hoặc đồng bộ từ JSON) có `map_id`, `pos_x`, `pos_y`, `angle` + FK account — *`IMPLEMENTATION-CHECKLIST` §Done đã có entity runtime; cần bài toán đồng bộ với `character_roster` / JSON nếu muốn SSOT DB-only.*
 - [ ] Importer `takumi_legacy` → runtime cho các cột world (nếu staging có dữ liệu).
-- [ ] Quyết định một nguồn sự thật (SSOT): chỉ DB / chỉ JSON / JSON+DB (hiện: **JSON + mirror DB**, SSOT thực tế vẫn là JSON file).
+- [ ] Quyết định một nguồn sự thật (SSOT): chỉ DB / chỉ JSON / JSON+DB (hiện: **JSON + mirror DB**, SSOT thực tế vẫn là JSON file). **Dev M5:** có thể làm ticket/handoff trước; **SSOT Postgres-only** là hạng mục riêng (xem `IMPLEMENTATION-CHECKLIST.md` §Next High).
 
 ---
 
@@ -60,8 +62,18 @@
 
 - [x] `LegacyLoginHost` + `GamePortMinimalSession`: cập nhật roster in-memory từ **walk** `C1 … 0xD4` / `0x10` và **instant move** `C1 05 15` (decode bước đi giống OpenMU); **ghi JSON + DB** vẫn theo `SavePersistedRoster` khi disconnect (và các chỗ save khác).
 - [x] Periodic save / save throttled giữa phiên: **`TAKUMI_ROSTER_PERIODIC_SAVE_SECONDS`** (5–3600) → flush JSON + mirror khi có **walk / instant move** (cờ dirty; `LegacyLoginHost` + `GamePortMinimalSession`).
-- [ ] Chuẩn hóa tile BYTE vs tọa độ float world.
-- [ ] Listener **process** game-only (M6 `GameHost`) parity đầy đủ với `GameServer` (scope, broadcast, …).
+- [ ] Chuẩn hóa tile BYTE vs tọa độ float world — **owner: M7 / parity client** (wire + roster hiện dùng byte tile; float chỉ khi mở rộng physics).
+- [ ] Listener **process** game-only (M6 `GameHost`) parity đầy đủ với `GameServer` (scope, broadcast, …) — **owner: M6+–M9**, không gộp vào close M4.
+
+---
+
+## Handoff cho dev **M5** (Join / ticket / cổng game)
+
+M4 **đã đủ** cho: vị trí trên roster, JSON flush, mirror **`character_roster`** / **`inventory_slot`**, walk trên **LegacyLoginHost** + **GamePortMinimalSession**, và **observability** merge/upsert.
+
+**M5 làm tiếp (không chờ M4 SSOT):** `Takumi.Server.Join`, **`TAKUMI_GAME_PORT`**, Postgres **`session_ticket`**, **`TAKUMI_SESSION_HANDOFF_DB`**, optional **`F1 A5`/`F1 A6`** — chi tiết **`docs/M5-JOIN-HANDOFF-CHECKLIST.md`**. Android split TCP smoke: **`docs/M6-GAME-TCP-CHECKLIST.md`**.
+
+**Không nằm trong M5:** bảng `character` “chuẩn” + importer world-only, tile/float, broadcast scope — lần lượt backlog / **M7–M10** (đánh dấu `[ ]` ở trên).
 
 ---
 
@@ -94,4 +106,6 @@ Trên host `dotnet run` (Postgres publish `54444`):
 TAKUMI_ROSTER_DB_SYNC=1
 TAKUMI_PG_HOST=127.0.0.1
 TAKUMI_PG_PORT=54444
+# Optional: one-line cumulative counters after roster DB upsert drain on disconnect
+# TAKUMI_ROSTER_HEALTH_LOG=1
 ```

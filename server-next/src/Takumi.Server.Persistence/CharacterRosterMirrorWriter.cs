@@ -34,10 +34,16 @@ public static class CharacterRosterMirrorWriter
                 try
                 {
                     await repo.ReplaceAccountRosterAsync(accountId, captured, CancellationToken.None).ConfigureAwait(false);
+                    CharacterRosterMirrorHealth.RecordUpsertSuccess();
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine("[roster-db] upsert failed for {0}: {1}", accountId, ex.Message);
+                    CharacterRosterMirrorHealth.RecordUpsertFail();
+                    Console.WriteLine(
+                        "[roster-db] upsert failed for {0}: {1} | {2}",
+                        accountId,
+                        ex.Message,
+                        CharacterRosterMirrorHealth.FormatSnapshot());
                 }
                 finally
                 {
@@ -54,5 +60,7 @@ public static class CharacterRosterMirrorWriter
         {
             Thread.Sleep(15);
         }
+
+        CharacterRosterMirrorHealth.LogSnapshotIfEnabled();
     }
 }

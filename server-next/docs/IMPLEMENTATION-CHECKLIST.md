@@ -1,6 +1,6 @@
 # Takumi Server Next - Implementation Checklist
 
-Last updated: 2026-05-14 (Dec2 env alias; `Season6ClientToServerDecryptSession`; max decrypted packet + rate gate; checklist sync)
+Last updated: 2026-05-15 (M4b roster health counters + handoff doc; checklist sync)
 
 ## Repository vs checklist (read first)
 
@@ -83,7 +83,8 @@ Use this to avoid unnecessary rebuilds.
 
 ## Next (High Priority)
 
-- [ ] **M4b–M5b:** Postgres-first roster SSOT beyond JSON mirror (see **`docs/M4-WORLD-POSITION-CHECKLIST.md`** §M4b).
+- [x] **M4b observability:** `CharacterRosterMirrorHealth` — merge/upsert success+fail counts; upsert errors log `[roster-health] …` snapshot; **`TAKUMI_ROSTER_HEALTH_LOG`** logs snapshot after **`TryDrainPendingUpserts`** (`docs/M4-WORLD-POSITION-CHECKLIST.md`).
+- [ ] **M4b–M5b (remaining):** Postgres-first roster **SSOT** beyond JSON mirror (domain `character` sync, importer world columns) — see **`docs/M4-WORLD-POSITION-CHECKLIST.md`** §Importer / SSOT; does **not** block M5 join/ticket work.
 - [ ] **M6+ / M7–M9:** Full **`Takumi.Server.Game`** protocol after join (map/scope/combat) when client uses **only** game TCP.
 - [x] **Split-stack login handoff (Postgres):** `sql/init/003_session_ticket.sql` + **`PostgresSessionHandoffRepository`**; **`TAKUMI_SESSION_HANDOFF_DB=1`** → `LegacyLoginHost` persists pending row after F1 01; optional **`TAKUMI_GAME_REQUIRE_LOGIN_HANDOFF=1`** on **GameHost** consumes one row before F1 01 success (**IP match** default on, override with **`TAKUMI_GAME_HANDOFF_MATCH_IP=0`**). Optional **signed wire path:** **`TAKUMI_SESSION_TICKET_HMAC_KEY`** + **`TAKUMI_GAME_TICKET_WIRE=1`** — Legacy pushes **`F1 A5`**, client **`F1 A6`** before game **`F1 01`**, consume on attach (see **`docs/M6-GAME-TCP-CHECKLIST.md`**). Plain IP handoff does not send ticket bytes on wire.
 - [ ] **`TakumiLoginServer` process** (if split from `LegacyLoginHost`) + signed ticket on wire / shared secret — not implemented; name in checklist = future exe only.
@@ -137,10 +138,11 @@ Use this to avoid unnecessary rebuilds.
    - [x] Đảm bảo F4 06/03/05 đồng hành với `ServerListManager` / BMD (đã phần nào trong host).  
    - [x] Tách process hoặc class library nếu cần scale riêng Connect (`Takumi.Server.Connect`; xem **`docs/M3-CONNECT-BMD.md`**).
 
-4. **M4 — Login + nhân vật + vị trí lưu thế giới** *(M4a + M4c walk trên TCP login đã QA thiết bị; M4b một phần — tick chi tiết trong **`docs/M4-WORLD-POSITION-CHECKLIST.md`**)*  
+4. **M4 — Login + nhân vật + vị trí lưu thế giới** *(M4a + M4c walk + periodic save + **M4b mirror + merge health metrics** — SSOT Postgres-only + tile/float still open; see **`docs/M4-WORLD-POSITION-CHECKLIST.md`** §Handoff M5)*  
    - [x] Bảng / roster: `map_id`, `pos_x`, `pos_y`, `angle` (JSON roster per account; join dùng `JoinMapSpawnWire`, không hard-code trong `Program` ngoài env default).  
    - [x] Đồng bộ khi disconnect (flush roster), khi đổi map stub (`8E 02` → cập nhật `MapId` + save); **walk** `C1 … 0xD4`/`0x10` + **instant move** `C1 05 15` cập nhật `posX`/`posY`/`angle` in-memory → flush cùng disconnect (log thực tế: join lần hai tại tile đã đi, ví dụ `xy=(140,193)` sau khi rời map).  
-   - [ ] **M4b/M4c + SSOT Postgres:** hoàn tất các mục chưa tick trong **`docs/M4-WORLD-POSITION-CHECKLIST.md`** (Testcontainers; tile/float; health metrics; game-only **scope** parity).
+   - [x] **M4b:** merge/upsert health counters + optional **`TAKUMI_ROSTER_HEALTH_LOG`** (`CharacterRosterMirrorHealth`).  
+   - [ ] **M4b/M4c + SSOT Postgres:** importer / `character` domain sync / tile vs float / full GS listener parity — **`docs/M4-WORLD-POSITION-CHECKLIST.md`** (owner M7+ where noted).
 
 5. **M5 — Join handoff (`3.JoinServer` parity)** *(partial — see **`docs/M5-JOIN-HANDOFF-CHECKLIST.md`**)*  
    - [x] **F4 03** advertised port (`TAKUMI_GAME_PORT`) + in-memory session ticket TTL / Touch / Revoke.  

@@ -43,12 +43,16 @@ public static class NpcShopCatalog
     public static int ResolveShopIndex(int monsterClass, byte mapId, byte x, byte y)
     {
         EnsureInitialized();
+        var exact = -1;
+        var byClass = -1;
         foreach (var s in _shops.Values)
         {
             if (s.MonsterClass != monsterClass)
             {
                 continue;
             }
+
+            byClass = s.ShopIndex;
 
             if (s.MapId is not null && s.MapId.Value != mapId)
             {
@@ -65,10 +69,11 @@ public static class NpcShopCatalog
                 continue;
             }
 
-            return s.ShopIndex;
+            exact = s.ShopIndex;
+            break;
         }
 
-        return -1;
+        return exact >= 0 ? exact : byClass;
     }
 
     public static IReadOnlyList<NpcShopItemEntry> GetItems(int shopIndex)

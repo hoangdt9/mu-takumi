@@ -76,9 +76,10 @@ public static class MonsterViewportPeriodicLoop
                 continue;
             }
 
-            if (left.Count > 0)
+            var destroyKeys = MapMonsterScopeSender.FilterViewportDestroyKeysForPeriodic(left);
+            if (destroyKeys.Count > 0)
             {
-                var destroyPkt = MonsterViewportDestroyWire602.Build(left);
+                var destroyPkt = MonsterViewportDestroyWire602.Build(destroyKeys);
                 await GamePortOutboundWire.WriteAsync(session.Connection, session.Protect, destroyPkt, ct)
                     .ConfigureAwait(false);
             }

@@ -202,6 +202,23 @@ public static class WorldGameplayHandlers
             return false;
         }
 
+        if (NpcTalkService.TryGetTalkResult(mob.MonsterClass, out var talkResult))
+        {
+            if (talkResult == NpcTalkService.TalkResultWarehouse)
+            {
+                await NpcTalkService.TryOpenWarehouseAsync(player, writeAsync, ct).ConfigureAwait(false);
+                Console.WriteLine("[m8] warehouse open npc class={0} {1}", mob.MonsterClass, remote);
+                return true;
+            }
+
+            if (talkResult == NpcTalkService.TalkResultDuelNpc)
+            {
+                await NpcTalkService.TryOpenDuelNpcAsync(writeAsync, ct).ConfigureAwait(false);
+                Console.WriteLine("[m8] duel npc talk class={0} {1}", mob.MonsterClass, remote);
+                return true;
+            }
+        }
+
         var shopIndex = NpcShopCatalog.ResolveShopIndex(mob.MonsterClass, mob.Map, mob.X, mob.Y);
         if (shopIndex < 0)
         {
@@ -211,7 +228,7 @@ public static class WorldGameplayHandlers
             }
 
             Console.WriteLine(
-                "[m8] npc talk class={0} map={1} xy=({2},{3}) no shop {4}",
+                "[m8] npc talk class={0} map={1} xy=({2},{3}) unhandled {4}",
                 mob.MonsterClass,
                 mob.Map,
                 mob.X,
@@ -241,6 +258,7 @@ public static class WorldGameplayHandlers
             wireItems.Add(new NpcShopWire602.ShopItemWire((byte)item.Slot, blob));
         }
 
+        await writeAsync(NpcTalkWire602.Build(NpcTalkService.TalkResultShop), ct).ConfigureAwait(false);
         var pkt = NpcShopWire602.Build(wireItems);
         await writeAsync(pkt, ct).ConfigureAwait(false);
         PlayerShopSession.OpenShop(presenceSessionId, shopIndex);

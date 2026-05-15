@@ -56,9 +56,20 @@ public sealed class MonsterViewportTracker
         }
 
         var left = new List<int>();
+        var destroyNpcs = string.Equals(
+            Environment.GetEnvironmentVariable("TAKUMI_MONSTER_VIEWPORT_DESTROY_NPC")?.Trim(),
+            "1",
+            StringComparison.OrdinalIgnoreCase);
         foreach (var key in _sentKeys.ToArray())
         {
             if (inRange.Contains(key))
+            {
+                continue;
+            }
+
+            if (!destroyNpcs
+                && MapMonsterWorld.TryGetMonster(key, out var mob)
+                && mob is { IsNpc: true })
             {
                 continue;
             }

@@ -5,7 +5,7 @@ using Takumi.Server.Protocol;
 
 namespace Takumi.Server.Game.World;
 
-/// <summary>Per-connection NPC shop + bag inventory (stub; SSOT inventory DB = M4b).</summary>
+/// <summary>Per-connection NPC shop + bag inventory; mirrors to <c>inventory_slot</c> when DB sync is on.</summary>
 public static class PlayerShopSession
 {
     static readonly ConcurrentDictionary<Guid, SessionState> Sessions = new();
@@ -124,6 +124,109 @@ public static class PlayerShopSession
         {
             s.Slots[slot] = item12;
         }
+    }
+
+    /// <summary>Mirror one slot to <c>inventory_slot</c> when <c>TAKUMI_ROSTER_DB_SYNC</c> is on.</summary>
+    public static void PersistSlotToMirror(string? accountId, byte[] characterName10, byte slot, byte[] item12)
+    {
+        if (string.IsNullOrEmpty(accountId) || TakumiPostgresMirror.InventorySlots is null)
+        {
+            return;
+        }
+
+        var charName = CharacterRosterMerge.NormaliseName(Encoding.ASCII.GetString(characterName10.AsSpan(0, 10)));
+        if (charName.Length == 0)
+        {
+            return;
+        }
+
+        if (ItemWire602.IsEmpty(item12))
+        {
+            InventorySlotMirrorWriter.ScheduleDeleteSlot(accountId, charName, slot);
+        }
+        else
+        {
+            InventorySlotMirrorWriter.ScheduleUpsertSlot(accountId, charName, slot, item12);
+        }
+    }
+
+    public static IReadOnlyList<InventorySlotRow> BuildSlotSnapshot(Guid sessionId)
+    {
+        if (!Sessions.TryGetValue(sessionId, out var s) || s.Slots.Count == 0)
+        {
+            return Array.Empty<InventorySlotRow>();
+        }
+
+        var list = new List<InventorySlotRow>(s.Slots.Count);
+        foreach (var kv in s.Slots)
+        {
+            if (ItemWire602.IsEmpty(kv.Value))
+            {
+                continue;
+            }
+
+            list.Add(new InventorySlotRow { Slot = kv.Key, Item12 = kv.Value });
+        }
+
+        return list;
+    }
+
+    public static void FlushInventoryMirrorOnDisconnect(string? accountId, byte[]? characterName10, Guid sessionId)
+    {
+        if (string.IsNullOrEmpty(accountId) || characterName10 is null || characterName10.Length < 10)
+        {
+            RemoveSession(sessionId);
+            return;
+        }
+
+        var snapshot = BuildSlotSnapshot(sessionId);
+        if (snapshot.Count > 0 && TakumiPostgresMirror.InventorySlots is not null)
+        {
+            var charName = CharacterRosterMerge.NormaliseName(Encoding.ASCII.GetString(characterName10.AsSpan(0, 10)));
+            if (charName.Length > 0)
+            {
+                InventorySlotMirrorWriter.ScheduleReplaceCharacter(accountId, charName, snapshot);
+            }
+        }
+
+        RemoveSession(sessionId);
+    }
+
+    public static bool IsInventorySlot(byte slot) => slot <= ItemWire602.LastBagSlot;
+
+    /// <summary>Move or swap between inventory slots (flags 0→0).</summary>
+    public static bool TryMoveInventorySlot(Guid sessionId, byte sourceSlot, byte targetSlot, out byte[] targetItem12)
+    {
+        targetItem12 = Array.Empty<byte>();
+        if (!IsInventorySlot(sourceSlot) || !IsInventorySlot(targetSlot) || sourceSlot == targetSlot)
+        {
+            return false;
+        }
+
+        var s = Sessions.GetOrAdd(sessionId, _ => new SessionState(-1, null, new Dictionary<byte, byte[]>()));
+        s.Slots.TryGetValue(sourceSlot, out var sourceItem);
+        sourceItem ??= Array.Empty<byte>();
+        if (ItemWire602.IsEmpty(sourceItem))
+        {
+            return false;
+        }
+
+        s.Slots.TryGetValue(targetSlot, out var destItem);
+        destItem ??= Array.Empty<byte>();
+        var moved = sourceItem.ToArray();
+        if (ItemWire602.IsEmpty(destItem))
+        {
+            s.Slots.Remove(sourceSlot);
+            s.Slots[targetSlot] = moved;
+        }
+        else
+        {
+            s.Slots[sourceSlot] = destItem.ToArray();
+            s.Slots[targetSlot] = moved;
+        }
+
+        targetItem12 = s.Slots[targetSlot];
+        return true;
     }
 
     public static bool TryFindEmptyBagSlot(Guid sessionId, out byte slot)

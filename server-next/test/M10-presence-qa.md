@@ -2,7 +2,9 @@
 
 **Đã merge (`b882608`):** `GameMapPresenceRegistry`, `PlayerPositionWire602` (`0x15`), `PlayerActionWire602` (`0x18`) trên join và map move.
 
-**Chưa đầy đủ:** broadcast cho session khác thấy nhau (cần 2 client); miss/skill % (WIP mac-m4).
+**Anti-flood:** `TAKUMI_PRESENCE_MAX_BROADCASTS_PER_SECOND` giới hạn outbound `0x15`/`0x18` broadcast (0 = tắt).
+
+**Chưa đầy đủ:** miss/skill % combat (WIP mac-m4).
 
 ## Chuẩn bị
 
@@ -31,11 +33,19 @@ docker compose logs -f legacy-login 2>&1 | grep -E '\[m10\]|presence|0x15|0x18|G
 2. [ ] **Host:** `GameMapPresenceRegistry` unregister map cũ, register map mới.
 3. [ ] Không crash; monster viewport M9 chạy lại trên map mới.
 
-## Bước 4 — Hai thiết bị (optional, full broadcast)
+## Bước 4 — Hai APK (full broadcast)
 
-1. [ ] Hai APK / emulator cùng account hoặc hai account cùng map.
-2. [ ] **Expect:** player B thấy position/action của A (khi broadcast đầy đủ).
-3. [ ] Hiện tại có thể chỉ thấy self — ghi nhận pass partial nếu log có gửi wire.
+1. [ ] Hai thiết bị, hai account, **cùng map** (Lorencia spawn gần nhau).
+2. [ ] Account A đi bộ; account B **nhìn thấy** nhân vật A di chuyển (không chỉ self).
+3. [ ] **Host A hoặc B:** `[m10] broadcast C1 0x15 … peers=1`
+4. [ ] (Tuỳ chọn) set `TAKUMI_PRESENCE_MAX_BROADCASTS_PER_SECOND=20` — spam walk không flood disconnect.
+
+```bash
+# .env
+TAKUMI_MAP_PRESENCE_ENABLED=1
+TAKUMI_PRESENCE_MAX_BROADCASTS_PER_SECOND=60
+TAKUMI_VERBOSE=1
+```
 
 ## M6 game-host path
 

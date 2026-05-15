@@ -796,6 +796,10 @@ public static class LegacyLoginHostRunner
                         playerObjectKey: presenceJoin?.ObjectKey ?? 0,
                         currentHp: picked.CurrentHp,
                         maxHp: picked.MaxHp,
+                        currentMp: picked.CurrentMp,
+                        maxMp: picked.MaxMp,
+                        accountLogin: loggedAccountId,
+                        characterName: Encoding.ASCII.GetString(picked.Name10).TrimEnd('\0'),
                         onVitalsChanged: (hp, max) =>
                         {
                             picked.CurrentHp = hp;
@@ -964,6 +968,10 @@ public static class LegacyLoginHostRunner
                             playerObjectKey: presenceMove?.ObjectKey ?? 0,
                             currentHp: pickedMove.CurrentHp,
                             maxHp: pickedMove.MaxHp,
+                            currentMp: pickedMove.CurrentMp,
+                            maxMp: pickedMove.MaxMp,
+                            accountLogin: loggedAccountId,
+                            characterName: Encoding.ASCII.GetString(pickedMove.Name10).TrimEnd('\0'),
                             onVitalsChanged: (hp, max) =>
                             {
                                 pickedMove.CurrentHp = hp;
@@ -1466,6 +1474,8 @@ public static class LegacyLoginHostRunner
             }
 
             CharacterRosterMirrorWriter.TryDrainPendingUpserts(TimeSpan.FromMilliseconds(900));
+            PlayerShopSession.FlushInventoryMirrorOnDisconnect(loggedAccountId, sessionJoinCharacterName10, presenceSessionId);
+            InventorySlotMirrorWriter.TryDrainPendingOps(TimeSpan.FromMilliseconds(900));
 
             tcp.Dispose();
         }
@@ -2217,6 +2227,36 @@ public static class LegacyLoginHostRunner
         }
 
         return d.Count > 0 ? d : null;
+    }
+
+    static GameRosterEntry ToGameRosterEntry(CharacterRosterEntry c) =>
+        new()
+        {
+            Name10 = c.Name10,
+            ServerClass = c.ServerClass,
+            Level = c.Level,
+            MapId = c.MapId,
+            PosX = c.PosX,
+            PosY = c.PosY,
+            Angle = c.Angle,
+            CurrentHp = c.CurrentHp,
+            MaxHp = c.MaxHp,
+            CurrentMp = c.CurrentMp,
+            MaxMp = c.MaxMp,
+            Zen = c.Zen,
+        };
+
+    static void ApplyGameRosterEntry(CharacterRosterEntry c, GameRosterEntry g)
+    {
+        c.MapId = g.MapId;
+        c.PosX = g.PosX;
+        c.PosY = g.PosY;
+        c.Angle = g.Angle;
+        c.CurrentHp = g.CurrentHp;
+        c.MaxHp = g.MaxHp;
+        c.CurrentMp = g.CurrentMp;
+        c.MaxMp = g.MaxMp;
+        c.Zen = g.Zen;
     }
 }
 

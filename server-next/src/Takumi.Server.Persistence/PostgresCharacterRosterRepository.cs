@@ -136,6 +136,32 @@ public sealed class PostgresCharacterRosterRepository : IAsyncDisposable
         await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
     }
 
+    public async Task UpsertVitalsAsync(
+        string accountLogin,
+        string characterName,
+        int currentHp,
+        int maxHp,
+        int currentMp,
+        int maxMp,
+        CancellationToken ct = default)
+    {
+        await using var conn = await this._dataSource.OpenConnectionAsync(ct).ConfigureAwait(false);
+        await using var cmd = new NpgsqlCommand(
+            """
+            UPDATE character_roster
+            SET current_hp = $3, max_hp = $4, current_mp = $5, max_mp = $6, updated_at = NOW()
+            WHERE account_login = $1 AND character_name = $2
+            """,
+            conn);
+        cmd.Parameters.Add(new NpgsqlParameter("a", NpgsqlDbType.Text) { Value = accountLogin });
+        cmd.Parameters.Add(new NpgsqlParameter("n", NpgsqlDbType.Text) { Value = CharacterRosterMerge.NormaliseName(characterName) });
+        cmd.Parameters.Add(new NpgsqlParameter("hp", NpgsqlDbType.Integer) { Value = currentHp });
+        cmd.Parameters.Add(new NpgsqlParameter("hpmax", NpgsqlDbType.Integer) { Value = maxHp });
+        cmd.Parameters.Add(new NpgsqlParameter("mp", NpgsqlDbType.Integer) { Value = currentMp });
+        cmd.Parameters.Add(new NpgsqlParameter("mpmax", NpgsqlDbType.Integer) { Value = maxMp });
+        await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+    }
+
     public async Task DeleteCharacterAsync(string accountLogin, string characterName, CancellationToken ct = default)
     {
         await using var conn = await this._dataSource.OpenConnectionAsync(ct).ConfigureAwait(false);

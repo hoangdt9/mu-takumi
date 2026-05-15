@@ -28,6 +28,10 @@ public sealed class MonsterViewerSession
     public int PlayerObjectKey { get; set; }
     public int CurrentHp { get; set; }
     public int MaxHp { get; set; }
+    public int CurrentMp { get; set; }
+    public int MaxMp { get; set; }
+    public string? AccountLogin { get; set; }
+    public string? CharacterName { get; set; }
     public MonsterViewportTracker? ViewportTracker { get; set; }
     public Action<int, int>? OnVitalsChanged { get; set; }
 }
@@ -59,6 +63,10 @@ public static class MonsterViewerRegistry
         int playerObjectKey = 0,
         int currentHp = 0,
         int maxHp = 0,
+        int currentMp = 0,
+        int maxMp = 0,
+        string? accountLogin = null,
+        string? characterName = null,
         Action<int, int>? onVitalsChanged = null)
     {
         if (Sessions.TryGetValue(sessionId, out var existing))
@@ -82,6 +90,26 @@ public static class MonsterViewerRegistry
                 existing.CurrentHp = currentHp;
             }
 
+            if (maxMp > 0)
+            {
+                existing.MaxMp = maxMp;
+            }
+
+            if (currentMp > 0)
+            {
+                existing.CurrentMp = currentMp;
+            }
+
+            if (!string.IsNullOrEmpty(accountLogin))
+            {
+                existing.AccountLogin = accountLogin;
+            }
+
+            if (!string.IsNullOrWhiteSpace(characterName))
+            {
+                existing.CharacterName = characterName;
+            }
+
             existing.OnVitalsChanged = onVitalsChanged ?? existing.OnVitalsChanged;
             return;
         }
@@ -95,6 +123,10 @@ public static class MonsterViewerRegistry
             PlayerObjectKey = playerObjectKey,
             CurrentHp = currentHp,
             MaxHp = maxHp,
+            CurrentMp = currentMp,
+            MaxMp = maxMp,
+            AccountLogin = accountLogin,
+            CharacterName = characterName,
             OnVitalsChanged = onVitalsChanged,
         };
     }
@@ -110,6 +142,9 @@ public static class MonsterViewerRegistry
     }
 
     public static void Unregister(Guid sessionId) => Sessions.TryRemove(sessionId, out _);
+
+    public static bool TryGetSession(Guid sessionId, out MonsterViewerSession session) =>
+        Sessions.TryGetValue(sessionId, out session!);
 
     public static bool TryGetByPlayerKey(int playerKey, out MonsterViewerSession session)
     {
@@ -276,8 +311,20 @@ public static class MonsterViewerRegistry
         var baseDmg = ParseIntEnv("TAKUMI_MONSTER_TO_PLAYER_DAMAGE", 15, 1, 2000);
         var dmg = Math.Max(1, baseDmg * Math.Clamp(damagePercent, 50, 500) / 100);
         var maxHp = Math.Max(1, session.MaxHp);
+        if (session.CurrentHp <= 0)
+        {
+            session.CurrentHp = maxHp;
+        }
+
         session.CurrentHp = Math.Max(0, session.CurrentHp - dmg);
         session.OnVitalsChanged?.Invoke(session.CurrentHp, maxHp);
+        RosterVitalsCombat.ScheduleVitalsMirror(
+            session.AccountLogin,
+            session.CharacterName,
+            session.CurrentHp,
+            maxHp,
+            session.CurrentMp,
+            session.MaxMp);
 
         var dmgPkt = MonsterDamageWire602.Build(
             session.PlayerObjectKey,
@@ -286,15 +333,24 @@ public static class MonsterViewerRegistry
             hitSuccess: true);
         await GamePortOutboundWire.WriteAsync(session.Connection, session.Protect, dmgPkt, ct).ConfigureAwait(false);
 
-        var lifePkt = LifeManaWire602.BuildLife(LifeManaWire602.TypeCurrent, (ushort)Math.Min(session.CurrentHp, ushort.MaxValue));
+        var lifePkt = LifeManaWire602.BuildLife(
+            LifeManaWire602.TypeCurrent,
+            (ushort)Math.Clamp(session.CurrentHp, 0, ushort.MaxValue));
         await GamePortOutboundWire.WriteAsync(session.Connection, session.Protect, lifePkt, ct).ConfigureAwait(false);
 
+        if (session.CurrentHp <= 0)
+        {
+            var diePkt = PlayerDieWire602.Build(session.PlayerObjectKey, monsterObjectKey);
+            await GamePortOutboundWire.WriteAsync(session.Connection, session.Protect, diePkt, ct).ConfigureAwait(false);
+        }
+
         Console.WriteLine(
-            "[m9-ai] monster hit player key={0} dmg={1} hp={2}/{3} from mob={4}",
+            "[m9-ai] monster hit player key={0} dmg={1} hp={2}/{3} died={4} from mob={5}",
             session.PlayerObjectKey,
             dmg,
             session.CurrentHp,
             maxHp,
+            session.CurrentHp <= 0,
             monsterObjectKey);
     }
 

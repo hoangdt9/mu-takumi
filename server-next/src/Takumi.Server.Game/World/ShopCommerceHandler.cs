@@ -167,6 +167,7 @@ public static class ShopCommerceHandler
         player.Zen -= price;
         onRosterDirty?.Invoke();
         PlayerShopSession.SetSlot(presenceSessionId, bagSlot, blob);
+        PlayerShopSession.PersistSlotToMirror(accountId, characterName10, bagSlot, blob);
 
         await writeAsync(ShopCommerceWire602.BuildBuy(bagSlot, blob), ct).ConfigureAwait(false);
         await PlayerShopSession.PersistAsync(presenceSessionId, accountId, characterName10, player.Zen, ct)
@@ -222,7 +223,9 @@ public static class ShopCommerceHandler
         var price = ShopItemPricing.SellPrice(blob);
         player.Zen += price;
         onRosterDirty?.Invoke();
-        PlayerShopSession.SetSlot(presenceSessionId, invSlot, new byte[ItemWire602.WireBytes]);
+        var empty = new byte[ItemWire602.WireBytes];
+        PlayerShopSession.SetSlot(presenceSessionId, invSlot, empty);
+        PlayerShopSession.PersistSlotToMirror(accountId, characterName10, invSlot, empty);
 
         await writeAsync(ShopCommerceWire602.BuildSell(1, (uint)Math.Clamp(player.Zen, 0, uint.MaxValue)), ct)
             .ConfigureAwait(false);
@@ -272,6 +275,7 @@ public static class ShopCommerceHandler
                 totalCost += cost;
                 ItemWire602.SetDurability(blob, 255);
                 PlayerShopSession.SetSlot(presenceSessionId, s, blob);
+                PlayerShopSession.PersistSlotToMirror(accountId, characterName10, s, blob);
             }
         }
         else if (PlayerShopSession.TryGetSlot(presenceSessionId, slot, out var one) && !ItemWire602.IsEmpty(one))
@@ -282,6 +286,7 @@ public static class ShopCommerceHandler
                 player.Zen -= totalCost;
                 ItemWire602.SetDurability(one, 255);
                 PlayerShopSession.SetSlot(presenceSessionId, slot, one);
+                PlayerShopSession.PersistSlotToMirror(accountId, characterName10, slot, one);
             }
             else
             {

@@ -4,8 +4,8 @@
 
 - [ ] **1. Wi‑Fi:** Điện thoại và Mac cùng mạng LAN (ví dụ `192.168.1.x`).
 - [ ] **2. APK:** Đã build & cài `realDevicePreloadDefaultDebug` (ABI `armeabi-v7a` + `arm64-v8a`).
-  - BuildConfig phải khớp `.env`: `MU_BOOTSTRAP_SERVER=192.168.1.50:44605`, `DATA_ZIP_URL_LAN=http://192.168.1.50:18080/data.zip`.
-  - Nếu đổi IP trong `.env` sau khi build APK → **build lại APK**.
+  - **LAN:** BuildConfig khớp `.env` — `MU_BOOTSTRAP_SERVER=<LAN>:44605`, `DATA_ZIP_URL_LAN=http://<LAN>:18080/data.zip`.
+  - **USB adb reverse (không rebuild APK mỗi lần đổi server):** build **một lần** với `-PmuBootstrapAdbReverse=true`, mỗi session chạy `./scripts/adb-reverse.sh`, `.env` dùng `TAKUMI_PUBLIC_HOST=127.0.0.1` + recreate stack.
 - [ ] **3. `server-next/.env`:** Copy từ `.env.lan.example` nếu chưa có; `TAKUMI_PUBLIC_HOST` = IP Mac.
 - [ ] **4. `keys/Dec2.dat`:** Có trong `server-next/keys/` (mount vào container `/keys/Dec2.dat`).
 - [ ] **5. Tắt stack khác** tránh trùng cổng:

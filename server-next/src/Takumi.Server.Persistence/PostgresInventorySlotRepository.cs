@@ -52,11 +52,72 @@ public sealed class PostgresInventorySlotRepository : IAsyncDisposable
         return list;
     }
 
-    /// <summary>Replace all inventory rows for one character (shop persist / disconnect flush).</summary>
+    public async Task UpsertSlotAsync(
+        string accountLogin,
+        string characterName,
+        byte slotIdx,
+        byte[] item12,
+        CancellationToken ct = default)
+    {
+        if (item12.Length != 12)
+        {
+            throw new ArgumentException("Item blob must be 12 bytes.", nameof(item12));
+        }
+
+        var name = CharacterRosterMerge.NormaliseName(characterName);
+        await using var conn = await this._dataSource.OpenConnectionAsync(ct).ConfigureAwait(false);
+        await using var cmd = new NpgsqlCommand(
+            """
+            INSERT INTO inventory_slot (account_login, character_name, slot_idx, item, updated_at)
+            VALUES ($1, $2, $3, $4, now())
+            ON CONFLICT (account_login, character_name, slot_idx)
+            DO UPDATE SET item = EXCLUDED.item, updated_at = now()
+            """,
+            conn);
+        cmd.Parameters.Add(new NpgsqlParameter("a", NpgsqlDbType.Text) { Value = accountLogin });
+        cmd.Parameters.Add(new NpgsqlParameter("n", NpgsqlDbType.Text) { Value = name });
+        cmd.Parameters.Add(new NpgsqlParameter("s", NpgsqlDbType.Smallint) { Value = (short)slotIdx });
+        cmd.Parameters.Add(new NpgsqlParameter("i", NpgsqlDbType.Bytea) { Value = item12 });
+        await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+    }
+
+    public async Task DeleteSlotAsync(
+        string accountLogin,
+        string characterName,
+        byte slotIdx,
+        CancellationToken ct = default)
+    {
+        var name = CharacterRosterMerge.NormaliseName(characterName);
+        await using var conn = await this._dataSource.OpenConnectionAsync(ct).ConfigureAwait(false);
+        await using var cmd = new NpgsqlCommand(
+            """
+            DELETE FROM inventory_slot
+            WHERE account_login = $1 AND character_name = $2 AND slot_idx = $3
+            """,
+            conn);
+        cmd.Parameters.Add(new NpgsqlParameter("a", NpgsqlDbType.Text) { Value = accountLogin });
+        cmd.Parameters.Add(new NpgsqlParameter("n", NpgsqlDbType.Text) { Value = name });
+        cmd.Parameters.Add(new NpgsqlParameter("s", NpgsqlDbType.Smallint) { Value = (short)slotIdx });
+        await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+    }
+
     public async Task ReplaceCharacterSlotsAsync(
         string accountLogin,
         string characterName,
         IReadOnlyDictionary<byte, byte[]> slots,
+        CancellationToken ct = default)
+    {
+        var rows = slots
+            .Select(kv => new InventorySlotRow { Slot = kv.Key, Item12 = kv.Value })
+            .ToList();
+        await ReplaceCharacterSlotsAsync(accountLogin, characterName, rows, ct).ConfigureAwait(false);
+    }
+
+    /// <summary>Replace all slots for one character (matches in-memory bag after shop session).</summary>
+    public async Task ReplaceCharacterSlotsAsync(
+        string accountLogin,
+        string characterName,
+        IReadOnlyList<InventorySlotRow> rows,
         CancellationToken ct = default)
     {
         var name = CharacterRosterMerge.NormaliseName(characterName);
@@ -72,24 +133,24 @@ public sealed class PostgresInventorySlotRepository : IAsyncDisposable
             await del.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
         }
 
-        foreach (var (slot, blob) in slots)
+        foreach (var row in rows)
         {
-            if (blob.Length != 12)
+            if (row.Item12.Length != 12)
             {
                 continue;
             }
 
             await using var ins = new NpgsqlCommand(
                 """
-                INSERT INTO inventory_slot (account_login, character_name, slot_idx, item)
-                VALUES ($1, $2, $3, $4)
+                INSERT INTO inventory_slot (account_login, character_name, slot_idx, item, updated_at)
+                VALUES ($1, $2, $3, $4, now())
                 """,
                 conn,
                 tx);
             ins.Parameters.Add(new NpgsqlParameter("a", NpgsqlDbType.Text) { Value = accountLogin });
             ins.Parameters.Add(new NpgsqlParameter("n", NpgsqlDbType.Text) { Value = name });
-            ins.Parameters.Add(new NpgsqlParameter("s", NpgsqlDbType.Smallint) { Value = (short)slot });
-            ins.Parameters.Add(new NpgsqlParameter("i", NpgsqlDbType.Bytea) { Value = blob });
+            ins.Parameters.Add(new NpgsqlParameter("s", NpgsqlDbType.Smallint) { Value = (short)row.Slot });
+            ins.Parameters.Add(new NpgsqlParameter("i", NpgsqlDbType.Bytea) { Value = row.Item12 });
             await ins.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
         }
 

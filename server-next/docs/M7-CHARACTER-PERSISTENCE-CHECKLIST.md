@@ -2,7 +2,8 @@
 
 **Quy ước:** chỉ tick `[x]` khi đã có trong git và có thể chứng minh (test hoặc QA ghi rõ). Cập nhật file này khi merge.
 
-**Phụ thuộc:** **`docs/M4-TILE-AND-COORDINATES.md`** (tile `byte`), **`docs/M4-ROSTER-SSOT.md`** (JSON + mirror), **`docs/M6-GAME-TCP-CHECKLIST.md`** (GameHost minimal-login). **Không chặn M5** (join/ticket).
+**Phụ thuộc:** **`docs/M4-TILE-AND-COORDINATES.md`**, **`docs/M4-ROSTER-SSOT.md`**, **`docs/M6-GAME-TCP-CHECKLIST.md`**.  
+**Port từ `Source/` (character + item):** **`docs/M4-M7-CHARACTER-ITEM-MIGRATION.md`**. **Không chặn M5** (join/ticket).
 
 **Tham chiếu client / legacy:** `Source/4.GameServer` save/load nhân vật; `WSclient.h` join stats (`PRECEIVE_JOIN_MAP_SERVER`); M1 map opcode sau vào thế giới.
 
@@ -50,10 +51,20 @@
 
 ---
 
+## M7f — Item inventory (liên kết M4 + M8)
+
+- [x] **`F3 10`** đọc `inventory_slot` (12-byte) — `JoinInventoryPacket602` (xem M4 checklist §M5+).
+- [x] **Ghi** `inventory_slot` sau buy/sell/repair — `InventorySlotMirrorWriter` + `PostgresInventorySlotRepository` (upsert/delete/replace); disconnect flush `PlayerShopSession.FlushInventoryMirrorOnDisconnect`. Cần **`TAKUMI_ROSTER_DB_SYNC=1`**.
+- [ ] Port `ItemManager` pick/drop/move (`0x22`–`0x24`) từ `Source/4.GameServer`.
+
+---
+
 ## Liên kết milestone khác
 
 | Milestone | Checklist |
 |-----------|-----------|
-| M8 — ETL thế giới tĩnh | **`docs/M8-M10-WORLD-RUNTIME-CHECKLIST.md`** §M8 |
+| M4 — roster / tile / mirror | **`docs/M4-WORLD-POSITION-CHECKLIST.md`** |
+| Port map `Source/` | **`docs/M4-M7-CHARACTER-ITEM-MIGRATION.md`** |
+| M8 — ETL + shop commerce stub | **`docs/M8-M10-WORLD-RUNTIME-CHECKLIST.md`** §M8 |
 | M9 — NPC / monster | cùng file §M9 |
 | M10 — Movement + broadcast | cùng file §M10 |

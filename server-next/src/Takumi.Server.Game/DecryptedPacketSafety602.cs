@@ -32,6 +32,19 @@ public static class DecryptedPacketSafety602
 
         return Math.Clamp(v, 0, 5000);
     }
+
+    /// <summary>0 = disabled; else clamp 1..500. Limits outbound <c>0x15</c>/<c>0x18</c> peer broadcasts per session.</summary>
+    public static int ParseMaxPresenceBroadcastsPerSecond()
+    {
+        var raw = Environment.GetEnvironmentVariable("TAKUMI_PRESENCE_MAX_BROADCASTS_PER_SECOND")?.Trim();
+        if (string.IsNullOrEmpty(raw)
+            || !int.TryParse(raw, NumberStyles.Integer, CultureInfo.InvariantCulture, out var v))
+        {
+            return 0;
+        }
+
+        return Math.Clamp(v, 0, 500);
+    }
 }
 
 /// <summary>Fixed 1s sliding window; intended under per-connection <see cref="System.Threading.SemaphoreSlim"/> serialization.</summary>

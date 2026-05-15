@@ -186,7 +186,7 @@ public static class ClientGameplayPackets602
             }
 
             var headOff = i + 2;
-            if (headOff + 1 >= packet.Length)
+            if (headOff + 2 >= packet.Length)
             {
                 continue;
             }
@@ -197,6 +197,105 @@ public static class ClientGameplayPackets602
                 shopSlot = packet[headOff + 2];
                 return true;
             }
+        }
+
+        return false;
+    }
+
+    public const int ItemMoveFrameLength = 19;
+
+    public static bool TryFindItemPickRequest(ReadOnlySpan<byte> packet, out int frameOffset, out ushort mapItemIndex)
+    {
+        frameOffset = -1;
+        mapItemIndex = 0;
+        for (var i = 0; i <= packet.Length - 5; i++)
+        {
+            if (packet[i] is not (0xC1 or 0xC3))
+            {
+                continue;
+            }
+
+            var headOff = i + 2;
+            if (headOff + 2 >= packet.Length || packet[headOff] != 0x22)
+            {
+                continue;
+            }
+
+            frameOffset = i;
+            mapItemIndex = (ushort)((packet[headOff + 1] << 8) | packet[headOff + 2]);
+            return true;
+        }
+
+        return false;
+    }
+
+    public static bool TryFindItemDropRequest(ReadOnlySpan<byte> packet, out int frameOffset, out byte x, out byte y, out byte slot)
+    {
+        frameOffset = -1;
+        x = 0;
+        y = 0;
+        slot = 0;
+        for (var i = 0; i <= packet.Length - 6; i++)
+        {
+            if (packet[i] is not (0xC1 or 0xC3))
+            {
+                continue;
+            }
+
+            var headOff = i + 2;
+            if (headOff + 3 >= packet.Length || packet[headOff] != 0x23)
+            {
+                continue;
+            }
+
+            frameOffset = i;
+            x = packet[headOff + 1];
+            y = packet[headOff + 2];
+            slot = packet[headOff + 3];
+            return true;
+        }
+
+        return false;
+    }
+
+    public static bool TryFindItemMoveRequest(
+        ReadOnlySpan<byte> packet,
+        out int frameOffset,
+        out byte sourceFlag,
+        out byte sourceSlot,
+        out byte targetFlag,
+        out byte targetSlot)
+    {
+        frameOffset = -1;
+        sourceFlag = 0;
+        sourceSlot = 0;
+        targetFlag = 0;
+        targetSlot = 0;
+        for (var i = 0; i <= packet.Length - ItemMoveFrameLength; i++)
+        {
+            if (packet[i] != 0xC1)
+            {
+                continue;
+            }
+
+            var len = packet[i + 1];
+            if (len < ItemMoveFrameLength || i + len > packet.Length)
+            {
+                continue;
+            }
+
+            var headOff = i + 2;
+            if (packet[headOff] != 0x24)
+            {
+                continue;
+            }
+
+            frameOffset = i;
+            sourceFlag = packet[headOff + 1];
+            sourceSlot = packet[headOff + 2];
+            targetFlag = packet[headOff + 15];
+            targetSlot = packet[headOff + 16];
+            return true;
         }
 
         return false;

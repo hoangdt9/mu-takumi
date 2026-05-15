@@ -17,6 +17,11 @@ TakumiPostgresMirror.InitWorldStaticDataIfEnabled();
 MapGateCatalog.EnsureInitialized();
 NpcShopCatalog.EnsureInitialized();
 
+using var cts = new CancellationTokenSource();
+Console.CancelKeyPress += (_, e) => { e.Cancel = true; cts.Cancel(); };
+MapMonsterWorld.EnsureInitialized();
+MonsterAiLoop.Start(cts.Token);
+
 if (!int.TryParse(
         Environment.GetEnvironmentVariable("TAKUMI_GAME_PORT"),
         NumberStyles.Integer,
@@ -122,9 +127,6 @@ var options = new GamePortListenOptions
     RequireSignedSessionTicketWire = requireSignedSessionTicketWire,
     ClientProtectOutboundKeys = protectOutbound,
 };
-
-using var cts = new CancellationTokenSource();
-Console.CancelKeyPress += (_, e) => { e.Cancel = true; cts.Cancel(); };
 
 Console.WriteLine(
     "Takumi.Server.GameHost\n" +

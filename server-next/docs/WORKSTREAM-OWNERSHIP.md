@@ -1,7 +1,9 @@
 # Workstream ownership (tránh conflict giữa dev / nhánh)
 
 Last updated: 2026-05-16  
-**Nhánh tích hợp hiện tại:** `mac-m4` (đã merge `origin/main` — M8 ETL + M7 vitals + M9 shop/gate/commerce + M10a presence)
+**Nhánh tích hợp hiện tại:** `mac-m4` (đã merge `origin/main` — M4/M7 item + M8 ETL + M9 gameplay + M10 presence/viewport)
+
+**M4 / M7 (nhân vật + item):** migration map + ownership — **`docs/M4-M7-CHARACTER-ITEM-MIGRATION.md`** (owner đề xuất: **`mac-m1`**).
 
 ## Quy ước làm việc
 
@@ -19,7 +21,11 @@ Last updated: 2026-05-16
 | **M8** gates / NPC shop / Custom | `8c1758b` | Persistence ETL + world data tables (xem `M8-M10-WORLD-RUNTIME-CHECKLIST.md`) |
 | **M7** vitals mirror + join seed | `68b31c1` | `RosterVitalsLifecycle`, `JoinMapVitalsSeed`, `004_character_roster_vitals.sql` |
 | **M7** Life/Mana wire + outbound track | `68b31c1` | `WriteOutboundAsync` / `TrackVitalsOutbound` trong Legacy + Game port |
-| **M5** split Connect/Login hosts | `2c45956` (mac-m4) / main tương đương | `LoginHost`, `ConnectHost`, thin `Program.cs` |
+| **M4** roster JSON + walk + mirror | (nhiều commit) | `takumi-roster/`, `CharacterRosterMirrorWriter`, `ClientWalkPackets602` |
+| **M4** `F3 10` read từ DB | `002_inventory_slot.sql` | `JoinInventoryPacket602`, `PostgresInventorySlotRepository` |
+| **M10** presence rate-limit | `6d5a810` | `GameMapPresenceRegistry`, `TAKUMI_PRESENCE_MAX_BROADCASTS_PER_SECOND` |
+| **M6** game-host MuServer mount | `b66efab` | `docker-compose.yml` `game-host` + `MapMonsterWorld` boot |
+| **M5** split Connect/Login hosts | `2c45956` | `LoginHost`, `ConnectHost`, profile `splitstack` |
 
 ---
 
@@ -40,27 +46,33 @@ Last updated: 2026-05-16
 
 ---
 
-## Đã xong (M10a — map presence broadcast)
+## Đã xong (M10 — map presence + viewport)
 
 | Hạng mục | Trạng thái | File (chỉ M10 touch) |
 |----------|------------|----------------------|
 | Map presence registry | Done | `Game/Networking/GameMapPresenceRegistry.cs` |
-| Broadcast tile `C1 0x15` | Done | `PlayerPositionWire602.cs` + hook walk/join |
+| Broadcast tile `C1 0x15` + rate-limit | Done | `PlayerPositionWire602.cs`, `TAKUMI_PRESENCE_MAX_BROADCASTS_PER_SECOND` |
 | Broadcast action `C1 0x18` | Done | `PlayerActionWire602.cs` + `MonsterCombatHandler` |
-| Miss / skill damage % | Done | `MonsterCombatCalculator`, env `TAKUMI_COMBAT_*` |
+| Player viewport `C2 0x12` on walk | Done | `PlayerViewportWire602`, `PlayerViewportTracker` |
+| PvP / AoE stub | Done | `MonsterCombatHandler`, `ClientHitPackets602` |
 
-## Đang làm / WIP (M10b+)
+## Đang làm / WIP — **M4 + M7** (owner: `mac-m1`)
+
+| Hạng mục | Trạng thái | File / ghi chú |
+|----------|------------|----------------|
+| Postgres-only roster SSOT | **OPEN** | `docs/M4-ROSTER-SSOT.md`, `character` domain — **đừng** song song 2 writer |
+| `inventory_slot` **write** sau shop buy/sell | **Done** | `InventorySlotMirrorWriter`, `PostgresInventorySlotRepository` — **`TAKUMI_ROSTER_DB_SYNC=1`** |
+| Item pick/drop/move `0x22`–`0x24` | **OPEN** | `ItemWorldHandler` — PR riêng |
+| Combat-driven `GCLifeSend` / vitals mid-fight | **OPEN** | M7d — `RosterVitalsOutboundTracker` mở rộng |
+| `inventory_staging` ETL → 12-byte | **OPEN** | `IMPLEMENTATION-CHECKLIST` §Data & Migration |
 
 **Chưa ai làm (để trống cho PR tiếp):**
 
-| Hạng mục | Gợi ý owner / nhánh | Tránh đụng |
-|----------|---------------------|------------|
-| Player viewport `C2 0x12` on walk / view range | M10b | `PlayerViewportWire602` (join-only done) |
-| PvP / player vs player damage | M10c | `MonsterCombatHandler` (chỉ mob) |
-| AoE skill / nhiều target | M10c | `ClientHitPackets602` |
-| Monster AI / pathing P2–P3 | M9b hoặc M11 | `MapMonsterInstance` state machine |
-| ItemValue / persist inventory sau shop | M8 + M4b | `ShopCommerceHandler` |
-| M4b SSOT Postgres-only roster | M4/M7 | `takumi-roster/*.json` merge logic |
+| Hạng mục | Gợi ý owner | Tránh đụng |
+|----------|-------------|------------|
+| Warehouse DB load (class 240) | M8 + M4b | `NpcTalkService`, `WarehouseWire602` |
+| Monster AI pathing nâng cao | M9b | `MapTilePathfinder` |
+| Element/exp/invasion đầy đủ | M9c | `MonsterStatCatalog`, invasion spawns |
 
 ---
 
@@ -94,5 +106,5 @@ Last updated: 2026-05-16
 ## Tiếp theo
 
 1. Giữ bảng **“Đã xong trên main”** cập nhật khi merge PR.  
-2. M10b+ → PR riêng `[M10]` (player viewport `C2 0x12`, PvP, AoE) trước khi đụng lại hook chung.  
-3. Sau khi `mac-m4` → `main` ổn định: feature branch mới rebase `origin/main`, không cherry-pick lại M9/M10a.
+2. **M4/M7:** làm theo thứ tự trong **`docs/M4-M7-CHARACTER-ITEM-MIGRATION.md`** — ưu tiên SSOT design + item world ops.  
+3. Sau khi `mac-m4` → `main` ổn định: feature branch mới rebase `origin/main`.

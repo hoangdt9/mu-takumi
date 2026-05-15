@@ -29,6 +29,20 @@ public static class WorldGameplayHandlers
             return true;
         }
 
+        if (await ItemWorldHandler.TryHandlePacketAsync(
+                player,
+                presenceSessionId,
+                accountId,
+                characterName10,
+                packet,
+                remote,
+                writeAsync,
+                onRosterDirty,
+                ct).ConfigureAwait(false))
+        {
+            return true;
+        }
+
         if (await ShopCommerceHandler.TryHandlePacketAsync(
                 player,
                 presenceSessionId,

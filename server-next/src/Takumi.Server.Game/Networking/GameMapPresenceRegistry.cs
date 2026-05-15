@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Globalization;
 using MUnique.OpenMU.Network;
+using Takumi.Server.Game;
 using Takumi.Server.Protocol;
 
 namespace Takumi.Server.Game.Networking;
@@ -35,7 +36,9 @@ public static class GameMapPresenceRegistry
 {
     static readonly ConcurrentDictionary<Guid, MapPresenceSession> Sessions = new();
     static readonly ConcurrentDictionary<Guid, PlayerViewportTracker> ViewportTrackers = new();
+    static readonly ConcurrentDictionary<Guid, DecryptedPacketRateGate> BroadcastGates = new();
     static int _nextPlayerKey = 1000;
+    static readonly int MaxBroadcastsPerSecond = DecryptedPacketSafety602.ParseMaxPresenceBroadcastsPerSecond();
 
     public static bool IsEnabled =>
         !string.Equals(
@@ -97,10 +100,13 @@ public static class GameMapPresenceRegistry
     {
         if (!Sessions.TryRemove(sessionId, out var leaving))
         {
+            BroadcastGates.TryRemove(sessionId, out _);
+            ViewportTrackers.TryRemove(sessionId, out _);
             return;
         }
 
         ViewportTrackers.TryRemove(sessionId, out _);
+        BroadcastGates.TryRemove(sessionId, out _);
 
         if (!UsePlayerViewportWire)
         {
@@ -119,6 +125,9 @@ public static class GameMapPresenceRegistry
             await GamePortOutboundWire.WriteAsync(other.Connection, other.Protect, destroy, ct).ConfigureAwait(false);
         }
     }
+
+    public static void Unregister(Guid sessionId) =>
+        UnregisterAsync(sessionId).GetAwaiter().GetResult();
 
     public static void UpdateMap(Guid sessionId, byte mapId, byte x, byte y, byte angle)
     {
@@ -229,6 +238,11 @@ public static class GameMapPresenceRegistry
         self.Y = y;
 
         await TrySyncPlayerViewportOnMoveAsync(self, remote, ct).ConfigureAwait(false);
+
+        if (!TryAllowBroadcast(sessionId))
+        {
+            return;
+        }
 
         var pkt = PlayerPositionWire602.Build(self.ObjectKey, x, y);
         var sent = 0;
@@ -381,6 +395,11 @@ public static class GameMapPresenceRegistry
             return;
         }
 
+        if (!TryAllowBroadcast(sessionId))
+        {
+            return;
+        }
+
         var pkt = PlayerActionWire602.Build(self.ObjectKey, dir, action, targetKey);
         var sent = 0;
         foreach (var other in Sessions.Values)
@@ -404,5 +423,16 @@ public static class GameMapPresenceRegistry
                 targetKey,
                 sent);
         }
+    }
+
+    static bool TryAllowBroadcast(Guid sessionId)
+    {
+        if (MaxBroadcastsPerSecond <= 0)
+        {
+            return true;
+        }
+
+        var gate = BroadcastGates.GetOrAdd(sessionId, _ => new DecryptedPacketRateGate(MaxBroadcastsPerSecond));
+        return gate.TryAllow(DateTimeOffset.UtcNow);
     }
 }

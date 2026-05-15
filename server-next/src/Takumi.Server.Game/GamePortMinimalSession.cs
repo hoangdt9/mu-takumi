@@ -441,6 +441,10 @@ public static class GamePortMinimalSession
                             playerObjectKey: presenceJoin?.ObjectKey ?? 0,
                             currentHp: picked.CurrentHp,
                             maxHp: picked.MaxHp,
+                            currentMp: picked.CurrentMp,
+                            maxMp: picked.MaxMp,
+                            accountLogin: loggedAccountId,
+                            characterName: Encoding.ASCII.GetString(picked.Name10).TrimEnd('\0'),
                             onVitalsChanged: (hp, max) =>
                             {
                                 picked.CurrentHp = hp;
@@ -519,6 +523,10 @@ public static class GamePortMinimalSession
                                 playerObjectKey: presenceMove?.ObjectKey ?? 0,
                                 currentHp: pickedMove.CurrentHp,
                                 maxHp: pickedMove.MaxHp,
+                                currentMp: pickedMove.CurrentMp,
+                                maxMp: pickedMove.MaxMp,
+                                accountLogin: loggedAccountId,
+                                characterName: Encoding.ASCII.GetString(pickedMove.Name10).TrimEnd('\0'),
                                 onVitalsChanged: (hp, max) =>
                                 {
                                     pickedMove.CurrentHp = hp;
@@ -920,6 +928,8 @@ public static class GamePortMinimalSession
             }
 
             CharacterRosterMirrorWriter.TryDrainPendingUpserts(TimeSpan.FromMilliseconds(900));
+            PlayerShopSession.FlushInventoryMirrorOnDisconnect(loggedAccountId, sessionJoinCharacterName10, presenceSessionId);
+            InventorySlotMirrorWriter.TryDrainPendingOps(TimeSpan.FromMilliseconds(900));
 
             await GameMapPresenceRegistry.UnregisterAsync(presenceSessionId, ct).ConfigureAwait(false);
             MonsterViewerRegistry.Unregister(presenceSessionId);

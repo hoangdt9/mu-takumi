@@ -1,4 +1,5 @@
 using System.Globalization;
+using Takumi.Server.Game.Networking;
 using Takumi.Server.Persistence;
 
 namespace Takumi.Server.Game.World;
@@ -54,7 +55,7 @@ public static class MapMonsterWorld
                 {
                     _setBase = BuildLorenciaFallback();
                     Console.WriteLine(
-                        "[m9] MonsterSetBase missing ({0}) — using built-in Lorencia fallback ({1} spawns)",
+                        "[m9] MonsterSetBase missing ({0}) — using built-in Lorencia fallback ({1} rows: NPCs + field spots)",
                         setPath ?? "(unset)",
                         _setBase.Count);
                 }
@@ -66,16 +67,42 @@ public static class MapMonsterWorld
 
             if (monsterPath is not null && File.Exists(monsterPath))
             {
-                _stats = MonsterStatCatalog.LoadFromFile(monsterPath);
-                Console.WriteLine("[m9] loaded Monster.txt from {0}", monsterPath);
+                try
+                {
+                    _stats = MonsterStatCatalog.LoadFromFile(monsterPath);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("[m9] Monster.txt load failed ({0}) — using default stats", ex.Message);
+                    _stats = new MonsterStatCatalog();
+                }
             }
 
+            var sw = System.Diagnostics.Stopwatch.StartNew();
             RebuildInstances();
+            sw.Stop();
+            var mapCount = _byMap.Count;
+            var instCount = _byObjectKey.Count;
+            Console.WriteLine(
+                "[m9] MapMonsterWorld ready: {0} instances on {1} maps ({2} ms)",
+                instCount,
+                mapCount,
+                sw.ElapsedMilliseconds);
             _initialized = true;
         }
     }
 
-    public static IReadOnlyList<MapMonsterInstance> GetMonstersNear(byte mapId, byte px, byte py, int viewRange, int maxCount)
+    public static IReadOnlyList<MapMonsterInstance> GetMonstersNear(byte mapId, byte px, byte py, int viewRange, int maxCount) =>
+        GetViewportEntities(mapId, px, py, viewRange, maxNpcs: maxCount, maxMonsters: maxCount);
+
+    /// <summary>NPCs first (sorted by distance), then field monsters — parity town vendors visible on join.</summary>
+    public static IReadOnlyList<MapMonsterInstance> GetViewportEntities(
+        byte mapId,
+        byte px,
+        byte py,
+        int viewRange,
+        int maxNpcs,
+        int maxMonsters)
     {
         EnsureInitialized();
         if (!_byMap.TryGetValue(mapId, out var all) || all.Count == 0)
@@ -83,34 +110,145 @@ public static class MapMonsterWorld
             return Array.Empty<MapMonsterInstance>();
         }
 
-        var list = new List<MapMonsterInstance>(Math.Min(maxCount, all.Count));
+        var npcs = new List<(int Dist, MapMonsterInstance Mob)>();
+        var mobs = new List<(int Dist, MapMonsterInstance Mob)>();
         foreach (var m in all)
         {
             if (!m.IsAlive)
             {
-                if (m.TryRegen())
-                {
-                    // Respawned — may enter view this tick.
-                }
-                else
+                _ = m.TryRegen();
+                if (!m.IsAlive)
                 {
                     continue;
                 }
             }
 
-            if (Math.Abs(m.X - px) + Math.Abs(m.Y - py) > viewRange)
+            var dist = Math.Abs(m.X - px) + Math.Abs(m.Y - py);
+            if (dist > viewRange)
             {
                 continue;
             }
 
-            list.Add(m);
-            if (list.Count >= maxCount)
+            if (m.IsNpc)
             {
-                break;
+                npcs.Add((dist, m));
+            }
+            else
+            {
+                mobs.Add((dist, m));
             }
         }
 
-        return list;
+        npcs.Sort(static (a, b) => a.Dist.CompareTo(b.Dist));
+        mobs.Sort(static (a, b) => a.Dist.CompareTo(b.Dist));
+
+        var cap = Math.Max(1, maxNpcs + maxMonsters);
+        var result = new List<MapMonsterInstance>(Math.Min(cap, npcs.Count + mobs.Count));
+        foreach (var (_, m) in npcs)
+        {
+            if (result.Count >= maxNpcs)
+            {
+                break;
+            }
+
+            result.Add(m);
+        }
+
+        foreach (var (_, m) in mobs)
+        {
+            if (result.Count >= maxNpcs + maxMonsters)
+            {
+                break;
+            }
+
+            result.Add(m);
+        }
+
+        return result;
+    }
+
+    public static IReadOnlyList<MonsterAiEvent> ProcessAiTick(Random rng)
+    {
+        EnsureInitialized();
+        var wanderPct = ParseIntEnv("TAKUMI_MONSTER_AI_WANDER_PCT", 28, 0, 100);
+        var attackPct = ParseIntEnv("TAKUMI_MONSTER_AI_ATTACK_PCT", 12, 0, 100);
+        var chaseRange = ParseIntEnv("TAKUMI_MONSTER_AI_CHASE_RANGE", 12, 3, 24);
+        var attackRange = ParseIntEnv("TAKUMI_MONSTER_AI_ATTACK_RANGE", 3, 1, 8);
+        var events = new List<MonsterAiEvent>();
+        foreach (var m in _byObjectKey.Values)
+        {
+            if (!m.IsNpc && !m.IsAlive)
+            {
+                if (m.TryRegen())
+                {
+                    events.Add(
+                        new MonsterAiEvent(
+                            MonsterAiEventKind.Regen,
+                            m.ObjectKey,
+                            m.Map,
+                            m.X,
+                            m.Y,
+                            m.Dir,
+                            TargetObjectKey: 0));
+                }
+
+                continue;
+            }
+
+            if (m.IsNpc || !m.IsAlive)
+            {
+                continue;
+            }
+
+            MonsterViewerTarget? target = null;
+            if (MonsterViewerRegistry.TryFindNearestTarget(m.Map, m.X, m.Y, chaseRange, out var found))
+            {
+                target = found;
+                m.SetAggro(found.PlayerObjectKey);
+            }
+            else if (m.AggroTargetKey is not null)
+            {
+                m.ClearAggro();
+            }
+
+            if (target is { } t)
+            {
+                var dist = m.ManhattanTo(t.X, t.Y);
+                if (dist > attackRange)
+                {
+                    if (m.TryChaseStep(t.X, t.Y, m.Map, out var cx, out var cy, out var cdir))
+                    {
+                        events.Add(
+                            new MonsterAiEvent(MonsterAiEventKind.Walk, m.ObjectKey, m.Map, cx, cy, cdir, t.PlayerObjectKey));
+                    }
+
+                    continue;
+                }
+
+                if (rng.Next(100) < attackPct)
+                {
+                    events.Add(
+                        new MonsterAiEvent(
+                            MonsterAiEventKind.Attack,
+                            m.ObjectKey,
+                            m.Map,
+                            m.X,
+                            m.Y,
+                            m.Dir,
+                            t.PlayerObjectKey,
+                            t.SessionId));
+                }
+
+                continue;
+            }
+
+            if (rng.Next(100) < wanderPct && m.TryRollWander(rng, m.Map, out var wx, out var wy, out var wdir))
+            {
+                events.Add(new MonsterAiEvent(MonsterAiEventKind.Walk, m.ObjectKey, m.Map, wx, wy, wdir, 0));
+            }
+        }
+
+        return events;
     }
 
     static bool TryLoadSetBaseFromPostgres(out string? fileFallbackPath)
@@ -153,26 +291,38 @@ public static class MapMonsterWorld
         var key = _nextObjectKey;
         foreach (var e in _setBase)
         {
+            // Parity CMonsterManager::SetMonsterData — invasion/event rows are not static map spawns.
+            if (e.SpawnType is 3 or 4)
+            {
+                continue;
+            }
+
             if (!MonsterSpawnResolver.TryResolvePosition(e, out var x, out var y))
             {
                 continue;
             }
 
             var stat = _stats.GetOrDefault(e.MonsterClass);
-            var regenMs = Math.Max(1, stat.RegenTimeSeconds) * 1000;
+            var isNpc = MonsterNpcClassifier.IsNpc(e.MonsterClass) || stat.Level == 0;
+            var maxLife = isNpc ? Math.Max(1, stat.Life) : stat.Life;
+            var regenMs = isNpc ? int.MaxValue / 2 : Math.Max(1, stat.RegenTimeSeconds) * 1000;
+            var leash = (byte)Math.Clamp(e.Dis > 0 ? e.Dis : stat.MoveRange > 0 ? stat.MoveRange : 3, 1, 30);
+            var moveRange = (byte)Math.Clamp(stat.MoveRange > 0 ? stat.MoveRange : 3, 1, 30);
             var inst = new MapMonsterInstance
             {
                 ObjectKey = key++,
                 MonsterClass = e.MonsterClass,
                 Map = e.Map,
-                X = x,
-                Y = y,
-                Dir = e.Dir,
-                MaxLife = stat.Life,
+                SpawnX = x,
+                SpawnY = y,
+                WanderLeash = leash,
+                MoveRange = moveRange,
+                MaxLife = maxLife,
                 Level = stat.Level,
                 RegenDelayMs = regenMs,
+                IsNpc = isNpc,
             };
-            inst.InitializeLife();
+            inst.InitializeAtSpawn(x, y, e.Dir);
 
             if (!_byMap.TryGetValue(inst.Map, out var bucket))
             {
@@ -214,14 +364,84 @@ public static class MapMonsterWorld
         return Path.GetFullPath(candidates[0]);
     }
 
+    /// <summary>QA fallback when <c>MonsterSetBase.txt</c> is unavailable (Docker without Data mount).</summary>
     static IReadOnlyList<MonsterSetBaseEntry> BuildLorenciaFallback()
     {
-        return new List<MonsterSetBaseEntry>
+        var list = new List<MonsterSetBaseEntry>(48);
+        list.AddRange(BuildLorenciaNpcFallback());
+        list.AddRange(BuildLorenciaFieldMonsterFallback());
+        return list;
+    }
+
+    /// <summary>Parity Lorencia section 0 NPCs (MuServer <c>MonsterSetBase.txt</c>).</summary>
+    static IEnumerable<MonsterSetBaseEntry> BuildLorenciaNpcFallback()
+    {
+        yield return Entry(0, 226, 122, 110, 3);
+        yield return Entry(0, 230, 62, 130, 3);
+        yield return Entry(0, 230, 118, 142, 2);
+        yield return Entry(0, 379, 115, 139, 3);
+        yield return Entry(0, 250, 183, 137, 2);
+        yield return Entry(0, 253, 127, 86, 2);
+        yield return Entry(0, 251, 116, 141, 3);
+        yield return Entry(0, 255, 122, 135, 1);
+        yield return Entry(0, 244, 126, 135, 1);
+        yield return Entry(0, 254, 118, 113, 3);
+        yield return Entry(0, 240, 147, 145, 1);
+        yield return Entry(0, 240, 146, 110, 3);
+        yield return Entry(0, 257, 96, 129, 1);
+        yield return Entry(0, 257, 132, 165, 3);
+        yield return Entry(0, 257, 132, 90, 3);
+        yield return Entry(0, 257, 170, 129, 1);
+        yield return Entry(0, 479, 130, 133, 3);
+        yield return Entry(0, 246, 120, 142, 2);
+    }
+
+    /// <summary>Parity Lorencia section 1 field spots (outside safe zone).</summary>
+    static IEnumerable<MonsterSetBaseEntry> BuildLorenciaFieldMonsterFallback()
+    {
+        yield return Spot(2, 187, 117, 187, 117);
+        yield return Spot(3, 187, 123, 187, 123);
+        yield return Spot(0, 134, 82, 134, 82);
+        yield return Spot(0, 141, 82, 141, 82);
+        yield return Spot(4, 86, 116, 86, 116);
+        yield return Spot(4, 86, 137, 86, 137);
+    }
+
+    static MonsterSetBaseEntry Entry(int spawnType, int monsterClass, int x, int y, byte dir) =>
+        new()
         {
-            new() { SpawnType = 0, MonsterClass = 3, Map = 0, Dis = 0, X = 180, Y = 120, Dir = 3 },
-            new() { SpawnType = 0, MonsterClass = 2, Map = 0, Dis = 0, X = 140, Y = 90, Dir = 1 },
-            new() { SpawnType = 0, MonsterClass = 0, Map = 0, Dis = 0, X = 130, Y = 130, Dir = 5 },
-            new() { SpawnType = 0, MonsterClass = 257, Map = 0, Dis = 0, X = 130, Y = 118, Dir = 3 },
+            SpawnType = spawnType,
+            MonsterClass = monsterClass,
+            Map = 0,
+            Dis = 0,
+            X = x,
+            Y = y,
+            Dir = dir,
         };
+
+    static MonsterSetBaseEntry Spot(int monsterClass, int x, int y, int tx, int ty) =>
+        new()
+        {
+            SpawnType = 1,
+            MonsterClass = monsterClass,
+            Map = 0,
+            Dis = 5,
+            X = x,
+            Y = y,
+            Tx = tx,
+            Ty = ty,
+            Dir = 255,
+        };
+
+    static int ParseIntEnv(string key, int defaultValue, int min, int max)
+    {
+        var raw = Environment.GetEnvironmentVariable(key);
+        if (string.IsNullOrWhiteSpace(raw)
+            || !int.TryParse(raw, NumberStyles.Integer, CultureInfo.InvariantCulture, out var v))
+        {
+            return defaultValue;
+        }
+
+        return Math.Clamp(v, min, max);
     }
 }

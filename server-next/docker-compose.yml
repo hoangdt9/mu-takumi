@@ -51,6 +51,8 @@ services:
       - .:/app
       # Default: server-next/keys/Dec2.dat. Override: TAKUMI_DEC2_HOST_DIR=../ClientBuild/Data (or any host dir containing Dec2.dat)
       - ${TAKUMI_DEC2_HOST_DIR:-./keys}:/keys:ro
+      # MuServer Data (MonsterSetBase, gates, shops). Override TAKUMI_GAMESERVER_DATA_HOST if your tree differs.
+      - ${TAKUMI_GAMESERVER_DATA_HOST:-../MuServer/4.GameServer/Data}:/muserver-data:ro
     ports:
       - "${TAKUMI_CONNECT_PUBLISH:-44605}:${TAKUMI_CONNECT_PORT:-44605}"
       - "${TAKUMI_LEGACY_LOGIN_PUBLISH:-44606}:${TAKUMI_LOGIN_PORT:-44606}"
@@ -68,6 +70,9 @@ services:
       TAKUMI_CS_CONNECT_BASE: "${TAKUMI_CS_CONNECT_BASE:-}"
       TAKUMI_CS_CONNECT_COUNT: "${TAKUMI_CS_CONNECT_COUNT:-}"
       TAKUMI_VERBOSE: "${TAKUMI_VERBOSE:-1}"
+      TAKUMI_GAMESERVER_DATA_PATH: "${TAKUMI_GAMESERVER_DATA_PATH:-/muserver-data}"
+      TAKUMI_MONSTER_SET_BASE_PATH: "${TAKUMI_MONSTER_SET_BASE_PATH:-/muserver-data/Monster/MonsterSetBase.txt}"
+      TAKUMI_MONSTER_INFO_PATH: "${TAKUMI_MONSTER_INFO_PATH:-/muserver-data/Monster/Monster.txt}"
       DOTNET_ENVIRONMENT: "${DOTNET_ENVIRONMENT:-Development}"
     # Build then run so a stale bin/Release from the host volume cannot mask Program.cs changes.
     command:

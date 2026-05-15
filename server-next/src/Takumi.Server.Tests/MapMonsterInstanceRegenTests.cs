@@ -33,14 +33,15 @@ public sealed class MapMonsterInstanceRegenTests
             ObjectKey = 1,
             MonsterClass = 3,
             Map = 0,
-            X = 10,
-            Y = 10,
-            Dir = 0,
+            SpawnX = 10,
+            SpawnY = 10,
+            WanderLeash = 3,
+            MoveRange = 3,
             MaxLife = 50,
             Level = 1,
             RegenDelayMs = regenMs,
         };
-        m.InitializeLife();
+        m.InitializeAtSpawn(10, 10, 0);
         return m;
     }
 }

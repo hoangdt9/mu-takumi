@@ -37,10 +37,13 @@ public sealed class MonsterStatCatalog
             var index = int.Parse(parts[0], CultureInfo.InvariantCulture);
             var level = int.Parse(parts[3], CultureInfo.InvariantCulture);
             var life = int.Parse(parts[4], CultureInfo.InvariantCulture);
+            var damageMin = parts.Length > 6 ? int.Parse(parts[6], CultureInfo.InvariantCulture) : 0;
+            var damageMax = parts.Length > 7 ? int.Parse(parts[7], CultureInfo.InvariantCulture) : damageMin;
+            var defense = parts.Length > 8 ? int.Parse(parts[8], CultureInfo.InvariantCulture) : 0;
             var regenSeconds = parts.Length > 18
                 ? int.Parse(parts[18], CultureInfo.InvariantCulture)
                 : 10;
-            cat._byClass[index] = new MonsterStat(index, level, life, regenSeconds);
+            cat._byClass[index] = new MonsterStat(index, level, life, damageMin, damageMax, defense, regenSeconds);
         }
 
         return cat;
@@ -49,7 +52,14 @@ public sealed class MonsterStatCatalog
     public MonsterStat GetOrDefault(int monsterClass) =>
         _byClass.TryGetValue(monsterClass, out var s)
             ? s
-            : new MonsterStat(monsterClass, Level: 1, Life: 100, RegenTimeSeconds: 10);
+            : new MonsterStat(monsterClass, Level: 1, Life: 100, DamageMin: 5, DamageMax: 10, Defense: 0, RegenTimeSeconds: 10);
 }
 
-public readonly record struct MonsterStat(int Index, int Level, int Life, int RegenTimeSeconds);
+public readonly record struct MonsterStat(
+    int Index,
+    int Level,
+    int Life,
+    int DamageMin,
+    int DamageMax,
+    int Defense,
+    int RegenTimeSeconds);

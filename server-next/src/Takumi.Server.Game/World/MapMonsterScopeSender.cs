@@ -83,10 +83,31 @@ public static class MapMonsterScopeSender
         var viewRange = ParseIntEnv("TAKUMI_MONSTER_VIEW_RANGE", 15, 1, 32);
         var maxCount = ParseIntEnv("TAKUMI_MONSTER_VIEWPORT_MAX", 64, 1, 120);
         var monsters = MapMonsterWorld.GetMonstersNear(mapId, playerX, playerY, viewRange, maxCount);
-        var fresh = tracker.TakeNewInView(monsters);
+        var (fresh, left) = tracker.SyncView(monsters);
         tracker.NoteAnchor(mapId, playerX, playerY);
+        await SendDestroyAsync(connection, clientProtectOutbound, left, remote, ct).ConfigureAwait(false);
         await SendPacketAsync(connection, clientProtectOutbound, mapId, playerX, playerY, fresh, remote, "move", ct)
             .ConfigureAwait(false);
+    }
+
+    static async Task SendDestroyAsync(
+        Connection connection,
+        (byte K1, byte K2)? clientProtectOutbound,
+        IReadOnlyList<int> objectKeys,
+        string remote,
+        CancellationToken ct)
+    {
+        if (objectKeys.Count == 0)
+        {
+            return;
+        }
+
+        var pkt = MonsterViewportDestroyWire602.Build(objectKeys);
+        await GamePortOutboundWire.WriteAsync(connection, clientProtectOutbound, pkt, ct).ConfigureAwait(false);
+        Console.WriteLine(
+            "[{0}] [m9] sent C1 0x14 destroy viewport count={1}",
+            remote,
+            objectKeys.Count);
     }
 
     static async Task SendPacketAsync(

@@ -29,8 +29,25 @@ public sealed class MonsterViewportTrackerTests
         Assert.True(tracker.ShouldRescan(0, 105, 100, 4));
     }
 
-    static MapMonsterInstance Make(int key, int cls, byte x, byte y) =>
-        new()
+    [Fact]
+    public void SyncView_returns_left_keys_when_monster_leaves_range()
+    {
+        var tracker = new MonsterViewportTracker();
+        tracker.ResetForMap(0, 100, 100);
+        var near = Make(12001, 3, 105, 105);
+        var far = Make(12002, 2, 200, 200);
+        tracker.TakeNewInView(new[] { near, far });
+
+        var (entered, left) = tracker.SyncView(new[] { near });
+
+        Assert.Empty(entered);
+        Assert.Equal([12002], left);
+        Assert.True(tracker.TakeNewInView(new[] { far }).Count == 1);
+    }
+
+    static MapMonsterInstance Make(int key, int cls, byte x, byte y)
+    {
+        var m = new MapMonsterInstance
         {
             ObjectKey = key,
             MonsterClass = cls,
@@ -38,8 +55,11 @@ public sealed class MonsterViewportTrackerTests
             X = x,
             Y = y,
             Dir = 3,
-            Life = 100,
+            MaxLife = 100,
             Level = 1,
             RegenDelayMs = 10_000,
         };
+        m.InitializeLife();
+        return m;
+    }
 }

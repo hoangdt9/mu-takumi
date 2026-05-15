@@ -2,8 +2,6 @@ using System.Net.Sockets;
 using Takumi.Server.Protocol;
 
 namespace Takumi.Server.Connect;
-
-/// <summary>Minimal Season 6 connect-server session (legacy <c>1.ConnectServer</c> subset).</summary>
 public sealed class ConnectMiniServerOptions
 {
     public required string PublicHost { get; init; }
@@ -16,6 +14,11 @@ public sealed class ConnectMiniServerOptions
     public required byte[] ServerList602 { get; init; }
 
     /// <summary>When true, send <see cref="ServerList602"/> immediately after TCP accept (before reading client).</summary>
+    /// <remarks>
+    /// Some LAN / Docker paths delay or drop the first client→server <c>C1 F4 06</c>; the client recv thread then
+    /// blocks forever with no <c>C2 F4 06</c>. Pushing the list on accept matches many MU clients that only parse
+    /// inbound data. Set <c>TAKUMI_CONNECT_SEND_LIST_ON_ACCEPT=0</c> to restore request-only behavior.
+    /// </remarks>
     public bool SendServerListOnAccept { get; init; } = true;
 
     /// <summary>When true, list requests receive <see cref="ConnectServerBusy602"/> instead of the list (QA).</summary>
@@ -70,6 +73,8 @@ public static class ConnectMiniServer
             $"[connect] TCP accept from {remote} (Connect Server — waiting for patch / F4 02|06 / F4 03)";
         Console.WriteLine(acceptMsg);
         Console.Error.WriteLine(acceptMsg);
+        Console.Out.Flush();
+        Console.Error.Flush();
         try
         {
             tcp.NoDelay = true;
@@ -78,13 +83,21 @@ public static class ConnectMiniServer
             var sentListOnAccept = false;
             if (options.SendServerListOnAccept && !options.ReturnBusy)
             {
+                // Plain synchronous NetworkStream write (no raw Socket.Send before GetStream — mixing can
+                // confuse some stacks; no WriteAsync here so no thread-pool continuation before bytes hit the wire).
                 stream.Write(options.ServerList602, 0, options.ServerList602.Length);
                 stream.Flush();
                 sentListOnAccept = true;
                 Console.WriteLine(
-                    "[connect] sent {0}: ServerList on-accept ({1} bytes)",
+                    "[connect] sent {0}: ServerList on-accept stream.Write ({1} bytes)",
                     remote,
                     options.ServerList602.Length);
+                Console.Error.WriteLine(
+                    "[connect] sent {0}: ServerList on-accept stream.Write ({1} bytes)",
+                    remote,
+                    options.ServerList602.Length);
+                Console.Out.Flush();
+                Console.Error.Flush();
             }
 
             var buf = new byte[512];
@@ -149,6 +162,12 @@ public static class ConnectMiniServer
                             remote,
                             options.ServerList602.Length);
                     }
+                    else if (options.Verbose)
+                    {
+                        Console.WriteLine(
+                            "[connect] {0}: F4 02|06 after on-accept list — skipping duplicate ServerList",
+                            remote);
+                    }
                 }
                 else if (ConnectServerPacketClassifier.TryFindFirstRequestOfKind(
                              span,
@@ -184,6 +203,9 @@ public static class ConnectMiniServer
         catch (Exception ex)
         {
             Console.WriteLine("[connect] error {0}: {1}", remote, ex.Message);
+            Console.Error.WriteLine("[connect] error {0}: {1}", remote, ex.Message);
+            Console.Out.Flush();
+            Console.Error.Flush();
         }
         finally
         {

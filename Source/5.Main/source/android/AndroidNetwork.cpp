@@ -400,7 +400,7 @@ void RecvLoop(
                 continue;
             }
 
-            const int recvErr = count < 0 ? errno : 0;
+            const int recvErr = (count < 0) ? errno : 0;
             NET_LOGE("[fd=%d] recv failed: count=%d errno=%d", handle, count, recvErr);
             __android_log_print(
                 ANDROID_LOG_INFO,

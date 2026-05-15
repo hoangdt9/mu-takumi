@@ -10,6 +10,7 @@ using MUnique.OpenMU.Network.SimpleModulus;
 using MUnique.OpenMU.Network.Xor;
 using Pipelines.Sockets.Unofficial;
 using Takumi.Server.Connect;
+using Takumi.Server.Game.World;
 using Takumi.Server.Persistence;
 using Takumi.Server.Protocol;
 
@@ -371,6 +372,14 @@ public static class GamePortMinimalSession
                             Volatile.Write(ref rosterDirty, 1);
                         }
 
+                        await MapMonsterScopeSender.TrySendAfterJoinAsync(
+                            connection,
+                            protect,
+                            picked.MapId,
+                            picked.PosX,
+                            picked.PosY,
+                            remote,
+                            ct).ConfigureAwait(false);
                         sessionJoinCharacterName10 = new byte[10];
                         Buffer.BlockCopy(joinName10, 0, sessionJoinCharacterName10, 0, 10);
                         Console.WriteLine(

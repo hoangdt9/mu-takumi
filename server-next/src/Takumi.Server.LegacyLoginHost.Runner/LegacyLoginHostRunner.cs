@@ -14,6 +14,7 @@ using Pipelines.Sockets.Unofficial;
 using Takumi.Server.Connect;
 using Takumi.Server.Join;
 using Takumi.Server.Game;
+using Takumi.Server.Game.World;
 using Takumi.Server.Persistence;
 using Takumi.Server.Protocol;
 
@@ -682,6 +683,14 @@ public static class LegacyLoginHostRunner
                     var invPkt = await JoinInventoryPacket602.BuildAsync(TakumiPostgresMirror.InventorySlots, loggedAccountId, joinName10, ct).ConfigureAwait(false);
                     await connection.Output.WriteAsync(joinPkt, ct).ConfigureAwait(false);
                     await connection.Output.WriteAsync(invPkt, ct).ConfigureAwait(false);
+                    await MapMonsterScopeSender.TrySendAfterJoinAsync(
+                        connection,
+                        clientProtectOutbound: null,
+                        picked.MapId,
+                        picked.PosX,
+                        picked.PosY,
+                        remote,
+                        ct).ConfigureAwait(false);
                     await connection.Output.FlushAsync(ct).ConfigureAwait(false);
                     if (JoinMapVitalsSeed.TryApplyFromJoinPacketIfUnset(picked.MaxHp > 0, joinPkt, out var joinVitals))
                     {

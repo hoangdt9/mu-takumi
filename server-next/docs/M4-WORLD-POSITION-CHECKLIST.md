@@ -2,7 +2,8 @@
 
 **Quy ước:** Mỗi dòng `[ ]` / `[x]` phải khớp trạng thái thật trong git. Cập nhật file này khi merge PR / hoàn thành bước.
 
-**Tham chiếu code:** `JoinMapSpawnWire`, `JoinMapServerWire602` (`Takumi.Server.Protocol`); roster JSON + **`TakumiPostgresMirror`** (`Takumi.Server.Persistence`, gọi từ `LegacyLoginHost/Program.cs` và `GameHost/Program.cs`); SQL `sql/init/001_character_roster.sql`, **`002_inventory_slot.sql`**, **`003_session_ticket.sql`**, **`004_character_roster_vitals.sql`** (M7a — cột vitals; C# đọc/ghi xem **`docs/M7-CHARACTER-PERSISTENCE-CHECKLIST.md`**). **Hợp đồng tọa độ / SSOT:** `docs/M4-TILE-AND-COORDINATES.md`, **`docs/M4-ROSTER-SSOT.md`**.
+**Tham chiếu code:** `JoinMapSpawnWire`, `JoinMapServerWire602`; roster JSON + **`TakumiPostgresMirror`**; SQL `001`–`004` trong `sql/init/`. **Hợp đồng tọa độ / SSOT:** `docs/M4-TILE-AND-COORDINATES.md`, **`docs/M4-ROSTER-SSOT.md`**.  
+**Migration `Source/` → server-next (M4 item + M7):** **`docs/M4-M7-CHARACTER-ITEM-MIGRATION.md`**.
 
 **Định tuyến M7+ (không thuộc close M4):** HP/MP/zen persist + join wire từ DB/JSON → **`docs/M7-CHARACTER-PERSISTENCE-CHECKLIST.md`**. ETL thế giới tĩnh, NPC, broadcast scope → **`docs/M8-M10-WORLD-RUNTIME-CHECKLIST.md`**. M4 giữ vai trò **roster vị thế + mirror + walk tile**; các mục `[ ]` còn lại ở đây là SSOT Postgres-only / `character` domain / listener GS đầy đủ.
 

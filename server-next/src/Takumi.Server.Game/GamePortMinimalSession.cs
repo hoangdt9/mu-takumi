@@ -910,6 +910,8 @@ public static class GamePortMinimalSession
             }
 
             CharacterRosterMirrorWriter.TryDrainPendingUpserts(TimeSpan.FromMilliseconds(900));
+            PlayerShopSession.FlushInventoryMirrorOnDisconnect(loggedAccountId, sessionJoinCharacterName10, presenceSessionId);
+            InventorySlotMirrorWriter.TryDrainPendingOps(TimeSpan.FromMilliseconds(900));
 
             GameMapPresenceRegistry.Unregister(presenceSessionId);
             MonsterViewerRegistry.Unregister(presenceSessionId);

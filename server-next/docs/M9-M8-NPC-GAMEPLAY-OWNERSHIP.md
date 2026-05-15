@@ -1,6 +1,6 @@
 # M8/M9 — NPC gameplay ownership (tránh duplicate)
 
-Last updated: 2026-05-16 · Branch: **`mac-m4`** (chưa merge main)
+Last updated: 2026-05-16 · **Đã trên `main`** (merge `34d44c9` + dedup `0fee99a`)
 
 ## Đã làm trên `mac-m4` — **đừng re-implement**
 

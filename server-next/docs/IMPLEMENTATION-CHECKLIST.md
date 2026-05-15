@@ -1,8 +1,9 @@
 # Takumi Server Next - Implementation Checklist
 
-Last updated: 2026-05-16 (`mac-m4`: M9 monster/combat + merge `main` M8 ETL / M7 vitals wire)
+Last updated: 2026-05-16 (`main` @ `0fee99a`: M8/M9 gameplay, M7 vitals, M10 presence, M4/M7 migration docs)
 
-**Phân vùng dev (tránh conflict):** xem **`docs/WORKSTREAM-OWNERSHIP.md`** — ai làm file/hạng mục nào trên nhánh nào.
+**Phân vùng dev (tránh conflict):** **`docs/WORKSTREAM-OWNERSHIP.md`**.  
+**M4 + M7 (nhân vật + item, port từ `Source/`):** **`docs/M4-M7-CHARACTER-ITEM-MIGRATION.md`** — owner đề xuất **`mac-m1`**.
 
 ## Repository vs checklist (read first)
 
@@ -141,13 +142,12 @@ Use this to avoid unnecessary rebuilds.
    - [x] Đảm bảo F4 06/03/05 đồng hành với `ServerListManager` / BMD (đã phần nào trong host).  
    - [x] Tách process hoặc class library nếu cần scale riêng Connect (`Takumi.Server.Connect`; xem **`docs/M3-CONNECT-BMD.md`**).
 
-4. **M4 — Login + nhân vật + vị trí lưu thế giới** *(M4a + M4c walk + periodic save + **M4b mirror + merge health metrics** — SSOT Postgres-only + tile/float still open; see **`docs/M4-WORLD-POSITION-CHECKLIST.md`** §Handoff M5; vitals schema prep **`004_character_roster_vitals.sql`** → **`docs/M7-CHARACTER-PERSISTENCE-CHECKLIST.md`**)*  
-   - [x] Bảng / roster: `map_id`, `pos_x`, `pos_y`, `angle` — **M4a:** file **`server-next/takumi-roster/<accountId>.json`**; **M4b:** mirror `character_roster` khi `TAKUMI_ROSTER_DB_SYNC`; join dùng `JoinMapSpawnWire`.
-4. **M4 — Login + nhân vật + vị trí lưu thế giới** *(M4a + M4c walk + periodic save + **M4b mirror + merge health metrics** — SSOT Postgres-only + tile/float still open; see **`docs/M4-WORLD-POSITION-CHECKLIST.md`** §Handoff M5; vitals **`004_character_roster_vitals.sql`** → **`docs/M7-CHARACTER-PERSISTENCE-CHECKLIST.md`**)*  
-   - [x] Bảng / roster: `map_id`, `pos_x`, `pos_y`, `angle` — **M4a:** `takumi-roster/<accountId>.json`; **M4b:** mirror `character_roster` khi `TAKUMI_ROSTER_DB_SYNC`; join dùng `JoinMapSpawnWire` (`LegacyLoginHostRunner` / `GamePortMinimalSession`). *(SSOT chỉ DB = mục `[ ]` trong **`## Next (High Priority)`**.)*  
-   - [x] Đồng bộ khi disconnect (flush roster), khi đổi map stub (`8E 02` → cập nhật `MapId` + save); **walk** `C1 … 0xD4`/`0x10` + **instant move** `C1 05 15` cập nhật `posX`/`posY`/`angle` in-memory → flush cùng disconnect (log thực tế: join lần hai tại tile đã đi, ví dụ `xy=(140,193)` sau khi rời map).  
-   - [x] **M4b:** merge/upsert health counters + optional **`TAKUMI_ROSTER_HEALTH_LOG`** (`CharacterRosterMirrorHealth`). **Tile vs float:** hợp đồng tile-only + **SSOT tài liệu** — `docs/M4-TILE-AND-COORDINATES.md`, `docs/M4-ROSTER-SSOT.md`.  
-   - [ ] **M4b/M4c + code SSOT Postgres-only:** importer / `character` domain sync / full GS listener parity — **`docs/M4-WORLD-POSITION-CHECKLIST.md`** (owner M7+ where noted).
+4. **M4 — Login + nhân vật + vị trí lưu thế giới** *(M4a + M4c walk + **M4b mirror** — SSOT Postgres-only + item persist still open; port map: **`docs/M4-M7-CHARACTER-ITEM-MIGRATION.md`**; chi tiết: **`docs/M4-WORLD-POSITION-CHECKLIST.md`**, vitals → M7)*  
+   - [x] Bảng / roster: `map_id`, `pos_x`, `pos_y`, `angle` — **M4a:** `takumi-roster/<accountId>.json`; **M4b:** mirror `character_roster` khi `TAKUMI_ROSTER_DB_SYNC`; join dùng `JoinMapSpawnWire` (`LegacyLoginHostRunner` / `GamePortMinimalSession`).  
+   - [x] Đồng bộ disconnect / move-map stub / **walk** + **instant move** → flush JSON + DB mirror.  
+   - [x] **M4b:** `CharacterRosterMirrorHealth` + **`TAKUMI_ROSTER_HEALTH_LOG`**. Tile-only: **`docs/M4-TILE-AND-COORDINATES.md`**, **`docs/M4-ROSTER-SSOT.md`**.  
+   - [x] **`inventory_slot` write** sau shop buy/sell/repair — `InventorySlotMirrorWriter` (đọc `F3 10` đã có từ trước).
+   - [ ] **M4b SSOT Postgres-only** + item pick/drop/move `0x22`–`0x24` — **`docs/M4-M7-CHARACTER-ITEM-MIGRATION.md`**.
 
 5. **M5 — Join handoff (`3.JoinServer` parity)** *(partial — see **`docs/M5-JOIN-HANDOFF-CHECKLIST.md`**)*  
    - [x] **F4 03** advertised port (`TAKUMI_GAME_PORT`) + in-memory session ticket TTL / Touch / Revoke.  
@@ -160,10 +160,12 @@ Use this to avoid unnecessary rebuilds.
    - [x] Structured log **`[event=decrypted_rx]`** (`TAKUMI_VERBOSE` hoặc **`TAKUMI_STRUCTURED_LOG`**); mirror **`character_roster`** khi save (cùng `CharacterRosterMirrorWriter` như Legacy).  
    - [x] Cross-process session ticket on wire / signed (**`SessionTicketWire602`**, **`PostgresSessionHandoffRepository.TryConsumeSignedWireAttachAsync`**); Postgres consume for IP-only handoff remains **`TAKUMI_GAME_REQUIRE_LOGIN_HANDOFF`** (skipped when **`TAKUMI_GAME_TICKET_WIRE`** is on).
 
-7. **M7 — Persistence vòng đời nhân vật** — **`docs/M7-CHARACTER-PERSISTENCE-CHECKLIST.md`**  
-   - [x] SQL prep: **`sql/init/004_character_roster_vitals.sql`** (`current_hp`, `max_hp`, `current_mp`, `max_mp`, `zen` on `character_roster`; apply via **`./scripts/apply-sql.sh`** on existing volumes).  
-   - [x] **M7b–c (partial):** `CharacterRosterRow` / JSON / Postgres mirror + **`CharacterRosterVitals`** on join **`F3 03`** when `max_hp`/`max_mp` &gt; 0; tests **`JoinMapVitals602Tests`**.  
-   - [x] **M7d (partial):** seed vitals + outbound `0x26`/`0x27` track + `TAKUMI_SEND_LIFE_MANA_AFTER_JOIN` (`LifeManaWire602`, `RosterVitalsLifecycle`). **Open:** combat-driven `GCLifeSend` đầy đủ.  
+7. **M7 — Persistence vòng đời nhân vật** — **`docs/M7-CHARACTER-PERSISTENCE-CHECKLIST.md`** + port map **`docs/M4-M7-CHARACTER-ITEM-MIGRATION.md`** §B  
+   - [x] SQL prep: **`004_character_roster_vitals.sql`**.  
+   - [x] **M7b–c:** vitals trên roster + join **`F3 03`**; tests **`JoinMapVitals602Tests`**.  
+   - [x] **M7d (partial):** `JoinMapVitalsSeed`, `LifeManaWire602`, `RosterVitalsOutboundTracker`, **`TAKUMI_SEND_LIFE_MANA_AFTER_JOIN`**.  
+   - [ ] **M7d:** combat-driven `GCLifeSend` đầy đủ (port `ItemManager` / combat path từ `Source/4.GameServer`).  
+   - [x] **M7 + M4:** `inventory_slot` upsert sau buy/sell/repair — `InventorySlotMirrorWriter`.  
    - [ ] Migration EF bổ sung (nếu dùng song song với `sql/init`).
 
 8. **M8 — Dữ liệu tĩnh thế giới (ETL)** — **`docs/M8-M10-WORLD-RUNTIME-CHECKLIST.md`** §M8  
@@ -180,9 +182,9 @@ Use this to avoid unnecessary rebuilds.
    - [~] **M9b AI:** wander/chase/`0xD4`/`0x18`, player damage stub, periodic viewport 1s, regen broadcast — **`docs/M9-MONSTER-AI-PORT-CHECKLIST.md`**.  
    - [ ] AoE / PvP / full pathfinding — **M10c / M9b P2–P3**.
 
-10. **M10 — Movement & visibility** — cùng file §M10; owner: **`docs/WORKSTREAM-OWNERSHIP.md`**  
+10. **M10 — Movement & visibility** — **`docs/M8-M10-WORLD-RUNTIME-CHECKLIST.md`** §M10  
     - [x] Nhận **walk / instant move** → roster tile (`LegacyLoginHost`, `GamePortMinimalSession`).  
-    - [ ] **WIP `mac-m4`:** broadcast `C1 0x15` / `0x18` tới player khác cùng map (`GameMapPresenceRegistry`).  
+    - [x] Broadcast `C1 0x15` / `0x18` + rate-limit (`GameMapPresenceRegistry`, `TAKUMI_PRESENCE_MAX_BROADCASTS_PER_SECOND`).  
     - [ ] Player viewport `C2 0x12`; đồng bộ sâu vitals mid-combat (M7).
 
 11. **M11 — DataServer merge**  

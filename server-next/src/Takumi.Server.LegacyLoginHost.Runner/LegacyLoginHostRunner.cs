@@ -1456,6 +1456,8 @@ public static class LegacyLoginHostRunner
             }
 
             CharacterRosterMirrorWriter.TryDrainPendingUpserts(TimeSpan.FromMilliseconds(900));
+            PlayerShopSession.FlushInventoryMirrorOnDisconnect(loggedAccountId, sessionJoinCharacterName10, presenceSessionId);
+            InventorySlotMirrorWriter.TryDrainPendingOps(TimeSpan.FromMilliseconds(900));
 
             tcp.Dispose();
         }

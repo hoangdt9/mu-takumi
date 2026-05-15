@@ -1456,7 +1456,7 @@ void ReceiveRevival( BYTE *ReceiveBuffer )
 	Teleport = false;
 	LPPRECEIVE_REVIVAL Data = (LPPRECEIVE_REVIVAL)ReceiveBuffer;
 
-	// Takumi server-next: town respawn uses 0x1C flag=0 + 0x26/0x27; F3 04 is legacy town regen (full reset).
+	// Takumi server-next: town respawn uses C1 F3 04 (this handler). C1 0x1C flag=0 misaligns XY on client.
 	// Only use lite path when server explicitly sends regen at safe coords (future); default full path for other maps.
 	if (false && SceneFlag == MAIN_SCENE && gMapManager.WorldActive == Data->Map)
 	{
@@ -1545,7 +1545,15 @@ void ReceiveRevival( BYTE *ReceiveBuffer )
 	BYTE BackUpGuildType = c->GuildType;
 	BYTE BackUpGuildRelationShip = c->GuildRelationShip;
 	BYTE byBackupEtcPart = c->EtcPart;
-	
+
+	g_ErrorReport.Write(
+		"[ReceiveRevival] town regen map=%d xy=(%d,%d) angle=%d life=%u mana=%u\r\n",
+		Data->Map,
+		Data->PositionX,
+		Data->PositionY,
+		Data->Angle,
+		Data->Life,
+		Data->Mana);
 	CreateCharacterPointer(c,MODEL_PLAYER,Data->PositionX,Data->PositionY,((float)Data->Angle-1.f)*45.f);
 	c->Key = HeroKey;
 	c->GuildStatus = BackUpGuildStatus;
@@ -7020,16 +7028,6 @@ void ReceiveLife( BYTE *ReceiveBuffer )
 	case 0xff:
 		CharacterAttribute->Life = ((WORD)(Data->Life[0]) << 8) + Data->Life[1];
 		CharacterAttribute->Shield = ((WORD)(Data->Life[3]) << 8) + Data->Life[4];
-		// Takumi m7d field revive: server sends 0x26 after death without F3 04 (avoids ClearCharacters).
-		if (SceneFlag == MAIN_SCENE && Hero != nullptr && Hero->Dead)
-		{
-			Hero->Dead = false;
-			Hero->Movement = false;
-			Hero->Object.Live = true;
-			Hero->Object.m_bActionStart = false;
-			SetPlayerStop(Hero);
-			g_ErrorReport.Write("[ReceiveLife] field revive hp=%u\r\n", CharacterAttribute->Life);
-		}
 		break;
 	case 0xfe:
 		if (gCharacterManager.IsMasterLevel(Hero->Class) == true)

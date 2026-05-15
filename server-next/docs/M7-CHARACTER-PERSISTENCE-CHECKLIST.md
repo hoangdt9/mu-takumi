@@ -43,6 +43,15 @@
 
 ---
 
+## M7g — Bulk migrate JSON → Postgres (tất cả nhân vật)
+
+- [x] **`CharacterRosterJsonMigrator`** — quét `takumi-roster/*.json`, mỗi file = một account, **mọi** entry trong `characters[]` → `character_roster` (+ `character_domain` khi sync bật).
+- [x] Script **`./scripts/migrate-roster-json-to-db.sh`** (`TAKUMI_MIGRATE_ROSTER_JSON_ONLY=1`).
+- [x] Startup tùy chọn: **`TAKUMI_MIGRATE_ROSTER_JSON=1`** trước khi host listen (Legacy + GameHost).
+- [ ] **`inventory_slot`** bulk từ JSON (chưa có field trong roster JSON) — cần ETL riêng / lưu in-game.
+
+---
+
 ## M7e — Kiểm thử
 
 - [x] Unit test: JSON vitals — **`GameRosterVitalsJsonTests`**; seed join — **`JoinMapVitalsSeedTests`**.

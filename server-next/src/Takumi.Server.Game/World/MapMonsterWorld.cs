@@ -19,6 +19,12 @@ public static class MapMonsterWorld
         return _byObjectKey.TryGetValue(objectKey, out monster);
     }
 
+    public static MonsterStat GetMonsterStat(int monsterClass)
+    {
+        EnsureInitialized();
+        return _stats.GetOrDefault(monsterClass);
+    }
+
     public static void EnsureInitialized()
     {
         if (_initialized)

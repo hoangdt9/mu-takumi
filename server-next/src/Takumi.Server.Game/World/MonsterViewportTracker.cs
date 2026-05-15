@@ -42,20 +42,40 @@ public sealed class MonsterViewportTracker
 
     public IReadOnlyList<MapMonsterInstance> TakeNewInView(IReadOnlyList<MapMonsterInstance> inView)
     {
-        if (inView.Count == 0)
+        return SyncView(inView).Entered;
+    }
+
+    /// <summary>Diff viewport: new spawns to create (<c>0x13</c>) and keys to destroy (<c>0x14</c>).</summary>
+    public (IReadOnlyList<MapMonsterInstance> Entered, IReadOnlyList<int> LeftKeys) SyncView(
+        IReadOnlyList<MapMonsterInstance> inView)
+    {
+        var inRange = new HashSet<int>();
+        foreach (var m in inView)
         {
-            return Array.Empty<MapMonsterInstance>();
+            inRange.Add(m.ObjectKey);
         }
 
-        var fresh = new List<MapMonsterInstance>();
+        var left = new List<int>();
+        foreach (var key in _sentKeys.ToArray())
+        {
+            if (inRange.Contains(key))
+            {
+                continue;
+            }
+
+            left.Add(key);
+            _sentKeys.Remove(key);
+        }
+
+        var entered = new List<MapMonsterInstance>();
         foreach (var m in inView)
         {
             if (_sentKeys.Add(m.ObjectKey))
             {
-                fresh.Add(m);
+                entered.Add(m);
             }
         }
 
-        return fresh;
+        return (entered, left);
     }
 }

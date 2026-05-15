@@ -16,18 +16,21 @@ public static class MonsterCombatHandler
         byte playerY,
         byte[] packet,
         string remote,
-        CancellationToken ct)
+        CancellationToken ct,
+        int playerLevel = 1)
     {
         if (ClientHitPackets602.TryFindHitRequest(packet, out _, out var targetId, out _, out _))
         {
-            await HandleHitAsync(tracker, connection, clientProtectOutbound, mapId, playerX, playerY, targetId, remote, ct)
+            await HandleHitAsync(
+                    tracker, connection, clientProtectOutbound, mapId, playerX, playerY, targetId, remote, ct, playerLevel)
                 .ConfigureAwait(false);
             return true;
         }
 
         if (ClientHitPackets602.TryFindTargetedSkill(packet, out _, out var skillTargetId))
         {
-            await HandleHitAsync(tracker, connection, clientProtectOutbound, mapId, playerX, playerY, skillTargetId, remote, ct)
+            await HandleHitAsync(
+                    tracker, connection, clientProtectOutbound, mapId, playerX, playerY, skillTargetId, remote, ct, playerLevel)
                 .ConfigureAwait(false);
             return true;
         }
@@ -44,7 +47,8 @@ public static class MonsterCombatHandler
         byte playerY,
         ushort targetId,
         string remote,
-        CancellationToken ct)
+        CancellationToken ct,
+        int playerLevel = 1)
     {
         MapMonsterWorld.EnsureInitialized();
         if (!MapMonsterWorld.TryGetMonster(targetId, out var monster) || monster is null || !monster.IsAlive)
@@ -63,7 +67,9 @@ public static class MonsterCombatHandler
             return;
         }
 
-        var damage = ParseIntEnv("TAKUMI_COMBAT_STUB_DAMAGE", 50, 1, 65_000);
+        var stat = MapMonsterWorld.GetMonsterStat(monster.MonsterClass);
+        var fallback = ParseIntEnv("TAKUMI_COMBAT_STUB_DAMAGE", 50, 1, 65_000);
+        var damage = MonsterCombatCalculator.RollDamageToMonster(playerLevel, stat, fallback);
         var died = monster.ApplyDamage(damage);
         var dmgPkt = MonsterDamageWire602.Build(
             monster.ObjectKey,

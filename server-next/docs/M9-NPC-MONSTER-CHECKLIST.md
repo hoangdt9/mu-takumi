@@ -1,6 +1,6 @@
 # M9 — NPC & monster runtime (scope A)
 
-Last updated: 2026-05-15
+Last updated: 2026-05-16
 
 ## Scope A (this iteration)
 
@@ -11,8 +11,10 @@ Last updated: 2026-05-15
 - [x] **Incremental viewport on walk / instant move** (`MonsterViewportTracker`, `TrySendOnMoveAsync`).
 - [x] **Regen timer** from `Monster.txt` `RegenTime` (`MapMonsterInstance.TryRegen` on viewport scan).
 - [x] **Combat stub** — `C1 0x11` hit / `0x19` skill → damage, `MarkDead`, `C1 0x16` die, `C1 0x14` destroy.
-- [ ] **Full combat** (defense, skills, broadcast to others) — post-M9.
-- [ ] **Regen** / AI / combat — M9 later.
+- [x] **Destroy on leave view** — `SyncView` + `C1 0x14` when walk out of range (parity `DestroyViewportMonster1`).
+- [x] **Damage vs Defense** — `MonsterCombatCalculator` + `Monster.txt` `Defense` column.
+- [ ] **Full combat** (skills, miss, PvP broadcast) — post-M9 / M10.
+- [ ] **AI** / NPC shop rows — post-M9.
 - [ ] **M8 ETL** to Postgres spawn table — optional; file path env for now.
 
 ## Legacy reference (`Source/4.GameServer`)
@@ -55,3 +57,4 @@ If set-base file is missing, a small **Lorencia fallback** spawn set is used for
 4. Client logcat: `0x13 [ReceiveCreateMonsterViewport`
 5. Tap attack near a mob (≤3 tiles): host `[m9] combat hit … died=True` then `C1 0x14 destroy + C1 0x16 die`.
 6. Client: damage numbers, mob disappears; after regen delay, walk back into range → new `0x13` spawn.
+7. Walk away from mob → host `[m9] sent C1 0x14 destroy viewport`; walk back → new `0x13`.

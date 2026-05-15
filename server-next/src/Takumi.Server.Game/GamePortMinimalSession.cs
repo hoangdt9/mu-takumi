@@ -445,7 +445,8 @@ public static class GamePortMinimalSession
                                 pickedCombat.PosY,
                                 packet,
                                 remote,
-                                ct).ConfigureAwait(false))
+                                ct,
+                                pickedCombat.Level).ConfigureAwait(false))
                         {
                             return;
                         }

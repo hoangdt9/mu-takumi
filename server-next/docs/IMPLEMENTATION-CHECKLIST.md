@@ -174,11 +174,8 @@ Use this to avoid unnecessary rebuilds.
    - [x] Gói **`C2 0x13`** scope spawn sau join + incremental on walk (`MonsterViewportWire602`, `MonsterViewportTracker`).  
    - [x] Regen delay từ `Monster.txt` (`MapMonsterInstance.TryRegen`).  
    - [x] Combat stub: `C1 0x11` hit / `0x19` skill → damage, `C1 0x14` destroy, `C1 0x16` die (`MonsterCombatHandler`).  
-   - [ ] Full combat (defense, skills, AoE) + AI; broadcast scope (M10).
-9. **M9 — NPC & monster runtime** *(scope A — **`docs/M9-NPC-MONSTER-CHECKLIST.md`**, **`docs/M8-M10-WORLD-RUNTIME-CHECKLIST.md`** §M9)*  
-   - [x] Spawn theo map từ **MonsterSetBase.txt** + **Monster.txt** stats (đứng yên; view-range filter).  
-   - [x] Gói **`C2 0x13`** scope spawn sau join (`MonsterViewportWire602`, hook Legacy + GamePort).  
-   - [ ] Regen; AI; broadcast khi di chuyển (M10).
+   - [x] Viewport destroy khi rời range (`MonsterViewportTracker.SyncView`); damage trừ Defense từ `Monster.txt`.  
+   - [ ] Full combat (skills, AoE, broadcast) + AI; scope broadcast (M10).
 
 10. **M10 — Movement & visibility** — cùng file §M10  
     - [x] Nhận **walk / instant move** trên TCP login tối thiểu (`LegacyLoginHost`, `GamePortMinimalSession`) → cập nhật roster tile (chưa broadcast scope).  

@@ -891,7 +891,8 @@ public static class LegacyLoginHostRunner
                             pickedCombat.PosY,
                             packet,
                             remote,
-                            ct).ConfigureAwait(false))
+                            ct,
+                            pickedCombat.Level).ConfigureAwait(false))
                     {
                         await connection.Output.FlushAsync(ct).ConfigureAwait(false);
                         return;

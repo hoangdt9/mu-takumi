@@ -1160,21 +1160,13 @@ public static class LegacyLoginHostRunner
                 // After PipelinedDecryptor the MU frame may not start at index 0 (prefix / coalescing); scan for C1|C3 + F3 00.
                 // Ref: takumi Source/5.Main/source/android/AndroidNetwork.cpp SendRequestCharacterList + SendGameEncrypted.
                 // Only after auth: F3 heuristics can match byte pairs inside large C3 F1:01 login (~90 B) and must not return early.
-                var listFrameOffset = 0;
-                var listReq = loginLatch.IsLoggedIn && TryFindCharacterListRequest(packet, out listFrameOffset);
-                if (!listReq
-                    && loginLatch.IsLoggedIn
-                    && packet.Length == 12
-                    && packet[0] == 0xC3)
+                if (loginLatch.IsLoggedIn && GamePacketFinders.TryFindPingResponse(packet, out _))
                 {
-                    // Last resort: Takumi+OpenMU pipeline often yields 12-byte C3 frames where Head/Sub follow a serial byte (not at +2/+3).
-                    Console.WriteLine(
-                        "[{0}] treating len=12 C3 as character-list req (hex={1})",
-                        remote,
-                        Convert.ToHexString(packet));
-                    listReq = true;
-                    listFrameOffset = 0;
+                    return;
                 }
+
+                var listFrameOffset = 0;
+                var listReq = loginLatch.IsLoggedIn && GamePacketFinders.TryFindCharacterListRequest(packet, out listFrameOffset);
 
                 if (listReq)
                 {
@@ -1200,15 +1192,6 @@ public static class LegacyLoginHostRunner
                             packet[listFrameOffset]);
                     }
 
-                    return;
-                }
-
-                if (loginLatch.IsLoggedIn
-                    && packet.Length == 3
-                    && packet[0] == 0xC1
-                    && packet[1] == 0x03
-                    && packet[2] == 0x71)
-                {
                     return;
                 }
 
@@ -2078,110 +2061,6 @@ public static class LegacyLoginHostRunner
             resident20 = new byte[20];
             scratch.Slice(14, 20).CopyTo(resident20);
             return true;
-        }
-
-        return false;
-    }
-
-    /// <summary>Detects PMSG_CHARACTER_LIST_REQ (F3 / 00). Takumi XOR hides logical 0x00 (wire often 0x0D after F3).</summary>
-    static bool TryFindCharacterListRequest(ReadOnlySpan<byte> packet, out int frameOffset)
-    {
-        frameOffset = -1;
-        Span<byte> scratch = stackalloc byte[8];
-
-        // PBMSG: Code, Size, HeadCode, SubCode — plain MU or Takumi stream-XOR on tail.
-        for (var i = 0; i <= packet.Length - 4; i++)
-        {
-            if (packet[i] is not (0xC1 or 0xC3))
-            {
-                continue;
-            }
-
-            // List requests are small; C3 account login is ~90 bytes and can contain incidental F3/00 at +2/+3.
-            if (packet[i] == 0xC3 && (int)packet[i + 1] > 48)
-            {
-                continue;
-            }
-
-            if (packet[i + 2] == 0xF3 && packet[i + 3] == 0x00)
-            {
-                frameOffset = i;
-                return true;
-            }
-
-            // F3/00 list req: wire sub often 0x0D (Takumi XOR of 0x00); OpenMU may already expose 0x00.
-            if (packet[i] == 0xC1 && packet[i + 2] == 0xF3 && i + 5 <= packet.Length)
-            {
-                packet.Slice(i, 5).CopyTo(scratch[..5]);
-                if (scratch[3] != 0x00)
-                {
-                    DecodeTakumiStreamXor(scratch[..5], firstXorIndex: 3);
-                }
-
-                if (scratch[3] == 0x00)
-                {
-                    frameOffset = i;
-                    return true;
-                }
-            }
-        }
-
-        // C3 + SimpleModulus counter: Code, Size, Counter/serial, Head, Sub — Head F3 Sub 00 at +3,+4 (see OpenMU packet docs).
-        for (var i = 0; i <= packet.Length - 5; i++)
-        {
-            if (packet[i] != 0xC3)
-            {
-                continue;
-            }
-
-            var c3Len = (int)packet[i + 1];
-            if (c3Len is < 5 or > 48)
-            {
-                continue;
-            }
-
-            if (packet[i + 3] == 0xF3 && packet[i + 4] == 0x00)
-            {
-                frameOffset = i;
-                return true;
-            }
-        }
-
-        // Size byte + F3 00 still preceded by C1/C3 two bytes earlier.
-        for (var i = 0; i <= packet.Length - 3; i++)
-        {
-            if (packet[i] != 0x05 || packet[i + 1] != 0xF3 || packet[i + 2] != 0x00)
-            {
-                continue;
-            }
-
-            if (i >= 2 && packet[i - 2] is 0xC1 or 0xC3)
-            {
-                frameOffset = i - 2;
-                return true;
-            }
-        }
-
-        // Short post-login control packets: list request is the usual F3/00 op (see WSclient ReceiveCharacterList path).
-        // Do not treat PMSG_CREATE_CHARACTER (C1 0x0F F3 xx, 15 bytes) as list because payload may contain 0xF3 0x00
-        // (e.g. last name byte + class 0).
-        if (packet.Length <= 16)
-        {
-            var skipSubstringScan = packet.Length == 15
-                && packet[0] == 0xC1
-                && packet[1] == 0x0F
-                && packet[2] == 0xF3;
-            if (!skipSubstringScan)
-            {
-                for (var j = 0; j <= packet.Length - 2; j++)
-                {
-                    if (packet[j] == 0xF3 && packet[j + 1] == 0x00)
-                    {
-                        frameOffset = j >= 2 ? j - 2 : 0;
-                        return true;
-                    }
-                }
-            }
         }
 
         return false;

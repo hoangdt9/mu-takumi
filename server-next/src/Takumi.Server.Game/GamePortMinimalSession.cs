@@ -664,19 +664,21 @@ public static class GamePortMinimalSession
                         return;
                     }
 
+                    if (loginLatch.IsLoggedIn && GamePacketFinders.TryFindPingResponse(packet, out var pingOff))
+                    {
+                        if (verbose)
+                        {
+                            Console.WriteLine("[{0}] ping reply 0x71 frame@{1} (no response)", remote, pingOff);
+                        }
+
+                        return;
+                    }
+
                     // F3 00 list: only after auth. Heuristics can match byte pairs inside large C3 F1:01 login (~90 B) and
                     // must not return early — otherwise the client never receives F1 01 / character list (M6 split port).
                     var listFrameOffset = 0;
                     var listReq = loginLatch.IsLoggedIn
                         && GamePacketFinders.TryFindCharacterListRequest(packet, out listFrameOffset);
-                    if (!listReq
-                        && loginLatch.IsLoggedIn
-                        && packet.Length == 12
-                        && packet[0] == 0xC3)
-                    {
-                        listReq = true;
-                        listFrameOffset = 0;
-                    }
 
                     if (listReq)
                     {

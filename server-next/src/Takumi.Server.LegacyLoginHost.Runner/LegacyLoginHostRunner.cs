@@ -1118,52 +1118,6 @@ public static class LegacyLoginHostRunner
                 }
 
                 if (loginLatch.IsLoggedIn
-                    && sessionJoinCharacterName10 is not null
-                    && FindRosterEntry(roster, sessionJoinCharacterName10) is { } pickedGate)
-                {
-                    var gateWire = ToGameRosterEntry(pickedGate);
-                    if (await MapGateTeleportHandler.TryHandleAsync(
-                            packet,
-                            gateWire,
-                            monsterViewportTracker,
-                            presenceSessionId,
-                            connection,
-                            protect: null,
-                            remote,
-                            verbose,
-                            ct).ConfigureAwait(false))
-                    {
-                        ApplyGameRosterEntry(pickedGate, gateWire);
-                        Volatile.Write(ref rosterDirty, 1);
-                        return;
-                    }
-                }
-
-                if (loginLatch.IsLoggedIn
-                    && sessionJoinCharacterName10 is not null
-                    && FindRosterEntry(roster, sessionJoinCharacterName10) is { } pickedShop)
-                {
-                    if (NpcShopHandler.TryHandleShopClose(packet))
-                    {
-                        return;
-                    }
-
-                    var shopWire = ToGameRosterEntry(pickedShop);
-                    if (await NpcShopHandler.TryHandleTalkAsync(
-                            packet,
-                            shopWire,
-                            connection,
-                            protect: null,
-                            remote,
-                            verbose,
-                            ct).ConfigureAwait(false))
-                    {
-                        ApplyGameRosterEntry(pickedShop, shopWire);
-                        return;
-                    }
-                }
-
-                if (loginLatch.IsLoggedIn
                     && string.Equals(Environment.GetEnvironmentVariable("TAKUMI_VERBOSE"), "1", StringComparison.OrdinalIgnoreCase)
                     && packet.Length == 15
                     && packet[0] == 0xC1

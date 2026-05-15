@@ -2,7 +2,7 @@
 
 **Đã merge:** schema `005`/`006`, importers, `MapMonsterWorld` ưu tiên DB, `MapGateCatalog`, `NpcShopCatalog`.
 
-**Wire gameplay:** gate teleport `C1 0x1C` (`MapGateTeleportHandler`), NPC shop `C1 0x30` + `C2 0x31` (`NpcShopHandler`).
+**Wire gameplay:** gate teleport `C1 0x1C`, NPC talk/shop (`WorldGameplayHandlers`, `MapGateService`, `NpcShopWire602`).
 
 ## Phần A — ETL (host)
 

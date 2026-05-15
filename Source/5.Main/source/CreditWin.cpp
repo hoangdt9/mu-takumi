@@ -175,7 +175,9 @@ void CCreditWin::UpdateWhileActive(double dDeltaTick)
 
 void CCreditWin::RenderControls()
 {
+#if !defined(__ANDROID__) && !defined(MU_IOS)
 	::glDisable(GL_ALPHA_TEST);
+#endif
 
 	for (int i = 0; i <= CRW_SPR_LOGO; ++i)
 		m_aSpr[i].Render();

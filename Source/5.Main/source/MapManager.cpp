@@ -1602,11 +1602,17 @@ void CMapManager::LoadWorld(int Map)
 	    LoadBitmap(FileName,BITMAP_MAPGRASS+2,GL_NEAREST,GL_REPEAT,false);
 
         sprintf(FileName,"%s\\leaf01.tga" ,WorldName);
-	    LoadBitmap(FileName,BITMAP_LEAF1          ,GL_NEAREST,GL_CLAMP_TO_EDGE,false);
-	    sprintf(FileName,"%s\\leaf01.jpg" ,WorldName);
-	    LoadBitmap(FileName,BITMAP_LEAF1          ,GL_NEAREST,GL_CLAMP_TO_EDGE,false);
-	    sprintf(FileName,"%s\\leaf02.jpg" ,WorldName);
-	    LoadBitmap(FileName,BITMAP_LEAF2          ,GL_NEAREST,GL_CLAMP_TO_EDGE,false);
+	    if (!LoadBitmap(FileName,BITMAP_LEAF1          ,GL_NEAREST,GL_CLAMP_TO_EDGE,false))
+	    {
+		    sprintf(FileName,"%s\\leaf01.jpg" ,WorldName);
+		    LoadBitmap(FileName,BITMAP_LEAF1          ,GL_NEAREST,GL_CLAMP_TO_EDGE,false);
+	    }
+	    sprintf(FileName,"%s\\leaf02.tga" ,WorldName);
+	    if (!LoadBitmap(FileName,BITMAP_LEAF2          ,GL_NEAREST,GL_CLAMP_TO_EDGE,false))
+	    {
+		    sprintf(FileName,"%s\\leaf02.jpg" ,WorldName);
+		    LoadBitmap(FileName,BITMAP_LEAF2          ,GL_NEAREST,GL_CLAMP_TO_EDGE,false);
+	    }
 
 		if(M34CryWolf1st::IsCyrWolf1st()==true)
 		{

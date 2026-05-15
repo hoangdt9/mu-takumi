@@ -3,6 +3,7 @@
 #include "stdafx.h"
 
 #include "AndroidNetwork.h"
+#include "GameConfig/MuLanDefaults.h"
 #include "SimpleModulusCrypt.h"
 #include "Utilities/Log/ErrorReport.h"
 #include "WSclient.h"
@@ -15,7 +16,9 @@
 #include <linux/tcp.h>
 #include <netinet/in.h>
 #include <poll.h>
+#include <sys/ioctl.h>
 #include <sys/socket.h>
+#include <sys/time.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -397,14 +400,25 @@ void RecvLoop(
                 continue;
             }
 
-            NET_LOGE("[fd=%d] recv failed: count=%d errno=%d", handle, count, errno);
+            const int recvErr = count < 0 ? errno : 0;
+            NET_LOGE("[fd=%d] recv failed: count=%d errno=%d", handle, count, recvErr);
             __android_log_print(
                 ANDROID_LOG_INFO,
                 "TakumiErrorReport",
                 "[AndroidLogin] recv closed/error fd=%d count=%d errno=%d",
                 handle,
                 count,
-                count < 0 ? errno : 0);
+                recvErr);
+            if (count < 0 && (recvErr == EAGAIN || recvErr == EWOULDBLOCK))
+            {
+                __android_log_print(
+                    ANDROID_LOG_ERROR,
+                    "TakumiErrorReport",
+                    "[AndroidLogin] recv EAGAIN/EWOULDBLOCK (likely SO_RCVTIMEO): no C2 from connect server. "
+                    "On Mac host: cd server-next && ./scripts/check-lan-connect-ports.sh && "
+                    "./scripts/smoke-connect-from-host.sh 127.0.0.1 44605 — if smoke fails, "
+                    "docker compose stop legacy-login && ./scripts/run-legacy-login-host.sh");
+            }
             break;
         }
 
@@ -581,6 +595,8 @@ MU_EXPORT int32_t ConnectionManager_Connect(
     const wchar_t* host,
     int32_t port,
     BYTE isEncrypted,
+    void (*onSocketReady)(int32_t handle, void* userData),
+    void* onSocketReadyUserData,
     void(*onPacket)(int32_t, int32_t, uint8_t*),
     void(*onDisconnect)(int32_t))
 {
@@ -720,6 +736,21 @@ MU_EXPORT int32_t ConnectionManager_Connect(
 
     TakumiNet::ApplyGameTcpKeepAlive(fd);
 
+    if (static_cast<std::uint16_t>(port) == MuLanDefaults::kDefaultFirstHopConnectPort)
+    {
+        timeval rcvTimeout {};
+        rcvTimeout.tv_sec = 15;
+        if (setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &rcvTimeout, sizeof(rcvTimeout)) != 0)
+        {
+            __android_log_print(
+                ANDROID_LOG_WARN,
+                "TakumiErrorReport",
+                "[AndroidLogin] SO_RCVTIMEO(fd=%d) failed errno=%d",
+                fd,
+                errno);
+        }
+    }
+
     auto* state = new AndroidConnState(isEncrypted != 0);
     {
         std::lock_guard<std::mutex> statsLock(state->statsMutex);
@@ -729,6 +760,30 @@ MU_EXPORT int32_t ConnectionManager_Connect(
     {
         std::lock_guard<std::mutex> lock(g_connectionsMutex);
         g_connections[fd] = state;
+    }
+
+    // Call before recv thread: connect handlers (e.g. LegacyLoginHost) may send C2 F4 06 immediately on accept.
+    // CWsctlc must own the fd in g_androidSocketOwners before any AndroidOnPacket runs or those bytes are dropped.
+    if (onSocketReady != nullptr)
+    {
+        onSocketReady(static_cast<int32_t>(fd), onSocketReadyUserData);
+    }
+
+    {
+        int queuedBytes = 0;
+        if (ioctl(fd, FIONREAD, &queuedBytes) == 0)
+        {
+            __android_log_print(
+                ANDROID_LOG_INFO,
+                "TakumiErrorReport",
+                "[AndroidLogin] after onSocketReady FIONREAD=%d fd=%d (if server pushed C2 on accept, often >0 before recv thread)",
+                queuedBytes,
+                fd);
+            g_ErrorReport.Write(
+                "[AndroidLogin] after onSocketReady FIONREAD=%d fd=%d\r\n",
+                queuedBytes,
+                fd);
+        }
     }
 
     const auto runningFlag = state->running;
@@ -909,6 +964,14 @@ MU_EXPORT void SendServerListRequest(int32_t handle)
 {
     const uint8_t packet[] = { 0xC1, 0x04, 0xF4, 0x06 };
     RawSend(handle, packet, sizeof(packet));
+    __android_log_print(
+        ANDROID_LOG_INFO,
+        "TakumiErrorReport",
+        "[AndroidLogin] sent C1 F4 06 server list request fd=%d (expect recv tcp C2… then Success Receive Server List)",
+        handle);
+    g_ErrorReport.Write(
+        "[AndroidLogin] sent C1 F4 06 server list request fd=%d (expect recv tcp C2… then Success Receive Server List)\r\n",
+        handle);
 }
 
 MU_EXPORT void SendConnectionInfoRequest075(int32_t handle, BYTE serverId)

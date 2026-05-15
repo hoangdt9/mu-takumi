@@ -61,6 +61,11 @@ int tjDecompress2(tjhandle /*handle*/,
                   int width, int pitch, int height,
                   int /*pixelFormat*/, int /*flags*/)
 {
+    // GlobalBitmap::OpenJpeg expects the same top-down row order as the Windows
+    // libjpeg path. Other Android code (e.g. UI PNG loader) may leave
+    // stbi_set_flip_vertically_on_load(1) set; that would flip every OZJ/JPEG here.
+    stbi_set_flip_vertically_on_load(0);
+
     int w = 0, h = 0, comp = 0;
     unsigned char* data = stbi_load_from_memory(
         jpegBuf, (int)jpegSize, &w, &h, &comp, 3   // force RGB

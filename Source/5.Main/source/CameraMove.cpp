@@ -446,36 +446,43 @@ BOOL CCameraMove::SetTourMode(BOOL bFlag, BOOL bRandomStart, int _index)
 BOOL CCameraMove::SetTourMode(BOOL bFlag, BOOL bRandomStart)
 #endif //PJH_NEW_SERVER_SELECT_MAP
 {
-	if (m_listWayPoint.size() <= 1) return FALSE;
-
-	m_bTourMode = bFlag;
-
-	if (bFlag == TRUE)
+	// Always allow turning tour *off* (login overlay / camera path). The waypoint count gate
+	// applies only when enabling — otherwise SetTourMode(FALSE) could no-op forever if the list
+	// was empty or trimmed, leaving the login "intro" dimmer stuck on top of server sub-UI.
+	if (bFlag == FALSE)
 	{
-		if (bRandomStart)
-		{
-			m_dwCurrentIndex = rand() % m_listWayPoint.size();
-		}
+		m_bTourMode = FALSE;
+		return TRUE;
+	}
+
+	if (m_listWayPoint.size() <= 1)
+		return FALSE;
+
+	m_bTourMode = TRUE;
+
+	if (bRandomStart)
+	{
+		m_dwCurrentIndex = rand() % m_listWayPoint.size();
+	}
 #ifdef PJH_NEW_SERVER_SELECT_MAP
-		else
-		{
-			m_dwCurrentIndex = _index;
-		}
+	else
+	{
+		m_dwCurrentIndex = _index;
+	}
 #endif //PJH_NEW_SERVER_SELECT_MAP
 
-		DWORD dwTargetIndex = (m_dwCurrentIndex < m_listWayPoint.size() ? m_dwCurrentIndex : 0);
-		WAYPOINT* pTargetWayPoint = m_listWayPoint[dwTargetIndex];
-		DWORD dwStartIndex = (m_dwCurrentIndex > 0 ? m_dwCurrentIndex - 1 : m_listWayPoint.size() - 1);
-		WAYPOINT* pStartWayPoint = m_listWayPoint[dwStartIndex];
-		m_CameraStartPos[0] = m_CurrentCameraPos[0] = m_vTourCameraPos[0] = pStartWayPoint->fCameraX;
-		m_CameraStartPos[1] = m_CurrentCameraPos[1] = m_vTourCameraPos[1] = pStartWayPoint->fCameraY;
-		m_CameraStartPos[2] = m_CurrentCameraPos[2] = m_vTourCameraPos[2] = pStartWayPoint->fCameraZ;
+	DWORD dwTargetIndex = (m_dwCurrentIndex < m_listWayPoint.size() ? m_dwCurrentIndex : 0);
+	WAYPOINT* pTargetWayPoint = m_listWayPoint[dwTargetIndex];
+	DWORD dwStartIndex = (m_dwCurrentIndex > 0 ? m_dwCurrentIndex - 1 : m_listWayPoint.size() - 1);
+	WAYPOINT* pStartWayPoint = m_listWayPoint[dwStartIndex];
+	m_CameraStartPos[0] = m_CurrentCameraPos[0] = m_vTourCameraPos[0] = pStartWayPoint->fCameraX;
+	m_CameraStartPos[1] = m_CurrentCameraPos[1] = m_vTourCameraPos[1] = pStartWayPoint->fCameraY;
+	m_CameraStartPos[2] = m_CurrentCameraPos[2] = m_vTourCameraPos[2] = pStartWayPoint->fCameraZ;
 
-		float fSubVector[2] = { pTargetWayPoint->fCameraX - pStartWayPoint->fCameraX,pTargetWayPoint->fCameraY - pStartWayPoint->fCameraY };
-		float fSubDistance = sqrt(fSubVector[0]*fSubVector[0] + fSubVector[1]*fSubVector[1]);
-		float fDirVector[2] = { fSubVector[0] / fSubDistance, fSubVector[1] / fSubDistance };
-		m_fTargetTourCameraAngle = m_fTourCameraAngle = CreateAngle(0, 0, fDirVector[0], -fDirVector[1]);
-	}
+	float fSubVector[2] = { pTargetWayPoint->fCameraX - pStartWayPoint->fCameraX,pTargetWayPoint->fCameraY - pStartWayPoint->fCameraY };
+	float fSubDistance = sqrt(fSubVector[0]*fSubVector[0] + fSubVector[1]*fSubVector[1]);
+	float fDirVector[2] = { fSubVector[0] / fSubDistance, fSubVector[1] / fSubDistance };
+	m_fTargetTourCameraAngle = m_fTourCameraAngle = CreateAngle(0, 0, fDirVector[0], -fDirVector[1]);
 
 	return TRUE;
 }

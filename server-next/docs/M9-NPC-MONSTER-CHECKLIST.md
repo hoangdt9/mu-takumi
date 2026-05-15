@@ -13,9 +13,10 @@ Last updated: 2026-05-16
 - [x] **Combat stub** — `C1 0x11` hit / `0x19` skill → damage, `MarkDead`, `C1 0x16` die, `C1 0x14` destroy.
 - [x] **Destroy on leave view** — `SyncView` + `C1 0x14` when walk out of range (parity `DestroyViewportMonster1`).
 - [x] **Damage vs Defense** — `MonsterCombatCalculator` + `Monster.txt` `Defense` column.
-- [ ] **Full combat** (skills, miss, PvP broadcast) — post-M9 / M10.
-- [ ] **AI** / NPC shop rows — post-M9.
-- [ ] **M8 ETL** to Postgres spawn table — optional; file path env for now.
+- [ ] **Full combat** (AoE, PvP) — **M10c** (xem **`WORKSTREAM-OWNERSHIP.md`**).
+- [ ] **M10 partial (WIP trên `mac-m4`):** map presence `0x15`/`0x18`, miss, skill % — chưa merge `main`.
+- [ ] **AI** / NPC shop rows — post-M9 (shop data **main** `8c1758b`; wire chưa).
+- [x] **M8 ETL** spawn Postgres — trên **`main`** (`b33d890`); `MapMonsterWorld` fallback file khi DB trống.
 
 ## Legacy reference (`Source/4.GameServer`)
 

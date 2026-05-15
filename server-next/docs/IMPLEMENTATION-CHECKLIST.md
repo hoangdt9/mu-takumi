@@ -178,11 +178,12 @@ Use this to avoid unnecessary rebuilds.
    - [x] Regen delay từ `Monster.txt` (`MapMonsterInstance.TryRegen`).  
    - [x] Combat stub: `C1 0x11` hit / `0x19` skill → damage, `C1 0x14` destroy, `C1 0x16` die (`MonsterCombatHandler`).  
    - [x] Viewport destroy khi rời range (`MonsterViewportTracker.SyncView`); damage trừ Defense từ `Monster.txt`.  
-   - [ ] Full combat (skills, AoE, broadcast) + AI; scope broadcast (M10).
+   - [ ] Full combat (AoE, PvP) + AI — **M10c / M9b**; stub hit/skill/miss trên `mac-m4` WIP.
 
-10. **M10 — Movement & visibility** — cùng file §M10  
-    - [x] Nhận **walk / instant move** trên TCP login tối thiểu (`LegacyLoginHost`, `GamePortMinimalSession`) → cập nhật roster tile (chưa broadcast scope).  
-    - [ ] Broadcast quanh player; đồng bộ sâu với M7.
+10. **M10 — Movement & visibility** — cùng file §M10; owner: **`docs/WORKSTREAM-OWNERSHIP.md`**  
+    - [x] Nhận **walk / instant move** → roster tile (`LegacyLoginHost`, `GamePortMinimalSession`).  
+    - [ ] **WIP `mac-m4`:** broadcast `C1 0x15` / `0x18` tới player khác cùng map (`GameMapPresenceRegistry`).  
+    - [ ] Player viewport `C2 0x12`; đồng bộ sâu vitals mid-combat (M7).
 
 11. **M11 — DataServer merge**  
     - [ ] Quyết định: Postgres-only vs bridge tới MSSQL legacy; API nội bộ cho `Takumi.Server.Game`.

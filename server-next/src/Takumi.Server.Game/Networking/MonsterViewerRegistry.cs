@@ -111,6 +111,9 @@ public static class MonsterViewerRegistry
 
     public static void Unregister(Guid sessionId) => Sessions.TryRemove(sessionId, out _);
 
+    public static bool TryGetSession(Guid sessionId, out MonsterViewerSession session) =>
+        Sessions.TryGetValue(sessionId, out session!);
+
     public static IReadOnlyCollection<MonsterViewerSession> GetAllSessions() => Sessions.Values.ToArray();
 
     public static bool TryFindNearestTarget(
@@ -230,6 +233,11 @@ public static class MonsterViewerRegistry
         var baseDmg = ParseIntEnv("TAKUMI_MONSTER_TO_PLAYER_DAMAGE", 15, 1, 2000);
         var dmg = Math.Max(1, baseDmg * Math.Clamp(damagePercent, 50, 500) / 100);
         var maxHp = Math.Max(1, session.MaxHp);
+        if (session.CurrentHp <= 0)
+        {
+            session.CurrentHp = maxHp;
+        }
+
         session.CurrentHp = Math.Max(0, session.CurrentHp - dmg);
         session.OnVitalsChanged?.Invoke(session.CurrentHp, maxHp);
 
@@ -240,7 +248,9 @@ public static class MonsterViewerRegistry
             hitSuccess: true);
         await GamePortOutboundWire.WriteAsync(session.Connection, session.Protect, dmgPkt, ct).ConfigureAwait(false);
 
-        var lifePkt = LifeManaWire602.BuildLife(LifeManaWire602.TypeCurrent, (ushort)Math.Min(session.CurrentHp, ushort.MaxValue));
+        var lifePkt = LifeManaWire602.BuildLife(
+            LifeManaWire602.TypeCurrent,
+            (ushort)Math.Clamp(session.CurrentHp, 0, ushort.MaxValue));
         await GamePortOutboundWire.WriteAsync(session.Connection, session.Protect, lifePkt, ct).ConfigureAwait(false);
 
         Console.WriteLine(

@@ -160,6 +160,43 @@ public static class PlayerShopSession
         RemoveSession(sessionId);
     }
 
+    public static bool IsInventorySlot(byte slot) => slot <= ItemWire602.LastBagSlot;
+
+    /// <summary>Move or swap between inventory slots (flags 0→0).</summary>
+    public static bool TryMoveInventorySlot(Guid sessionId, byte sourceSlot, byte targetSlot, out byte[] targetItem12)
+    {
+        targetItem12 = Array.Empty<byte>();
+        if (!IsInventorySlot(sourceSlot) || !IsInventorySlot(targetSlot) || sourceSlot == targetSlot)
+        {
+            return false;
+        }
+
+        var s = Sessions.GetOrAdd(sessionId, _ => new SessionState(-1, new Dictionary<byte, byte[]>()));
+        s.Slots.TryGetValue(sourceSlot, out var sourceItem);
+        sourceItem ??= Array.Empty<byte>();
+        if (ItemWire602.IsEmpty(sourceItem))
+        {
+            return false;
+        }
+
+        s.Slots.TryGetValue(targetSlot, out var destItem);
+        destItem ??= Array.Empty<byte>();
+        var moved = sourceItem.ToArray();
+        if (ItemWire602.IsEmpty(destItem))
+        {
+            s.Slots.Remove(sourceSlot);
+            s.Slots[targetSlot] = moved;
+        }
+        else
+        {
+            s.Slots[sourceSlot] = destItem.ToArray();
+            s.Slots[targetSlot] = moved;
+        }
+
+        targetItem12 = s.Slots[targetSlot];
+        return true;
+    }
+
     public static bool TryFindEmptyBagSlot(Guid sessionId, out byte slot)
     {
         if (!Sessions.TryGetValue(sessionId, out var s))

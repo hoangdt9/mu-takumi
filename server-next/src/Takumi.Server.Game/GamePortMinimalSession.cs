@@ -40,6 +40,7 @@ public static class GamePortMinimalSession
         var rosterDbMergeOverlay =
             !string.Equals(Environment.GetEnvironmentVariable("TAKUMI_ROSTER_DB_MERGE_MODE")?.Trim(), "json", StringComparison.OrdinalIgnoreCase);
         byte[]? sessionJoinCharacterName10 = null;
+        var monsterViewportTracker = new MonsterViewportTracker();
         var loginLatch = new LoginLatch();
         Task? protectInboundPumpTask = null;
         CancellationTokenSource? protectInboundPumpCts = null;
@@ -402,6 +403,7 @@ public static class GamePortMinimalSession
                             ct).ConfigureAwait(false);
 
                         await MapMonsterScopeSender.TrySendAfterJoinAsync(
+                            monsterViewportTracker,
                             connection,
                             protect,
                             picked.MapId,
@@ -441,6 +443,15 @@ public static class GamePortMinimalSession
                             var invMove = await JoinInventoryPacket602.BuildAsync(TakumiPostgresMirror.InventorySlots, loggedAccountId, sessionJoinCharacterName10, ct).ConfigureAwait(false);
                             await GamePortOutboundWire.WriteAsync(connection, protect, joinPktMove, ct).ConfigureAwait(false);
                             await GamePortOutboundWire.WriteAsync(connection, protect, invMove, ct).ConfigureAwait(false);
+                            await MapMonsterScopeSender.TrySendAfterJoinAsync(
+                                monsterViewportTracker,
+                                connection,
+                                protect,
+                                pickedMove.MapId,
+                                pickedMove.PosX,
+                                pickedMove.PosY,
+                                remote,
+                                ct).ConfigureAwait(false);
                             Console.WriteLine("[{0}] move map + F3 03 + F3 10 len={2} mapId={1} frame@{3}", remote, mapIdx, invMove.Length, moveOff);
                         }
 
@@ -457,6 +468,15 @@ public static class GamePortMinimalSession
                             pickedInst.PosX = instX;
                             pickedInst.PosY = instY;
                             Volatile.Write(ref rosterDirty, 1);
+                            await MapMonsterScopeSender.TrySendOnMoveAsync(
+                                monsterViewportTracker,
+                                connection,
+                                protect,
+                                pickedInst.MapId,
+                                instX,
+                                instY,
+                                remote,
+                                ct).ConfigureAwait(false);
                         }
 
                         return;
@@ -473,6 +493,15 @@ public static class GamePortMinimalSession
                             {
                                 pickedWalk.PosX = walkX;
                                 pickedWalk.PosY = walkY;
+                                await MapMonsterScopeSender.TrySendOnMoveAsync(
+                                    monsterViewportTracker,
+                                    connection,
+                                    protect,
+                                    pickedWalk.MapId,
+                                    walkX,
+                                    walkY,
+                                    remote,
+                                    ct).ConfigureAwait(false);
                             }
 
                             pickedWalk.Angle = walkAng;

@@ -8,7 +8,9 @@ Last updated: 2026-05-15
 - [x] Load **`Monster.txt`** for minimal **Life/Level** (`MonsterStatCatalog`).
 - [x] Spawn static rows per **map**; filter by **view range** around player join tile.
 - [x] Send **`C2 0x13`** (`MonsterViewportWire602`) after **`F3 03` + `F3 10`** on login/game TCP.
-- [ ] **Regen** / AI / combat — M9 later.
+- [x] **Incremental viewport on walk / instant move** (`MonsterViewportTracker`, `TrySendOnMoveAsync`).
+- [x] **Regen timer** from `Monster.txt` `RegenTime` (`MapMonsterInstance.TryRegen` on viewport scan).
+- [ ] **Combat / MarkDead from damage** — M9 later.
 - [ ] **M8 ETL** to Postgres spawn table — optional; file path env for now.
 
 ## Legacy reference (`Source/4.GameServer`)
@@ -37,6 +39,7 @@ Last updated: 2026-05-15
 | `TAKUMI_MONSTER_INFO_PATH` | `Monster/Monster.txt` |
 | `TAKUMI_MONSTER_VIEW_RANGE` | `15` (Manhattan tiles) |
 | `TAKUMI_MONSTER_VIEWPORT_MAX` | `64` monsters per packet |
+| `TAKUMI_MONSTER_VIEWPORT_MOVE_TILES` | `4` Manhattan tiles before rescan on walk |
 
 If set-base file is missing, a small **Lorencia fallback** spawn set is used for QA.
 

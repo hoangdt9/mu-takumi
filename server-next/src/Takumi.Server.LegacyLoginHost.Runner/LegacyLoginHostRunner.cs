@@ -482,6 +482,7 @@ public static class LegacyLoginHostRunner
         var rosterDbMergeOverlay =
             !string.Equals(Environment.GetEnvironmentVariable("TAKUMI_ROSTER_DB_MERGE_MODE")?.Trim(), "json", StringComparison.OrdinalIgnoreCase);
         byte[]? sessionJoinCharacterName10 = null;
+        var monsterViewportTracker = new MonsterViewportTracker();
         try
         {
             tcp.NoDelay = true;
@@ -744,6 +745,7 @@ public static class LegacyLoginHostRunner
                         picked.MaxMp,
                         ct).ConfigureAwait(false);
                     await MapMonsterScopeSender.TrySendAfterJoinAsync(
+                        monsterViewportTracker,
                         connection,
                         clientProtectOutbound: null,
                         picked.MapId,
@@ -880,6 +882,15 @@ public static class LegacyLoginHostRunner
                         var invMove = await JoinInventoryPacket602.BuildAsync(TakumiPostgresMirror.InventorySlots, loggedAccountId, sessionJoinCharacterName10, ct).ConfigureAwait(false);
                         await WriteOutboundAsync(joinPktMove);
                         await WriteOutboundAsync(invMove);
+                        await MapMonsterScopeSender.TrySendAfterJoinAsync(
+                            monsterViewportTracker,
+                            connection,
+                            clientProtectOutbound: null,
+                            pickedMove.MapId,
+                            pickedMove.PosX,
+                            pickedMove.PosY,
+                            remote,
+                            ct).ConfigureAwait(false);
                         await connection.Output.FlushAsync(ct).ConfigureAwait(false);
                         Console.WriteLine(
                             "[{0}] stub move map: 8E 03 ok + F3 03 + F3 10 len={1} mapId={2} frame@{3}",
@@ -922,6 +933,16 @@ public static class LegacyLoginHostRunner
                         pickedInst.PosX = instX;
                         pickedInst.PosY = instY;
                         Volatile.Write(ref rosterDirty, 1);
+                        await MapMonsterScopeSender.TrySendOnMoveAsync(
+                            monsterViewportTracker,
+                            connection,
+                            clientProtectOutbound: null,
+                            pickedInst.MapId,
+                            instX,
+                            instY,
+                            remote,
+                            ct).ConfigureAwait(false);
+                        await connection.Output.FlushAsync(ct).ConfigureAwait(false);
                     }
 
                     return;
@@ -938,6 +959,16 @@ public static class LegacyLoginHostRunner
                         {
                             pickedWalk.PosX = walkX;
                             pickedWalk.PosY = walkY;
+                            await MapMonsterScopeSender.TrySendOnMoveAsync(
+                                monsterViewportTracker,
+                                connection,
+                                clientProtectOutbound: null,
+                                pickedWalk.MapId,
+                                walkX,
+                                walkY,
+                                remote,
+                                ct).ConfigureAwait(false);
+                            await connection.Output.FlushAsync(ct).ConfigureAwait(false);
                         }
 
                         pickedWalk.Angle = walkAng;

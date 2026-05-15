@@ -12,12 +12,12 @@
 
 #define	LMW_BTN_MENU		0
 #define	LMW_BTN_CREDIT		1
-#ifdef MOVIE_DIRECTSHOW
+#if defined(MOVIE_DIRECTSHOW) || defined(__ANDROID__)
 #define	LMW_BTN_MOVIE		2
 #define	LMW_BTN_MAX			3
-#else	// MOVIE_DIRECTSHOW
+#else
 #define	LMW_BTN_MAX			2
-#endif	// MOVIE_DIRECTSHOW
+#endif
 
 class CLoginMainWin : public CWin  
 {

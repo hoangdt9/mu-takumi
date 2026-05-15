@@ -1489,6 +1489,10 @@ void CreateLogInScene()
 	
 	::PlayMp3(g_lpszMp3[MUSIC_LOGIN_THEME]);
 
+#if defined(__ANDROID__)
+	MU_AndroidTryStartLoginBackgroundMovie();
+#endif
+
 	g_ErrorReport.Write( "> Login Scene init success.\r\n");
 }
 
@@ -1517,7 +1521,11 @@ void NewMoveLogInScene()
 			SAFE_DELETE(g_pMovieScene);
 		}
 		CUIMng::Instance().SetMoving(false);
-#endif // MOVIE_DIRECTSHOW
+#elif defined(__ANDROID__)
+		MU_AndroidStopLoginIntroMovie();
+		MU_AndroidStopLoginBackgroundMovie();
+		CUIMng::Instance().SetMoving(false);
+#endif
 		g_ErrorReport.Write( "> Request Character list\r\n");
 
 		CCameraMove::GetInstancePtr()->SetTourMode(FALSE);
@@ -1535,12 +1543,12 @@ void NewMoveLogInScene()
 		ClearCharacters();
 	}
 
-#ifdef MOVIE_DIRECTSHOW
+#if defined(MOVIE_DIRECTSHOW) || defined(__ANDROID__)
 	if(CUIMng::Instance().IsMoving() == true)
 	{
 		return;
 	}
-#endif // MOVIE_DIRECTSHOW
+#endif
 	if (!CUIMng::Instance().m_CreditWin.IsShow())
 	{
 		InitTerrainLight();
@@ -1581,6 +1589,13 @@ bool NewRenderLogInScene(HDC hDC)
 	if(!InitLogIn) return false;
 
 	FogEnable = false;
+
+#if defined(__ANDROID__)
+	if (!CUIMng::Instance().IsMoving())
+	{
+		MU_AndroidLoginBgVideoRenderTick();
+	}
+#endif
 // 	extern GLfloat FogColor[4];
 // 	FogColor[0] = 178.f/256.f; FogColor[1] = 178.f/256.f; FogColor[2] = 178.f/256.f; FogColor[3] = 0.f;
 // 	glFogf(GL_FOG_START, 3700.0f);
@@ -1610,13 +1625,25 @@ bool NewRenderLogInScene(HDC hDC)
 		}
 		return true;
 	}
-#endif // MOVIE_DIRECTSHOW
+#elif defined(__ANDROID__)
+	if (CUIMng::Instance().IsMoving() == true)
+	{
+		// Intro video is a full-screen TextureView + MediaPlayer (see MuMainNativeActivity).
+		return true;
+	}
+#endif
 
 	vec3_t pos;
 	VectorCopy(CameraPosition, pos);
 
     MoveMainCamera();
 	const bool skipNonEssentialPasses = SkipNonEssentialMobilePasses();
+
+#if defined(__ANDROID__)
+	const bool androidLoginBgVideo = MU_AndroidIsLoginBackgroundMovieActive();
+#else
+	const bool androidLoginBgVideo = false;
+#endif
 
 	int Width,Height;
 
@@ -1647,6 +1674,10 @@ bool NewRenderLogInScene(HDC hDC)
 
 	if (!CUIMng::Instance().m_CreditWin.IsShow())
 	{
+#if defined(__ANDROID__)
+		if (!androidLoginBgVideo)
+		{
+#endif
 		CameraViewFar = 330.f * CCameraMove::GetInstancePtr()->GetCurrentCameraDistanceLevel();
 #ifndef PJH_NEW_SERVER_SELECT_MAP
 		BeginOpengl();
@@ -1670,6 +1701,9 @@ bool NewRenderLogInScene(HDC hDC)
 		}
 		RenderObjects_AfterCharacter();
 		ThePetProcess().RenderPets();
+#if defined(__ANDROID__)
+		}
+#endif
 	}
 
 	BeginSprite();

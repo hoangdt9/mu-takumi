@@ -27,6 +27,9 @@
 #include "../UIControls.h"
 #include "SceneCommon.h"
 #include "../ZzzOpenData.h"
+#if defined(__ANDROID__)
+#include "../MobilePlatform.h"
+#endif
 
 // External declarations
 extern int DeleteGuildIndex;
@@ -300,6 +303,10 @@ void CreateLogInScene()
 
     ::PlayMp3(MUSIC_LOGIN_THEME);
 
+#if defined(__ANDROID__)
+    MU_AndroidTryStartLoginBackgroundMovie();
+#endif
+
     g_ErrorReport.Write(L"> Login Scene init success.\r\n");
 }
 
@@ -376,19 +383,40 @@ bool NewRenderLogInScene(HDC hDC)
 
     MoveMainCamera();
 
+#if defined(__ANDROID__)
+    const bool androidLoginBgVideo = MU_AndroidIsLoginBackgroundMovieActive();
+    if (androidLoginBgVideo)
+    {
+        glDisable(GL_SCISSOR_TEST);
+        glViewport(0, 0, WindowWidth, WindowHeight);
+        glClearColor(0.f, 0.f, 0.f, 0.f);
+        glClear(GL_COLOR_BUFFER_BIT);
+    }
+#else
+    const bool androidLoginBgVideo = false;
+#endif
+
     int Width, Height;
 
     glColor3f(1.f, 1.f, 1.f);
 
     Height = 480;
     Width = GetScreenWidth();
+#if defined(__ANDROID__)
+    glClearColor(0.f, 0.f, 0.f, androidLoginBgVideo ? 0.f : 1.f);
+#else
     glClearColor(0.f, 0.f, 0.f, 1.f);
+#endif
 
     BeginOpengl(0, 25, 640, 430);
     CreateFrustrum((float)Width / 640.0f, (float)(Height - 50) / 480.0f, pos);
 
     if (!CUIMng::Instance().m_CreditWin.IsShow())
     {
+#if defined(__ANDROID__)
+        if (!androidLoginBgVideo)
+        {
+#endif
         CameraViewFar = 330.f * CCameraMove::GetInstancePtr()->GetCurrentCameraDistanceLevel();
 
         RenderTerrain(false);
@@ -403,6 +431,9 @@ bool NewRenderLogInScene(HDC hDC)
         RenderBoids();
         RenderObjects_AfterCharacter();
         ThePetProcess().RenderPets();
+#if defined(__ANDROID__)
+        }
+#endif
     }
 
     BeginSprite();

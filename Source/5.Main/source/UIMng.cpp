@@ -44,9 +44,9 @@ CUIMng::CUIMng()
 	m_pgbLoding = NULL;
 	m_pLoadingScene = NULL;
 	
-#ifdef MOVIE_DIRECTSHOW
+#if defined(MOVIE_DIRECTSHOW) || defined(__ANDROID__)
 	m_bMoving = false;
-#endif // MOVIE_DIRECTSHOW
+#endif
 }
 
 CUIMng::~CUIMng()

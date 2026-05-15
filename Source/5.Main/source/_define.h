@@ -576,6 +576,10 @@ enum struct STORAGE_TYPE
 #define WM_GRAPHNOTIFY  WM_USER+13
 #define MOVIE_FILE_TXT	"Data\\Movie\\Movie.txt"
 #define MOVIE_FILE_WMV	"Data\\Movie\\MU.wmv"
+#if defined(__ANDROID__) || defined(MU_IOS)
+/** H.264 in MP4 plays on mobile; WMV often fails in MediaPlayer. Same folder as {@link MOVIE_FILE_WMV}. */
+#define MOVIE_FILE_MP4	"Data\\Movie\\MU.mp4"
+#endif
 
 /////////////////////////////////////_npcbreederfile end_//////////////////////////////////////////////////////
 //////////////////////////////////////_matchevent start_//////////////////////////////////////////////////////

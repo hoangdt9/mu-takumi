@@ -53,9 +53,9 @@ protected:
 	int				m_nScene;
 	bool			m_bWinActive;
 	bool			m_bSysMenuWinShow;
-#ifdef MOVIE_DIRECTSHOW
+#if defined(MOVIE_DIRECTSHOW) || defined(__ANDROID__)
 	bool			m_bMoving;
-#endif // MOVIE_DIRECTSHOW
+#endif
 
 public:
 	virtual ~CUIMng();
@@ -83,10 +83,10 @@ public:
 	void SetSysMenuWinShow(bool bShow) { m_bSysMenuWinShow = bShow; }
 	bool IsSysMenuWinShow() { return m_bSysMenuWinShow; };
 
-#ifdef MOVIE_DIRECTSHOW
+#if defined(MOVIE_DIRECTSHOW) || defined(__ANDROID__)
 	void SetMoving(bool bMoving) { m_bMoving = bMoving; };
 	bool IsMoving() { return m_bMoving; };
-#endif // MOVIE_DIRECTSHOW
+#endif
 
 protected:
 	CUIMng();

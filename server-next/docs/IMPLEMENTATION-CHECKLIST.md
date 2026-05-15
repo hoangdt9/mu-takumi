@@ -164,9 +164,10 @@ Use this to avoid unnecessary rebuilds.
    - [ ] Import `MuServer/4.GameServer/Data/Monster/MonsterSetBase*.txt` → bảng spawn.  
    - [ ] Cửa / shop / custom từ `Data/Custom/` + nguồn C++ tham chiếu.
 
-9. **M9 — NPC & monster runtime**  
-   - [ ] Spawn theo map; regen; bảng monster id → stats (tối thiểu HP đứng yên).  
-   - [ ] Gói scope spawn tới client (opcode theo M1).
+9. **M9 — NPC & monster runtime** *(scope A — **`docs/M9-NPC-MONSTER-CHECKLIST.md`**)*  
+   - [x] Spawn theo map từ **MonsterSetBase.txt** + **Monster.txt** stats (đứng yên; view-range filter).  
+   - [x] Gói **`C2 0x13`** scope spawn sau join (`MonsterViewportWire602`, hook Legacy + GamePort).  
+   - [ ] Regen; AI; broadcast khi di chuyển (M10).
 
 10. **M10 — Movement & visibility**  
     - [x] Nhận **walk / instant move** trên TCP login tối thiểu (`LegacyLoginHost`, `GamePortMinimalSession`) → cập nhật roster tile (chưa broadcast scope).  

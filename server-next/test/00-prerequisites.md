@@ -27,7 +27,13 @@ TAKUMI_STRUCTURED_LOG=1
 
 # M4b + M7 vitals/inventory mirror
 TAKUMI_ROSTER_DB_SYNC=1
+TAKUMI_ROSTER_DB_PRIMARY=1
+TAKUMI_CHARACTER_DOMAIN_SYNC=1
 TAKUMI_PG_CONNECTION_STRING=Host=postgres;Port=5432;Username=takumi;Password=takumi;Database=takumi_runtime
+
+# M7 — đẩy hết nhân vật trong takumi-roster/*.json lên DB (một lần hoặc mỗi lần start)
+# ./scripts/migrate-roster-json-to-db.sh
+# TAKUMI_MIGRATE_ROSTER_JSON=1
 
 # M7d — gửi 0x26/0x27 sau join
 TAKUMI_SEND_LIFE_MANA_AFTER_JOIN=1

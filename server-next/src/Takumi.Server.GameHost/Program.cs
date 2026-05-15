@@ -11,6 +11,18 @@ using Takumi.Server.Protocol;
 
 RepoEnvLoader.ApplyDefaultsAndLocalEnv();
 TakumiPostgresMirror.InitIfEnabled();
+
+if (CharacterRosterJsonMigrator.IsMigrateOnlyMode())
+{
+    await CharacterRosterJsonMigrator.MigrateAllJsonFilesAsync().ConfigureAwait(false);
+    return 0;
+}
+
+if (CharacterRosterJsonMigrator.IsMigrateOnStartupEnabled())
+{
+    await CharacterRosterJsonMigrator.MigrateAllJsonFilesAsync().ConfigureAwait(false);
+}
+
 TakumiPostgresMirror.InitSessionHandoffIfEnabled();
 TakumiPostgresMirror.InitMonsterSpawnIfEnabled();
 TakumiPostgresMirror.InitWorldStaticDataIfEnabled();

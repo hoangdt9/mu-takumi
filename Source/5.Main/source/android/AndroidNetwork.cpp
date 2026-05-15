@@ -397,14 +397,19 @@ void RecvLoop(
                 continue;
             }
 
-            NET_LOGE("[fd=%d] recv failed: count=%d errno=%d", handle, count, errno);
+            const int recvErr = (count < 0) ? errno : 0;
+            NET_LOGE("[fd=%d] recv failed: count=%d errno=%d", handle, count, recvErr);
             __android_log_print(
                 ANDROID_LOG_INFO,
                 "TakumiErrorReport",
                 "[AndroidLogin] recv closed/error fd=%d count=%d errno=%d",
                 handle,
                 count,
-                count < 0 ? errno : 0);
+                recvErr);
+            if (count < 0 && (recvErr == EAGAIN || recvErr == EWOULDBLOCK))
+            {
+                continue;
+            }
             break;
         }
 

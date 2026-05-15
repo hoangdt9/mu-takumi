@@ -140,6 +140,12 @@ public:
 	static void AndroidOnPacket(int32_t handle, int32_t size, uint8_t* data);
 	static void AndroidOnDisconnect(int32_t handle);
 	void AndroidClearPacketQueue();
+	/// Called before the Android recv thread starts so CheckSocketPort / send paths see a valid fd.
+	void AndroidBindSocketHandle(int32_t handle);
+	/// After each processed MU packet: free CPacket garbage (PopPacket) — must not run while recv holds stale pointer.
+	void AndroidFlushPacketGarbage();
+	/// Drain kernel TCP queue on the connect thread (C2 on-accept before recv thread runs).
+	void AndroidSyncPollRecvPending();
 #endif
 
 	void LogPrint( char *szlog, ...);

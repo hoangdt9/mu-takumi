@@ -128,6 +128,7 @@ set_target_properties(mpg123 PROPERTIES IMPORTED_LOCATION "${JNI_LIBS_DIR}/libmp
 
 file(GLOB_RECURSE GAME_SOURCES "${GAME_SRC_DIR}/*.cpp")
 list(APPEND GAME_SOURCES "${GAME_SRC_DIR}/ScenePerfTelemetry.cpp")
+list(APPEND GAME_SOURCES "${GAME_SRC_DIR}/Platform/AndroidLoginUi.cpp")
 list(FILTER GAME_SOURCES EXCLUDE REGEX ".*[Ww]inmain\\.cpp$")
 list(FILTER GAME_SOURCES EXCLUDE REGEX ".*MuEditor.*\\.cpp$")
 list(FILTER GAME_SOURCES EXCLUDE REGEX ".*imgui.*\\.cpp$")

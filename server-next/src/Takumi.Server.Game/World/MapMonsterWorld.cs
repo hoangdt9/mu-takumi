@@ -10,7 +10,14 @@ public static class MapMonsterWorld
     static IReadOnlyList<MonsterSetBaseEntry> _setBase = Array.Empty<MonsterSetBaseEntry>();
     static MonsterStatCatalog _stats = new();
     static Dictionary<byte, List<MapMonsterInstance>> _byMap = new();
+    static Dictionary<int, MapMonsterInstance> _byObjectKey = new();
     static int _nextObjectKey = 12_000;
+
+    public static bool TryGetMonster(int objectKey, out MapMonsterInstance? monster)
+    {
+        EnsureInitialized();
+        return _byObjectKey.TryGetValue(objectKey, out monster);
+    }
 
     public static void EnsureInitialized()
     {
@@ -99,6 +106,7 @@ public static class MapMonsterWorld
     static void RebuildInstances()
     {
         _byMap = new Dictionary<byte, List<MapMonsterInstance>>();
+        _byObjectKey = new Dictionary<int, MapMonsterInstance>();
         var key = _nextObjectKey;
         foreach (var e in _setBase)
         {
@@ -117,10 +125,11 @@ public static class MapMonsterWorld
                 X = x,
                 Y = y,
                 Dir = e.Dir,
-                Life = stat.Life,
+                MaxLife = stat.Life,
                 Level = stat.Level,
                 RegenDelayMs = regenMs,
             };
+            inst.InitializeLife();
 
             if (!_byMap.TryGetValue(inst.Map, out var bucket))
             {
@@ -129,6 +138,7 @@ public static class MapMonsterWorld
             }
 
             bucket.Add(inst);
+            _byObjectKey[inst.ObjectKey] = inst;
         }
 
         _nextObjectKey = key;

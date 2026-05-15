@@ -15,6 +15,16 @@ public sealed class GameRosterEntry
     public byte PosX { get; set; }
     public byte PosY { get; set; }
     public byte Angle { get; set; }
+
+    public int CurrentHp { get; set; }
+
+    public int MaxHp { get; set; }
+
+    public int CurrentMp { get; set; }
+
+    public int MaxMp { get; set; }
+
+    public long Zen { get; set; }
 }
 
 public static class GameSpawnEnv
@@ -160,6 +170,11 @@ public static class GameRosterDisk
                     PosX = c.PosX,
                     PosY = c.PosY,
                     Angle = c.Angle,
+                    CurrentHp = c.CurrentHp,
+                    MaxHp = c.MaxHp,
+                    CurrentMp = c.CurrentMp,
+                    MaxMp = c.MaxMp,
+                    Zen = c.Zen,
                 };
                 ApplyLegacySpawnIfUnset(entry);
                 list.Add(entry);
@@ -187,6 +202,16 @@ public static class GameRosterDisk
         public byte PosX { get; set; }
         public byte PosY { get; set; }
         public byte Angle { get; set; }
+
+        public int CurrentHp { get; set; }
+
+        public int MaxHp { get; set; }
+
+        public int CurrentMp { get; set; }
+
+        public int MaxMp { get; set; }
+
+        public long Zen { get; set; }
     }
 }
 

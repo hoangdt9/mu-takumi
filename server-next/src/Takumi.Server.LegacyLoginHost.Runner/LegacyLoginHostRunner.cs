@@ -853,6 +853,27 @@ public static class LegacyLoginHostRunner
                 }
 
                 if (loginLatch.IsLoggedIn
+                    && sessionJoinCharacterName10 is not null)
+                {
+                    var pickedCombat = FindRosterEntry(roster, sessionJoinCharacterName10);
+                    if (pickedCombat is not null
+                        && await MonsterCombatHandler.TryHandleCombatPacketAsync(
+                            monsterViewportTracker,
+                            connection,
+                            clientProtectOutbound: null,
+                            pickedCombat.MapId,
+                            pickedCombat.PosX,
+                            pickedCombat.PosY,
+                            packet,
+                            remote,
+                            ct).ConfigureAwait(false))
+                    {
+                        await connection.Output.FlushAsync(ct).ConfigureAwait(false);
+                        return;
+                    }
+                }
+
+                if (loginLatch.IsLoggedIn
                     && sessionJoinCharacterName10 is not null
                     && ClientWalkPackets602.TryFindInstantMove(packet, out _, out var instX, out var instY))
                 {

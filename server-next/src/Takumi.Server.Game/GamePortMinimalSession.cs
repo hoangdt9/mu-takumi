@@ -377,6 +377,11 @@ public static class GamePortMinimalSession
                             picked.PosY,
                             remote,
                             ct).ConfigureAwait(false);
+                        if (RosterVitalsLifecycle.TrySeedGameEntryFromJoin(picked, joinPkt))
+                        {
+                            Volatile.Write(ref rosterDirty, 1);
+                        }
+
                         sessionJoinCharacterName10 = new byte[10];
                         Buffer.BlockCopy(joinName10, 0, sessionJoinCharacterName10, 0, 10);
                         Console.WriteLine(
@@ -400,9 +405,14 @@ public static class GamePortMinimalSession
                         if (pickedMove is not null)
                         {
                             pickedMove.MapId = (byte)(mapIdx & 0xFF);
-                            SaveRoster(loggedAccountId!, roster);
                             var mvSpawn = new JoinMapSpawnWire(pickedMove.MapId, pickedMove.PosX, pickedMove.PosY, pickedMove.Angle);
                             var joinPktMove = JoinMapServerWire602.Build(ToWire(pickedMove), mvSpawn);
+                            if (RosterVitalsLifecycle.TrySeedGameEntryFromJoin(pickedMove, joinPktMove))
+                            {
+                                Volatile.Write(ref rosterDirty, 1);
+                            }
+
+                            SaveRoster(loggedAccountId!, roster);
                             var invMove = await JoinInventoryPacket602.BuildAsync(TakumiPostgresMirror.InventorySlots, loggedAccountId, sessionJoinCharacterName10, ct).ConfigureAwait(false);
                             await GamePortOutboundWire.WriteAsync(connection, protect, joinPktMove, ct).ConfigureAwait(false);
                             await GamePortOutboundWire.WriteAsync(connection, protect, invMove, ct).ConfigureAwait(false);
@@ -419,6 +429,26 @@ public static class GamePortMinimalSession
                         }
 
                         return;
+                    }
+
+                    if (loginLatch.IsLoggedIn
+                        && sessionJoinCharacterName10 is not null)
+                    {
+                        var pickedCombat = FindRosterEntry(roster, sessionJoinCharacterName10);
+                        if (pickedCombat is not null
+                            && await MonsterCombatHandler.TryHandleCombatPacketAsync(
+                                monsterViewportTracker,
+                                connection,
+                                protect,
+                                pickedCombat.MapId,
+                                pickedCombat.PosX,
+                                pickedCombat.PosY,
+                                packet,
+                                remote,
+                                ct).ConfigureAwait(false))
+                        {
+                            return;
+                        }
                     }
 
                     if (loginLatch.IsLoggedIn
@@ -668,6 +698,11 @@ public static class GamePortMinimalSession
                                     e.Angle = d.Angle;
                                     e.Level = d.Level;
                                     e.ServerClass = d.ServerClass;
+                                    e.CurrentHp = d.CurrentHp;
+                                    e.MaxHp = d.MaxHp;
+                                    e.CurrentMp = d.CurrentMp;
+                                    e.MaxMp = d.MaxMp;
+                                    e.Zen = d.Zen;
                                 });
                             CharacterRosterMirrorHealth.RecordMergeSuccess();
                         }
@@ -774,6 +809,11 @@ public static class GamePortMinimalSession
                     PosX = e.PosX,
                     PosY = e.PosY,
                     Angle = e.Angle,
+                    CurrentHp = e.CurrentHp,
+                    MaxHp = e.MaxHp,
+                    CurrentMp = e.CurrentMp,
+                    MaxMp = e.MaxMp,
+                    Zen = e.Zen,
                 });
         }
 
@@ -805,16 +845,19 @@ public static class GamePortMinimalSession
             }
 
             list.Add(
-                new CharacterRosterRow
-                {
-                    Name = name,
-                    ServerClass = e.ServerClass,
-                    Level = e.Level,
-                    MapId = e.MapId,
-                    PosX = e.PosX,
-                    PosY = e.PosY,
-                    Angle = e.Angle,
-                });
+                CharacterRosterRowMapping.ToRow(
+                    name,
+                    e.ServerClass,
+                    e.Level,
+                    e.MapId,
+                    e.PosX,
+                    e.PosY,
+                    e.Angle,
+                    e.CurrentHp,
+                    e.MaxHp,
+                    e.CurrentMp,
+                    e.MaxMp,
+                    e.Zen));
         }
 
         return list.ToArray();
@@ -834,6 +877,16 @@ public static class GamePortMinimalSession
         public byte PosX { get; set; }
         public byte PosY { get; set; }
         public byte Angle { get; set; }
+
+        public int CurrentHp { get; set; }
+
+        public int MaxHp { get; set; }
+
+        public int CurrentMp { get; set; }
+
+        public int MaxMp { get; set; }
+
+        public long Zen { get; set; }
     }
 
     static GameRosterEntry? FindRosterEntry(List<GameRosterEntry> roster, byte[] joinName10)
@@ -849,7 +902,8 @@ public static class GamePortMinimalSession
         return null;
     }
 
-    static CharacterRosterWire ToWire(GameRosterEntry e) => new(e.Name10, e.ServerClass, e.Level);
+    static CharacterRosterWire ToWire(GameRosterEntry e) =>
+        new(e.Name10, e.ServerClass, e.Level, CharacterRosterVitals.FromInts(e.CurrentHp, e.MaxHp, e.CurrentMp, e.MaxMp, e.Zen));
 
     static List<CharacterRosterWire> MapRosterToWire(List<GameRosterEntry> roster)
     {

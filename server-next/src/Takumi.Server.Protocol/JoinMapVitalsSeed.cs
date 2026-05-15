@@ -1,0 +1,47 @@
+using System.Buffers.Binary;
+
+namespace Takumi.Server.Protocol;
+
+/// <summary>M7d: copy HP/MP/zen from a sent <c>F3 03</c> join packet into roster storage when vitals are still unset.</summary>
+public static class JoinMapVitalsSeed
+{
+    public static bool TryReadFromJoinPacket(ReadOnlySpan<byte> joinPkt, out CharacterRosterVitals vitals)
+    {
+        vitals = default;
+        if (joinPkt.Length < JoinMapServerWire602.PacketLength)
+        {
+            return false;
+        }
+
+        if (joinPkt[0] != 0xC1 || joinPkt[2] != 0xF3 || joinPkt[3] != 0x03)
+        {
+            return false;
+        }
+
+        var life = BinaryPrimitives.ReadUInt16LittleEndian(joinPkt.Slice(34));
+        var lifeMax = BinaryPrimitives.ReadUInt16LittleEndian(joinPkt.Slice(36));
+        var mana = BinaryPrimitives.ReadUInt16LittleEndian(joinPkt.Slice(38));
+        var manaMax = BinaryPrimitives.ReadUInt16LittleEndian(joinPkt.Slice(40));
+        var gold = BinaryPrimitives.ReadUInt32LittleEndian(joinPkt.Slice(50));
+
+        if (lifeMax == 0)
+        {
+            return false;
+        }
+
+        vitals = CharacterRosterVitals.FromInts(life, lifeMax, mana, manaMax, gold);
+        return true;
+    }
+
+    /// <summary>When <paramref name="maxHpAlreadySet"/> is false, reads join wire stats into <paramref name="vitals"/>.</summary>
+    public static bool TryApplyFromJoinPacketIfUnset(bool maxHpAlreadySet, ReadOnlySpan<byte> joinPkt, out CharacterRosterVitals vitals)
+    {
+        vitals = default;
+        if (maxHpAlreadySet)
+        {
+            return false;
+        }
+
+        return TryReadFromJoinPacket(joinPkt, out vitals);
+    }
+}

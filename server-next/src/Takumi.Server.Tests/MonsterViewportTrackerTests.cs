@@ -29,8 +29,9 @@ public sealed class MonsterViewportTrackerTests
         Assert.True(tracker.ShouldRescan(0, 105, 100, 4));
     }
 
-    static MapMonsterInstance Make(int key, int cls, byte x, byte y) =>
-        new()
+    static MapMonsterInstance Make(int key, int cls, byte x, byte y)
+    {
+        var m = new MapMonsterInstance
         {
             ObjectKey = key,
             MonsterClass = cls,
@@ -38,8 +39,11 @@ public sealed class MonsterViewportTrackerTests
             X = x,
             Y = y,
             Dir = 3,
-            Life = 100,
+            MaxLife = 100,
             Level = 1,
             RegenDelayMs = 10_000,
         };
+        m.InitializeLife();
+        return m;
+    }
 }

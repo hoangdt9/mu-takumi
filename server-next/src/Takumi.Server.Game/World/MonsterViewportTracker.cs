@@ -20,6 +20,8 @@ public sealed class MonsterViewportTracker
 
     public void Clear() => _sentKeys.Clear();
 
+    public void Forget(int objectKey) => _sentKeys.Remove(objectKey);
+
     public bool ShouldRescan(byte mapId, byte playerX, byte playerY, int moveThresholdTiles)
     {
         if (!_hasAnchor || mapId != _map)

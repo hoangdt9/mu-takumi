@@ -10,7 +10,8 @@ Last updated: 2026-05-15
 - [x] Send **`C2 0x13`** (`MonsterViewportWire602`) after **`F3 03` + `F3 10`** on login/game TCP.
 - [x] **Incremental viewport on walk / instant move** (`MonsterViewportTracker`, `TrySendOnMoveAsync`).
 - [x] **Regen timer** from `Monster.txt` `RegenTime` (`MapMonsterInstance.TryRegen` on viewport scan).
-- [ ] **Combat / MarkDead from damage** — M9 later.
+- [x] **Combat stub** — `C1 0x11` hit / `0x19` skill → damage, `MarkDead`, `C1 0x16` die, `C1 0x14` destroy.
+- [ ] **Full combat** (defense, skills, broadcast to others) — post-M9.
 - [ ] **M8 ETL** to Postgres spawn table — optional; file path env for now.
 
 ## Legacy reference (`Source/4.GameServer`)
@@ -40,6 +41,8 @@ Last updated: 2026-05-15
 | `TAKUMI_MONSTER_VIEW_RANGE` | `15` (Manhattan tiles) |
 | `TAKUMI_MONSTER_VIEWPORT_MAX` | `64` monsters per packet |
 | `TAKUMI_MONSTER_VIEWPORT_MOVE_TILES` | `4` Manhattan tiles before rescan on walk |
+| `TAKUMI_COMBAT_STUB_DAMAGE` | `50` damage per hit |
+| `TAKUMI_COMBAT_MELEE_RANGE` | `3` tiles (Manhattan) |
 
 If set-base file is missing, a small **Lorencia fallback** spawn set is used for QA.
 
@@ -49,3 +52,5 @@ If set-base file is missing, a small **Lorencia fallback** spawn set is used for
 2. Login → select character → enter world.
 3. Host log: `[m9] sent C2 0x13 monster viewport count=…`
 4. Client logcat: `0x13 [ReceiveCreateMonsterViewport`
+5. Tap attack near a mob (≤3 tiles): host `[m9] combat hit … died=True` then `C1 0x14 destroy + C1 0x16 die`.
+6. Client: damage numbers, mob disappears; after regen delay, walk back into range → new `0x13` spawn.

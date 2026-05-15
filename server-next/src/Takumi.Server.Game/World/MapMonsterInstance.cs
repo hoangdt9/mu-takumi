@@ -8,12 +8,33 @@ public sealed class MapMonsterInstance
     public required byte X { get; init; }
     public required byte Y { get; init; }
     public required byte Dir { get; init; }
-    public required int Life { get; init; }
+    public required int MaxLife { get; init; }
     public required int Level { get; init; }
     public required int RegenDelayMs { get; init; }
 
+    public int CurrentLife { get; private set; }
     public bool IsAlive { get; private set; } = true;
     DateTimeOffset? _diedAtUtc;
+
+    public void InitializeLife() => CurrentLife = MaxLife;
+
+    /// <returns><see langword="true"/> if the monster died from this hit.</returns>
+    public bool ApplyDamage(int amount)
+    {
+        if (!IsAlive || amount <= 0)
+        {
+            return false;
+        }
+
+        CurrentLife = Math.Max(0, CurrentLife - amount);
+        if (CurrentLife > 0)
+        {
+            return false;
+        }
+
+        MarkDead();
+        return true;
+    }
 
     public void MarkDead()
     {
@@ -23,6 +44,7 @@ public sealed class MapMonsterInstance
         }
 
         IsAlive = false;
+        CurrentLife = 0;
         _diedAtUtc = DateTimeOffset.UtcNow;
     }
 
@@ -37,6 +59,7 @@ public sealed class MapMonsterInstance
         if (_diedAtUtc is null)
         {
             IsAlive = true;
+            CurrentLife = MaxLife;
             return true;
         }
 
@@ -47,6 +70,7 @@ public sealed class MapMonsterInstance
         }
 
         IsAlive = true;
+        CurrentLife = MaxLife;
         _diedAtUtc = null;
         return true;
     }

@@ -43,7 +43,8 @@ public sealed class PostgresCharacterRosterRepository : IAsyncDisposable
         await using var conn = await this._dataSource.OpenConnectionAsync(ct).ConfigureAwait(false);
         await using var cmd = new NpgsqlCommand(
             """
-            SELECT character_name, server_class, level, map_id, pos_x, pos_y, angle
+            SELECT character_name, server_class, level, map_id, pos_x, pos_y, angle,
+                   current_hp, max_hp, current_mp, max_mp, zen
             FROM character_roster
             WHERE account_login = $1
             ORDER BY character_name
@@ -63,6 +64,11 @@ public sealed class PostgresCharacterRosterRepository : IAsyncDisposable
                     PosX = (byte)reader.GetInt16(4),
                     PosY = (byte)reader.GetInt16(5),
                     Angle = (byte)reader.GetInt16(6),
+                    CurrentHp = reader.GetInt32(7),
+                    MaxHp = reader.GetInt32(8),
+                    CurrentMp = reader.GetInt32(9),
+                    MaxMp = reader.GetInt32(10),
+                    Zen = reader.GetInt64(11),
                 });
         }
 
@@ -84,8 +90,10 @@ public sealed class PostgresCharacterRosterRepository : IAsyncDisposable
         {
             await using var ins = new NpgsqlCommand(
                 """
-                INSERT INTO character_roster (account_login, character_name, server_class, level, map_id, pos_x, pos_y, angle)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                INSERT INTO character_roster (
+                    account_login, character_name, server_class, level, map_id, pos_x, pos_y, angle,
+                    current_hp, max_hp, current_mp, max_mp, zen)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
                 """,
                 conn,
                 tx);
@@ -97,6 +105,11 @@ public sealed class PostgresCharacterRosterRepository : IAsyncDisposable
             ins.Parameters.Add(new NpgsqlParameter("x", NpgsqlDbType.Smallint) { Value = (short)row.PosX });
             ins.Parameters.Add(new NpgsqlParameter("y", NpgsqlDbType.Smallint) { Value = (short)row.PosY });
             ins.Parameters.Add(new NpgsqlParameter("g", NpgsqlDbType.Smallint) { Value = (short)row.Angle });
+            ins.Parameters.Add(new NpgsqlParameter("hp", NpgsqlDbType.Integer) { Value = row.CurrentHp });
+            ins.Parameters.Add(new NpgsqlParameter("hpmax", NpgsqlDbType.Integer) { Value = row.MaxHp });
+            ins.Parameters.Add(new NpgsqlParameter("mp", NpgsqlDbType.Integer) { Value = row.CurrentMp });
+            ins.Parameters.Add(new NpgsqlParameter("mpmax", NpgsqlDbType.Integer) { Value = row.MaxMp });
+            ins.Parameters.Add(new NpgsqlParameter("z", NpgsqlDbType.Bigint) { Value = row.Zen });
             await ins.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
         }
 

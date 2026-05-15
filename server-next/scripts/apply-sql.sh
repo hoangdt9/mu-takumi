@@ -5,7 +5,7 @@
 #   ./scripts/apply-sql.sh "postgresql://takumi:takumi@127.0.0.1:54444/takumi_runtime"
 # Inside legacy-login container (peer auth to service postgres):
 #   docker compose exec -T legacy-login sh -c 'psql "postgresql://takumi:takumi@postgres:5432/takumi_runtime" -v ON_ERROR_STOP=1 -f /app/sql/init/001_character_roster.sql'
-#   (Loop runs every sql/init/*.sql in lexical order — includes 002_inventory_slot.sql when present.)
+#   (Loop runs every sql/init/*.sql in lexical order — includes 002, 003, 004 when present.)
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 URI="${1:-}"

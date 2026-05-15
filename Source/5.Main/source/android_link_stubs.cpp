@@ -47,6 +47,9 @@ extern "C" void SendServerListRequest(int32_t handle);
 
 extern BOOL g_bGameServerConnected;
 
+extern BYTE g_byPacketSerialSend;
+extern BYTE g_byPacketSerialRecv;
+
 char* szServerIpAddress = const_cast<char*>(CfgDefaults::CfgDefaultServerIpNarrow);
 std::string g_strSelectedML = "Eng";
 int m_SavePassOnOff = 0;
@@ -764,8 +767,11 @@ BOOL CWsctlc::Connect(char* ipAddr, unsigned short port, DWORD)
     }
 
     m_socket = static_cast<SOCKET>(handle);
+    // Match WSclient.cpp CreateConnectSocket: OpenMU SM counter is per-TCP; split M6 opens a new socket to GameHost.
+    g_byPacketSerialSend = 0;
+    g_byPacketSerialRecv = 0;
     g_ErrorReport.Write(
-        "[Android Socket] connected ip=%s port=%d handle=%d [AndroidLogin] native CM ok\r\n",
+        "[Android Socket] connected ip=%s port=%d handle=%d [AndroidLogin] native CM ok (SM serial reset)\r\n",
         ipAddr,
         port,
         handle);

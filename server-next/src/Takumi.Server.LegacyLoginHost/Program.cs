@@ -73,7 +73,7 @@ if (accounts is null || accounts.Count == 0)
     return 1;
 }
 
-var (serverDecryptKeys, decryptKeysTag) = Dec2ServerDecryptKeysLoader.Load();
+var (serverDecryptKeys, decryptKeysTag) = Season6ClientToServerDecryptSession.LoadServerDecryptKeysFromDec2OrEnv();
 
 var verbose = string.Equals(Environment.GetEnvironmentVariable("TAKUMI_VERBOSE"), "1", StringComparison.OrdinalIgnoreCase)
               || string.Equals(Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT"), "Development", StringComparison.OrdinalIgnoreCase);
@@ -486,6 +486,9 @@ static async Task HandleClientAsync(
         // PacketReceived may invoke handlers concurrently before the previous async handler awaits;
         // a follow-up 12-byte F3 request could run before SetLoggedIn() → list ignored. Serialize per connection.
         using var packetGate = new SemaphoreSlim(1, 1);
+        var maxDecryptedPacketBytes = DecryptedPacketSafety602.ParseMaxDecryptedPacketBytes();
+        var maxPacketsPerSecond = DecryptedPacketSafety602.ParseMaxPacketsPerSecond();
+        var decryptedPacketRateGate = new DecryptedPacketRateGate(maxPacketsPerSecond);
 
         using var connectionCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
         var keepAliveInterval = GamePortKeepAliveRunner.ParseIntervalSeconds();
@@ -500,6 +503,7 @@ static async Task HandleClientAsync(
                 remote,
                 verbose,
                 keepAliveInterval,
+                clientProtectOutbound: null,
                 connectionCts.Token);
         }
 
@@ -559,6 +563,28 @@ static async Task HandleClientAsync(
             await packetGate.WaitAsync(ct).ConfigureAwait(false);
             try
             {
+            var plen = packetSeq.Length;
+            if (plen > maxDecryptedPacketBytes)
+            {
+                Console.WriteLine(
+                    "[{0}] closing: decrypted packet too large len={1} max={2}",
+                    remote,
+                    plen,
+                    maxDecryptedPacketBytes);
+                tcp.Dispose();
+                return;
+            }
+
+            if (maxPacketsPerSecond > 0 && !decryptedPacketRateGate.TryAllow(DateTimeOffset.UtcNow))
+            {
+                Console.WriteLine(
+                    "[{0}] closing: exceeded packet rate limit ({1}/s)",
+                    remote,
+                    maxPacketsPerSecond);
+                tcp.Dispose();
+                return;
+            }
+
             var packet = packetSeq.ToArray();
             if (packet.Length == 0)
             {
@@ -848,7 +874,9 @@ static async Task HandleClientAsync(
             // Character list request F3 00: Android `SendRequestCharacterList` → plain C1 F3 00 + language, XOR on wire.
             // After PipelinedDecryptor the MU frame may not start at index 0 (prefix / coalescing); scan for C1|C3 + F3 00.
             // Ref: takumi Source/5.Main/source/android/AndroidNetwork.cpp SendRequestCharacterList + SendGameEncrypted.
-            var listReq = TryFindCharacterListRequest(packet, out var listFrameOffset);
+            // Only after auth: F3 heuristics can match byte pairs inside large C3 F1:01 login (~90 B) and must not return early.
+            var listFrameOffset = 0;
+            var listReq = loginLatch.IsLoggedIn && TryFindCharacterListRequest(packet, out listFrameOffset);
             if (!listReq
                 && loginLatch.IsLoggedIn
                 && packet.Length == 12
@@ -865,12 +893,6 @@ static async Task HandleClientAsync(
 
             if (listReq)
             {
-                if (!loginLatch.IsLoggedIn)
-                {
-                    Console.WriteLine("[{0}] F3 00 before login — ignored", remote);
-                    return;
-                }
-
                 var list = roster.Count > 0 ? CharacterListWire602.Build(MapRosterToWire(roster)) : CharacterListWire602.BuildEmpty();
                 LogCharacterListWire(remote, list, "on F3 00 request");
                 await connection.Output.WriteAsync(list, ct).ConfigureAwait(false);
@@ -901,20 +923,39 @@ static async Task HandleClientAsync(
                 Console.WriteLine("[{0}] post-login unmatched hex={1}", remote, Convert.ToHexString(packet));
             }
 
-            // Login: Android builds inner packet as C3 F1 01 ... (see AndroidNetwork.cpp SendGameLogin).
+            // F1 01 account login: C3 + stream XOR peel (GamePacketFinders) — same path as GamePortMinimalSession.
+            var loginFrame = packet;
+            if (!loginLatch.IsLoggedIn
+                && GamePacketFinders.TryUnpackAccountLoginFrame(packet, out var unpackedLogin)
+                && unpackedLogin.Length >= 59)
+            {
+                loginFrame = unpackedLogin;
+            }
+            else if (!loginLatch.IsLoggedIn && packet.Length >= 59 && packet[0] == 0xC1 && packet[2] == 0xF1)
+            {
+                loginFrame = (byte[])packet.Clone();
+                var span = loginFrame.AsSpan();
+                for (var peel = 0; peel < 8 && span[3] != 0x01; peel++)
+                {
+                    DecodeTakumiStreamXor(span, 3);
+                }
+            }
+
+            // Login: Android may send C3-wrapped F1 01; use first byte of the normalized frame (not raw packet[0]).
             byte head;
             byte sub;
             int payloadOffset;
-            if (t == 0xC3 && packet.Length >= 4)
+            var loginLead = loginFrame[0];
+            if (loginLead == 0xC3 && loginFrame.Length >= 4)
             {
-                head = packet[2];
-                sub = packet[3];
+                head = loginFrame[2];
+                sub = loginFrame[3];
                 payloadOffset = 4;
             }
-            else if (t == 0xC1 && packet.Length >= 4)
+            else if (loginLead == 0xC1 && loginFrame.Length >= 4)
             {
-                head = packet[2];
-                sub = packet[3];
+                head = loginFrame[2];
+                sub = loginFrame[3];
                 payloadOffset = 4;
             }
             else
@@ -923,34 +964,43 @@ static async Task HandleClientAsync(
             }
 
             // Android plain layout: ... account[10] password[20] tick[4] version[5] serial[16] (59 bytes after C3 header).
-            if (head != 0xF1 || sub != 0x01 || packet.Length < 59)
+            if (head != 0xF1 || sub != 0x01 || loginFrame.Length < 59)
             {
                 if (loginLatch.IsLoggedIn
-                    && packet.Length <= 48
+                    && loginFrame.Length <= 48
                     && string.Equals(Environment.GetEnvironmentVariable("TAKUMI_VERBOSE"), "1", StringComparison.OrdinalIgnoreCase))
                 {
                     Console.WriteLine(
                         "[{0}] not login pkt — hex={1} head@2=0x{2:X2} sub@3=0x{3:X2}",
                         remote,
-                        Convert.ToHexString(packet),
+                        Convert.ToHexString(loginFrame),
                         head,
                         sub);
+                }
+                else if (!loginLatch.IsLoggedIn && loginFrame.Length >= 40 && loginFrame[0] == 0xC1 && loginFrame[2] == 0xF1)
+                {
+                    var previewLen = Math.Min(40, loginFrame.Length);
+                    Console.WriteLine(
+                        "[{0}] pre-login F1 frame not login (post-peel): sub@3=0x{1:X2} len={2} preview={3}",
+                        remote,
+                        loginFrame[3],
+                        loginFrame.Length,
+                        Convert.ToHexString(loginFrame.AsSpan(0, previewLen)));
                 }
 
                 return;
             }
 
-            // Match takumi GameServer Protocol.cpp CGConnectAccountRecv: PacketArgumentDecrypt(account, …, 10)
-            // and PacketArgumentDecrypt(password, …, 10) — only the first 10 password bytes are auth-relevant.
-            var idEnc = packet.AsSpan(payloadOffset, 10).ToArray();
-            var passEnc = packet.AsSpan(payloadOffset + 10, 10).ToArray();
+            // Wire matches Source/5.Main wsclientinline.h SendRequestLogIn: id[10] password[20] tick[4] version[5] serial[16].
+            var idEnc = loginFrame.AsSpan(payloadOffset, 10).ToArray();
+            var passEnc = loginFrame.AsSpan(payloadOffset + 10, 20).ToArray();
             BuxXor(idEnc);
             BuxXor(passEnc);
             var id = Encoding.ASCII.GetString(idEnc).TrimEnd('\0', ' ');
             var pass = Encoding.ASCII.GetString(passEnc).TrimEnd('\0', ' ');
 
-            var clientVer = packet.AsSpan(payloadOffset + 34, 5);
-            var clientSer = packet.AsSpan(payloadOffset + 39, 16);
+            var clientVer = loginFrame.AsSpan(payloadOffset + 34, 5);
+            var clientSer = loginFrame.AsSpan(payloadOffset + 39, 16);
 
             if (!clientVer.SequenceEqual(joinVersion))
             {
@@ -1025,9 +1075,11 @@ static async Task HandleClientAsync(
                             e.Level = d.Level;
                             e.ServerClass = d.ServerClass;
                         });
+                    CharacterRosterMirrorHealth.RecordMergeSuccess();
                 }
                 catch (Exception ex)
                 {
+                    CharacterRosterMirrorHealth.RecordMergeFail();
                     Console.WriteLine("[roster-db] merge after login failed for {0}: {1}", id, ex.Message);
                 }
             }
@@ -1040,6 +1092,19 @@ static async Task HandleClientAsync(
                 roster.Count);
             // 0x01 and 0x20 are both treated as success in Takumi WSclient TranslateProtocol.
             await WriteLoginResultAsync(connection, 0x01, ct).ConfigureAwait(false);
+
+            var hmacKeyPush = SessionTicketSignature602.ResolveHmacKeyFromEnv();
+            if (hmacKeyPush.Length >= 8 && TakumiPostgresMirror.SessionHandoff is not null)
+            {
+                var expUnix = issued.ExpiresUtc.ToUnixTimeSeconds();
+                Span<byte> acct10 = stackalloc byte[SessionTicketSignature602.AccountWireBytes];
+                SessionTicketSignature602.FormatAccount10(id, acct10);
+                var mac = SessionTicketSignature602.ComputeMacV1(hmacKeyPush, issued.TicketId, expUnix, acct10);
+                var push = SessionTicketWire602.BuildPushC1(issued.TicketId, expUnix, acct10, mac);
+                await connection.Output.WriteAsync(push, ct).ConfigureAwait(false);
+                await connection.Output.FlushAsync(ct).ConfigureAwait(false);
+                Console.WriteLine("[{0}] sent F1 A5 session-ticket (wire) len={1}", remote, push.Length);
+            }
 
             // Scene switches to character select and client sends F3 00; push list from disk (or empty) (disable with TAKUMI_SKIP_AUTO_CHARLIST=1).
             if (!string.Equals(Environment.GetEnvironmentVariable("TAKUMI_SKIP_AUTO_CHARLIST"), "1", StringComparison.Ordinal))
@@ -1684,6 +1749,12 @@ static bool TryFindCharacterListRequest(ReadOnlySpan<byte> packet, out int frame
             continue;
         }
 
+        // List requests are small; C3 account login is ~90 bytes and can contain incidental F3/00 at +2/+3.
+        if (packet[i] == 0xC3 && (int)packet[i + 1] > 48)
+        {
+            continue;
+        }
+
         if (packet[i + 2] == 0xF3 && packet[i + 3] == 0x00)
         {
             frameOffset = i;
@@ -1711,6 +1782,12 @@ static bool TryFindCharacterListRequest(ReadOnlySpan<byte> packet, out int frame
     for (var i = 0; i <= packet.Length - 5; i++)
     {
         if (packet[i] != 0xC3)
+        {
+            continue;
+        }
+
+        var c3Len = (int)packet[i + 1];
+        if (c3Len is < 5 or > 48)
         {
             continue;
         }

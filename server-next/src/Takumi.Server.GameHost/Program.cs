@@ -5,6 +5,7 @@ using System.Globalization;
 using System.Net.Sockets;
 using Takumi.Server.Game;
 using Takumi.Server.Persistence;
+using Takumi.Server.Protocol;
 
 RepoEnvLoader.ApplyDefaultsAndLocalEnv();
 TakumiPostgresMirror.InitIfEnabled();
@@ -41,7 +42,7 @@ if (ushort.TryParse(
     joinIndex = ji;
 }
 
-var (serverDecryptKeys, decryptKeysTag) = Dec2ServerDecryptKeysLoader.Load();
+var (serverDecryptKeys, decryptKeysTag) = Season6ClientToServerDecryptSession.LoadServerDecryptKeysFromDec2OrEnv();
 
 var verbose = string.Equals(Environment.GetEnvironmentVariable("TAKUMI_VERBOSE"), "1", StringComparison.OrdinalIgnoreCase)
               || string.Equals(Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT"), "Development", StringComparison.OrdinalIgnoreCase);
@@ -63,6 +64,43 @@ var requireLoginHandoff = string.Equals(Environment.GetEnvironmentVariable("TAKU
                         || string.Equals(Environment.GetEnvironmentVariable("TAKUMI_GAME_REQUIRE_LOGIN_HANDOFF"), "true", StringComparison.OrdinalIgnoreCase);
 var handoffMatchIp = !string.Equals(Environment.GetEnvironmentVariable("TAKUMI_GAME_HANDOFF_MATCH_IP"), "0", StringComparison.OrdinalIgnoreCase);
 
+var requireSignedSessionTicketWire = string.Equals(Environment.GetEnvironmentVariable("TAKUMI_GAME_TICKET_WIRE"), "1", StringComparison.OrdinalIgnoreCase)
+                                   || string.Equals(Environment.GetEnvironmentVariable("TAKUMI_GAME_TICKET_WIRE"), "true", StringComparison.OrdinalIgnoreCase);
+
+var protectWireRaw = Environment.GetEnvironmentVariable("TAKUMI_GAME_CLIENT_PROTECT_WIRE");
+var protectCustomer = Environment.GetEnvironmentVariable("TAKUMI_PROTECT_CUSTOMER_NAME");
+var protectOutbound = GameWireEnv.ResolveClientProtectOutboundKeys(protectWireRaw, protectCustomer, serverSerial);
+
+// Android (ENCRYPT_STATE): CheckSocketPort + DecryptData on recv for GS-range peer ports — plain C1 on wire becomes garbage (logcat: packet sync lost).
+if (protectOutbound is null
+    && gamePort is >= 55901 and <= 55999
+    && !string.Equals(protectWireRaw?.Trim(), "0", StringComparison.OrdinalIgnoreCase)
+    && !string.Equals(protectWireRaw?.Trim(), "false", StringComparison.OrdinalIgnoreCase))
+{
+    Console.Error.WriteLine(
+        "[game-host] WARN: client protect wire is OFF on port {0} (typical Android GS range). " +
+        "Unset TAKUMI_GAME_CLIENT_PROTECT_WIRE or set to 1; plain join will break Android recv (packet sync lost / intro hang).",
+        gamePort);
+}
+
+if (requireSignedSessionTicketWire)
+{
+    if (TakumiPostgresMirror.SessionHandoff is null)
+    {
+        Console.Error.WriteLine(
+            "TAKUMI_GAME_TICKET_WIRE=1 requires Postgres session handoff (set TAKUMI_SESSION_HANDOFF_DB=1 and a valid PG connection string).");
+        return 1;
+    }
+
+    var wireKey = SessionTicketSignature602.ResolveHmacKeyFromEnv();
+    if (wireKey.Length < 8)
+    {
+        Console.Error.WriteLine(
+            "TAKUMI_GAME_TICKET_WIRE=1 requires TAKUMI_SESSION_TICKET_HMAC_KEY (UTF-8, at least 8 bytes), shared with LegacyLoginHost.");
+        return 1;
+    }
+}
+
 var options = new GamePortListenOptions
 {
     ServerDecryptKeys = serverDecryptKeys,
@@ -75,6 +113,8 @@ var options = new GamePortListenOptions
     SkipAutoCharacterList = skipAutoCharList,
     RequireLoginPostgresHandoff = requireLoginHandoff,
     LoginHandoffMatchClientIp = handoffMatchIp,
+    RequireSignedSessionTicketWire = requireSignedSessionTicketWire,
+    ClientProtectOutboundKeys = protectOutbound,
 };
 
 using var cts = new CancellationTokenSource();
@@ -89,6 +129,8 @@ Console.WriteLine(
     "  accounts:      {4}\n" +
     "  verbose RX:    {5}\n" +
     "  handoff DB:    {6} (match IP: {7})\n" +
+    "  ticket wire:   {8}\n" +
+    "  client protect wire (Android GS port): {9}\n" +
     "Ctrl+C to stop.",
     gamePort,
     joinIndex,
@@ -97,7 +139,9 @@ Console.WriteLine(
     accounts is null ? "(none — bootstrap-only)" : string.Join(", ", accounts.Keys) + ":***",
     verbose,
     requireLoginHandoff,
-    handoffMatchIp);
+    handoffMatchIp,
+    requireSignedSessionTicketWire,
+    protectOutbound is null ? "off" : "on");
 
 try
 {

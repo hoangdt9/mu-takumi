@@ -18,6 +18,13 @@ public static class GamePacketFinders
                 continue;
             }
 
+            // PMSG_CHARACTER_LIST is a small control frame; C3 account login from Android is ~90 bytes and can
+            // contain incidental F3/00 pairs at +2/+3 — do not treat those as list requests.
+            if (packet[i] == 0xC3 && (int)packet[i + 1] > 48)
+            {
+                continue;
+            }
+
             if (packet[i + 2] == 0xF3 && packet[i + 3] == 0x00)
             {
                 frameOffset = i;
@@ -43,6 +50,12 @@ public static class GamePacketFinders
         for (var i = 0; i <= packet.Length - 5; i++)
         {
             if (packet[i] != 0xC3)
+            {
+                continue;
+            }
+
+            var c3Len = (int)packet[i + 1];
+            if (c3Len is < 5 or > 48)
             {
                 continue;
             }
@@ -171,6 +184,83 @@ public static class GamePacketFinders
                     value = work[4];
                     return true;
                 }
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Locates and normalizes account login (<c>F1 01</c>): plain <c>C1</c> with stream XOR on subcode, or <c>C3</c> envelope
+    /// (same peel loop as <see cref="TryFindGameLogoutRequest"/>) until <c>[2]=0xF1</c> and <c>[3]=0x01</c>. Output length is at least 59 bytes for id/password/version/serial layout.
+    /// </summary>
+    public static bool TryUnpackAccountLoginFrame(ReadOnlySpan<byte> packet, out byte[] loginFrame)
+    {
+        loginFrame = Array.Empty<byte>();
+        Span<byte> xorScratch = stackalloc byte[256];
+
+        for (var i = 0; i <= packet.Length - 5; i++)
+        {
+            var lead = packet[i];
+            if (lead is not (0xC1 or 0xC3))
+            {
+                continue;
+            }
+
+            var size = (int)packet[i + 1];
+            if (size < 5 || i + size > packet.Length)
+            {
+                continue;
+            }
+
+            var frame = packet.Slice(i, size);
+
+            if (lead == 0xC1 && size >= 59)
+            {
+                var buf = frame.ToArray();
+                var sp = buf.AsSpan();
+                for (var peel = 0; peel < 16 && (sp[2] != 0xF1 || sp[3] != 0x01); peel++)
+                {
+                    TakumiStreamXorCodec.DecodeTakumiStreamXor(sp, firstXorIndex: 3);
+                }
+
+                if (sp[2] != 0xF1 || sp[3] != 0x01 || sp.Length < 59)
+                {
+                    continue;
+                }
+
+                loginFrame = sp.Length == 59 ? buf : sp[..59].ToArray();
+                return true;
+            }
+
+            if (lead == 0xC3 && size >= 5 && size <= 256)
+            {
+                var work = xorScratch.Slice(0, size);
+                frame.CopyTo(work);
+                for (var pass = 0; pass < 16 && (work[2] != 0xF1 || work[3] != 0x01); pass++)
+                {
+                    TakumiStreamXorCodec.DecodeTakumiStreamXor(work, firstXorIndex: 3);
+                }
+
+                if (work[2] != 0xF1 || work[3] != 0x01)
+                {
+                    continue;
+                }
+
+                if (work[0] == 0xC1 && work[1] >= 59 && work[1] <= size)
+                {
+                    loginFrame = work[..work[1]].ToArray();
+                }
+                else if (size >= 59)
+                {
+                    loginFrame = work[..size].ToArray();
+                }
+                else
+                {
+                    continue;
+                }
+
+                return loginFrame.Length >= 59;
             }
         }
 

@@ -2,6 +2,7 @@
 # Tail Takumi-related Android logs in a second terminal while LegacyLoginHost runs in the first.
 # Usage: ./scripts/watch-android-takumi-log.sh
 # Env: TAKUMI_LOGCAT_CLEAR=0 to skip "adb logcat -c" (keep buffer history).
+# After start, open the app / reproduce login — filter shows nothing until the game emits MuPreload/MuMain/TakumiErrorReport lines.
 set -euo pipefail
 
 if ! command -v adb >/dev/null 2>&1; then

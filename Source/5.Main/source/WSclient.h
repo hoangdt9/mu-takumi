@@ -73,6 +73,13 @@
 
 extern int CurrentProtocolState;
 
+#define TAKUMI_SERVERNEXT_SESSION_TICKET_BYTES 66
+extern BYTE g_TakumiServerNextTicketPending[TAKUMI_SERVERNEXT_SESSION_TICKET_BYTES];
+extern bool g_TakumiServerNextTicketPendingValid;
+void Takumi_ClearServerNextSessionTicketPending();
+void ReceiveServerNextSessionTicket( BYTE* ReceiveBuffer, int Size );
+void Takumi_SendSessionTicketAttachIfPending();
+
 typedef struct 
 {
 	BYTE Code;

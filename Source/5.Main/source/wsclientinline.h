@@ -276,6 +276,7 @@ __forceinline void SendCheck( void)
 	LogIn = 1;\
 	strcpy(LogInID, ( p_lpszID));\
 	CurrentProtocolState = REQUEST_LOG_IN;\
+	Takumi_SendSessionTicketAttachIfPending();\
 	CStreamPacketEngine spe;\
 	spe.Init( 0xC1, 0xF1);\
 	spe << ( BYTE)0x01;\

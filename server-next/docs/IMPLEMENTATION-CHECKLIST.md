@@ -1,6 +1,6 @@
 # Takumi Server Next - Implementation Checklist
 
-Last updated: 2026-05-14 (Postgres `inventory_slot` + `F3 10` after join/move when `TAKUMI_ROSTER_DB_SYNC`; `TakumiPostgresMirror` shared by Legacy + GameHost)
+Last updated: 2026-05-15 (M4b roster health counters + handoff doc; checklist sync)
 
 ## Repository vs checklist (read first)
 
@@ -59,7 +59,7 @@ Use this to avoid unnecessary rebuilds.
   - [x] After join payload, send Season 6 `F3 10` on the same TCP session (`InventoryListWire602` / `JoinInventoryPacket602`): **empty** when Postgres mirror off; when **`TAKUMI_ROSTER_DB_SYNC`** + table **`inventory_slot`** (`sql/init/002_inventory_slot.sql`), load **12-byte** `item` blobs per slot for the selected character (`LegacyLoginHost`, `GamePortMinimalSession`).
   - [x] Keep session open and process multiple packets on one TCP stream
   - [x] Enforce authenticated-only character-list/select flow
-- [x] Encrypted `C3`/`C4` client→server decrypt path: `Season6ClientToServerDecryptSession` (per-connection counter; 12×`uint` key optional, OpenMU-compatible fallback when empty).
+- [x] Encrypted `C3`/`C4` client→server decrypt path: **`Season6ClientToServerDecryptSession`** (facade) → **`Dec2ServerDecryptKeysLoader`** / `PipelinedDecryptor` (per-connection counter; keys from **`Dec2.dat`**, env **`TAKUMI_DEC2_PATH`**, **`TAKUMI_SIMPLEMODULUS_CS_DEC_KEY_PATH`**, OpenMU-compatible fallback when missing).
 - [x] Login-port compatibility for clients that query server list / server info on the login TCP port:
   - answer `F4 06 / F4 03 / PatchInfo` on login socket (same payloads as connect server)
 - [x] Integration tests for login/select baseline (including multi-packet burst, fragmented reads, unknown-packet ignore):
@@ -67,7 +67,7 @@ Use this to avoid unnecessary rebuilds.
   - [x] select flow: `F3 15` + **131-byte** `F3 03` join map + **`F3 10`** inventory (empty or DB-backed; same flush batch)
   - [x] reject when not authenticated (`F3 00`)
   - [x] reject unknown character select (`F3 03`)
-- [x] **M6 (scaffold + split-port minimal-login):** `Takumi.Server.Game` — `GameListenHost` (**minimal-login** …); **`Takumi.Server.GameHost`** + **`TakumiPostgresMirror`**; **`docs/M6-GAME-TCP-CHECKLIST.md`**. **Đã có:** `[event=decrypted_rx]`, mirror **`character_roster`**, `F3 10` từ DB, optional **`session_ticket`** + **`TAKUMI_GAME_REQUIRE_LOGIN_HANDOFF`**. **Còn thiếu:** ticket ký trên wire / SSOT Postgres-only cho roster.
+- [x] **M6 (scaffold + split-port minimal-login):** `Takumi.Server.Game` — `GameListenHost` (**minimal-login** …); **`Takumi.Server.GameHost`** + **`TakumiPostgresMirror`**; **`docs/M6-GAME-TCP-CHECKLIST.md`**. **Đã có:** `[event=decrypted_rx]`, mirror **`character_roster`**, `F3 10` từ DB, optional **`session_ticket`** + **`TAKUMI_GAME_REQUIRE_LOGIN_HANDOFF`**, **signed ticket on wire** (`F1 A5` / `F1 A6`, **`TAKUMI_GAME_TICKET_WIRE`**, **`TAKUMI_SESSION_TICKET_HMAC_KEY`**). **Còn thiếu:** SSOT Postgres-only cho roster (tách khỏi JSON).
 - [x] **Reproducible LAN / dev env (no committed machine IP):**
   - [x] Committed **`server-next/env.defaults`** (ports, join version, serial, `TAKUMI_ACCOUNTS` format) + gitignored **`server-next/.env`** from **`.env.lan.example`** (`YOUR_LAN_IP`).
   - [x] **`RepoEnvLoader`**: load `env.defaults` (fill unset) then `.env` (override) before `LegacyLoginHost` reads configuration.
@@ -79,20 +79,21 @@ Use this to avoid unnecessary rebuilds.
 
 - [ ] Validate packet parity against real Takumi client captures (golden pcap loop).
 - [ ] Confirm Connect→Login→Select→in-game on real Android client (no black screen after `LoadWorld`). **Requires** Docker + LAN IP correct; **requires** APK rebuilt from current `Source/5.Main` for **touch-to-enter** after character select (`SEASON3B::IsPress` / long-press path in `ZzzScene.cpp` — see repo `docs/DEVELOPMENT-LOG-2026-05-12.md`). Rebuild again after IME/modal fixes logged **`docs/DEVELOPMENT-LOG-2026-05-14.md`**.
-- [ ] Load SimpleModulus CS decrypt key from `keys/Dec2.dat` (or `TAKUMI_SIMPLEMODULUS_CS_DEC_KEY_PATH`) into `Season6ClientToServerDecryptSession` instead of hardcoded fallback only.
+- [x] Load SimpleModulus CS decrypt key from `keys/Dec2.dat` via **`Dec2ServerDecryptKeysLoader`** / **`Season6ClientToServerDecryptSession`** (`TAKUMI_DEC2_PATH`, **`TAKUMI_SIMPLEMODULUS_CS_DEC_KEY_PATH`**). Post-decrypt **DoS guards:** **`TAKUMI_MAX_DECRYPTED_PACKET_BYTES`** (default 12288) + **`TAKUMI_MAX_PACKETS_PER_SECOND`** (0=off) close TCP on violation (`LegacyLoginHost`, `GamePortMinimalSession`).
 
 ## Next (High Priority)
 
-- [ ] **M4b–M5b:** Postgres-first roster SSOT beyond JSON mirror (see **`docs/M4-WORLD-POSITION-CHECKLIST.md`** §M4b).
+- [x] **M4b observability:** `CharacterRosterMirrorHealth` — merge/upsert success+fail counts; upsert errors log `[roster-health] …` snapshot; **`TAKUMI_ROSTER_HEALTH_LOG`** logs snapshot after **`TryDrainPendingUpserts`** (`docs/M4-WORLD-POSITION-CHECKLIST.md`).
+- [ ] **M4b–M5b (remaining):** Postgres-first roster **SSOT** beyond JSON mirror (domain `character` sync, importer world columns) — see **`docs/M4-WORLD-POSITION-CHECKLIST.md`** §Importer / SSOT; does **not** block M5 join/ticket work.
 - [ ] **M6+ / M7–M9:** Full **`Takumi.Server.Game`** protocol after join (map/scope/combat) when client uses **only** game TCP.
-- [x] **Split-stack login handoff (Postgres):** `sql/init/003_session_ticket.sql` + **`PostgresSessionHandoffRepository`**; **`TAKUMI_SESSION_HANDOFF_DB=1`** → `LegacyLoginHost` persists pending row after F1 01; optional **`TAKUMI_GAME_REQUIRE_LOGIN_HANDOFF=1`** on **GameHost** consumes one row before F1 01 success (**IP match** default on, override with **`TAKUMI_GAME_HANDOFF_MATCH_IP=0`**). Client does **not** send ticket bytes on wire — handoff is account + client IP + “login on legacy port first”.
+- [x] **Split-stack login handoff (Postgres):** `sql/init/003_session_ticket.sql` + **`PostgresSessionHandoffRepository`**; **`TAKUMI_SESSION_HANDOFF_DB=1`** → `LegacyLoginHost` persists pending row after F1 01; optional **`TAKUMI_GAME_REQUIRE_LOGIN_HANDOFF=1`** on **GameHost** consumes one row before F1 01 success (**IP match** default on, override with **`TAKUMI_GAME_HANDOFF_MATCH_IP=0`**). Optional **signed wire path:** **`TAKUMI_SESSION_TICKET_HMAC_KEY`** + **`TAKUMI_GAME_TICKET_WIRE=1`** — Legacy pushes **`F1 A5`**, client **`F1 A6`** before game **`F1 01`**, consume on attach (see **`docs/M6-GAME-TCP-CHECKLIST.md`**). Plain IP handoff does not send ticket bytes on wire.
 - [ ] **`TakumiLoginServer` process** (if split from `LegacyLoginHost`) + signed ticket on wire / shared secret — not implemented; name in checklist = future exe only.
-- [x] **Protocol tests (partial):** `C1DeclaredLength602` guards + **`SessionHandoffPostgresTests`** when **`TEST_PG_CONNECTION_STRING`** (needs `003_session_ticket.sql` applied). Still open: TCP-level oversized close, rate limits, golden pcap loop.
+- [x] **Protocol tests (partial):** `C1DeclaredLength602` guards + **`SessionHandoffPostgresTests`** when **`TEST_PG_CONNECTION_STRING`**. **TCP hardening (partial):** max decrypted frame + optional **`DecryptedPacketRateGate`** (`DecryptedPacketSafety602Tests`). Still open: golden pcap loop, transport-level framing audit vs OpenMU `Connection`, richer rate policy.
 
 ## Next (Medium Priority)
 
 - [ ] Add explicit error/reason codes for rejected character requests.
-- [ ] Add request-rate safeguards (max packet size / protocol violation close may already exist — confirm and document).
+- [x] **Request-rate / frame size (partial):** **`TAKUMI_MAX_DECRYPTED_PACKET_BYTES`** + **`TAKUMI_MAX_PACKETS_PER_SECOND`** (TCP close on `LegacyLoginHost` / `GamePortMinimalSession`); full protocol violation matrix + metrics still open.
 - [ ] Improve observability: structured logs with packet code/subcode fields; metrics for auth and packet types.
 - [ ] Separate compatibility mode flags by client build/version.
 
@@ -137,21 +138,22 @@ Use this to avoid unnecessary rebuilds.
    - [x] Đảm bảo F4 06/03/05 đồng hành với `ServerListManager` / BMD (đã phần nào trong host).  
    - [x] Tách process hoặc class library nếu cần scale riêng Connect (`Takumi.Server.Connect`; xem **`docs/M3-CONNECT-BMD.md`**).
 
-4. **M4 — Login + nhân vật + vị trí lưu thế giới** *(M4a + M4c walk trên TCP login đã QA thiết bị; M4b một phần — tick chi tiết trong **`docs/M4-WORLD-POSITION-CHECKLIST.md`**)*  
+4. **M4 — Login + nhân vật + vị trí lưu thế giới** *(M4a + M4c walk + periodic save + **M4b mirror + merge health metrics** — SSOT Postgres-only + tile/float still open; see **`docs/M4-WORLD-POSITION-CHECKLIST.md`** §Handoff M5)*  
    - [x] Bảng / roster: `map_id`, `pos_x`, `pos_y`, `angle` (JSON roster per account; join dùng `JoinMapSpawnWire`, không hard-code trong `Program` ngoài env default).  
    - [x] Đồng bộ khi disconnect (flush roster), khi đổi map stub (`8E 02` → cập nhật `MapId` + save); **walk** `C1 … 0xD4`/`0x10` + **instant move** `C1 05 15` cập nhật `posX`/`posY`/`angle` in-memory → flush cùng disconnect (log thực tế: join lần hai tại tile đã đi, ví dụ `xy=(140,193)` sau khi rời map).  
-   - [ ] **M4b/M4c + SSOT Postgres:** hoàn tất các mục chưa tick trong **`docs/M4-WORLD-POSITION-CHECKLIST.md`** (Testcontainers; tile/float; health metrics; game-only **scope** parity).
+   - [x] **M4b:** merge/upsert health counters + optional **`TAKUMI_ROSTER_HEALTH_LOG`** (`CharacterRosterMirrorHealth`).  
+   - [ ] **M4b/M4c + SSOT Postgres:** importer / `character` domain sync / tile vs float / full GS listener parity — **`docs/M4-WORLD-POSITION-CHECKLIST.md`** (owner M7+ where noted).
 
 5. **M5 — Join handoff (`3.JoinServer` parity)** *(partial — see **`docs/M5-JOIN-HANDOFF-CHECKLIST.md`**)*  
    - [x] **F4 03** advertised port (`TAKUMI_GAME_PORT`) + in-memory session ticket TTL / Touch / Revoke.  
-   - [x] Postgres **`session_ticket`** pending row + optional GameHost consume (**`TAKUMI_SESSION_HANDOFF_DB`**, **`TAKUMI_GAME_REQUIRE_LOGIN_HANDOFF`**).  
-   - [ ] Signed ticket on client wire; standalone `TakumiLoginServer` process.
+   - [x] Postgres **`session_ticket`** pending row + optional GameHost consume (**`TAKUMI_SESSION_HANDOFF_DB`**, **`TAKUMI_GAME_REQUIRE_LOGIN_HANDOFF`**) + signed wire **`F1 A5` / `F1 A6`** (**`TAKUMI_SESSION_TICKET_HMAC_KEY`**, **`TAKUMI_GAME_TICKET_WIRE`**).  
+   - [ ] Standalone `TakumiLoginServer` process.
 
 6. **M6 — Game TCP host (`Takumi.Server.Game`) — skeleton `4.GameServer`** *(bootstrap + split-port minimal-login — **`docs/M6-GAME-TCP-CHECKLIST.md`**)*  
    - [x] Project `src/Takumi.Server.Game` + **`Takumi.Server.GameHost`**: accept, decrypt, join, **minimal-login** (F1 01 + roster JSON + F3 00 + **F3 01/02** + F3 03 join + move stub + walk roster + **`GamePortKeepAliveRunner`** + F1 02 ack) khi có `TAKUMI_ACCOUNTS` + serial.  
    - [x] Docker profile **`gamehost`** + `TAKUMI_GAME_PUBLISH`.  
    - [x] Structured log **`[event=decrypted_rx]`** (`TAKUMI_VERBOSE` hoặc **`TAKUMI_STRUCTURED_LOG`**); mirror **`character_roster`** khi save (cùng `CharacterRosterMirrorWriter` như Legacy).  
-   - [ ] Cross-process session ticket on wire / signed; Postgres **`session_ticket`** consume path done for split-stack QA (**`TAKUMI_GAME_REQUIRE_LOGIN_HANDOFF`**).
+   - [x] Cross-process session ticket on wire / signed (**`SessionTicketWire602`**, **`PostgresSessionHandoffRepository.TryConsumeSignedWireAttachAsync`**); Postgres consume for IP-only handoff remains **`TAKUMI_GAME_REQUIRE_LOGIN_HANDOFF`** (skipped when **`TAKUMI_GAME_TICKET_WIRE`** is on).
 
 7. **M7 — Persistence vòng đời nhân vật**  
    - [ ] Lưu/khôi phục HP/MP/zen/map/xy khi thoát / periodic save (parity `GameServer` save).  
@@ -191,6 +193,7 @@ Use this to avoid unnecessary rebuilds.
 
 **Android log triage (real device, tag `TakumiErrorReport`):**
 
+- **M6 (split port + GameHost + wire ticket):** quy trình từng bước, logcat, và biến môi trường — **`docs/M6-GAME-TCP-CHECKLIST.md`** § **QA Android (thiết bị thật)**.
 - After **`TCP session start port=<login/game port>`** (e.g. `44606`), **first** inbound bytes should log as **`[AndroidLogin] recv tcp …`** within milliseconds. **No recv tcp at all** means the listening process on that port did not send data (wrong service on port, or not `Takumi.Server.LegacyLoginHost`). Fix with `lsof -nP -iTCP:<port> -sTCP:LISTEN` and run LegacyLoginHost so console shows **`sent join C1 F1 00`** per connection.
 - Only **after** join bytes appear does **`Dec2.dat` mismatch** matter for encrypted `C3` login; see `../README.md` and `../../docs/ANDROID-DEV-MAC.md`.
 
@@ -215,8 +218,8 @@ Use this to avoid unnecessary rebuilds.
 Order is suggested dependency / risk reduction:
 
 1. **Device QA (unblocks “MVP done” perception):** real Android against Docker `server-next` — confirm **recv join** → **Translate F1** → select → **no black screen** after `LoadWorld`; capture `adb logcat` + host logs. Tie to **Exit criteria** above.
-2. **SimpleModulus CS key from `keys/Dec2.dat`:** replace hardcoded decrypt fallback in `Season6ClientToServerDecryptSession` (**In Progress** item); verify with same `Dec2.dat` as APK `Data/`.
-3. **Golden / pcap parity:** scripted or captured client RX/TX vs host (**In Progress**); extend tests for TCP oversized close + rate limits (**Next High** — partial: **`C1DeclaredLength602`** unit tests only).
+2. **SimpleModulus CS key from `keys/Dec2.dat`:** **`Season6ClientToServerDecryptSession`** + **`Dec2ServerDecryptKeysLoader`** (`TAKUMI_DEC2_PATH`, **`TAKUMI_SIMPLEMODULUS_CS_DEC_KEY_PATH`**); post-decrypt size/rate limits env — **done** in host paths; verify with same `Dec2.dat` as APK `Data/`.
+3. **Golden / pcap parity:** scripted or captured client RX/TX vs host (**In Progress**); extend tests for transport framing vs OpenMU `Connection` (**Next High** — partial: **`C1DeclaredLength602`**, max decrypted bytes + **`TAKUMI_MAX_PACKETS_PER_SECOND`** close).
 4. **Post-select game TCP:** split **`Takumi.Server.GameHost`** documented in **`docs/M6-GAME-TCP-CHECKLIST.md`** + `ANDROID-DEV-MAC.md`.
-5. **Session ticket / split handoff:** Postgres **`session_ticket`** + optional **`TAKUMI_GAME_REQUIRE_LOGIN_HANDOFF`** (**done** for IP/account consume path); still open: signed ticket on wire, dedicated `TakumiLoginServer` exe.
+5. **Session ticket / split handoff:** Postgres **`session_ticket`** + optional **`TAKUMI_GAME_REQUIRE_LOGIN_HANDOFF`** + signed wire **`TAKUMI_GAME_TICKET_WIRE`** / **`TAKUMI_SESSION_TICKET_HMAC_KEY`** (**done**); still open: dedicated `TakumiLoginServer` exe.
 6. **Medium:** error codes for rejected character ops, rate limits, structured logging, client version flags.

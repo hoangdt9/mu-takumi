@@ -11,6 +11,12 @@ public static class Dec2ServerDecryptKeysLoader
         var serializer = new SimpleModulusKeySerializer();
         var candidates = new List<string>();
 
+        var simpleModulusPath = Environment.GetEnvironmentVariable("TAKUMI_SIMPLEMODULUS_CS_DEC_KEY_PATH")?.Trim();
+        if (!string.IsNullOrEmpty(simpleModulusPath))
+        {
+            candidates.Add(simpleModulusPath);
+        }
+
         var envPath = Environment.GetEnvironmentVariable("TAKUMI_DEC2_PATH");
         if (!string.IsNullOrWhiteSpace(envPath))
         {

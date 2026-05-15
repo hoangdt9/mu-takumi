@@ -833,8 +833,6 @@ public static class LegacyLoginHostRunner
                             SavePersistedRoster(loggedAccountId, roster);
                         }
 
-                        var mvSpawn = new JoinMapSpawnWire(pickedMove.MapId, pickedMove.PosX, pickedMove.PosY, pickedMove.Angle);
-                        var joinPktMove = JoinMapServerWire602.Build(ToWire(pickedMove), mvSpawn);
                         var invMove = await JoinInventoryPacket602.BuildAsync(TakumiPostgresMirror.InventorySlots, loggedAccountId, sessionJoinCharacterName10, ct).ConfigureAwait(false);
                         await connection.Output.WriteAsync(joinPktMove, ct).ConfigureAwait(false);
                         await connection.Output.WriteAsync(invMove, ct).ConfigureAwait(false);
@@ -847,9 +845,6 @@ public static class LegacyLoginHostRunner
                             pickedMove.PosY,
                             remote,
                             ct).ConfigureAwait(false);
-                        var invMove = await JoinInventoryPacket602.BuildAsync(TakumiPostgresMirror.InventorySlots, loggedAccountId, sessionJoinCharacterName10, ct).ConfigureAwait(false);
-                        await connection.Output.WriteAsync(joinPktMove, ct).ConfigureAwait(false);
-                        await connection.Output.WriteAsync(invMove, ct).ConfigureAwait(false);
                         await connection.Output.FlushAsync(ct).ConfigureAwait(false);
                         Console.WriteLine(
                             "[{0}] stub move map: 8E 03 ok + F3 03 + F3 10 len={1} mapId={2} frame@{3}",

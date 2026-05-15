@@ -98,9 +98,6 @@ public static class ConnectMiniServer
                     options.ServerList602.Length);
                 Console.Out.Flush();
                 Console.Error.Flush();
-                    "[connect] sent {0}: ServerList on-accept ({1} bytes)",
-                    remote,
-                    options.ServerList602.Length);
             }
 
             var buf = new byte[512];

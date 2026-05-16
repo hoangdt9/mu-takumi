@@ -4215,23 +4215,28 @@ void RenderVirtualPad()
         const float yAG  = yMP  + kHudBarH + kHudBarGap;
         const float yEXP = yAG  + kHudBarH + kHudBarGap;
 
+        DWORD curHP = 0;
+        DWORD maxHP = 0;
+        DWORD curMP = 0;
+        DWORD maxMP = 0;
+        DWORD curAG = 0;
+        DWORD maxAG = 0;
+        TakumiGetHudVitals(curHP, maxHP, curMP, maxMP, curAG, maxAG);
+        maxHP = std::max(1u, maxHP);
+        maxMP = std::max(1u, maxMP);
+        maxAG = std::max(1u, maxAG);
+
         // HP â€” bright red
-        const DWORD curHP = CharacterAttribute->Life;
-        const DWORD maxHP = std::max(1u, CharacterAttribute->LifeMax);
         DrawVirtualBarH(kHudBarLeft, yHP, barW, kHudBarH,
                         static_cast<float>(curHP) / static_cast<float>(maxHP),
                         0.95f, 0.15f, 0.15f,  0.22f, 0.04f, 0.04f);
 
         // MP â€” bright blue
-        const DWORD curMP = CharacterAttribute->Mana;
-        const DWORD maxMP = std::max(1u, CharacterAttribute->ManaMax);
         DrawVirtualBarH(kHudBarLeft, yMP, barW, kHudBarH,
                         static_cast<float>(curMP) / static_cast<float>(maxMP),
                         0.15f, 0.45f, 1.00f,  0.04f, 0.08f, 0.28f);
 
         // AG â€” cyan
-        const DWORD curAG = CharacterAttribute->SkillMana;
-        const DWORD maxAG = std::max(1u, CharacterAttribute->SkillManaMax);
         DrawVirtualBarH(kHudBarLeft, yAG, barW, kHudBarH,
                         static_cast<float>(curAG) / static_cast<float>(maxAG),
                         0.10f, 0.95f, 0.90f,  0.04f, 0.20f, 0.18f);

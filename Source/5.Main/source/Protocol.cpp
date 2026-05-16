@@ -672,22 +672,63 @@ void GCConnectClientRecv(PMSG_CONNECT_CLIENT_RECV* lpMsg) // OK
 
 void GCDamageRecv(PMSG_DAMAGE_RECV* lpMsg) // OK
 {
+	const int pktSize = lpMsg->header.size;
 	int aIndex = MAKE_NUMBERW(lpMsg->index[0], lpMsg->index[1]) & 0x7FFF;
 
-	if (CharacterAttribute->PrintPlayer.ViewIndex == aIndex)
+	if (pktSize >= 37)
 	{
-		CharacterAttribute->PrintPlayer.ViewCurHP = lpMsg->ViewCurHP;
-		CharacterAttribute->PrintPlayer.ViewCurSD = lpMsg->ViewCurSD;
+		const auto ext = (LPPRECEIVE_ATTACK)lpMsg;
+		const auto buf = (const BYTE*)lpMsg;
+		DWORD viewCurHp = 0;
+		DWORD viewCurSd = 0;
+		QWORD viewDmgHp = 0;
+		QWORD viewDmgSd = 0;
+		memcpy(&viewCurHp, buf + 10, sizeof(viewCurHp));
+		memcpy(&viewCurSd, buf + 14, sizeof(viewCurSd));
+		memcpy(&viewDmgHp, buf + 18, sizeof(viewDmgHp));
+		memcpy(&viewDmgSd, buf + 26, sizeof(viewDmgSd));
+		const WORD damageHL = (WORD)(((WORD)ext->DamageH << 8) | ext->DamageL);
+		if (viewDmgHp > 200000)
+		{
+			viewDmgHp = damageHL;
+		}
+		if (CharacterAttribute->PrintPlayer.ViewIndex == aIndex || aIndex == HeroKey)
+		{
+			TakumiSyncHeroCurrentVitals(viewCurHp, viewCurSd);
+		}
+
+		CharacterAttribute->PrintPlayer.ViewDamageHP = viewDmgHp;
+		CharacterAttribute->PrintPlayer.ViewDamageSD = viewDmgSd;
+	}
+	else if (CharacterAttribute->PrintPlayer.ViewIndex == aIndex || aIndex == HeroKey)
+	{
+		if (pktSize >= 14)
+		{
+			CharacterAttribute->PrintPlayer.ViewCurHP = lpMsg->ViewCurHP;
+			CharacterAttribute->PrintPlayer.ViewCurSD = lpMsg->ViewCurSD;
+			if (lpMsg->ViewCurHP <= (DWORD)CharacterAttribute->LifeMax)
+			{
+				CharacterAttribute->Life = (WORD)lpMsg->ViewCurHP;
+			}
+			else if (lpMsg->ViewCurHP == 0)
+			{
+				CharacterAttribute->Life = 0;
+			}
+		}
+
+		CharacterAttribute->PrintPlayer.ViewDamageHP =
+			((WORD)lpMsg->damage[0] << 8) | lpMsg->damage[1];
+		CharacterAttribute->PrintPlayer.ViewDamageSD =
+			((WORD)lpMsg->ShieldDamage[0] << 8) | lpMsg->ShieldDamage[1];
 	}
 
-	CharacterAttribute->PrintPlayer.ViewDamageHP = lpMsg->ViewDamageHP;
-	CharacterAttribute->PrintPlayer.ViewDamageSD = lpMsg->ViewDamageSD;
+	const QWORD resolvedDamage = CharacterAttribute->PrintPlayer.ViewDamageHP;
 
 	if ((lpMsg->type & 0x10) != 0)
 	{
 		if (CharacterAttribute->PrintPlayer.ViewDamageCount < 3)
 		{
-			CharacterAttribute->PrintPlayer.ViewDamageTable[CharacterAttribute->PrintPlayer.ViewDamageCount++] = lpMsg->ViewDamageHP;
+			CharacterAttribute->PrintPlayer.ViewDamageTable[CharacterAttribute->PrintPlayer.ViewDamageCount++] = resolvedDamage;
 			CharacterAttribute->PrintPlayer.ViewDamageValue = CharacterAttribute->PrintPlayer.ViewDamageCount;
 		}
 	}
@@ -696,7 +737,7 @@ void GCDamageRecv(PMSG_DAMAGE_RECV* lpMsg) // OK
 	{
 		if (CharacterAttribute->PrintPlayer.ViewDamageCount < 4)
 		{
-			CharacterAttribute->PrintPlayer.ViewDamageTable[CharacterAttribute->PrintPlayer.ViewDamageCount++] = lpMsg->ViewDamageHP;
+			CharacterAttribute->PrintPlayer.ViewDamageTable[CharacterAttribute->PrintPlayer.ViewDamageCount++] = resolvedDamage;
 			CharacterAttribute->PrintPlayer.ViewDamageValue = CharacterAttribute->PrintPlayer.ViewDamageCount;
 		}
 	}
@@ -704,43 +745,67 @@ void GCDamageRecv(PMSG_DAMAGE_RECV* lpMsg) // OK
 
 void GCMonsterDieRecv(PMSG_MONSTER_DIE_RECV* lpMsg) // OK
 {
-	CharacterAttribute->PrintPlayer.ViewDamageHP = lpMsg->ViewDamageHP;
+	const int pktSize = lpMsg->header.size;
+	if (pktSize >= 14)
+	{
+		const auto buf = (const BYTE*)lpMsg;
+		DWORD viewDmg = 0;
+		memcpy(&viewDmg, buf + 9, sizeof(viewDmg));
+		CharacterAttribute->PrintPlayer.ViewDamageHP = viewDmg;
+	}
+	else
+	{
+		CharacterAttribute->PrintPlayer.ViewDamageHP = lpMsg->ViewDamageHP;
+	}
 }
 
 void GCUserDieRecv(PMSG_USER_DIE_RECV* lpMsg) // OK
 {
 	int aIndex = MAKE_NUMBERW(lpMsg->index[0], lpMsg->index[1]) & 0x7FFF;
 
-	if (CharacterAttribute->PrintPlayer.ViewIndex == aIndex)
+	if (CharacterAttribute->PrintPlayer.ViewIndex == aIndex || aIndex == HeroKey)
 	{
 		CharacterAttribute->PrintPlayer.ViewCurHP = 0;
+		CharacterAttribute->Life = 0;
 	}
 }
 
 void GCLifeRecv(PMSG_LIFE_RECV* lpMsg) // OK
 {
-	if (lpMsg->type == 0xFE)
+	const int pktSize = lpMsg->header.size;
+
+	if (lpMsg->type == 0xFE && pktSize >= 17)
 	{
-		CharacterAttribute->PrintPlayer.ViewMaxHP = lpMsg->ViewHP;
-		CharacterAttribute->PrintPlayer.ViewMaxSD = lpMsg->ViewSD;
+		const auto buf = (const BYTE*)lpMsg;
+		DWORD viewHp = 0;
+		DWORD viewSd = 0;
+		memcpy(&viewHp, buf + 9, sizeof(viewHp));
+		memcpy(&viewSd, buf + 13, sizeof(viewSd));
+		TakumiSyncHeroMaxVitals(viewHp, viewSd);
 	}
 
-	if (lpMsg->type == 0xFF)
+	if (lpMsg->type == 0xFF && pktSize >= 17)
 	{
-		CharacterAttribute->PrintPlayer.ViewCurHP = ((CharacterAttribute->PrintPlayer.ViewCurHP == 0) ? CharacterAttribute->PrintPlayer.ViewCurHP : lpMsg->ViewHP);
-		CharacterAttribute->PrintPlayer.ViewCurSD = lpMsg->ViewSD;
+		const auto buf = (const BYTE*)lpMsg;
+		DWORD viewHp = 0;
+		DWORD viewSd = 0;
+		memcpy(&viewHp, buf + 9, sizeof(viewHp));
+		memcpy(&viewSd, buf + 13, sizeof(viewSd));
+		TakumiSyncHeroCurrentVitals(viewHp, viewSd);
 	}
 }
 
 void GCManaRecv(PMSG_MANA_RECV * lpMsg) // OK
 {
-	if (lpMsg->type == 0xFE)
+	const int pktSize = lpMsg->header.size;
+
+	if (lpMsg->type == 0xFE && pktSize >= 16)
 	{
 		CharacterAttribute->PrintPlayer.ViewMaxMP = lpMsg->ViewMP;
 		CharacterAttribute->PrintPlayer.ViewMaxBP = lpMsg->ViewBP;
 	}
 
-	if (lpMsg->type == 0xFF)
+	if (lpMsg->type == 0xFF && pktSize >= 16)
 	{
 		CharacterAttribute->PrintPlayer.ViewCurMP = lpMsg->ViewMP;
 		CharacterAttribute->PrintPlayer.ViewCurBP = lpMsg->ViewBP;
@@ -965,7 +1030,11 @@ void GCCharacterInfoRecv(BYTE* ReceiveBuffer) // OK
 
 	//*(BYTE*)(*(DWORD*)(MAIN_VIEWPORT_STRUCT)+0x30C) = 0;
 
-	switch (gCharacterManager.GetBaseClass(Hero->Class))
+	// F3 03: ProtocolCoreEx runs before WSclient ReceiveJoinMapServer — Hero is not set yet.
+	const BYTE classForAttackLimit = (Hero != nullptr)
+		? Hero->Class
+		: CharacterAttribute->Class;
+	switch (gCharacterManager.GetBaseClass(classForAttackLimit))
 	{
 	case 0:
 		g_iLimitAttackTimeSet = ((gProtect.m_MainInfo.DWMaxAttackSpeed >= 0xFFFF) ? 0x02 : 0x0F);
@@ -1113,6 +1182,18 @@ void GCCharacterRegenRecv(PMSG_CHARACTER_REGEN_RECV* lpMsg) // OK
 	CharacterAttribute->PrintPlayer.ViewCurMP = lpMsg->ViewCurMP;
 	CharacterAttribute->PrintPlayer.ViewCurBP = lpMsg->ViewCurBP;
 	CharacterAttribute->PrintPlayer.ViewCurSD = lpMsg->ViewCurSD;
+	if (CharacterAttribute->PrintPlayer.ViewMaxHP == 0 && lpMsg->ViewCurHP > 0)
+	{
+		CharacterAttribute->PrintPlayer.ViewMaxHP = CharacterAttribute->LifeMax > 0
+			? (DWORD)CharacterAttribute->LifeMax
+			: lpMsg->ViewCurHP;
+	}
+	if (CharacterAttribute->PrintPlayer.ViewMaxMP == 0 && lpMsg->ViewCurMP > 0)
+	{
+		CharacterAttribute->PrintPlayer.ViewMaxMP = CharacterAttribute->ManaMax > 0
+			? (DWORD)CharacterAttribute->ManaMax
+			: lpMsg->ViewCurMP;
+	}
 }
 
 void GCLevelUpRecv(PMSG_LEVEL_UP_RECV* lpMsg) // OK

@@ -555,7 +555,7 @@ void CMapManager::Load() // OK
 	case WD_41CHANGEUP3RD_1ST:
 		LoadBitmap("Effect\\clouds.jpg" , BITMAP_CLOUD, GL_LINEAR, GL_CLAMP_TO_EDGE);
 		LoadBitmap("Effect\\firered.jpg" , BITMAP_FIRE_RED, GL_LINEAR, GL_CLAMP_TO_EDGE);
-		LoadBitmap("Effect\\FireSnuff.jpg", BITMAP_FIRE_SNUFF, GL_LINEAR, GL_CLAMP_TO_EDGE);      //  불씨.
+		LoadBitmap("Effect\\FireSnuff.jpg", BITMAP_FIRE_SNUFF, GL_LINEAR, GL_CLAMP_TO_EDGE);      //  ???.
 		
 		LoadWaveFile(SOUND_3RD_CHANGE_UP_BG_CAGE1,			"Data\\Sound\\w42\\cage01.wav", 1);
 		LoadWaveFile(SOUND_3RD_CHANGE_UP_BG_CAGE2,			"Data\\Sound\\w42\\cage02.wav", 1);
@@ -599,7 +599,7 @@ void CMapManager::Load() // OK
 			LoadBitmap("Logo\\MU-logo.tga"         ,BITMAP_LOG_IN+16, GL_LINEAR);
 			LoadBitmap("Logo\\MU-logo_g.jpg", BITMAP_LOG_IN+17, GL_LINEAR);
 
-			// 몬스터 미리 읽어놓기
+			// ???? ??? ???????
 			OpenMonsterModel(129);
 			OpenMonsterModel(130);
 			OpenMonsterModel(131);
@@ -1215,6 +1215,10 @@ void CMapManager::LoadWorld(int Map)
 	{
 		Map = this->WorldActive = 9;
 	}
+	else
+	{
+		this->WorldActive = Map;
+	}
 
 	this->DeleteObjects();
 	DeleteNpcs();
@@ -1323,9 +1327,13 @@ void CMapManager::LoadWorld(int Map)
    		sprintf(Text,"%s file corrupted1 (%d/%d).",FileName, iMapWorld, iResult);
 		g_ErrorReport.Write( Text);
 		g_ErrorReport.Write( "\r\n");
+#if defined(__ANDROID__) || defined(MU_IOS)
+		return;
+#else
 		MessageBox(g_hWnd,Text,NULL,MB_OK);
 		SendMessage(g_hWnd,WM_DESTROY,0,0);
 		return;
+#endif
 	}
 
 #ifdef PJH_NEW_SERVER_SELECT_MAP
@@ -1405,9 +1413,13 @@ void CMapManager::LoadWorld(int Map)
    		sprintf(Text,"%s file corrupted2.",FileName);
 		g_ErrorReport.Write( Text);
 		g_ErrorReport.Write( "\r\n");
+#if defined(__ANDROID__) || defined(MU_IOS)
+		return;
+#else
 		MessageBox(g_hWnd,Text,NULL,MB_OK);
 		SendMessage(g_hWnd,WM_DESTROY,0,0);
 		return;
+#endif
 	}
 
 	sprintf(FileName,"Data\\%s\\EncTerrain%d.obj",WorldName, iMapWorld);
@@ -1434,9 +1446,13 @@ void CMapManager::LoadWorld(int Map)
    		sprintf(Text,"%s file corrupted3.",FileName);
 		g_ErrorReport.Write( Text);
 		g_ErrorReport.Write( "\r\n");
+#if defined(__ANDROID__) || defined(MU_IOS)
+		return;
+#else
 		MessageBox(g_hWnd,Text,NULL,MB_OK);
 		SendMessage(g_hWnd,WM_DESTROY,0,0);
 		return;
+#endif
 	}
 
 	sprintf(FileName,"%s\\TerrainHeight.bmp",WorldName);

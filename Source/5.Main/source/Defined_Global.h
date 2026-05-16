@@ -70,7 +70,7 @@
 #define UseNewMacroUI							0 //Su dung khung toa do mini map moi
 #define ShadowText								0 //Name Text Moi
 #define ShowLogoGuild							1
-#define FixDmgQWORD								0
+#define FixDmgQWORD								1
 
 #define UseReconnect							1
 #define HAISLOTRING								1

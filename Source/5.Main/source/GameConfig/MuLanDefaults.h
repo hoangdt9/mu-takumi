@@ -15,6 +15,9 @@ namespace MuLanDefaults
 // First-hop TCP (Connect / CS) when config is empty or invalid — matches server-next LegacyLoginHost.
 inline constexpr std::uint16_t kDefaultFirstHopConnectPort = 44605u;
 
+// server-next LegacyLoginHost game/login listener (paired with kDefaultFirstHopConnectPort).
+inline constexpr std::uint16_t kTakumiLegacyLoginGamePort = 44606u;
+
 // Lower bound of game-shard TCP range in Main.info protect fallback (not the CS port).
 inline constexpr std::uint16_t kDefaultGameShardPortMin = 55901u;
 

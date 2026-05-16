@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="src/Takumi.Client.Protocol/Takumi.Client.Protocol.csproj" />
+  <Project Path="src/Takumi.Client.Protocol.Tests/Takumi.Client.Protocol.Tests.csproj" />
+</Solution>

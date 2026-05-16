@@ -3,6 +3,7 @@ using Takumi.Server.Hosting;
 using Takumi.Server.LegacyLoginHost;
 
 RepoEnvLoader.ApplyDefaultsAndLocalEnv();
+DockerRuntimeEnv.ApplyStackOverridesIfEnabled();
 
 using var cts = new CancellationTokenSource();
 Console.CancelKeyPress += (_, e) => { e.Cancel = true; cts.Cancel(); };

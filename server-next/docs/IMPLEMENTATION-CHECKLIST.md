@@ -235,11 +235,17 @@ Use this to avoid unnecessary rebuilds.
 
 ---
 
+## Client MonoGame (skeleton — after Gate S2)
+
+- [x] Skeleton repo: **`../client-mono/`** — `Takumi.Client.slnx`, **`Takumi.Client.Protocol`** (project reference → `Takumi.Server.Protocol`). Roadmap: **`docs/MONOGAME-CLIENT-ROADMAP.md`**. QA gate: **`docs/S2-GATE-QA.md`**.
+- [ ] Phase 1+ (network shell, scenes): blocked on **Gate S2** sign-off.
+
 ## Planned next steps (consolidated)
 
 Order is suggested dependency / risk reduction:
 
-1. **Device QA (unblocks “MVP done” perception):** real Android against Docker `server-next` — confirm **recv join** → **Translate F1** → select → **no black screen** after `LoadWorld`; capture `adb logcat` + host logs. Tie to **Exit criteria** above.
+1. **Gate S2 QA:** **`docs/S2-GATE-QA.md`** — Docker recreate + Android logcat + `login ok` on game-host; unblocks MonoGame Phase 1.
+2. **Device QA (unblocks “MVP done” perception):** real Android against Docker `server-next` — confirm **recv join** → **Translate F1** → select → **no black screen** after `LoadWorld`; capture `adb logcat` + host logs. Tie to **Exit criteria** above.
 2. **SimpleModulus CS key from `keys/Dec2.dat`:** **`Season6ClientToServerDecryptSession`** + **`Dec2ServerDecryptKeysLoader`** (`TAKUMI_DEC2_PATH`, **`TAKUMI_SIMPLEMODULUS_CS_DEC_KEY_PATH`**); post-decrypt size/rate limits env — **done** in host paths; verify with same `Dec2.dat` as APK `Data/`.
 3. **Golden / pcap parity:** scripted or captured client RX/TX vs host (**In Progress**); extend tests for transport framing vs OpenMU `Connection` (**Next High** — partial: **`C1DeclaredLength602`**, max decrypted bytes + **`TAKUMI_MAX_PACKETS_PER_SECOND`** close).
 4. **Post-select game TCP:** split **`Takumi.Server.GameHost`** documented in **`docs/M6-GAME-TCP-CHECKLIST.md`** + `ANDROID-DEV-MAC.md`.

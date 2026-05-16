@@ -4,6 +4,7 @@ using Takumi.Server.LegacyLoginHost;
 using Takumi.Server.Persistence;
 
 RepoEnvLoader.ApplyDefaultsAndLocalEnv();
+DockerRuntimeEnv.ApplyStackOverridesIfEnabled();
 TakumiPostgresMirror.InitIfEnabled();
 
 if (CharacterRosterJsonMigrator.IsMigrateOnlyMode())

@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>Takumi.Client.Protocol</RootNamespace>
+    <Description>Takumi MonoGame client — wire helpers; references shared Season 6 builders from server-next.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../../server-next/src/Takumi.Server.Protocol/Takumi.Server.Protocol.csproj" />
+  </ItemGroup>
+
+</Project>

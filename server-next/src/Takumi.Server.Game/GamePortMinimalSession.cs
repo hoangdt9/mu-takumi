@@ -860,7 +860,21 @@ public static class GamePortMinimalSession
                         }
 
                         var clientIp = ConnectClientIp.TryFormatIp(tcp.Client.RemoteEndPoint);
-                        var consumed = await sh.TryConsumePendingAsync(id, clientIp, options.LoginHandoffMatchClientIp, ct).ConfigureAwait(false);
+                        bool consumed;
+                        try
+                        {
+                            consumed = await sh.TryConsumePendingAsync(id, clientIp, options.LoginHandoffMatchClientIp, ct).ConfigureAwait(false);
+                        }
+                        catch (Exception ex) when (IsPostgresException(ex))
+                        {
+                            Console.WriteLine(
+                                "[{0}] login rejected: session handoff DB error ({1})",
+                                remote,
+                                ex.Message);
+                            await WriteLoginResultAsync(connection, protect, 0x00, ct).ConfigureAwait(false);
+                            return;
+                        }
+
                         if (!consumed)
                         {
                             Console.WriteLine(
@@ -1144,6 +1158,20 @@ public static class GamePortMinimalSession
     {
         var pkt = LoginAccountWire602.BuildLoginResult(result);
         return GamePortOutboundWire.WriteAsync(connection, clientProtectOutbound, pkt, ct);
+    }
+
+    static bool IsPostgresException(Exception ex)
+    {
+        for (var e = ex; e is not null; e = e.InnerException)
+        {
+            var name = e.GetType().FullName;
+            if (name is not null && name.StartsWith("Npgsql.", StringComparison.Ordinal))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     sealed class LoginLatch

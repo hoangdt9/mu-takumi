@@ -59,6 +59,12 @@ services:
       - "${TAKUMI_CONNECT_PUBLISH:-44605}:${TAKUMI_CONNECT_PORT:-44605}"
       - "${TAKUMI_LEGACY_LOGIN_PUBLISH:-44606}:${TAKUMI_LOGIN_PORT:-44606}"
     environment:
+      TAKUMI_DOCKER_STACK: "1"
+      TAKUMI_PG_HOST: postgres
+      TAKUMI_PG_PORT: "5432"
+      TAKUMI_PG_USER: "${TAKUMI_PG_USER:-takumi}"
+      TAKUMI_PG_PASSWORD: "${TAKUMI_PG_PASSWORD:-takumi}"
+      TAKUMI_PG_DATABASE: "${TAKUMI_PG_DATABASE:-takumi_runtime}"
       TAKUMI_LOGIN_PORT: "${TAKUMI_LOGIN_PORT:-44606}"
       TAKUMI_CONNECT_PORT: "${TAKUMI_CONNECT_PORT:-44605}"
       TAKUMI_GAME_PORT: "${TAKUMI_GAME_PORT:-}"
@@ -155,6 +161,8 @@ services:
     image: mcr.microsoft.com/dotnet/sdk:10.0
     container_name: takumi-game-host
     restart: unless-stopped
+    depends_on:
+      - postgres
     working_dir: /app
     volumes:
       - .:/app
@@ -164,7 +172,13 @@ services:
       - "${TAKUMI_GAME_PUBLISH:-55901}:${TAKUMI_GAME_PORT:-55901}"
     environment:
       # Redirects all GameHost graph obj/bin to /tmp (see server-next/Directory.Build.props).
+      TAKUMI_DOCKER_STACK: "1"
       TAKUMI_DOCKER_GAMEHOST: "1"
+      TAKUMI_PG_HOST: postgres
+      TAKUMI_PG_PORT: "5432"
+      TAKUMI_PG_USER: "${TAKUMI_PG_USER:-takumi}"
+      TAKUMI_PG_PASSWORD: "${TAKUMI_PG_PASSWORD:-takumi}"
+      TAKUMI_PG_DATABASE: "${TAKUMI_PG_DATABASE:-takumi_runtime}"
       TAKUMI_GAME_PORT: "${TAKUMI_GAME_PORT:-55901}"
       TAKUMI_DEC2_PATH: /keys/Dec2.dat
       # Android ENCRYPT_STATE: recv on GS-range ports runs gProtect.DecryptData — outbound must be XOR'd.

@@ -23,6 +23,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Takumi.Server.Game\Takumi.Server.Game.csproj" />
+    <ProjectReference Include="..\Takumi.Server.Hosting\Takumi.Server.Hosting.csproj" />
     <ProjectReference Include="..\Takumi.Server.Join\Takumi.Server.Join.csproj" />
     <ProjectReference Include="..\Takumi.Server.Connect\Takumi.Server.Connect.csproj" />
     <ProjectReference Include="..\Takumi.Server.Persistence\Takumi.Server.Persistence.csproj" />

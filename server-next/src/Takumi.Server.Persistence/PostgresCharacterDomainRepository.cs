@@ -1,5 +1,4 @@
 using Npgsql;
-using NpgsqlTypes;
 
 namespace Takumi.Server.Persistence;
 
@@ -27,7 +26,7 @@ public sealed class PostgresCharacterDomainRepository : IAsyncDisposable
             ORDER BY character_name
             """,
             conn);
-        cmd.Parameters.Add(new NpgsqlParameter("a", NpgsqlDbType.Text) { Value = accountLogin });
+        cmd.Parameters.AddWithValue(accountLogin);
         await using var reader = await cmd.ExecuteReaderAsync(ct).ConfigureAwait(false);
         while (await reader.ReadAsync(ct).ConfigureAwait(false))
         {
@@ -68,7 +67,7 @@ public sealed class PostgresCharacterDomainRepository : IAsyncDisposable
         await using var tx = await conn.BeginTransactionAsync(ct).ConfigureAwait(false);
         await using (var del = new NpgsqlCommand("DELETE FROM character_domain WHERE account_login = $1", conn, tx))
         {
-            del.Parameters.Add(new NpgsqlParameter("a", NpgsqlDbType.Text) { Value = accountLogin });
+            del.Parameters.AddWithValue(accountLogin);
             await del.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
         }
 
@@ -84,29 +83,29 @@ public sealed class PostgresCharacterDomainRepository : IAsyncDisposable
                 """,
                 conn,
                 tx);
-            ins.Parameters.Add(new NpgsqlParameter("a", NpgsqlDbType.Text) { Value = accountLogin });
-            ins.Parameters.Add(new NpgsqlParameter("n", NpgsqlDbType.Text) { Value = CharacterRosterMerge.NormaliseName(row.Name) });
-            ins.Parameters.Add(new NpgsqlParameter("c", NpgsqlDbType.Smallint) { Value = (short)row.ServerClass });
-            ins.Parameters.Add(new NpgsqlParameter("l", NpgsqlDbType.Integer) { Value = (int)row.Level });
-            ins.Parameters.Add(new NpgsqlParameter("m", NpgsqlDbType.Smallint) { Value = (short)row.MapId });
-            ins.Parameters.Add(new NpgsqlParameter("x", NpgsqlDbType.Smallint) { Value = (short)row.PosX });
-            ins.Parameters.Add(new NpgsqlParameter("y", NpgsqlDbType.Smallint) { Value = (short)row.PosY });
-            ins.Parameters.Add(new NpgsqlParameter("g", NpgsqlDbType.Smallint) { Value = (short)row.Angle });
-            ins.Parameters.Add(new NpgsqlParameter("hp", NpgsqlDbType.Integer) { Value = row.CurrentHp });
-            ins.Parameters.Add(new NpgsqlParameter("hpmax", NpgsqlDbType.Integer) { Value = row.MaxHp });
-            ins.Parameters.Add(new NpgsqlParameter("mp", NpgsqlDbType.Integer) { Value = row.CurrentMp });
-            ins.Parameters.Add(new NpgsqlParameter("mpmax", NpgsqlDbType.Integer) { Value = row.MaxMp });
-            ins.Parameters.Add(new NpgsqlParameter("z", NpgsqlDbType.Bigint) { Value = row.Zen });
-            ins.Parameters.Add(new NpgsqlParameter("sd", NpgsqlDbType.Integer) { Value = row.CurrentShield });
-            ins.Parameters.Add(new NpgsqlParameter("sdm", NpgsqlDbType.Integer) { Value = row.MaxShield });
-            ins.Parameters.Add(new NpgsqlParameter("str", NpgsqlDbType.Integer) { Value = row.Strength });
-            ins.Parameters.Add(new NpgsqlParameter("dex", NpgsqlDbType.Integer) { Value = row.Dexterity });
-            ins.Parameters.Add(new NpgsqlParameter("vit", NpgsqlDbType.Integer) { Value = row.Vitality });
-            ins.Parameters.Add(new NpgsqlParameter("ene", NpgsqlDbType.Integer) { Value = row.Energy });
-            ins.Parameters.Add(new NpgsqlParameter("lead", NpgsqlDbType.Integer) { Value = row.Leadership });
-            ins.Parameters.Add(new NpgsqlParameter("lup", NpgsqlDbType.Integer) { Value = row.LevelUpPoint });
-            ins.Parameters.Add(new NpgsqlParameter("bp", NpgsqlDbType.Integer) { Value = row.CurrentBp });
-            ins.Parameters.Add(new NpgsqlParameter("bpmax", NpgsqlDbType.Integer) { Value = row.MaxBp });
+            ins.Parameters.AddWithValue(accountLogin);
+            ins.Parameters.AddWithValue(CharacterRosterMerge.NormaliseName(row.Name));
+            ins.Parameters.AddWithValue((short)row.ServerClass);
+            ins.Parameters.AddWithValue((int)row.Level);
+            ins.Parameters.AddWithValue((short)row.MapId);
+            ins.Parameters.AddWithValue((short)row.PosX);
+            ins.Parameters.AddWithValue((short)row.PosY);
+            ins.Parameters.AddWithValue((short)row.Angle);
+            ins.Parameters.AddWithValue(row.CurrentHp);
+            ins.Parameters.AddWithValue(row.MaxHp);
+            ins.Parameters.AddWithValue(row.CurrentMp);
+            ins.Parameters.AddWithValue(row.MaxMp);
+            ins.Parameters.AddWithValue(row.Zen);
+            ins.Parameters.AddWithValue(row.CurrentShield);
+            ins.Parameters.AddWithValue(row.MaxShield);
+            ins.Parameters.AddWithValue(row.Strength);
+            ins.Parameters.AddWithValue(row.Dexterity);
+            ins.Parameters.AddWithValue(row.Vitality);
+            ins.Parameters.AddWithValue(row.Energy);
+            ins.Parameters.AddWithValue(row.Leadership);
+            ins.Parameters.AddWithValue(row.LevelUpPoint);
+            ins.Parameters.AddWithValue(row.CurrentBp);
+            ins.Parameters.AddWithValue(row.MaxBp);
             await ins.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
         }
 

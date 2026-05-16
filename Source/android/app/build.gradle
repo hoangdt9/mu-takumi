@@ -499,7 +499,8 @@ android {
                 arguments "-DANDROID_STL=c++_static",
                           "-DANDROID_PLATFORM=android-21",
                           "-DMU_ENABLE_BGFX=" + (muEnableBgfx ? "ON" : "OFF"),
-                          "-DMU_LAN_DEFAULT_HOST_A=${muLanIp}"
+                          "-DMU_LAN_DEFAULT_HOST_A=${muLanIp}",
+                          "-DMU_BOOTSTRAP_ADB_REVERSE=" + (muBootstrapAdbReverseEnabled() ? "ON" : "OFF")
             }
         }
 

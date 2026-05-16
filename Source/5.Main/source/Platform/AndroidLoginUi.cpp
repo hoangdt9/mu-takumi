@@ -74,6 +74,28 @@ bool IsPrivateIPv4Host(const char* address)
 	return false;
 }
 
+void AndroidFinishDirectGameLoginUi(unsigned short gamePort, const char* hostLabel)
+{
+	g_bGameServerConnected = TRUE;
+	CUIMng& rUIMng = CUIMng::Instance();
+	rUIMng.HideWin(&rUIMng.m_ServerSelWin);
+	rUIMng.ShowWin(&rUIMng.m_LoginWin);
+	HeroKey = 0;
+	CurrentProtocolState = RECEIVE_JOIN_SERVER_SUCCESS;
+
+	for (int drainPass = 0; drainPass < 12; ++drainPass)
+	{
+		SocketClient.AndroidSyncPollRecvPending();
+		ProtocolCompiler();
+	}
+
+	g_ErrorReport.Write(
+		"[TakumiLoginBg] opened LoginWin via direct %s:%u (F4 03 bypass)\r\n",
+		hostLabel != nullptr ? hostLabel : "?",
+		static_cast<unsigned>(gamePort));
+}
+
+#if defined(MU_BOOTSTRAP_ADB_REVERSE)
 bool AndroidTryReconnectLoopbackConnect()
 {
 	if (s_triedLoopbackConnect)
@@ -110,7 +132,7 @@ bool AndroidTryReconnectLoopbackConnect()
 	return true;
 }
 
-void AndroidOpenGameLoginDirect()
+void AndroidOpenGameLoginDirectLoopback()
 {
 	s_preferLoopbackTcp = true;
 	SocketClient.Close();
@@ -124,24 +146,34 @@ void AndroidOpenGameLoginDirect()
 		return;
 	}
 
-	g_bGameServerConnected = TRUE;
-	CUIMng& rUIMng = CUIMng::Instance();
-	rUIMng.HideWin(&rUIMng.m_ServerSelWin);
-	rUIMng.ShowWin(&rUIMng.m_LoginWin);
-	HeroKey = 0;
-	CurrentProtocolState = RECEIVE_JOIN_SERVER_SUCCESS;
+	AndroidFinishDirectGameLoginUi(gamePort, "127.0.0.1");
+}
+#endif
 
-	for (int drainPass = 0; drainPass < 12; ++drainPass)
+void AndroidOpenGameLoginDirectOnHost(const char* host)
+{
+	if (host == nullptr || host[0] == '\0')
 	{
-		SocketClient.AndroidSyncPollRecvPending();
-		ProtocolCompiler();
+		return;
 	}
 
-	g_ErrorReport.Write(
-		"[TakumiLoginBg] opened LoginWin via direct 127.0.0.1:%u (no F4 03 on LAN)\r\n",
-		static_cast<unsigned>(gamePort));
+	s_preferLoopbackTcp = false;
+	SocketClient.Close();
+
+	const unsigned short gamePort = MuLanDefaults::kTakumiLegacyLoginGamePort;
+	if (!CreateSocket(const_cast<char*>(host), gamePort))
+	{
+		g_ErrorReport.Write(
+			"[TakumiLoginBg] direct game connect failed %s:%u (same Wi‑Fi as server?)\r\n",
+			host,
+			static_cast<unsigned>(gamePort));
+		return;
+	}
+
+	AndroidFinishDirectGameLoginUi(gamePort, host);
 }
-}
+
+} // namespace
 
 bool MU_AndroidShouldPreferLoopbackTcp()
 {
@@ -254,11 +286,13 @@ void MU_AndroidTickLoginSceneConnectFallback()
 		return;
 	}
 
+#if defined(MU_BOOTSTRAP_ADB_REVERSE)
 	if (!s_triedLoopbackConnect && AndroidTryReconnectLoopbackConnect())
 	{
 		s_connectFallbackStartMs = MU_MobileGetTicks();
 		return;
 	}
+#endif
 
 	if (fd != INVALID_SOCKET && static_cast<int>(fd) > 0)
 	{
@@ -333,12 +367,18 @@ void MU_AndroidTickLoginAfterServerPickFallback()
 	if (!s_triedDirectGameLogin && elapsedMs >= kF403DirectGameMs)
 	{
 		s_triedDirectGameLogin = true;
+#if defined(MU_BOOTSTRAP_ADB_REVERSE)
 		if (!s_triedLoopbackConnect && IsPrivateIPv4Host(szServerIpAddress))
 		{
 			AndroidTryReconnectLoopbackConnect();
 		}
-
-		AndroidOpenGameLoginDirect();
+		AndroidOpenGameLoginDirectLoopback();
+#else
+		if (szServerIpAddress != nullptr && szServerIpAddress[0] != '\0')
+		{
+			AndroidOpenGameLoginDirectOnHost(szServerIpAddress);
+		}
+#endif
 		if (rUIMng.m_LoginWin.IsShow())
 		{
 			s_serverPickStartMs = 0;
@@ -354,11 +394,15 @@ void MU_AndroidTickLoginAfterServerPickFallback()
 	s_serverPickStartMs = 0;
 	rUIMng.ShowWin(&rUIMng.m_ServerSelWin);
 	rUIMng.PopUpMsgWin(MESSAGE_SERVER_LOST);
+#if defined(MU_BOOTSTRAP_ADB_REVERSE)
 	g_ErrorReport.Write(
-		"[TakumiLoginBg] F4 03 timeout after %u ms — no game socket / LoginWin. "
-		"Run: server-next/scripts/adb-reverse-takumi-dev.sh then rebuild APK with "
-		"-PmuBootstrapAdbReverse=true (127.0.0.1).\r\n",
+		"[TakumiLoginBg] F4 03 timeout after %u ms — USB: adb-reverse-takumi-dev.sh + -PmuBootstrapAdbReverse=true.\r\n",
 		elapsedMs);
+#else
+	g_ErrorReport.Write(
+		"[TakumiLoginBg] F4 03 timeout after %u ms — LAN: same Wi-Fi, .env TAKUMI_PUBLIC_HOST, docker-stack, TCP 44605/44606.\r\n",
+		elapsedMs);
+#endif
 }
 
 #endif // __ANDROID__

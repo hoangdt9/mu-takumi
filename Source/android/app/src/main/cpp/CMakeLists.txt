@@ -171,6 +171,10 @@ if(DEFINED MU_LAN_DEFAULT_HOST_A AND NOT "${MU_LAN_DEFAULT_HOST_A}" STREQUAL "")
     )
 endif()
 
+if(MU_BOOTSTRAP_ADB_REVERSE STREQUAL "ON")
+    target_compile_definitions(main PRIVATE MU_BOOTSTRAP_ADB_REVERSE=1)
+endif()
+
 set(SDL2_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/SDL2/include")
 
 target_include_directories(main PRIVATE

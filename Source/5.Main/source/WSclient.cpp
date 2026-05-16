@@ -250,7 +250,7 @@ namespace
 
 		strcpy_s(output,outputSize,address);
 
-#if defined(__ANDROID__)
+#if defined(__ANDROID__) && defined(MU_BOOTSTRAP_ADB_REVERSE)
 		if (MU_AndroidShouldPreferLoopbackTcp()
 			&& IsPrivateIPv4(address)
 			&& !IsLoopbackIPv4(address))
@@ -262,7 +262,7 @@ namespace
 		}
 		else
 #endif
-#if defined(__ANDROID__) || defined(MU_IOS)
+#if (defined(__ANDROID__) && defined(MU_BOOTSTRAP_ADB_REVERSE)) || defined(MU_IOS)
 		if (szServerIpAddress != 0 && szServerIpAddress[0] != '\0'
 			&& IsLoopbackIPv4(szServerIpAddress)
 			&& IsPrivateIPv4(address)

@@ -724,6 +724,7 @@ public static class LegacyLoginHostRunner
                     var invPkt = await JoinInventoryPacket602.BuildAsync(TakumiPostgresMirror.InventorySlots, loggedAccountId, joinName10, ct).ConfigureAwait(false);
                     await WriteOutboundAsync(joinPkt);
                     await WriteOutboundAsync(invPkt);
+                    await WriteOutboundAsync(MagicListWire602.BuildEmpty());
                     if (JoinMapVitalsSeed.TryApplyFromJoinPacketIfUnset(picked.MaxHp > 0, joinPkt, out var joinVitals))
                     {
                         RosterVitalsLifecycle.ApplyVitals(
@@ -1457,7 +1458,10 @@ public static class LegacyLoginHostRunner
 
             CharacterRosterMirrorWriter.TryDrainPendingUpserts(TimeSpan.FromMilliseconds(900));
             PlayerShopSession.FlushInventoryMirrorOnDisconnect(loggedAccountId, sessionJoinCharacterName10, presenceSessionId);
+            PlayerWarehouseSession.FlushOnDisconnect(loggedAccountId, presenceSessionId);
+            PlayerTradeSession.Close(presenceSessionId);
             InventorySlotMirrorWriter.TryDrainPendingOps(TimeSpan.FromMilliseconds(900));
+            WarehouseSlotMirrorWriter.TryDrainPendingOps(TimeSpan.FromMilliseconds(900));
 
             tcp.Dispose();
         }

@@ -42,10 +42,12 @@ public sealed class ItemWorldHandlerTests
     }
 
     [Fact]
-    public void IsSupportedItemStorage_allows_main_inventory_only()
+    public void IsSupportedItemStorage_respects_open_interfaces()
     {
-        Assert.True(ClientGameplayPackets602.IsSupportedItemStorage(0));
-        Assert.False(ClientGameplayPackets602.IsSupportedItemStorage(1));
+        Assert.True(ClientGameplayPackets602.IsSupportedItemStorage(0, warehouseOpen: false, tradeOpen: false));
+        Assert.True(ClientGameplayPackets602.IsSupportedItemStorage(2, warehouseOpen: true, tradeOpen: false));
+        Assert.False(ClientGameplayPackets602.IsSupportedItemStorage(2, warehouseOpen: false, tradeOpen: false));
+        Assert.True(ClientGameplayPackets602.IsSupportedItemStorage(1, warehouseOpen: false, tradeOpen: true));
     }
 
     [Fact]

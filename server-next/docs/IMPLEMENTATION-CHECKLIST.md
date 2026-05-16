@@ -88,7 +88,7 @@ Use this to avoid unnecessary rebuilds.
 ## Next (High Priority)
 
 - [x] **M4b observability:** `CharacterRosterMirrorHealth` — merge/upsert success+fail counts; upsert errors log `[roster-health] …` snapshot; **`TAKUMI_ROSTER_HEALTH_LOG`** logs snapshot after **`TryDrainPendingUpserts`** (`docs/M4-WORLD-POSITION-CHECKLIST.md`).
-- [x] **M4b SSOT (minimal hosts):** `TAKUMI_ROSTER_DB_PRIMARY`, `character_domain` mirror, `character_staging` importer — **`docs/M4-WORLD-POSITION-CHECKLIST.md`**, **`docs/M4-ROSTER-SSOT.md`**. EF full host / warehouse item move vẫn backlog.
+- [x] **M4b SSOT (minimal hosts):** `TAKUMI_ROSTER_DB_PRIMARY`, `character_domain` mirror, `character_staging` importer — **`docs/M4-WORLD-POSITION-CHECKLIST.md`**, **`docs/M4-ROSTER-SSOT.md`**. **M11 (partial):** warehouse/trade/guild/skill stubs trên minimal hosts — **`docs/M11-SOCIAL-WAREHOUSE-SKILLS.md`**; EF full `Takumi.Server.Host` vẫn backlog.
 - [ ] **M6+ / M7–M10:** Full **`Takumi.Server.Game`** protocol after join (map/scope/combat) when client uses **only** game TCP — **`docs/M7-CHARACTER-PERSISTENCE-CHECKLIST.md`**, **`docs/M8-M10-WORLD-RUNTIME-CHECKLIST.md`**.
 - [x] **Split-stack login handoff (Postgres):** `sql/init/003_session_ticket.sql` + **`PostgresSessionHandoffRepository`**; **`TAKUMI_SESSION_HANDOFF_DB=1`** → `LegacyLoginHost` persists pending row after F1 01; optional **`TAKUMI_GAME_REQUIRE_LOGIN_HANDOFF=1`** on **GameHost** consumes one row before F1 01 success (**IP match** default on, override with **`TAKUMI_GAME_HANDOFF_MATCH_IP=0`**). Optional **signed wire path:** **`TAKUMI_SESSION_TICKET_HMAC_KEY`** + **`TAKUMI_GAME_TICKET_WIRE=1`** — Legacy pushes **`F1 A5`**, client **`F1 A6`** before game **`F1 01`**, consume on attach (see **`docs/M6-GAME-TCP-CHECKLIST.md`**). Plain IP handoff does not send ticket bytes on wire.
 - [x] **M5 split processes:** `Takumi.Server.LoginHost` + `Takumi.Server.ConnectHost` (shared `LegacyLoginHost.Runner` / `ConnectServerHostRunner`); Docker profile **`splitstack`**; scripts `run-login-host.sh` / `run-connect-host.sh`. Combined `LegacyLoginHost` unchanged for default Docker.
@@ -109,7 +109,7 @@ Use this to avoid unnecessary rebuilds.
 - [x] Runtime **`inventory_slot`** table (`sql/init/002_inventory_slot.sql`) + **`PostgresInventorySlotRepository`** / **`JoinInventoryPacket602`** (12-byte `item` wire blobs; apply SQL on existing volumes via **`./scripts/apply-sql.sh`**).
 - [ ] Staging **`inventory_staging`** + startup importer (flat `ItemIndex` → 12-byte encoding / parity `ItemByteConvert`).
 - [x] After `F3 03` (and move-map restub), send Season 6 **`F3 10`** from **`inventory_slot`** when **`TAKUMI_ROSTER_DB_SYNC`** is on; otherwise empty list.
-- [ ] Extend staging→runtime mapping to skills, warehouse, guild/social domains.
+- [~] Extend staging→runtime mapping to skills, warehouse, guild/social domains — **M11:** `warehouse_slot` + moves; trade/guild/skill list stubs (**`docs/M11-SOCIAL-WAREHOUSE-SKILLS.md`**); full skill DB + guild domain still open.
 
 ## Lộ trình chuẩn — `server-next` chạy tương đương `Source/` (đánh số module)
 
@@ -164,7 +164,7 @@ Use this to avoid unnecessary rebuilds.
    - [x] SQL prep: **`004_character_roster_vitals.sql`**.  
    - [x] **M7b–c:** vitals trên roster + join **`F3 03`**; tests **`JoinMapVitals602Tests`**.  
    - [x] **M7d (partial):** `JoinMapVitalsSeed`, `LifeManaWire602`, `RosterVitalsOutboundTracker`, **`TAKUMI_SEND_LIFE_MANA_AFTER_JOIN`**.  
-   - [x] **M7d (minimal hosts):** combat hit/die/revive, HP regen, vitals DB upsert, potion use (`ItemWorldHandler`); trade/warehouse/PvP **OPEN** (M8+).
+   - [x] **M7d (minimal hosts):** combat hit/die/revive, HP regen, vitals DB upsert, potion use (`ItemWorldHandler`). **M11 (partial):** warehouse (`warehouse_slot`, NPC 240), trade window (`0x36`–`0x3D`), guild stub ack, empty **`F3 11`** after join — **`docs/M11-SOCIAL-WAREHOUSE-SKILLS.md`**; PvP full parity still open.  
    - [x] **M7d town respawn:** chết trên field → **`C1 F3 04`** (`CharacterRegenWire602` + `MapRespawnCatalog`) tới tile thành Lorencia **(135,122)**; **không** dùng `C1 0x1C flag=0` (client `PRECEIVE_TELEPORT` thiếu `SubCode` → lệch XY kiểu **(122,1)**). Gate vẫn dùng `0x1C flag=1` (`WorldGameplayHandlers`).
    - [ ] **QA Android (death):** logcat `[ReceiveRevival] town regen map=0 xy=(135,122)`; minimap Lorencia **(135,122)**; không void/black tile; rebuild APK sau sửa `WSclient.cpp`.  
    - [x] **M7 + M4:** `inventory_slot` upsert sau buy/sell/repair — `InventorySlotMirrorWriter`.  

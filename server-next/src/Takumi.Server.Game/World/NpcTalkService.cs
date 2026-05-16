@@ -1,3 +1,4 @@
+using Takumi.Server.Persistence;
 using Takumi.Server.Protocol;
 
 namespace Takumi.Server.Game.World;
@@ -23,16 +24,40 @@ public static class NpcTalkService
 
     public static async Task<bool> TryOpenWarehouseAsync(
         GameRosterEntry player,
+        Guid presenceSessionId,
+        string? accountId,
         Func<ReadOnlyMemory<byte>, CancellationToken, Task> writeAsync,
         CancellationToken ct)
     {
+        PlayerWarehouseSession.Open(presenceSessionId);
+        await PlayerWarehouseSession.EnsureLoadedAsync(presenceSessionId, accountId, ct).ConfigureAwait(false);
+
         await writeAsync(NpcTalkWire602.Build(TalkResultWarehouse), ct).ConfigureAwait(false);
-        await writeAsync(NpcShopWire602.Build(Array.Empty<NpcShopWire602.ShopItemWire>(), listType: 0), ct)
-            .ConfigureAwait(false);
+
+        var wireItems = new List<NpcShopWire602.ShopItemWire>();
+        if (Sessions.TryGetSnapshot(presenceSessionId, out var rows))
+        {
+            foreach (var row in rows)
+            {
+                wireItems.Add(new NpcShopWire602.ShopItemWire(row.Slot, row.Item12));
+            }
+        }
+
+        await writeAsync(NpcShopWire602.Build(wireItems, listType: 0), ct).ConfigureAwait(false);
         var invMoney = (uint)Math.Clamp(player.Zen, 0, uint.MaxValue);
-        await writeAsync(WarehouseWire602.BuildMoney(invMoney, warehouseMoney: 0), ct).ConfigureAwait(false);
+        var whMoney = (uint)Math.Clamp(player.Zen, 0, uint.MaxValue);
+        await writeAsync(WarehouseWire602.BuildMoney(invMoney, whMoney), ct).ConfigureAwait(false);
         await writeAsync(WarehouseWire602.BuildState(0), ct).ConfigureAwait(false);
         return true;
+    }
+
+    static class Sessions
+    {
+        public static bool TryGetSnapshot(Guid sessionId, out IReadOnlyList<InventorySlotRow> rows)
+        {
+            rows = PlayerWarehouseSession.BuildSnapshot(sessionId);
+            return rows.Count > 0;
+        }
     }
 
     public static async Task<bool> TryOpenDuelNpcAsync(

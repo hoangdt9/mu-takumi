@@ -154,6 +154,24 @@ public static class GameMapPresenceRegistry
         return false;
     }
 
+    public static bool TryGetSession(Guid sessionId, out MapPresenceSession? session) =>
+        Sessions.TryGetValue(sessionId, out session);
+
+    public static bool TryGetByObjectKey(int objectKey, out MapPresenceSession? session)
+    {
+        foreach (var s in Sessions.Values)
+        {
+            if (s.ObjectKey == objectKey)
+            {
+                session = s;
+                return true;
+            }
+        }
+
+        session = null;
+        return false;
+    }
+
     public static async Task NotifyJoinAsync(MapPresenceSession self, string remote, CancellationToken ct)
     {
         var peerCount = 0;

@@ -76,8 +76,9 @@ public static class ItemWorldWire602
         return buf;
     }
 
-    public static byte[] BuildMoveSuccess(byte targetSlot, ReadOnlySpan<byte> item12) =>
-        BuildMove(0, targetSlot, item12);
+    /// <param name="storageSubCode">Target storage flag sent as <c>SubCode</c> (<see cref="ItemStorageFlags602"/>).</param>
+    public static byte[] BuildMoveSuccess(byte storageSubCode, byte targetSlot, ReadOnlySpan<byte> item12) =>
+        BuildMove(storageSubCode, targetSlot, item12);
 
     /// <summary><c>GCItemDeleteSend</c> — C1:28 slot + flag.</summary>
     public static byte[] BuildItemDelete(byte slot, byte flag = 1)

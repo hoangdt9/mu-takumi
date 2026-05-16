@@ -389,6 +389,13 @@ public static class GamePortMinimalSession
                         var invPkt = await JoinInventoryPacket602.BuildAsync(TakumiPostgresMirror.InventorySlots, loggedAccountId, joinName10, ct).ConfigureAwait(false);
                         await GamePortOutboundWire.WriteAsync(connection, protect, joinPkt, ct, TrackVitalsOutbound).ConfigureAwait(false);
                         await GamePortOutboundWire.WriteAsync(connection, protect, invPkt, ct, TrackVitalsOutbound).ConfigureAwait(false);
+                        await GamePortOutboundWire.WriteAsync(
+                                connection,
+                                protect,
+                                MagicListWire602.BuildEmpty(),
+                                ct,
+                                TrackVitalsOutbound)
+                            .ConfigureAwait(false);
                         if (RosterVitalsLifecycle.TrySeedGameEntryFromJoin(picked, joinPkt))
                         {
                             Volatile.Write(ref rosterDirty, 1);
@@ -913,7 +920,10 @@ public static class GamePortMinimalSession
 
             CharacterRosterMirrorWriter.TryDrainPendingUpserts(TimeSpan.FromMilliseconds(900));
             PlayerShopSession.FlushInventoryMirrorOnDisconnect(loggedAccountId, sessionJoinCharacterName10, presenceSessionId);
+            PlayerWarehouseSession.FlushOnDisconnect(loggedAccountId, presenceSessionId);
+            PlayerTradeSession.Close(presenceSessionId);
             InventorySlotMirrorWriter.TryDrainPendingOps(TimeSpan.FromMilliseconds(900));
+            WarehouseSlotMirrorWriter.TryDrainPendingOps(TimeSpan.FromMilliseconds(900));
 
             await GameMapPresenceRegistry.UnregisterAsync(presenceSessionId, ct).ConfigureAwait(false);
             MonsterViewerRegistry.Unregister(presenceSessionId);

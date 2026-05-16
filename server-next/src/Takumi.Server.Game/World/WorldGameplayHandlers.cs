@@ -25,7 +25,24 @@ public static class WorldGameplayHandlers
         if (ClientGameplayPackets602.TryFindShopExitRequest(packet, out _))
         {
             PlayerShopSession.CloseShop(presenceSessionId);
+            PlayerWarehouseSession.Close(presenceSessionId);
             Console.WriteLine("[m8] shop exit 0x31 from {0}", remote);
+            return true;
+        }
+
+        if (await TradeGameplayHandler.TryHandlePacketAsync(
+                presenceSessionId,
+                characterName10,
+                packet,
+                remote,
+                writeAsync,
+                ct).ConfigureAwait(false))
+        {
+            return true;
+        }
+
+        if (await GuildGameplayHandler.TryHandlePacketAsync(packet, remote, writeAsync, ct).ConfigureAwait(false))
+        {
             return true;
         }
 
@@ -220,7 +237,13 @@ public static class WorldGameplayHandlers
         {
             if (talkResult == NpcTalkService.TalkResultWarehouse)
             {
-                await NpcTalkService.TryOpenWarehouseAsync(player, writeAsync, ct).ConfigureAwait(false);
+                await NpcTalkService.TryOpenWarehouseAsync(
+                        player,
+                        presenceSessionId,
+                        accountId,
+                        writeAsync,
+                        ct)
+                    .ConfigureAwait(false);
                 Console.WriteLine("[m8] warehouse open npc class={0} {1}", mob.MonsterClass, remote);
                 return true;
             }

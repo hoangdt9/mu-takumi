@@ -114,29 +114,154 @@ public static class ItemWorldHandler
             return true;
         }
 
-        if (!ClientGameplayPackets602.IsSupportedItemStorage(srcFlag)
-            || !ClientGameplayPackets602.IsSupportedItemStorage(dstFlag))
+        var warehouseOpen = PlayerWarehouseSession.IsOpen(presenceSessionId);
+        var tradeOpen = PlayerTradeSession.IsOpen(presenceSessionId);
+        if (!ClientGameplayPackets602.IsSupportedItemStorage(srcFlag, warehouseOpen, tradeOpen)
+            || !ClientGameplayPackets602.IsSupportedItemStorage(dstFlag, warehouseOpen, tradeOpen))
         {
             await writeAsync(ItemWorldWire602.BuildMoveFail(dstSlot), ct).ConfigureAwait(false);
             return true;
         }
 
-        await PlayerShopSession.EnsureInventoryLoadedAsync(presenceSessionId, accountId, characterName10, ct)
-            .ConfigureAwait(false);
-
-        if (!PlayerShopSession.TryMoveInventorySlot(presenceSessionId, srcSlot, dstSlot, out var targetItem))
+        var moveResult = await TryApplyItemMoveAsync(
+                presenceSessionId,
+                accountId,
+                characterName10,
+                srcFlag,
+                srcSlot,
+                dstFlag,
+                dstSlot,
+                ct).ConfigureAwait(false);
+        if (!moveResult.Ok)
         {
             await writeAsync(ItemWorldWire602.BuildMoveFail(dstSlot), ct).ConfigureAwait(false);
-            Console.WriteLine("[m7] item move fail {0}→{1} {2}", srcSlot, dstSlot, remote);
+            Console.WriteLine(
+                "[m7] item move fail f{0}:{1}→f{2}:{3} {4}",
+                srcFlag,
+                srcSlot,
+                dstFlag,
+                dstSlot,
+                remote);
             return true;
         }
 
-        PersistSlotMirror(presenceSessionId, accountId, characterName10, srcSlot);
-        PersistSlotMirror(presenceSessionId, accountId, characterName10, dstSlot);
-
-        await writeAsync(ItemWorldWire602.BuildMoveSuccess(dstSlot, targetItem), ct).ConfigureAwait(false);
-        Console.WriteLine("[m7] item move {0}→{1} map={2} {3}", srcSlot, dstSlot, player.MapId, remote);
+        await writeAsync(ItemWorldWire602.BuildMoveSuccess(dstFlag, dstSlot, moveResult.TargetItem), ct).ConfigureAwait(false);
+        Console.WriteLine(
+            "[m7] item move f{0}:{1}→f{2}:{3} map={4} {5}",
+            srcFlag,
+            srcSlot,
+            dstFlag,
+            dstSlot,
+            player.MapId,
+            remote);
         return true;
+    }
+
+    static async Task<(bool Ok, byte[] TargetItem)> TryApplyItemMoveAsync(
+        Guid presenceSessionId,
+        string? accountId,
+        byte[] characterName10,
+        byte srcFlag,
+        byte srcSlot,
+        byte dstFlag,
+        byte dstSlot,
+        CancellationToken ct)
+    {
+        if (srcFlag == ItemStorageFlags602.Inventory && dstFlag == ItemStorageFlags602.Inventory)
+        {
+            await PlayerShopSession.EnsureInventoryLoadedAsync(presenceSessionId, accountId, characterName10, ct)
+                .ConfigureAwait(false);
+            if (!PlayerShopSession.TryMoveInventorySlot(presenceSessionId, srcSlot, dstSlot, out var targetItem))
+            {
+                return (false, Array.Empty<byte>());
+            }
+
+            PersistSlotMirror(presenceSessionId, accountId, characterName10, srcSlot);
+            PersistSlotMirror(presenceSessionId, accountId, characterName10, dstSlot);
+            return (true, targetItem);
+        }
+
+        if (srcFlag == ItemStorageFlags602.Warehouse && dstFlag == ItemStorageFlags602.Warehouse)
+        {
+            await PlayerWarehouseSession.EnsureLoadedAsync(presenceSessionId, accountId, ct).ConfigureAwait(false);
+            if (!PlayerWarehouseSession.TryMoveSlot(presenceSessionId, srcSlot, dstSlot, out var targetItem))
+            {
+                return (false, Array.Empty<byte>());
+            }
+
+            PlayerWarehouseSession.PersistSlot(accountId, srcSlot, Array.Empty<byte>());
+            PlayerWarehouseSession.PersistSlot(accountId, dstSlot, targetItem);
+            return (true, targetItem);
+        }
+
+        if (srcFlag == ItemStorageFlags602.Inventory && dstFlag == ItemStorageFlags602.Warehouse)
+        {
+            await PlayerShopSession.EnsureInventoryLoadedAsync(presenceSessionId, accountId, characterName10, ct)
+                .ConfigureAwait(false);
+            await PlayerWarehouseSession.EnsureLoadedAsync(presenceSessionId, accountId, ct).ConfigureAwait(false);
+            if (!PlayerShopSession.TryGetSlot(presenceSessionId, srcSlot, out var item)
+                || ItemWire602.IsEmpty(item)
+                || !PlayerShopSession.IsInventorySlot(srcSlot))
+            {
+                return (false, Array.Empty<byte>());
+            }
+
+            if (PlayerWarehouseSession.TryGetSlot(presenceSessionId, dstSlot, out var dest) && !ItemWire602.IsEmpty(dest))
+            {
+                return (false, Array.Empty<byte>());
+            }
+
+            var moved = item.ToArray();
+            PlayerShopSession.SetSlot(presenceSessionId, srcSlot, Array.Empty<byte>());
+            PlayerWarehouseSession.SetSlot(presenceSessionId, dstSlot, moved);
+            PersistSlotMirror(presenceSessionId, accountId, characterName10, srcSlot);
+            PlayerWarehouseSession.PersistSlot(accountId, dstSlot, moved);
+            return (true, moved);
+        }
+
+        if (srcFlag == ItemStorageFlags602.Warehouse && dstFlag == ItemStorageFlags602.Inventory)
+        {
+            await PlayerShopSession.EnsureInventoryLoadedAsync(presenceSessionId, accountId, characterName10, ct)
+                .ConfigureAwait(false);
+            await PlayerWarehouseSession.EnsureLoadedAsync(presenceSessionId, accountId, ct).ConfigureAwait(false);
+            if (!PlayerWarehouseSession.TryGetSlot(presenceSessionId, srcSlot, out var item)
+                || ItemWire602.IsEmpty(item))
+            {
+                return (false, Array.Empty<byte>());
+            }
+
+            if (!PlayerShopSession.IsInventorySlot(dstSlot))
+            {
+                return (false, Array.Empty<byte>());
+            }
+
+            if (PlayerShopSession.TryGetSlot(presenceSessionId, dstSlot, out var dest) && !ItemWire602.IsEmpty(dest))
+            {
+                return (false, Array.Empty<byte>());
+            }
+
+            var moved = item.ToArray();
+            PlayerWarehouseSession.SetSlot(presenceSessionId, srcSlot, Array.Empty<byte>());
+            PlayerShopSession.SetSlot(presenceSessionId, dstSlot, moved);
+            PlayerWarehouseSession.PersistSlot(accountId, srcSlot, Array.Empty<byte>());
+            PersistSlotMirror(presenceSessionId, accountId, characterName10, dstSlot);
+            return (true, moved);
+        }
+
+        if (PlayerTradeSession.TryApplyMove(
+                presenceSessionId,
+                accountId,
+                characterName10,
+                srcFlag,
+                srcSlot,
+                dstFlag,
+                dstSlot,
+                out var tradeItem))
+        {
+            return (true, tradeItem);
+        }
+
+        return (false, Array.Empty<byte>());
     }
 
     static async Task<bool> HandleDropAsync(

@@ -38,6 +38,31 @@ public sealed class CharacterRosterRow
 
     public int MaxShield { get; set; }
 
+    public int Strength { get; set; }
+
+    public int Dexterity { get; set; }
+
+    public int Vitality { get; set; }
+
+    public int Energy { get; set; }
+
+    public int Leadership { get; set; }
+
+    public int LevelUpPoint { get; set; }
+
+    public int CurrentBp { get; set; }
+
+    public int MaxBp { get; set; }
+
+    public CharacterSheetStats ToSheet() =>
+        CharacterSheetStats.FromInts(
+            this.Strength,
+            this.Dexterity,
+            this.Vitality,
+            this.Energy,
+            this.Leadership,
+            this.LevelUpPoint);
+
     public CharacterRosterVitals ToVitals() =>
         CharacterRosterVitals.FromInts(
             this.CurrentHp,

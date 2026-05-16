@@ -44,7 +44,9 @@ public static class RosterVitalsLifecycle
         int maxMp,
         CancellationToken ct,
         int currentShield = 0,
-        int maxShield = 0)
+        int maxShield = 0,
+        int currentBp = 0,
+        int maxBp = 0)
     {
         if (!IsSendLifeManaAfterJoinEnabled() || maxHp <= 0)
         {
@@ -61,29 +63,49 @@ public static class RosterVitalsLifecycle
         // Legacy ObjectManager: max (0xFE) then current (0xFF) for life + SD.
         await writeAsync(LifeManaWire602.BuildLife(LifeManaWire602.TypeMax, hpMax, sdMax), ct).ConfigureAwait(false);
         await writeAsync(LifeManaWire602.BuildLife(LifeManaWire602.TypeCurrent, hp, sd), ct).ConfigureAwait(false);
-        await writeAsync(LifeManaWire602.BuildMana(LifeManaWire602.TypeMax, mpMax), ct).ConfigureAwait(false);
-        await writeAsync(LifeManaWire602.BuildMana(LifeManaWire602.TypeCurrent, mp), ct).ConfigureAwait(false);
+        var bp = (ushort)Math.Clamp(currentBp > 0 ? currentBp : maxBp, 0, ushort.MaxValue);
+        var bpMax = (ushort)Math.Clamp(maxBp, 0, ushort.MaxValue);
+        await writeAsync(LifeManaWire602.BuildMana(LifeManaWire602.TypeMax, mpMax, bpMax), ct).ConfigureAwait(false);
+        await writeAsync(LifeManaWire602.BuildMana(LifeManaWire602.TypeCurrent, mp, bp), ct).ConfigureAwait(false);
     }
 
-    public static bool TrySeedGameEntryFromJoin(GameRosterEntry entry, ReadOnlySpan<byte> joinPkt)
+    public static bool TrySeedGameEntryFromJoin(GameRosterEntry entry, ReadOnlySpan<byte> joinPkt) =>
+        SyncGameEntryFromJoin(entry, joinPkt);
+
+    /// <summary>Persist vitals/stats from the join wire we just sent (full heal path included).</summary>
+    public static bool SyncGameEntryFromJoin(GameRosterEntry entry, ReadOnlySpan<byte> joinPkt)
     {
-        if (!JoinMapVitalsSeed.TryApplyFromJoinPacketIfUnset(entry.MaxHp > 0, joinPkt, out var v))
+        var changed = false;
+        if (JoinMapVitalsSeed.TryReadFromJoinPacket(joinPkt, out var v))
         {
-            return false;
+            entry.CurrentHp = v.CurrentHp;
+            entry.MaxHp = v.MaxHp;
+            entry.CurrentMp = v.CurrentMp;
+            entry.MaxMp = v.MaxMp;
+            entry.Zen = v.Zen;
+            if (v.HasShield)
+            {
+                entry.CurrentShield = v.CurrentShield;
+                entry.MaxShield = v.MaxShield;
+            }
+
+            changed = true;
         }
 
-        entry.CurrentHp = v.CurrentHp;
-        entry.MaxHp = v.MaxHp;
-        entry.CurrentMp = v.CurrentMp;
-        entry.MaxMp = v.MaxMp;
-        entry.Zen = v.Zen;
-        if (JoinMapVitalsSeed.TryReadShieldFromJoinPacket(joinPkt, out var curSd, out var maxSd))
+        if (JoinMapVitalsSeed.TryReadBpFromJoinPacket(joinPkt, out var curBp, out var maxBp))
         {
-            entry.CurrentShield = curSd;
-            entry.MaxShield = maxSd;
+            entry.CurrentBp = curBp;
+            entry.MaxBp = maxBp;
+            changed = true;
         }
 
-        return true;
+        if (JoinMapVitalsSeed.TryReadSheetFromJoinPacket(joinPkt, out var sheet))
+        {
+            entry.ApplySheet(sheet);
+            changed = true;
+        }
+
+        return changed;
     }
 
     public static void ApplyVitals(

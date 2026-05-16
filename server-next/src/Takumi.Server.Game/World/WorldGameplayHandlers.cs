@@ -22,6 +22,16 @@ public static class WorldGameplayHandlers
         Action? onRosterDirty,
         CancellationToken ct)
     {
+        if (await CharacterStatPointHandler.TryHandleAsync(
+                player,
+                packet,
+                writeAsync,
+                onRosterDirty,
+                ct).ConfigureAwait(false))
+        {
+            return true;
+        }
+
         if (ClientGameplayPackets602.TryFindShopExitRequest(packet, out _))
         {
             PlayerShopSession.CloseShop(presenceSessionId);
@@ -181,7 +191,7 @@ public static class WorldGameplayHandlers
         {
             tracker.ResetForMap(dest.MapId, dest.X, dest.Y);
             var spawn = new JoinMapSpawnWire(dest.MapId, dest.X, dest.Y, dest.Angle);
-            var joinPkt = JoinMapServerWire602.Build(ToWire(player), spawn);
+            var joinPkt = JoinMapServerWire602.Build(player.ToWireWithSheet(), spawn);
             var invPkt = await JoinInventoryPacket602
                 .BuildAsync(TakumiPostgresMirror.InventorySlots, accountId, characterName10, ct)
                 .ConfigureAwait(false);
@@ -371,18 +381,4 @@ public static class WorldGameplayHandlers
 
         await writeAsync(pkt, ct).ConfigureAwait(false);
     }
-
-    static CharacterRosterWire ToWire(GameRosterEntry e) =>
-        new(
-            e.Name10,
-            e.ServerClass,
-            e.Level,
-            CharacterRosterVitals.FromInts(
-                e.CurrentHp,
-                e.MaxHp,
-                e.CurrentMp,
-                e.MaxMp,
-                e.Zen,
-                e.CurrentShield,
-                e.MaxShield));
 }

@@ -1,5 +1,4 @@
 using Npgsql;
-using NpgsqlTypes;
 
 namespace Takumi.Server.Persistence;
 
@@ -19,13 +18,15 @@ public sealed class PostgresCharacterDomainRepository : IAsyncDisposable
             """
             SELECT character_name, server_class, level, map_id, pos_x, pos_y, angle,
                    current_hp, max_hp, current_mp, max_mp, zen,
-                   current_shield, max_shield
+                   current_shield, max_shield,
+                   strength, dexterity, vitality, energy, leadership, level_up_point,
+                   current_bp, max_bp
             FROM character_domain
             WHERE account_login = $1
             ORDER BY character_name
             """,
             conn);
-        cmd.Parameters.Add(new NpgsqlParameter("a", NpgsqlDbType.Text) { Value = accountLogin });
+        cmd.Parameters.AddWithValue(accountLogin);
         await using var reader = await cmd.ExecuteReaderAsync(ct).ConfigureAwait(false);
         while (await reader.ReadAsync(ct).ConfigureAwait(false))
         {
@@ -46,6 +47,14 @@ public sealed class PostgresCharacterDomainRepository : IAsyncDisposable
                     Zen = reader.GetInt64(11),
                     CurrentShield = reader.GetInt32(12),
                     MaxShield = reader.GetInt32(13),
+                    Strength = reader.GetInt32(14),
+                    Dexterity = reader.GetInt32(15),
+                    Vitality = reader.GetInt32(16),
+                    Energy = reader.GetInt32(17),
+                    Leadership = reader.GetInt32(18),
+                    LevelUpPoint = reader.GetInt32(19),
+                    CurrentBp = reader.GetInt32(20),
+                    MaxBp = reader.GetInt32(21),
                 });
         }
 
@@ -58,7 +67,7 @@ public sealed class PostgresCharacterDomainRepository : IAsyncDisposable
         await using var tx = await conn.BeginTransactionAsync(ct).ConfigureAwait(false);
         await using (var del = new NpgsqlCommand("DELETE FROM character_domain WHERE account_login = $1", conn, tx))
         {
-            del.Parameters.Add(new NpgsqlParameter("a", NpgsqlDbType.Text) { Value = accountLogin });
+            del.Parameters.AddWithValue(accountLogin);
             await del.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
         }
 
@@ -68,26 +77,35 @@ public sealed class PostgresCharacterDomainRepository : IAsyncDisposable
                 """
                 INSERT INTO character_domain (
                     account_login, character_name, server_class, level, map_id, pos_x, pos_y, angle,
-                    current_hp, max_hp, current_mp, max_mp, zen, current_shield, max_shield)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+                    current_hp, max_hp, current_mp, max_mp, zen, current_shield, max_shield,
+                    strength, dexterity, vitality, energy, leadership, level_up_point, current_bp, max_bp)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23)
                 """,
                 conn,
                 tx);
-            ins.Parameters.Add(new NpgsqlParameter("a", NpgsqlDbType.Text) { Value = accountLogin });
-            ins.Parameters.Add(new NpgsqlParameter("n", NpgsqlDbType.Text) { Value = CharacterRosterMerge.NormaliseName(row.Name) });
-            ins.Parameters.Add(new NpgsqlParameter("c", NpgsqlDbType.Smallint) { Value = (short)row.ServerClass });
-            ins.Parameters.Add(new NpgsqlParameter("l", NpgsqlDbType.Integer) { Value = (int)row.Level });
-            ins.Parameters.Add(new NpgsqlParameter("m", NpgsqlDbType.Smallint) { Value = (short)row.MapId });
-            ins.Parameters.Add(new NpgsqlParameter("x", NpgsqlDbType.Smallint) { Value = (short)row.PosX });
-            ins.Parameters.Add(new NpgsqlParameter("y", NpgsqlDbType.Smallint) { Value = (short)row.PosY });
-            ins.Parameters.Add(new NpgsqlParameter("g", NpgsqlDbType.Smallint) { Value = (short)row.Angle });
-            ins.Parameters.Add(new NpgsqlParameter("hp", NpgsqlDbType.Integer) { Value = row.CurrentHp });
-            ins.Parameters.Add(new NpgsqlParameter("hpmax", NpgsqlDbType.Integer) { Value = row.MaxHp });
-            ins.Parameters.Add(new NpgsqlParameter("mp", NpgsqlDbType.Integer) { Value = row.CurrentMp });
-            ins.Parameters.Add(new NpgsqlParameter("mpmax", NpgsqlDbType.Integer) { Value = row.MaxMp });
-            ins.Parameters.Add(new NpgsqlParameter("z", NpgsqlDbType.Bigint) { Value = row.Zen });
-            ins.Parameters.Add(new NpgsqlParameter("sd", NpgsqlDbType.Integer) { Value = row.CurrentShield });
-            ins.Parameters.Add(new NpgsqlParameter("sdm", NpgsqlDbType.Integer) { Value = row.MaxShield });
+            ins.Parameters.AddWithValue(accountLogin);
+            ins.Parameters.AddWithValue(CharacterRosterMerge.NormaliseName(row.Name));
+            ins.Parameters.AddWithValue((short)row.ServerClass);
+            ins.Parameters.AddWithValue((int)row.Level);
+            ins.Parameters.AddWithValue((short)row.MapId);
+            ins.Parameters.AddWithValue((short)row.PosX);
+            ins.Parameters.AddWithValue((short)row.PosY);
+            ins.Parameters.AddWithValue((short)row.Angle);
+            ins.Parameters.AddWithValue(row.CurrentHp);
+            ins.Parameters.AddWithValue(row.MaxHp);
+            ins.Parameters.AddWithValue(row.CurrentMp);
+            ins.Parameters.AddWithValue(row.MaxMp);
+            ins.Parameters.AddWithValue(row.Zen);
+            ins.Parameters.AddWithValue(row.CurrentShield);
+            ins.Parameters.AddWithValue(row.MaxShield);
+            ins.Parameters.AddWithValue(row.Strength);
+            ins.Parameters.AddWithValue(row.Dexterity);
+            ins.Parameters.AddWithValue(row.Vitality);
+            ins.Parameters.AddWithValue(row.Energy);
+            ins.Parameters.AddWithValue(row.Leadership);
+            ins.Parameters.AddWithValue(row.LevelUpPoint);
+            ins.Parameters.AddWithValue(row.CurrentBp);
+            ins.Parameters.AddWithValue(row.MaxBp);
             await ins.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
         }
 

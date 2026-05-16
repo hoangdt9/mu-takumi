@@ -1,5 +1,4 @@
 using Npgsql;
-using NpgsqlTypes;
 
 namespace Takumi.Server.Persistence;
 
@@ -29,8 +28,8 @@ public sealed class PostgresInventorySlotRepository : IAsyncDisposable
             LIMIT 255
             """,
             conn);
-        cmd.Parameters.Add(new NpgsqlParameter("a", NpgsqlDbType.Text) { Value = accountLogin });
-        cmd.Parameters.Add(new NpgsqlParameter("n", NpgsqlDbType.Text) { Value = name });
+        cmd.Parameters.AddWithValue(accountLogin);
+        cmd.Parameters.AddWithValue(name);
         await using var reader = await cmd.ExecuteReaderAsync(ct).ConfigureAwait(false);
         while (await reader.ReadAsync(ct).ConfigureAwait(false))
         {
@@ -74,10 +73,10 @@ public sealed class PostgresInventorySlotRepository : IAsyncDisposable
             DO UPDATE SET item = EXCLUDED.item, updated_at = now()
             """,
             conn);
-        cmd.Parameters.Add(new NpgsqlParameter("a", NpgsqlDbType.Text) { Value = accountLogin });
-        cmd.Parameters.Add(new NpgsqlParameter("n", NpgsqlDbType.Text) { Value = name });
-        cmd.Parameters.Add(new NpgsqlParameter("s", NpgsqlDbType.Smallint) { Value = (short)slotIdx });
-        cmd.Parameters.Add(new NpgsqlParameter("i", NpgsqlDbType.Bytea) { Value = item12 });
+        cmd.Parameters.AddWithValue(accountLogin);
+        cmd.Parameters.AddWithValue(name);
+        cmd.Parameters.AddWithValue((short)slotIdx);
+        cmd.Parameters.AddWithValue(item12);
         await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
     }
 
@@ -95,9 +94,9 @@ public sealed class PostgresInventorySlotRepository : IAsyncDisposable
             WHERE account_login = $1 AND character_name = $2 AND slot_idx = $3
             """,
             conn);
-        cmd.Parameters.Add(new NpgsqlParameter("a", NpgsqlDbType.Text) { Value = accountLogin });
-        cmd.Parameters.Add(new NpgsqlParameter("n", NpgsqlDbType.Text) { Value = name });
-        cmd.Parameters.Add(new NpgsqlParameter("s", NpgsqlDbType.Smallint) { Value = (short)slotIdx });
+        cmd.Parameters.AddWithValue(accountLogin);
+        cmd.Parameters.AddWithValue(name);
+        cmd.Parameters.AddWithValue((short)slotIdx);
         await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
     }
 
@@ -128,8 +127,8 @@ public sealed class PostgresInventorySlotRepository : IAsyncDisposable
             conn,
             tx))
         {
-            del.Parameters.Add(new NpgsqlParameter("a", NpgsqlDbType.Text) { Value = accountLogin });
-            del.Parameters.Add(new NpgsqlParameter("n", NpgsqlDbType.Text) { Value = name });
+            del.Parameters.AddWithValue(accountLogin);
+            del.Parameters.AddWithValue(name);
             await del.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
         }
 
@@ -147,10 +146,10 @@ public sealed class PostgresInventorySlotRepository : IAsyncDisposable
                 """,
                 conn,
                 tx);
-            ins.Parameters.Add(new NpgsqlParameter("a", NpgsqlDbType.Text) { Value = accountLogin });
-            ins.Parameters.Add(new NpgsqlParameter("n", NpgsqlDbType.Text) { Value = name });
-            ins.Parameters.Add(new NpgsqlParameter("s", NpgsqlDbType.Smallint) { Value = (short)row.Slot });
-            ins.Parameters.Add(new NpgsqlParameter("i", NpgsqlDbType.Bytea) { Value = row.Item12 });
+            ins.Parameters.AddWithValue(accountLogin);
+            ins.Parameters.AddWithValue(name);
+            ins.Parameters.AddWithValue((short)row.Slot);
+            ins.Parameters.AddWithValue(row.Item12);
             await ins.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
         }
 

@@ -151,7 +151,7 @@ void AndroidOpenGameLoginDirectLoopback()
 	s_preferLoopbackTcp = true;
 	SocketClient.Close();
 
-	const unsigned short gamePort = MuLanDefaults::kTakumiLegacyLoginGamePort;
+	const unsigned short gamePort = MuLanDefaults::kTakumiGameTcpPort;
 	if (!CreateSocket(const_cast<char*>("127.0.0.1"), gamePort))
 	{
 		g_ErrorReport.Write(
@@ -174,7 +174,7 @@ void AndroidOpenGameLoginDirectOnHost(const char* host)
 	s_preferLoopbackTcp = false;
 	SocketClient.Close();
 
-	const unsigned short gamePort = MuLanDefaults::kTakumiLegacyLoginGamePort;
+	const unsigned short gamePort = MuLanDefaults::kTakumiGameTcpPort;
 	if (!CreateSocket(const_cast<char*>(host), gamePort))
 	{
 		g_ErrorReport.Write(
@@ -462,7 +462,16 @@ void MU_AndroidNotifyServerSubPickStarted()
 	s_serverPickStartMs = MU_MobileGetTicks();
 	s_lastF403RetryMs = 0;
 	s_triedDirectGameLogin = false;
-	g_ErrorReport.Write("[TakumiLoginBg] sub-server picked — waiting for F4 03 on connect socket\r\n");
+	if (MuLanDefaults::kTakumiSplitGameHostStack)
+	{
+		g_ErrorReport.Write(
+			"[TakumiLoginBg] sub-server picked — M6 split stack: wait F4 03 → game TCP :%u (no 44606 bypass)\r\n",
+			static_cast<unsigned>(MuLanDefaults::kTakumiGameTcpPort));
+	}
+	else
+	{
+		g_ErrorReport.Write("[TakumiLoginBg] sub-server picked — waiting for F4 03 on connect socket\r\n");
+	}
 }
 
 void MU_AndroidTickLoginAfterServerPickFallback()
@@ -515,6 +524,12 @@ void MU_AndroidTickLoginAfterServerPickFallback()
 
 	if (!s_triedDirectGameLogin && elapsedMs >= kF403DirectGameMs)
 	{
+		if (MuLanDefaults::kTakumiSplitGameHostStack)
+		{
+			// F4 03 must advertise game-host; direct connect to login port breaks M6.
+		}
+		else
+		{
 		s_triedDirectGameLogin = true;
 #if defined(MU_BOOTSTRAP_ADB_REVERSE)
 		if (!s_triedLoopbackConnect && IsPrivateIPv4Host(szServerIpAddress))
@@ -533,6 +548,7 @@ void MU_AndroidTickLoginAfterServerPickFallback()
 			s_serverPickStartMs = 0;
 			return;
 		}
+		}
 	}
 
 	if (elapsedMs < kF403GiveUpMs)
@@ -549,8 +565,10 @@ void MU_AndroidTickLoginAfterServerPickFallback()
 		elapsedMs);
 #else
 	g_ErrorReport.Write(
-		"[TakumiLoginBg] F4 03 timeout after %u ms — LAN: same Wi-Fi, .env TAKUMI_PUBLIC_HOST, docker-stack, TCP 44605/44606.\r\n",
-		elapsedMs);
+		"[TakumiLoginBg] F4 03 timeout after %u ms — LAN: same Wi-Fi, .env TAKUMI_PUBLIC_HOST, "
+		"./scripts/docker-stack-lan-gamehost.sh, TCP 44605 + game %u.\r\n",
+		elapsedMs,
+		static_cast<unsigned>(MuLanDefaults::kTakumiGameTcpPort));
 #endif
 }
 

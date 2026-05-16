@@ -179,6 +179,10 @@ if(MU_BOOTSTRAP_ADB_REVERSE STREQUAL "ON")
     target_compile_definitions(main PRIVATE MU_BOOTSTRAP_ADB_REVERSE=1)
 endif()
 
+if(DEFINED MU_GAME_TCP_PORT AND NOT "${MU_GAME_TCP_PORT}" STREQUAL "")
+    target_compile_definitions(main PRIVATE MU_GAME_TCP_PORT=${MU_GAME_TCP_PORT})
+endif()
+
 set(SDL2_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/SDL2/include")
 
 target_include_directories(main PRIVATE

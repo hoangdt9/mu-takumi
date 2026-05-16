@@ -181,6 +181,45 @@ int resolveMuBootstrapServerPort() {
     return 0
 }
 
+/** Game TCP from server-next/.env TAKUMI_GAME_PORT (M6 split stack); else TAKUMI_LOGIN_PORT; else 44606. */
+int resolveMuGameTcpPort() {
+    String cli = rootProject.findProperty("muGameTcpPort")?.toString()?.trim()
+    if (cli) {
+        try {
+            int v = Integer.parseInt(cli)
+            if (v > 0 && v <= 65535) {
+                return v
+            }
+        } catch (NumberFormatException ignored) {
+            // fall through
+        }
+    }
+    File envFile = takumiServerNextEnvFile()
+    String game = readDotEnvValue(envFile, "TAKUMI_GAME_PORT")
+    if (game != null && !game.trim().isEmpty()) {
+        try {
+            int v = Integer.parseInt(game.trim())
+            if (v > 0 && v <= 65535) {
+                return v
+            }
+        } catch (NumberFormatException ignored) {
+            // fall through
+        }
+    }
+    String login = readDotEnvValue(envFile, "TAKUMI_LOGIN_PORT")
+    if (login != null && !login.trim().isEmpty()) {
+        try {
+            int v = Integer.parseInt(login.trim())
+            if (v > 0 && v <= 65535) {
+                return v
+            }
+        } catch (NumberFormatException ignored) {
+            // fall through
+        }
+    }
+    return 44606
+}
+
 def requiredNativeLibs = [
     "libSDL2.so",
     "libSDL2_image.so",
@@ -494,6 +533,9 @@ android {
         buildConfigField "String", "MU_BOOTSTRAP_SERVER_HOST", "\"${muBootstrapHost.replace('"', '\\"')}\""
         buildConfigField "int", "MU_BOOTSTRAP_SERVER_PORT", "${muBootstrapPort}"
 
+        int muGameTcpPort = resolveMuGameTcpPort()
+        println("TakumiMu MU_GAME_TCP_PORT (CMake) = ${muGameTcpPort} (.env TAKUMI_GAME_PORT / TAKUMI_LOGIN_PORT)")
+
         externalNativeBuild {
             cmake {
                 // C++20, Android platform defines, disable editor/dotnet
@@ -502,6 +544,7 @@ android {
                           "-DANDROID_PLATFORM=android-21",
                           "-DMU_ENABLE_BGFX=" + (muEnableBgfx ? "ON" : "OFF"),
                           "-DMU_LAN_DEFAULT_HOST_A=${muLanIp}",
+                          "-DMU_GAME_TCP_PORT=${muGameTcpPort}",
                           "-DMU_BOOTSTRAP_ADB_REVERSE=" + (muBootstrapAdbReverseEnabled() ? "ON" : "OFF")
             }
         }

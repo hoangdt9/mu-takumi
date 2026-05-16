@@ -13351,7 +13351,6 @@ void ProtocolCompiler( CWsctlc *pSocketClient, int iTranslation, int iParam)
 #if defined(__ANDROID__)
 		++packetsThisCall;
 #endif
-		else 
 		{
 			BOOL bEncrypted = FALSE;
 			BYTE byDec[MAX_SPE_BUFFERSIZE_];

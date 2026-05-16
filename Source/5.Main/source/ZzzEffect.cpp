@@ -19602,6 +19602,11 @@ void RenderEffectShadows()
 
 void CreateMyGensInfluenceGroundEffect()
 {
+	if (Hero == nullptr)
+	{
+		return;
+	}
+
 	DeleteEffect(BITMAP_OUR_INFLUENCE_GROUND, &Hero->Object, 0);
 	if (::IsStrifeMap(gMapManager.WorldActive))
 	{

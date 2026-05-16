@@ -985,7 +985,7 @@ public static class GamePortMinimalSession
 
             protectInboundPumpCts?.Dispose();
 
-            if (!string.IsNullOrEmpty(loggedAccountId) && roster.Count > 0)
+            if (!string.IsNullOrEmpty(loggedAccountId) && roster.Count > 0 && Volatile.Read(ref rosterDirty) != 0)
             {
                 try
                 {

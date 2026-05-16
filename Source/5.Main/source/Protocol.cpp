@@ -222,7 +222,7 @@ BOOL ProtocolCoreEx(BYTE head, BYTE* lpMsg, int size, int key) // OK
 					break;
 				case 0x06:
 					GCLevelUpPointRecv((PMSG_LEVEL_UP_POINT_RECV*)lpMsg);
-					break;
+					return 1;
 				case 0x07:
 					GCMonsterDamageRecv((PMSG_MONSTER_DAMAGE_RECV*)lpMsg);
 					break;
@@ -1007,6 +1007,11 @@ void ReceiveNewHealthBar(BYTE* ReceiveBuffer)
 
 void GCCharacterInfoRecv(BYTE* ReceiveBuffer) // OK
 {
+	if (ReceiveBuffer == nullptr || CharacterAttribute == nullptr)
+	{
+		return;
+	}
+
 	PRECEIVE_JOIN_MAP_SERVER* lpMsg = (PRECEIVE_JOIN_MAP_SERVER*)ReceiveBuffer;
 #if(UseReconnect)
 	g_pReconnect->ReconnectOnCharacterInfo();  //Add
@@ -1109,6 +1114,11 @@ void GCNewCharacterInfoRecv(BYTE* ReceiveBuffer)
 }
 void GCNewCharacterCalcRecv(BYTE* ReceiveBuffer)
 {
+	if (ReceiveBuffer == nullptr || CharacterAttribute == nullptr)
+	{
+		return;
+	}
+
 	PMSG_NEW_CHARACTER_CALC_RECV* lpMsg = (PMSG_NEW_CHARACTER_CALC_RECV*)ReceiveBuffer;
 	CharacterAttribute->PrintPlayer.ViewCurHP = lpMsg->ViewCurHP;
 	CharacterAttribute->PrintPlayer.ViewMaxHP = lpMsg->ViewMaxHP;
@@ -1210,21 +1220,65 @@ void GCLevelUpRecv(PMSG_LEVEL_UP_RECV* lpMsg) // OK
 	CharacterAttribute->PrintPlayer.ViewNextExperience = lpMsg->ViewNextExperience;
 }
 
+#if defined(__cplusplus) && __cplusplus >= 201103L
+static_assert(sizeof(PMSG_LEVEL_UP_POINT_RECV) == 51, "F3 06 must match LevelUpPointWire602.PacketLength");
+static_assert(offsetof(PMSG_LEVEL_UP_POINT_RECV, ViewPoint) == 11, "F3 06 ViewPoint wire offset");
+static_assert(offsetof(PMSG_LEVEL_UP_POINT_RECV, ViewStrength) == 31, "F3 06 ViewStrength wire offset");
+#endif
+
 void GCLevelUpPointRecv(PMSG_LEVEL_UP_POINT_RECV* lpMsg) // OK
 {
-	if (lpMsg->result >= 16 && lpMsg->result <= 20)
+	if (lpMsg->result < 16 || lpMsg->result > 20)
 	{
-		CharacterAttribute->PrintPlayer.ViewPoint = lpMsg->ViewPoint;
-		CharacterAttribute->PrintPlayer.ViewMaxHP = lpMsg->ViewMaxHP;
-		CharacterAttribute->PrintPlayer.ViewMaxMP = lpMsg->ViewMaxMP;
-		CharacterAttribute->PrintPlayer.ViewMaxBP = lpMsg->ViewMaxBP;
-		CharacterAttribute->PrintPlayer.ViewMaxSD = lpMsg->ViewMaxSD;
-		CharacterAttribute->PrintPlayer.ViewStrength = lpMsg->ViewStrength;
-		CharacterAttribute->PrintPlayer.ViewDexterity = lpMsg->ViewDexterity;
-		CharacterAttribute->PrintPlayer.ViewVitality = lpMsg->ViewVitality;
-		CharacterAttribute->PrintPlayer.ViewEnergy = lpMsg->ViewEnergy;
-		CharacterAttribute->PrintPlayer.ViewLeadership = lpMsg->ViewLeadership;
+		return;
 	}
+
+	switch (lpMsg->result & 0x0F)
+	{
+	case 0:
+		CharacterAttribute->Strength = static_cast<WORD>(lpMsg->ViewStrength);
+		break;
+	case 1:
+		CharacterAttribute->Dexterity = static_cast<WORD>(lpMsg->ViewDexterity);
+		break;
+	case 2:
+		CharacterAttribute->Vitality = static_cast<WORD>(lpMsg->ViewVitality);
+		CharacterAttribute->LifeMax = lpMsg->MaxLifeAndMana;
+		break;
+	case 3:
+		CharacterAttribute->Energy = static_cast<WORD>(lpMsg->ViewEnergy);
+		CharacterAttribute->ManaMax = lpMsg->MaxLifeAndMana;
+		break;
+	case 4:
+		CharacterAttribute->Charisma = static_cast<WORD>(lpMsg->ViewLeadership);
+		break;
+	}
+
+	CharacterAttribute->LevelUpPoint = static_cast<WORD>(min(lpMsg->ViewPoint, 65535u));
+	CharacterAttribute->LifeMax = static_cast<WORD>(min(lpMsg->ViewMaxHP, 65535u));
+	CharacterAttribute->ManaMax = static_cast<WORD>(min(lpMsg->ViewMaxMP, 65535u));
+	CharacterAttribute->SkillManaMax = lpMsg->MaxBP;
+	CharacterAttribute->ShieldMax = lpMsg->MaxShield;
+
+	CharacterAttribute->PrintPlayer.ViewPoint = lpMsg->ViewPoint;
+	CharacterAttribute->PrintPlayer.ViewMaxHP = lpMsg->ViewMaxHP;
+	CharacterAttribute->PrintPlayer.ViewMaxMP = lpMsg->ViewMaxMP;
+	CharacterAttribute->PrintPlayer.ViewMaxBP = lpMsg->ViewMaxBP;
+	CharacterAttribute->PrintPlayer.ViewMaxSD = lpMsg->ViewMaxSD;
+	CharacterAttribute->PrintPlayer.ViewStrength = lpMsg->ViewStrength;
+	CharacterAttribute->PrintPlayer.ViewDexterity = lpMsg->ViewDexterity;
+	CharacterAttribute->PrintPlayer.ViewVitality = lpMsg->ViewVitality;
+	CharacterAttribute->PrintPlayer.ViewEnergy = lpMsg->ViewEnergy;
+	CharacterAttribute->PrintPlayer.ViewLeadership = lpMsg->ViewLeadership;
+
+#if defined(__ANDROID__)
+	TakumiDeferCharacterCalculateAll();
+#else
+	if (CharacterMachine != nullptr)
+	{
+		CharacterMachine->CalculateAll();
+	}
+#endif
 }
 
 void GCMonsterDamageRecv(PMSG_MONSTER_DAMAGE_RECV* lpMsg) // OK

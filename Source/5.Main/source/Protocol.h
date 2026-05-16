@@ -31,6 +31,7 @@ struct PMSG_CHARACTER_REGEN_RECV
 	DWORD ViewCurSD;
 };
 
+#pragma pack(push, 1)
 struct PMSG_LEVEL_UP_RECV
 {
 	PSBMSG_HEAD header; // C1:F3:05
@@ -54,6 +55,7 @@ struct PMSG_LEVEL_UP_RECV
 	DWORD ViewNextExperience;
 };
 
+/// <summary>Wire <c>C1 F3 06</c> — must match server <c>LevelUpPointWire602</c> (51 bytes, no padding after <c>result</c>).</summary>
 struct PMSG_LEVEL_UP_POINT_RECV
 {
 	PSBMSG_HEAD header; // C1:F3:06
@@ -73,6 +75,7 @@ struct PMSG_LEVEL_UP_POINT_RECV
 	DWORD ViewEnergy;
 	DWORD ViewLeadership;
 };
+#pragma pack(pop)
 
 struct PMSG_MONSTER_DAMAGE_RECV
 {

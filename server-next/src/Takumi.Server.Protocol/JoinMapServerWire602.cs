@@ -32,10 +32,13 @@ public static class JoinMapServerWire602
         p[6] = spawn.Map;
         p[7] = spawn.Angle;
 
-        // Experience / next exp (8 + 8 LE) — MU cumulative thresholds for HUD + character sheet.
+        // Experience / next exp (8 + 8 LE) — cumulative totals (parity client EXP bar + level-up loop).
         var lv = Math.Max((ushort)1, r.Level);
         BinaryPrimitives.WriteUInt64LittleEndian(p.AsSpan(8), r.Experience);
-        BinaryPrimitives.WriteUInt64LittleEndian(p.AsSpan(16), ExperienceFormula602.CumulativeForLevel(lv));
+        var nextThreshold = lv < ExperienceProgression602.MaxLevel
+            ? ExperienceFormula602.CumulativeForLevel(lv + 1)
+            : ExperienceFormula602.CumulativeForLevel(lv);
+        BinaryPrimitives.WriteUInt64LittleEndian(p.AsSpan(16), nextThreshold);
 
         BinaryPrimitives.WriteUInt16LittleEndian(p.AsSpan(24), stats.LevelUpPoint);
 

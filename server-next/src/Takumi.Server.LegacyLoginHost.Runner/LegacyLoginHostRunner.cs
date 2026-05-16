@@ -1495,7 +1495,8 @@ public static class LegacyLoginHostRunner
                 sessionTicketStore.RevokeTicket(tid);
             }
 
-            if (!string.IsNullOrEmpty(loggedAccountId) && roster.Count > 0)
+            // M6 split stack: gameplay EXP/level updates live on game-host; this roster is often stale.
+            if (!string.IsNullOrEmpty(loggedAccountId) && roster.Count > 0 && Volatile.Read(ref rosterDirty) != 0)
             {
                 try
                 {
@@ -1505,6 +1506,12 @@ public static class LegacyLoginHostRunner
                 {
                     Console.WriteLine("[roster] disconnect flush failed: {0}", ex.Message);
                 }
+            }
+            else if (!string.IsNullOrEmpty(loggedAccountId) && roster.Count > 0 && verbose)
+            {
+                Console.WriteLine(
+                    "[roster] disconnect flush skipped for {0} (roster not dirty — game-host owns progress on split stack)",
+                    loggedAccountId);
             }
 
             CharacterRosterMirrorWriter.TryDrainPendingUpserts(TimeSpan.FromMilliseconds(900));
@@ -1644,6 +1651,7 @@ public static class LegacyLoginHostRunner
                     e.PosY = d.PosY;
                     e.Angle = d.Angle;
                     e.Level = d.Level;
+                    e.Experience = (uint)Math.Clamp(d.Experience, 0, uint.MaxValue);
                     e.ServerClass = d.ServerClass;
                     e.CurrentHp = d.CurrentHp;
                     e.MaxHp = d.MaxHp;
@@ -1652,6 +1660,14 @@ public static class LegacyLoginHostRunner
                     e.Zen = d.Zen;
                     e.CurrentShield = d.CurrentShield;
                     e.MaxShield = d.MaxShield;
+                    e.Strength = (ushort)Math.Clamp(d.Strength, 0, ushort.MaxValue);
+                    e.Dexterity = (ushort)Math.Clamp(d.Dexterity, 0, ushort.MaxValue);
+                    e.Vitality = (ushort)Math.Clamp(d.Vitality, 0, ushort.MaxValue);
+                    e.Energy = (ushort)Math.Clamp(d.Energy, 0, ushort.MaxValue);
+                    e.Leadership = (ushort)Math.Clamp(d.Leadership, 0, ushort.MaxValue);
+                    e.LevelUpPoint = (ushort)Math.Clamp(d.LevelUpPoint, 0, ushort.MaxValue);
+                    e.CurrentBp = d.CurrentBp;
+                    e.MaxBp = d.MaxBp;
                 });
             CharacterRosterMirrorHealth.RecordMergeSuccess();
         }

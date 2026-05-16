@@ -783,6 +783,13 @@ public static class LegacyLoginHostRunner
                     TrackVitalsOutbound(calcPkt);
                     await connection.Output.WriteAsync(calcPkt, ct).ConfigureAwait(false);
                     await connection.Output.FlushAsync(ct).ConfigureAwait(false);
+                    await MoveMapOutbound.TrySendChecksumAfterJoinAsync(
+                            presenceSessionId,
+                            connection,
+                            clientProtectOutbound: null,
+                            writeAsync: null,
+                            ct)
+                        .ConfigureAwait(false);
                     Console.WriteLine(
                         "[{0}] sent join map (F3 03) + inventory (F3 10 len={1}) map={2} xy=({3},{4}) ang={5} name='{6}' — flushed before viewport",
                         remote,
@@ -1353,6 +1360,7 @@ public static class LegacyLoginHostRunner
         {
             await GameMapPresenceRegistry.UnregisterAsync(presenceSessionId, ct).ConfigureAwait(false);
             MonsterViewerRegistry.Unregister(presenceSessionId);
+            MoveMapSessionState.Remove(presenceSessionId);
 
             if (connectionSessionTicket is { } tid)
             {

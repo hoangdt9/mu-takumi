@@ -219,6 +219,7 @@ services:
       TAKUMI_ACCOUNT_DB: "${TAKUMI_ACCOUNT_DB:-1}"
       TAKUMI_LEGACY_PROMOTE: "${TAKUMI_LEGACY_PROMOTE:-1}"
       TAKUMI_DROP_EF_RUNTIME_SCHEMA: "${TAKUMI_DROP_EF_RUNTIME_SCHEMA:-1}"
+      TAKUMI_SKIP_CONTAINER_BUILD: "${TAKUMI_SKIP_CONTAINER_BUILD:-0}"
       DOTNET_ENVIRONMENT: "${DOTNET_ENVIRONMENT:-Development}"
     # Bind-mount + host obj → NETSDK1064; script uses TAKUMI_DOCKER_GAMEHOST + Directory.Build.props for /tmp outputs (no shared rm).
     command:

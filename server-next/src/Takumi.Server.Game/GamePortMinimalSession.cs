@@ -469,6 +469,14 @@ public static class GamePortMinimalSession
                             await GameMapPresenceRegistry.NotifyJoinAsync(presenceJoin, remote, ct).ConfigureAwait(false);
                         }
 
+                        await MoveMapOutbound.TrySendChecksumAfterJoinAsync(
+                                presenceSessionId,
+                                connection,
+                                protect,
+                                writeAsync: null,
+                                ct)
+                            .ConfigureAwait(false);
+
                         MonsterViewerRegistry.Register(
                             presenceSessionId,
                             connection,
@@ -912,6 +920,7 @@ public static class GamePortMinimalSession
 
             await GameMapPresenceRegistry.UnregisterAsync(presenceSessionId, ct).ConfigureAwait(false);
             MonsterViewerRegistry.Unregister(presenceSessionId);
+            MoveMapSessionState.Remove(presenceSessionId);
 
             try
             {

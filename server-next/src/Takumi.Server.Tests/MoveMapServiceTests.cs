@@ -28,6 +28,20 @@ public sealed class MoveMapServiceTests
     }
 
     [Fact]
+    public void Catalog_duplicate_index_last_row_wins()
+    {
+        MoveMapCatalog.LoadForTests(
+        [
+            new MoveMapEntry { Index = 26, Money = 0, Gate = 118 },
+            new MoveMapEntry { Index = 26, Money = 27000, MinLevel = 150, Gate = 118 },
+        ]);
+
+        Assert.True(MoveMapCatalog.TryGet(26, out var entry));
+        Assert.Equal(27000, entry!.Money);
+        Assert.Equal(150, entry.MinLevel);
+    }
+
+    [Fact]
     public void ToWireResult_maps_level_and_zen_denials()
     {
         Assert.Equal(MoveMapWire602.ResultNotEnoughLevel, MoveMapService.ToWireResult(MoveMapService.DenyReason.LevelTooLow));

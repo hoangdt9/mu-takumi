@@ -22,9 +22,28 @@ public static class MoveMapHandler
         Action? onRosterDirty,
         CancellationToken ct)
     {
-        if (!GamePacketFinders.TryFindMoveMapRequest(packet.AsSpan(), out var moveOff, out _, out var mapIdx))
+        if (!GamePacketFinders.TryFindMoveMapRequest(packet.AsSpan(), out var moveOff, out var blockKey, out var mapIdx))
         {
             return false;
+        }
+
+        if (!MoveMapSessionState.SkipKeyCheck())
+        {
+            if (!MoveMapSessionState.TryGet(presenceSessionId, out var seed)
+                || !MoveMapKeyGenerator.TryAcceptKey(ref seed, blockKey))
+            {
+                await WriteAsync(connection, clientProtectOutbound, writeAsync, MoveMapWire602.BuildAnswer(MoveMapWire602.ResultFailed), ct)
+                    .ConfigureAwait(false);
+                Console.WriteLine(
+                    "[m8] move map denied index={0} bad block key=0x{1:X8} {2} frame@{3}",
+                    mapIdx,
+                    blockKey,
+                    remote,
+                    moveOff);
+                return true;
+            }
+
+            MoveMapSessionState.Reset(presenceSessionId, seed);
         }
 
         var prevMap = player.MapId;

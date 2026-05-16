@@ -25,7 +25,7 @@ public static class MoveMapCatalog
             if (path is not null && File.Exists(path))
             {
                 var rows = MoveLoader.LoadFromFile(path);
-                _byIndex = rows.ToDictionary(r => r.Index);
+                Rebuild(rows);
                 Console.WriteLine("[m8] MoveMapCatalog: {0} moves from {1}", _byIndex.Count, path);
             }
             else
@@ -35,6 +35,28 @@ public static class MoveMapCatalog
             }
 
             _initialized = true;
+        }
+    }
+
+    static void Rebuild(IReadOnlyList<MoveMapEntry> rows)
+    {
+        _byIndex = new Dictionary<int, MoveMapEntry>(rows.Count);
+        var duplicateKeys = 0;
+        foreach (var row in rows)
+        {
+            if (_byIndex.ContainsKey(row.Index))
+            {
+                duplicateKeys++;
+            }
+
+            _byIndex[row.Index] = row;
+        }
+
+        if (duplicateKeys > 0)
+        {
+            Console.WriteLine(
+                "[m8] MoveMapCatalog: {0} duplicate Index row(s) in source — last row wins (parity custom Move.txt)",
+                duplicateKeys);
         }
     }
 
@@ -56,7 +78,7 @@ public static class MoveMapCatalog
     {
         lock (InitLock)
         {
-            _byIndex = rows.ToDictionary(r => r.Index);
+            Rebuild(rows);
             _initialized = true;
         }
     }

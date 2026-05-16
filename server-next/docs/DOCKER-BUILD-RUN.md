@@ -64,6 +64,62 @@ Stack `server-next` **không** bake code C# vào Docker image.
 
 Kiểm tra port: `./scripts/check-lan-connect-ports.sh` hoặc `./scripts/check-takumi-ports.sh`.
 
+### 2.1 Wi‑Fi LAN — Android QA (checklist)
+
+Phone và Mac **cùng Wi‑Fi**, **tắt VPN** trên điện thoại. IP trong `.env` phải là IP LAN **hiện tại** của Mac (`ifconfig | grep "inet "` trên en0/wlan0).
+
+```bash
+# 1) .env
+cd server-next
+cp -n .env.lan.example .env   # nếu chưa có
+# Sửa: TAKUMI_PUBLIC_HOST=192.168.x.x  (IP Mac)
+#      TAKUMI_DATA_ZIP_URL=http://192.168.x.x:18080/data.zip
+
+# 2) Stack (nhanh: host build + skip compile trong container)
+./scripts/docker-stack.sh --host-build --recreate --detach
+
+# 3) Đợi log
+docker compose logs legacy-login game-host | grep -E 'build OK|listening|connect\] listening'
+# legacy-login: [legacy-login] build OK …
+# game-host (nếu TAKUMI_GAME_PORT): [game-host] build OK — listening on *:55901
+
+# 4) Port trên Mac
+./scripts/check-lan-connect-ports.sh
+./scripts/smoke-connect-from-host.sh 192.168.x.x 44605   # từ Mac → phải OK
+
+# 5) APK (Gradle đọc server-next/.env)
+cd ../Source/android
+./gradlew :app:assembleRealDevicePreloadDefaultDebug \
+  -PmuRequiredAbis=armeabi-v7a,arm64-v8a
+adb install -r app/build/outputs/apk/realDevicePreloadDefault/debug/*.apk
+```
+
+**Logcat — connect thành công (LAN):**
+
+| Có | Không (lỗi) |
+|----|-------------|
+| `[Connect to Server …] ip=192.168.x.x port=44605` | `errno=110 Connection timed out` |
+| Recv server list / không còn `no C2 F4 06 yet` | `connect fallback: revealed … (no C2 F4 06 yet)` → UI list **offline** |
+
+**Sau chọn server (split M6, `TAKUMI_GAME_PORT=55901`):**
+
+| Có | Không |
+|----|-------|
+| TCP tới `55901`, server log `sent join C1 F1 00` | `errno=111` hoặc không có log `game-host` |
+| `ReceiveJoinServer result=0x01` (logcat) | Chỉ `decrypted_rx len=12` rồi disconnect → xem **M6-GAME-TCP-CHECKLIST.md** |
+
+**Đơn giản hóa M6 (một TCP):** comment `TAKUMI_GAME_PORT` / `TAKUMI_GAME_PUBLISH` trong `.env`, rồi:
+
+```bash
+./scripts/docker-stack.sh --no-gamehost --host-build --recreate --detach
+```
+
+F4 03 trả cổng **44606**; login/game cùng `legacy-login`.
+
+**AP isolation / firewall:** phone không ping được Mac → dùng USB: mục **§10** (`adb-reverse`), APK `-PmuBootstrapAdbReverse=true`, `TAKUMI_PUBLIC_HOST=127.0.0.1`.
+
+Chi tiết client: `../../docs/ANDROID-DEV-MAC.md`. Wire game: `M6-GAME-TCP-CHECKLIST.md`.
+
 ---
 
 ## 3. Lệnh chính: `docker-stack.sh`

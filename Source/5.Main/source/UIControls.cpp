@@ -3669,7 +3669,8 @@ void CUITextInputBox::Render()
 {
 #if defined(__ANDROID__) || defined(MU_IOS)
     m_bIsReady = TRUE;
-    if (m_hEditWnd == NULL || IsWindowVisible(m_hEditWnd) == FALSE)
+    // Native edit is intentionally hidden (SetState SW_HIDE); draw from buffer here.
+    if (m_hEditWnd == NULL || m_iState == UISTATE_HIDE)
     {
         return;
     }

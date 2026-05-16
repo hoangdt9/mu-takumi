@@ -28,6 +28,9 @@ FrameTimingState g_frameTiming;
 #include "../ZzzOpenglUtil.h"
 #include "../PhysicsManager.h"
 #include "../Time/Timer.h"
+#if defined(__ANDROID__) || defined(MU_IOS)
+#include "../Platform/MobilePlatform.h"
+#endif
 #include "../Input.h"
 #include "../UIMng.h"
 #include "../WSclient.h"
@@ -567,6 +570,9 @@ static void CheckServerConnection()
         if (!s_bClosed)
         {
             s_bClosed = TRUE;
+#if defined(__ANDROID__) || defined(MU_IOS)
+            MU_MobileStopTextInput();
+#endif
             g_ErrorReport.Write(L"> Connection closed. ");
             g_ErrorReport.WriteCurrentTime();
             g_ConsoleDebug->Write(MCD_NORMAL, L"Connection closed");

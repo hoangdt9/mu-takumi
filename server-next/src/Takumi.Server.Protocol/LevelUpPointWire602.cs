@@ -12,7 +12,8 @@ public static class LevelUpPointWire602
     public static byte[] BuildSuccess(
         byte statType,
         CharacterSheetStats sheet,
-        CharacterComputedVitals vitals)
+        CharacterComputedVitals vitals,
+        ushort maxLifeOrMana = 0)
     {
         var p = new byte[PacketLength];
         p[0] = 0xC1;
@@ -20,7 +21,7 @@ public static class LevelUpPointWire602
         p[2] = Head;
         p[3] = Sub;
         p[4] = (byte)(16 + (statType & 0x0F));
-        BinaryPrimitives.WriteUInt16LittleEndian(p.AsSpan(5), vitals.LifeMax);
+        BinaryPrimitives.WriteUInt16LittleEndian(p.AsSpan(5), maxLifeOrMana);
         BinaryPrimitives.WriteUInt16LittleEndian(p.AsSpan(7), vitals.ShieldMax);
         BinaryPrimitives.WriteUInt16LittleEndian(p.AsSpan(9), vitals.SkillManaMax);
 

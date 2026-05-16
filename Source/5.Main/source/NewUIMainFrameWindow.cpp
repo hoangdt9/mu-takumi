@@ -3827,6 +3827,102 @@ void SEASON3B::CNewUIMainFrameWindow::SetGetExp_Wide(__int64 dwGetExp)
 	}
 }
 
+bool SEASON3B::CNewUIMainFrameWindow::GetHudExperienceBarFill(
+	float& currentFill01, float& priorFill01, bool& highlightGain, bool& highlightFullBar) const
+{
+	currentFill01 = 0.f;
+	priorFill01 = 0.f;
+	highlightGain = false;
+	highlightFullBar = false;
+
+	if (CharacterAttribute == nullptr)
+	{
+		return false;
+	}
+
+	const WORD wLevel = (WORD)max(1, (int)CharacterAttribute->Level);
+	const DWORD dwNexExperience = (DWORD)CharacterAttribute->NextExperince;
+	const DWORD dwExperience = (DWORD)CharacterAttribute->Experience;
+
+	if (gCharacterManager.IsMasterLevel(CharacterAttribute->Class) == true)
+	{
+		const __int64 iTotalLevel = (__int64)wLevel + 400;
+		const __int64 iTOverLevel = iTotalLevel - 255;
+		const __int64 iData_Master =
+			(((__int64)9 + iTotalLevel) * iTotalLevel * iTotalLevel * (__int64)10)
+			+ (((__int64)9 + iTOverLevel) * iTOverLevel * iTOverLevel * (__int64)1000);
+		const __int64 iBaseExperience = (iData_Master - (__int64)3892250000) / (__int64)2;
+
+		const double fNeedExp = (double)dwNexExperience - (double)iBaseExperience;
+		double fExp = (double)dwExperience - (double)iBaseExperience;
+		if (dwExperience < iBaseExperience || fNeedExp <= 0.0)
+		{
+			fExp = 0.0;
+		}
+		else if (fExp < 0.0)
+		{
+			fExp = 0.0;
+		}
+
+		if (fExp > 0.0 && fNeedExp > 0.0)
+		{
+			currentFill01 = (float)(fExp / fNeedExp);
+		}
+
+		priorFill01 = currentFill01;
+		if (!m_bExpEffect)
+		{
+			return true;
+		}
+
+		highlightGain = true;
+		if (m_loPreExp < iBaseExperience)
+		{
+			highlightFullBar = true;
+			return true;
+		}
+
+		double fPreExp = (double)m_loPreExp - (double)iBaseExperience;
+		if (fPreExp > 0.0 && fNeedExp > 0.0)
+		{
+			priorFill01 = (float)(fPreExp / fNeedExp);
+		}
+		else
+		{
+			priorFill01 = 0.f;
+		}
+
+		const int iExpBarNum = (int)(currentFill01 * 10.f);
+		const int iPreExpBarNum = (int)(priorFill01 * 10.f);
+		if (iExpBarNum > iPreExpBarNum)
+		{
+			highlightFullBar = true;
+		}
+
+		return true;
+	}
+
+	const int level = max(1, (int)wLevel);
+	currentFill01 = TakumiComputeExperienceFill01(dwExperience, dwNexExperience, level);
+	priorFill01 = currentFill01;
+	if (!m_bExpEffect)
+	{
+		return true;
+	}
+
+	highlightGain = true;
+	priorFill01 = TakumiComputeExperienceFill01((DWORD)m_dwPreExp, dwNexExperience, level);
+
+	const int iExpBarNum = (int)(currentFill01 * 10.f);
+	const int iPreExpBarNum = (int)(priorFill01 * 10.f);
+	if (iExpBarNum > iPreExpBarNum)
+	{
+		highlightFullBar = true;
+	}
+
+	return true;
+}
+
 void SEASON3B::CNewUIMainFrameWindow::SetPreExp(DWORD dwPreExp)
 {
 	m_dwPreExp = dwPreExp;

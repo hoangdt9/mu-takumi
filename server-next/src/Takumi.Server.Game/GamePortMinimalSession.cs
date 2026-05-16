@@ -435,6 +435,13 @@ public static class GamePortMinimalSession
                             bpCur,
                             bpMax,
                             computedVitals).ConfigureAwait(false);
+                        await GamePortOutboundWire.WriteAsync(
+                                connection,
+                                protect,
+                                NewCharacterCalcWire602.Build(picked.ToWireWithSheet()),
+                                ct,
+                                TrackVitalsOutbound)
+                            .ConfigureAwait(false);
                         await MapMonsterScopeSender.TrySendAfterJoinAsync(
                             monsterViewportTracker,
                             connection,
@@ -481,6 +488,8 @@ public static class GamePortMinimalSession
                             accountLogin: loggedAccountId,
                             characterName: Encoding.ASCII.GetString(picked.Name10).TrimEnd('\0'),
                             playerLevel: picked.Level,
+                            serverClass: picked.ServerClass,
+                            sheet: picked.ResolveSheet(),
                             onVitalsChanged: (hp, max) =>
                             {
                                 picked.CurrentHp = hp;
@@ -648,7 +657,15 @@ public static class GamePortMinimalSession
                                 presenceSessionId,
                                 pickedCombat,
                                 loggedAccountId,
-                                () => Volatile.Write(ref rosterDirty, 1)).ConfigureAwait(false))
+                                () =>
+                                {
+                                    Volatile.Write(ref rosterDirty, 1);
+                                    MonsterViewerRegistry.TryUpdatePlayerLevel(presenceSessionId, pickedCombat.Level);
+                                    if (!string.IsNullOrEmpty(loggedAccountId))
+                                    {
+                                        SaveRoster(loggedAccountId, roster);
+                                    }
+                                }).ConfigureAwait(false))
                         {
                             return;
                         }

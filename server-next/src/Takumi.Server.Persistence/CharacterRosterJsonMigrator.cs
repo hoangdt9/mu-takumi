@@ -138,6 +138,7 @@ public static class CharacterRosterJsonMigrator
                     Name = CharacterRosterMerge.NormaliseName(c.Name),
                     ServerClass = c.ServerClass,
                     Level = c.Level,
+                    Experience = c.Experience,
                     MapId = c.MapId,
                     PosX = c.PosX,
                     PosY = c.PosY,
@@ -149,6 +150,14 @@ public static class CharacterRosterJsonMigrator
                     Zen = c.Zen,
                     CurrentShield = c.CurrentShield,
                     MaxShield = c.MaxShield,
+                    Strength = c.Strength,
+                    Dexterity = c.Dexterity,
+                    Vitality = c.Vitality,
+                    Energy = c.Energy,
+                    Leadership = c.Leadership,
+                    LevelUpPoint = c.LevelUpPoint,
+                    CurrentBp = c.CurrentBp,
+                    MaxBp = c.MaxBp,
                 };
                 ApplySpawnDefaultsIfUnset(row);
                 list.Add(row);
@@ -215,6 +224,8 @@ public static class CharacterRosterJsonMigrator
 
         public ushort Level { get; set; }
 
+        public long Experience { get; set; }
+
         public byte MapId { get; set; }
 
         public byte PosX { get; set; }
@@ -236,5 +247,21 @@ public static class CharacterRosterJsonMigrator
         public int CurrentShield { get; set; }
 
         public int MaxShield { get; set; }
+
+        public int Strength { get; set; }
+
+        public int Dexterity { get; set; }
+
+        public int Vitality { get; set; }
+
+        public int Energy { get; set; }
+
+        public int Leadership { get; set; }
+
+        public int LevelUpPoint { get; set; }
+
+        public int CurrentBp { get; set; }
+
+        public int MaxBp { get; set; }
     }
 }

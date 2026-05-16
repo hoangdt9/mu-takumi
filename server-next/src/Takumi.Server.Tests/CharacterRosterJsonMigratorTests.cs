@@ -39,6 +39,36 @@ public sealed class CharacterRosterJsonMigratorTests
     }
 
     [Fact]
+    public void TryLoadRowsFromJsonFile_loads_experience_and_stats()
+    {
+        var dir = Path.Combine(Path.GetTempPath(), "roster-migrate-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(dir);
+        var path = Path.Combine(dir, "acc.json");
+        File.WriteAllText(
+            path,
+            """
+            { "characters": [{ "name": "X", "serverClass": 0, "level": 8, "experience": 9999,
+              "strength": 100, "dexterity": 50, "vitality": 40, "energy": 30, "leadership": 0,
+              "levelUpPoint": 5, "mapId": 0, "posX": 1, "posY": 2, "angle": 0,
+              "currentHp": 1, "maxHp": 1, "currentMp": 1, "maxMp": 1, "zen": 0 }] }
+            """);
+
+        try
+        {
+            var rows = CharacterRosterJsonMigrator.TryLoadRowsFromJsonFile(path);
+            Assert.Single(rows);
+            Assert.Equal(9999, rows[0].Experience);
+            Assert.Equal(100, rows[0].Strength);
+            Assert.Equal(5, rows[0].LevelUpPoint);
+            Assert.Equal((byte)1, rows[0].PosX);
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
+    [Fact]
     public void Apply_spawn_defaults_when_xy_zero()
     {
         var dir = Path.Combine(Path.GetTempPath(), "roster-migrate-" + Guid.NewGuid().ToString("N"));

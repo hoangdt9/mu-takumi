@@ -3625,6 +3625,8 @@ static void TakumiPlayLevelUpEffects()
 			CreateJoint(BITMAP_FLARE, o->Position, o->Position, o->Angle, 0, o, 40, 2);
 		}
 		CreateEffect(BITMAP_MAGIC + 1, o->Position, o->Angle, o->Light, 0, o);
+		// Join-map style ring (BITMAP_MAGIC+2) — visible level-up circle on Android.
+		CreateEffect(BITMAP_MAGIC + 2, o->Position, o->Angle, o->Light, 0, o);
 	}
 
 	PlayBuffer(SOUND_LEVEL_UP);
@@ -3783,6 +3785,68 @@ void TakumiEnsureExperienceThresholds()
 		CharacterMachine->Character.Experience = CharacterAttribute->Experience;
 		CharacterMachine->Character.NextExperince = CharacterAttribute->NextExperince;
 	}
+}
+
+float TakumiComputeExperienceFill01(DWORD experience, DWORD nextExperience, int level)
+{
+	if (nextExperience == 0)
+	{
+		return 0.f;
+	}
+
+	level = max(1, level);
+	const DWORD prior = (level > 1) ? TakumiMuCumulativeExperienceForLevel(level - 1) : 0u;
+
+	// Standard MU: cumulative Experience and NextExperince (threshold for next level).
+	if (nextExperience > prior && experience > prior)
+	{
+		const DWORD need = nextExperience - prior;
+		const DWORD have = min(experience, nextExperience) - prior;
+		if (need > 0)
+		{
+			return static_cast<float>(have) / static_cast<float>(need);
+		}
+	}
+
+	// Fallback: same ratio as character sheet (Experience / NextExperince) when values are not
+	// aligned with cumulative prior (e.g. legacy roster or level/exp mismatch on join).
+	if (experience < nextExperience)
+	{
+		return static_cast<float>(experience) / static_cast<float>(nextExperience);
+	}
+
+	return 1.f;
+}
+
+float TakumiGetHudExperienceRatio()
+{
+	if (CharacterAttribute == nullptr)
+	{
+		return 0.f;
+	}
+
+	TakumiEnsureExperienceThresholds();
+
+	return TakumiComputeExperienceFill01(
+		(DWORD)CharacterAttribute->Experience,
+		(DWORD)CharacterAttribute->NextExperince,
+		max(1, (int)CharacterAttribute->Level));
+}
+
+bool TakumiGetHudExperienceBarFill(
+	float& currentFill01, float& priorFill01, bool& highlightGain, bool& highlightFullBar)
+{
+	currentFill01 = TakumiGetHudExperienceRatio();
+	priorFill01 = currentFill01;
+	highlightGain = false;
+	highlightFullBar = false;
+
+	if (g_pMainFrame == nullptr)
+	{
+		return CharacterAttribute != nullptr;
+	}
+
+	return g_pMainFrame->GetHudExperienceBarFill(currentFill01, priorFill01, highlightGain, highlightFullBar);
 }
 
 void TakumiGetHudVitals(DWORD& curHp, DWORD& maxHp, DWORD& curMp, DWORD& maxMp, DWORD& curAg, DWORD& maxAg)
@@ -7557,33 +7621,89 @@ void ReceiveLevelUp( BYTE *ReceiveBuffer )
 	g_ConsoleDebug->Write(MCD_RECEIVE, "0x05 [ReceiveLevelUp]");
 }
 
+namespace
+{
+	int s_pendingLevelUpStatCount = 0;
+	BYTE s_pendingLevelUpStatType = 0;
+	constexpr int kLevelUpPointsPerTick = 4;
+}
+
+void TakumiScheduleLevelUpPoints(BYTE statType, int count)
+{
+	if (count <= 0)
+	{
+		return;
+	}
+
+	s_pendingLevelUpStatType = statType;
+	s_pendingLevelUpStatCount += count;
+	if (s_pendingLevelUpStatCount > 65535)
+	{
+		s_pendingLevelUpStatCount = 65535;
+	}
+}
+
+void TakumiPumpLevelUpPoints()
+{
+	if (s_pendingLevelUpStatCount <= 0)
+	{
+		return;
+	}
+
+	if (SocketClient == nullptr || !SocketClient->IsConnected())
+	{
+		s_pendingLevelUpStatCount = 0;
+		return;
+	}
+
+	int budget = kLevelUpPointsPerTick;
+	while (budget-- > 0 && s_pendingLevelUpStatCount > 0)
+	{
+		if (CharacterAttribute == nullptr || CharacterAttribute->LevelUpPoint <= 0)
+		{
+			s_pendingLevelUpStatCount = 0;
+			break;
+		}
+
+		CStreamPacketEngine spe;
+		spe.Init(0xC1, 0xF3);
+		spe << static_cast<BYTE>(0x06) << s_pendingLevelUpStatType;
+		spe.Send();
+		--s_pendingLevelUpStatCount;
+	}
+}
+
 void ReceiveAddPoint( BYTE *ReceiveBuffer )
 {
     LPPRECEIVE_ADD_POINT Data = (LPPRECEIVE_ADD_POINT)ReceiveBuffer;
 
 	if(Data->Result>>4)
 	{
-		CharacterAttribute->LevelUpPoint --;
 		switch(Data->Result&0xf)
 		{
 		case 0:
-			CharacterAttribute->Strength ++;
+			CharacterAttribute->Strength = static_cast<WORD>(Data->ViewStrength);
 			break;
 		case 1:
-			CharacterAttribute->Dexterity ++;
+			CharacterAttribute->Dexterity = static_cast<WORD>(Data->ViewDexterity);
 			break;
 		case 2:
-			CharacterAttribute->Vitality ++;
+			CharacterAttribute->Vitality = static_cast<WORD>(Data->ViewVitality);
 			CharacterAttribute->LifeMax = Data->Max;
 			break;
 		case 3:
-			CharacterAttribute->Energy ++;
+			CharacterAttribute->Energy = static_cast<WORD>(Data->ViewEnergy);
 			CharacterAttribute->ManaMax = Data->Max;
 			break;
         case 4:
-			CharacterAttribute->Charisma ++;
+			CharacterAttribute->Charisma = static_cast<WORD>(Data->ViewLeadership);
             break;
 		}
+
+		CharacterAttribute->LevelUpPoint = static_cast<WORD>(min(Data->ViewPoint, 65535u));
+		CharacterAttribute->PrintPlayer.ViewPoint = CharacterAttribute->LevelUpPoint;
+		CharacterAttribute->LifeMax = static_cast<WORD>(min(Data->ViewMaxHP, 65535u));
+		CharacterAttribute->ManaMax = static_cast<WORD>(min(Data->ViewMaxMP, 65535u));
 		CharacterAttribute->SkillManaMax = Data->SkillManaMax;
 		CharacterAttribute->ShieldMax = Data->ShieldMax;
 	}
@@ -8094,6 +8214,15 @@ void ReceiveGuildResult( BYTE *ReceiveBuffer )
 
 void ReceiveGuildList( BYTE *ReceiveBuffer )
 {
+	// server-next guild stub may reply with C1 0x52 len=5; full list needs PWMSG/C2 body.
+	if (ReceiveBuffer[0] == 0xC1 && ReceiveBuffer[1] < sizeof(PRECEIVE_GUILD_LISTS))
+	{
+		g_nGuildMemberCount = 0;
+		g_pGuildInfoWindow->GuildClear();
+		g_pGuildInfoWindow->UnionGuildClear();
+		return;
+	}
+
 	LPPRECEIVE_GUILD_LISTS Data = (LPPRECEIVE_GUILD_LISTS)ReceiveBuffer;
 	int Offset = sizeof(PRECEIVE_GUILD_LISTS);
 	

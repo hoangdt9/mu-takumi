@@ -582,6 +582,33 @@ bool SEASON3B::CNewUICommonMessageBox::Update()
 		break;
 	}
 
+#if defined(__ANDROID__) || defined(MU_IOS)
+	// Touch often never delivers MSGBOX_EVENT_MOUSE_LBUTTON_UP (no hover frame, or
+	// MouseLButtonPop cleared by jitter). Mirror LButtonUp on finger release.
+	if (SEASON3B::IsRelease(VK_LBUTTON))
+	{
+		switch (m_dwType)
+		{
+		case MSGBOX_COMMON_TYPE_OK:
+			if (m_BtnOk.IsMouseIn())
+			{
+				g_MessageBox->SendEvent(this, MSGBOX_EVENT_USER_COMMON_OK);
+			}
+			break;
+		case MSGBOX_COMMON_TYPE_OKCANCEL:
+			if (m_BtnOk.IsMouseIn())
+			{
+				g_MessageBox->SendEvent(this, MSGBOX_EVENT_USER_COMMON_OK);
+			}
+			else if (m_BtnCancel.IsMouseIn())
+			{
+				g_MessageBox->SendEvent(this, MSGBOX_EVENT_USER_COMMON_CANCEL);
+			}
+			break;
+		}
+	}
+#endif
+
 	return true;
 }
 
@@ -885,6 +912,31 @@ bool SEASON3B::CNewUI3DItemCommonMsgBox::Update()
 		m_BtnCancel.Update();
 		break;
 	}
+
+#if defined(__ANDROID__) || defined(MU_IOS)
+	if (SEASON3B::IsRelease(VK_LBUTTON))
+	{
+		switch (m_dwType)
+		{
+		case MSGBOX_COMMON_TYPE_OK:
+			if (m_BtnOk.IsMouseIn())
+			{
+				g_MessageBox->SendEvent(this, MSGBOX_EVENT_USER_COMMON_OK);
+			}
+			break;
+		case MSGBOX_COMMON_TYPE_OKCANCEL:
+			if (m_BtnOk.IsMouseIn())
+			{
+				g_MessageBox->SendEvent(this, MSGBOX_EVENT_USER_COMMON_OK);
+			}
+			else if (m_BtnCancel.IsMouseIn())
+			{
+				g_MessageBox->SendEvent(this, MSGBOX_EVENT_USER_COMMON_CANCEL);
+			}
+			break;
+		}
+	}
+#endif
 
 	return true;
 }

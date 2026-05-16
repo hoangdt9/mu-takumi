@@ -64,7 +64,14 @@ public static class CharacterRosterMirrorWriter
         int currentMp,
         int maxMp,
         int currentShield = 0,
-        int maxShield = 0)
+        int maxShield = 0,
+        int strength = 0,
+        int dexterity = 0,
+        int vitality = 0,
+        int energy = 0,
+        int leadership = 0,
+        int currentBp = 0,
+        int maxBp = 0)
     {
         var repo = TakumiPostgresMirror.CharacterRoster;
         if (repo is null || string.IsNullOrEmpty(accountId) || string.IsNullOrWhiteSpace(characterName))
@@ -92,8 +99,40 @@ public static class CharacterRosterMirrorWriter
                             maxMp,
                             currentShield,
                             maxShield,
+                            strength,
+                            dexterity,
+                            vitality,
+                            energy,
+                            leadership,
+                            currentBp,
+                            maxBp,
                             CancellationToken.None)
                         .ConfigureAwait(false);
+                    if (CharacterDomainMirrorWriter.IsEnabled() && TakumiPostgresMirror.CharacterDomain is { } domainRepo)
+                    {
+                        await domainRepo.UpsertProgressAsync(
+                                accountId,
+                                name,
+                                level,
+                                exp,
+                                levelUpPoint,
+                                currentHp,
+                                maxHp,
+                                currentMp,
+                                maxMp,
+                                currentShield,
+                                maxShield,
+                                strength,
+                                dexterity,
+                                vitality,
+                                energy,
+                                leadership,
+                                currentBp,
+                                maxBp,
+                                CancellationToken.None)
+                            .ConfigureAwait(false);
+                    }
+
                     CharacterRosterMirrorHealth.RecordUpsertSuccess();
                 }
                 catch (Exception ex)

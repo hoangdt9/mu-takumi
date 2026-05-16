@@ -193,6 +193,7 @@ static void android_set_data_dir_early()
 #include "NewUIMyInventory.h"
 #include "NewUIInventoryCtrl.h"
 #include "NewUISystem.h"
+#include "NewUIMessageBox.h"
 #include "Translation/i18n.h"
 #include "Time/Timer.h"
 #include "UIMng.h"
@@ -583,6 +584,9 @@ extern int ActionTarget;
 extern int TargetX;
 extern int TargetY;
 extern int Attacking;
+bool CheckTile(CHARACTER* c, OBJECT* o, float Range);
+void SetPlayerAttack(CHARACTER* c);
+void LetHeroStop();
 
 namespace
 {
@@ -2891,6 +2895,54 @@ bool IsSupportOrSelfSkill(ActionSkillType skillType)
     return IsCorrectSkillType_Buff(skillType) || IsCorrectSkillType_FrendlySkill(skillType);
 }
 
+static bool TrySendHeroMeleeAttackPacket(int targetIndex)
+{
+    if (targetIndex < 0
+        || targetIndex >= MAX_CHARACTERS_CLIENT
+        || Hero == nullptr
+        || CharactersClient == nullptr)
+    {
+        return false;
+    }
+
+    CHARACTER* c = Hero;
+    OBJECT* o = &c->Object;
+    float range = 1.8f;
+    const int rightWeapon = CharacterMachine->Equipment[EQUIPMENT_WEAPON_RIGHT].Type;
+    if (rightWeapon >= ITEM_SPEAR && rightWeapon < ITEM_SPEAR + MAX_ITEM_INDEX)
+    {
+        range = 2.2f;
+    }
+
+    if (gCharacterManager.GetEquipedBowType() != BOWTYPE_NONE)
+    {
+        range = 6.0f;
+    }
+
+    if (!CheckTile(c, o, range))
+    {
+        return false;
+    }
+
+    TargetX = static_cast<int>(CharactersClient[targetIndex].Object.Position[0] / TERRAIN_SCALE);
+    TargetY = static_cast<int>(CharactersClient[targetIndex].Object.Position[1] / TERRAIN_SCALE);
+    SetPlayerAttack(c);
+    c->AttackTime = 1;
+    VectorCopy(CharactersClient[targetIndex].Object.Position, c->TargetPosition);
+    o->Angle[2] = CreateAngle(
+        o->Position[0],
+        o->Position[1],
+        c->TargetPosition[0],
+        c->TargetPosition[1]);
+    LetHeroStop();
+    c->Movement = false;
+    c->TargetCharacter = targetIndex;
+    c->Skill = 0;
+    const int dir = static_cast<int>(((BYTE)((Hero->Object.Angle[2] + 22.5f) / 360.f * 8.f + 1.f)) % 8);
+    SendRequestAttack(CharactersClient[targetIndex].Key, dir);
+    return true;
+}
+
 bool TriggerVirtualNormalAutoAttack()
 {
     if (!IsVirtualPadAvailable()
@@ -2937,6 +2989,12 @@ bool TriggerVirtualNormalAutoAttack()
     if (!CheckWall(c->PositionX, c->PositionY, TargetX, TargetY))
     {
         return false;
+    }
+
+    if (TrySendHeroMeleeAttackPacket(localTarget))
+    {
+        Action(c, o, true);
+        return true;
     }
 
     if (!PathFinding2(c->PositionX, c->PositionY, TargetX, TargetY, &c->Path))
@@ -3271,6 +3329,13 @@ bool HandleVirtualFingerDown(const SDL_TouchFingerEvent& touch)
         return true;
     }
 
+    // Season3B modal (guild invite, stat points, mix, …): do not steal the touch for
+    // virtual attack/skill/joystick — let MouseLButton* reach g_MessageBox.
+    if (g_MessageBox != nullptr && !g_MessageBox->IsEmpty())
+    {
+        return false;
+    }
+
     if (!IsVirtualPadAvailable())
     {
         return false;
@@ -3474,6 +3539,34 @@ void DrawVirtualCircle(float uiX, float uiY, float uiRadius, float red, float gr
         const float py = centerY + std::sin(angle) * radiusY;
         glVertex2f(px, py);
     }
+    glEnd();
+}
+
+// Highlight overlay for a sub-range of a horizontal bar (no background).
+void DrawVirtualBarFillRange(float uiLeft, float uiTop, float uiW, float uiH,
+                             float startRatio, float endRatio,
+                             float fillR, float fillG, float fillB, float fillA)
+{
+    const float start = std::clamp(startRatio, 0.0f, 1.0f);
+    const float end = std::clamp(endRatio, 0.0f, 1.0f);
+    if (end <= start + 0.0001f)
+    {
+        return;
+    }
+
+    const float sx0 = UiToScreenX(uiLeft + uiW * start);
+    const float sx1 = UiToScreenX(uiLeft + uiW * end);
+    const float syT = static_cast<float>(WindowHeight) - UiToScreenY(uiTop);
+    const float syB = static_cast<float>(WindowHeight) - UiToScreenY(uiTop + uiH);
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glColor4f(fillR, fillG, fillB, fillA);
+    glBegin(GL_TRIANGLE_FAN);
+    glVertex2f(sx0, syB);
+    glVertex2f(sx1, syB);
+    glVertex2f(sx1, syT);
+    glVertex2f(sx0, syT);
     glEnd();
 }
 
@@ -4241,15 +4334,24 @@ void RenderVirtualPad()
                         static_cast<float>(curAG) / static_cast<float>(maxAG),
                         0.10f, 0.95f, 0.90f,  0.04f, 0.20f, 0.18f);
 
-        // EXP â€” gold
-        float expRatio = 0.0f;
-        if (CharacterAttribute->NextExperience > 0)
-            expRatio = static_cast<float>(
-                static_cast<double>(CharacterAttribute->Experience) /
-                static_cast<double>(CharacterAttribute->NextExperience));
+        // EXP — gold; gain flash uses g_pMainFrame SetPreExp/SetGetExp (parity RenderExperience)
+        float expCurrent = 0.f;
+        float expPrior = 0.f;
+        bool expHighlight = false;
+        bool expHighlightFull = false;
+        TakumiGetHudExperienceBarFill(expCurrent, expPrior, expHighlight, expHighlightFull);
+        expCurrent = std::clamp(expCurrent, 0.0f, 1.0f);
+        expPrior = std::clamp(expPrior, 0.0f, expCurrent);
         DrawVirtualBarH(kHudBarLeft, yEXP, barW, kHudBarH,
-                        expRatio,
+                        expCurrent,
                         1.00f, 0.85f, 0.05f,  0.22f, 0.18f, 0.02f);
+        if (expHighlight)
+        {
+            const float highlightStart = expHighlightFull ? 0.0f : expPrior;
+            DrawVirtualBarFillRange(kHudBarLeft, yEXP, barW, kHudBarH,
+                                    highlightStart, expCurrent,
+                                    1.0f, 1.0f, 1.0f, 0.4f);
+        }
 
         // â”€â”€ Numbers centered ON each bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         // Use the legacy number atlas for sharper, anti-aliased digits like old UI.
@@ -4259,7 +4361,7 @@ void RenderVirtualPad()
         SEASON3B::RenderNumber(kHudNumCenterX, yHP  + kHudNumberOffsetY, static_cast<int>(curHP), kHudNumberScale);
         SEASON3B::RenderNumber(kHudNumCenterX, yMP  + kHudNumberOffsetY, static_cast<int>(curMP), kHudNumberScale);
         SEASON3B::RenderNumber(kHudNumCenterX, yAG  + kHudNumberOffsetY, static_cast<int>(curAG), kHudNumberScale);
-        const int expPercent = static_cast<int>(std::clamp(expRatio, 0.0f, 1.0f) * 100.0f + 0.5f);
+        const int expPercent = static_cast<int>(expCurrent * 100.0f + 0.5f);
         SEASON3B::RenderNumber(kHudNumCenterX, yEXP + kHudNumberOffsetY, expPercent, kHudNumberScale);
 
         // Restore additive blend used by the rest of the virtual pad rendering

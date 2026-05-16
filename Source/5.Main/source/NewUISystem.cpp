@@ -1771,8 +1771,8 @@ bool SEASON3B::CNewUISystem::Update()
 		// (same intent as CUIMng tap-outside when no CWin hit).
 		if (mouseEventUnused && CInput::Instance().IsLBtnDn() && AndroidHasFocusedTextInput())
 		{
-			// Legacy MsgWin (e.g. delete-character captcha) is not a Season3B object; do not steal IME.
-			if (!CUIMng::Instance().m_MsgWin.IsShow())
+			// Legacy MsgWin and Season3B text-input message boxes (stat points, trade zen, …) manage IME focus themselves.
+			if (!CUIMng::Instance().m_MsgWin.IsShow() && g_MessageBox->IsEmpty())
 			{
 				::SetFocus(nullptr);
 				MU_MobileStopTextInput();

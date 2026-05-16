@@ -38,6 +38,8 @@ public sealed class MonsterViewerSession
     public string? AccountLogin { get; set; }
     public string? CharacterName { get; set; }
     public ushort PlayerLevel { get; set; } = 1;
+    public byte ServerClass { get; set; }
+    public CharacterSheetStats Sheet { get; set; }
     public MonsterViewportTracker? ViewportTracker { get; set; }
     public Action<int, int>? OnVitalsChanged { get; set; }
 
@@ -81,6 +83,8 @@ public static class MonsterViewerRegistry
         string? accountLogin = null,
         string? characterName = null,
         ushort playerLevel = 1,
+        byte serverClass = 0,
+        CharacterSheetStats sheet = default,
         Action<int, int>? onVitalsChanged = null,
         Action<int, int>? onShieldVitalsChanged = null,
         Action<byte, byte, byte>? onRosterPositionChanged = null)
@@ -143,6 +147,16 @@ public static class MonsterViewerRegistry
                 existing.PlayerLevel = playerLevel;
             }
 
+            if (serverClass != 0)
+            {
+                existing.ServerClass = serverClass;
+            }
+
+            if (sheet.HasBaseStats)
+            {
+                existing.Sheet = sheet;
+            }
+
             existing.OnVitalsChanged = onVitalsChanged ?? existing.OnVitalsChanged;
             existing.OnShieldVitalsChanged = onShieldVitalsChanged ?? existing.OnShieldVitalsChanged;
             existing.OnRosterPositionChanged = onRosterPositionChanged ?? existing.OnRosterPositionChanged;
@@ -168,6 +182,8 @@ public static class MonsterViewerRegistry
             AccountLogin = accountLogin,
             CharacterName = characterName,
             PlayerLevel = playerLevel > (ushort)0 ? playerLevel : (ushort)1,
+            ServerClass = serverClass,
+            Sheet = sheet,
             OnVitalsChanged = onVitalsChanged,
             OnShieldVitalsChanged = onShieldVitalsChanged,
             OnRosterPositionChanged = onRosterPositionChanged,
@@ -181,6 +197,19 @@ public static class MonsterViewerRegistry
             session.MapId = mapId;
             session.X = x;
             session.Y = y;
+        }
+    }
+
+    public static void TryUpdatePlayerLevel(Guid sessionId, ushort playerLevel)
+    {
+        if (playerLevel == 0)
+        {
+            return;
+        }
+
+        if (Sessions.TryGetValue(sessionId, out var session))
+        {
+            session.PlayerLevel = playerLevel;
         }
     }
 
@@ -397,7 +426,9 @@ public static class MonsterViewerRegistry
             "1",
             StringComparison.OrdinalIgnoreCase);
         var stat = MapMonsterWorld.GetMonsterStat(monsterClass);
-        var playerDef = MonsterCombatCalculator.ResolveStubPlayerDefense(session.PlayerLevel);
+        var playerDef = session.Sheet.HasBaseStats
+            ? CharacterCombatPreview602.ResolvePlayerDefense(session.ServerClass, session.PlayerLevel, session.Sheet)
+            : MonsterCombatCalculator.ResolveStubPlayerDefense(session.PlayerLevel);
         var dmg = useTxt
             ? MonsterCombatCalculator.RollDamageFromMonsterToPlayer(
                 stat,

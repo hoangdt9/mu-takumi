@@ -42,6 +42,8 @@
 - [x] **Cả hai host:** `LegacyLoginHost` + `GamePortMinimalSession`.
 - [x] **`LifeManaWire602`** + **`RosterVitalsOutboundTracker`** — quét outbound `C1 0x26`/`0x27` (type `0xFF`/`0xFE`) cập nhật roster + `rosterDirty` (**bao gồm shield** trong word thứ hai của `0x26`); gửi sync sau join khi `TAKUMI_SEND_LIFE_MANA_AFTER_JOIN` (mặc định bật) — thứ tự legacy: max life+SD rồi current.
 - [x] **EXP / level persist:** `011_character_experience.sql`, `ExperienceProgression602`, `RosterExperienceCombat` — grant on monster kill (`0x16`), `UpsertProgressAsync` + `ScheduleProgressUpsert`, join `F3 03` offset 8; **`CharacterRosterEntryMapping`** full DB load (stats + exp).
+- [x] **Progress mirror:** `RosterProgressMirror` + `ScheduleProgressUpsert` cập nhật cả `character_roster` và `character_domain` (level/EXP/stats/vitals) sau kill EXP và `F3 06` stat point.
+- [x] **Stat allocation UI:** client `CAddStatPointMsgBoxLayout` gửi `C1 F3 06` (`SendRequestAddPoint`) thay chat `/addstr`; Android tap-to-focus trên `CNewUITextInputMsgBox` + không dismiss IME khi message box đang mở; server `CharacterStatPointHandler` + `LevelUpPointWire602` word `Max` cho Vit/Ene.
 
 ---
 
@@ -50,7 +52,7 @@
 - [x] **`CharacterRosterJsonMigrator`** — quét `takumi-roster/*.json`, mỗi file = một account, **mọi** entry trong `characters[]` → `character_roster` (+ `character_domain` khi sync bật).
 - [x] Script **`./scripts/migrate-roster-json-to-db.sh`** (`TAKUMI_MIGRATE_ROSTER_JSON_ONLY=1`).
 - [x] Startup tùy chọn: **`TAKUMI_MIGRATE_ROSTER_JSON=1`** trước khi host listen (Legacy + GameHost).
-- [ ] **`inventory_slot`** bulk từ JSON (chưa có field trong roster JSON) — cần ETL riêng / lưu in-game.
+- [x] **`inventory_slot`** bulk từ JSON — `InventorySlotJsonMigrator` quét `takumi-inventory/*.json` (mỗi file = account, `characters[].slots[]` với `itemHex` hoặc `itemBase64` 12 byte); script **`./scripts/migrate-inventory-json-to-db.sh`**; startup **`TAKUMI_MIGRATE_INVENTORY_JSON=1`**.
 
 ---
 

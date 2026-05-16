@@ -24,6 +24,7 @@ public static class WorldGameplayHandlers
     {
         if (await CharacterStatPointHandler.TryHandleAsync(
                 player,
+                accountId,
                 packet,
                 writeAsync,
                 onRosterDirty,

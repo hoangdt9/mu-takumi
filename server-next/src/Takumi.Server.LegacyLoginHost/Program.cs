@@ -7,6 +7,12 @@ RepoEnvLoader.ApplyDefaultsAndLocalEnv();
 DockerRuntimeEnv.ApplyStackOverridesIfEnabled();
 TakumiPostgresMirror.InitIfEnabled();
 
+if (InventorySlotJsonMigrator.IsMigrateOnlyMode())
+{
+    await InventorySlotJsonMigrator.MigrateAllJsonFilesAsync().ConfigureAwait(false);
+    return 0;
+}
+
 if (CharacterRosterJsonMigrator.IsMigrateOnlyMode())
 {
     await CharacterRosterJsonMigrator.MigrateAllJsonFilesAsync().ConfigureAwait(false);
@@ -16,6 +22,11 @@ if (CharacterRosterJsonMigrator.IsMigrateOnlyMode())
 if (CharacterRosterJsonMigrator.IsMigrateOnStartupEnabled())
 {
     await CharacterRosterJsonMigrator.MigrateAllJsonFilesAsync().ConfigureAwait(false);
+}
+
+if (InventorySlotJsonMigrator.IsMigrateOnStartupEnabled())
+{
+    await InventorySlotJsonMigrator.MigrateAllJsonFilesAsync().ConfigureAwait(false);
 }
 
 using var cts = new CancellationTokenSource();

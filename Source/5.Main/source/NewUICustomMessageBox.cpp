@@ -5,6 +5,8 @@
 #include "ZzzBMD.h"
 #include "ZzzObject.h"
 #include "ZzzCharacter.h"
+#include "ZzzInfomation.h"
+#include "WSclient.h"
 #include "wsclientinline.h"
 #include "PersonalShopTitleImp.h"
 #include "CComGem.h"
@@ -18,6 +20,7 @@
 #include "Reconnect.h"
 
 #if defined(__ANDROID__) || defined(MU_IOS)
+#include "Input.h"
 #include "MobilePlatform.h"
 #endif
 
@@ -320,7 +323,40 @@ bool SEASON3B::CNewUITextInputMsgBox::Update()
 		if(false == m_pInputBox->HaveFocus() && g_MessageBox->GetRelatedWnd() != g_hWnd)
 		{
 			g_MessageBox->SetRelatedWnd(g_hWnd);
-		}	
+		}
+
+#if defined(__ANDROID__) || defined(MU_IOS)
+		if (CInput::Instance().IsLBtnDn())
+		{
+			const float inputX = static_cast<float>(m_pInputBox->GetPosition_x());
+			const float inputY = static_cast<float>(m_pInputBox->GetPosition_y());
+			const float inputW = static_cast<float>(m_pInputBox->GetWidth());
+			const float inputH = static_cast<float>(m_pInputBox->GetHeight());
+			const bool onInput = SEASON3B::CheckMouseIn(inputX, inputY, inputW, inputH);
+			if (onInput)
+			{
+				m_pInputBox->GiveFocus(TRUE);
+			}
+			else
+			{
+				bool onButton = false;
+				switch (m_dwMsgBoxType)
+				{
+				case MSGBOX_COMMON_TYPE_OK:
+					onButton = m_BtnOk.IsMouseIn();
+					break;
+				case MSGBOX_COMMON_TYPE_OKCANCEL:
+					onButton = m_BtnOk.IsMouseIn() || m_BtnCancel.IsMouseIn();
+					break;
+				}
+				if (!onButton && AndroidHasFocusedTextInput())
+				{
+					::SetFocus(nullptr);
+					MU_MobileStopTextInput();
+				}
+			}
+		}
+#endif
 	}
 
 	return true;
@@ -1570,7 +1606,7 @@ void SEASON3B::CGemIntegrationUnityMsgBox::SetButtonInfo()
 	for( int k=0; k< (int)COMGEM::eCOMTYPE_END; k++ )
 	{
 		cButton.SetInfo(CNewUIMessageBoxMng::IMAGE_MSGBOX_BTN_EMPTY, x+50.0f, y+ (height+10.0f)*k, MSGBOX_BTN_EMPTY_WIDTH + 20, height, CNewUIMessageBoxButton::MSGBOX_BTN_SIZE_EMPTY);
-		// 1808 "%dùù ùùùù(%dùù ù?ù)"
+		// 1808 "%d?? ????(%d?? ???)"
 		unicode::_sprintf(szTemp, GlobalText[1808], 10*(k+1), 500000*(k+1));
 		cButton.SetText(szTemp);
 		m_cMixButton.push_back(cButton);
@@ -2429,7 +2465,7 @@ CALLBACK_RESULT SEASON3B::CSystemMenuMsgBox::LButtonUp(class CNewUIMessageBoxBas
 		}
 
 #if !defined(__ANDROID__) && !defined(MU_IOS)
-		// Desktop: arm disconnect countdown UI. Mobile: GameOverBtnDown calls MU_MobileRequestExit ù skip countdown.
+		// Desktop: arm disconnect countdown UI. Mobile: GameOverBtnDown calls MU_MobileRequestExit ? skip countdown.
 		g_pNewUIHotKey->SetStateGameOver(true);
 #endif
 
@@ -2547,7 +2583,7 @@ CALLBACK_RESULT SEASON3B::CSystemMenuMsgBox::ChooseCharacterBtnDown(class CNewUI
 	g_ErrorReport.Write( "> Menu - Join with another character. ");
 	g_ErrorReport.WriteCurrentTime();
 
-    //  ùùù?ùùùùù ùùùùùù ùùùùùù ùùùù.
+    //  ????????? ?????? ?????? ????.
     SaveOptions();
 	SaveMacro("Data\\Macro.txt");
 
@@ -4475,7 +4511,7 @@ void CCherryBlossomMsgBox::SetButtonInfo()
 	x = GetPos().x + msgboxhalfwidth - btnhalfwidth;
 	y = GetPos().y + GetSize().cy - (MSGBOX_BTN_EMPTY_HEIGHT + MSGBOX_BTN_BOTTOM_BLANK);
 	m_BtnExit.SetInfo(CNewUIMessageBoxMng::IMAGE_MSGBOX_BTN_EMPTY_SMALL, x, y, width, height, CNewUIMessageBoxButton::MSGBOX_BTN_SIZE_EMPTY_SMALL);
-	// 1002 "ù?ù"
+	// 1002 "???"
 	m_BtnExit.SetText(GlobalText[1002]);
 }	
 
@@ -5981,11 +6017,11 @@ void SEASON3B::CLuckyTradeMenuMsgBox::SetButtonInfo()
 	x = GetPos().x + msgboxhalfwidth - btnhalfwidth;
 	y = GetPos().y + 85;
 	m_BtnTrade.SetInfo(CNewUIMessageBoxMng::IMAGE_MSGBOX_BTN_EMPTY, x, y, width, height, CNewUIMessageBoxButton::MSGBOX_BTN_SIZE_EMPTY);
-	m_BtnTrade.SetText("ùù?ùùùùùù ùù?");	// "GlobalText"
+	m_BtnTrade.SetText("????????? ???");	// "GlobalText"
 
 	y = GetPos().y + 120;
 	m_BtnRefinery.SetInfo(CNewUIMessageBoxMng::IMAGE_MSGBOX_BTN_EMPTY, x, y, width, height, CNewUIMessageBoxButton::MSGBOX_BTN_SIZE_EMPTY);
-	m_BtnRefinery.SetText("ùù?ùùùùùù ùùùù");	// "GlobalText"
+	m_BtnRefinery.SetText("????????? ????");	// "GlobalText"
 
 	width = MSGBOX_BTN_EMPTY_SMALL_WIDTH;
 	btnhalfwidth = width / 2.f;
@@ -6025,12 +6061,12 @@ void SEASON3B::CLuckyTradeMenuMsgBox::RenderTexts()
 	g_pRenderText->SetBgColor(0, 0, 0, 0);
 	g_pRenderText->SetTextColor(255, 255, 255, 255);
 	g_pRenderText->SetFont(g_hFontBold);
-	sprintf( szText, "ùù?ùùùùùù ùù?NPC" );	// "LuckyItem Trade NPC"
+	sprintf( szText, "????????? ???NPC" );	// "LuckyItem Trade NPC"
 	g_pRenderText->RenderText(fPos_x, fPos_y, szText, MSGBOX_WIDTH - 20.0f, 0, RT3_SORT_CENTER);
 	
 	fPos_y += 15;
 	g_pRenderText->SetFont(g_hFont);
-	sprintf( szText, "ùù?ùùùùùùùùùù ùù?ù??ù ùùùùùù ùù ù?ùù?." );
+	sprintf( szText, "????????????? ??????? ?????? ?? ?????." );
 	g_pRenderText->RenderText(fPos_x, fPos_y+1*18, szText, MSGBOX_WIDTH - 20.0f, 0, RT3_SORT_CENTER);
 }
 
@@ -6638,7 +6674,7 @@ void SEASON3B::CElpisMsgBox::RenderTexts()
 	g_pRenderText->RenderText(fPos_x, fPos_y+0*18, szText, MSGBOX_WIDTH - 20.0f, 0, RT3_SORT_CENTER);
 
 	fPos_y += 15;
-	g_pRenderText->SetTextColor(220, 183, 131, 255);	// ?ù?ù
+	g_pRenderText->SetTextColor(220, 183, 131, 255);	// ????
 
 	switch(m_iMessageType)
 	{
@@ -7100,7 +7136,7 @@ void SEASON3B::CResetCharacterPointMsgBox::SetButtonInfo()
 	x = GetPos().x + msgboxhalfwidth - btnhalfwidth;
 	y = GetPos().y + 105;
 	m_ResetCharacterPointBtn.SetInfo(CNewUIMessageBoxMng::IMAGE_MSGBOX_BTN_EMPTY, x, y, width, height, CNewUIMessageBoxButton::MSGBOX_BTN_SIZE_EMPTY);
-	m_ResetCharacterPointBtn.SetText(GlobalText[1884]); // "ùùùù ù?ù?"
+	m_ResetCharacterPointBtn.SetText(GlobalText[1884]); // "???? ????"
 
 	
 	width = MSGBOX_BTN_EMPTY_SMALL_WIDTH;
@@ -7835,6 +7871,14 @@ bool SEASON3B::CAddStatPointMsgBoxLayout::SetLayout()
 
 CALLBACK_RESULT CAddStatPointMsgBoxLayout::ProcessOk(CNewUIMessageBoxBase* pOwner, const leaf::xstreambuf& xParam)
 {
+	static DWORD s_lastStatOkTick = 0;
+	const DWORD nowTick = GetTickCount();
+	if (nowTick - s_lastStatOkTick < 400)
+	{
+		return CALLBACK_BREAK;
+	}
+	s_lastStatOkTick = nowTick;
+
 	CNewUITextInputMsgBox* pMsgBox = dynamic_cast<CNewUITextInputMsgBox*>(pOwner);
 	if (!pMsgBox) return CALLBACK_CONTINUE;
 
@@ -7842,20 +7886,30 @@ CALLBACK_RESULT CAddStatPointMsgBoxLayout::ProcessOk(CNewUIMessageBoxBase* pOwne
 	pMsgBox->GetInputBoxText(szText);
 	int iValue = atoi(szText);
 
+	if (g_SelectedStatType < 0 || g_SelectedStatType > 4 || CharacterAttribute == nullptr)
+	{
+		return CALLBACK_CONTINUE;
+	}
+
 	if (iValue > 0 && iValue <= 65535)
 	{
-		char szCmd[32];
-		switch (g_SelectedStatType)
+		int count = iValue;
+		const int available = static_cast<int>(CharacterAttribute->LevelUpPoint);
+		if (available <= 0)
 		{
-		case 0: sprintf(szCmd, "/addstr %d", iValue); break;
-		case 1: sprintf(szCmd, "/addagi %d", iValue); break;
-		case 2: sprintf(szCmd, "/addvit %d", iValue); break;
-		case 3: sprintf(szCmd, "/addene %d", iValue); break;
-		case 4: sprintf(szCmd, "/addcmd %d", iValue); break;
-		default: return CALLBACK_CONTINUE;
+			return CALLBACK_CONTINUE;
+		}
+		if (count > available)
+		{
+			count = available;
 		}
 
-		SendChat(szCmd);
+		TakumiScheduleLevelUpPoints(static_cast<BYTE>(g_SelectedStatType), count);
+
+		PlayBuffer(SOUND_CLICK01);
+#if defined(__ANDROID__) || defined(MU_IOS)
+		MU_MobileStopTextInput();
+#endif
 		g_MessageBox->SendEvent(pOwner, MSGBOX_EVENT_DESTROY);
 	}
 

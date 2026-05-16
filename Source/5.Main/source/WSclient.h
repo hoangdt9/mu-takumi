@@ -79,10 +79,20 @@ extern bool g_TakumiServerNextTicketPendingValid;
 void Takumi_ClearServerNextSessionTicketPending();
 void ReceiveServerNextSessionTicket( BYTE* ReceiveBuffer, int Size );
 
+/// Queue <c>C1 F3 06</c> stat allocations (throttled in <see cref="TakumiPumpLevelUpPoints"/>).
+void TakumiScheduleLevelUpPoints(BYTE statType, int count);
+void TakumiPumpLevelUpPoints();
+
 // Keep Life/Mana sheet and PrintPlayer view fields in sync (HUD orb + Android bars).
 void TakumiSyncHeroCurrentVitals(DWORD curHp, DWORD curSd);
 void TakumiSyncHeroMaxVitals(DWORD maxHp, DWORD maxSd);
 void TakumiGetHudVitals(DWORD& curHp, DWORD& maxHp, DWORD& curMp, DWORD& maxMp, DWORD& curAg, DWORD& maxAg);
+/// <summary>EXP fill 0..1 for current level (cumulative segment, or Experience/NextExperince fallback).</summary>
+float TakumiComputeExperienceFill01(DWORD experience, DWORD nextExperience, int level);
+/// <summary>EXP fill for HUD (0..1) within the current level segment — parity <c>RenderExperience</c>.</summary>
+float TakumiGetHudExperienceRatio();
+/// <summary>EXP bar fill + SetPreExp/SetGetExp gain highlight (Android HUD parity PC).</summary>
+bool TakumiGetHudExperienceBarFill(float& currentFill01, float& priorFill01, bool& highlightGain, bool& highlightFullBar);
 void TakumiEnsureExperienceThresholds();
 void Takumi_SendSessionTicketAttachIfPending();
 

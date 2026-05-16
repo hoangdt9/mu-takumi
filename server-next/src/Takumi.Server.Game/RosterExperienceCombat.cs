@@ -45,24 +45,9 @@ public static class RosterExperienceCombat
 
         onRosterDirty?.Invoke();
 
-        var charName = Encoding.ASCII.GetString(player.Name10).TrimEnd('\0', ' ');
-        if (!string.IsNullOrEmpty(accountId) && !string.IsNullOrEmpty(charName))
-        {
-            CharacterRosterMirrorWriter.ScheduleProgressUpsert(
-                accountId,
-                charName,
-                player.Level,
-                player.Experience,
-                player.LevelUpPoint,
-                player.MaxHp,
-                player.CurrentHp,
-                player.MaxMp,
-                player.CurrentMp,
-                player.MaxShield,
-                player.CurrentShield);
-            RosterVitalsCombat.ScheduleVitalsMirror(accountId, charName, player);
-        }
+        RosterProgressMirror.ScheduleFromEntry(accountId, player);
 
+        var charName = Encoding.ASCII.GetString(player.Name10).TrimEnd('\0', ' ');
         if (levelsGained > 0)
         {
             Console.WriteLine(
@@ -72,6 +57,15 @@ public static class RosterExperienceCombat
                 player.Experience,
                 player.LevelUpPoint,
                 levelsGained);
+        }
+        else
+        {
+            Console.WriteLine(
+                "[m7-exp] kill grant name={0} +{1} exp lv={2} totalExp={3}",
+                charName,
+                expGain,
+                player.Level,
+                player.Experience);
         }
 
         return levelsGained;

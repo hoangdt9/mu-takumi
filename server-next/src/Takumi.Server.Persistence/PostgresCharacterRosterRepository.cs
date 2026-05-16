@@ -276,6 +276,13 @@ public sealed class PostgresCharacterRosterRepository : IAsyncDisposable
         int maxMp,
         int currentShield = 0,
         int maxShield = 0,
+        int strength = 0,
+        int dexterity = 0,
+        int vitality = 0,
+        int energy = 0,
+        int leadership = 0,
+        int currentBp = 0,
+        int maxBp = 0,
         CancellationToken ct = default)
     {
         await using var conn = await this._dataSource.OpenConnectionAsync(ct).ConfigureAwait(false);
@@ -284,7 +291,10 @@ public sealed class PostgresCharacterRosterRepository : IAsyncDisposable
             UPDATE character_roster
             SET level = $3, experience = $4, level_up_point = $5,
                 current_hp = $6, max_hp = $7, current_mp = $8, max_mp = $9,
-                current_shield = $10, max_shield = $11, updated_at = NOW()
+                current_shield = $10, max_shield = $11,
+                strength = $12, dexterity = $13, vitality = $14, energy = $15, leadership = $16,
+                current_bp = $17, max_bp = $18,
+                updated_at = NOW()
             WHERE account_login = $1 AND character_name = $2
             """,
             conn);
@@ -299,6 +309,13 @@ public sealed class PostgresCharacterRosterRepository : IAsyncDisposable
         cmd.Parameters.AddWithValue(maxMp);
         cmd.Parameters.AddWithValue(currentShield);
         cmd.Parameters.AddWithValue(maxShield);
+        cmd.Parameters.AddWithValue(strength);
+        cmd.Parameters.AddWithValue(dexterity);
+        cmd.Parameters.AddWithValue(vitality);
+        cmd.Parameters.AddWithValue(energy);
+        cmd.Parameters.AddWithValue(leadership);
+        cmd.Parameters.AddWithValue(currentBp);
+        cmd.Parameters.AddWithValue(maxBp);
         await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
     }
 

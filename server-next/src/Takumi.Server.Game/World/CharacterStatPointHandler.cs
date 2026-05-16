@@ -5,10 +5,10 @@ namespace Takumi.Server.Game.World;
 /// <summary><c>CGLevelUpPointRecv</c> — <c>C1 F3 06</c> stat allocation.</summary>
 public static class CharacterStatPointHandler
 {
-    public static bool TryFindAddPointRequest(ReadOnlySpan<byte> packet, out byte statType)
+    public static bool TryFindNextAddPointRequest(ReadOnlySpan<byte> packet, ref int searchFrom, out byte statType)
     {
         statType = 0;
-        for (var i = 0; i + 5 <= packet.Length; i++)
+        for (var i = searchFrom; i + 5 <= packet.Length; i++)
         {
             if (packet[i] != 0xC1 || packet[i + 2] != 0xF3 || packet[i + 3] != 0x06)
             {
@@ -16,26 +16,46 @@ public static class CharacterStatPointHandler
             }
 
             statType = packet[i + 4];
+            searchFrom = i + 5;
             return true;
         }
 
+        searchFrom = packet.Length;
         return false;
     }
 
     public static async Task<bool> TryHandleAsync(
         GameRosterEntry player,
+        string? accountId,
         byte[] packet,
         Func<ReadOnlyMemory<byte>, CancellationToken, Task> writeAsync,
         Action? onRosterDirty,
         CancellationToken ct)
     {
-        if (!TryFindAddPointRequest(packet.AsSpan(), out var statType))
+        var span = packet.AsSpan();
+        var searchFrom = 0;
+        var sheet = player.ResolveSheet();
+        var handledAny = false;
+        byte lastStatType = 0;
+        var failed = false;
+
+        while (TryFindNextAddPointRequest(span, ref searchFrom, out var statType))
+        {
+            handledAny = true;
+            lastStatType = statType;
+            if (!CharacterSheetCalculator.TryAddStatPoint(ref sheet, statType, out _))
+            {
+                failed = true;
+                break;
+            }
+        }
+
+        if (!handledAny)
         {
             return false;
         }
 
-        var sheet = player.ResolveSheet();
-        if (!CharacterSheetCalculator.TryAddStatPoint(ref sheet, statType, out _))
+        if (failed)
         {
             await writeAsync(LevelUpPointWire602.BuildFail(), ct).ConfigureAwait(false);
             return true;
@@ -52,12 +72,14 @@ public static class CharacterStatPointHandler
         player.CurrentBp = vitals.SkillMana;
         player.MaxBp = vitals.SkillManaMax;
         onRosterDirty?.Invoke();
+        RosterProgressMirror.ScheduleFromEntry(accountId, player);
 
-        var pkt = LevelUpPointWire602.BuildSuccess(statType, sheet, vitals);
+        var maxLifeOrMana = CharacterSheetCalculator.MaxAfterStatAdd(player.ServerClass, player.Level, sheet, lastStatType);
+        var pkt = LevelUpPointWire602.BuildSuccess(lastStatType, sheet, vitals, maxLifeOrMana);
         await writeAsync(pkt, ct).ConfigureAwait(false);
         Console.WriteLine(
             "[m7] stat point type={0} str={1} vit={2} ene={3} pointsLeft={4}",
-            statType,
+            lastStatType,
             sheet.Strength,
             sheet.Vitality,
             sheet.Energy,

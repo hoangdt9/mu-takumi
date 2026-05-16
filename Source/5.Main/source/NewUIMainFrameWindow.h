@@ -250,6 +250,9 @@ namespace SEASON3B
 		void SetPreExp(DWORD dwPreExp);
 		void SetGetExp(DWORD dwGetExp);
 
+		/// Linear 0..1 EXP fill for HUD; when gain effect is active, prior + highlight flags match RenderExperience.
+		bool GetHudExperienceBarFill(float& currentFill01, float& priorFill01, bool& highlightGain, bool& highlightFullBar) const;
+
 		// buttons
 		void SetBtnState(int iBtnType, bool bStateDown);
 

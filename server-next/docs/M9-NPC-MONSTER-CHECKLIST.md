@@ -15,7 +15,7 @@ Last updated: 2026-05-16
 - [x] **Damage vs Defense** — `MonsterCombatCalculator` + `Monster.txt` `Defense` column.
 - [x] **M10a (mac-m4):** map presence `C1 0x15` / `0x18`, miss, skill % (`GameMapPresenceRegistry`).
 - [ ] **Full combat** (AoE, PvP) — **M10c** (xem **`WORKSTREAM-OWNERSHIP.md`**).
-- [~] **AI (M9b):** wander, chase, `0xD4`/`0x18`, player dmg stub, periodic viewport, regen broadcast — see **`docs/M9-MONSTER-AI-PORT-CHECKLIST.md`**.
+- [~] **AI (M9b):** wander, chase, `0xD4`/`0x18`, monster→player dmg from `Monster.txt` (+ level defense stub), periodic viewport, regen broadcast — see **`docs/M9-MONSTER-AI-PORT-CHECKLIST.md`**.
 - [x] **NPC shop wire** — `0x30` talk → `C2 0x31` (`WorldGameplayHandlers`, `NpcShopCatalog`).
 - [x] **Gate / shop commerce stub** — `0x1C` gate, `0x32`–`0x34` buy/sell/repair (`MapGateService`, `ShopCommerceHandler`); see **`docs/M9-M8-NPC-GAMEPLAY-OWNERSHIP.md`**.
 - [x] **M8 ETL** spawn Postgres — **`main`** (`b33d890`); `MapMonsterWorld` fallback file khi DB trống.

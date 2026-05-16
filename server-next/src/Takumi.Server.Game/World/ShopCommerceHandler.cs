@@ -145,6 +145,18 @@ public static class ShopCommerceHandler
             .ConfigureAwait(false);
 
         var price = ShopItemPricing.BuyPrice(shopItem);
+        var indexForCoin = (shopItem.ItemGroup * 512) + shopItem.ItemIndex;
+        if (ItemValueCatalog.IsCoinOnlyPrice(indexForCoin, shopItem.ItemLevel, shopItem.ExcOpt))
+        {
+            await writeAsync(ShopCommerceWire602.BuildBuyFail(), ct).ConfigureAwait(false);
+            Console.WriteLine(
+                "[m8] shop buy rejected coin-only item index={0} lvl={1} (no zen price in ItemValue.txt) {2}",
+                indexForCoin,
+                shopItem.ItemLevel,
+                remote);
+            return true;
+        }
+
         if (player.Zen < price)
         {
             await writeAsync(ShopCommerceWire602.BuildBuyFail(), ct).ConfigureAwait(false);

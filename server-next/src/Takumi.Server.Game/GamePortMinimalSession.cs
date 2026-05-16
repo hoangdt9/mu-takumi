@@ -456,6 +456,7 @@ public static class GamePortMinimalSession
                             maxShield: picked.MaxShield,
                             accountLogin: loggedAccountId,
                             characterName: Encoding.ASCII.GetString(picked.Name10).TrimEnd('\0'),
+                            playerLevel: picked.Level,
                             onVitalsChanged: (hp, max) =>
                             {
                                 picked.CurrentHp = hp;
@@ -553,6 +554,7 @@ public static class GamePortMinimalSession
                                 maxShield: pickedMove.MaxShield,
                                 accountLogin: loggedAccountId,
                                 characterName: Encoding.ASCII.GetString(pickedMove.Name10).TrimEnd('\0'),
+                                playerLevel: pickedMove.Level,
                                 onVitalsChanged: (hp, max) =>
                                 {
                                     pickedMove.CurrentHp = hp;

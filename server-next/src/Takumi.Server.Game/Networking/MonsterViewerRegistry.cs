@@ -34,6 +34,7 @@ public sealed class MonsterViewerSession
     public int MaxShield { get; set; }
     public string? AccountLogin { get; set; }
     public string? CharacterName { get; set; }
+    public ushort PlayerLevel { get; set; } = 1;
     public MonsterViewportTracker? ViewportTracker { get; set; }
     public Action<int, int>? OnVitalsChanged { get; set; }
 
@@ -75,6 +76,7 @@ public static class MonsterViewerRegistry
         int maxShield = 0,
         string? accountLogin = null,
         string? characterName = null,
+        ushort playerLevel = 1,
         Action<int, int>? onVitalsChanged = null,
         Action<int, int>? onShieldVitalsChanged = null,
         Action<byte, byte, byte>? onRosterPositionChanged = null)
@@ -130,6 +132,11 @@ public static class MonsterViewerRegistry
                 existing.CharacterName = characterName;
             }
 
+            if (playerLevel > 0)
+            {
+                existing.PlayerLevel = playerLevel;
+            }
+
             existing.OnVitalsChanged = onVitalsChanged ?? existing.OnVitalsChanged;
             existing.OnShieldVitalsChanged = onShieldVitalsChanged ?? existing.OnShieldVitalsChanged;
             existing.OnRosterPositionChanged = onRosterPositionChanged ?? existing.OnRosterPositionChanged;
@@ -153,6 +160,7 @@ public static class MonsterViewerRegistry
             MaxShield = initSdMax,
             AccountLogin = accountLogin,
             CharacterName = characterName,
+            PlayerLevel = playerLevel > (ushort)0 ? playerLevel : (ushort)1,
             OnVitalsChanged = onVitalsChanged,
             OnShieldVitalsChanged = onShieldVitalsChanged,
             OnRosterPositionChanged = onRosterPositionChanged,
@@ -359,6 +367,7 @@ public static class MonsterViewerRegistry
     public static async Task ApplyMonsterHitToPlayerAsync(
         Guid targetSessionId,
         int monsterObjectKey,
+        int monsterClass,
         byte mapId,
         byte monsterX,
         byte monsterY,
@@ -375,8 +384,21 @@ public static class MonsterViewerRegistry
             return;
         }
 
-        var baseDmg = ParseIntEnv("TAKUMI_MONSTER_TO_PLAYER_DAMAGE", 15, 1, 2000);
-        var dmg = Math.Max(1, baseDmg * Math.Clamp(damagePercent, 50, 500) / 100);
+        var fallbackStub = ParseIntEnv("TAKUMI_MONSTER_TO_PLAYER_DAMAGE", 15, 1, 2000);
+        var useTxt = !string.Equals(
+            Environment.GetEnvironmentVariable("TAKUMI_MONSTER_IGNORE_TXT_DAMAGE")?.Trim(),
+            "1",
+            StringComparison.OrdinalIgnoreCase);
+        var stat = MapMonsterWorld.GetMonsterStat(monsterClass);
+        var playerDef = MonsterCombatCalculator.ResolveStubPlayerDefense(session.PlayerLevel);
+        var dmg = useTxt
+            ? MonsterCombatCalculator.RollDamageFromMonsterToPlayer(
+                stat,
+                playerDef,
+                damagePercent,
+                Random.Shared,
+                fallbackStub)
+            : Math.Max(1, fallbackStub * Math.Clamp(damagePercent, 50, 500) / 100);
         var maxHp = Math.Max(1, session.MaxHp);
         var maxSd = Math.Max(0, session.MaxShield);
         var sd = Math.Max(0, session.CurrentShield);
@@ -434,13 +456,16 @@ public static class MonsterViewerRegistry
         }
 
         Console.WriteLine(
-            "[m9-ai] monster hit player key={0} dmg={1} hp={2}/{3} died={4} from mob={5}",
+            "[m9-ai] monster hit player key={0} dmg={1} hp={2}/{3} died={4} mobKey={5} mobClass={6} txt={7} def={8}",
             session.PlayerObjectKey,
             dmg,
             session.CurrentHp,
             maxHp,
             session.CurrentHp <= 0,
-            monsterObjectKey);
+            monsterObjectKey,
+            monsterClass,
+            useTxt,
+            playerDef);
     }
 
     static int ParseIntEnv(string key, int defaultValue, int min, int max)

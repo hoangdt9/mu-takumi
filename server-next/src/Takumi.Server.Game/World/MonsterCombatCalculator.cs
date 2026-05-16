@@ -84,4 +84,54 @@ public static class MonsterCombatCalculator
 
         return Random.Shared.Next(100) < Math.Clamp(missRatePercent, 0, 100);
     }
+
+    /// <summary>Physical hit from monster toward player (minimal parity with legacy <c>gAttack</c> damage roll).</summary>
+    public static int RollDamageFromMonsterToPlayer(
+        MonsterStat attacker,
+        int playerDefense,
+        int damagePercent,
+        Random rng,
+        int fallbackDamageWhenTxtDamageZero)
+    {
+        var min = attacker.DamageMin;
+        var max = attacker.DamageMax;
+        if (max < min)
+        {
+            (min, max) = (max, min);
+        }
+
+        int rolled;
+        if (min <= 0 && max <= 0)
+        {
+            rolled = Math.Max(1, fallbackDamageWhenTxtDamageZero);
+        }
+        else
+        {
+            rolled = min == max ? min : rng.Next(min, max + 1);
+            rolled = Math.Max(1, rolled);
+        }
+
+        rolled = rolled * Math.Clamp(damagePercent, 50, 500) / 100;
+        var mitigated = rolled - Math.Max(0, playerDefense);
+        return Math.Clamp(mitigated, 1, 65_000);
+    }
+
+    /// <summary>Stub defense until roster stores armor (legacy derives from stats + equipment).</summary>
+    public static int ResolveStubPlayerDefense(int playerLevel)
+    {
+        var perLevel = ParseIntEnv("TAKUMI_MONSTER_TO_PLAYER_DEF_PER_LEVEL", 3, 0, 50);
+        var flat = ParseIntEnv("TAKUMI_COMBAT_PLAYER_DEFENSE_FLAT", 0, 0, 10_000);
+        return flat + Math.Max(0, playerLevel) * perLevel;
+    }
+
+    static int ParseIntEnv(string name, int defaultValue, int min, int max)
+    {
+        var raw = Environment.GetEnvironmentVariable(name);
+        if (!int.TryParse(raw, NumberStyles.Integer, CultureInfo.InvariantCulture, out var v))
+        {
+            v = defaultValue;
+        }
+
+        return Math.Clamp(v, min, max);
+    }
 }

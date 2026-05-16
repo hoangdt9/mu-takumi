@@ -181,7 +181,7 @@ Use this to avoid unnecessary rebuilds.
    - [x] Regen delay từ `Monster.txt` (`MapMonsterInstance.TryRegen`).  
    - [x] Combat stub: `C1 0x11` hit / `0x19` skill → damage, `C1 0x14` destroy, `C1 0x16` die (`MonsterCombatHandler`); damage trừ Defense từ `Monster.txt`.  
    - [x] Gate / NPC shop / buy-sell-repair stub (`MapGateService`, `WorldGameplayHandlers`, `ShopCommerceHandler`).
-   - [~] **M9b AI:** wander/chase/`0xD4`/`0x18`, player damage stub, periodic viewport 1s, regen broadcast — **`docs/M9-MONSTER-AI-PORT-CHECKLIST.md`**.  
+   - [~] **M9b AI:** wander/chase/`0xD4`/`0x18`, monster→player dmg từ `Monster.txt` (+ defense stub theo level), periodic viewport 1s, regen broadcast — **`docs/M9-MONSTER-AI-PORT-CHECKLIST.md`**.  
    - [~] **M9c:** `ItemValue.txt` + `GCItemValueSend` (`C2 F3 E9`), AoE `0xDB`, PvP stub, quest NPC dialog stub (P4.4 partial).  
    - [ ] Element/exp/invasion (P3.2–P4), pathfinding BFS đầy đủ — **M9b P2.3+**.
 

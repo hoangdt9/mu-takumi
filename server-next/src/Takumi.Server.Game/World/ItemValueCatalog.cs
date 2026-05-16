@@ -66,6 +66,34 @@ public static class ItemValueCatalog
         return false;
     }
 
+    /// <summary>True when <c>ItemValue.txt</c> row uses coin columns with zero zen <c>Value</c> (legacy cash shop).</summary>
+    public static bool IsCoinOnlyPrice(int itemIndex, int level, int excellent)
+    {
+        EnsureInitialized();
+        foreach (var row in _rows)
+        {
+            if (row.Index != itemIndex)
+            {
+                continue;
+            }
+
+            if (row.Level != -1 && row.Level != level)
+            {
+                continue;
+            }
+
+            if (row.Grade != -1 && row.Grade != excellent)
+            {
+                continue;
+            }
+
+            var anyCoin = row.Coin1 != 0 || row.Coin2 != 0 || row.Coin3 != 0;
+            return anyCoin && row.Value <= 0;
+        }
+
+        return false;
+    }
+
     static List<ItemValueRow>? LoadFromFile()
     {
         var path = ResolvePath();

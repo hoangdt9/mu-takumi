@@ -94,9 +94,13 @@ public static class MonsterAiLoop
                                 var skillMult = ev.Kind == MonsterAiEventKind.SkillAttack
                                     ? ParseIntEnv("TAKUMI_MONSTER_SKILL_DAMAGE_PCT", 150, 50, 500)
                                     : 100;
+                                var mobClass = MapMonsterWorld.TryGetMonster(ev.ObjectKey, out var mobRef) && mobRef is not null
+                                    ? mobRef.MonsterClass
+                                    : 0;
                                 await MonsterViewerRegistry.ApplyMonsterHitToPlayerAsync(
                                         ev.TargetSessionId,
                                         ev.ObjectKey,
+                                        mobClass,
                                         ev.MapId,
                                         ev.X,
                                         ev.Y,

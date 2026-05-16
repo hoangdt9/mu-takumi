@@ -41,7 +41,7 @@ Last updated: 2026-05-16
 | P1.3 | Walk broadcast `C1 0xD4` | `PMSG_MOVE_SEND` | [x] | `MonsterWalkWire602` |
 | P1.4 | Attack anim `C1 0x18` action 120 | `GCActionSend` | [x] | `PlayerActionWire602` |
 | P1.5 | **Aggro + chase toward player** | `TargetNumber`, move to target | [x] | `TryChaseStep`, `AggroTargetKey`, `TAKUMI_MONSTER_AI_CHASE_RANGE` |
-| P1.6 | **Monster → player damage** | `gAttack.Attack` | [~] | `0x11` + `0x26` stub via `ApplyMonsterHitToPlayerAsync` (`TAKUMI_MONSTER_TO_PLAYER_DAMAGE`) |
+| P1.6 | **Monster → player damage** | `gAttack.Attack` | [x] | `Monster.txt` `DamageMin`/`DamageMax` roll + stub defense by level (`TAKUMI_MONSTER_TO_PLAYER_DEF_PER_LEVEL`, `TAKUMI_COMBAT_PLAYER_DEFENSE_FLAT`); fallback `TAKUMI_MONSTER_TO_PLAYER_DAMAGE`; `TAKUMI_MONSTER_IGNORE_TXT_DAMAGE=1` restores old flat stub |
 | P1.7 | Player → monster damage + die | `GCDamageSend` / die | [x] | `MonsterCombatHandler` |
 | P1.8 | Miss / defense from `Monster.txt` | calc | [x] | `MonsterCombatCalculator` |
 | P1.9 | Broadcast monster death to viewers | viewport destroy | [x] | `MonsterViewportBroadcast.BroadcastDestroyAsync` |
@@ -99,7 +99,10 @@ Last updated: 2026-05-16
 | `TAKUMI_MONSTER_AI_ATTACK_PCT` | 12 | |
 | `TAKUMI_MONSTER_AI_CHASE_RANGE` | 12 | Aggro leash |
 | `TAKUMI_MONSTER_AI_ATTACK_RANGE` | 3 | Melee |
-| `TAKUMI_MONSTER_TO_PLAYER_DAMAGE` | 15 | Stub dmg per hit |
+| `TAKUMI_MONSTER_TO_PLAYER_DAMAGE` | 15 | Fallback dmg when `Monster.txt` damage is `0/0`; also flat stub when `TAKUMI_MONSTER_IGNORE_TXT_DAMAGE=1` |
+| `TAKUMI_MONSTER_IGNORE_TXT_DAMAGE` | `0` | `1` = ignore `Monster.txt` damage columns (QA / legacy stub behavior) |
+| `TAKUMI_MONSTER_TO_PLAYER_DEF_PER_LEVEL` | 3 | Stub player physical defense: `level * this + TAKUMI_COMBAT_PLAYER_DEFENSE_FLAT` |
+| `TAKUMI_COMBAT_PLAYER_DEFENSE_FLAT` | 0 | Flat defense added to stub |
 | `TAKUMI_ATT_DATA_ROOT` | (search) | `Data/<World>/Terrain.att` |
 | `TAKUMI_MAP_PRESENCE_ENABLED` | 1 | Player object key for damage |
 

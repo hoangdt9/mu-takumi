@@ -26,6 +26,9 @@ public sealed class MonsterViewerSession
     public byte X { get; set; }
     public byte Y { get; set; }
     public int PlayerObjectKey { get; set; }
+
+    /// <summary>Wire key from <c>C1 F1 00</c> index (client <c>HeroKey</c>). Differs from <see cref="PlayerObjectKey"/> used for viewport/presence.</summary>
+    public int ClientHeroWireKey { get; set; }
     public int CurrentHp { get; set; }
     public int MaxHp { get; set; }
     public int CurrentMp { get; set; }
@@ -68,6 +71,7 @@ public static class MonsterViewerRegistry
         byte y,
         MonsterViewportTracker? viewportTracker = null,
         int playerObjectKey = 0,
+        int clientHeroWireKey = 0,
         int currentHp = 0,
         int maxHp = 0,
         int currentMp = 0,
@@ -91,6 +95,8 @@ public static class MonsterViewerRegistry
             {
                 existing.PlayerObjectKey = playerObjectKey;
             }
+
+            existing.ClientHeroWireKey = clientHeroWireKey;
 
             if (maxHp > 0)
             {
@@ -152,6 +158,7 @@ public static class MonsterViewerRegistry
             Y = y,
             ViewportTracker = viewportTracker,
             PlayerObjectKey = playerObjectKey,
+            ClientHeroWireKey = clientHeroWireKey,
             CurrentHp = currentHp,
             MaxHp = maxHp,
             CurrentMp = currentMp,
@@ -244,7 +251,7 @@ public static class MonsterViewerRegistry
             victim.CurrentShield,
             maxSd);
 
-        var dmgPkt = MonsterDamageWire602.Build(victim.PlayerObjectKey, dmg, victim.CurrentHp, hitSuccess: true);
+        var dmgPkt = MonsterDamageWire602.Build(victim.ClientHeroWireKey, dmg, victim.CurrentHp, hitSuccess: true);
         await GamePortOutboundWire.WriteAsync(victim.Connection, victim.Protect, dmgPkt, ct).ConfigureAwait(false);
         var sdWire = (ushort)Math.Clamp(victim.CurrentShield, 0, ushort.MaxValue);
         var lifePkt = LifeManaWire602.BuildLife(
@@ -435,7 +442,7 @@ public static class MonsterViewerRegistry
             maxSd);
 
         var dmgPkt = MonsterDamageWire602.Build(
-            session.PlayerObjectKey,
+            session.ClientHeroWireKey,
             dmg,
             session.CurrentHp,
             hitSuccess: true);
@@ -451,7 +458,7 @@ public static class MonsterViewerRegistry
         if (session.CurrentHp <= 0)
         {
             PlayerVitalsState.MarkDead(targetSessionId, PlayerVitalsState.ReviveDelayFromEnv());
-            var diePkt = PlayerDieWire602.Build(session.PlayerObjectKey, monsterObjectKey);
+            var diePkt = PlayerDieWire602.Build(session.ClientHeroWireKey, monsterObjectKey);
             await GamePortOutboundWire.WriteAsync(session.Connection, session.Protect, diePkt, ct).ConfigureAwait(false);
         }
 

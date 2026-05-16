@@ -16,6 +16,7 @@
 #include "ZzzInterface.h"
 #include "ZzzInventory.h"
 #include "wsclientinline.h"
+#include "WSclient.h"
 #include "CSItemOption.h"
 #include "CSChaosCastle.h"
 #include "MapManager.h"
@@ -38,6 +39,15 @@
 #include "CustomRanking.h"
 
 extern float g_fScreenRate_x;
+
+static void TakumiResolveMainFrameVitals(DWORD& lifeMax, DWORD& life, DWORD& manaMax, DWORD& mana)
+{
+	DWORD curAg = 0;
+	DWORD maxAg = 0;
+	TakumiGetHudVitals(life, lifeMax, mana, manaMax, curAg, maxAg);
+	(void)curAg;
+	(void)maxAg;
+}
 extern float g_fScreenRate_y;
 extern int  MouseUpdateTime;
 extern int  MouseUpdateTimeMax;
@@ -322,11 +332,7 @@ void SEASON3B::CNewUIMainFrameWindow::RenderLifeManaSS2()
 {
 	DWORD wLifeMax, wLife, wManaMax, wMana;
 
-
-	wLifeMax = CharacterAttribute->PrintPlayer.ViewMaxHP;
-	wLife = min(max(0, CharacterAttribute->PrintPlayer.ViewCurHP), wLifeMax);
-	wManaMax = CharacterAttribute->PrintPlayer.ViewMaxMP;
-	wMana = min(max(0, CharacterAttribute->PrintPlayer.ViewCurMP), wManaMax);
+	TakumiResolveMainFrameVitals(wLifeMax, wLife, wManaMax, wMana);
 
 
 	if (wLifeMax > 0)
@@ -847,10 +853,7 @@ void SEASON3B::CNewUIMainFrameWindow::RenderLifeMana()
 	//}
 	//else
 	{
-		wLifeMax = CharacterAttribute->PrintPlayer.ViewMaxHP;
-		wLife = min(max(0, CharacterAttribute->PrintPlayer.ViewCurHP), wLifeMax);
-		wManaMax = CharacterAttribute->PrintPlayer.ViewMaxMP;
-		wMana = min(max(0, CharacterAttribute->PrintPlayer.ViewCurMP), wManaMax);
+		TakumiResolveMainFrameVitals(wLifeMax, wLife, wManaMax, wMana);
 	}
 
 	if (wLifeMax > 0)

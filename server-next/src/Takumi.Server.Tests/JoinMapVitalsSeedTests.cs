@@ -34,9 +34,11 @@ public sealed class JoinMapVitalsSeedTests
         var name = new byte[10];
         "Z"u8.CopyTo(name);
         var vitals = CharacterRosterVitals.FromInts(50, 100, 10, 20, 0, currentShield: 33, maxShield: 120);
+        var computed = CharacterSheetCalculator.ComputeMaxVitals(0x20, 8, CharacterSheetCalculator.DefaultSheet(0x20, 8));
+        var merged = CharacterSheetCalculator.MergeVitalsForJoin(vitals, computed);
         var joinPkt = JoinMapServerWire602.Build(new CharacterRosterWire(name, 0x20, 8, vitals));
         Assert.True(JoinMapVitalsSeed.TryReadFromJoinPacket(joinPkt, out var v));
-        Assert.Equal(33, v.CurrentShield);
-        Assert.Equal(120, v.MaxShield);
+        Assert.Equal(merged.CurrentShield, v.CurrentShield);
+        Assert.Equal(computed.ShieldMax, v.MaxShield);
     }
 }

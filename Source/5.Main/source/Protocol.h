@@ -138,6 +138,7 @@ struct PMSG_HELPER_START_RECV //GS Send Client
 	BYTE result;
 };
 
+#pragma pack(push, 1)
 struct PMSG_DAMAGE_RECV
 {
 	PBMSG_HEAD header; // C1:11
@@ -145,12 +146,17 @@ struct PMSG_DAMAGE_RECV
 	BYTE damage[2];
 	BYTE type;
 	BYTE ShieldDamage[2];
-	//EXTRA
 	DWORD ViewCurHP;
 	DWORD ViewCurSD;
+#if(FixDmgQWORD)
+	QWORD ViewDamageHP;
+	QWORD ViewDamageSD;
+#else
 	DWORD ViewDamageHP;
 	DWORD ViewDamageSD;
+#endif
 };
+#pragma pack(pop)
 
 struct PMSG_VIEWPORT_DESTROY_RECV
 {
@@ -163,15 +169,16 @@ struct PMSG_VIEWPORT_DESTROY
 	BYTE index[2];
 };
 
+#pragma pack(push, 1)
 struct PMSG_MONSTER_DIE_RECV
 {
 	PBMSG_HEAD header; // C1:16
 	BYTE index[2];
 	BYTE experience[2];
 	BYTE damage[2];
-	//EXTRA
 	DWORD ViewDamageHP;
 };
+#pragma pack(pop)
 
 struct PMSG_USER_DIE_RECV
 {
@@ -181,6 +188,7 @@ struct PMSG_USER_DIE_RECV
 	BYTE killer[2];
 };
 
+#pragma pack(push, 1)
 struct PMSG_LIFE_RECV
 {
 	PBMSG_HEAD header; // C1:26
@@ -203,6 +211,7 @@ struct PMSG_MANA_RECV
 	DWORD ViewMP;
 	DWORD ViewBP;
 };
+#pragma pack(pop)
 
 struct PMSG_FRUIT_RESULT_RECV
 {

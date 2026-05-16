@@ -322,17 +322,19 @@ public static class MonsterCombatHandler
             return;
         }
 
+        var expStub = ComputeKillExperience(monster);
+        var diePkt = MonsterDieWire602.Build(monster.ObjectKey, expStub, damage, dieSuccess: true);
+        await GamePortOutboundWire.WriteAsync(connection, clientProtectOutbound, diePkt, ct).ConfigureAwait(false);
+
         tracker.Forget(monster.ObjectKey);
         await MonsterViewportBroadcast.BroadcastDestroyAsync(monster, ct).ConfigureAwait(false);
         var destroyPkt = MonsterViewportDestroyWire602.Build([monster.ObjectKey]);
         await GamePortOutboundWire.WriteAsync(connection, clientProtectOutbound, destroyPkt, ct).ConfigureAwait(false);
-        var expStub = ComputeKillExperience(monster);
-        var diePkt = MonsterDieWire602.Build(monster.ObjectKey, expStub, damage);
-        await GamePortOutboundWire.WriteAsync(connection, clientProtectOutbound, diePkt, ct).ConfigureAwait(false);
         Console.WriteLine(
-            "[{0}] [m9] monster died key={1} sent C1 0x14 destroy + C1 0x16 die",
+            "[{0}] [m9] monster died key={1} sent C1 0x16 die then C1 0x14 destroy exp={2}",
             remote,
-            monster.ObjectKey);
+            monster.ObjectKey,
+            expStub);
     }
 
     static ushort ComputeKillExperience(MapMonsterInstance monster)

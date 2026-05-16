@@ -7927,6 +7927,11 @@ void MoveEffect( OBJECT *o, int iIndex);
 
 void MoveHero()
 {
+	if (Hero == nullptr)
+	{
+		return;
+	}
+
 	CHARACTER *c = Hero;
 	OBJECT *o = &c->Object;
 	

@@ -69,6 +69,7 @@ void ClearCharacters(int Key=-1);
 void DeleteCharacter(int Key);
 void DeleteCharacter ( CHARACTER* c, OBJECT* o );
 int FindCharacterIndex(int Key);
+int FindCharacterIndexForDamage(int Key);
 int FindCharacterIndexByMonsterIndex ( int Type );
 
 void DeadCharacterBuff ( OBJECT* o );

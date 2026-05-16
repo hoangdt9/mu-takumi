@@ -504,7 +504,8 @@ public static class LegacyLoginHostRunner
                 encryptionPipe: null,
                 new NullLogger<Connection>());
 
-            var join = LoginAccountWire602.BuildJoinPacket(result: 1, index: 0, joinVersion);
+            const ushort joinWireIndex = 0;
+            var join = LoginAccountWire602.BuildJoinPacket(result: 1, index: joinWireIndex, joinVersion);
             await connection.Output.WriteAsync(join, ct).ConfigureAwait(false);
             await connection.Output.FlushAsync(ct).ConfigureAwait(false);
             // Stderr too — easier to spot when stdout is buffered or mixed with other hosts.
@@ -755,7 +756,12 @@ public static class LegacyLoginHostRunner
 
                     sessionJoinCharacterName10 = new byte[10];
                     Buffer.BlockCopy(joinName10, 0, sessionJoinCharacterName10, 0, 10);
-                    var (bpCur, bpMax) = ToGameRosterEntry(picked).ResolveBpForSync();
+                    var gameEntry = ToGameRosterEntry(picked);
+                    var (bpCur, bpMax) = gameEntry.ResolveBpForSync();
+                    var computedVitals = CharacterSheetCalculator.ComputeMaxVitals(
+                        gameEntry.ServerClass,
+                        gameEntry.Level,
+                        gameEntry.ResolveSheet());
                     await RosterVitalsLifecycle.TrySendLifeManaSyncAsync(
                         async (m, t) =>
                         {
@@ -770,7 +776,8 @@ public static class LegacyLoginHostRunner
                         picked.CurrentShield,
                         picked.MaxShield,
                         bpCur,
-                        bpMax).ConfigureAwait(false);
+                        bpMax,
+                        computedVitals).ConfigureAwait(false);
                     await connection.Output.FlushAsync(ct).ConfigureAwait(false);
                     Console.WriteLine(
                         "[{0}] sent join map (F3 03) + inventory (F3 10 len={1}) map={2} xy=({3},{4}) ang={5} name='{6}' — flushed before viewport",
@@ -817,6 +824,7 @@ public static class LegacyLoginHostRunner
                         picked.PosY,
                         monsterViewportTracker,
                         playerObjectKey: presenceJoin?.ObjectKey ?? 0,
+                        clientHeroWireKey: joinWireIndex,
                         currentHp: picked.CurrentHp,
                         maxHp: picked.MaxHp,
                         currentMp: picked.CurrentMp,
@@ -998,6 +1006,7 @@ public static class LegacyLoginHostRunner
                             pickedMove.PosY,
                             monsterViewportTracker,
                             playerObjectKey: presenceMove?.ObjectKey ?? 0,
+                            clientHeroWireKey: joinWireIndex,
                             currentHp: pickedMove.CurrentHp,
                             maxHp: pickedMove.MaxHp,
                             currentMp: pickedMove.CurrentMp,

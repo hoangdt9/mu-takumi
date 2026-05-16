@@ -78,6 +78,12 @@ extern BYTE g_TakumiServerNextTicketPending[TAKUMI_SERVERNEXT_SESSION_TICKET_BYT
 extern bool g_TakumiServerNextTicketPendingValid;
 void Takumi_ClearServerNextSessionTicketPending();
 void ReceiveServerNextSessionTicket( BYTE* ReceiveBuffer, int Size );
+
+// Keep Life/Mana sheet and PrintPlayer view fields in sync (HUD orb + Android bars).
+void TakumiSyncHeroCurrentVitals(DWORD curHp, DWORD curSd);
+void TakumiSyncHeroMaxVitals(DWORD maxHp, DWORD maxSd);
+void TakumiGetHudVitals(DWORD& curHp, DWORD& maxHp, DWORD& curMp, DWORD& maxMp, DWORD& curAg, DWORD& maxAg);
+void TakumiEnsureExperienceThresholds();
 void Takumi_SendSessionTicketAttachIfPending();
 
 typedef struct 
@@ -718,6 +724,8 @@ typedef struct {
 	BYTE          Item[PACKET_ITEM_LENGTH];
 } PRECEIVE_GET_ITEM, * LPPRECEIVE_GET_ITEM;
 
+// Wire layouts for 0x11/0x15/0x26/0x27 must match server (packed; no DWORD padding after byte fields).
+#pragma pack(push, 1)
 //receive attack
 typedef struct {
 	PBMSG_HEADER  Header;
@@ -958,6 +966,28 @@ typedef struct {
 	DWORD     ViewSD;
 	//#endif
 } PRECEIVE_MANA, * LPPRECEIVE_MANA;
+
+//receive damage (0x15)
+typedef struct {
+	PBMSG_HEADER Header;
+	BYTE         SubCode;
+	BYTE         DamageH;
+	BYTE         DamageL;
+	BYTE		 ShieldDamageH;
+	BYTE		 ShieldDamageL;
+	//EXTRA
+	DWORD ViewCurHP;
+	DWORD ViewCurSD;
+#if(FixDmgQWORD)
+	QWORD ViewDamageHP;
+	QWORD ViewDamageSD;
+#else
+	DWORD ViewDamageHP;
+	DWORD ViewDamageSD;
+#endif
+} PRECEIVE_DAMAGE, * LPPRECEIVE_DAMAGE;
+#pragma pack(pop)
+
 //receive add point
 typedef struct {
 	PBMSG_HEADER Header;
@@ -995,26 +1025,6 @@ typedef struct {
 	BYTE         PositionY;
 	BYTE         Angle;
 } PRECEIVE_TELEPORT_POSITION, * LPPRECEIVE_TELEPORT_POSITION;
-
-//receive damage
-typedef struct {
-	PBMSG_HEADER Header;
-	BYTE         SubCode;
-	BYTE         DamageH;
-	BYTE         DamageL;
-	BYTE		 ShieldDamageH;
-	BYTE		 ShieldDamageL;
-	//EXTRA
-	DWORD ViewCurHP;
-	DWORD ViewCurSD;
-#if(FixDmgQWORD)
-	QWORD ViewDamageHP;
-	QWORD ViewDamageSD;
-#else
-	DWORD ViewDamageHP;
-	DWORD ViewDamageSD;
-#endif
-} PRECEIVE_DAMAGE, * LPPRECEIVE_DAMAGE;
 
 //receive create guild master
 typedef struct {

@@ -49,10 +49,15 @@ void MU_AndroidRevealLoginServerUi();
 void MU_AndroidTickLoginSceneConnectFallback();
 /** Call when entering login scene so fallback timers do not use stale WorldTime from loading. */
 void MU_AndroidResetLoginSceneConnectFallback();
+/** Call when C2 F4 06 server list is parsed (not the synthetic fallback list). */
+void MU_AndroidNotifyWireServerListReceived();
 /** Call when user taps a sub-server (before F4 03 / ReceiveServerConnect). */
 void MU_AndroidNotifyServerSubPickStarted();
 /** Opens LoginWin if F4 03 never arrives after sub pick (server-next / Docker LAN). */
 void MU_AndroidTickLoginAfterServerPickFallback();
+/** True after LAN connect failed and client should use 127.0.0.1 (adb reverse / Docker Desktop Mac). */
+bool MU_AndroidShouldPreferLoopbackTcp();
+void MU_AndroidSetPreferLoopbackTcp(bool prefer);
 #endif
 
 #endif // defined(__ANDROID__) || defined(MU_IOS)

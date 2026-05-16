@@ -76,9 +76,10 @@ public static class CharacterSheetCalculator
         CharacterComputedVitals computed,
         bool keepPartial = false)
     {
-        var maxHp = persisted.HasHp ? persisted.MaxHp : computed.LifeMax;
-        var maxMp = persisted.HasMp ? persisted.MaxMp : computed.ManaMax;
-        var maxSd = persisted.HasShield ? persisted.MaxShield : computed.ShieldMax;
+        // Always recompute max vitals from class + stats (parity ObjectManager::CharacterCalcAttribute).
+        var maxHp = computed.LifeMax;
+        var maxMp = computed.ManaMax;
+        var maxSd = computed.ShieldMax;
 
         // Heal when current is unset/0 (fixes corrupt 0 HP UI); keep partial when DB has current > 0.
         var curHp = persisted.HasHp && persisted.CurrentHp > 0

@@ -12954,7 +12954,20 @@ int FindCharacterIndex(int Key)
 		}
 	}
 	return MAX_CHARACTERS_CLIENT;
-}       
+}
+
+int FindCharacterIndexForDamage(int Key)
+{
+	for (int i = 0; i < MAX_CHARACTERS_CLIENT; ++i)
+	{
+		CHARACTER* c = &CharactersClient[i];
+		if (c->Key == Key)
+		{
+			return i;
+		}
+	}
+	return MAX_CHARACTERS_CLIENT;
+}
 
 int FindCharacterIndexByMonsterIndex ( int Type )
 {

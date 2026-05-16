@@ -250,6 +250,18 @@ namespace
 
 		strcpy_s(output,outputSize,address);
 
+#if defined(__ANDROID__)
+		if (MU_AndroidShouldPreferLoopbackTcp()
+			&& IsPrivateIPv4(address)
+			&& !IsLoopbackIPv4(address))
+		{
+			g_ErrorReport.Write(
+				"[NetworkFallback] Android prefer loopback; F4 03 %s -> 127.0.0.1\r\n",
+				address);
+			strcpy_s(output, outputSize, "127.0.0.1");
+		}
+		else
+#endif
 #if defined(__ANDROID__) || defined(MU_IOS)
 		if (szServerIpAddress != 0 && szServerIpAddress[0] != '\0'
 			&& IsLoopbackIPv4(szServerIpAddress)
@@ -527,6 +539,10 @@ void ReceiveServerList(BYTE* ReceiveBuffer, int Size)
 	}
 
 	g_ErrorReport.Write("Success Receive Server List.\r\n");
+
+#if defined(__ANDROID__)
+	MU_AndroidNotifyWireServerListReceived();
+#endif
 
 	g_ConsoleDebug->Write(MCD_RECEIVE, "0xF4 [ReceiveServerList]");
 }
@@ -1317,6 +1333,7 @@ BOOL ReceiveJoinMapServer(BYTE *ReceiveBuffer, BOOL bEncrypted)
 	
     OBJECT *o = &c->Object;
 	c->Class = CharacterAttribute->Class;
+	c->Level = CharacterAttribute->Level;
 	c->Skin = 0;
 	c->PK    = Data->PK;
 	c->CtlCode	= Data->CtlCode;
@@ -1353,10 +1370,10 @@ BOOL ReceiveJoinMapServer(BYTE *ReceiveBuffer, BOOL bEncrypted)
 	CharacterAttribute->PrintPlayer.ViewReset = Data->ViewReset;
 	CharacterAttribute->PrintPlayer.ViewMasterReset = Data->ViewMasterReset;
 	CharacterAttribute->PrintPlayer.ViewPoint = Data->ViewPoint;
-	CharacterAttribute->PrintPlayer.ViewCurHP = (DWORD)CharacterAttribute->Life;
-	CharacterAttribute->PrintPlayer.ViewMaxHP = (DWORD)CharacterAttribute->LifeMax;
-	CharacterAttribute->PrintPlayer.ViewCurMP = (DWORD)CharacterAttribute->Mana;
-	CharacterAttribute->PrintPlayer.ViewMaxMP = (DWORD)CharacterAttribute->ManaMax;
+	CharacterAttribute->PrintPlayer.ViewCurHP = Data->ViewCurHP > 0 ? Data->ViewCurHP : (DWORD)CharacterAttribute->Life;
+	CharacterAttribute->PrintPlayer.ViewMaxHP = Data->ViewMaxHP > 0 ? Data->ViewMaxHP : (DWORD)CharacterAttribute->LifeMax;
+	CharacterAttribute->PrintPlayer.ViewCurMP = Data->ViewCurMP > 0 ? Data->ViewCurMP : (DWORD)CharacterAttribute->Mana;
+	CharacterAttribute->PrintPlayer.ViewMaxMP = Data->ViewMaxMP > 0 ? Data->ViewMaxMP : (DWORD)CharacterAttribute->ManaMax;
 	CharacterAttribute->PrintPlayer.ViewCurBP = Data->ViewCurBP;
 	CharacterAttribute->PrintPlayer.ViewMaxBP = Data->ViewMaxBP;
 	CharacterAttribute->PrintPlayer.ViewCurSD = (DWORD)CharacterAttribute->Shield;
@@ -1366,13 +1383,26 @@ BOOL ReceiveJoinMapServer(BYTE *ReceiveBuffer, BOOL bEncrypted)
 	CharacterAttribute->PrintPlayer.ViewVitality = CharacterAttribute->Vitality;
 	CharacterAttribute->PrintPlayer.ViewEnergy = CharacterAttribute->Energy;
 	CharacterAttribute->PrintPlayer.ViewLeadership = CharacterAttribute->Charisma;
-	CharacterAttribute->PrintPlayer.ViewExperience = (DWORD)CharacterAttribute->Experience;
-	CharacterAttribute->PrintPlayer.ViewNextExperience = (DWORD)CharacterAttribute->NextExperince;
+	TakumiEnsureExperienceThresholds();
+
+#if defined(__ANDROID__)
+	g_ErrorReport.Write(
+		"[Exp] join exp=%d next=%d level=%u\r\n",
+		CharacterAttribute->Experience,
+		CharacterAttribute->NextExperince,
+		(unsigned)CharacterAttribute->Level);
+#endif
 
 	Hero = c;
 
-	memcpy(c->ID,(char *)CharacterAttribute->Name,MAX_ID_SIZE);
-
+	if (CharacterAttribute != nullptr && CharacterAttribute->Name[0] != 0)
+	{
+		memcpy(c->ID, (char*)CharacterAttribute->Name, MAX_ID_SIZE);
+	}
+	else if (SelectedHero >= 0 && SelectedHero < MAX_CHARACTERS_CLIENT)
+	{
+		memcpy(c->ID, CharactersClient[SelectedHero].ID, MAX_ID_SIZE);
+	}
 	c->ID[MAX_ID_SIZE] = NULL;
 	CreateEffect(BITMAP_MAGIC+2,o->Position,o->Angle,o->Light,0,o);
 	
@@ -1424,7 +1454,10 @@ BOOL ReceiveJoinMapServer(BYTE *ReceiveBuffer, BOOL bEncrypted)
 		StopBuffer(SOUND_EMPIREGUARDIAN_INDOOR_SOUND, true);
 	}
 
-	g_pUIMapName->ShowMapName();
+	if (g_pUIMapName != nullptr)
+	{
+		g_pUIMapName->ShowMapName();
+	}
 
 	CreateMyGensInfluenceGroundEffect();
 		
@@ -1452,7 +1485,13 @@ BOOL ReceiveJoinMapServer(BYTE *ReceiveBuffer, BOOL bEncrypted)
 	{
 		g_pNewUISystem->Hide(SEASON3B::INTERFACE_EMPIREGUARDIAN_TIMER);
 	}
-	g_pMasterSkillTreeInterface->SetMasterType(gCharacterManager.GetCharacterClass(CharacterAttribute->Class));
+#if(NEW_MASTER_SKILL_TREE == 1)
+	if (g_pMasterSkillTreeInterface != nullptr && CharacterAttribute != nullptr)
+	{
+		g_pMasterSkillTreeInterface->SetMasterType(
+			gCharacterManager.GetCharacterClass(CharacterAttribute->Class));
+	}
+#endif
 	g_ConsoleDebug->Write(MCD_RECEIVE, "0x03 [ReceiveJoinMapServer]");
 	
 	return ( TRUE);
@@ -1534,10 +1573,28 @@ void ReceiveRevival( BYTE *ReceiveBuffer )
 	
 	CharacterMachine->Gold         = Data->Gold;
 
-	CharacterAttribute->PrintPlayer.ViewCurHP = Data->ViewCurHP;
-	CharacterAttribute->PrintPlayer.ViewCurMP = Data->ViewCurMP;
+	CharacterAttribute->PrintPlayer.ViewCurHP = Data->ViewCurHP > 0 ? Data->ViewCurHP : (DWORD)Data->Life;
+	CharacterAttribute->PrintPlayer.ViewCurMP = Data->ViewCurMP > 0 ? Data->ViewCurMP : (DWORD)Data->Mana;
 	CharacterAttribute->PrintPlayer.ViewCurBP = Data->ViewCurBP;
 	CharacterAttribute->PrintPlayer.ViewCurSD = Data->ViewCurSD;
+	if (CharacterAttribute->PrintPlayer.ViewMaxBP > 50000u)
+	{
+		CharacterAttribute->PrintPlayer.ViewMaxBP = (DWORD)max(
+			(WORD)CharacterAttribute->SkillManaMax,
+			Data->ViewCurBP);
+	}
+	if (CharacterAttribute->PrintPlayer.ViewMaxHP == 0)
+	{
+		CharacterAttribute->PrintPlayer.ViewMaxHP = (DWORD)max(
+			(WORD)CharacterAttribute->LifeMax,
+			Data->Life);
+	}
+	if (CharacterAttribute->PrintPlayer.ViewMaxMP == 0)
+	{
+		CharacterAttribute->PrintPlayer.ViewMaxMP = (DWORD)max(
+			(WORD)CharacterAttribute->ManaMax,
+			Data->Mana);
+	}
 
 	for(int i=0;i<MAX_CHARACTERS_CLIENT;i++)
 	{
@@ -1768,6 +1825,12 @@ void ReceiveMagicList( BYTE *ReceiveBuffer )
 
 BOOL ReceiveInventory(BYTE *ReceiveBuffer, BOOL bEncrypted)
 {
+	if (g_pMyInventory == nullptr || g_pMyInventoryExt == nullptr || g_pMyShopInventory == nullptr)
+	{
+		g_ErrorReport.Write("[ReceiveInventory] skip — inventory UI not ready\r\n");
+		return TRUE;
+	}
+
 	for(int i=0;i<MAX_EQUIPMENT;i++)
 	{
 		CharacterMachine->Equipment[i].Type = -1;
@@ -1799,10 +1862,12 @@ BOOL ReceiveInventory(BYTE *ReceiveBuffer, BOOL bEncrypted)
 	
 	LPPHEADER_DEFAULT_SUBCODE_WORD Data = (LPPHEADER_DEFAULT_SUBCODE_WORD)ReceiveBuffer; //LPPHEADER_DEFAULT_SUBCODE_WORD 6byte
 	int Offset = sizeof(PHEADER_DEFAULT_SUBCODE_WORD);
-	DeleteBug(&Hero->Object);
-    giPetManager::DeletePet ( Hero );       
-
-	ThePetProcess().DeletePet( Hero );
+	if (Hero != nullptr)
+	{
+		DeleteBug(&Hero->Object);
+		giPetManager::DeletePet(Hero);
+		ThePetProcess().DeletePet(Hero);
+	}
 
 	for(int i=0;i<Data->Value;i++)
 	{
@@ -1828,6 +1893,13 @@ BOOL ReceiveInventory(BYTE *ReceiveBuffer, BOOL bEncrypted)
 			g_pMyShopInventory->InsertItem(itemindex, Data2->Item);
 		}
 		Offset += sizeof(PRECEIVE_INVENTORY);
+	}
+
+	// F3 03 runs before F3 10 in the join burst — refresh hero mesh from equipment now.
+	if (Hero != nullptr && Hero->Object.Type == MODEL_PLAYER)
+	{
+		SetCharacterClass(Hero);
+		CreatePetDarkSpirit_Now(Hero);
 	}
 	
 	g_ConsoleDebug->Write(MCD_RECEIVE, "0x10 [ReceiveInventory]");
@@ -3251,7 +3323,15 @@ void ReceiveCreateMonsterViewport( BYTE *ReceiveBuffer )
 			c->Movement = false;
 		}
 
-		Offset += (sizeof(PCREATE_MONSTER)-(sizeof(BYTE)*(MAX_BUFF_SLOT_INDEX-Data2->s_BuffCount)));
+		// server-next C2 0x13 uses 10-byte entries (buff count byte only, no buff array).
+		if (Data2->s_BuffCount == 0)
+		{
+			Offset += 10;
+		}
+		else
+		{
+			Offset += (sizeof(PCREATE_MONSTER) - (sizeof(BYTE) * (MAX_BUFF_SLOT_INDEX - Data2->s_BuffCount)));
+		}
 	}
 }
 
@@ -3359,6 +3439,19 @@ void ReceiveDeleteCharacterViewport( BYTE *ReceiveBuffer )
 		int DeleteFlag = (Key>>15);
 
 		Key &= 0x7FFF;
+
+		// Server may send viewport destroy (0x14) before die+exp (0x16) in one TCP read.
+		// Immediate DeleteCharacter sets Live=false and skips MONSTER01_DIE / death FX.
+		const int dieIndex = FindCharacterIndexForDamage(Key);
+		if (dieIndex != MAX_CHARACTERS_CLIENT)
+		{
+			CHARACTER* dieCha = &CharactersClient[dieIndex];
+			if (dieCha->Object.Kind == KIND_MONSTER && dieCha->Dead < 15)
+			{
+				Offset += sizeof(PDELETE_CHARACTER);
+				continue;
+			}
+		}
 		
 		int iIndex = g_pPurchaseShopInventory->GetShopCharacterIndex();
 		if(iIndex >=0 && iIndex < MAX_CHARACTERS_CLIENT)
@@ -3391,6 +3484,332 @@ void ReceiveDeleteCharacterViewport( BYTE *ReceiveBuffer )
 	}
 }
 int AttackPlayer = 0;
+
+namespace
+{
+constexpr int kAttackWireExtended = 37;
+constexpr int kAttackOffViewCurHp = 10;
+constexpr int kAttackOffViewCurSd = 14;
+constexpr int kAttackOffViewDmgHp = 18;
+constexpr int kAttackOffViewDmgSd = 26;
+constexpr int kLifeOffViewHp = 9;
+constexpr int kLifeOffViewSd = 13;
+
+static DWORD TakumiReadDwordLE(const BYTE* buf, int off, int pktSize)
+{
+	if (pktSize < off + 4)
+	{
+		return 0;
+	}
+	DWORD v = 0;
+	memcpy(&v, buf + off, sizeof(v));
+	return v;
+}
+
+static QWORD TakumiReadQwordLE(const BYTE* buf, int off, int pktSize)
+{
+	if (pktSize < off + 8)
+	{
+		return 0;
+	}
+	QWORD v = 0;
+	memcpy(&v, buf + off, sizeof(v));
+	return v;
+}
+
+static QWORD TakumiResolveAttackDamage(const BYTE* buf, int pktSize, const LPPRECEIVE_ATTACK data)
+{
+	const WORD damageHL = (WORD)(((WORD)data->DamageH << 8) | data->DamageL);
+	QWORD damage = (pktSize >= kAttackWireExtended)
+		? TakumiReadQwordLE(buf, kAttackOffViewDmgHp, pktSize)
+		: damageHL;
+	if (damage == 0)
+	{
+		damage = damageHL;
+	}
+	if (damage > 200000)
+	{
+		damage = damageHL;
+	}
+	return damage;
+}
+
+static QWORD TakumiResolveAttackShieldDamage(const BYTE* buf, int pktSize, const LPPRECEIVE_ATTACK data)
+{
+	const WORD shieldHL = (WORD)(((WORD)data->ShieldDamageH << 8) | data->ShieldDamageL);
+	QWORD shield = (pktSize >= kAttackWireExtended)
+		? TakumiReadQwordLE(buf, kAttackOffViewDmgSd, pktSize)
+		: shieldHL;
+	if (shield > 200000)
+	{
+		shield = shieldHL;
+	}
+	return shield;
+}
+} // namespace
+
+static int TakumiLevelUpPointsPerLevel()
+{
+	if (Hero == nullptr)
+	{
+		return 5;
+	}
+
+	const int baseClass = gCharacterManager.GetBaseClass(Hero->Class);
+	if (baseClass == CLASS_DARK
+		|| baseClass == CLASS_DARK_LORD
+#ifdef PBG_ADD_NEWCHAR_MONK
+		|| baseClass == CLASS_RAGEFIGHTER
+#endif
+		)
+	{
+		return 7;
+	}
+
+	return 5;
+}
+
+static void TakumiPlayLevelUpEffects()
+{
+	if (Hero == nullptr)
+	{
+		return;
+	}
+
+	OBJECT* o = &Hero->Object;
+	if (gCharacterManager.IsMasterLevel(Hero->Class))
+	{
+		CreateJoint(BITMAP_FLARE, o->Position, o->Position, o->Angle, 45, o, 80, 2);
+		for (int i = 0; i < 19; ++i)
+		{
+			CreateJoint(BITMAP_FLARE, o->Position, o->Position, o->Angle, 46, o, 80, 2);
+		}
+	}
+	else
+	{
+		for (int i = 0; i < 15; ++i)
+		{
+			CreateJoint(BITMAP_FLARE, o->Position, o->Position, o->Angle, 0, o, 40, 2);
+		}
+		CreateEffect(BITMAP_MAGIC + 1, o->Position, o->Angle, o->Light, 0, o);
+	}
+
+	PlayBuffer(SOUND_LEVEL_UP);
+}
+
+static void TakumiRecalcHeroMaxVitalsForLevel()
+{
+	if (Hero == nullptr || CharacterAttribute == nullptr)
+	{
+		return;
+	}
+
+	const int baseClass = gCharacterManager.GetBaseClass(Hero->Class);
+	if (baseClass < 0 || baseClass >= MAX_CLASS)
+	{
+		return;
+	}
+
+	const CLASS_ATTRIBUTE* ca = &ClassAttribute[baseClass];
+	const int lv = max(1, (int)CharacterAttribute->Level);
+
+	float maxLife = (float)ca->Life + (float)ca->LevelLife * (float)(lv - 1);
+	maxLife += (float)(CharacterAttribute->Vitality - ca->Vitality) * (float)ca->VitalityToLife;
+
+	float maxMana = (float)ca->Mana + (float)ca->LevelMana * (float)(lv - 1);
+	maxMana += (float)(CharacterAttribute->Energy - ca->Energy) * (float)ca->EnergyToMana;
+
+	CharacterAttribute->LifeMax = (WORD)min(max(maxLife, 1.f), 65535.f);
+	CharacterAttribute->ManaMax = (WORD)min(max(maxMana, 1.f), 65535.f);
+	CharacterAttribute->Life = CharacterAttribute->LifeMax;
+	CharacterAttribute->Mana = CharacterAttribute->ManaMax;
+
+	if (CharacterMachine != nullptr)
+	{
+		CharacterMachine->Character.Level = CharacterAttribute->Level;
+		CharacterMachine->Character.LifeMax = CharacterAttribute->LifeMax;
+		CharacterMachine->Character.ManaMax = CharacterAttribute->ManaMax;
+		CharacterMachine->Character.Life = CharacterAttribute->Life;
+		CharacterMachine->Character.Mana = CharacterAttribute->Mana;
+	}
+
+	CharacterAttribute->PrintPlayer.ViewMaxHP = CharacterAttribute->LifeMax;
+	CharacterAttribute->PrintPlayer.ViewCurHP = CharacterAttribute->LifeMax;
+	CharacterAttribute->PrintPlayer.ViewMaxMP = CharacterAttribute->ManaMax;
+	CharacterAttribute->PrintPlayer.ViewCurMP = CharacterAttribute->ManaMax;
+}
+
+static void TakumiOnHeroLevelGained()
+{
+	if (CharacterAttribute == nullptr)
+	{
+		return;
+	}
+
+	const int pts = TakumiLevelUpPointsPerLevel();
+	CharacterAttribute->LevelUpPoint = (WORD)min((int)CharacterAttribute->LevelUpPoint + pts, 65535);
+	CharacterAttribute->PrintPlayer.ViewPoint = CharacterAttribute->LevelUpPoint;
+
+	TakumiRecalcHeroMaxVitalsForLevel();
+	TakumiPlayLevelUpEffects();
+
+	if (Hero != nullptr)
+	{
+		Hero->Level = CharacterAttribute->Level;
+	}
+
+#if defined(__ANDROID__)
+	g_ErrorReport.Write(
+		"[Exp] level up Lv=%d +%d statPts=%u maxHp=%u\r\n",
+		(int)CharacterAttribute->Level,
+		pts,
+		(unsigned)CharacterAttribute->LevelUpPoint,
+		(unsigned)CharacterAttribute->LifeMax);
+#endif
+}
+
+void TakumiSyncHeroCurrentVitals(DWORD curHp, DWORD curSd)
+{
+	CharacterAttribute->PrintPlayer.ViewCurHP = curHp;
+	CharacterAttribute->PrintPlayer.ViewCurSD = curSd;
+
+	if (CharacterAttribute->LifeMax > 0 && curHp > (DWORD)CharacterAttribute->LifeMax)
+	{
+		CharacterAttribute->LifeMax = (WORD)min(curHp, 65535u);
+		CharacterAttribute->PrintPlayer.ViewMaxHP = curHp;
+	}
+	else if (CharacterAttribute->PrintPlayer.ViewMaxHP == 0 && curHp > 0)
+	{
+		CharacterAttribute->PrintPlayer.ViewMaxHP = curHp;
+		if (CharacterAttribute->LifeMax == 0)
+		{
+			CharacterAttribute->LifeMax = (WORD)min(curHp, 65535u);
+		}
+	}
+
+	CharacterAttribute->Life = (WORD)min(curHp, 65535u);
+
+	if (CharacterAttribute->ShieldMax > 0 && curSd > (DWORD)CharacterAttribute->ShieldMax)
+	{
+		CharacterAttribute->ShieldMax = (WORD)min(curSd, 65535u);
+		CharacterAttribute->PrintPlayer.ViewMaxSD = curSd;
+	}
+	CharacterAttribute->Shield = (WORD)min(curSd, 65535u);
+}
+
+void TakumiSyncHeroMaxVitals(DWORD maxHp, DWORD maxSd)
+{
+	CharacterAttribute->PrintPlayer.ViewMaxHP = maxHp;
+	CharacterAttribute->PrintPlayer.ViewMaxSD = maxSd;
+	if (maxHp > 0)
+	{
+		CharacterAttribute->LifeMax = (WORD)min(maxHp, 65535u);
+	}
+	if (maxSd > 0)
+	{
+		CharacterAttribute->ShieldMax = (WORD)min(maxSd, 65535u);
+	}
+}
+
+static DWORD TakumiMuCumulativeExperienceForLevel(int level)
+{
+	if (level < 1)
+	{
+		level = 1;
+	}
+
+	DWORD v = (DWORD)((9 + level) * level * level * 10);
+	if (level > 255)
+	{
+		const int over = level - 255;
+		v += (DWORD)((9 + over) * over * over * 1000);
+	}
+
+	return v;
+}
+
+void TakumiEnsureExperienceThresholds()
+{
+	if (CharacterAttribute == nullptr)
+	{
+		return;
+	}
+
+	const int level = max(1, (int)CharacterAttribute->Level);
+	if (CharacterAttribute->NextExperince <= 0)
+	{
+		CharacterAttribute->NextExperince = (int)TakumiMuCumulativeExperienceForLevel(level);
+	}
+
+	CharacterAttribute->PrintPlayer.ViewExperience = (DWORD)CharacterAttribute->Experience;
+	CharacterAttribute->PrintPlayer.ViewNextExperience = (DWORD)CharacterAttribute->NextExperince;
+
+	if (CharacterMachine != nullptr)
+	{
+		CharacterMachine->Character.Level = CharacterAttribute->Level;
+		CharacterMachine->Character.Experience = CharacterAttribute->Experience;
+		CharacterMachine->Character.NextExperince = CharacterAttribute->NextExperince;
+	}
+}
+
+void TakumiGetHudVitals(DWORD& curHp, DWORD& maxHp, DWORD& curMp, DWORD& maxMp, DWORD& curAg, DWORD& maxAg)
+{
+	curHp = CharacterAttribute->PrintPlayer.ViewCurHP;
+	maxHp = CharacterAttribute->PrintPlayer.ViewMaxHP;
+	curMp = CharacterAttribute->PrintPlayer.ViewCurMP;
+	maxMp = CharacterAttribute->PrintPlayer.ViewMaxMP;
+	curAg = CharacterAttribute->PrintPlayer.ViewCurBP;
+	maxAg = CharacterAttribute->PrintPlayer.ViewMaxBP;
+
+	if (maxHp == 0 && CharacterAttribute->LifeMax > 0)
+	{
+		maxHp = (DWORD)CharacterAttribute->LifeMax;
+	}
+	if (maxHp == 0 && curHp > 0)
+	{
+		maxHp = curHp;
+	}
+	if (maxMp == 0 && CharacterAttribute->ManaMax > 0)
+	{
+		maxMp = (DWORD)CharacterAttribute->ManaMax;
+	}
+	if (maxMp == 0 && curMp > 0)
+	{
+		maxMp = curMp;
+	}
+	if (maxAg > 50000u)
+	{
+		maxAg = (DWORD)max(
+			(WORD)CharacterAttribute->SkillManaMax,
+			CharacterAttribute->PrintPlayer.ViewCurBP);
+	}
+
+	if (curHp == 0 && CharacterAttribute->Life > 0)
+	{
+		curHp = (DWORD)CharacterAttribute->Life;
+	}
+	if (curMp == 0 && CharacterAttribute->Mana > 0)
+	{
+		curMp = (DWORD)CharacterAttribute->Mana;
+	}
+	if (curAg == 0 && CharacterAttribute->SkillMana > 0)
+	{
+		curAg = (DWORD)CharacterAttribute->SkillMana;
+	}
+
+	if (maxHp > 0)
+	{
+		curHp = min(curHp, maxHp);
+	}
+	if (maxMp > 0)
+	{
+		curMp = min(curMp, maxMp);
+	}
+	if (maxAg > 0)
+	{
+		curAg = min(curAg, maxAg);
+	}
+}
 
 void ReceiveDamage( BYTE *ReceiveBuffer )
 {
@@ -3533,8 +3952,54 @@ void ProcessDamageCastle( LPPRECEIVE_ATTACK Data)
 	c->Hit = Damage;
 }
 
+static void Takumi_ApplyHeroDamageFromAttackPacket(const BYTE* buf, int pktSize, LPPRECEIVE_ATTACK data)
+{
+	const DWORD curHp = (pktSize >= kAttackWireExtended)
+		? TakumiReadDwordLE(buf, kAttackOffViewCurHp, pktSize)
+		: data->ViewCurHP;
+	const DWORD curSd = (pktSize >= kAttackWireExtended)
+		? TakumiReadDwordLE(buf, kAttackOffViewCurSd, pktSize)
+		: data->ViewCurSD;
+	TakumiSyncHeroCurrentVitals(curHp, curSd);
+}
+
+static void Takumi_UpdateMonsterHealBarFromAttack(CHARACTER* c, OBJECT* o, LPPRECEIVE_ATTACK data, QWORD damage, bool hitSuccess)
+{
+	if (!hitSuccess || c == Hero || o->Kind != KIND_MONSTER)
+	{
+		return;
+	}
+
+	const DWORD curHp = (data->Header.Size >= kAttackWireExtended)
+		? TakumiReadDwordLE((const BYTE*)data, kAttackOffViewCurHp, data->Header.Size)
+		: data->ViewCurHP;
+	if (curHp == 0)
+	{
+		c->InfoHealBar.Clear();
+		return;
+	}
+
+	DWORD maxHp = c->InfoHealBar.Reset;
+	if (maxHp < curHp)
+	{
+		maxHp = curHp + (DWORD)damage;
+	}
+	if (maxHp == 0)
+	{
+		maxHp = curHp;
+	}
+	c->InfoHealBar.Reset = maxHp;
+	c->InfoHealBar.Type = o->Kind;
+	c->InfoHealBar.Life = (BYTE)min(100u, (curHp * 100u) / max(maxHp, 1u));
+	if (c->InfoHealBar.Life < 1)
+	{
+		c->InfoHealBar.Life = 1;
+	}
+}
+
 void ReceiveAttackDamage( BYTE *ReceiveBuffer )
 {
+	const int pktSize = ReceiveBuffer[1];
 	LPPRECEIVE_ATTACK Data = (LPPRECEIVE_ATTACK)ReceiveBuffer;
 
 	if(gMapManager.InChaosCastle())
@@ -3547,12 +4012,23 @@ void ReceiveAttackDamage( BYTE *ReceiveBuffer )
 	int Success = (Key>>15);
 	Key &= 0x7FFF;
 	
-	int Index = FindCharacterIndex(Key);
+	int Index = FindCharacterIndexForDamage(Key);
+	if (Index == MAX_CHARACTERS_CLIENT)
+	{
+		g_ConsoleDebug->Write(MCD_RECEIVE, "0x11 [ReceiveAttackDamage] unknown key=%d", Key);
+#if defined(__ANDROID__)
+		g_ErrorReport.Write(
+			"[Combat] 0x11 unknown target key=%d pktSize=%d dmgHL=%u\r\n",
+			Key,
+			pktSize,
+			(unsigned)(((WORD)Data->DamageH << 8) | Data->DamageL));
+#endif
+		return;
+	}
 	CHARACTER *c = &CharactersClient[Index];
 	OBJECT *o = &c->Object;
 	vec3_t Light;
-	//WORD Damage			= (((WORD)(Data->DamageH)<<8) + Data->DamageL);
-	QWORD Damage = Data->ViewDamageHP; //Fix Dmg 65k
+	QWORD Damage = TakumiResolveAttackDamage(ReceiveBuffer, pktSize, Data);
 #ifdef PBG_ADD_NEWCHAR_MONK_SKILL
 	// DamageType
 	int	 DamageType		= (Data->DamageType)&0x0f;
@@ -3563,8 +4039,7 @@ void ReceiveAttackDamage( BYTE *ReceiveBuffer )
 #endif //PBG_ADD_NEWCHAR_MONK_SKILL
     bool bDoubleEnable  = (Data->DamageType>>6)&0x01;
 	bool bComboEnable	= (Data->DamageType>>7)&0x01;
-	//WORD ShieldDamage	= (((WORD)(Data->ShieldDamageH)<<8) + Data->ShieldDamageL);
-	QWORD ShieldDamage = Data->ViewDamageSD; //Fix Dmg 65k
+	QWORD ShieldDamage = TakumiResolveAttackShieldDamage(ReceiveBuffer, pktSize, Data);
 
 	if(Success)
 	{
@@ -3584,30 +4059,14 @@ void ReceiveAttackDamage( BYTE *ReceiveBuffer )
 		
 		if(Key == HeroKey)
 		{
-			if(Damage >= CharacterAttribute->Life)
-				CharacterAttribute->Life = 0;
-			else
-				CharacterAttribute->Life -= Damage;
-			
-			if(ShieldDamage >= CharacterAttribute->Shield)
-				CharacterAttribute->Shield = 0;
-			else
-				CharacterAttribute->Shield -= ShieldDamage;
+			Takumi_ApplyHeroDamageFromAttackPacket(ReceiveBuffer, pktSize, Data);
 		}
 	}
 	else
 	{
 		if(Key == HeroKey)
 		{
-			if(Damage >= CharacterAttribute->Life)
-				CharacterAttribute->Life = 0;
-			else
-				CharacterAttribute->Life -= Damage;
-			
-			if(ShieldDamage >= CharacterAttribute->Shield)
-				CharacterAttribute->Shield = 0;
-			else
-				CharacterAttribute->Shield -= ShieldDamage;
+			Takumi_ApplyHeroDamageFromAttackPacket(ReceiveBuffer, pktSize, Data);
 			
 			if( g_isCharacterBuff( o, eBuff_PhysDefense ) && o->Type==MODEL_PLAYER )			
 			{
@@ -3758,8 +4217,23 @@ void ReceiveAttackDamage( BYTE *ReceiveBuffer )
 			CreatePoint(nPosShieldDamage, ShieldDamage, Light);
 		}
 	}
+	Takumi_UpdateMonsterHealBarFromAttack(c, o, Data, Damage, Success != 0);
 	c->Hit = Damage;
-	
+
+#if defined(__ANDROID__)
+	if (Damage > 0 && Key != HeroKey)
+	{
+		g_ErrorReport.Write(
+			"[Combat] hit mob key=%d dmg=%llu hpView=%u success=%d\r\n",
+			Key,
+			(unsigned long long)Damage,
+			(unsigned)(Data->Header.Size >= kAttackWireExtended
+				? TakumiReadDwordLE(ReceiveBuffer, kAttackOffViewCurHp, pktSize)
+				: Data->ViewCurHP),
+			Success);
+	}
+#endif
+
 	g_ConsoleDebug->Write(MCD_RECEIVE, "0x15 [ReceiveAttackDamage(%d %d)]", AttackPlayer, Damage);
 }
 
@@ -6132,26 +6606,56 @@ BOOL ReceiveDieExp(BYTE *ReceiveBuffer,BOOL bEncrypted)
 	int     Success = (Key>>15);
 	Key &= 0x7FFF;
 	
-	int Index = FindCharacterIndex(Key);
-	CHARACTER *c = &CharactersClient[Index];
-	OBJECT *o = &c->Object;
+	const int Index = FindCharacterIndexForDamage(Key);
 	vec3_t Light;
 	Vector(1.f,0.6f,0.f,Light);
-	if(Success)
+
+	if (Index != MAX_CHARACTERS_CLIENT)
 	{
-		SetPlayerDie(c);
-		CreatePoint(o->Position,Damage,Light);
+		CHARACTER* c = &CharactersClient[Index];
+		OBJECT* o = &c->Object;
+
+		if (Key == HeroKey)
+		{
+			Hero->AttackFlag = ATTACK_DIE;
+			Hero->Damage = Damage;
+			Hero->TargetCharacter = Index;
+		}
+		else
+		{
+			// Viewport destroy (0x14) may have cleared Live before this packet is handled.
+			if (!o->Live && o->Kind == KIND_MONSTER)
+			{
+				o->Live = true;
+			}
+			SetPlayerDie(c);
+		}
+
+		CreatePoint(o->Position, Damage, Light);
+		if (c->Dead <= 0)
+		{
+			c->Dead = 1;
+		}
+		c->Movement = false;
+
+#if defined(__ANDROID__)
+		g_ErrorReport.Write(
+			"[Combat] mob died key=%d exp=%u success=%d live=%d\r\n",
+			Key,
+			(unsigned)Exp,
+			Success,
+			o->Live ? 1 : 0);
+#endif
 	}
-	else
+#if defined(__ANDROID__)
+	else if (Exp > 0)
 	{
-		Hero->AttackFlag = ATTACK_DIE;
-		Hero->Damage = Damage;
-		Hero->TargetCharacter = Index;
-		CreatePoint(o->Position,Damage,Light);
+		g_ErrorReport.Write(
+			"[Combat] die exp key=%d exp=%u (mob already despawned)\r\n",
+			Key,
+			(unsigned)Exp);
 	}
-	c->Dead = true;
-	c->Movement = false;
-	
+#endif
 
 	//if(gCharacterManager.IsMasterLevel(Hero->Class) == true)
 	//{
@@ -6163,7 +6667,21 @@ BOOL ReceiveDieExp(BYTE *ReceiveBuffer,BOOL bEncrypted)
 	{
 		g_pMainFrame->SetPreExp(CharacterAttribute->Experience);
 		g_pMainFrame->SetGetExp(Exp);
-		CharacterAttribute->Experience += Exp;	
+		CharacterAttribute->Experience += Exp;
+
+		TakumiEnsureExperienceThresholds();
+
+		while (CharacterAttribute->NextExperince > 0
+			&& CharacterAttribute->Experience >= CharacterAttribute->NextExperince
+			&& CharacterAttribute->Level < 400)
+		{
+			CharacterAttribute->Level++;
+			CharacterAttribute->NextExperince =
+				(int)TakumiMuCumulativeExperienceForLevel(CharacterAttribute->Level);
+			TakumiOnHeroLevelGained();
+		}
+
+		TakumiEnsureExperienceThresholds();
 	}
 	
 	if(Exp > 0)
@@ -6205,25 +6723,30 @@ BOOL ReceiveDieExpLarge(BYTE *ReceiveBuffer,BOOL bEncrypted)
 	int     Success = (Key>>15);
 	Key &= 0x7FFF;
 	
-	int Index = FindCharacterIndex(Key);
-	CHARACTER *c = &CharactersClient[Index];
-	OBJECT *o = &c->Object;
+	const int Index = FindCharacterIndexForDamage(Key);
 	vec3_t Light;
 	Vector(1.f,0.6f,0.f,Light);
-	if(Success)
+
+	if (Index != MAX_CHARACTERS_CLIENT)
 	{
-		SetPlayerDie(c);
-		CreatePoint(o->Position,Damage,Light);
+		CHARACTER* c = &CharactersClient[Index];
+		OBJECT* o = &c->Object;
+
+		if (Key == HeroKey)
+		{
+			Hero->AttackFlag = ATTACK_DIE;
+			Hero->Damage = (int)Damage;
+			Hero->TargetCharacter = Index;
+		}
+		else
+		{
+			SetPlayerDie(c);
+		}
+
+		CreatePoint(o->Position, (int)Damage, Light);
+		c->Dead = true;
+		c->Movement = false;
 	}
-	else
-	{
-		Hero->AttackFlag = ATTACK_DIE;
-		Hero->Damage = Damage;
-		Hero->TargetCharacter = Index;
-		CreatePoint(o->Position,Damage,Light);
-	}
-	c->Dead = true;
-	c->Movement = false;
 
 	//if(gCharacterManager.IsMasterLevel(Hero->Class) == true)
 	//{
@@ -6234,8 +6757,22 @@ BOOL ReceiveDieExpLarge(BYTE *ReceiveBuffer,BOOL bEncrypted)
 	//else
 	{
 		g_pMainFrame->SetPreExp(CharacterAttribute->Experience);
-		g_pMainFrame->SetGetExp(Exp);	
-		CharacterAttribute->Experience += Exp;	
+		g_pMainFrame->SetGetExp(Exp);
+		CharacterAttribute->Experience += Exp;
+
+		TakumiEnsureExperienceThresholds();
+
+		while (CharacterAttribute->NextExperince > 0
+			&& CharacterAttribute->Experience >= CharacterAttribute->NextExperince
+			&& CharacterAttribute->Level < 400)
+		{
+			CharacterAttribute->Level++;
+			CharacterAttribute->NextExperince =
+				(int)TakumiMuCumulativeExperienceForLevel(CharacterAttribute->Level);
+			TakumiOnHeroLevelGained();
+		}
+
+		TakumiEnsureExperienceThresholds();
 	}
 	
 	if(Exp > 0)
@@ -6311,14 +6848,24 @@ void ReceiveDie(BYTE *ReceiveBuffer,int Size)
     int Key = ((int)(Data->KeyH )<<8) + Data->KeyL;
 	
 	int Index = FindCharacterIndex(Key);
-
+	if (Index == MAX_CHARACTERS_CLIENT)
+	{
+		g_ConsoleDebug->Write(MCD_RECEIVE, "0x17 [ReceiveDie(%d)] unknown key", Key);
+		return;
+	}
 
 	CHARACTER *c = &CharactersClient[Index];
 	OBJECT *o = &c->Object;
-	c->Dead = true;
+	c->Dead = 1;
 	c->Movement = false;
 
 	c->InfoHealBar.Clear();
+
+	if (c == Hero)
+	{
+		CharacterAttribute->Life = 0;
+		CharacterAttribute->PrintPlayer.ViewCurHP = 0;
+	}
 
 
 	WORD SkillType = ((int)(Data->MagicH )<<8) + Data->MagicL;
@@ -6971,27 +7518,8 @@ void ReceiveLevelUp( BYTE *ReceiveBuffer )
 	g_pChatListBox->AddText("", szText, SEASON3B::TYPE_SYSTEM_MESSAGE);
 
     CharacterMachine->CalculateNextExperince();
-	
-	OBJECT *o = &Hero->Object;
 
-	if(gCharacterManager.IsMasterLevel(Hero->Class) == true)
-	{
-		
-		CreateJoint(BITMAP_FLARE,o->Position,o->Position,o->Angle,45,o,80,2);
-		for ( int i=0; i<19; ++i )
-		{
-			CreateJoint(BITMAP_FLARE,o->Position,o->Position,o->Angle,46,o,80,2);
-		}
-	}
-	else
-	{
-		for ( int i=0; i<15; ++i )
-		{
-			CreateJoint(BITMAP_FLARE,o->Position,o->Position,o->Angle,0,o,40,2);
-		}
-		CreateEffect(BITMAP_MAGIC+1,o->Position,o->Angle,o->Light,0,o);
-	}
-    PlayBuffer(SOUND_LEVEL_UP);
+	TakumiPlayLevelUpEffects();
 	
 	g_ConsoleDebug->Write(MCD_RECEIVE, "0x05 [ReceiveLevelUp]");
 }
@@ -7035,9 +7563,17 @@ void ReceiveLife( BYTE *ReceiveBuffer )
 	switch (Data->Index)
 	{
 	case 0xff:
-		CharacterAttribute->Life = ((WORD)(Data->Life[0]) << 8) + Data->Life[1];
-		CharacterAttribute->Shield = ((WORD)(Data->Life[3]) << 8) + Data->Life[4];
+	{
+		DWORD curHp = ((WORD)(Data->Life[0]) << 8) + Data->Life[1];
+		DWORD curSd = ((WORD)(Data->Life[3]) << 8) + Data->Life[4];
+		if (ReceiveBuffer[1] >= 17)
+		{
+			curHp = TakumiReadDwordLE(ReceiveBuffer, kLifeOffViewHp, ReceiveBuffer[1]);
+			curSd = TakumiReadDwordLE(ReceiveBuffer, kLifeOffViewSd, ReceiveBuffer[1]);
+		}
+		TakumiSyncHeroCurrentVitals(curHp, curSd);
 		break;
+	}
 	case 0xfe:
 		if (gCharacterManager.IsMasterLevel(Hero->Class) == true)
 		{
@@ -7051,6 +7587,18 @@ void ReceiveLife( BYTE *ReceiveBuffer )
 		{
 			CharacterAttribute->LifeMax = ((WORD)(Data->Life[0]) << 8) + Data->Life[1];
 			CharacterAttribute->ShieldMax = ((WORD)(Data->Life[3]) << 8) + Data->Life[4];
+		}
+		if (ReceiveBuffer[1] >= 17)
+		{
+			TakumiSyncHeroMaxVitals(
+				TakumiReadDwordLE(ReceiveBuffer, kLifeOffViewHp, ReceiveBuffer[1]),
+				TakumiReadDwordLE(ReceiveBuffer, kLifeOffViewSd, ReceiveBuffer[1]));
+		}
+		else
+		{
+			TakumiSyncHeroMaxVitals(
+				((WORD)(Data->Life[0]) << 8) + Data->Life[1],
+				((WORD)(Data->Life[3]) << 8) + Data->Life[4]);
 		}
 		break;
 	case 0xfd:
@@ -7077,8 +7625,8 @@ void ReceiveMana( BYTE *ReceiveBuffer )
 	case 0xff:
 		CharacterAttribute->Mana = ((WORD)(Data->Life[0])<<8) + Data->Life[1];
 		CharacterAttribute->SkillMana = ((WORD)(Data->Life[2])<<8) + Data->Life[3];
-		// Takumi 9-byte 0x27 wire has no ViewHP/ViewSD — reading them caused garbage UI (e.g. 16777215).
-		if (ReceiveBuffer[1] > 9)
+		// Takumi extended 0x27 wire is 16 bytes (View DWORDs at +8).
+		if (ReceiveBuffer[1] >= 16)
 		{
 			CharacterAttribute->PrintPlayer.ViewCurMP = Data->ViewHP;
 			CharacterAttribute->PrintPlayer.ViewCurBP = Data->ViewSD;
@@ -7095,8 +7643,12 @@ void ReceiveMana( BYTE *ReceiveBuffer )
 			CharacterAttribute->ManaMax = ((WORD)(Data->Life[0])<<8) + Data->Life[1];
 			CharacterAttribute->SkillManaMax = ((WORD)(Data->Life[2])<<8) + Data->Life[3];
 		}
-		CharacterAttribute->PrintPlayer.ViewMaxMP = Data->ViewHP;
-		CharacterAttribute->PrintPlayer.ViewMaxBP = Data->ViewSD;
+		// Takumi 0x27 extended wire is 16 bytes (View DWORDs at +8). Reading them on 9-byte frames corrupts AG (64768).
+		if (ReceiveBuffer[1] >= 16)
+		{
+			CharacterAttribute->PrintPlayer.ViewMaxMP = Data->ViewHP;
+			CharacterAttribute->PrintPlayer.ViewMaxBP = Data->ViewSD;
+		}
 		break;
 	default:
 		CharacterAttribute->Mana = ((WORD)(Data->Life[0])<<8) + Data->Life[1];

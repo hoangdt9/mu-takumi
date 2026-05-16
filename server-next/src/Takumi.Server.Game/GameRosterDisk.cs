@@ -11,6 +11,9 @@ public sealed class GameRosterEntry
     public byte[] Name10 { get; set; } = new byte[10];
     public byte ServerClass { get; set; }
     public ushort Level { get; set; }
+
+    public uint Experience { get; set; }
+
     public byte MapId { get; set; }
     public byte PosX { get; set; }
     public byte PosY { get; set; }
@@ -187,6 +190,7 @@ public static class GameRosterDisk
                     Name10 = nm,
                     ServerClass = c.ServerClass,
                     Level = c.Level,
+                    Experience = c.Experience,
                     MapId = c.MapId,
                     PosX = c.PosX,
                     PosY = c.PosY,
@@ -229,6 +233,9 @@ public static class GameRosterDisk
         public string Name { get; set; } = "";
         public byte ServerClass { get; set; }
         public ushort Level { get; set; }
+
+        public uint Experience { get; set; }
+
         public byte MapId { get; set; }
         public byte PosX { get; set; }
         public byte PosY { get; set; }

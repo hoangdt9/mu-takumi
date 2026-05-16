@@ -18,7 +18,7 @@ public static class CharacterRosterHostLoad
         {
             foreach (var row in dbPrimary)
             {
-                roster.Add(ToGameEntry(row));
+                roster.Add(CharacterRosterEntryMapping.ToGameEntry(row));
             }
 
             return;
@@ -37,22 +37,7 @@ public static class CharacterRosterHostLoad
                 dbRows,
                 roster,
                 static e => Encoding.ASCII.GetString(e.Name10).TrimEnd('\0', ' '),
-                static (e, d) =>
-                {
-                    e.MapId = d.MapId;
-                    e.PosX = d.PosX;
-                    e.PosY = d.PosY;
-                    e.Angle = d.Angle;
-                    e.Level = d.Level;
-                    e.ServerClass = d.ServerClass;
-                    e.CurrentHp = d.CurrentHp;
-                    e.MaxHp = d.MaxHp;
-                    e.CurrentMp = d.CurrentMp;
-                    e.MaxMp = d.MaxMp;
-                    e.Zen = d.Zen;
-                    e.CurrentShield = d.CurrentShield;
-                    e.MaxShield = d.MaxShield;
-                });
+                CharacterRosterEntryMapping.ApplyDbOverlay);
             CharacterRosterMirrorHealth.RecordMergeSuccess();
         }
         catch (Exception ex)
@@ -60,31 +45,5 @@ public static class CharacterRosterHostLoad
             CharacterRosterMirrorHealth.RecordMergeFail();
             Console.WriteLine("[roster-db] merge after login failed for {0}: {1}", accountId, ex.Message);
         }
-    }
-
-    public static GameRosterEntry ToGameEntry(CharacterRosterRow row)
-    {
-        var nm = new byte[10];
-        var enc = Encoding.ASCII.GetBytes(row.Name.Trim());
-        Buffer.BlockCopy(enc, 0, nm, 0, Math.Min(10, enc.Length));
-        var entry = new GameRosterEntry
-        {
-            Name10 = nm,
-            ServerClass = row.ServerClass,
-            Level = row.Level,
-            MapId = row.MapId,
-            PosX = row.PosX,
-            PosY = row.PosY,
-            Angle = row.Angle,
-            CurrentHp = row.CurrentHp,
-            MaxHp = row.MaxHp,
-            CurrentMp = row.CurrentMp,
-            MaxMp = row.MaxMp,
-            Zen = row.Zen,
-            CurrentShield = row.CurrentShield,
-            MaxShield = row.MaxShield,
-        };
-        GameRosterDisk.ApplyLegacySpawnIfUnset(entry);
-        return entry;
     }
 }

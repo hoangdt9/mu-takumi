@@ -34,7 +34,7 @@ public static class JoinMapServerWire602
 
         // Experience / next exp (8 + 8 LE) — MU cumulative thresholds for HUD + character sheet.
         var lv = Math.Max((ushort)1, r.Level);
-        BinaryPrimitives.WriteUInt64LittleEndian(p.AsSpan(8), 0UL);
+        BinaryPrimitives.WriteUInt64LittleEndian(p.AsSpan(8), r.Experience);
         BinaryPrimitives.WriteUInt64LittleEndian(p.AsSpan(16), ExperienceFormula602.CumulativeForLevel(lv));
 
         BinaryPrimitives.WriteUInt16LittleEndian(p.AsSpan(24), stats.LevelUpPoint);

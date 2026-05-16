@@ -154,10 +154,14 @@ void CCharSelMainWin::UpdateDisplay()
 		}
 	}
 	
-	if (bNobodyCharacter == true)
+	CUIMng& rUIMng = CUIMng::Instance();
+	if (bNobodyCharacter)
 	{
-		CUIMng& rUIMng = CUIMng::Instance();
 		rUIMng.ShowWin(&rUIMng.m_CharMakeWin);
+	}
+	else if (rUIMng.m_CharMakeWin.IsShow())
+	{
+		rUIMng.HideWin(&rUIMng.m_CharMakeWin);
 	}
 }
 

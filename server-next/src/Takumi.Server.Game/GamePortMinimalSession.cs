@@ -645,7 +645,10 @@ public static class GamePortMinimalSession
                                 remote,
                                 ct,
                                 pickedCombat.Level,
-                                presenceSessionId).ConfigureAwait(false))
+                                presenceSessionId,
+                                pickedCombat,
+                                loggedAccountId,
+                                () => Volatile.Write(ref rosterDirty, 1)).ConfigureAwait(false))
                         {
                             return;
                         }
@@ -1015,6 +1018,7 @@ public static class GamePortMinimalSession
                     Name = name,
                     ServerClass = e.ServerClass,
                     Level = e.Level,
+                    Experience = e.Experience,
                     MapId = e.MapId,
                     PosX = e.PosX,
                     PosY = e.PosY,
@@ -1090,7 +1094,8 @@ public static class GamePortMinimalSession
                     e.Leadership,
                     e.LevelUpPoint,
                     e.CurrentBp,
-                    e.MaxBp));
+                    e.MaxBp,
+                    e.Experience));
         }
 
         return list.ToArray();
@@ -1106,6 +1111,9 @@ public static class GamePortMinimalSession
         public string Name { get; set; } = "";
         public byte ServerClass { get; set; }
         public ushort Level { get; set; }
+
+        public uint Experience { get; set; }
+
         public byte MapId { get; set; }
         public byte PosX { get; set; }
         public byte PosY { get; set; }

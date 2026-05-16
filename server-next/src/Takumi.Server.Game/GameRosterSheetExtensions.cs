@@ -44,7 +44,7 @@ public static class GameRosterSheetExtensions
                 e.MaxShield),
             CharacterSheetCalculator.ComputeMaxVitals(e.ServerClass, e.Level, sheet),
             keepPartial);
-        return new CharacterRosterWire(e.Name10, e.ServerClass, e.Level, vitals, sheet);
+        return new CharacterRosterWire(e.Name10, e.ServerClass, e.Level, vitals, sheet, e.Experience);
     }
 
     public static (int CurrentBp, int MaxBp) ResolveBpForSync(this GameRosterEntry e)

@@ -114,7 +114,7 @@ public sealed class PostgresCharacterRosterRepository : IAsyncDisposable
         await using var conn = await this._dataSource.OpenConnectionAsync(ct).ConfigureAwait(false);
         await using var cmd = new NpgsqlCommand(
             """
-            SELECT character_name, server_class, level, map_id, pos_x, pos_y, angle,
+            SELECT character_name, server_class, level, experience, map_id, pos_x, pos_y, angle,
                    current_hp, max_hp, current_mp, max_mp, zen,
                    current_shield, max_shield,
                    strength, dexterity, vitality, energy, leadership, level_up_point,
@@ -134,25 +134,26 @@ public sealed class PostgresCharacterRosterRepository : IAsyncDisposable
                     Name = reader.GetString(0),
                     ServerClass = (byte)reader.GetInt16(1),
                     Level = (ushort)reader.GetInt32(2),
-                    MapId = (byte)reader.GetInt16(3),
-                    PosX = (byte)reader.GetInt16(4),
-                    PosY = (byte)reader.GetInt16(5),
-                    Angle = (byte)reader.GetInt16(6),
-                    CurrentHp = reader.GetInt32(7),
-                    MaxHp = reader.GetInt32(8),
-                    CurrentMp = reader.GetInt32(9),
-                    MaxMp = reader.GetInt32(10),
-                    Zen = reader.GetInt64(11),
-                    CurrentShield = reader.GetInt32(12),
-                    MaxShield = reader.GetInt32(13),
-                    Strength = reader.GetInt32(14),
-                    Dexterity = reader.GetInt32(15),
-                    Vitality = reader.GetInt32(16),
-                    Energy = reader.GetInt32(17),
-                    Leadership = reader.GetInt32(18),
-                    LevelUpPoint = reader.GetInt32(19),
-                    CurrentBp = reader.GetInt32(20),
-                    MaxBp = reader.GetInt32(21),
+                    Experience = reader.GetInt64(3),
+                    MapId = (byte)reader.GetInt16(4),
+                    PosX = (byte)reader.GetInt16(5),
+                    PosY = (byte)reader.GetInt16(6),
+                    Angle = (byte)reader.GetInt16(7),
+                    CurrentHp = reader.GetInt32(8),
+                    MaxHp = reader.GetInt32(9),
+                    CurrentMp = reader.GetInt32(10),
+                    MaxMp = reader.GetInt32(11),
+                    Zen = reader.GetInt64(12),
+                    CurrentShield = reader.GetInt32(13),
+                    MaxShield = reader.GetInt32(14),
+                    Strength = reader.GetInt32(15),
+                    Dexterity = reader.GetInt32(16),
+                    Vitality = reader.GetInt32(17),
+                    Energy = reader.GetInt32(18),
+                    Leadership = reader.GetInt32(19),
+                    LevelUpPoint = reader.GetInt32(20),
+                    CurrentBp = reader.GetInt32(21),
+                    MaxBp = reader.GetInt32(22),
                 });
         }
 
@@ -175,10 +176,10 @@ public sealed class PostgresCharacterRosterRepository : IAsyncDisposable
             await using var ins = new NpgsqlCommand(
                 """
                 INSERT INTO character_roster (
-                    account_login, character_name, server_class, level, map_id, pos_x, pos_y, angle,
+                    account_login, character_name, server_class, level, experience, map_id, pos_x, pos_y, angle,
                     current_hp, max_hp, current_mp, max_mp, zen, current_shield, max_shield,
                     strength, dexterity, vitality, energy, leadership, level_up_point, current_bp, max_bp)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24)
                 """,
                 conn,
                 tx);
@@ -186,6 +187,7 @@ public sealed class PostgresCharacterRosterRepository : IAsyncDisposable
             ins.Parameters.AddWithValue(CharacterRosterMerge.NormaliseName(row.Name));
             ins.Parameters.AddWithValue((short)row.ServerClass);
             ins.Parameters.AddWithValue((int)row.Level);
+            ins.Parameters.AddWithValue(row.Experience);
             ins.Parameters.AddWithValue((short)row.MapId);
             ins.Parameters.AddWithValue((short)row.PosX);
             ins.Parameters.AddWithValue((short)row.PosY);
@@ -253,6 +255,44 @@ public sealed class PostgresCharacterRosterRepository : IAsyncDisposable
             conn);
         cmd.Parameters.AddWithValue(accountLogin);
         cmd.Parameters.AddWithValue(CharacterRosterMerge.NormaliseName(characterName));
+        cmd.Parameters.AddWithValue(currentHp);
+        cmd.Parameters.AddWithValue(maxHp);
+        cmd.Parameters.AddWithValue(currentMp);
+        cmd.Parameters.AddWithValue(maxMp);
+        cmd.Parameters.AddWithValue(currentShield);
+        cmd.Parameters.AddWithValue(maxShield);
+        await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+    }
+
+    public async Task UpsertProgressAsync(
+        string accountLogin,
+        string characterName,
+        ushort level,
+        long experience,
+        int levelUpPoint,
+        int currentHp,
+        int maxHp,
+        int currentMp,
+        int maxMp,
+        int currentShield = 0,
+        int maxShield = 0,
+        CancellationToken ct = default)
+    {
+        await using var conn = await this._dataSource.OpenConnectionAsync(ct).ConfigureAwait(false);
+        await using var cmd = new NpgsqlCommand(
+            """
+            UPDATE character_roster
+            SET level = $3, experience = $4, level_up_point = $5,
+                current_hp = $6, max_hp = $7, current_mp = $8, max_mp = $9,
+                current_shield = $10, max_shield = $11, updated_at = NOW()
+            WHERE account_login = $1 AND character_name = $2
+            """,
+            conn);
+        cmd.Parameters.AddWithValue(accountLogin);
+        cmd.Parameters.AddWithValue(CharacterRosterMerge.NormaliseName(characterName));
+        cmd.Parameters.AddWithValue((int)level);
+        cmd.Parameters.AddWithValue(experience);
+        cmd.Parameters.AddWithValue(levelUpPoint);
         cmd.Parameters.AddWithValue(currentHp);
         cmd.Parameters.AddWithValue(maxHp);
         cmd.Parameters.AddWithValue(currentMp);

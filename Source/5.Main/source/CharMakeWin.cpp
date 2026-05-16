@@ -36,12 +36,12 @@ void MoveCharacterCamera(vec3_t Origin,vec3_t Position,vec3_t Angle);
 
 namespace
 {
-	// Default panel was 108px — Vietnamese labels need a wider stat column.
-	const int kStatPanelWidth = 138;
+	// Default panel was 108px — Vietnamese labels (Sức mạnh, Nhanh nhẹn, …) need more width.
+	const int kStatPanelWidth = 200;
 	const int kStatPanelExtraLeft = kStatPanelWidth - 108;
-	const int kStatPadX = 6;
-	const int kStatValueColumnW = 22;
-	const int kStatLabelValueGap = 10;
+	const int kStatPadX = 8;
+	const int kStatValueColumnPx = 28;
+	constexpr int kStatPanelAlpha = 88;
 
 	const char* const kWizardStats[4] = { "28", "20", "25", "10" };
 	const char* const kKnightStats[4] = { "18", "18", "15", "30" };
@@ -140,7 +140,9 @@ void CCharMakeWin::Create()
 	m_asprBack[CMW_SPR_DESC].Create(454, 51);
 
 	int i;
-	for (i = CMW_SPR_STAT; i < CMW_SPR_MAX; ++i)
+	m_asprBack[CMW_SPR_STAT].SetAlpha(kStatPanelAlpha);
+	m_asprBack[CMW_SPR_STAT].SetColor(0, 0, 0);
+	for (i = CMW_SPR_INPUT; i < CMW_SPR_MAX; ++i)
 	{
 		m_asprBack[i].SetAlpha(143);
 		m_asprBack[i].SetColor(0, 0, 0);
@@ -497,11 +499,12 @@ void CCharMakeWin::RenderControls()
 	const char* const* apszStat = GetCreateCharacterStats(m_nSelJob);
 	const int nStatPanelX = m_asprBack[CMW_SPR_STAT].GetXPos();
 	const int nStatPanelW = m_asprBack[CMW_SPR_STAT].GetWidth();
-	const int nStatVirtLeft = int((nStatPanelX + kStatPadX) / g_fScreenRate_x);
-	const int nStatVirtRight = int((nStatPanelX + nStatPanelW - kStatPadX) / g_fScreenRate_x);
-	const int nStatVirtInnerW = nStatVirtRight - nStatVirtLeft;
-	const int nStatLabelVirtW = nStatVirtInnerW - kStatValueColumnW - kStatLabelValueGap;
-	const int nStatValueVirtX = nStatVirtRight - kStatValueColumnW;
+	const int nStatLabelX = int((nStatPanelX + kStatPadX) / g_fScreenRate_x);
+	const int nStatLabelVirtW = int(
+		(nStatPanelW - (kStatPadX * 2) - kStatValueColumnPx) / g_fScreenRate_x);
+	const int nStatValueVirtW = int(kStatValueColumnPx / g_fScreenRate_x);
+	const int nStatValueX = int(
+		(nStatPanelX + nStatPanelW - kStatPadX - kStatValueColumnPx) / g_fScreenRate_x);
 	int nStatY;
 
 	auto renderStatRow = [&](int rowIndex, const char* label, const char* value)
@@ -509,18 +512,18 @@ void CCharMakeWin::RenderControls()
 		nStatY = int((m_asprBack[CMW_SPR_STAT].GetYPos() + 10 + rowIndex * 17) / g_fScreenRate_y);
 		g_pRenderText->SetTextColor(CLRDW_WHITE);
 		g_pRenderText->RenderText(
-			nStatVirtLeft,
+			nStatLabelX,
 			nStatY,
 			label,
 			nStatLabelVirtW,
 			0,
-			RT3_SORT_LEFT_CLIP);
+			RT3_SORT_LEFT);
 		g_pRenderText->SetTextColor(CLRDW_ORANGE);
 		g_pRenderText->RenderText(
-			nStatValueVirtX,
+			nStatValueX,
 			nStatY,
 			value,
-			kStatValueColumnW,
+			nStatValueVirtW,
 			0,
 			RT3_SORT_RIGHT);
 	};

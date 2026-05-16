@@ -19,7 +19,10 @@ public static class MonsterCombatHandler
         string remote,
         CancellationToken ct,
         int playerLevel = 1,
-        Guid? presenceSessionId = null)
+        Guid? presenceSessionId = null,
+        GameRosterEntry? player = null,
+        string? accountId = null,
+        Action? onRosterDirty = null)
     {
         if (ClientHitPackets602.TryFindHitRequest(
                 packet,
@@ -42,7 +45,10 @@ public static class MonsterCombatHandler
                     isSkill: false,
                     attackAnimation,
                     lookingDirection,
-                    presenceSessionId)
+                    presenceSessionId,
+                    player,
+                    accountId,
+                    onRosterDirty)
                 .ConfigureAwait(false);
             return true;
         }
@@ -63,7 +69,10 @@ public static class MonsterCombatHandler
                     isSkill: true,
                     attackAnimation: 0,
                     lookingDirection: 0,
-                    presenceSessionId)
+                    presenceSessionId,
+                    player,
+                    accountId,
+                    onRosterDirty)
                 .ConfigureAwait(false);
             return true;
         }
@@ -83,7 +92,10 @@ public static class MonsterCombatHandler
                     remote,
                     ct,
                     playerLevel,
-                    presenceSessionId)
+                    presenceSessionId,
+                    player,
+                    accountId,
+                    onRosterDirty)
                 .ConfigureAwait(false);
             return true;
         }
@@ -104,7 +116,10 @@ public static class MonsterCombatHandler
         string remote,
         CancellationToken ct,
         int playerLevel,
-        Guid? presenceSessionId)
+        Guid? presenceSessionId,
+        GameRosterEntry? player = null,
+        string? accountId = null,
+        Action? onRosterDirty = null)
     {
         var aoeRange = ParseIntEnv("TAKUMI_COMBAT_AOE_RANGE", 3, 1, 8);
         var skillPct = ParseIntEnv("TAKUMI_COMBAT_SKILL_DAMAGE_PCT", 150, 50, 500);
@@ -134,7 +149,10 @@ public static class MonsterCombatHandler
                     isSkill: true,
                     attackAnimation: 0,
                     lookingDirection: 0,
-                    presenceSessionId)
+                    presenceSessionId,
+                    player,
+                    accountId,
+                    onRosterDirty)
                 .ConfigureAwait(false);
             processed.Add(tid & 0x7FFF);
         }
@@ -166,7 +184,10 @@ public static class MonsterCombatHandler
                     isSkill: true,
                     attackAnimation: 0,
                     lookingDirection: 0,
-                    presenceSessionId)
+                    presenceSessionId,
+                    player,
+                    accountId,
+                    onRosterDirty)
                 .ConfigureAwait(false);
         }
 
@@ -223,7 +244,10 @@ public static class MonsterCombatHandler
         bool isSkill,
         byte attackAnimation,
         byte lookingDirection,
-        Guid? presenceSessionId)
+        Guid? presenceSessionId,
+        GameRosterEntry? player = null,
+        string? accountId = null,
+        Action? onRosterDirty = null)
     {
         var targetKey = targetId & 0x7FFF;
         if (await TryHandlePvPAsync(targetKey, mapId, playerLevel, skillPct: isSkill ? ParseIntEnv("TAKUMI_COMBAT_SKILL_DAMAGE_PCT", 150, 50, 500) : 100, presenceSessionId, remote, ct).ConfigureAwait(false))
@@ -323,6 +347,11 @@ public static class MonsterCombatHandler
         }
 
         var expStub = ComputeKillExperience(monster);
+        if (player is not null)
+        {
+            RosterExperienceCombat.GrantKillExperience(player, expStub, accountId, onRosterDirty);
+        }
+
         var diePkt = MonsterDieWire602.Build(monster.ObjectKey, expStub, damage, dieSuccess: true);
         await GamePortOutboundWire.WriteAsync(connection, clientProtectOutbound, diePkt, ct).ConfigureAwait(false);
 

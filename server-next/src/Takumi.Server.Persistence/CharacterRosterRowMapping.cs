@@ -25,12 +25,14 @@ public static class CharacterRosterRowMapping
         int leadership = 0,
         int levelUpPoint = 0,
         int currentBp = 0,
-        int maxBp = 0) =>
+        int maxBp = 0,
+        long experience = 0) =>
         new()
         {
             Name = name,
             ServerClass = serverClass,
             Level = level,
+            Experience = experience,
             MapId = mapId,
             PosX = posX,
             PosY = posY,

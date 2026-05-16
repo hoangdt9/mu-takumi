@@ -1555,24 +1555,20 @@ void NewMoveLogInScene()
 
 		SceneFlag = CHARACTER_SCENE;
 
-		// Server may already have sent F3 00 (auto after F1 01); do not request again.
-		if (CurrentProtocolState != RECEIVE_CHARACTERS_LIST)
-		{
-			g_ErrorReport.Write("> Request Character list\r\n");
-#ifdef NEW_PROTOCOL_SYSTEM
-			gProtocolSend.SendRequestCharactersListNew();
-#else
-			SendRequestCharactersList(g_pMultiLanguage->GetLanguage());
-#endif
-		}
-		else
-		{
-			g_ErrorReport.Write("> Character list already received (skip duplicate F3 request)\r\n");
-		}
+		ReleaseLogoSceneData();
 
-        ReleaseLogoSceneData();
-
+		// Always clear select-scene heroes, then request roster (matches LoginScene flow).
+		// server-next may push F3 00 before this transition; skipping re-request left an empty roster
+		// because ClearCharacters() wiped heroes that ReceiveCharacterList had already built.
 		ClearCharacters();
+
+		CurrentProtocolState = REQUEST_CHARACTERS_LIST;
+		g_ErrorReport.Write("> Request Character list\r\n");
+#ifdef NEW_PROTOCOL_SYSTEM
+		gProtocolSend.SendRequestCharactersListNew();
+#else
+		SendRequestCharactersList(g_pMultiLanguage->GetLanguage());
+#endif
 	}
 
 #if defined(MOVIE_DIRECTSHOW) || defined(__ANDROID__)

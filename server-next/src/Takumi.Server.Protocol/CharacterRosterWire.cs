@@ -10,7 +10,8 @@ public sealed class CharacterRosterWire
         byte serverClass,
         ushort level,
         CharacterRosterVitals vitals = default,
-        CharacterSheetStats sheet = default)
+        CharacterSheetStats sheet = default,
+        uint experience = 0)
     {
         this.Name10 = new byte[10];
         var n = Math.Min(10, name10.Length);
@@ -19,6 +20,7 @@ public sealed class CharacterRosterWire
         this.Level = level;
         this.Vitals = vitals;
         this.Sheet = sheet;
+        this.Experience = experience;
     }
 
     public byte[] Name10 { get; }
@@ -32,4 +34,7 @@ public sealed class CharacterRosterWire
 
     /// <summary>M7: base stats + level-up points; unset → class defaults from <see cref="CharacterSheetCalculator"/>.</summary>
     public CharacterSheetStats Sheet { get; }
+
+    /// <summary>M7: cumulative EXP at join (offset 8 in F3 03).</summary>
+    public uint Experience { get; }
 }

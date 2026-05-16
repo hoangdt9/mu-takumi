@@ -14,6 +14,9 @@ public sealed class CharacterRosterRow
 
     public ushort Level { get; set; }
 
+    /// <summary>M7: cumulative EXP (0 = new character).</summary>
+    public long Experience { get; set; }
+
     public byte MapId { get; set; }
 
     public byte PosX { get; set; }

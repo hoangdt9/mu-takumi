@@ -30,6 +30,8 @@ public static class CharacterSheetCalculator
 
     public static int ClassIndex(byte serverClass) => Math.Clamp(serverClass / 0x20, 0, Classes.Length - 1);
 
+    public static int LevelUpPointsPerLevel(byte serverClass) => Classes[ClassIndex(serverClass)].LevelUpPerLevel;
+
     public static CharacterSheetStats DefaultSheet(byte serverClass, ushort level)
     {
         var c = Classes[ClassIndex(serverClass)];

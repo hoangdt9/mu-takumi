@@ -72,20 +72,16 @@ extern CWsctlc * g_pSocketClient;
 __forceinline int SendPacket( char *buf, int len, BOOL bEncrypt = FALSE, BOOL bForceC4 = FALSE)
 {
 	#ifdef NEW_PROTOCOL_SYSTEM
+#if !defined(__ANDROID__)
+	// PC: CustomClient handles post-login wire; suppress duplicate SocketClient send.
 	gProtocolSend.SendPacketClassic((uint8_t*)buf,len);
 
 	if(SceneFlag >= CHARACTER_SCENE)
 	{
-#ifdef __ANDROID__
-		if (len >= 4 && static_cast<unsigned char>(buf[2]) == 0xF1 && static_cast<unsigned char>(buf[3]) == 0x01)
-		{
-			g_ErrorReport.Write(
-				"[AndroidLogin] WARNING SendPacket early return (SceneFlag>=CHARACTER_SCENE); login packet NOT sent over socket. SceneFlag=%d\r\n",
-				SceneFlag);
-		}
-#endif
 		return 1;
 	}
+#endif
+	// Android: MU TCP is always SocketClient (see ReceiveServerConnect); never early-return here.
 	#endif
 
 #ifdef SAVE_PACKET

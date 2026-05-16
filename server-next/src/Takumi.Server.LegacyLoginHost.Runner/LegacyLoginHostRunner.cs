@@ -1100,22 +1100,29 @@ public static class LegacyLoginHostRunner
                     && sessionJoinCharacterName10 is not null)
                 {
                     var pickedCombat = FindRosterEntry(roster, sessionJoinCharacterName10);
-                    if (pickedCombat is not null
-                        && await MonsterCombatHandler.TryHandleCombatPacketAsync(
-                            monsterViewportTracker,
-                            connection,
-                            clientProtectOutbound: null,
-                            pickedCombat.MapId,
-                            pickedCombat.PosX,
-                            pickedCombat.PosY,
-                            packet,
-                            remote,
-                            ct,
-                            pickedCombat.Level,
-                            presenceSessionId).ConfigureAwait(false))
+                    if (pickedCombat is not null)
                     {
-                        await connection.Output.FlushAsync(ct).ConfigureAwait(false);
-                        return;
+                        var combatProxy = ToGameRosterEntry(pickedCombat);
+                        if (await MonsterCombatHandler.TryHandleCombatPacketAsync(
+                                monsterViewportTracker,
+                                connection,
+                                clientProtectOutbound: null,
+                                pickedCombat.MapId,
+                                pickedCombat.PosX,
+                                pickedCombat.PosY,
+                                packet,
+                                remote,
+                                ct,
+                                pickedCombat.Level,
+                                presenceSessionId,
+                                combatProxy,
+                                loggedAccountId,
+                                () => Volatile.Write(ref rosterDirty, 1)).ConfigureAwait(false))
+                        {
+                            CopyGameRosterBack(pickedCombat, combatProxy);
+                            await connection.Output.FlushAsync(ct).ConfigureAwait(false);
+                            return;
+                        }
                     }
                 }
 
@@ -1662,6 +1669,7 @@ public static class LegacyLoginHostRunner
             Name10 = nm,
             ServerClass = row.ServerClass,
             Level = row.Level,
+            Experience = (uint)Math.Clamp(row.Experience, 0, uint.MaxValue),
             MapId = row.MapId,
             PosX = row.PosX,
             PosY = row.PosY,
@@ -1724,6 +1732,7 @@ public static class LegacyLoginHostRunner
                     Name10 = nm,
                     ServerClass = c.ServerClass,
                     Level = c.Level,
+                    Experience = c.Experience,
                     MapId = c.MapId,
                     PosX = c.PosX,
                     PosY = c.PosY,
@@ -1771,6 +1780,7 @@ public static class LegacyLoginHostRunner
                     Name = name,
                     ServerClass = e.ServerClass,
                     Level = e.Level,
+                    Experience = e.Experience,
                     MapId = e.MapId,
                     PosX = e.PosX,
                     PosY = e.PosY,
@@ -1856,7 +1866,8 @@ public static class LegacyLoginHostRunner
                         e.Leadership,
                         e.LevelUpPoint,
                         e.CurrentBp,
-                        e.MaxBp));
+                        e.MaxBp,
+                        e.Experience));
             }
 
             snapshot = list.ToArray();
@@ -1961,6 +1972,7 @@ public static class LegacyLoginHostRunner
             Name10 = e.Name10,
             ServerClass = e.ServerClass,
             Level = e.Level,
+            Experience = e.Experience,
             MapId = e.MapId,
             PosX = e.PosX,
             PosY = e.PosY,
@@ -1984,6 +1996,9 @@ public static class LegacyLoginHostRunner
 
     static void CopyGameRosterBack(CharacterRosterEntry dst, GameRosterEntry src)
     {
+        dst.Level = src.Level;
+        dst.Experience = src.Experience;
+        dst.LevelUpPoint = src.LevelUpPoint;
         dst.MapId = src.MapId;
         dst.PosX = src.PosX;
         dst.PosY = src.PosY;
@@ -2363,6 +2378,8 @@ internal sealed class CharacterRosterEntry
     public byte ServerClass;
     public ushort Level;
 
+    public uint Experience;
+
     /// <summary>World map id (Takumi <c>PRECEIVE_JOIN_MAP_SERVER.Map</c>).</summary>
     public byte MapId;
 
@@ -2400,6 +2417,8 @@ internal sealed class RosterPersistChar
     public string Name { get; set; } = "";
     public byte ServerClass { get; set; }
     public ushort Level { get; set; }
+
+    public uint Experience { get; set; }
 
     public byte MapId { get; set; }
     public byte PosX { get; set; }

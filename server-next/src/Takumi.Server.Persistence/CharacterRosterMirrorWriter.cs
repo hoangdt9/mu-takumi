@@ -53,6 +53,61 @@ public static class CharacterRosterMirrorWriter
             });
     }
 
+    public static void ScheduleProgressUpsert(
+        string accountId,
+        string characterName,
+        ushort level,
+        uint experience,
+        ushort levelUpPoint,
+        int currentHp,
+        int maxHp,
+        int currentMp,
+        int maxMp,
+        int currentShield = 0,
+        int maxShield = 0)
+    {
+        var repo = TakumiPostgresMirror.CharacterRoster;
+        if (repo is null || string.IsNullOrEmpty(accountId) || string.IsNullOrWhiteSpace(characterName))
+        {
+            return;
+        }
+
+        var name = CharacterRosterMerge.NormaliseName(characterName);
+        var exp = (long)Math.Min(experience, long.MaxValue);
+        Interlocked.Increment(ref _pendingUpserts);
+        _ = Task.Run(
+            async () =>
+            {
+                try
+                {
+                    await repo.UpsertProgressAsync(
+                            accountId,
+                            name,
+                            level,
+                            exp,
+                            levelUpPoint,
+                            currentHp,
+                            maxHp,
+                            currentMp,
+                            maxMp,
+                            currentShield,
+                            maxShield,
+                            CancellationToken.None)
+                        .ConfigureAwait(false);
+                    CharacterRosterMirrorHealth.RecordUpsertSuccess();
+                }
+                catch (Exception ex)
+                {
+                    CharacterRosterMirrorHealth.RecordUpsertFail();
+                    Console.WriteLine("[roster-db] progress upsert failed for {0}/{1}: {2}", accountId, name, ex.Message);
+                }
+                finally
+                {
+                    Interlocked.Decrement(ref _pendingUpserts);
+                }
+            });
+    }
+
     public static void ScheduleVitalsUpsert(
         string accountId,
         string characterName,

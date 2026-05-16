@@ -1,0 +1,79 @@
+using System.Text;
+using Takumi.Server.Persistence;
+using Takumi.Server.Protocol;
+
+namespace Takumi.Server.Game;
+
+/// <summary>M7d: grant kill EXP, level-up, mirror vitals + progress to Postgres.</summary>
+public static class RosterExperienceCombat
+{
+    public static int GrantKillExperience(
+        GameRosterEntry player,
+        int expGain,
+        string? accountId,
+        Action? onRosterDirty)
+    {
+        if (expGain <= 0)
+        {
+            return 0;
+        }
+
+        var level = player.Level;
+        var experience = player.Experience;
+        var levelUpPoint = player.LevelUpPoint;
+        var levelsGained = ExperienceProgression602.ApplyKillExperience(
+            ref level,
+            ref experience,
+            ref levelUpPoint,
+            player.ServerClass,
+            expGain,
+            vitals =>
+            {
+                player.MaxHp = vitals.LifeMax;
+                player.CurrentHp = vitals.LifeMax;
+                player.MaxMp = vitals.ManaMax;
+                player.CurrentMp = vitals.ManaMax;
+                player.MaxShield = vitals.ShieldMax;
+                player.CurrentShield = vitals.ShieldMax;
+                player.MaxBp = vitals.SkillManaMax;
+                player.CurrentBp = vitals.SkillMana;
+            });
+
+        player.Level = level;
+        player.Experience = experience;
+        player.LevelUpPoint = levelUpPoint;
+
+        onRosterDirty?.Invoke();
+
+        var charName = Encoding.ASCII.GetString(player.Name10).TrimEnd('\0', ' ');
+        if (!string.IsNullOrEmpty(accountId) && !string.IsNullOrEmpty(charName))
+        {
+            CharacterRosterMirrorWriter.ScheduleProgressUpsert(
+                accountId,
+                charName,
+                player.Level,
+                player.Experience,
+                player.LevelUpPoint,
+                player.MaxHp,
+                player.CurrentHp,
+                player.MaxMp,
+                player.CurrentMp,
+                player.MaxShield,
+                player.CurrentShield);
+            RosterVitalsCombat.ScheduleVitalsMirror(accountId, charName, player);
+        }
+
+        if (levelsGained > 0)
+        {
+            Console.WriteLine(
+                "[m7-exp] level up name={0} lv={1} exp={2} statPts={3} (+{4} levels)",
+                charName,
+                player.Level,
+                player.Experience,
+                player.LevelUpPoint,
+                levelsGained);
+        }
+
+        return levelsGained;
+    }
+}

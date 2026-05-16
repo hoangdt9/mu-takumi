@@ -923,7 +923,14 @@ void ReceiveCharacterList( BYTE *ReceiveBuffer )
 		case 3:	fPos[0] = 23019.0f;	fPos[1] = 15443.0f;	fAngle = 25.0f; break;
 		case 4:	fPos[0] = 23211.6f;	fPos[1] = 15467.0f;	fAngle = 0.0f; break;
 #endif //PJH_NEW_SERVER_SELECT_MAP
-		default: return;
+		default:
+			g_ErrorReport.Write(
+				"[ReceiveCharacterList] skip entry %d: slot=%u out of range (count=%d)\r\n",
+				i,
+				static_cast<unsigned>(slot),
+				count);
+			Offset += entrySize;
+			continue;
 		}
 
 		CHARACTER *c = CreateHero(slot, iClass, 0, fPos[0], fPos[1], fAngle);
@@ -940,11 +947,15 @@ void ReceiveCharacterList( BYTE *ReceiveBuffer )
 		Offset += entrySize;
 	}
 	CurrentProtocolState = RECEIVE_CHARACTERS_LIST;
-	// Empty roster → CharMakeWin is opened from CreateCharacterScene() via
-	// m_CharSelMainWin.UpdateDisplay() after CUIMng::CreateCharacterScene().
-	// Do not call UpdateDisplay here: SceneFlag may already be CHARACTER_SCENE while
-	// InitCharacterScene is still false (packet before first NewMoveCharacterScene),
-	// and ShowWin(&m_CharMakeWin) on an uncreated window crashes (SIGSEGV @ ~0x8).
+
+	// Refresh select UI when roster arrives after scene init (re-request after ClearCharacters).
+	extern bool InitCharacterScene;
+	if (SceneFlag == CHARACTER_SCENE && InitCharacterScene)
+	{
+		CUIMng& rUIMng = CUIMng::Instance();
+		rUIMng.m_CharSelMainWin.UpdateDisplay();
+		rUIMng.m_CharInfoBalloonMng.UpdateDisplay();
+	}
 }
 CHARACTER_ENABLE g_CharCardEnable;
 

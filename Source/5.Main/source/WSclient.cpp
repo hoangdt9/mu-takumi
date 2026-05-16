@@ -4160,6 +4160,11 @@ void ReceiveAttackDamage( BYTE *ReceiveBuffer )
 	bool bComboEnable	= (Data->DamageType>>7)&0x01;
 	QWORD ShieldDamage = TakumiResolveAttackShieldDamage(ReceiveBuffer, pktSize, Data);
 
+	if(Key == HeroKey)
+	{
+		Takumi_ApplyHeroDamageFromAttackPacket(ReceiveBuffer, pktSize, Data);
+	}
+
 	if(Success)
 	{
 		SetPlayerShock(c,Damage);
@@ -4175,17 +4180,11 @@ void ReceiveAttackDamage( BYTE *ReceiveBuffer )
 			nPosShieldDamage[2] = o->Position[2] + 25.f;
 			CreatePoint(nPosShieldDamage, ShieldDamage, Light);
 		}
-		
-		if(Key == HeroKey)
-		{
-			Takumi_ApplyHeroDamageFromAttackPacket(ReceiveBuffer, pktSize, Data);
-		}
 	}
 	else
 	{
 		if(Key == HeroKey)
 		{
-			Takumi_ApplyHeroDamageFromAttackPacket(ReceiveBuffer, pktSize, Data);
 			
 			if( g_isCharacterBuff( o, eBuff_PhysDefense ) && o->Type==MODEL_PLAYER )			
 			{

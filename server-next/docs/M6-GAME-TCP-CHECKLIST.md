@@ -2,7 +2,9 @@
 
 **Iteration status:** **COMPLETE** (2026-05-15) — split-stack **minimal-login** on `game-host`, Docker profile **`gamehost`**, real-device Android smoke from Connect **44605** through **F4 06 → F4 03 → game TCP** to **Main Scene**.
 
-Last updated: 2026-05-15 — changelog tail: Android RX order **SM+XOR then strip `gProtect`**; `[event=decrypted_rx]`; APK resets SM serial per `Connect`; `./scripts/docker-stack.sh` **force-recreates** `legacy-login` + `game-host` so bind-mount builds pick up new DLLs.
+Last updated: 2026-05-16 — **in-world combat** smoke (melee `0x11`, kill EXP, `F3 E1`); **`./scripts/docker-stack.sh --host-build --recreate`**; client FPS packet budget (`13cc5f0`+). Session log: **`../../docs/DEVELOPMENT-LOG-2026-05-16.md`**.
+
+**2026-05-15 baseline:** Android RX order **SM+XOR then strip `gProtect`**; `[event=decrypted_rx]`; APK resets SM serial per `Connect`; `docker-stack.sh` force-recreates `legacy-login` + `game-host`.
 
 ## Goal
 
@@ -22,7 +24,7 @@ When **`TAKUMI_GAME_PORT`** differs from **`TAKUMI_LOGIN_PORT`**, the client fol
 
 | Mode | When | Behaviour |
 |------|------|-----------|
-| **minimal-login** | `TAKUMI_ACCOUNTS` resolves to a non-empty map **and** `TAKUMI_SERVER_SERIAL` is 16 ASCII bytes | `F1 01` login, auto `F3 00` list (unless `TAKUMI_SKIP_AUTO_CHARLIST=1`), **`F3 01` / `F3 02`** create/delete, `F3 03`/`F3 15` join + **`F3 10`**, stub move-map `8E 02` + `F3 03` + **`F3 10`**, walk/instant-move roster updates, keepalive **`C1 03 71`**, `F1 02` logout ack |
+| **minimal-login** | `TAKUMI_ACCOUNTS` resolves to a non-empty map **and** `TAKUMI_SERVER_SERIAL` is 16 ASCII bytes | `F1 01` login, auto `F3 00` list (unless `TAKUMI_SKIP_AUTO_CHARLIST=1`), **`F3 01` / `F3 02`** create/delete, `F3 03`/`F3 15` join + **`F3 10`**, move-map **`8E 02`** → gate spawn + **`8E 03`** + **`0x1C`** + **`F3 03`/`F3 10`** (`MoveMapCatalog` / `Move.txt`), walk/instant-move roster updates, keepalive **`C1 03 71`**, `F1 02` logout ack |
 | **bootstrap-only** | Accounts missing or serial invalid | Join + decrypt RX log only (`TAKUMI_VERBOSE=1`) |
 
 `RepoEnvLoader` loads **`env.defaults`** then **`.env`**. If `.env` omits accounts/serial, **`env.defaults`** still supplies them when you run from `server-next/` (same as LegacyLoginHost).
@@ -50,8 +52,9 @@ Use this table when closing a QA round; values assume default LAN ports (**44605
 | F4 03 | `ReceiveServerConnect` → `TCP session start … port=55901` | `[connect] recv … F403` → `ServerInfo ip=<LAN> port=55901` |
 | Game join | `ReceiveJoinServer result=0x01`, `Post-CS redirect … gamePort=55901` | `listening on *:55901`, `sent join C1 F1 00`, `m6_minimal_session_begin`, `protect_inbound_pump on` |
 | Login / char / world | `Try to Login`, `ReceiveList`, `Character scene`, `Main Scene init success` | `login ok id=…`, `[event=decrypted_rx]`, `F3 00`, `sent … F3 03` + `F3 10` |
+| In-world combat (2026-05-16) | `[Combat] hit mob`, `mob died`, `[Exp] level up` | `[m9] combat hit`, `[m7-exp]`, `sent join` + `F3 E1` / vitals |
 
-**Stack command (recommended):** `./scripts/docker-stack.sh --detach` from `server-next/` — pulls, `up`, **force-recreates** `legacy-login` and `game-host` (avoids stale dotnet process after source edits). Wait for **`[legacy-login] build OK`** before opening the client.
+**Stack command (recommended):** `./scripts/docker-stack.sh --host-build --recreate --detach` from `server-next/` — host `dotnet build` sanity check, pull, up, **force-recreates** `legacy-login` and `game-host`. Wait for **`[legacy-login] build OK`** (hoặc `TAKUMI_SKIP_CONTAINER_BUILD=1` + host-built DLL). Optional: set **`TAKUMI_SKIP_CONTAINER_BUILD=1`** in `.env` when dùng `--host-build` để container `dotnet exec` IL thay vì build lại trong Linux VM.
 
 **Compose profiles:** if you run plain `docker compose up -d` in a shell **without** `COMPOSE_PROFILES`, services under profiles **`datazip`** / **`gamehost`** may not start. Either add to **`.env`**: `COMPOSE_PROFILES=datazip,gamehost`, or always use **`docker-stack.sh`** (it merges profiles when `TAKUMI_GAME_PORT` > 0 and datazip is on by default).
 

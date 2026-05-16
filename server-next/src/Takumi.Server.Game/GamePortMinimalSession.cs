@@ -469,6 +469,14 @@ public static class GamePortMinimalSession
                             await GameMapPresenceRegistry.NotifyJoinAsync(presenceJoin, remote, ct).ConfigureAwait(false);
                         }
 
+                        await MoveMapOutbound.TrySendChecksumAfterJoinAsync(
+                                presenceSessionId,
+                                connection,
+                                protect,
+                                writeAsync: null,
+                                ct)
+                            .ConfigureAwait(false);
+
                         MonsterViewerRegistry.Register(
                             presenceSessionId,
                             connection,
@@ -518,100 +526,6 @@ public static class GamePortMinimalSession
                             joinPkt[5],
                             Encoding.ASCII.GetString(picked.Name10).TrimEnd('\0'),
                             invPkt.Length);
-                        return;
-                    }
-
-                    if (loginLatch.IsLoggedIn
-                        && sessionJoinCharacterName10 is not null
-                        && GamePacketFinders.TryFindMoveMapRequest(packet, out var moveOff, out _, out var mapIdx))
-                    {
-                        var pickedMove = FindRosterEntry(roster, sessionJoinCharacterName10);
-                        var ackMove = new byte[] { 0xC1, 0x05, 0x8E, 0x03, 0x01 };
-                        await GamePortOutboundWire.WriteAsync(connection, protect, ackMove, ct).ConfigureAwait(false);
-                        if (pickedMove is not null)
-                        {
-                            pickedMove.MapId = (byte)(mapIdx & 0xFF);
-                            var mvSpawn = new JoinMapSpawnWire(pickedMove.MapId, pickedMove.PosX, pickedMove.PosY, pickedMove.Angle);
-                            var joinPktMove = JoinMapServerWire602.Build(pickedMove.ToWireWithSheet(), mvSpawn);
-                            if (RosterVitalsLifecycle.SyncGameEntryFromJoin(pickedMove, joinPktMove))
-                            {
-                                Volatile.Write(ref rosterDirty, 1);
-                            }
-
-                            SaveRoster(loggedAccountId!, roster);
-                            var invMove = await JoinInventoryPacket602.BuildAsync(TakumiPostgresMirror.InventorySlots, loggedAccountId, sessionJoinCharacterName10, ct).ConfigureAwait(false);
-                            await GamePortOutboundWire.WriteAsync(connection, protect, joinPktMove, ct).ConfigureAwait(false);
-                            await GamePortOutboundWire.WriteAsync(connection, protect, invMove, ct).ConfigureAwait(false);
-                            await MapMonsterScopeSender.TrySendAfterJoinAsync(
-                                monsterViewportTracker,
-                                connection,
-                                protect,
-                                pickedMove.MapId,
-                                pickedMove.PosX,
-                                pickedMove.PosY,
-                                remote,
-                                ct).ConfigureAwait(false);
-                            var presenceMove = GameMapPresenceRegistry.Register(
-                                presenceSessionId,
-                                connection,
-                                protect,
-                                pickedMove.MapId,
-                                pickedMove.PosX,
-                                pickedMove.PosY,
-                                pickedMove.Angle,
-                                new PlayerPresenceAppearance
-                                {
-                                    Name10 = pickedMove.Name10,
-                                    ServerClass = pickedMove.ServerClass,
-                                });
-                            if (presenceMove is not null)
-                            {
-                                await GameMapPresenceRegistry.NotifyJoinAsync(presenceMove, remote, ct)
-                                    .ConfigureAwait(false);
-                            }
-
-                            MonsterViewerRegistry.Register(
-                                presenceSessionId,
-                                connection,
-                                protect,
-                                pickedMove.MapId,
-                                pickedMove.PosX,
-                                pickedMove.PosY,
-                                monsterViewportTracker,
-                                playerObjectKey: presenceMove?.ObjectKey ?? 0,
-                                clientHeroWireKey: options.JoinWireIndex,
-                                currentHp: pickedMove.CurrentHp,
-                                maxHp: pickedMove.MaxHp,
-                                currentMp: pickedMove.CurrentMp,
-                                maxMp: pickedMove.MaxMp,
-                                currentShield: pickedMove.CurrentShield,
-                                maxShield: pickedMove.MaxShield,
-                                accountLogin: loggedAccountId,
-                                characterName: Encoding.ASCII.GetString(pickedMove.Name10).TrimEnd('\0'),
-                                playerLevel: pickedMove.Level,
-                                onVitalsChanged: (hp, max) =>
-                                {
-                                    pickedMove.CurrentHp = hp;
-                                    pickedMove.MaxHp = max;
-                                    Volatile.Write(ref rosterDirty, 1);
-                                },
-                                onShieldVitalsChanged: (sd, sdMax) =>
-                                {
-                                    pickedMove.CurrentShield = sd;
-                                    pickedMove.MaxShield = sdMax;
-                                    Volatile.Write(ref rosterDirty, 1);
-                                },
-                                onRosterPositionChanged: (map, x, y) =>
-                                {
-                                    pickedMove.MapId = map;
-                                    pickedMove.PosX = x;
-                                    pickedMove.PosY = y;
-                                    Volatile.Write(ref rosterDirty, 1);
-                                });
-
-                            Console.WriteLine("[{0}] move map + F3 03 + F3 10 len={2} mapId={1} frame@{3}", remote, mapIdx, invMove.Length, moveOff);
-                        }
-
                         return;
                     }
 
@@ -1006,6 +920,7 @@ public static class GamePortMinimalSession
 
             await GameMapPresenceRegistry.UnregisterAsync(presenceSessionId, ct).ConfigureAwait(false);
             MonsterViewerRegistry.Unregister(presenceSessionId);
+            MoveMapSessionState.Remove(presenceSessionId);
 
             try
             {

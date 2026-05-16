@@ -46,6 +46,7 @@ TakumiPostgresMirror.InitSessionHandoffIfEnabled();
 TakumiPostgresMirror.InitMonsterSpawnIfEnabled();
 TakumiPostgresMirror.InitWorldStaticDataIfEnabled();
 MapGateCatalog.EnsureInitialized();
+MoveMapCatalog.EnsureInitialized();
 NpcShopCatalog.EnsureInitialized();
 
 using var cts = new CancellationTokenSource();

@@ -44,6 +44,7 @@ public static class LegacyLoginHostRunner
         TakumiPostgresMirror.InitMonsterSpawnIfEnabled();
         TakumiPostgresMirror.InitWorldStaticDataIfEnabled();
         MapGateCatalog.EnsureInitialized();
+        MoveMapCatalog.EnsureInitialized();
         NpcShopCatalog.EnsureInitialized();
         MapMonsterWorld.EnsureInitialized();
         MonsterAiLoop.Start(appCancellationToken);
@@ -782,6 +783,13 @@ public static class LegacyLoginHostRunner
                     TrackVitalsOutbound(calcPkt);
                     await connection.Output.WriteAsync(calcPkt, ct).ConfigureAwait(false);
                     await connection.Output.FlushAsync(ct).ConfigureAwait(false);
+                    await MoveMapOutbound.TrySendChecksumAfterJoinAsync(
+                            presenceSessionId,
+                            connection,
+                            clientProtectOutbound: null,
+                            writeAsync: null,
+                            ct)
+                        .ConfigureAwait(false);
                     Console.WriteLine(
                         "[{0}] sent join map (F3 03) + inventory (F3 10 len={1}) map={2} xy=({3},{4}) ang={5} name='{6}' — flushed before viewport",
                         remote,
@@ -947,131 +955,6 @@ public static class LegacyLoginHostRunner
                 }
 
                 if (loginLatch.IsLoggedIn
-                    && sessionJoinCharacterName10 is not null
-                    && TryFindMoveMapRequest(packet, out var moveOff, out _, out var mapIdx))
-                {
-                    var pickedMove = FindRosterEntry(roster, sessionJoinCharacterName10);
-                    var ackMove = new byte[] { 0xC1, 0x05, 0x8E, 0x03, 0x01 };
-                    await connection.Output.WriteAsync(ackMove, ct).ConfigureAwait(false);
-                    await connection.Output.FlushAsync(ct).ConfigureAwait(false);
-                    if (pickedMove is not null)
-                    {
-                        pickedMove.MapId = (byte)(mapIdx & 0xFF);
-
-                        var mvSpawn = new JoinMapSpawnWire(pickedMove.MapId, pickedMove.PosX, pickedMove.PosY, pickedMove.Angle);
-                        var joinPktMove = JoinMapServerWire602.Build(ToWireWithSheet(pickedMove), mvSpawn);
-                        if (SyncLegacyEntryFromJoin(pickedMove, joinPktMove))
-                        {
-                            Volatile.Write(ref rosterDirty, 1);
-                        }
-
-                        if (!string.IsNullOrEmpty(loggedAccountId))
-                        {
-                            SavePersistedRoster(loggedAccountId, roster);
-                        }
-
-                        var invMove = await JoinInventoryPacket602.BuildAsync(TakumiPostgresMirror.InventorySlots, loggedAccountId, sessionJoinCharacterName10, ct).ConfigureAwait(false);
-                        await WriteOutboundAsync(joinPktMove);
-                        await WriteOutboundAsync(invMove);
-                        await MapMonsterScopeSender.TrySendAfterJoinAsync(
-                            monsterViewportTracker,
-                            connection,
-                            clientProtectOutbound: null,
-                            pickedMove.MapId,
-                            pickedMove.PosX,
-                            pickedMove.PosY,
-                            remote,
-                            ct).ConfigureAwait(false);
-                        var presenceMove = GameMapPresenceRegistry.Register(
-                            presenceSessionId,
-                            connection,
-                            protect: null,
-                            pickedMove.MapId,
-                            pickedMove.PosX,
-                            pickedMove.PosY,
-                            pickedMove.Angle,
-                            new PlayerPresenceAppearance
-                            {
-                                Name10 = pickedMove.Name10,
-                                ServerClass = pickedMove.ServerClass,
-                            });
-                        if (presenceMove is not null)
-                        {
-                            await GameMapPresenceRegistry.NotifyJoinAsync(presenceMove, remote, ct).ConfigureAwait(false);
-                        }
-
-                        MonsterViewerRegistry.Register(
-                            presenceSessionId,
-                            connection,
-                            protect: null,
-                            pickedMove.MapId,
-                            pickedMove.PosX,
-                            pickedMove.PosY,
-                            monsterViewportTracker,
-                            playerObjectKey: presenceMove?.ObjectKey ?? 0,
-                            clientHeroWireKey: joinWireIndex,
-                            currentHp: pickedMove.CurrentHp,
-                            maxHp: pickedMove.MaxHp,
-                            currentMp: pickedMove.CurrentMp,
-                            maxMp: pickedMove.MaxMp,
-                            currentShield: pickedMove.CurrentShield,
-                            maxShield: pickedMove.MaxShield,
-                            accountLogin: loggedAccountId,
-                            characterName: Encoding.ASCII.GetString(pickedMove.Name10).TrimEnd('\0'),
-                            playerLevel: pickedMove.Level,
-                            onVitalsChanged: (hp, max) =>
-                            {
-                                pickedMove.CurrentHp = hp;
-                                pickedMove.MaxHp = max;
-                                Volatile.Write(ref rosterDirty, 1);
-                            },
-                            onShieldVitalsChanged: (sd, sdMax) =>
-                            {
-                                pickedMove.CurrentShield = sd;
-                                pickedMove.MaxShield = sdMax;
-                                Volatile.Write(ref rosterDirty, 1);
-                            },
-                            onRosterPositionChanged: (map, x, y) =>
-                            {
-                                pickedMove.MapId = map;
-                                pickedMove.PosX = x;
-                                pickedMove.PosY = y;
-                                Volatile.Write(ref rosterDirty, 1);
-                            });
-
-                        await connection.Output.FlushAsync(ct).ConfigureAwait(false);
-                        Console.WriteLine(
-                            "[{0}] stub move map: 8E 03 ok + F3 03 + F3 10 len={1} mapId={2} frame@{3}",
-                            remote,
-                            invMove.Length,
-                            mapIdx,
-                            moveOff);
-                        if (connectionSessionTicket is { } tMove)
-                        {
-                            sessionTicketStore.Touch(tMove, sessionTicketTtl);
-                            if (TakumiPostgresMirror.SessionHandoff is { } shMove
-                                && sessionTicketStore.TryValidate(tMove, out _, out var expMove))
-                            {
-                                try
-                                {
-                                    await shMove.TouchExpiresAsync(tMove, expMove, ct).ConfigureAwait(false);
-                                }
-                                catch (Exception ex)
-                                {
-                                    Console.WriteLine("[session-ticket-db] touch after move-map: {0}", ex.Message);
-                                }
-                            }
-                        }
-                    }
-                    else
-                    {
-                        Console.WriteLine("[{0}] stub move map: 8E 03 ok only (no roster match) frame@{1}", remote, moveOff);
-                    }
-
-                    return;
-                }
-
-                if (loginLatch.IsLoggedIn
                     && sessionJoinCharacterName10 is not null)
                 {
                     var pickedGameplay = FindRosterEntry(roster, sessionJoinCharacterName10);
@@ -1081,7 +964,7 @@ public static class LegacyLoginHostRunner
                         if (await WorldGameplayHandlers.TryHandlePacketAsync(
                                 gameRoster,
                                 monsterViewportTracker,
-                                connection: null,
+                                connection,
                                 clientProtectOutbound: null,
                                 loggedAccountId,
                                 sessionJoinCharacterName10,
@@ -1477,6 +1360,7 @@ public static class LegacyLoginHostRunner
         {
             await GameMapPresenceRegistry.UnregisterAsync(presenceSessionId, ct).ConfigureAwait(false);
             MonsterViewerRegistry.Unregister(presenceSessionId);
+            MoveMapSessionState.Remove(presenceSessionId);
 
             if (connectionSessionTicket is { } tid)
             {

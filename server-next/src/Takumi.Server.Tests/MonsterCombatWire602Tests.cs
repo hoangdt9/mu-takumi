@@ -27,6 +27,20 @@ public sealed class MonsterCombatWire602Tests
     }
 
     [Fact]
+    public void Damage_wire_C1_11_includes_shield_view_and_sd_qword()
+    {
+        var pkt = MonsterDamageWire602.Build(
+            12001,
+            0,
+            70,
+            hitSuccess: true,
+            viewCurSd: 42,
+            shieldDamage: 3);
+        Assert.Equal(42u, BitConverter.ToUInt32(pkt, 14));
+        Assert.Equal(3ul, BitConverter.ToUInt64(pkt, 26));
+    }
+
+    [Fact]
     public void Destroy_wire_C1_14_layout()
     {
         var pkt = MonsterViewportDestroyWire602.Build([12001]);

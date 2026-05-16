@@ -65,6 +65,42 @@ public static class MapGateService
         return true;
     }
 
+    /// <summary>Move-map warp: resolve destination gate without proximity (parity <c>gObjMoveGate</c> via <c>CMove::Move</c>).</summary>
+    public static bool TryResolveWarpGate(int destinationGateIndex, int playerLevel, byte previousMap, out TeleportDestination dest)
+    {
+        dest = default;
+        if (!MapGateCatalog.TryGetGate(destinationGateIndex, out var gate) || gate is null)
+        {
+            return false;
+        }
+
+        if (!PassesLevel(gate, playerLevel))
+        {
+            return false;
+        }
+
+        var hops = 0;
+        while (gate.TargetGate != 0 && hops++ < 8)
+        {
+            if (!MapGateCatalog.TryGetGate(gate.TargetGate, out var next) || next is null)
+            {
+                return false;
+            }
+
+            gate = next;
+        }
+
+        if (!TryPickTile(gate, out var x, out var y))
+        {
+            x = (byte)Math.Clamp((int)gate.PosX, 0, 255);
+            y = (byte)Math.Clamp((int)gate.PosY, 0, 255);
+        }
+
+        var angle = (byte)Math.Clamp((int)gate.Dir, 0, 255);
+        dest = new TeleportDestination(gate.MapId, x, y, angle, gate.MapId != previousMap);
+        return true;
+    }
+
     static bool SkipProximityCheck() =>
         string.Equals(Environment.GetEnvironmentVariable("TAKUMI_GATE_SKIP_PROXIMITY"), "1", StringComparison.OrdinalIgnoreCase);
 

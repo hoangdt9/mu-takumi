@@ -381,8 +381,6 @@ bool CB_DangKyInGame::RenderWindow(int X, int Y)
 	{
 		const float fieldScreenX = startX + 120.0f;
 		const float fieldScreenY = startY + 50.0f;
-		const int fieldVirtX = static_cast<int>(fieldScreenX / g_fScreenRate_x);
-		const int fieldVirtY = static_cast<int>(fieldScreenY / g_fScreenRate_y);
 		const int fieldVirtW = static_cast<int>(kInputWidth / g_fScreenRate_x);
 		const int fieldVirtH = static_cast<int>(14.0f / g_fScreenRate_y);
 
@@ -390,8 +388,8 @@ bool CB_DangKyInGame::RenderWindow(int X, int Y)
 		gInterface.DrawBarForm((fieldScreenX) - 3.0f, (fieldScreenY) - 3.0f, kInputWidth, 16.0f, 0.0f, 0.0f, 0.0f, 1.0f);
 
 		g_pBCustomMenuInfo->RenderInputBox(
-			static_cast<float>(fieldVirtX),
-			static_cast<float>(fieldVirtY),
+			fieldScreenX,
+			fieldScreenY,
 			static_cast<float>(fieldVirtW),
 			static_cast<float>(fieldVirtH),
 			"",

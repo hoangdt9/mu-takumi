@@ -113,6 +113,10 @@ if [[ "$HOST_BUILD" -eq 1 ]]; then
   echo "== dotnet build (host, Release) — kiểm tra dependency trước khi lên container =="
   dotnet build "$ROOT/src/Takumi.Server.LegacyLoginHost/Takumi.Server.LegacyLoginHost.csproj" \
     -c Release -nologo -v minimal
+  if compose_profiles_has_gamehost 2>/dev/null || [[ "$WITH_GAMEHOST" -eq 1 ]] || { [[ -n "${TAKUMI_GAME_PORT:-}" ]] && [[ "${TAKUMI_GAME_PORT}" =~ ^[0-9]+$ ]] && [[ "${TAKUMI_GAME_PORT}" -gt 0 ]]; }; then
+    dotnet build "$ROOT/src/Takumi.Server.GameHost/Takumi.Server.GameHost.csproj" \
+      -c Release -nologo -v minimal
+  fi
   echo ""
 fi
 

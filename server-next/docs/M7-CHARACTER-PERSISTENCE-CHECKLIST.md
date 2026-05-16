@@ -1,6 +1,9 @@
 # M7 — Character persistence lifecycle (HP / MP / zen / map / tile)
 
-**Quy ước:** chỉ tick `[x]` khi đã có trong git và có thể chứng minh (test hoặc QA ghi rõ). Cập nhật file này khi merge.
+Last updated: 2026-05-16
+
+**Quy ước:** chỉ tick `[x]` khi đã có trong git và có thể chứng minh (test hoặc QA ghi rõ). Cập nhật file này khi merge.  
+**Nhật ký Android + combat:** **`../../docs/DEVELOPMENT-LOG-2026-05-16.md`**.
 
 **Phụ thuộc:** **`docs/M4-TILE-AND-COORDINATES.md`**, **`docs/M4-ROSTER-SSOT.md`**, **`docs/M6-GAME-TCP-CHECKLIST.md`**.  
 **Port từ `Source/` (character + item):** **`docs/M4-M7-CHARACTER-ITEM-MIGRATION.md`**. **Không chặn M5** (join/ticket).
@@ -44,6 +47,10 @@
 - [x] **EXP / level persist:** `011_character_experience.sql`, `ExperienceProgression602`, `RosterExperienceCombat` — grant on monster kill (`0x16`), `UpsertProgressAsync` + `ScheduleProgressUpsert`, join `F3 03` offset 8; **`CharacterRosterEntryMapping`** full DB load (stats + exp).
 - [x] **Progress mirror:** `RosterProgressMirror` + `ScheduleProgressUpsert` cập nhật cả `character_roster` và `character_domain` (level/EXP/stats/vitals) sau kill EXP và `F3 06` stat point.
 - [x] **Stat allocation UI:** client `CAddStatPointMsgBoxLayout` gửi `C1 F3 06` (`SendRequestAddPoint`) thay chat `/addstr`; Android tap-to-focus trên `CNewUITextInputMsgBox` + không dismiss IME khi message box đang mở; server `CharacterStatPointHandler` + `LevelUpPointWire602` word `Max` cho Vit/Ene.
+- [x] **Batch `F3 06` (server):** `CharacterStatPointHandler` — parse nhiều `C1 F3 06` trong một decrypted buffer → một `LevelUpPointWire602` success + một mirror upsert.
+- [x] **Stat pump (Android):** `TakumiScheduleLevelUpPoints` / `TakumiPumpLevelUpPoints` — tối đa 4 gói/frame; tránh flood disconnect (`4e84ff3`).
+- [x] **Combat HUD (`C1 F3 E1`):** `NewCharacterCalcWire602` (172 byte) + `CharacterCombatPreview602` — gửi sau join trên `LegacyLoginHostRunner` + `GamePortMinimalSession`; tests `NewCharacterCalcWire602Tests.cs`.
+- [x] **Monster → player defense:** `MonsterViewerRegistry` dùng `CharacterCombatPreview602.ResolvePlayerDefense` khi sheet có base stats (không stub `level*3` thuần).
 
 ---
 
@@ -62,6 +69,7 @@
 - [x] `TEST_PG_CONNECTION_STRING`: vitals round-trip — **`CharacterRosterPostgresVitalsTests`** (cần `004_character_roster_vitals.sql` đã apply).
 - [x] **`LifeManaWire602Tests`** — build/parse 0x26/0x27.
 - [x] **`ExperienceProgression602Tests`** — level-up from kill EXP + join wire EXP offset.
+- [x] **`NewCharacterCalcWire602Tests`** — golden length/head `F3 E1`.
 
 ---
 

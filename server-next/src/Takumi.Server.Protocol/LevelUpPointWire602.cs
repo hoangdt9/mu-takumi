@@ -7,7 +7,8 @@ public static class LevelUpPointWire602
 {
     public const byte Head = 0xF3;
     public const byte Sub = 0x06;
-    public const int PacketLength = 48;
+    /// <summary>Client <c>PRECEIVE_ADD_POINT</c> / <c>PMSG_LEVEL_UP_POINT_RECV</c> — 51 bytes (through ViewLeadership).</summary>
+    public const int PacketLength = 51;
 
     public static byte[] BuildSuccess(
         byte statType,
@@ -39,6 +40,14 @@ public static class LevelUpPointWire602
         return p;
     }
 
-    public static byte[] BuildFail() =>
-        new byte[] { 0xC1, PacketLength, Head, Sub, 0x00, 0, 0, 0, 0, 0, 0 };
+    public static byte[] BuildFail()
+    {
+        var p = new byte[PacketLength];
+        p[0] = 0xC1;
+        p[1] = PacketLength;
+        p[2] = Head;
+        p[3] = Sub;
+        p[4] = 0x00;
+        return p;
+    }
 }

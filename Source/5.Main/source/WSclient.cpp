@@ -1236,6 +1236,13 @@ BOOL ReceiveLogOut(BYTE *ReceiveBuffer, BOOL bEncrypted)
 
 int HeroIndex;
 
+static UINT64 TakumiReadWireUInt64LE(const BYTE* bytes)
+{
+	UINT64 value = 0;
+	memcpy(&value, bytes, sizeof(value));
+	return value;
+}
+
 BOOL ReceiveJoinMapServer(BYTE *ReceiveBuffer, BOOL bEncrypted)
 {
 //#ifndef NEW_PROTOCOL_SYSTEM
@@ -1250,62 +1257,27 @@ BOOL ReceiveJoinMapServer(BYTE *ReceiveBuffer, BOOL bEncrypted)
 	MouseLButton = false;
 	
 	LPPRECEIVE_JOIN_MAP_SERVER Data = (LPPRECEIVE_JOIN_MAP_SERVER)ReceiveBuffer;
-	
 
-	__int64 Data_Exp = 0x0000000000000000;
+	if (ReceiveBuffer == nullptr || CharacterAttribute == nullptr || CharacterMachine == nullptr)
+	{
+		g_ErrorReport.Write("[AndroidLogin] ReceiveJoinMapServer aborted — null buffer or character state\r\n");
+		return FALSE;
+	}
+
+	if (ReceiveBuffer[0] != 0xC1 || ReceiveBuffer[1] < 131)
+	{
+		g_ErrorReport.Write(
+			"[AndroidLogin] ReceiveJoinMapServer short/invalid frame len=%u need>=131\r\n",
+			ReceiveBuffer[1]);
+		return FALSE;
+	}
+
+	const UINT64 joinExperience = TakumiReadWireUInt64LE(&Data->btMExp1);
+	const UINT64 joinNextExperience = TakumiReadWireUInt64LE(&Data->btMNextExp1);
 	Master_Level_Data.lMasterLevel_Experince = 0x0000000000000000;
-	Data_Exp |= Data->btMExp1;	
-	Data_Exp <<= 8;
-	Data_Exp |= Data->btMExp2;	
-	Data_Exp <<= 8;
-	Data_Exp |= Data->btMExp3;	
-	Data_Exp <<= 8;
-	Data_Exp |= Data->btMExp4;	
-	Data_Exp <<= 8;
-	Data_Exp |= Data->btMExp5;	
-	Data_Exp <<= 8;
-	Data_Exp |= Data->btMExp6;	
-	Data_Exp <<= 8;
-	Data_Exp |= Data->btMExp7;	
-	Data_Exp <<= 8;
-	Data_Exp |= Data->btMExp8;
-	
-	//if(gCharacterManager.IsMasterLevel(CharacterAttribute->Class) == true)
-	//{
-	//	Master_Level_Data.lMasterLevel_Experince = Data_Exp;
-	//}
-	//else
-	{
-		CharacterAttribute->Experience = (int)Data_Exp;
-	}
-	
-	Data_Exp = 0x0000000000000000;
+	CharacterAttribute->Experience = (int)joinExperience;
 	Master_Level_Data.lNext_MasterLevel_Experince = 0x0000000000000000;
-	
-	Data_Exp |= Data->btMNextExp1;	
-	Data_Exp <<= 8;
-	Data_Exp |= Data->btMNextExp2;	
-	Data_Exp <<= 8;
-	Data_Exp |= Data->btMNextExp3;	
-	Data_Exp <<= 8;
-	Data_Exp |= Data->btMNextExp4;	
-	Data_Exp <<= 8;
-	Data_Exp |= Data->btMNextExp5;	
-	Data_Exp <<= 8;
-	Data_Exp |= Data->btMNextExp6;	
-	Data_Exp <<= 8;
-	Data_Exp |= Data->btMNextExp7;	
-	Data_Exp <<= 8;
-	Data_Exp |= Data->btMNextExp8;
-	
-	//if(gCharacterManager.IsMasterLevel(CharacterAttribute->Class) == true)
-	//{
-	//	Master_Level_Data.lNext_MasterLevel_Experince = Data_Exp;
-	//}
-	//else
-	{
-		CharacterAttribute->NextExperince = (int)Data_Exp;
-	}
+	CharacterAttribute->NextExperince = (int)joinNextExperience;
 	
 	CharacterAttribute->LevelUpPoint  = Data->LevelUpPoint;
 	CharacterAttribute->Strength      = Data->Strength;
@@ -1335,9 +1307,28 @@ BOOL ReceiveJoinMapServer(BYTE *ReceiveBuffer, BOOL bEncrypted)
 	CharacterMachine->Gold            = Data->Gold;
 	//CharacterAttribute->SkillMana     = CharacterAttribute->Energy*10+CharacterAttribute->ManaMax*10/6;
 
-	gMapManager.WorldActive = Data->Map;
+	const int previousMap = gMapManager.WorldActive;
+	const int joinMap = Data->Map;
+	gMapManager.WorldActive = joinMap;
 
-	gMapManager.LoadWorld(gMapManager.WorldActive);
+	if (previousMap != joinMap)
+	{
+		gMapManager.LoadWorld(joinMap);
+	}
+	else
+	{
+#if defined(__ANDROID__)
+		g_ErrorReport.Write(
+			"[AndroidLogin] ReceiveJoinMapServer same map=%d — skip LoadWorld (character reselect)\r\n",
+			joinMap);
+#endif
+		gMapManager.DeleteObjects();
+		DeleteNpcs();
+		DeleteMonsters();
+		ClearItems();
+		ClearCharacters();
+		RemoveAllShopTitleExceptHero();
+	}
 
 	if (Hero != NULL && Hero->Object.Live)
 	{
@@ -1420,9 +1411,9 @@ BOOL ReceiveJoinMapServer(BYTE *ReceiveBuffer, BOOL bEncrypted)
 
 #if defined(__ANDROID__)
 	g_ErrorReport.Write(
-		"[Exp] join exp=%d next=%d level=%u\r\n",
-		CharacterAttribute->Experience,
-		CharacterAttribute->NextExperince,
+		"[Exp] join exp=%llu next=%llu level=%u\r\n",
+		(unsigned long long)joinExperience,
+		(unsigned long long)joinNextExperience,
 		(unsigned)CharacterAttribute->Level);
 #endif
 
@@ -1448,12 +1439,18 @@ BOOL ReceiveJoinMapServer(BYTE *ReceiveBuffer, BOOL bEncrypted)
     MouseUpdateTime = 0;
     MouseUpdateTimeMax = 6;
 
-    CreatePetDarkSpirit_Now ( Hero );
-	
+	if (Hero != nullptr)
+	{
+		CreatePetDarkSpirit_Now(Hero);
+	}
+
 	CreateEffect(BITMAP_MAGIC+2,o->Position,o->Angle,o->Light,0,o);
     o->Alpha = 0.f;
 	
-	g_pNewUISystem->HideAll();
+	if (g_pNewUISystem != nullptr)
+	{
+		g_pNewUISystem->HideAll();
+	}
 	
     SelectedItem		= -1;
     SelectedNpc			= -1;
@@ -1462,8 +1459,11 @@ BOOL ReceiveJoinMapServer(BYTE *ReceiveBuffer, BOOL bEncrypted)
     Attacking			= -1;
     RepairEnable		= 0;
    
-    Hero->Movement = false;
-    SetPlayerStop(Hero);
+	if (Hero != nullptr)
+	{
+		Hero->Movement = false;
+		SetPlayerStop(Hero);
+	}
 
     if ( gMapManager.InBloodCastle() == false )
     {
@@ -1500,7 +1500,10 @@ BOOL ReceiveJoinMapServer(BYTE *ReceiveBuffer, BOOL bEncrypted)
 		char Text[256];
 		sprintf(Text,"%s%s",GlobalText[484],gMapManager.GetMapName(gMapManager.WorldActive));
 		
-		g_pChatListBox->AddText("", Text, SEASON3B::TYPE_SYSTEM_MESSAGE);
+		if (g_pChatListBox != nullptr)
+		{
+			g_pChatListBox->AddText("", Text, SEASON3B::TYPE_SYSTEM_MESSAGE);
+		}
 	}
 	
 	if( gMapManager.WorldActive == WD_30BATTLECASTLE )
@@ -1509,14 +1512,17 @@ BOOL ReceiveJoinMapServer(BYTE *ReceiveBuffer, BOOL bEncrypted)
 			g_pSiegeWarfare->CreateMiniMapUI();
 	}
 	
-	if( gMapManager.WorldActive < WD_65DOPPLEGANGER1 || gMapManager.WorldActive > WD_68DOPPLEGANGER4 )
+	if (g_pNewUISystem != nullptr)
 	{
-		g_pNewUISystem->Hide(SEASON3B::INTERFACE_DOPPELGANGER_FRAME);
-	}
+		if( gMapManager.WorldActive < WD_65DOPPLEGANGER1 || gMapManager.WorldActive > WD_68DOPPLEGANGER4 )
+		{
+			g_pNewUISystem->Hide(SEASON3B::INTERFACE_DOPPELGANGER_FRAME);
+		}
 
-	if( gMapManager.WorldActive < WD_69EMPIREGUARDIAN1 || WD_72EMPIREGUARDIAN4 < gMapManager.WorldActive)
-	{
-		g_pNewUISystem->Hide(SEASON3B::INTERFACE_EMPIREGUARDIAN_TIMER);
+		if( gMapManager.WorldActive < WD_69EMPIREGUARDIAN1 || WD_72EMPIREGUARDIAN4 < gMapManager.WorldActive)
+		{
+			g_pNewUISystem->Hide(SEASON3B::INTERFACE_EMPIREGUARDIAN_TIMER);
+		}
 	}
 #if(NEW_MASTER_SKILL_TREE == 1)
 	if (g_pMasterSkillTreeInterface != nullptr && CharacterAttribute != nullptr)
@@ -3625,8 +3631,6 @@ static void TakumiPlayLevelUpEffects()
 			CreateJoint(BITMAP_FLARE, o->Position, o->Position, o->Angle, 0, o, 40, 2);
 		}
 		CreateEffect(BITMAP_MAGIC + 1, o->Position, o->Angle, o->Light, 0, o);
-		// Join-map style ring (BITMAP_MAGIC+2) — visible level-up circle on Android.
-		CreateEffect(BITMAP_MAGIC + 2, o->Position, o->Angle, o->Light, 0, o);
 	}
 
 	PlayBuffer(SOUND_LEVEL_UP);
@@ -3775,7 +3779,9 @@ void TakumiEnsureExperienceThresholds()
 	const int level = max(1, (int)CharacterAttribute->Level);
 	if (CharacterAttribute->NextExperince <= 0)
 	{
-		CharacterAttribute->NextExperince = (int)TakumiMuCumulativeExperienceForLevel(level);
+		CharacterAttribute->NextExperince = (level < 400)
+			? (int)TakumiMuCumulativeExperienceForLevel(level + 1)
+			: (int)TakumiMuCumulativeExperienceForLevel(level);
 	}
 
 	CharacterAttribute->PrintPlayer.ViewExperience = (DWORD)CharacterAttribute->Experience;
@@ -3798,8 +3804,16 @@ float TakumiComputeExperienceFill01(DWORD experience, DWORD nextExperience, int 
 
 	level = max(1, level);
 	const DWORD prior = (level > 1) ? TakumiMuCumulativeExperienceForLevel(level - 1) : 0u;
+	const DWORD cumForLevel = TakumiMuCumulativeExperienceForLevel(level);
 
-	// Standard MU: cumulative Experience and NextExperince (threshold for next level).
+	// Roster / join: Experience is progress within the current level; NextExperince is often
+	// CumulativeForLevel(level) (cap for this level), not the next-level threshold — match character sheet Experience/NextExperince.
+	if (experience < cumForLevel && nextExperience > 0 && nextExperience <= cumForLevel)
+	{
+		return static_cast<float>(experience) / static_cast<float>(nextExperience);
+	}
+
+	// Standard MU: cumulative Experience toward NextExperince (threshold for level+1).
 	if (nextExperience > prior && experience > prior)
 	{
 		const DWORD need = nextExperience - prior;
@@ -3810,8 +3824,6 @@ float TakumiComputeExperienceFill01(DWORD experience, DWORD nextExperience, int 
 		}
 	}
 
-	// Fallback: same ratio as character sheet (Experience / NextExperince) when values are not
-	// aligned with cumulative prior (e.g. legacy roster or level/exp mismatch on join).
 	if (experience < nextExperience)
 	{
 		return static_cast<float>(experience) / static_cast<float>(nextExperience);
@@ -6775,8 +6787,10 @@ BOOL ReceiveDieExp(BYTE *ReceiveBuffer,BOOL bEncrypted)
 			&& CharacterAttribute->Level < 400)
 		{
 			CharacterAttribute->Level++;
-			CharacterAttribute->NextExperince =
-				(int)TakumiMuCumulativeExperienceForLevel(CharacterAttribute->Level);
+			const int lv = CharacterAttribute->Level;
+			CharacterAttribute->NextExperince = (lv < 400)
+				? (int)TakumiMuCumulativeExperienceForLevel(lv + 1)
+				: (int)TakumiMuCumulativeExperienceForLevel(lv);
 			++levelsGainedFromKill;
 		}
 
@@ -6872,8 +6886,10 @@ BOOL ReceiveDieExpLarge(BYTE *ReceiveBuffer,BOOL bEncrypted)
 			&& CharacterAttribute->Level < 400)
 		{
 			CharacterAttribute->Level++;
-			CharacterAttribute->NextExperince =
-				(int)TakumiMuCumulativeExperienceForLevel(CharacterAttribute->Level);
+			const int lv = CharacterAttribute->Level;
+			CharacterAttribute->NextExperince = (lv < 400)
+				? (int)TakumiMuCumulativeExperienceForLevel(lv + 1)
+				: (int)TakumiMuCumulativeExperienceForLevel(lv);
 			++levelsGainedFromKill;
 		}
 
@@ -7643,6 +7659,11 @@ namespace
 
 #if defined(__ANDROID__)
 static bool s_pendingCharacterCalculateAll = false;
+
+void TakumiDeferCharacterCalculateAll()
+{
+	s_pendingCharacterCalculateAll = true;
+}
 constexpr int kProtocolPacketsPerFrame = 20;
 #endif
 
@@ -7709,43 +7730,8 @@ void TakumiSendMeleeAttack(WORD targetKey, BYTE dir)
 
 void ReceiveAddPoint( BYTE *ReceiveBuffer )
 {
-    LPPRECEIVE_ADD_POINT Data = (LPPRECEIVE_ADD_POINT)ReceiveBuffer;
-
-	if(Data->Result>>4)
-	{
-		switch(Data->Result&0xf)
-		{
-		case 0:
-			CharacterAttribute->Strength = static_cast<WORD>(Data->ViewStrength);
-			break;
-		case 1:
-			CharacterAttribute->Dexterity = static_cast<WORD>(Data->ViewDexterity);
-			break;
-		case 2:
-			CharacterAttribute->Vitality = static_cast<WORD>(Data->ViewVitality);
-			CharacterAttribute->LifeMax = Data->Max;
-			break;
-		case 3:
-			CharacterAttribute->Energy = static_cast<WORD>(Data->ViewEnergy);
-			CharacterAttribute->ManaMax = Data->Max;
-			break;
-        case 4:
-			CharacterAttribute->Charisma = static_cast<WORD>(Data->ViewLeadership);
-            break;
-		}
-
-		CharacterAttribute->LevelUpPoint = static_cast<WORD>(min(Data->ViewPoint, 65535u));
-		CharacterAttribute->PrintPlayer.ViewPoint = CharacterAttribute->LevelUpPoint;
-		CharacterAttribute->LifeMax = static_cast<WORD>(min(Data->ViewMaxHP, 65535u));
-		CharacterAttribute->ManaMax = static_cast<WORD>(min(Data->ViewMaxMP, 65535u));
-		CharacterAttribute->SkillManaMax = Data->SkillManaMax;
-		CharacterAttribute->ShieldMax = Data->ShieldMax;
-	}
-#if defined(__ANDROID__)
-    s_pendingCharacterCalculateAll = true;
-#else
-    CharacterMachine->CalculateAll();
-#endif
+	// F3 06 handled in ProtocolCoreEx → GCLevelUpPointRecv (packed 51-byte wire).
+	GCLevelUpPointRecv(reinterpret_cast<PMSG_LEVEL_UP_POINT_RECV*>(ReceiveBuffer));
 }
 
 void ReceiveLife( BYTE *ReceiveBuffer )

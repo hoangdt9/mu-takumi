@@ -82,6 +82,7 @@ void ReceiveServerNextSessionTicket( BYTE* ReceiveBuffer, int Size );
 /// Queue <c>C1 F3 06</c> stat allocations (throttled in <see cref="TakumiPumpLevelUpPoints"/>).
 void TakumiScheduleLevelUpPoints(BYTE statType, int count);
 void TakumiPumpLevelUpPoints();
+void TakumiDeferCharacterCalculateAll();
 void TakumiSendMeleeAttack(WORD targetKey, BYTE dir);
 
 // Keep Life/Mana sheet and PrintPlayer view fields in sync (HUD orb + Android bars).
@@ -999,7 +1000,8 @@ typedef struct {
 } PRECEIVE_DAMAGE, * LPPRECEIVE_DAMAGE;
 #pragma pack(pop)
 
-//receive add point
+//receive add point — wire C1 F3 06 (51 bytes); must match LevelUpPointWire602 / PMSG_LEVEL_UP_POINT_RECV
+#pragma pack(push, 1)
 typedef struct {
 	PBMSG_HEADER Header;
 	BYTE         SubCode;
@@ -1019,6 +1021,7 @@ typedef struct {
 	DWORD ViewEnergy;
 	DWORD ViewLeadership;
 } PRECEIVE_ADD_POINT, * LPPRECEIVE_ADD_POINT;
+#pragma pack(pop)
 
 typedef struct {
 	PBMSG_HEADER Header;
@@ -3946,6 +3949,7 @@ struct PMSG_NEW_CHARACTER_INFO_RECV
 	DWORD ViewEnergy;
 	DWORD ViewLeadership;
 };
+#pragma pack(push, 1)
 struct PMSG_NEW_CHARACTER_CALC_RECV
 {
 	PSBMSG_HEAD header; // C1:F3:E1
@@ -3992,6 +3996,7 @@ struct PMSG_NEW_CHARACTER_CALC_RECV
 	DWORD ViewDarkSpiritAttackSpeed;
 	DWORD ViewDarkSpiritAttackSuccessRate;
 };
+#pragma pack(pop)
 
 
 struct PMSG_HELPER_DATA_SEND

@@ -23,6 +23,15 @@ extern int HeroKey;
 extern int CurrentProtocolState;
 extern CHARACTER* Hero;
 
+uint32_t s_joinServerWaitStartMs = 0;
+char s_joinGameHost[16] = { 0 };
+int s_joinGamePort = 0;
+bool s_joinServerRetriedConnect = false;
+bool s_joinServerTimedOut = false;
+
+constexpr uint32_t kJoinServerRetryConnectMs = 8000u;
+constexpr uint32_t kJoinServerGiveUpMs = 90000u;
+
 namespace
 {
 constexpr uint32_t kRevealServerListDelayMs = 2000u;
@@ -129,18 +138,148 @@ void AndroidOpenGameLoginDirect()
 	rUIMng.HideWin(&rUIMng.m_ServerSelWin);
 	rUIMng.ShowWin(&rUIMng.m_LoginWin);
 	HeroKey = 0;
-	CurrentProtocolState = RECEIVE_JOIN_SERVER_SUCCESS;
-
-	for (int drainPass = 0; drainPass < 12; ++drainPass)
-	{
-		SocketClient.AndroidSyncPollRecvPending();
-		ProtocolCompiler();
-	}
+	CurrentProtocolState = REQUEST_JOIN_SERVER;
+	MU_AndroidBeginJoinServerWait("127.0.0.1", static_cast<int>(gamePort));
 
 	g_ErrorReport.Write(
 		"[TakumiLoginBg] opened LoginWin via direct 127.0.0.1:%u (no F4 03 on LAN)\r\n",
 		static_cast<unsigned>(gamePort));
 }
+} // namespace
+
+void MU_AndroidDismissLoginWaitMsgIfShown()
+{
+	CUIMng& rUIMng = CUIMng::Instance();
+	if (rUIMng.m_MsgWin.IsShow())
+	{
+		rUIMng.HideWin(&rUIMng.m_MsgWin);
+	}
+}
+
+void MU_AndroidBeginJoinServerWait(const char* gameHost, int gamePort)
+{
+	s_joinServerWaitStartMs = MU_MobileGetTicks();
+	s_joinServerRetriedConnect = false;
+	s_joinServerTimedOut = false;
+	s_joinGamePort = gamePort;
+	if (gameHost != nullptr)
+	{
+		strncpy(s_joinGameHost, gameHost, sizeof(s_joinGameHost) - 1);
+		s_joinGameHost[sizeof(s_joinGameHost) - 1] = '\0';
+	}
+	else
+	{
+		s_joinGameHost[0] = '\0';
+	}
+
+	g_ErrorReport.Write(
+		"[AndroidLogin] join-server wait begin host=%s port=%d (expect C1 F1 00 from game-host)\r\n",
+		s_joinGameHost,
+		s_joinGamePort);
+}
+
+void MU_AndroidResetJoinServerWait()
+{
+	s_joinServerWaitStartMs = 0;
+	s_joinGameHost[0] = '\0';
+	s_joinGamePort = 0;
+	s_joinServerRetriedConnect = false;
+	s_joinServerTimedOut = false;
+}
+
+void MU_AndroidTickJoinServerWait()
+{
+	if (s_joinServerWaitStartMs == 0 || s_joinServerTimedOut)
+	{
+		return;
+	}
+
+	CUIMng& rUIMng = CUIMng::Instance();
+	if (!rUIMng.m_LoginWin.IsShow())
+	{
+		return;
+	}
+
+	if (CurrentProtocolState == RECEIVE_JOIN_SERVER_SUCCESS)
+	{
+		MU_AndroidDismissLoginWaitMsgIfShown();
+		MU_AndroidResetJoinServerWait();
+		return;
+	}
+
+	const uint32_t elapsedMs = MU_MobileGetTicks() - s_joinServerWaitStartMs;
+	for (int pass = 0; pass < 8; ++pass)
+	{
+		SocketClient.AndroidSyncPollRecvPending();
+		ProtocolCompiler();
+	}
+
+	if (CurrentProtocolState == RECEIVE_JOIN_SERVER_SUCCESS)
+	{
+		g_ErrorReport.Write(
+			"[AndroidLogin] join-server ready after %u ms (F1 00)\r\n",
+			elapsedMs);
+		MU_AndroidDismissLoginWaitMsgIfShown();
+		MU_AndroidResetJoinServerWait();
+		return;
+	}
+
+	if (!s_joinServerRetriedConnect
+		&& elapsedMs >= kJoinServerRetryConnectMs
+		&& s_joinGameHost[0] != '\0'
+		&& s_joinGamePort > 0)
+	{
+		s_joinServerRetriedConnect = true;
+		g_ErrorReport.Write(
+			"[AndroidLogin] no F1 00 after %u ms — retry game TCP %s:%d (Docker game-host may have just finished building)\r\n",
+			elapsedMs,
+			s_joinGameHost,
+			s_joinGamePort);
+
+		SocketClient.Close();
+		g_bGameServerConnected = FALSE;
+		if (CreateSocket(s_joinGameHost, static_cast<unsigned short>(s_joinGamePort)))
+		{
+			g_bGameServerConnected = TRUE;
+			for (int pass = 0; pass < 16; ++pass)
+			{
+				SocketClient.AndroidSyncPollRecvPending();
+				ProtocolCompiler();
+				if (CurrentProtocolState == RECEIVE_JOIN_SERVER_SUCCESS)
+				{
+					g_ErrorReport.Write(
+						"[AndroidLogin] join-server ready after game TCP retry (%u ms)\r\n",
+						MU_MobileGetTicks() - s_joinServerWaitStartMs);
+					MU_AndroidDismissLoginWaitMsgIfShown();
+					MU_AndroidResetJoinServerWait();
+					return;
+				}
+			}
+		}
+		else
+		{
+			g_ErrorReport.Write(
+				"[AndroidLogin] game TCP retry failed %s:%d\r\n",
+				s_joinGameHost,
+				s_joinGamePort);
+		}
+	}
+
+	if (elapsedMs < kJoinServerGiveUpMs)
+	{
+		return;
+	}
+
+	s_joinServerTimedOut = true;
+	g_ErrorReport.Write(
+		"[AndroidLogin] join-server timeout after %u ms — is game-host listening? "
+		"docker compose logs -f game-host until \"listening on *:55901\"\r\n",
+		elapsedMs);
+	MU_AndroidDismissLoginWaitMsgIfShown();
+	rUIMng.PopUpMsgWin(MESSAGE_SERVER_LOST);
+	SocketClient.Close();
+	g_bGameServerConnected = FALSE;
+	CurrentProtocolState = REQUEST_JOIN_SERVER;
 }
 
 bool MU_AndroidShouldPreferLoopbackTcp()
@@ -169,6 +308,7 @@ void MU_AndroidResetLoginSceneConnectFallback()
 	s_serverPickStartMs = 0;
 	s_lastF403RetryMs = 0;
 	s_triedDirectGameLogin = false;
+	MU_AndroidResetJoinServerWait();
 }
 
 void MU_AndroidRevealLoginServerUi()

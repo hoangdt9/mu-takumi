@@ -55,6 +55,11 @@ void MU_AndroidNotifyWireServerListReceived();
 void MU_AndroidNotifyServerSubPickStarted();
 /** Opens LoginWin if F4 03 never arrives after sub pick (server-next / Docker LAN). */
 void MU_AndroidTickLoginAfterServerPickFallback();
+/** After game TCP connect: poll for C1 F1 00 (game-host may still be building in Docker). */
+void MU_AndroidBeginJoinServerWait(const char* gameHost, int gamePort);
+void MU_AndroidTickJoinServerWait();
+void MU_AndroidResetJoinServerWait();
+void MU_AndroidDismissLoginWaitMsgIfShown();
 /** True after LAN connect failed and client should use 127.0.0.1 (adb reverse / Docker Desktop Mac). */
 bool MU_AndroidShouldPreferLoopbackTcp();
 void MU_AndroidSetPreferLoopbackTcp(bool prefer);

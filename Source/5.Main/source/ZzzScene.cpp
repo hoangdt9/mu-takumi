@@ -1599,6 +1599,7 @@ void NewMoveLogInScene()
 #if defined(__ANDROID__)
 	MU_AndroidTickLoginSceneConnectFallback();
 	MU_AndroidTickLoginAfterServerPickFallback();
+	MU_AndroidTickJoinServerWait();
 #endif
 
 	if (CInput::Instance().IsKeyDown(VK_ESCAPE))

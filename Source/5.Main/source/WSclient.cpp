@@ -579,17 +579,30 @@ void ReceiveServerConnect(BYTE* ReceiveBuffer) //Recebe informação do ConnectS
 			rUIMng.HideWin(&rUIMng.m_ServerSelWin);
 			rUIMng.ShowWin(&rUIMng.m_LoginWin);
 			HeroKey = 0;
-			CurrentProtocolState = RECEIVE_JOIN_SERVER_SUCCESS;
 			g_ErrorReport.Write(
 				"[ReceiveServerConnect] enable login UI after game socket (csPort=%u gamePort=%d)\r\n",
 				static_cast<unsigned int>(g_ServerPort),
 				static_cast<int>(Data->Port));
 #if defined(__ANDROID__)
-			for (int drainPass = 0; drainPass < 12; ++drainPass)
+			// Do not mark join success until C1 F1 00 arrives (game-host Docker build can lag F4 03).
+			CurrentProtocolState = REQUEST_JOIN_SERVER;
+			MU_AndroidBeginJoinServerWait(IP, static_cast<int>(Data->Port));
+			for (int drainPass = 0; drainPass < 24; ++drainPass)
 			{
 				SocketClient.AndroidSyncPollRecvPending();
 				ProtocolCompiler();
+				if (CurrentProtocolState == RECEIVE_JOIN_SERVER_SUCCESS)
+				{
+					break;
+				}
 			}
+			if (CurrentProtocolState != RECEIVE_JOIN_SERVER_SUCCESS)
+			{
+				g_ErrorReport.Write(
+					"[ReceiveServerConnect] game socket up; waiting for F1 00 (poll in login scene)\r\n");
+			}
+#else
+			CurrentProtocolState = RECEIVE_JOIN_SERVER_SUCCESS;
 #endif
 		}
 	}
@@ -614,15 +627,20 @@ void ReceiveServerConnect(BYTE* ReceiveBuffer) //Recebe informação do ConnectS
 			rUIMng.HideWin(&rUIMng.m_ServerSelWin);
 			rUIMng.ShowWin(&rUIMng.m_LoginWin);
 			HeroKey = 0;
-			CurrentProtocolState = RECEIVE_JOIN_SERVER_SUCCESS;
 			g_ErrorReport.Write(
 				"[ReceiveServerConnect] Android NEW_PROTOCOL: enable login UI (csPort=%u gamePort=%d)\r\n",
 				static_cast<unsigned int>(g_ServerPort),
 				static_cast<int>(Data->Port));
-			for (int drainPass = 0; drainPass < 12; ++drainPass)
+			CurrentProtocolState = REQUEST_JOIN_SERVER;
+			MU_AndroidBeginJoinServerWait(IP, static_cast<int>(Data->Port));
+			for (int drainPass = 0; drainPass < 24; ++drainPass)
 			{
 				SocketClient.AndroidSyncPollRecvPending();
 				ProtocolCompiler();
+				if (CurrentProtocolState == RECEIVE_JOIN_SERVER_SUCCESS)
+				{
+					break;
+				}
 			}
 		}
 	}
@@ -677,6 +695,10 @@ void ReceiveJoinServer( BYTE *ReceiveBuffer )
 			rUIMng.ShowWin(&rUIMng.m_LoginWin);
             HeroKey = ((int)(Data2->NumberH)<<8) + Data2->NumberL;
             CurrentProtocolState = RECEIVE_JOIN_SERVER_SUCCESS;
+#if defined(__ANDROID__)
+			MU_AndroidDismissLoginWaitMsgIfShown();
+			MU_AndroidResetJoinServerWait();
+#endif
             break;
 			
         default:

@@ -564,7 +564,7 @@ static void RenderFpsCounter()
  */
 static void CheckServerConnection()
 {
-    if (SocketClient == nullptr || !SocketClient->IsConnected())
+    if (SocketClient.GetSocket() == INVALID_SOCKET || !g_bGameServerConnected)
     {
         static BOOL s_bClosed = FALSE;
         if (!s_bClosed)

@@ -82,6 +82,7 @@ void ReceiveServerNextSessionTicket( BYTE* ReceiveBuffer, int Size );
 /// Queue <c>C1 F3 06</c> stat allocations (throttled in <see cref="TakumiPumpLevelUpPoints"/>).
 void TakumiScheduleLevelUpPoints(BYTE statType, int count);
 void TakumiPumpLevelUpPoints();
+void TakumiSendMeleeAttack(WORD targetKey, BYTE dir);
 
 // Keep Life/Mana sheet and PrintPlayer view fields in sync (HUD orb + Android bars).
 void TakumiSyncHeroCurrentVitals(DWORD curHp, DWORD curSd);

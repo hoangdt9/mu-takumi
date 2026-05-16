@@ -586,7 +586,6 @@ extern int TargetY;
 extern int Attacking;
 bool CheckTile(CHARACTER* c, OBJECT* o, float Range);
 void SetPlayerAttack(CHARACTER* c);
-void LetHeroStop();
 
 namespace
 {
@@ -2939,7 +2938,7 @@ static bool TrySendHeroMeleeAttackPacket(int targetIndex)
     c->TargetCharacter = targetIndex;
     c->Skill = 0;
     const int dir = static_cast<int>(((BYTE)((Hero->Object.Angle[2] + 22.5f) / 360.f * 8.f + 1.f)) % 8);
-    SendRequestAttack(CharactersClient[targetIndex].Key, dir);
+    TakumiSendMeleeAttack(CharactersClient[targetIndex].Key, static_cast<BYTE>(dir));
     return true;
 }
 

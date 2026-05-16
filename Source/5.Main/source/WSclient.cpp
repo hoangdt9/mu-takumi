@@ -7650,7 +7650,7 @@ void TakumiPumpLevelUpPoints()
 		return;
 	}
 
-	if (SocketClient == nullptr || !SocketClient->IsConnected())
+	if (SocketClient.GetSocket() == INVALID_SOCKET || !g_bGameServerConnected)
 	{
 		s_pendingLevelUpStatCount = 0;
 		return;
@@ -7671,6 +7671,22 @@ void TakumiPumpLevelUpPoints()
 		spe.Send();
 		--s_pendingLevelUpStatCount;
 	}
+}
+
+void TakumiSendMeleeAttack(WORD targetKey, BYTE dir)
+{
+	if (Hero == nullptr || FindText2(Hero->ID, "webzen"))
+	{
+		return;
+	}
+
+	CStreamPacketEngine spe;
+	spe.Init(0xC1, 0x11);
+	spe << static_cast<BYTE>(targetKey >> 8)
+		<< static_cast<BYTE>(targetKey & 0xff)
+		<< static_cast<BYTE>(AT_ATTACK1)
+		<< static_cast<BYTE>(dir);
+	spe.Send();
 }
 
 void ReceiveAddPoint( BYTE *ReceiveBuffer )

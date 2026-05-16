@@ -76,6 +76,10 @@ services:
       TAKUMI_MONSTER_SET_BASE_PATH: "${TAKUMI_MONSTER_SET_BASE_PATH:-/muserver-data/Monster/MonsterSetBase.txt}"
       TAKUMI_MONSTER_INFO_PATH: "${TAKUMI_MONSTER_INFO_PATH:-/muserver-data/Monster/Monster.txt}"
       TAKUMI_ATT_DATA_ROOT: "${TAKUMI_ATT_DATA_ROOT:-/att-data}"
+      TAKUMI_PG_CONNECTION_STRING: "${TAKUMI_PG_CONNECTION_STRING:-Host=postgres;Port=5432;Username=takumi;Password=takumi;Database=takumi_runtime}"
+      TAKUMI_ROSTER_DB_SYNC: "${TAKUMI_ROSTER_DB_SYNC:-1}"
+      TAKUMI_ROSTER_DB_PRIMARY: "${TAKUMI_ROSTER_DB_PRIMARY:-1}"
+      TAKUMI_CHARACTER_DOMAIN_SYNC: "${TAKUMI_CHARACTER_DOMAIN_SYNC:-1}"
       DOTNET_ENVIRONMENT: "${DOTNET_ENVIRONMENT:-Development}"
     # Build then run so a stale bin/Release from the host volume cannot mask Program.cs changes.
     command:
@@ -180,6 +184,10 @@ services:
       TAKUMI_GAMESERVER_DATA_PATH: "${TAKUMI_GAMESERVER_DATA_PATH:-/muserver-data}"
       TAKUMI_MONSTER_SET_BASE_PATH: "${TAKUMI_MONSTER_SET_BASE_PATH:-/muserver-data/Monster/MonsterSetBase.txt}"
       TAKUMI_MONSTER_INFO_PATH: "${TAKUMI_MONSTER_INFO_PATH:-/muserver-data/Monster/Monster.txt}"
+      TAKUMI_PG_CONNECTION_STRING: "${TAKUMI_PG_CONNECTION_STRING:-Host=postgres;Port=5432;Username=takumi;Password=takumi;Database=takumi_runtime}"
+      TAKUMI_ROSTER_DB_SYNC: "${TAKUMI_ROSTER_DB_SYNC:-1}"
+      TAKUMI_ROSTER_DB_PRIMARY: "${TAKUMI_ROSTER_DB_PRIMARY:-1}"
+      TAKUMI_CHARACTER_DOMAIN_SYNC: "${TAKUMI_CHARACTER_DOMAIN_SYNC:-1}"
       DOTNET_ENVIRONMENT: "${DOTNET_ENVIRONMENT:-Development}"
     # Bind-mount + host obj → NETSDK1064; script uses TAKUMI_DOCKER_GAMEHOST + Directory.Build.props for /tmp outputs (no shared rm).
     command:

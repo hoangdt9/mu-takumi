@@ -134,98 +134,26 @@ file sealed class JoinMapStatWire
     internal static JoinMapStatWire FromRoster(CharacterRosterWire r)
     {
         var lv = Math.Max((ushort)1, r.Level);
-        var tier = (byte)Math.Min(7, r.ServerClass / 0x20);
-        ushort str;
-        ushort dex;
-        ushort vit;
-        ushort ene;
-        switch (tier)
-        {
-            case 0: // DW + unknown low
-                str = (ushort)(18 + lv);
-                dex = (ushort)(18 + lv / 2);
-                vit = (ushort)(15 + lv);
-                ene = (ushort)(30 + lv);
-                break;
-            case 1: // DK
-                str = (ushort)(28 + lv);
-                dex = (ushort)(20 + lv / 2);
-                vit = (ushort)(25 + lv);
-                ene = (ushort)(10 + lv / 3);
-                break;
-            case 2: // ELF
-                str = (ushort)(22 + lv / 2);
-                dex = (ushort)(25 + lv);
-                vit = (ushort)(20 + lv / 2);
-                ene = (ushort)(15 + lv);
-                break;
-            case 3: // MG
-                str = (ushort)(26 + lv);
-                dex = (ushort)(26 + lv);
-                vit = (ushort)(26 + lv);
-                ene = (ushort)(26 + lv);
-                break;
-            default:
-                str = (ushort)(20 + lv);
-                dex = (ushort)(20 + lv);
-                vit = (ushort)(20 + lv);
-                ene = (ushort)(20 + lv);
-                break;
-        }
+        var sheet = CharacterSheetCalculator.ResolveSheet(r.ServerClass, lv, r.Sheet);
+        var keepPartial = string.Equals(
+            Environment.GetEnvironmentVariable("TAKUMI_JOIN_KEEP_VITALS")?.Trim(),
+            "1",
+            StringComparison.OrdinalIgnoreCase);
+        var merged = CharacterSheetCalculator.MergeVitalsForJoin(
+            r.Vitals,
+            CharacterSheetCalculator.ComputeMaxVitals(r.ServerClass, lv, sheet),
+            keepPartial);
+        var computed = CharacterSheetCalculator.ComputeMaxVitals(r.ServerClass, lv, sheet);
 
-        var life = (ushort)Math.Min(ushort.MaxValue, 55 + vit * 2 + lv * 3);
-        var v = r.Vitals;
-        if (v.HasHp)
-        {
-            life = v.ClampU16(v.MaxHp);
-            var cur = v.ClampU16(v.CurrentHp > 0 ? v.CurrentHp : v.MaxHp);
-            if (cur > life)
-            {
-                cur = life;
-            }
-
-            life = cur;
-        }
-
-        ushort lifeMax;
-        if (v.HasHp)
-        {
-            lifeMax = v.ClampU16(v.MaxHp);
-        }
-        else
-        {
-            lifeMax = (ushort)Math.Min(ushort.MaxValue, 55 + vit * 2 + lv * 3);
-        }
-
-        ushort manaCur;
-        ushort manaMax;
-        if (v.HasMp)
-        {
-            manaMax = v.ClampU16(v.MaxMp);
-            manaCur = v.ClampU16(v.CurrentMp > 0 ? v.CurrentMp : v.MaxMp);
-            if (manaCur > manaMax)
-            {
-                manaCur = manaMax;
-            }
-        }
-        else
-        {
-            manaMax = (ushort)Math.Min(ushort.MaxValue, 40 + ene * 2 + lv * 2);
-            manaCur = manaMax;
-        }
-
-        var gold = v.Zen > 0 ? v.ClampGold() : 0u;
-        ushort sdMax = 0;
-        ushort sdCur = 0;
-        if (v.HasShield)
-        {
-            sdMax = v.ClampU16(v.MaxShield);
-            sdCur = v.ClampU16(v.CurrentShield > 0 ? v.CurrentShield : v.MaxShield);
-            if (sdCur > sdMax)
-            {
-                sdCur = sdMax;
-            }
-        }
+        var life = merged.ClampU16(merged.CurrentHp > 0 ? merged.CurrentHp : merged.MaxHp);
+        var lifeMax = merged.ClampU16(merged.MaxHp);
+        var manaCur = merged.ClampU16(merged.CurrentMp > 0 ? merged.CurrentMp : merged.MaxMp);
+        var manaMax = merged.ClampU16(merged.MaxMp);
+        var sdCur = merged.ClampU16(merged.CurrentShield);
+        var sdMax = merged.ClampU16(merged.MaxShield);
+        var bpCur = computed.SkillMana;
+        var bpMax = computed.SkillManaMax;
+        var gold = merged.Zen > 0 ? merged.ClampGold() : 0u;
 
         var view = new ViewDwordBlock
         {
@@ -233,36 +161,39 @@ file sealed class JoinMapStatWire
             ViewMaxHp = lifeMax,
             ViewCurMp = manaCur,
             ViewMaxMp = manaMax,
+            ViewCurBp = bpCur,
+            ViewMaxBp = bpMax,
             ViewCurSd = sdCur,
             ViewMaxSd = sdMax,
-            ViewStrength = str,
-            ViewDexterity = dex,
-            ViewVitality = vit,
-            ViewEnergy = ene,
-            ViewLeadership = 0,
+            ViewStrength = sheet.Strength,
+            ViewDexterity = sheet.Dexterity,
+            ViewVitality = sheet.Vitality,
+            ViewEnergy = sheet.Energy,
+            ViewLeadership = sheet.Leadership,
+            ViewPoint = sheet.LevelUpPoint,
         };
 
         return new JoinMapStatWire
         {
-            Strength = str,
-            Dexterity = dex,
-            Vitality = vit,
-            Energy = ene,
+            Strength = sheet.Strength,
+            Dexterity = sheet.Dexterity,
+            Vitality = sheet.Vitality,
+            Energy = sheet.Energy,
             Life = life,
             LifeMax = lifeMax,
             Mana = manaCur,
             ManaMax = manaMax,
             Shield = sdCur,
             ShieldMax = sdMax,
-            SkillMana = manaCur,
-            SkillManaMax = manaMax,
-            LevelUpPoint = 0,
+            SkillMana = bpCur,
+            SkillManaMax = bpMax,
+            LevelUpPoint = sheet.LevelUpPoint,
             Gold = gold,
             Pk = 0,
             CtlCode = 0,
             AddPoint = 0,
             MaxAddPoint = 0,
-            Charisma = 0,
+            Charisma = sheet.Leadership,
             MinusPoint = 0,
             MaxMinusPoint = 0,
             ExtInventory = 0,

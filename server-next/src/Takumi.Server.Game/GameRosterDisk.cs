@@ -30,6 +30,22 @@ public sealed class GameRosterEntry
     public int CurrentShield { get; set; }
 
     public int MaxShield { get; set; }
+
+    public ushort Strength { get; set; }
+
+    public ushort Dexterity { get; set; }
+
+    public ushort Vitality { get; set; }
+
+    public ushort Energy { get; set; }
+
+    public ushort Leadership { get; set; }
+
+    public ushort LevelUpPoint { get; set; }
+
+    public int CurrentBp { get; set; }
+
+    public int MaxBp { get; set; }
 }
 
 public static class GameSpawnEnv
@@ -182,6 +198,14 @@ public static class GameRosterDisk
                     Zen = c.Zen,
                     CurrentShield = c.CurrentShield,
                     MaxShield = c.MaxShield,
+                    Strength = c.Strength,
+                    Dexterity = c.Dexterity,
+                    Vitality = c.Vitality,
+                    Energy = c.Energy,
+                    Leadership = c.Leadership,
+                    LevelUpPoint = c.LevelUpPoint,
+                    CurrentBp = c.CurrentBp,
+                    MaxBp = c.MaxBp,
                 };
                 ApplyLegacySpawnIfUnset(entry);
                 list.Add(entry);
@@ -223,6 +247,22 @@ public static class GameRosterDisk
         public int CurrentShield { get; set; }
 
         public int MaxShield { get; set; }
+
+        public ushort Strength { get; set; }
+
+        public ushort Dexterity { get; set; }
+
+        public ushort Vitality { get; set; }
+
+        public ushort Energy { get; set; }
+
+        public ushort Leadership { get; set; }
+
+        public ushort LevelUpPoint { get; set; }
+
+        public int CurrentBp { get; set; }
+
+        public int MaxBp { get; set; }
     }
 }
 

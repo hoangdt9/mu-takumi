@@ -722,27 +722,19 @@ public static class LegacyLoginHostRunner
                     }
 
                     var spawn = new JoinMapSpawnWire(picked.MapId, picked.PosX, picked.PosY, picked.Angle);
-                    var joinPkt = JoinMapServerWire602.Build(ToWire(picked), spawn);
+                    var joinPkt = JoinMapServerWire602.Build(ToWireWithSheet(picked), spawn);
                     var invPkt = await JoinInventoryPacket602.BuildAsync(TakumiPostgresMirror.InventorySlots, loggedAccountId, joinName10, ct).ConfigureAwait(false);
                     await WriteOutboundAsync(joinPkt);
                     await WriteOutboundAsync(invPkt);
                     await WriteOutboundAsync(MagicListWire602.BuildEmpty());
-                    if (JoinMapVitalsSeed.TryApplyFromJoinPacketIfUnset(picked.MaxHp > 0, joinPkt, out var joinVitals))
+                    if (SyncLegacyEntryFromJoin(picked, joinPkt))
                     {
-                        RosterVitalsLifecycle.ApplyVitals(
-                            joinVitals,
-                            ref picked.CurrentHp,
-                            ref picked.MaxHp,
-                            ref picked.CurrentMp,
-                            ref picked.MaxMp,
-                            ref picked.Zen,
-                            ref picked.CurrentShield,
-                            ref picked.MaxShield);
                         Volatile.Write(ref rosterDirty, 1);
                     }
 
                     sessionJoinCharacterName10 = new byte[10];
                     Buffer.BlockCopy(joinName10, 0, sessionJoinCharacterName10, 0, 10);
+                    var (bpCur, bpMax) = ToGameRosterEntry(picked).ResolveBpForSync();
                     await RosterVitalsLifecycle.TrySendLifeManaSyncAsync(
                         async (m, t) =>
                         {
@@ -755,7 +747,9 @@ public static class LegacyLoginHostRunner
                         picked.MaxMp,
                         ct,
                         picked.CurrentShield,
-                        picked.MaxShield).ConfigureAwait(false);
+                        picked.MaxShield,
+                        bpCur,
+                        bpMax).ConfigureAwait(false);
                     await connection.Output.FlushAsync(ct).ConfigureAwait(false);
                     Console.WriteLine(
                         "[{0}] sent join map (F3 03) + inventory (F3 10 len={1}) map={2} xy=({3},{4}) ang={5} name='{6}' — flushed before viewport",
@@ -933,18 +927,9 @@ public static class LegacyLoginHostRunner
                         pickedMove.MapId = (byte)(mapIdx & 0xFF);
 
                         var mvSpawn = new JoinMapSpawnWire(pickedMove.MapId, pickedMove.PosX, pickedMove.PosY, pickedMove.Angle);
-                        var joinPktMove = JoinMapServerWire602.Build(ToWire(pickedMove), mvSpawn);
-                        if (JoinMapVitalsSeed.TryApplyFromJoinPacketIfUnset(pickedMove.MaxHp > 0, joinPktMove, out var moveVitals))
+                        var joinPktMove = JoinMapServerWire602.Build(ToWireWithSheet(pickedMove), mvSpawn);
+                        if (SyncLegacyEntryFromJoin(pickedMove, joinPktMove))
                         {
-                            RosterVitalsLifecycle.ApplyVitals(
-                                moveVitals,
-                                ref pickedMove.CurrentHp,
-                                ref pickedMove.MaxHp,
-                                ref pickedMove.CurrentMp,
-                                ref pickedMove.MaxMp,
-                                ref pickedMove.Zen,
-                                ref pickedMove.CurrentShield,
-                                ref pickedMove.MaxShield);
                             Volatile.Write(ref rosterDirty, 1);
                         }
 
@@ -1658,6 +1643,14 @@ public static class LegacyLoginHostRunner
             Zen = row.Zen,
             CurrentShield = row.CurrentShield,
             MaxShield = row.MaxShield,
+            Strength = (ushort)Math.Clamp(row.Strength, 0, ushort.MaxValue),
+            Dexterity = (ushort)Math.Clamp(row.Dexterity, 0, ushort.MaxValue),
+            Vitality = (ushort)Math.Clamp(row.Vitality, 0, ushort.MaxValue),
+            Energy = (ushort)Math.Clamp(row.Energy, 0, ushort.MaxValue),
+            Leadership = (ushort)Math.Clamp(row.Leadership, 0, ushort.MaxValue),
+            LevelUpPoint = (ushort)Math.Clamp(row.LevelUpPoint, 0, ushort.MaxValue),
+            CurrentBp = row.CurrentBp,
+            MaxBp = row.MaxBp,
         };
         ApplyLegacySpawnIfUnset(entry);
         return entry;
@@ -1712,6 +1705,14 @@ public static class LegacyLoginHostRunner
                     Zen = c.Zen,
                     CurrentShield = c.CurrentShield,
                     MaxShield = c.MaxShield,
+                    Strength = c.Strength,
+                    Dexterity = c.Dexterity,
+                    Vitality = c.Vitality,
+                    Energy = c.Energy,
+                    Leadership = c.Leadership,
+                    LevelUpPoint = c.LevelUpPoint,
+                    CurrentBp = c.CurrentBp,
+                    MaxBp = c.MaxBp,
                 };
                 ApplyLegacySpawnIfUnset(entry);
                 roster.Add(entry);
@@ -1751,6 +1752,14 @@ public static class LegacyLoginHostRunner
                     Zen = e.Zen,
                     CurrentShield = e.CurrentShield,
                     MaxShield = e.MaxShield,
+                    Strength = e.Strength,
+                    Dexterity = e.Dexterity,
+                    Vitality = e.Vitality,
+                    Energy = e.Energy,
+                    Leadership = e.Leadership,
+                    LevelUpPoint = e.LevelUpPoint,
+                    CurrentBp = e.CurrentBp,
+                    MaxBp = e.MaxBp,
                 });
         }
 
@@ -1809,7 +1818,15 @@ public static class LegacyLoginHostRunner
                         e.MaxMp,
                         e.Zen,
                         e.CurrentShield,
-                        e.MaxShield));
+                        e.MaxShield,
+                        e.Strength,
+                        e.Dexterity,
+                        e.Vitality,
+                        e.Energy,
+                        e.Leadership,
+                        e.LevelUpPoint,
+                        e.CurrentBp,
+                        e.MaxBp));
             }
 
             snapshot = list.ToArray();
@@ -1851,6 +1868,8 @@ public static class LegacyLoginHostRunner
         }
 
         var sp = ReadNewCharacterSpawnDefaultsFromEnv();
+        var sheet = CharacterSheetCalculator.DefaultSheet(serverClass, level);
+        var vitals = CharacterSheetCalculator.ComputeMaxVitals(serverClass, level, sheet);
         roster.Add(
             new CharacterRosterEntry
             {
@@ -1861,6 +1880,20 @@ public static class LegacyLoginHostRunner
                 PosX = sp.PositionX,
                 PosY = sp.PositionY,
                 Angle = sp.Angle,
+                Strength = sheet.Strength,
+                Dexterity = sheet.Dexterity,
+                Vitality = sheet.Vitality,
+                Energy = sheet.Energy,
+                Leadership = sheet.Leadership,
+                LevelUpPoint = sheet.LevelUpPoint,
+                CurrentHp = vitals.Life,
+                MaxHp = vitals.LifeMax,
+                CurrentMp = vitals.Mana,
+                MaxMp = vitals.ManaMax,
+                CurrentShield = vitals.Shield,
+                MaxShield = vitals.ShieldMax,
+                CurrentBp = vitals.SkillMana,
+                MaxBp = vitals.SkillManaMax,
             });
     }
 
@@ -1877,12 +1910,20 @@ public static class LegacyLoginHostRunner
         return null;
     }
 
-    static CharacterRosterWire ToWire(CharacterRosterEntry e) =>
-        new(
-            e.Name10,
-            e.ServerClass,
-            e.Level,
-            CharacterRosterVitals.FromInts(e.CurrentHp, e.MaxHp, e.CurrentMp, e.MaxMp, e.Zen, e.CurrentShield, e.MaxShield));
+    static CharacterRosterWire ToWireWithSheet(CharacterRosterEntry e) =>
+        ToGameRosterEntry(e).ToWireWithSheet();
+
+    static bool SyncLegacyEntryFromJoin(CharacterRosterEntry entry, ReadOnlySpan<byte> joinPkt)
+    {
+        var game = ToGameRosterEntry(entry);
+        if (!RosterVitalsLifecycle.SyncGameEntryFromJoin(game, joinPkt))
+        {
+            return false;
+        }
+
+        CopyGameRosterBack(entry, game);
+        return true;
+    }
 
     static GameRosterEntry ToGameRosterEntry(CharacterRosterEntry e) =>
         new()
@@ -1901,6 +1942,14 @@ public static class LegacyLoginHostRunner
             Zen = e.Zen,
             CurrentShield = e.CurrentShield,
             MaxShield = e.MaxShield,
+            Strength = e.Strength,
+            Dexterity = e.Dexterity,
+            Vitality = e.Vitality,
+            Energy = e.Energy,
+            Leadership = e.Leadership,
+            LevelUpPoint = e.LevelUpPoint,
+            CurrentBp = e.CurrentBp,
+            MaxBp = e.MaxBp,
         };
 
     static void CopyGameRosterBack(CharacterRosterEntry dst, GameRosterEntry src)
@@ -1916,6 +1965,14 @@ public static class LegacyLoginHostRunner
         dst.Zen = src.Zen;
         dst.CurrentShield = src.CurrentShield;
         dst.MaxShield = src.MaxShield;
+        dst.Strength = src.Strength;
+        dst.Dexterity = src.Dexterity;
+        dst.Vitality = src.Vitality;
+        dst.Energy = src.Energy;
+        dst.Leadership = src.Leadership;
+        dst.LevelUpPoint = src.LevelUpPoint;
+        dst.CurrentBp = src.CurrentBp;
+        dst.MaxBp = src.MaxBp;
     }
 
     static List<CharacterRosterWire> MapRosterToWire(List<CharacterRosterEntry> roster)
@@ -1923,7 +1980,7 @@ public static class LegacyLoginHostRunner
         var list = new List<CharacterRosterWire>(roster.Count);
         foreach (var e in roster)
         {
-            list.Add(ToWire(e));
+            list.Add(ToWireWithSheet(e));
         }
 
         return list;
@@ -2249,6 +2306,14 @@ public static class LegacyLoginHostRunner
         c.Zen = g.Zen;
         c.CurrentShield = g.CurrentShield;
         c.MaxShield = g.MaxShield;
+        c.Strength = g.Strength;
+        c.Dexterity = g.Dexterity;
+        c.Vitality = g.Vitality;
+        c.Energy = g.Energy;
+        c.Leadership = g.Leadership;
+        c.LevelUpPoint = g.LevelUpPoint;
+        c.CurrentBp = g.CurrentBp;
+        c.MaxBp = g.MaxBp;
     }
 }
 
@@ -2284,6 +2349,15 @@ internal sealed class CharacterRosterEntry
     public long Zen;
     public int CurrentShield;
     public int MaxShield;
+
+    public ushort Strength;
+    public ushort Dexterity;
+    public ushort Vitality;
+    public ushort Energy;
+    public ushort Leadership;
+    public ushort LevelUpPoint;
+    public int CurrentBp;
+    public int MaxBp;
 }
 
 internal sealed class RosterPersistRoot
@@ -2315,6 +2389,22 @@ internal sealed class RosterPersistChar
     public int CurrentShield { get; set; }
 
     public int MaxShield { get; set; }
+
+    public ushort Strength { get; set; }
+
+    public ushort Dexterity { get; set; }
+
+    public ushort Vitality { get; set; }
+
+    public ushort Energy { get; set; }
+
+    public ushort Leadership { get; set; }
+
+    public ushort LevelUpPoint { get; set; }
+
+    public int CurrentBp { get; set; }
+
+    public int MaxBp { get; set; }
 }
 
 /// <summary>Thread-safe login flag for keepalive + packet gate (visibility across tasks).</summary>

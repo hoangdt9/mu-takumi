@@ -19,7 +19,9 @@ public sealed class PostgresCharacterDomainRepository : IAsyncDisposable
             """
             SELECT character_name, server_class, level, map_id, pos_x, pos_y, angle,
                    current_hp, max_hp, current_mp, max_mp, zen,
-                   current_shield, max_shield
+                   current_shield, max_shield,
+                   strength, dexterity, vitality, energy, leadership, level_up_point,
+                   current_bp, max_bp
             FROM character_domain
             WHERE account_login = $1
             ORDER BY character_name
@@ -46,6 +48,14 @@ public sealed class PostgresCharacterDomainRepository : IAsyncDisposable
                     Zen = reader.GetInt64(11),
                     CurrentShield = reader.GetInt32(12),
                     MaxShield = reader.GetInt32(13),
+                    Strength = reader.GetInt32(14),
+                    Dexterity = reader.GetInt32(15),
+                    Vitality = reader.GetInt32(16),
+                    Energy = reader.GetInt32(17),
+                    Leadership = reader.GetInt32(18),
+                    LevelUpPoint = reader.GetInt32(19),
+                    CurrentBp = reader.GetInt32(20),
+                    MaxBp = reader.GetInt32(21),
                 });
         }
 
@@ -68,8 +78,9 @@ public sealed class PostgresCharacterDomainRepository : IAsyncDisposable
                 """
                 INSERT INTO character_domain (
                     account_login, character_name, server_class, level, map_id, pos_x, pos_y, angle,
-                    current_hp, max_hp, current_mp, max_mp, zen, current_shield, max_shield)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+                    current_hp, max_hp, current_mp, max_mp, zen, current_shield, max_shield,
+                    strength, dexterity, vitality, energy, leadership, level_up_point, current_bp, max_bp)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23)
                 """,
                 conn,
                 tx);
@@ -88,6 +99,14 @@ public sealed class PostgresCharacterDomainRepository : IAsyncDisposable
             ins.Parameters.Add(new NpgsqlParameter("z", NpgsqlDbType.Bigint) { Value = row.Zen });
             ins.Parameters.Add(new NpgsqlParameter("sd", NpgsqlDbType.Integer) { Value = row.CurrentShield });
             ins.Parameters.Add(new NpgsqlParameter("sdm", NpgsqlDbType.Integer) { Value = row.MaxShield });
+            ins.Parameters.Add(new NpgsqlParameter("str", NpgsqlDbType.Integer) { Value = row.Strength });
+            ins.Parameters.Add(new NpgsqlParameter("dex", NpgsqlDbType.Integer) { Value = row.Dexterity });
+            ins.Parameters.Add(new NpgsqlParameter("vit", NpgsqlDbType.Integer) { Value = row.Vitality });
+            ins.Parameters.Add(new NpgsqlParameter("ene", NpgsqlDbType.Integer) { Value = row.Energy });
+            ins.Parameters.Add(new NpgsqlParameter("lead", NpgsqlDbType.Integer) { Value = row.Leadership });
+            ins.Parameters.Add(new NpgsqlParameter("lup", NpgsqlDbType.Integer) { Value = row.LevelUpPoint });
+            ins.Parameters.Add(new NpgsqlParameter("bp", NpgsqlDbType.Integer) { Value = row.CurrentBp });
+            ins.Parameters.Add(new NpgsqlParameter("bpmax", NpgsqlDbType.Integer) { Value = row.MaxBp });
             await ins.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
         }
 

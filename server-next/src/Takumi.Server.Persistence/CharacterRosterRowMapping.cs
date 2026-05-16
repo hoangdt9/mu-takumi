@@ -17,7 +17,15 @@ public static class CharacterRosterRowMapping
         int maxMp,
         long zen,
         int currentShield = 0,
-        int maxShield = 0) =>
+        int maxShield = 0,
+        int strength = 0,
+        int dexterity = 0,
+        int vitality = 0,
+        int energy = 0,
+        int leadership = 0,
+        int levelUpPoint = 0,
+        int currentBp = 0,
+        int maxBp = 0) =>
         new()
         {
             Name = name,
@@ -34,5 +42,13 @@ public static class CharacterRosterRowMapping
             Zen = zen,
             CurrentShield = currentShield,
             MaxShield = maxShield,
+            Strength = strength,
+            Dexterity = dexterity,
+            Vitality = vitality,
+            Energy = energy,
+            Leadership = leadership,
+            LevelUpPoint = levelUpPoint,
+            CurrentBp = currentBp,
+            MaxBp = maxBp,
         };
 }

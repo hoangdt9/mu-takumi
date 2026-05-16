@@ -60,4 +60,46 @@ public static class JoinMapVitalsSeed
 
         return TryReadFromJoinPacket(joinPkt, out vitals);
     }
+
+    public static bool TryReadBpFromJoinPacket(ReadOnlySpan<byte> joinPkt, out int currentBp, out int maxBp)
+    {
+        currentBp = 0;
+        maxBp = 0;
+        if (joinPkt.Length < JoinMapServerWire602.PacketLength)
+        {
+            return false;
+        }
+
+        if (joinPkt[0] != 0xC1 || joinPkt[2] != 0xF3 || joinPkt[3] != 0x03)
+        {
+            return false;
+        }
+
+        currentBp = BinaryPrimitives.ReadUInt16LittleEndian(joinPkt.Slice(46));
+        maxBp = BinaryPrimitives.ReadUInt16LittleEndian(joinPkt.Slice(48));
+        return maxBp > 0;
+    }
+
+    public static bool TryReadSheetFromJoinPacket(ReadOnlySpan<byte> joinPkt, out CharacterSheetStats sheet)
+    {
+        sheet = default;
+        if (joinPkt.Length < JoinMapServerWire602.PacketLength)
+        {
+            return false;
+        }
+
+        if (joinPkt[0] != 0xC1 || joinPkt[2] != 0xF3 || joinPkt[3] != 0x03)
+        {
+            return false;
+        }
+
+        sheet = CharacterSheetStats.FromInts(
+            BinaryPrimitives.ReadUInt16LittleEndian(joinPkt.Slice(26)),
+            BinaryPrimitives.ReadUInt16LittleEndian(joinPkt.Slice(28)),
+            BinaryPrimitives.ReadUInt16LittleEndian(joinPkt.Slice(30)),
+            BinaryPrimitives.ReadUInt16LittleEndian(joinPkt.Slice(32)),
+            BinaryPrimitives.ReadUInt16LittleEndian(joinPkt.Slice(60)),
+            BinaryPrimitives.ReadUInt16LittleEndian(joinPkt.Slice(24)));
+        return sheet.HasBaseStats || sheet.LevelUpPoint > 0;
+    }
 }

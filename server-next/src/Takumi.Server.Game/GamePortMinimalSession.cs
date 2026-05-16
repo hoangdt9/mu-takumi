@@ -404,6 +404,10 @@ public static class GamePortMinimalSession
                         sessionJoinCharacterName10 = new byte[10];
                         Buffer.BlockCopy(joinName10, 0, sessionJoinCharacterName10, 0, 10);
                         var (bpCur, bpMax) = picked.ResolveBpForSync();
+                        var computedVitals = CharacterSheetCalculator.ComputeMaxVitals(
+                            picked.ServerClass,
+                            picked.Level,
+                            picked.ResolveSheet());
                         await RosterVitalsLifecycle.TrySendLifeManaSyncAsync(
                             async (m, t) => await GamePortOutboundWire.WriteAsync(connection, protect, m, t, TrackVitalsOutbound).ConfigureAwait(false),
                             picked.CurrentHp,
@@ -414,7 +418,8 @@ public static class GamePortMinimalSession
                             picked.CurrentShield,
                             picked.MaxShield,
                             bpCur,
-                            bpMax).ConfigureAwait(false);
+                            bpMax,
+                            computedVitals).ConfigureAwait(false);
                         await MapMonsterScopeSender.TrySendAfterJoinAsync(
                             monsterViewportTracker,
                             connection,
@@ -451,6 +456,7 @@ public static class GamePortMinimalSession
                             picked.PosY,
                             monsterViewportTracker,
                             playerObjectKey: presenceJoin?.ObjectKey ?? 0,
+                            clientHeroWireKey: options.JoinWireIndex,
                             currentHp: picked.CurrentHp,
                             maxHp: picked.MaxHp,
                             currentMp: picked.CurrentMp,
@@ -549,6 +555,7 @@ public static class GamePortMinimalSession
                                 pickedMove.PosY,
                                 monsterViewportTracker,
                                 playerObjectKey: presenceMove?.ObjectKey ?? 0,
+                                clientHeroWireKey: options.JoinWireIndex,
                                 currentHp: pickedMove.CurrentHp,
                                 maxHp: pickedMove.MaxHp,
                                 currentMp: pickedMove.CurrentMp,

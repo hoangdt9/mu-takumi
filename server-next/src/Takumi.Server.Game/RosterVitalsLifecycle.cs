@@ -46,9 +46,27 @@ public static class RosterVitalsLifecycle
         int currentShield = 0,
         int maxShield = 0,
         int currentBp = 0,
-        int maxBp = 0)
+        int maxBp = 0,
+        CharacterComputedVitals? computedFallback = null)
     {
-        if (!IsSendLifeManaAfterJoinEnabled() || maxHp <= 0)
+        if (!IsSendLifeManaAfterJoinEnabled())
+        {
+            return;
+        }
+
+        if (maxHp <= 0 && computedFallback is { } fb)
+        {
+            maxHp = fb.LifeMax;
+            currentHp = currentHp > 0 ? currentHp : fb.Life;
+            maxMp = fb.ManaMax;
+            currentMp = currentMp > 0 ? currentMp : fb.Mana;
+            maxShield = fb.ShieldMax;
+            currentShield = currentShield > 0 ? currentShield : fb.Shield;
+            maxBp = fb.SkillManaMax;
+            currentBp = currentBp > 0 ? currentBp : fb.SkillMana;
+        }
+
+        if (maxHp <= 0)
         {
             return;
         }

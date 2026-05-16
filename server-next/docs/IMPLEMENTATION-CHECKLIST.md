@@ -16,6 +16,8 @@ Last updated: 2026-05-16 (`main` @ `0fee99a`: M8/M9 gameplay, M7 vitals, M10 pre
 
 ## Client APK, `data.zip`, and Docker (what to redo when)
 
+**Hướng dẫn Docker đầy đủ:** **`docs/DOCKER-BUILD-RUN.md`** (`docker-stack.sh`, recreate vs build image, profile, troubleshooting).
+
 Use this to avoid unnecessary rebuilds.
 
 | Change | Rebuild & reinstall APK? | Re-download `data.zip`? | Docker / ops |

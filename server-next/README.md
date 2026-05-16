@@ -15,6 +15,7 @@
 | `docs/M6-GAME-TCP-CHECKLIST.md` | **M6** dedicated game TCP scaffold (`GameListenHost`, `GameHost`, compose profile `gamehost`). |
 | `docs/M7-CHARACTER-PERSISTENCE-CHECKLIST.md` | **M7** HP/MP/zen + join restore; SQL `004_*` + roadmap C#/JSON. |
 | `docs/M8-M10-WORLD-RUNTIME-CHECKLIST.md` | **M8–M10** ETL thế giới, NPC, movement/broadcast (sau login). |
+| `docs/DOCKER-BUILD-RUN.md` | **Docker QA:** build/run stack, `docker-stack.sh`, khi nào recreate vs build image vs APK. |
 | `src/Takumi.Server.Game/` | **M6** shared bootstrap: env loader, Dec2 keys, `GameListenHost`. |
 | `src/Takumi.Server.GameHost/` | **M6** executable listening on **`TAKUMI_GAME_PORT`**. |
 | `src/Takumi.Server.Protocol/` | **M2** shared Season 6 wire builders (character list, join map, login/connect packets). |
@@ -45,11 +46,13 @@ Example Npgsql URL for a host app on the same machine as Docker Desktop:
 
 ## Quick start (database + LAN server in Docker)
 
+**Chi tiết (tiếng Việt):** **`docs/DOCKER-BUILD-RUN.md`** — ma trận “khi nào recreate / pull / build APK”, profile `datazip` / `gamehost`, xử lý sự cố.
+
 1. `cp .env.lan.example .env` and replace **`YOUR_LAN_IP`** with your Mac/PC LAN IP (phones must reach it). Ports and serial come from **`env.defaults`** unless you override them in `.env`.
-2. **`docker compose up -d`** or **`./scripts/docker-stack.sh --detach`** — starts **Postgres** (default **54444**) and **LegacyLoginHost** (**44605** Connect + **44606** login). Dec2 is always **`/keys/Dec2.dat`** inside the container (read-only mount **`./keys`** → `/keys`, i.e. commit **`keys/Dec2.dat`** next to `docker-compose.yml`). Override **`TAKUMI_DEC2_HOST_DIR`** if your `Dec2.dat` lives elsewhere; **`TAKUMI_DEC2_PATH` in `.env` is only for host `dotnet run`**, not substituted into Docker (host paths would break SimpleModulus). Connect list **F4 06** (sub-server lines): if **`TAKUMI_CS_CONNECT_IDS`** / **`TAKUMI_CS_CONNECT_BASE`** are unset, the host sends **32 safe wire ids** (`0..14`, `20..34`, `40..41`) so each BMD group uses at most **15** connect slots — the Takumi client’s `ServerListManager` only has **`SLM_MAX_SERVER_COUNT` (15)** `NonPVP` bytes per group but indexes with `(connectIndex % 20) + 1`, so denser presets (e.g. `0..19` in one group) can **SIGSEGV** on Android. Override with **`TAKUMI_CS_CONNECT_IDS`** or **`TAKUMI_CS_CONNECT_BASE` + `TAKUMI_CS_CONNECT_COUNT`** when your `ServerList.bmd` uses other `connectIndex/20` groups (keep **≤15** distinct `%20` remainders per group, or fix the client).
-3. **Optional LAN `data.zip` download** (different host port, default **18080**): `docker compose --profile datazip up -d` or `./scripts/docker-stack.sh --detach` (profile **datazip** bật mặc định; dùng **`--no-datazip`** nếu không cần nginx). Serves `../docker/data-zip/host/data.zip` as `http://<LAN-IP>:18080/data.zip` (override `DATA_ZIP_PUBLISH_PORT`). Same nginx config as `takumi/docker` — do not run both `datazip` stacks on the same publish port.
-4. Logs: `./scripts/docker-stack.sh` (bám log) hoặc `docker compose logs -f legacy-login`. Stop: `docker compose down`.
-5. Full `Takumi.Server.Host`: run when `src/Takumi.Server.Host` sources exist; connection string → Postgres above.
+2. **`./scripts/docker-stack.sh --detach`** (khuyên dùng) hoặc `docker compose up -d` — **Postgres** (**54444**) + **LegacyLoginHost** (**44605** / **44606**). Script mặc định **force-recreate** `legacy-login` (và `game-host` nếu `TAKUMI_GAME_PORT` > 0) để `dotnet build` lại từ bind-mount; đợi log **`[legacy-login] build OK`**. Dec2 trong container: **`/keys/Dec2.dat`** (`./keys` → `/keys`). **`TAKUMI_DEC2_PATH` trong `.env` chỉ cho `dotnet run` trên host**, không map path macOS vào container.
+3. **Optional `data.zip` (port 18080):** profile **datazip** bật mặc định trong `docker-stack.sh`; **`--no-datazip`** nếu không cần. Không chạy hai stack nginx cùng port **18080**.
+4. Logs: `docker compose logs -f legacy-login` (và `game-host` / `postgres` / `datazip` nếu bật). Stop: `docker compose down`.
+5. Full `Takumi.Server.Host`: when sources exist; Postgres URL above.
 
 Port/env sanity: `./scripts/check-takumi-ports.sh` from `server-next`.
 

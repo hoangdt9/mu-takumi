@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # Takumi server-next — pull image → up stack → (mặc định) tail log Docker.
+# Docs: docs/DOCKER-BUILD-RUN.md (khi nào recreate vs build image vs APK).
 #
 # Stack mặc định: Postgres + LegacyLoginHost (44605/44606) + data.zip (profile datazip, nginx 18080).
 # M6: nếu .env có TAKUMI_GAME_PORT (số > 0) thì tự thêm profile **gamehost** — một lệnh đủ Connect + GameHost.

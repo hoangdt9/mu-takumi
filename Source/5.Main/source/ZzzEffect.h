@@ -79,7 +79,7 @@ void CreateEffect(int Type,vec3_t Position,vec3_t Angle,vec3_t Light,int SubType
 				  WORD SkillIndex=0,WORD Skill=0,WORD SkillSerialNum=0, float Scale = 0.0f, short int sTargetIndex = -1);
 void MoveEffects();
 
-void RenderCircle(int Type,vec3_t ObjectPosition,float ScaleBottom,float ScaleTop,float Height,float Rotation=0.f,float LightTop=1.f,float TextureV=0.f);
+void RenderCircle(int Type,vec3_t ObjectPosition,float ScaleBottom,float ScaleTop,float Height,float Rotation=0.f,float LightTop=1.f,float TextureV=0.f,const vec3_t Tint=nullptr);
 void RenderCircle2D(int Type,vec3_t ObjectPosition,float ScaleBottom,float ScaleTop,float Height,float Rotation=0.f,float TextureV=0.f,float TextureVScale=0.f);
 void RenderMagicBox(int Texture,vec3_t Position,float Angle);
 void RenderShpere(int Type,vec3_t ShperePosition,float Scale,vec3_t ShpereLight,float Rotation,float TextureV);

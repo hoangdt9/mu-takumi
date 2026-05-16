@@ -5,6 +5,17 @@ Other	gOther;
 
 extern std::string g_strSelectedML;
 
+static void TakumiApplyCharacterInfoTextDefault(char* text, const char* fallbackVie, const char* fallbackEng)
+{
+	if (text == nullptr || text[0] == '\0'
+		|| _stricmp(text, "Null") == 0 || _stricmp(text, "NULL") == 0)
+	{
+		const char* fallback = (g_strSelectedML.find("Vie") != std::string::npos) ? fallbackVie : fallbackEng;
+		strncpy(text, fallback, 119);
+		text[119] = '\0';
+	}
+}
+
 Other::Other()
 {
 	Other::Load();
@@ -54,6 +65,9 @@ void Other::Load()
 #endif
 
 	}
+
+	TakumiApplyCharacterInfoTextDefault(Text_ChacracterInfo[0], "Chi so", "Stats");
+	TakumiApplyCharacterInfoTextDefault(Text_ChacracterInfo[1], "Bang chi so", "Advanced");
 
 	char GetFotText2[55] = { 0 };
 	for (int st2 = 0; st2 < 150; st2++)

@@ -1176,7 +1176,7 @@ void SEASON3B::CNewUICharacterInfoWindow::RenderAttribute()
 				unicode::_sprintf(strBlocking, GlobalText[208], CharacterAttribute->PrintPlayer.ViewDefense, CharacterAttribute->PrintPlayer.ViewDefenseSuccessRate);
 			}
 #else //PBG_ADD_NEWCHAR_MONK_SKILL
-			// 208 "방어력(율): %d (%d)"
+			// 208 "????(??): %d (%d)"
 			unicode::_sprintf(strBlocking, GlobalText[208],
 				t_adjdef + maxdefense + iChangeRingAddDefense,
 				CharacterAttribute->SuccessfulBlocking
@@ -1355,7 +1355,7 @@ void SEASON3B::CNewUICharacterInfoWindow::RenderAttribute()
 	if (iBaseClass == CLASS_RAGEFIGHTER)
 	{
 		iY += 13;
-		//물리공격력
+		//?????????
 		unicode::_sprintf(strVitality, GlobalText[3155], CharacterAttribute->PrintPlayer.ViewRFDamageMultiplierA);
 		g_pRenderText->RenderText(m_Pos.x + 20, m_Pos.y + iY, strVitality);
 	}
@@ -1716,11 +1716,11 @@ void SEASON3B::CNewUICharacterInfoWindow::RenderAttribute()
 #ifdef PBG_ADD_NEWCHAR_MONK
 	if (iBaseClass == CLASS_RAGEFIGHTER)
 	{
-		//마법공격력
+		//?????????
 		unicode::_sprintf(strEnergy, GlobalText[3156], CharacterAttribute->PrintPlayer.ViewRFDamageMultiplierB);
 		g_pRenderText->RenderText(m_Pos.x + 20, m_Pos.y + iY, strEnergy);
 		iY += 13;
-		//범위공격력
+		//?????????
 		unicode::_sprintf(strEnergy, GlobalText[3157], CharacterAttribute->PrintPlayer.ViewRFDamageMultiplierC);
 		g_pRenderText->RenderText(m_Pos.x + 20, m_Pos.y + iY, strEnergy);
 	}

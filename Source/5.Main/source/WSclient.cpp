@@ -3623,6 +3623,8 @@ static void TakumiPlayLevelUpEffects()
 		{
 			CreateJoint(BITMAP_FLARE, o->Position, o->Position, o->Angle, 46, o, 80, 2);
 		}
+		CreateEffect(BITMAP_MAGIC + 1, o->Position, o->Angle, o->Light, 0, o);
+		CreateEffect(BITMAP_MAGIC + 2, o->Position, o->Angle, o->Light, 3, o);
 	}
 	else
 	{
@@ -3630,10 +3632,16 @@ static void TakumiPlayLevelUpEffects()
 		{
 			CreateJoint(BITMAP_FLARE, o->Position, o->Position, o->Angle, 0, o, 40, 2);
 		}
+		// Level-up: white ground (MAGIC+1/0) + gold body column (MAGIC+2/3). Join/respawn uses MAGIC+2/0 only.
 		CreateEffect(BITMAP_MAGIC + 1, o->Position, o->Angle, o->Light, 0, o);
+		CreateEffect(BITMAP_MAGIC + 2, o->Position, o->Angle, o->Light, 3, o);
 	}
 
 	PlayBuffer(SOUND_LEVEL_UP);
+
+#if defined(__ANDROID__)
+	g_ErrorReport.Write("[LevelUpFx] flare + MAGIC+1/0 ground + MAGIC+2/3 gold column (not join/0)\r\n");
+#endif
 }
 
 static void TakumiRecalcHeroMaxVitalsForLevel()
@@ -10427,13 +10435,20 @@ void ReceiveDisplayEffectViewport(BYTE* ReceiveBuffer)
 			break;
 			case 0x10:	//. Level up
 			{
-				if (gCharacterManager.IsMasterLevel(pPlayer->Class) == true)
+				if (pPlayer == Hero)
+				{
+					TakumiPlayLevelUpEffects();
+				}
+				else if (gCharacterManager.IsMasterLevel(pPlayer->Class) == true)
 				{
 					CreateJoint(BITMAP_FLARE, o->Position, o->Position, o->Angle, 45, o, 80, 2);
 					for (int i = 0; i < 19; ++i)
 					{
 						CreateJoint(BITMAP_FLARE, o->Position, o->Position, o->Angle, 46, o, 80, 2);
 					}
+					CreateEffect(BITMAP_MAGIC + 1, o->Position, o->Angle, o->Light, 0, o);
+					CreateEffect(BITMAP_MAGIC + 2, o->Position, o->Angle, o->Light, 3, o);
+					PlayBuffer(SOUND_LEVEL_UP);
 				}
 				else
 				{
@@ -10442,8 +10457,9 @@ void ReceiveDisplayEffectViewport(BYTE* ReceiveBuffer)
 						CreateJoint(BITMAP_FLARE, o->Position, o->Position, o->Angle, 0, o, 40, 2);
 					}
 					CreateEffect(BITMAP_MAGIC + 1, o->Position, o->Angle, o->Light, 0, o);
+					CreateEffect(BITMAP_MAGIC + 2, o->Position, o->Angle, o->Light, 3, o);
+					PlayBuffer(SOUND_LEVEL_UP);
 				}
-				PlayBuffer(SOUND_LEVEL_UP);
 			}
 			break;
 			case 0x03:

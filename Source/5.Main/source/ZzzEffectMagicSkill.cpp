@@ -16,15 +16,25 @@
 #include "SkillManager.h"
 
 
-void RenderCircle(int Type,vec3_t ObjectPosition,float ScaleBottom,float ScaleTop,float Height,float Rotation,float LightTop,float TextureV)
+void RenderCircle(int Type,vec3_t ObjectPosition,float ScaleBottom,float ScaleTop,float Height,float Rotation,float LightTop,float TextureV,const vec3_t Tint)
 {
 	BindTexture(Type);
 
+	vec3_t base;
+	if (Tint != nullptr)
+	{
+		VectorCopy(Tint, base);
+	}
+	else
+	{
+		Vector(1.f, 1.f, 1.f, base);
+	}
+
 	vec3_t Light[4];
-	Vector(1.f,1.f,1.f,Light[0]);
-	Vector(1.f,1.f,1.f,Light[1]);
-	Vector(LightTop,LightTop,LightTop,Light[2]);
-	Vector(LightTop,LightTop,LightTop,Light[3]);
+	Vector(base[0], base[1], base[2], Light[0]);
+	Vector(base[0], base[1], base[2], Light[1]);
+	Vector(base[0] * LightTop, base[1] * LightTop, base[2] * LightTop, Light[2]);
+	Vector(base[0] * LightTop, base[1] * LightTop, base[2] * LightTop, Light[3]);
 
 	float Num    = 12.f;
 	for(float x=0.f;x<Num;x+=1.f)

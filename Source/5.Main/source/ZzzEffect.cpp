@@ -8313,7 +8313,7 @@ void MoveEffect(OBJECT * o, int iIndex)
 	case BITMAP_MAGIC + 1:
 	case BITMAP_MAGIC + 2:
 		if (o->SubType >= 1
-			&& o->SubType != 4 && o->SubType != 6 && o->SubType != 7 && o->SubType != 8 && o->SubType != 9 && o->SubType != 10
+			&& o->SubType != 3 && o->SubType != 4 && o->SubType != 5 && o->SubType != 6 && o->SubType != 7 && o->SubType != 8 && o->SubType != 9 && o->SubType != 10
 			&& o->SubType != 11 && o->SubType != 12
 			&& o->SubType != 13
 			)
@@ -19430,13 +19430,29 @@ void RenderEffectShadows()
 					Rotation = (int)WorldTime % 3600 / (float)10.f;
 
 					Luminosity = 1.f;
-					if (o->SubType != 2)
+					if (o->SubType == 3)
+					{
+						// Level-up body column (gold tint). Join/respawn = SubType 0 (+ orange ground disc).
+						vec3_t goldTint;
+						vec3_t bodyPos;
+						Vector(1.f, 0.92f, 0.18f, goldTint);
+						VectorCopy(o->Position, bodyPos);
+						bodyPos[2] += 55.f;
+						RenderCircle(BITMAP_MAGIC + 2, bodyPos, 55.f, 125.f, 200.f, Rotation, 1.f, 0.f, goldTint);
+						RenderCircle(BITMAP_MAGIC + 2, bodyPos, 55.f, 125.f, 200.f, -Rotation, 1.f, 0.f, goldTint);
+
+						if (o->LifeTime < 5) Luminosity -= (float)(5 - o->LifeTime) * 0.2f;
+					}
+					else if (o->SubType != 2)
 					{
 						RenderCircle(BITMAP_MAGIC + 2, o->Position, 90.f, 130.f, 200.f, Rotation, 0.f, 0.f);
 						RenderCircle(BITMAP_MAGIC + 2, o->Position, 90.f, 130.f, 200.f, -Rotation, 0.f, 0.f);
 
 						if (o->LifeTime < 5) Luminosity -= (float)(5 - o->LifeTime) * 0.2f;
 						Scale = (20 - o->LifeTime) * 0.15f;
+
+						Vector(Luminosity * 1.f, Luminosity * 0.4f, Luminosity * 0.2f, Light);
+						RenderTerrainAlphaBitmap(BITMAP_MAGIC + 1, o->Position[0], o->Position[1], Scale, Scale, Light, -o->Angle[2]);
 					}
 					else if (o->SubType == 2)
 					{
@@ -19448,9 +19464,10 @@ void RenderEffectShadows()
 						{
 							Luminosity -= (float)(10 - o->LifeTime) * 0.1f;
 						}
+
+						Vector(Luminosity * 1.f, Luminosity * 0.4f, Luminosity * 0.2f, Light);
+						RenderTerrainAlphaBitmap(BITMAP_MAGIC + 1, o->Position[0], o->Position[1], Scale, Scale, Light, -o->Angle[2]);
 					}
-					Vector(Luminosity * 1.f, Luminosity * 0.4f, Luminosity * 0.2f, Light);
-					RenderTerrainAlphaBitmap(BITMAP_MAGIC + 1, o->Position[0], o->Position[1], Scale, Scale, Light, -o->Angle[2]);
 					break;
 
 				case BITMAP_MAGIC_ZIN:

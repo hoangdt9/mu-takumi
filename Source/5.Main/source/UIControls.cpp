@@ -3479,6 +3479,39 @@ void CUITextInputBox::Init(HWND hWnd, int iWidth, int iHeight, int iMaxLength, B
 #endif //PBG_ADD_INGAMESHOPMSGBOX
 }
 
+void CUITextInputBox::SetPosition(int iPos_x, int iPos_y)
+{
+	CUIControl::SetPosition(iPos_x, iPos_y);
+
+#if defined(__ANDROID__) || defined(MU_IOS)
+	if (m_hEditWnd != NULL)
+	{
+		const int screenX = static_cast<int>(m_iPos_x * g_fScreenRate_x);
+		const int screenY = static_cast<int>(m_iPos_y * g_fScreenRate_y);
+		const int screenW = static_cast<int>(m_iWidth * g_fScreenRate_x);
+		const int screenH = static_cast<int>(m_iHeight * g_fScreenRate_y);
+		SetWindowPos(
+			m_hEditWnd,
+			nullptr,
+			screenX,
+			screenY,
+			screenW > 0 ? screenW : 1,
+			screenH > 0 ? screenH : 1,
+			SWP_NOZORDER);
+
+		if (HaveFocus())
+		{
+			SDL_Rect textInputRect = {};
+			textInputRect.x = screenX;
+			textInputRect.y = screenY;
+			textInputRect.w = screenW > 0 ? screenW : 1;
+			textInputRect.h = screenH > 0 ? screenH : 1;
+			SDL_SetTextInputRect(&textInputRect);
+		}
+	}
+#endif
+}
+
 void CUITextInputBox::SetState(int iState)
 {
 	if (m_hEditWnd == NULL) return;
@@ -3487,7 +3520,12 @@ void CUITextInputBox::SetState(int iState)
 		ShowWindow(m_hEditWnd, SW_HIDE);
 	else
 	{
+#if defined(__ANDROID__) || defined(MU_IOS)
+		// Mobile draws text in Render(); native edit at Init offset would appear in the wrong place.
+		ShowWindow(m_hEditWnd, SW_HIDE);
+#else
 		ShowWindow(m_hEditWnd, SW_SHOW);
+#endif
 	}
 }
 

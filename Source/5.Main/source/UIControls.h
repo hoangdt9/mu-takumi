@@ -818,6 +818,7 @@ public:
 	virtual ~CUITextInputBox();
 
 	virtual void SetSize(int iWidth, int iHeight);
+	virtual void SetPosition(int iPos_x, int iPos_y);
 
 	virtual void Init(HWND hWnd, int iWidth, int iHeight, int iMaxLength = 50, BOOL bIsPassword = FALSE);
 	virtual void Render();

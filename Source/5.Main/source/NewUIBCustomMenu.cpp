@@ -881,11 +881,23 @@ void CNewUIBCustomMenuInfo::RederBarOptionW(int iPosX, int iPosY, int* Vaule)
 }
 bool CNewUIBCustomMenuInfo::RenderInputBox(float PosX, float PosY, float W, float H, char* TextSet, CUITextInputBox*& Input, UIOPTIONS UiOption,int MaxChar, bool isPass)
 {
-	// Input Box
+	extern float g_fScreenRate_x;
+	extern float g_fScreenRate_y;
+
+	// PosX/PosY: screen pixels (gInterface / DrawBarForm). W/H: virtual size (640x480 space).
+	const int virtX = static_cast<int>(PosX / g_fScreenRate_x);
+	const int virtY = static_cast<int>(PosY / g_fScreenRate_y);
+	const int virtW = static_cast<int>(W);
+	const int virtH = static_cast<int>(H);
+	if (virtW <= 0 || virtH <= 0)
+	{
+		return false;
+	}
+
 	if (!Input)
 	{
 		Input = new CUITextInputBox;
-		Input->Init(g_hWnd, W, H, MaxChar, isPass);
+		Input->Init(g_hWnd, virtW, virtH, MaxChar, isPass);
 		Input->SetTextColor(255, 255, 230, 230);
 		Input->SetBackColor(0, 0, 0, 25);
 		Input->SetFont(g_hFont);
@@ -893,10 +905,15 @@ bool CNewUIBCustomMenuInfo::RenderInputBox(float PosX, float PosY, float W, floa
 		Input->SetOption(UiOption);
 		Input->SetText(TextSet);
 	}
-	Input->SetPosition(PosX, PosY);
+	else
+	{
+		Input->SetSize(virtW, virtH);
+	}
+
+	Input->SetPosition(virtX, virtY);
 	Input->Render();
 	Input->DoAction();
-	return 1;
+	return true;
 }
 //---------------------------------------------------------------------------------------------
 // Create

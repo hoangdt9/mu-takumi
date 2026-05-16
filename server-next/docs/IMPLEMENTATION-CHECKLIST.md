@@ -1,9 +1,26 @@
 # Takumi Server Next - Implementation Checklist
 
-Last updated: 2026-05-16 (M14 account Postgres: login + in-game `C1 D3 05` register)
+Last updated: 2026-05-16 (Android in-world combat + FPS; M7 F3 E1; Docker LAN stack)
 
 **Phân vùng dev (tránh conflict):** **`docs/WORKSTREAM-OWNERSHIP.md`**.  
-**M4 + M7 (nhân vật + item, port từ `Source/`):** **`docs/M4-M7-CHARACTER-ITEM-MIGRATION.md`** — owner đề xuất **`mac-m1`**.
+**M4 + M7 (nhân vật + item, port từ `Source/`):** **`docs/M4-M7-CHARACTER-ITEM-MIGRATION.md`** — owner đề xuất **`mac-m1`**.  
+**Nhật ký giao hàng gần đây (git):** **`../../docs/DEVELOPMENT-LOG-2026-05-16.md`**.
+
+## Recent deliverables (git `main`, 2026-05-05 → 2026-05-16)
+
+Tóm tắt theo commit; diff đầy đủ: `git log --oneline 2672bfd..HEAD` trong repo `mu-takumi`.
+
+| Area | Done (high level) | Key commits |
+|------|-------------------|-------------|
+| **Docker LAN** | `docker-stack.sh`, profiles `datazip` + `gamehost`, force-recreate, `--host-build` | `67c888b`, `bfe8017` |
+| **M6 split game TCP** | F4 03 → **55901**, `GamePortMinimalSession`, gProtect, handoff/ticket (optional) | `67c888b`, `3de80bb` |
+| **M7 EXP/stats** | EXP on kill + DB mirror; `F3 06` batch; **`C1 F3 E1`** combat HUD | `2672bfd`, `4e84ff3` |
+| **M9 combat** | `0x11` hit/die, AI dmg, viewport `0x13`; throttle life `0x26` under burst | `53fc5b9`+, `13cc5f0` |
+| **Android client** | Melee `0x11`, stat pump, login wait `F1 00`, LAN bootstrap, FPS fixes | `4e84ff3`–`57f37a3` |
+| **Move map (M)** | `8E 02` → `Move.txt` index → gate → `8E 03` + `0x1C` + join-map reload | (this change) |
+| **Death/revive** | Town `F3 04`, HeroKey vitals | `e428749`, `7d65d8d` |
+
+**Android device QA (2026-05-16):** login → Lorencia → đánh quái → level-up + EXP log OK; xem **`../../docs/DEVELOPMENT-LOG-2026-05-16.md`** § QA.
 
 ## Repository vs checklist (read first)
 
@@ -13,6 +30,7 @@ Last updated: 2026-05-16 (M14 account Postgres: login + in-game `C1 D3 05` regis
 - **Native client (C++) session notes**
   - Character select (touch → `StartGame`, ray pick, IME sau login): **`../../docs/DEVELOPMENT-LOG-2026-05-12.md`**
   - IME toàn cục / modal / xóa nhân vật (captcha 6 số phía client), JNI **Done** → Return, `UpdateMouseFromTouch` trước handler: **`../../docs/DEVELOPMENT-LOG-2026-05-14.md`**
+  - In-world combat, stat points, FPS, Docker LAN QA: **`../../docs/DEVELOPMENT-LOG-2026-05-16.md`**
 
 ## Client APK, `data.zip`, and Docker (what to redo when)
 
@@ -65,6 +83,7 @@ Use this to avoid unnecessary rebuilds.
   - [x] After join payload, send Season 6 `F3 10` on the same TCP session (`InventoryListWire602` / `JoinInventoryPacket602`): **empty** when Postgres mirror off; when **`TAKUMI_ROSTER_DB_SYNC`** + table **`inventory_slot`** (`sql/init/002_inventory_slot.sql`), load **12-byte** `item` blobs per slot for the selected character (`LegacyLoginHost`, `GamePortMinimalSession`).
   - [x] Keep session open and process multiple packets on one TCP stream
   - [x] Enforce authenticated-only character-list/select flow
+  - [x] **Move map (M):** `C1 0A 8E 02` warp list — `MoveMapCatalog` (`Move/Move.txt`, env **`TAKUMI_MOVE_PATH`**) → destination gate (`MapGateService.TryResolveWarpGate`) → `8E 03` ack, zen/level deny, `0x1C` teleport + `F3 03`/`F3 10` on map change (`MoveMapHandler` / `WorldGameplayHandlers`; parity `CMove::Move` + OpenMU `WarpHandlerPlugIn`).
 - [x] Encrypted `C3`/`C4` client→server decrypt path: **`Season6ClientToServerDecryptSession`** (facade) → **`Dec2ServerDecryptKeysLoader`** / `PipelinedDecryptor` (per-connection counter; keys from **`Dec2.dat`**, env **`TAKUMI_DEC2_PATH`**, **`TAKUMI_SIMPLEMODULUS_CS_DEC_KEY_PATH`**, OpenMU-compatible fallback when missing).
 - [x] Login-port compatibility for clients that query server list / server info on the login TCP port:
   - answer `F4 06 / F4 03 / PatchInfo` on login socket (same payloads as connect server)
@@ -74,6 +93,7 @@ Use this to avoid unnecessary rebuilds.
   - [x] reject when not authenticated (`F3 00`)
   - [x] reject unknown character select (`F3 03`)
 - [x] **M6 (scaffold + split-port minimal-login):** `Takumi.Server.Game` — `GameListenHost` (**minimal-login** …); **`Takumi.Server.GameHost`** + **`TakumiPostgresMirror`**; **`docs/M6-GAME-TCP-CHECKLIST.md`**. **Đã có:** `[event=decrypted_rx]`, mirror **`character_roster`**, `F3 10` từ DB, optional **`session_ticket`** + **`TAKUMI_GAME_REQUIRE_LOGIN_HANDOFF`**, **signed ticket on wire** (`F1 A5` / `F1 A6`, **`TAKUMI_GAME_TICKET_WIRE`**, **`TAKUMI_SESSION_TICKET_HMAC_KEY`**). **Còn thiếu:** SSOT Postgres-only cho roster (tách khỏi JSON).
+- [x] **Android in-world (2026-05-16, partial MVP):** split port login → game **55901**; melee `C1 0x11`; HUD **`F3 E1`**; kill EXP + multi-level batch effects; stat `F3 06` pump; FPS packet budget — **`../../docs/DEVELOPMENT-LOG-2026-05-16.md`**.
 - [x] **Reproducible LAN / dev env (no committed machine IP):**
   - [x] Committed **`server-next/env.defaults`** (ports, join version, serial, `TAKUMI_ACCOUNTS` format) + gitignored **`server-next/.env`** from **`.env.lan.example`** (`YOUR_LAN_IP`).
   - [x] **`RepoEnvLoader`**: load `env.defaults` (fill unset) then `.env` (override) before `LegacyLoginHost` reads configuration.
@@ -84,7 +104,7 @@ Use this to avoid unnecessary rebuilds.
 ## In Progress
 
 - [ ] Validate packet parity against real Takumi client captures (golden pcap loop).
-- [ ] Confirm Connect→Login→Select→in-game on real Android client (no black screen after `LoadWorld`). **Requires** Docker + LAN IP correct; **requires** APK rebuilt from current `Source/5.Main` for **touch-to-enter** after character select (`SEASON3B::IsPress` / long-press path in `ZzzScene.cpp` — see repo `docs/DEVELOPMENT-LOG-2026-05-12.md`). Rebuild again after IME/modal fixes logged **`docs/DEVELOPMENT-LOG-2026-05-14.md`**.
+- [~] Confirm Connect→Login→Select→**in-game combat** on real Android (**2026-05-16:** join + đánh quái + EXP OK trên `dw001`; vẫn cần regression sau mỗi APK). **Requires** Docker + LAN IP; APK từ `main` ≥ `57f37a3`. Touch-to-enter: **`docs/DEVELOPMENT-LOG-2026-05-12.md`**; IME/modal: **`docs/DEVELOPMENT-LOG-2026-05-14.md`**.
 - [x] Load SimpleModulus CS decrypt key from `keys/Dec2.dat` via **`Dec2ServerDecryptKeysLoader`** / **`Season6ClientToServerDecryptSession`** (`TAKUMI_DEC2_PATH`, **`TAKUMI_SIMPLEMODULUS_CS_DEC_KEY_PATH`**). Post-decrypt **DoS guards:** **`TAKUMI_MAX_DECRYPTED_PACKET_BYTES`** (default 12288) + **`TAKUMI_MAX_PACKETS_PER_SECOND`** (0=off) close TCP on violation (`LegacyLoginHost`, `GamePortMinimalSession`).
 
 ## Next (High Priority)

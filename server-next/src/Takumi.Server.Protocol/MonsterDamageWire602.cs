@@ -6,7 +6,14 @@ public static class MonsterDamageWire602
     public const byte HeadCode = 0x11;
 
     /// <summary>Builds <c>PRECEIVE_ATTACK</c> with QWORD view damage (Takumi <c>FixDmgQWORD</c>).</summary>
-    public static byte[] Build(int targetObjectKey, int damage, int viewCurHp, bool hitSuccess, byte damageType = 0)
+    public static byte[] Build(
+        int targetObjectKey,
+        int damage,
+        int viewCurHp,
+        bool hitSuccess,
+        byte damageType = 0,
+        int viewCurSd = 0,
+        int shieldDamage = 0)
     {
         const int size = 37;
         var buf = new byte[size];
@@ -20,18 +27,20 @@ public static class MonsterDamageWire602
             key |= 0x8000;
         }
 
+        var hpDmg = Math.Max(0, damage);
+        var sdDmg = Math.Max(0, shieldDamage);
         buf[3] = (byte)((key >> 8) & 0xFF);
         buf[4] = (byte)(key & 0xFF);
-        buf[5] = (byte)((damage >> 8) & 0xFF);
-        buf[6] = (byte)(damage & 0xFF);
+        buf[5] = (byte)((hpDmg >> 8) & 0xFF);
+        buf[6] = (byte)(hpDmg & 0xFF);
         buf[7] = damageType;
-        buf[8] = 0;
-        buf[9] = 0;
+        buf[8] = (byte)((sdDmg >> 8) & 0xFF);
+        buf[9] = (byte)(sdDmg & 0xFF);
 
         WriteUInt32Le(buf, 10, (uint)Math.Max(0, viewCurHp));
-        WriteUInt32Le(buf, 14, 0);
-        WriteUInt64Le(buf, 18, (ulong)Math.Max(0, damage));
-        WriteUInt64Le(buf, 26, 0);
+        WriteUInt32Le(buf, 14, (uint)Math.Max(0, viewCurSd));
+        WriteUInt64Le(buf, 18, (ulong)hpDmg);
+        WriteUInt64Le(buf, 26, (ulong)sdDmg);
         return buf;
     }
 

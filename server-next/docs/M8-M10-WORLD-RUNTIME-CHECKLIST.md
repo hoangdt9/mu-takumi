@@ -17,6 +17,7 @@
 - [x] **Custom:** `custom_world_config` (JSONB table/raw snapshot) — **`CustomWorldConfigDbImporter`** (`Custom/*.txt` + `.ini`/`.xml` raw); `TAKUMI_CUSTOM_WORLD_DB`.
 - [x] Script gộp: **`scripts/import-world-static-data.sh`** (cần `TAKUMI_GAMESERVER_DATA_PATH` hoặc auto-detect MuServer Data).
 - [x] Runtime gameplay: `C1 0x1C` teleport / `C2 0x31` shop list (`WorldGameplayHandlers`, `MapGateService`, `NpcShopWire602`).
+- [x] **Move map (M):** `C1 0A 8E 02` → `MoveMapCatalog` + `MoveMapHandler` (zen/level gate, `8E 03` + `0x1C` + join reload).
 
 ---
 

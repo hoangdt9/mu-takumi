@@ -33,6 +33,23 @@ public static class WorldGameplayHandlers
             return true;
         }
 
+        if (await MoveMapHandler.TryHandleAsync(
+                player,
+                tracker,
+                connection,
+                clientProtectOutbound,
+                accountId,
+                characterName10,
+                presenceSessionId,
+                packet,
+                remote,
+                writeAsync,
+                onRosterDirty,
+                ct).ConfigureAwait(false))
+        {
+            return true;
+        }
+
         if (ClientGameplayPackets602.TryFindShopExitRequest(packet, out _))
         {
             PlayerShopSession.CloseShop(presenceSessionId);

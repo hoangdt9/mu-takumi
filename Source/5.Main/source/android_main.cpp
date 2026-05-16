@@ -601,6 +601,7 @@ constexpr int kVirtualZoomButtonMinus = 0;
 constexpr int kVirtualZoomButtonPlus = 1;
 constexpr uint32_t kVirtualMiniMapButtonCooldownMs = 220;
 constexpr uint32_t kVirtualAttackRepeatMs = 320;
+constexpr uint32_t kVirtualProximityAttackMs = 380;
 constexpr uint32_t kVirtualUtilityButtonCooldownMs = 200;
 constexpr uint32_t kVirtualSkillAssignLongPressMs = 480;
 constexpr uint32_t kVirtualAssignModeTimeoutMs = 9000;
@@ -3510,6 +3511,40 @@ void UpdateVirtualPadHolds()
     }
 
     ApplyVirtualJoystickMovement();
+}
+
+void UpdateVirtualProximityCombat()
+{
+    if (!IsVirtualPadAvailable() || Hero == nullptr || Hero->Dead > 0)
+    {
+        return;
+    }
+
+    if (IsVirtualButtonPressed(kVirtualAttackButton))
+    {
+        return;
+    }
+
+    static uint32_t s_lastProximityAttackMs = 0;
+    const uint32_t nowMs = MU_MobileGetTicks();
+    if (s_lastProximityAttackMs != 0 && (nowMs - s_lastProximityAttackMs) < kVirtualProximityAttackMs)
+    {
+        return;
+    }
+
+    EnsureNormalAttackTarget();
+    const int target = SelectedCharacter;
+    if (target < 0 || !IsWithinVirtualAutoAcquireRange(target))
+    {
+        return;
+    }
+
+    if (!TriggerVirtualNormalAutoAttack())
+    {
+        return;
+    }
+
+    s_lastProximityAttackMs = nowMs;
 }
 
 float UiToScreenX(float uiX)
@@ -7220,6 +7255,7 @@ static void RunAndroidGameFrame()
 
     AndroidDrainPackets();
     UpdateVirtualPadHolds();
+    UpdateVirtualProximityCombat();
 
     const uint32_t nowTicks = MU_MobileGetTicks();
     int hackTickBudget = 4;
@@ -8115,6 +8151,7 @@ int SDL_main(int argc, char* argv[])
 
         AndroidDrainPackets();
         UpdateVirtualPadHolds();
+        UpdateVirtualProximityCombat();
 
         // Windows builds drive MU Helper via Win32 SetTimer(MUHELPER_TIMER, 250ms).
         // On Android, SetTimer is a stub, so tick MU Helper from the main loop.

@@ -27,27 +27,52 @@ void CreatePoint(vec3_t Position,int Value,vec3_t Color,float scale, bool bMove)
 {
 	//if (!g_pNewUISystem->GetUI_NewOptionWindow()->OnOffGrap[g_pNewUISystem->GetUI_NewOptionWindow()->eEffectDynamic]) return;
 
+	int slot = -1;
+#if defined(__ANDROID__) || defined(MU_IOS)
+	int reuse = -1;
+	int reuseLife = 1000000;
+#endif
 	for(int i=0;i<MAX_POINTS;i++)
 	{
 		PARTICLE *o = &Points[i];
 		if(!o->Live)
 		{
-			o->Live = true;
-			o->Type = Value;
-			VectorCopy(Position,o->Position);
-			o->Position[2] += 140.f;
-			VectorCopy(Color,o->Angle);
-#ifdef PBG_ADD_NEWCHAR_MONK_SKILL
-			o->bRepeatedly = bRepeatedly;
-			o->fRepeatedlyHeight = RequestTerrainHeight(o->Position[0], o->Position[1])+140.0f;
-#endif //PBG_ADD_NEWCHAR_MONK_SKILL
-			o->Gravity  = 10.f;
-			o->Scale    = scale;
-			o->LifeTime = 0;
-            o->bEnableMove = bMove;
-			return;
+			slot = i;
+			break;
 		}
+#if defined(__ANDROID__) || defined(MU_IOS)
+		if(o->LifeTime < reuseLife)
+		{
+			reuseLife = o->LifeTime;
+			reuse = i;
+		}
+#endif
 	}
+#if defined(__ANDROID__) || defined(MU_IOS)
+	if(slot < 0)
+	{
+		slot = reuse;
+	}
+#endif
+	if(slot < 0)
+	{
+		return;
+	}
+
+	PARTICLE *o = &Points[slot];
+	o->Live = true;
+	o->Type = Value;
+	VectorCopy(Position,o->Position);
+	o->Position[2] += 140.f;
+	VectorCopy(Color,o->Angle);
+#ifdef PBG_ADD_NEWCHAR_MONK_SKILL
+	o->bRepeatedly = bRepeatedly;
+	o->fRepeatedlyHeight = RequestTerrainHeight(o->Position[0], o->Position[1])+140.0f;
+#endif //PBG_ADD_NEWCHAR_MONK_SKILL
+	o->Gravity  = 10.f;
+	o->Scale    = scale;
+	o->LifeTime = 0;
+	o->bEnableMove = bMove;
 }
 
 void RenderPoints( BYTE byRenderOneMore )

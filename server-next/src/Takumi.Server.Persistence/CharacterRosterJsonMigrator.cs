@@ -147,6 +147,8 @@ public static class CharacterRosterJsonMigrator
                     CurrentMp = c.CurrentMp,
                     MaxMp = c.MaxMp,
                     Zen = c.Zen,
+                    CurrentShield = c.CurrentShield,
+                    MaxShield = c.MaxShield,
                 };
                 ApplySpawnDefaultsIfUnset(row);
                 list.Add(row);
@@ -230,5 +232,9 @@ public static class CharacterRosterJsonMigrator
         public int MaxMp { get; set; }
 
         public long Zen { get; set; }
+
+        public int CurrentShield { get; set; }
+
+        public int MaxShield { get; set; }
     }
 }

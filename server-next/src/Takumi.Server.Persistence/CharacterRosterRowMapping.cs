@@ -15,7 +15,9 @@ public static class CharacterRosterRowMapping
         int maxHp,
         int currentMp,
         int maxMp,
-        long zen) =>
+        long zen,
+        int currentShield = 0,
+        int maxShield = 0) =>
         new()
         {
             Name = name,
@@ -30,5 +32,7 @@ public static class CharacterRosterRowMapping
             CurrentMp = currentMp,
             MaxMp = maxMp,
             Zen = zen,
+            CurrentShield = currentShield,
+            MaxShield = maxShield,
         };
 }

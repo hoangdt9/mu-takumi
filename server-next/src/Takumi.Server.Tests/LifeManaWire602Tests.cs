@@ -17,18 +17,24 @@ public sealed class LifeManaWire602Tests
     }
 
     [Fact]
-    public void TryApplyVitalsFromOutbound_updates_hp_mp()
+    public void TryApplyVitalsFromOutbound_updates_hp_mp_and_shield()
     {
         var curHp = 0;
         var maxHp = 0;
         var curMp = 0;
         var maxMp = 0;
+        var curSd = 0;
+        var maxSd = 0;
         var buf = new byte[32];
-        LifeManaWire602.BuildLife(LifeManaWire602.TypeCurrent, 100).CopyTo(buf, 0);
-        LifeManaWire602.BuildMana(LifeManaWire602.TypeMax, 200).CopyTo(buf, 9);
+        LifeManaWire602.BuildLife(LifeManaWire602.TypeCurrent, 100, 55).CopyTo(buf, 0);
+        LifeManaWire602.BuildLife(LifeManaWire602.TypeMax, 200, 180).CopyTo(buf, 9);
+        LifeManaWire602.BuildMana(LifeManaWire602.TypeMax, 220).CopyTo(buf, 18);
 
-        Assert.True(LifeManaWire602.TryApplyVitalsFromOutbound(buf, ref curHp, ref maxHp, ref curMp, ref maxMp));
+        Assert.True(LifeManaWire602.TryApplyVitalsFromOutbound(buf, ref curHp, ref maxHp, ref curMp, ref maxMp, ref curSd, ref maxSd));
         Assert.Equal(100, curHp);
-        Assert.Equal(200, maxMp);
+        Assert.Equal(55, curSd);
+        Assert.Equal(200, maxHp);
+        Assert.Equal(180, maxSd);
+        Assert.Equal(220, maxMp);
     }
 }

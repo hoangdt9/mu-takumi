@@ -409,7 +409,9 @@ public static class GamePortMinimalSession
                             picked.MaxHp,
                             picked.CurrentMp,
                             picked.MaxMp,
-                            ct).ConfigureAwait(false);
+                            ct,
+                            picked.CurrentShield,
+                            picked.MaxShield).ConfigureAwait(false);
                         await MapMonsterScopeSender.TrySendAfterJoinAsync(
                             monsterViewportTracker,
                             connection,
@@ -450,12 +452,20 @@ public static class GamePortMinimalSession
                             maxHp: picked.MaxHp,
                             currentMp: picked.CurrentMp,
                             maxMp: picked.MaxMp,
+                            currentShield: picked.CurrentShield,
+                            maxShield: picked.MaxShield,
                             accountLogin: loggedAccountId,
                             characterName: Encoding.ASCII.GetString(picked.Name10).TrimEnd('\0'),
                             onVitalsChanged: (hp, max) =>
                             {
                                 picked.CurrentHp = hp;
                                 picked.MaxHp = max;
+                                Volatile.Write(ref rosterDirty, 1);
+                            },
+                            onShieldVitalsChanged: (sd, sdMax) =>
+                            {
+                                picked.CurrentShield = sd;
+                                picked.MaxShield = sdMax;
                                 Volatile.Write(ref rosterDirty, 1);
                             },
                             onRosterPositionChanged: (map, x, y) =>
@@ -539,12 +549,20 @@ public static class GamePortMinimalSession
                                 maxHp: pickedMove.MaxHp,
                                 currentMp: pickedMove.CurrentMp,
                                 maxMp: pickedMove.MaxMp,
+                                currentShield: pickedMove.CurrentShield,
+                                maxShield: pickedMove.MaxShield,
                                 accountLogin: loggedAccountId,
                                 characterName: Encoding.ASCII.GetString(pickedMove.Name10).TrimEnd('\0'),
                                 onVitalsChanged: (hp, max) =>
                                 {
                                     pickedMove.CurrentHp = hp;
                                     pickedMove.MaxHp = max;
+                                    Volatile.Write(ref rosterDirty, 1);
+                                },
+                                onShieldVitalsChanged: (sd, sdMax) =>
+                                {
+                                    pickedMove.CurrentShield = sd;
+                                    pickedMove.MaxShield = sdMax;
                                     Volatile.Write(ref rosterDirty, 1);
                                 },
                                 onRosterPositionChanged: (map, x, y) =>
@@ -965,6 +983,8 @@ public static class GamePortMinimalSession
                     CurrentMp = e.CurrentMp,
                     MaxMp = e.MaxMp,
                     Zen = e.Zen,
+                    CurrentShield = e.CurrentShield,
+                    MaxShield = e.MaxShield,
                 });
         }
 
@@ -1011,7 +1031,9 @@ public static class GamePortMinimalSession
                     e.MaxHp,
                     e.CurrentMp,
                     e.MaxMp,
-                    e.Zen));
+                    e.Zen,
+                    e.CurrentShield,
+                    e.MaxShield));
         }
 
         return list.ToArray();
@@ -1041,6 +1063,10 @@ public static class GamePortMinimalSession
         public int MaxMp { get; set; }
 
         public long Zen { get; set; }
+
+        public int CurrentShield { get; set; }
+
+        public int MaxShield { get; set; }
     }
 
     static GameRosterEntry? FindRosterEntry(List<GameRosterEntry> roster, byte[] joinName10)
@@ -1057,7 +1083,18 @@ public static class GamePortMinimalSession
     }
 
     static CharacterRosterWire ToWire(GameRosterEntry e) =>
-        new(e.Name10, e.ServerClass, e.Level, CharacterRosterVitals.FromInts(e.CurrentHp, e.MaxHp, e.CurrentMp, e.MaxMp, e.Zen));
+        new(
+            e.Name10,
+            e.ServerClass,
+            e.Level,
+            CharacterRosterVitals.FromInts(
+                e.CurrentHp,
+                e.MaxHp,
+                e.CurrentMp,
+                e.MaxMp,
+                e.Zen,
+                e.CurrentShield,
+                e.MaxShield));
 
     static List<CharacterRosterWire> MapRosterToWire(List<GameRosterEntry> roster)
     {

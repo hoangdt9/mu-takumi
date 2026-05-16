@@ -373,5 +373,16 @@ public static class WorldGameplayHandlers
     }
 
     static CharacterRosterWire ToWire(GameRosterEntry e) =>
-        new(e.Name10, e.ServerClass, e.Level, CharacterRosterVitals.FromInts(e.CurrentHp, e.MaxHp, e.CurrentMp, e.MaxMp, e.Zen));
+        new(
+            e.Name10,
+            e.ServerClass,
+            e.Level,
+            CharacterRosterVitals.FromInts(
+                e.CurrentHp,
+                e.MaxHp,
+                e.CurrentMp,
+                e.MaxMp,
+                e.Zen,
+                e.CurrentShield,
+                e.MaxShield));
 }

@@ -47,7 +47,9 @@ public static class LifeManaWire602
         ref int currentHp,
         ref int maxHp,
         ref int currentMp,
-        ref int maxMp)
+        ref int maxMp,
+        ref int currentShield,
+        ref int maxShield)
     {
         var changed = false;
         for (var i = 0; i + PacketLength <= outbound.Length; i++)
@@ -60,16 +62,19 @@ public static class LifeManaWire602
             var head = outbound[i + 2];
             var type = outbound[i + 3];
             var v = (ushort)((outbound[i + 4] << 8) | outbound[i + 5]);
+            var shieldWord = (ushort)((outbound[i + 7] << 8) | outbound[i + 8]);
             if (head == HeadLife)
             {
-                if (type == TypeCurrent && currentHp != v)
+                if (type == TypeCurrent && (currentHp != v || currentShield != shieldWord))
                 {
                     currentHp = v;
+                    currentShield = shieldWord;
                     changed = true;
                 }
-                else if (type == TypeMax && maxHp != v)
+                else if (type == TypeMax && (maxHp != v || maxShield != shieldWord))
                 {
                     maxHp = v;
+                    maxShield = shieldWord;
                     changed = true;
                 }
             }

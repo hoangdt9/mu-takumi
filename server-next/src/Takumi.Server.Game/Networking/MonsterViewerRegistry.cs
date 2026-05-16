@@ -30,10 +30,14 @@ public sealed class MonsterViewerSession
     public int MaxHp { get; set; }
     public int CurrentMp { get; set; }
     public int MaxMp { get; set; }
+    public int CurrentShield { get; set; }
+    public int MaxShield { get; set; }
     public string? AccountLogin { get; set; }
     public string? CharacterName { get; set; }
     public MonsterViewportTracker? ViewportTracker { get; set; }
     public Action<int, int>? OnVitalsChanged { get; set; }
+
+    public Action<int, int>? OnShieldVitalsChanged { get; set; }
 
     public Action<byte, byte, byte>? OnRosterPositionChanged { get; set; }
 }
@@ -67,9 +71,12 @@ public static class MonsterViewerRegistry
         int maxHp = 0,
         int currentMp = 0,
         int maxMp = 0,
+        int currentShield = 0,
+        int maxShield = 0,
         string? accountLogin = null,
         string? characterName = null,
         Action<int, int>? onVitalsChanged = null,
+        Action<int, int>? onShieldVitalsChanged = null,
         Action<byte, byte, byte>? onRosterPositionChanged = null)
     {
         if (Sessions.TryGetValue(sessionId, out var existing))
@@ -103,6 +110,16 @@ public static class MonsterViewerRegistry
                 existing.CurrentMp = currentMp;
             }
 
+            if (maxShield > 0)
+            {
+                existing.MaxShield = maxShield;
+                existing.CurrentShield = currentShield > 0 ? currentShield : (existing.CurrentShield > 0 ? existing.CurrentShield : maxShield);
+            }
+            else if (currentShield > 0)
+            {
+                existing.CurrentShield = currentShield;
+            }
+
             if (!string.IsNullOrEmpty(accountLogin))
             {
                 existing.AccountLogin = accountLogin;
@@ -114,10 +131,13 @@ public static class MonsterViewerRegistry
             }
 
             existing.OnVitalsChanged = onVitalsChanged ?? existing.OnVitalsChanged;
+            existing.OnShieldVitalsChanged = onShieldVitalsChanged ?? existing.OnShieldVitalsChanged;
             existing.OnRosterPositionChanged = onRosterPositionChanged ?? existing.OnRosterPositionChanged;
             return;
         }
 
+        var initSdMax = Math.Max(0, maxShield);
+        var initSd = initSdMax > 0 ? (currentShield > 0 ? currentShield : initSdMax) : currentShield;
         Sessions[sessionId] = new MonsterViewerSession(sessionId, connection, protect)
         {
             MapId = mapId,
@@ -129,9 +149,12 @@ public static class MonsterViewerRegistry
             MaxHp = maxHp,
             CurrentMp = currentMp,
             MaxMp = maxMp,
+            CurrentShield = initSd,
+            MaxShield = initSdMax,
             AccountLogin = accountLogin,
             CharacterName = characterName,
             OnVitalsChanged = onVitalsChanged,
+            OnShieldVitalsChanged = onShieldVitalsChanged,
             OnRosterPositionChanged = onRosterPositionChanged,
         };
     }
@@ -183,13 +206,43 @@ public static class MonsterViewerRegistry
         }
 
         var maxHp = Math.Max(1, victim.MaxHp);
+        var maxSd = Math.Max(0, victim.MaxShield);
+        var sd = Math.Max(0, victim.CurrentShield);
+        if (maxSd > 0 && sd <= 0)
+        {
+            sd = maxSd;
+        }
+
         var dmg = Math.Max(1, damage);
-        victim.CurrentHp = Math.Max(0, victim.CurrentHp - dmg);
+        var remaining = dmg;
+        if (maxSd > 0)
+        {
+            var takeSd = Math.Min(sd, remaining);
+            sd -= takeSd;
+            remaining -= takeSd;
+        }
+
+        victim.CurrentShield = sd;
+        victim.CurrentHp = Math.Max(0, victim.CurrentHp - remaining);
         victim.OnVitalsChanged?.Invoke(victim.CurrentHp, maxHp);
+        victim.OnShieldVitalsChanged?.Invoke(victim.CurrentShield, maxSd);
+        RosterVitalsCombat.ScheduleVitalsMirror(
+            victim.AccountLogin,
+            victim.CharacterName,
+            victim.CurrentHp,
+            maxHp,
+            victim.CurrentMp,
+            victim.MaxMp,
+            victim.CurrentShield,
+            maxSd);
 
         var dmgPkt = MonsterDamageWire602.Build(victim.PlayerObjectKey, dmg, victim.CurrentHp, hitSuccess: true);
         await GamePortOutboundWire.WriteAsync(victim.Connection, victim.Protect, dmgPkt, ct).ConfigureAwait(false);
-        var lifePkt = LifeManaWire602.BuildLife(LifeManaWire602.TypeCurrent, (ushort)Math.Min(victim.CurrentHp, ushort.MaxValue));
+        var sdWire = (ushort)Math.Clamp(victim.CurrentShield, 0, ushort.MaxValue);
+        var lifePkt = LifeManaWire602.BuildLife(
+            LifeManaWire602.TypeCurrent,
+            (ushort)Math.Min(victim.CurrentHp, ushort.MaxValue),
+            sdWire);
         await GamePortOutboundWire.WriteAsync(victim.Connection, victim.Protect, lifePkt, ct).ConfigureAwait(false);
 
         Console.WriteLine(
@@ -325,20 +378,39 @@ public static class MonsterViewerRegistry
         var baseDmg = ParseIntEnv("TAKUMI_MONSTER_TO_PLAYER_DAMAGE", 15, 1, 2000);
         var dmg = Math.Max(1, baseDmg * Math.Clamp(damagePercent, 50, 500) / 100);
         var maxHp = Math.Max(1, session.MaxHp);
+        var maxSd = Math.Max(0, session.MaxShield);
+        var sd = Math.Max(0, session.CurrentShield);
+        if (maxSd > 0 && sd <= 0)
+        {
+            sd = maxSd;
+        }
+
         if (session.CurrentHp <= 0)
         {
             session.CurrentHp = maxHp;
         }
 
-        session.CurrentHp = Math.Max(0, session.CurrentHp - dmg);
+        var remaining = dmg;
+        if (maxSd > 0)
+        {
+            var takeSd = Math.Min(sd, remaining);
+            sd -= takeSd;
+            remaining -= takeSd;
+        }
+
+        session.CurrentShield = sd;
+        session.CurrentHp = Math.Max(0, session.CurrentHp - remaining);
         session.OnVitalsChanged?.Invoke(session.CurrentHp, maxHp);
+        session.OnShieldVitalsChanged?.Invoke(session.CurrentShield, maxSd);
         RosterVitalsCombat.ScheduleVitalsMirror(
             session.AccountLogin,
             session.CharacterName,
             session.CurrentHp,
             maxHp,
             session.CurrentMp,
-            session.MaxMp);
+            session.MaxMp,
+            session.CurrentShield,
+            maxSd);
 
         var dmgPkt = MonsterDamageWire602.Build(
             session.PlayerObjectKey,
@@ -347,9 +419,11 @@ public static class MonsterViewerRegistry
             hitSuccess: true);
         await GamePortOutboundWire.WriteAsync(session.Connection, session.Protect, dmgPkt, ct).ConfigureAwait(false);
 
+        var sdWire = (ushort)Math.Clamp(session.CurrentShield, 0, ushort.MaxValue);
         var lifePkt = LifeManaWire602.BuildLife(
             LifeManaWire602.TypeCurrent,
-            (ushort)Math.Clamp(session.CurrentHp, 0, ushort.MaxValue));
+            (ushort)Math.Clamp(session.CurrentHp, 0, ushort.MaxValue),
+            sdWire);
         await GamePortOutboundWire.WriteAsync(session.Connection, session.Protect, lifePkt, ct).ConfigureAwait(false);
 
         if (session.CurrentHp <= 0)

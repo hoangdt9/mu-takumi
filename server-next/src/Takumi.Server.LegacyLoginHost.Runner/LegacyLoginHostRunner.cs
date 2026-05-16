@@ -532,7 +532,9 @@ public static class LegacyLoginHostRunner
                         ref active.CurrentHp,
                         ref active.MaxHp,
                         ref active.CurrentMp,
-                        ref active.MaxMp))
+                        ref active.MaxMp,
+                        ref active.CurrentShield,
+                        ref active.MaxShield))
                 {
                     Volatile.Write(ref rosterDirty, 1);
                 }
@@ -733,7 +735,9 @@ public static class LegacyLoginHostRunner
                             ref picked.MaxHp,
                             ref picked.CurrentMp,
                             ref picked.MaxMp,
-                            ref picked.Zen);
+                            ref picked.Zen,
+                            ref picked.CurrentShield,
+                            ref picked.MaxShield);
                         Volatile.Write(ref rosterDirty, 1);
                     }
 
@@ -749,7 +753,9 @@ public static class LegacyLoginHostRunner
                         picked.MaxHp,
                         picked.CurrentMp,
                         picked.MaxMp,
-                        ct).ConfigureAwait(false);
+                        ct,
+                        picked.CurrentShield,
+                        picked.MaxShield).ConfigureAwait(false);
                     await connection.Output.FlushAsync(ct).ConfigureAwait(false);
                     Console.WriteLine(
                         "[{0}] sent join map (F3 03) + inventory (F3 10 len={1}) map={2} xy=({3},{4}) ang={5} name='{6}' — flushed before viewport",
@@ -800,12 +806,20 @@ public static class LegacyLoginHostRunner
                         maxHp: picked.MaxHp,
                         currentMp: picked.CurrentMp,
                         maxMp: picked.MaxMp,
+                        currentShield: picked.CurrentShield,
+                        maxShield: picked.MaxShield,
                         accountLogin: loggedAccountId,
                         characterName: Encoding.ASCII.GetString(picked.Name10).TrimEnd('\0'),
                         onVitalsChanged: (hp, max) =>
                         {
                             picked.CurrentHp = hp;
                             picked.MaxHp = max;
+                            Volatile.Write(ref rosterDirty, 1);
+                        },
+                        onShieldVitalsChanged: (sd, sdMax) =>
+                        {
+                            picked.CurrentShield = sd;
+                            picked.MaxShield = sdMax;
                             Volatile.Write(ref rosterDirty, 1);
                         },
                         onRosterPositionChanged: (map, x, y) =>
@@ -927,7 +941,9 @@ public static class LegacyLoginHostRunner
                                 ref pickedMove.MaxHp,
                                 ref pickedMove.CurrentMp,
                                 ref pickedMove.MaxMp,
-                                ref pickedMove.Zen);
+                                ref pickedMove.Zen,
+                                ref pickedMove.CurrentShield,
+                                ref pickedMove.MaxShield);
                             Volatile.Write(ref rosterDirty, 1);
                         }
 
@@ -979,12 +995,20 @@ public static class LegacyLoginHostRunner
                             maxHp: pickedMove.MaxHp,
                             currentMp: pickedMove.CurrentMp,
                             maxMp: pickedMove.MaxMp,
+                            currentShield: pickedMove.CurrentShield,
+                            maxShield: pickedMove.MaxShield,
                             accountLogin: loggedAccountId,
                             characterName: Encoding.ASCII.GetString(pickedMove.Name10).TrimEnd('\0'),
                             onVitalsChanged: (hp, max) =>
                             {
                                 pickedMove.CurrentHp = hp;
                                 pickedMove.MaxHp = max;
+                                Volatile.Write(ref rosterDirty, 1);
+                            },
+                            onShieldVitalsChanged: (sd, sdMax) =>
+                            {
+                                pickedMove.CurrentShield = sd;
+                                pickedMove.MaxShield = sdMax;
                                 Volatile.Write(ref rosterDirty, 1);
                             },
                             onRosterPositionChanged: (map, x, y) =>
@@ -1599,6 +1623,8 @@ public static class LegacyLoginHostRunner
                     e.CurrentMp = d.CurrentMp;
                     e.MaxMp = d.MaxMp;
                     e.Zen = d.Zen;
+                    e.CurrentShield = d.CurrentShield;
+                    e.MaxShield = d.MaxShield;
                 });
             CharacterRosterMirrorHealth.RecordMergeSuccess();
         }
@@ -1628,6 +1654,8 @@ public static class LegacyLoginHostRunner
             CurrentMp = row.CurrentMp,
             MaxMp = row.MaxMp,
             Zen = row.Zen,
+            CurrentShield = row.CurrentShield,
+            MaxShield = row.MaxShield,
         };
         ApplyLegacySpawnIfUnset(entry);
         return entry;
@@ -1680,6 +1708,8 @@ public static class LegacyLoginHostRunner
                     CurrentMp = c.CurrentMp,
                     MaxMp = c.MaxMp,
                     Zen = c.Zen,
+                    CurrentShield = c.CurrentShield,
+                    MaxShield = c.MaxShield,
                 };
                 ApplyLegacySpawnIfUnset(entry);
                 roster.Add(entry);
@@ -1717,6 +1747,8 @@ public static class LegacyLoginHostRunner
                     CurrentMp = e.CurrentMp,
                     MaxMp = e.MaxMp,
                     Zen = e.Zen,
+                    CurrentShield = e.CurrentShield,
+                    MaxShield = e.MaxShield,
                 });
         }
 
@@ -1773,7 +1805,9 @@ public static class LegacyLoginHostRunner
                         e.MaxHp,
                         e.CurrentMp,
                         e.MaxMp,
-                        e.Zen));
+                        e.Zen,
+                        e.CurrentShield,
+                        e.MaxShield));
             }
 
             snapshot = list.ToArray();
@@ -1842,7 +1876,11 @@ public static class LegacyLoginHostRunner
     }
 
     static CharacterRosterWire ToWire(CharacterRosterEntry e) =>
-        new(e.Name10, e.ServerClass, e.Level, CharacterRosterVitals.FromInts(e.CurrentHp, e.MaxHp, e.CurrentMp, e.MaxMp, e.Zen));
+        new(
+            e.Name10,
+            e.ServerClass,
+            e.Level,
+            CharacterRosterVitals.FromInts(e.CurrentHp, e.MaxHp, e.CurrentMp, e.MaxMp, e.Zen, e.CurrentShield, e.MaxShield));
 
     static GameRosterEntry ToGameRosterEntry(CharacterRosterEntry e) =>
         new()
@@ -1859,6 +1897,8 @@ public static class LegacyLoginHostRunner
             CurrentMp = e.CurrentMp,
             MaxMp = e.MaxMp,
             Zen = e.Zen,
+            CurrentShield = e.CurrentShield,
+            MaxShield = e.MaxShield,
         };
 
     static void CopyGameRosterBack(CharacterRosterEntry dst, GameRosterEntry src)
@@ -1872,6 +1912,8 @@ public static class LegacyLoginHostRunner
         dst.CurrentMp = src.CurrentMp;
         dst.MaxMp = src.MaxMp;
         dst.Zen = src.Zen;
+        dst.CurrentShield = src.CurrentShield;
+        dst.MaxShield = src.MaxShield;
     }
 
     static List<CharacterRosterWire> MapRosterToWire(List<CharacterRosterEntry> roster)
@@ -2203,6 +2245,8 @@ public static class LegacyLoginHostRunner
         c.CurrentMp = g.CurrentMp;
         c.MaxMp = g.MaxMp;
         c.Zen = g.Zen;
+        c.CurrentShield = g.CurrentShield;
+        c.MaxShield = g.MaxShield;
     }
 }
 
@@ -2236,6 +2280,8 @@ internal sealed class CharacterRosterEntry
     public int CurrentMp;
     public int MaxMp;
     public long Zen;
+    public int CurrentShield;
+    public int MaxShield;
 }
 
 internal sealed class RosterPersistRoot
@@ -2263,6 +2309,10 @@ internal sealed class RosterPersistChar
     public int MaxMp { get; set; }
 
     public long Zen { get; set; }
+
+    public int CurrentShield { get; set; }
+
+    public int MaxShield { get; set; }
 }
 
 /// <summary>Thread-safe login flag for keepalive + packet gate (visibility across tasks).</summary>

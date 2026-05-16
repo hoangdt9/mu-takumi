@@ -24,6 +24,20 @@ public sealed class JoinMapVitals602Tests
     }
 
     [Fact]
+    public void Join_uses_persisted_shield_when_max_sd_set()
+    {
+        var name = new byte[10];
+        "Sd"u8.CopyTo(name);
+        var vitals = CharacterRosterVitals.FromInts(100, 200, 30, 60, zen: 0, currentShield: 40, maxShield: 180);
+        var pkt = JoinMapServerWire602.Build(new CharacterRosterWire(name, serverClass: 0x20, level: 10, vitals));
+
+        Assert.Equal(40, BinaryPrimitives.ReadUInt16LittleEndian(pkt.AsSpan(42)));
+        Assert.Equal(180, BinaryPrimitives.ReadUInt16LittleEndian(pkt.AsSpan(44)));
+        Assert.Equal(40u, BinaryPrimitives.ReadUInt32LittleEndian(pkt.AsSpan(103)));
+        Assert.Equal(180u, BinaryPrimitives.ReadUInt32LittleEndian(pkt.AsSpan(107)));
+    }
+
+    [Fact]
     public void Join_falls_back_to_stub_when_vitals_unset()
     {
         var name = new byte[10];

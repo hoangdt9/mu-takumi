@@ -44,7 +44,8 @@ public sealed class PostgresCharacterRosterRepository : IAsyncDisposable
         await using var cmd = new NpgsqlCommand(
             """
             SELECT character_name, server_class, level, map_id, pos_x, pos_y, angle,
-                   current_hp, max_hp, current_mp, max_mp, zen
+                   current_hp, max_hp, current_mp, max_mp, zen,
+                   current_shield, max_shield
             FROM character_roster
             WHERE account_login = $1
             ORDER BY character_name
@@ -69,6 +70,8 @@ public sealed class PostgresCharacterRosterRepository : IAsyncDisposable
                     CurrentMp = reader.GetInt32(9),
                     MaxMp = reader.GetInt32(10),
                     Zen = reader.GetInt64(11),
+                    CurrentShield = reader.GetInt32(12),
+                    MaxShield = reader.GetInt32(13),
                 });
         }
 
@@ -92,8 +95,8 @@ public sealed class PostgresCharacterRosterRepository : IAsyncDisposable
                 """
                 INSERT INTO character_roster (
                     account_login, character_name, server_class, level, map_id, pos_x, pos_y, angle,
-                    current_hp, max_hp, current_mp, max_mp, zen)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+                    current_hp, max_hp, current_mp, max_mp, zen, current_shield, max_shield)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
                 """,
                 conn,
                 tx);
@@ -110,6 +113,8 @@ public sealed class PostgresCharacterRosterRepository : IAsyncDisposable
             ins.Parameters.Add(new NpgsqlParameter("mp", NpgsqlDbType.Integer) { Value = row.CurrentMp });
             ins.Parameters.Add(new NpgsqlParameter("mpmax", NpgsqlDbType.Integer) { Value = row.MaxMp });
             ins.Parameters.Add(new NpgsqlParameter("z", NpgsqlDbType.Bigint) { Value = row.Zen });
+            ins.Parameters.Add(new NpgsqlParameter("sd", NpgsqlDbType.Integer) { Value = row.CurrentShield });
+            ins.Parameters.Add(new NpgsqlParameter("sdm", NpgsqlDbType.Integer) { Value = row.MaxShield });
             await ins.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
         }
 
@@ -143,13 +148,16 @@ public sealed class PostgresCharacterRosterRepository : IAsyncDisposable
         int maxHp,
         int currentMp,
         int maxMp,
+        int currentShield = 0,
+        int maxShield = 0,
         CancellationToken ct = default)
     {
         await using var conn = await this._dataSource.OpenConnectionAsync(ct).ConfigureAwait(false);
         await using var cmd = new NpgsqlCommand(
             """
             UPDATE character_roster
-            SET current_hp = $3, max_hp = $4, current_mp = $5, max_mp = $6, updated_at = NOW()
+            SET current_hp = $3, max_hp = $4, current_mp = $5, max_mp = $6,
+                current_shield = $7, max_shield = $8, updated_at = NOW()
             WHERE account_login = $1 AND character_name = $2
             """,
             conn);
@@ -159,6 +167,8 @@ public sealed class PostgresCharacterRosterRepository : IAsyncDisposable
         cmd.Parameters.Add(new NpgsqlParameter("hpmax", NpgsqlDbType.Integer) { Value = maxHp });
         cmd.Parameters.Add(new NpgsqlParameter("mp", NpgsqlDbType.Integer) { Value = currentMp });
         cmd.Parameters.Add(new NpgsqlParameter("mpmax", NpgsqlDbType.Integer) { Value = maxMp });
+        cmd.Parameters.Add(new NpgsqlParameter("sd", NpgsqlDbType.Integer) { Value = currentShield });
+        cmd.Parameters.Add(new NpgsqlParameter("sdm", NpgsqlDbType.Integer) { Value = maxShield });
         await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
     }
 

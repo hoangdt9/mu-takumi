@@ -13,7 +13,7 @@
 
 - [x] `sql/init/004_character_roster_vitals.sql` — thêm `current_hp`, `max_hp`, `current_mp`, `max_mp`, `zen` trên `public.character_roster` (`ALTER … IF NOT EXISTS`).
 - [x] Ghi chú trong `README.md` / `apply-sql.sh` header nếu thứ tự file thay đổi (hiện `001` → `004` theo tên).
-- [ ] (Tuỳ chọn) Cột `shield` / `skill_mana` nếu join wire cần parity đầy đủ hơn — đối chiếu `JoinMapServerWire602` offsets.
+- [x] (Tuỳ chọn) Cột `shield` / `skill_mana` nếu join wire cần parity đầy đủ hơn — đối chiếu `JoinMapServerWire602` offsets. **Đã có:** `current_shield` / `max_shield` trên `character_roster` + `character_domain` (`008_character_roster_shield.sql`), join `F3 03` + vitals upsert + JSON roster; `skill_mana` join vẫn mirror mana khi chưa có cột riêng.
 
 ---
 
@@ -39,7 +39,7 @@
 - [x] Lưu vitals khi **disconnect** (cùng `SavePersistedRoster` / `SaveRoster` — đã ghi field vitals; cần seed trước, xem dưới).
 - [x] **Seed sau join / move-map:** `JoinMapVitalsSeed` + `RosterVitalsLifecycle` — copy HP/MP/zen từ **`F3 03`** vào roster khi `max_hp == 0`; `rosterDirty` cho **`TAKUMI_ROSTER_PERIODIC_SAVE_SECONDS`**.
 - [x] **Cả hai host:** `LegacyLoginHost` + `GamePortMinimalSession`.
-- [x] **Giữa phiên (partial):** `LifeManaWire602` + `RosterVitalsOutboundTracker` — quét outbound `C1 0x26`/`0x27` (type `0xFF`/`0xFE`) cập nhật roster + `rosterDirty`; gửi sync sau join khi `TAKUMI_SEND_LIFE_MANA_AFTER_JOIN` (mặc định bật). **Open:** combat gửi life/mana thường xuyên hơn (full `GCLifeSend` parity).
+- [x] **`LifeManaWire602`** + **`RosterVitalsOutboundTracker`** — quét outbound `C1 0x26`/`0x27` (type `0xFF`/`0xFE`) cập nhật roster + `rosterDirty` (**bao gồm shield** trong word thứ hai của `0x26`); gửi sync sau join khi `TAKUMI_SEND_LIFE_MANA_AFTER_JOIN` (mặc định bật) — thứ tự legacy: max life+SD rồi current. **Open:** toàn bộ skill/combat paths khác.
 
 ---
 
@@ -65,7 +65,7 @@
 - [x] **`F3 10`** đọc `inventory_slot` (12-byte) — `JoinInventoryPacket602` (xem M4 checklist §M5+).
 - [x] **Ghi** `inventory_slot` sau buy/sell/repair — `InventorySlotMirrorWriter` + `PostgresInventorySlotRepository` (upsert/delete/replace); disconnect flush `PlayerShopSession.FlushInventoryMirrorOnDisconnect`. Cần **`TAKUMI_ROSTER_DB_SYNC=1`**.
 - [x] Port `ItemManager` pick/drop/move (`0x22`–`0x24`) từ `Source/4.GameServer` — `ItemWorldHandler` (bag + wear slot 0–11, storage flag 0); trade/warehouse flags **OPEN**.
-- [x] **M7d (partial):** potion use `CGItemUseRecv` (`C1`/`C3` `0x26`) — `ItemWorldHandler` + `InventoryConsumableRules` (HP/MP/SD potions); `0x28` delete / `0x2A` durability; SD session trên `GameRosterEntry` (chưa persist DB). Trade/warehouse/scroll **OPEN**.
+- [x] **M7d (partial):** potion use `CGItemUseRecv` (`C1`/`C3` `0x26`) — `ItemWorldHandler` + `InventoryConsumableRules` (HP/MP/SD potions); `0x28` delete / `0x2A` durability; **SD persist:** `current_shield`/`max_shield` DB + roster JSON + `GCLifeSend` shield word; monster/PvP hit giảm SD trước HP (parity `Attack.cpp`). Trade/warehouse/scroll **OPEN**.
 
 ---
 

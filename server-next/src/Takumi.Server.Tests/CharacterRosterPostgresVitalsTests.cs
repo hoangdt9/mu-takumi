@@ -18,7 +18,7 @@ public sealed class CharacterRosterPostgresVitalsTests
         await using var repo = new PostgresCharacterRosterRepository(cs);
         var rows = new[]
         {
-            CharacterRosterRowMapping.ToRow("VitHero", 0x20, 12, 0, 100, 110, 2, 250, 400, 90, 150, 42_000),
+            CharacterRosterRowMapping.ToRow("VitHero", 0x20, 12, 0, 100, 110, 2, 250, 400, 90, 150, 42_000, 40, 200),
         };
 
         await repo.ReplaceAccountRosterAsync(account, rows);
@@ -29,6 +29,8 @@ public sealed class CharacterRosterPostgresVitalsTests
         Assert.Equal(90, loaded[0].CurrentMp);
         Assert.Equal(150, loaded[0].MaxMp);
         Assert.Equal(42_000, loaded[0].Zen);
+        Assert.Equal(40, loaded[0].CurrentShield);
+        Assert.Equal(200, loaded[0].MaxShield);
 
         await repo.DeleteCharacterAsync(account, "VitHero");
         await repo.ReplaceAccountRosterAsync(account, Array.Empty<CharacterRosterRow>());

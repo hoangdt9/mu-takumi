@@ -33,7 +33,19 @@ public sealed class CharacterRosterRow
 
     public long Zen { get; set; }
 
+    /// <summary>M7: SD current (0 = treat as full when <see cref="MaxShield"/> &gt; 0 at join).</summary>
+    public int CurrentShield { get; set; }
+
+    public int MaxShield { get; set; }
+
     public CharacterRosterVitals ToVitals() =>
-        CharacterRosterVitals.FromInts(this.CurrentHp, this.MaxHp, this.CurrentMp, this.MaxMp, this.Zen);
+        CharacterRosterVitals.FromInts(
+            this.CurrentHp,
+            this.MaxHp,
+            this.CurrentMp,
+            this.MaxMp,
+            this.Zen,
+            this.CurrentShield,
+            this.MaxShield);
 }
 

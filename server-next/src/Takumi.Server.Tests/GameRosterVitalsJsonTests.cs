@@ -28,6 +28,8 @@ public sealed class GameRosterVitalsJsonTests
                     currentMp = 80,
                     maxMp = 120,
                     zen = 999L,
+                    currentShield = 40,
+                    maxShield = 200,
                 },
             },
         };
@@ -53,6 +55,8 @@ public sealed class GameRosterVitalsJsonTests
                 Assert.Equal(80, loaded[0].CurrentMp);
                 Assert.Equal(120, loaded[0].MaxMp);
                 Assert.Equal(999, loaded[0].Zen);
+                Assert.Equal(40, loaded[0].CurrentShield);
+                Assert.Equal(200, loaded[0].MaxShield);
             }
             finally
             {

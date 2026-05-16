@@ -215,14 +215,26 @@ file sealed class JoinMapStatWire
         }
 
         var gold = v.Zen > 0 ? v.ClampGold() : 0u;
+        ushort sdMax = 0;
+        ushort sdCur = 0;
+        if (v.HasShield)
+        {
+            sdMax = v.ClampU16(v.MaxShield);
+            sdCur = v.ClampU16(v.CurrentShield > 0 ? v.CurrentShield : v.MaxShield);
+            if (sdCur > sdMax)
+            {
+                sdCur = sdMax;
+            }
+        }
+
         var view = new ViewDwordBlock
         {
             ViewCurHp = life,
             ViewMaxHp = lifeMax,
             ViewCurMp = manaCur,
             ViewMaxMp = manaMax,
-            ViewCurSd = 0,
-            ViewMaxSd = 0,
+            ViewCurSd = sdCur,
+            ViewMaxSd = sdMax,
             ViewStrength = str,
             ViewDexterity = dex,
             ViewVitality = vit,
@@ -240,8 +252,8 @@ file sealed class JoinMapStatWire
             LifeMax = lifeMax,
             Mana = manaCur,
             ManaMax = manaMax,
-            Shield = 0,
-            ShieldMax = 0,
+            Shield = sdCur,
+            ShieldMax = sdMax,
             SkillMana = manaCur,
             SkillManaMax = manaMax,
             LevelUpPoint = 0,

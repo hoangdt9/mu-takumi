@@ -11,7 +11,9 @@ public static class RosterVitalsOutboundTracker
         var maxHp = entry.MaxHp;
         var curMp = entry.CurrentMp;
         var maxMp = entry.MaxMp;
-        if (!LifeManaWire602.TryApplyVitalsFromOutbound(outbound, ref curHp, ref maxHp, ref curMp, ref maxMp))
+        var curSd = entry.CurrentShield;
+        var maxSd = entry.MaxShield;
+        if (!LifeManaWire602.TryApplyVitalsFromOutbound(outbound, ref curHp, ref maxHp, ref curMp, ref maxMp, ref curSd, ref maxSd))
         {
             return false;
         }
@@ -20,6 +22,8 @@ public static class RosterVitalsOutboundTracker
         entry.MaxHp = maxHp;
         entry.CurrentMp = curMp;
         entry.MaxMp = maxMp;
+        entry.CurrentShield = curSd;
+        entry.MaxShield = maxSd;
         return true;
     }
 }

@@ -165,8 +165,7 @@ Use this to avoid unnecessary rebuilds.
    - [x] **M7b–c:** vitals trên roster + join **`F3 03`**; tests **`JoinMapVitals602Tests`**.  
    - [x] **M7d (partial):** `JoinMapVitalsSeed`, `LifeManaWire602`, `RosterVitalsOutboundTracker`, **`TAKUMI_SEND_LIFE_MANA_AFTER_JOIN`**.  
    - [x] **M7d (minimal hosts):** combat hit/die/revive, HP regen, vitals DB upsert, potion use (`ItemWorldHandler`). **M11 (partial):** warehouse (`warehouse_slot`, NPC 240), trade window (`0x36`–`0x3D`), guild stub ack, empty **`F3 11`** after join — **`docs/M11-SOCIAL-WAREHOUSE-SKILLS.md`**; PvP full parity still open.  
-   - [x] **M7d town respawn:** chết trên field → **`C1 F3 04`** (`CharacterRegenWire602` + `MapRespawnCatalog`) tới tile thành Lorencia **(135,122)**; **không** dùng `C1 0x1C flag=0` (client `PRECEIVE_TELEPORT` thiếu `SubCode` → lệch XY kiểu **(122,1)**). Gate vẫn dùng `0x1C flag=1` (`WorldGameplayHandlers`).
-   - [ ] **QA Android (death):** logcat `[ReceiveRevival] town regen map=0 xy=(135,122)`; minimap Lorencia **(135,122)**; không void/black tile; rebuild APK sau sửa `WSclient.cpp`.  
+   - [x] **M7d town respawn:** chết trên field → **`C1 F3 04`** (`CharacterRegenWire602` + `MapRespawnCatalog`) tới tile thành Lorencia **(135,122)**; **không** dùng `C1 0x1C flag=0` (client `PRECEIVE_TELEPORT` thiếu `SubCode` → lệch XY kiểu **(122,1)**). Gate vẫn dùng `0x1C flag=1` (`WorldGameplayHandlers`). 
    - [x] **M7 + M4:** `inventory_slot` upsert sau buy/sell/repair — `InventorySlotMirrorWriter`.  
    - [ ] Migration EF bổ sung (nếu dùng song song với `sql/init`).
 

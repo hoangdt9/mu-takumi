@@ -31,9 +31,7 @@ public static class JoinMapVitalsSeed
             return false;
         }
 
-        vitals = CharacterRosterVitals.FromInts(life, lifeMax, mana, manaMax, gold);
-        _ = shield;
-        _ = shieldMax;
+        vitals = CharacterRosterVitals.FromInts(life, lifeMax, mana, manaMax, gold, shield, shieldMax);
         return true;
     }
 

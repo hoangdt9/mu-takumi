@@ -50,6 +50,8 @@ public static class CharacterRosterHostLoad
                     e.CurrentMp = d.CurrentMp;
                     e.MaxMp = d.MaxMp;
                     e.Zen = d.Zen;
+                    e.CurrentShield = d.CurrentShield;
+                    e.MaxShield = d.MaxShield;
                 });
             CharacterRosterMirrorHealth.RecordMergeSuccess();
         }
@@ -79,6 +81,8 @@ public static class CharacterRosterHostLoad
             CurrentMp = row.CurrentMp,
             MaxMp = row.MaxMp,
             Zen = row.Zen,
+            CurrentShield = row.CurrentShield,
+            MaxShield = row.MaxShield,
         };
         GameRosterDisk.ApplyLegacySpawnIfUnset(entry);
         return entry;

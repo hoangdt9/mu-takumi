@@ -71,6 +71,8 @@ public sealed class CharacterRosterMergeTests
                 CurrentMp = 30,
                 MaxMp = 60,
                 Zen = 999,
+                CurrentShield = 12,
+                MaxShield = 99,
             },
         };
 
@@ -81,6 +83,8 @@ public sealed class CharacterRosterMergeTests
             x.CurrentMp = d.CurrentMp;
             x.MaxMp = d.MaxMp;
             x.Zen = d.Zen;
+            x.CurrentShield = d.CurrentShield;
+            x.MaxShield = d.MaxShield;
         });
 
         Assert.Equal(100, roster[0].CurrentHp);
@@ -88,5 +92,7 @@ public sealed class CharacterRosterMergeTests
         Assert.Equal(30, roster[0].CurrentMp);
         Assert.Equal(60, roster[0].MaxMp);
         Assert.Equal(999, roster[0].Zen);
+        Assert.Equal(12, roster[0].CurrentShield);
+        Assert.Equal(99, roster[0].MaxShield);
     }
 }

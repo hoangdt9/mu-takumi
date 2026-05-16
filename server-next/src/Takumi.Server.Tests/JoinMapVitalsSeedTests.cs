@@ -27,4 +27,16 @@ public sealed class JoinMapVitalsSeedTests
 
         Assert.False(JoinMapVitalsSeed.TryApplyFromJoinPacketIfUnset(maxHpAlreadySet: true, joinPkt, out _));
     }
+
+    [Fact]
+    public void Seed_reads_shield_from_join_when_present_in_vitals()
+    {
+        var name = new byte[10];
+        "Z"u8.CopyTo(name);
+        var vitals = CharacterRosterVitals.FromInts(50, 100, 10, 20, 0, currentShield: 33, maxShield: 120);
+        var joinPkt = JoinMapServerWire602.Build(new CharacterRosterWire(name, 0x20, 8, vitals));
+        Assert.True(JoinMapVitalsSeed.TryReadFromJoinPacket(joinPkt, out var v));
+        Assert.Equal(33, v.CurrentShield);
+        Assert.Equal(120, v.MaxShield);
+    }
 }

@@ -82,9 +82,12 @@ public static class PlayerVitalsLoop
             session.CurrentHp,
             session.MaxHp,
             session.CurrentMp,
-            session.MaxMp);
+            session.MaxMp,
+            session.CurrentShield,
+            session.MaxShield);
 
-        var pkt = LifeManaWire602.BuildLife(LifeManaWire602.TypeCurrent, (ushort)Math.Clamp(next, 0, ushort.MaxValue));
+        var sdWire = (ushort)Math.Clamp(session.CurrentShield, 0, ushort.MaxValue);
+        var pkt = LifeManaWire602.BuildLife(LifeManaWire602.TypeCurrent, (ushort)Math.Clamp(next, 0, ushort.MaxValue), sdWire);
         await GamePortOutboundWire.WriteAsync(session.Connection, session.Protect, pkt, ct).ConfigureAwait(false);
     }
 
@@ -95,14 +98,22 @@ public static class PlayerVitalsLoop
         var maxMp = Math.Max(1, session.MaxMp);
         session.CurrentHp = maxHp;
         session.CurrentMp = maxMp;
+        if (session.MaxShield > 0)
+        {
+            session.CurrentShield = session.MaxShield;
+        }
+
         session.OnVitalsChanged?.Invoke(session.CurrentHp, maxHp);
+        session.OnShieldVitalsChanged?.Invoke(session.CurrentShield, session.MaxShield);
         RosterVitalsCombat.ScheduleVitalsMirror(
             session.AccountLogin,
             session.CharacterName,
             session.CurrentHp,
             maxHp,
             session.CurrentMp,
-            maxMp);
+            maxMp,
+            session.CurrentShield,
+            session.MaxShield);
 
         var town = MapRespawnCatalog.GetTownRespawn(session.MapId);
         session.MapId = town.Map;

@@ -180,6 +180,8 @@ public static class GameRosterDisk
                     CurrentMp = c.CurrentMp,
                     MaxMp = c.MaxMp,
                     Zen = c.Zen,
+                    CurrentShield = c.CurrentShield,
+                    MaxShield = c.MaxShield,
                 };
                 ApplyLegacySpawnIfUnset(entry);
                 list.Add(entry);
@@ -217,6 +219,10 @@ public static class GameRosterDisk
         public int MaxMp { get; set; }
 
         public long Zen { get; set; }
+
+        public int CurrentShield { get; set; }
+
+        public int MaxShield { get; set; }
     }
 }
 

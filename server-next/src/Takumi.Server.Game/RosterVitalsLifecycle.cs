@@ -11,8 +11,17 @@ public static class RosterVitalsLifecycle
         ref int currentHp,
         ref int maxHp,
         ref int currentMp,
-        ref int maxMp) =>
-        LifeManaWire602.TryApplyVitalsFromOutbound(outbound, ref currentHp, ref maxHp, ref currentMp, ref maxMp);
+        ref int maxMp,
+        ref int currentShield,
+        ref int maxShield) =>
+        LifeManaWire602.TryApplyVitalsFromOutbound(
+            outbound,
+            ref currentHp,
+            ref maxHp,
+            ref currentMp,
+            ref maxMp,
+            ref currentShield,
+            ref maxShield);
 
     public static bool IsSendLifeManaAfterJoinEnabled()
     {
@@ -33,7 +42,9 @@ public static class RosterVitalsLifecycle
         int maxHp,
         int currentMp,
         int maxMp,
-        CancellationToken ct)
+        CancellationToken ct,
+        int currentShield = 0,
+        int maxShield = 0)
     {
         if (!IsSendLifeManaAfterJoinEnabled() || maxHp <= 0)
         {
@@ -44,11 +55,14 @@ public static class RosterVitalsLifecycle
         var hpMax = (ushort)Math.Clamp(maxHp, 0, ushort.MaxValue);
         var mp = (ushort)Math.Clamp(currentMp > 0 ? currentMp : maxMp, 0, ushort.MaxValue);
         var mpMax = (ushort)Math.Clamp(maxMp, 0, ushort.MaxValue);
+        var sd = (ushort)Math.Clamp(currentShield > 0 ? currentShield : maxShield, 0, ushort.MaxValue);
+        var sdMax = (ushort)Math.Clamp(maxShield, 0, ushort.MaxValue);
 
-        await writeAsync(LifeManaWire602.BuildLife(LifeManaWire602.TypeCurrent, hp), ct).ConfigureAwait(false);
-        await writeAsync(LifeManaWire602.BuildLife(LifeManaWire602.TypeMax, hpMax), ct).ConfigureAwait(false);
-        await writeAsync(LifeManaWire602.BuildMana(LifeManaWire602.TypeCurrent, mp), ct).ConfigureAwait(false);
+        // Legacy ObjectManager: max (0xFE) then current (0xFF) for life + SD.
+        await writeAsync(LifeManaWire602.BuildLife(LifeManaWire602.TypeMax, hpMax, sdMax), ct).ConfigureAwait(false);
+        await writeAsync(LifeManaWire602.BuildLife(LifeManaWire602.TypeCurrent, hp, sd), ct).ConfigureAwait(false);
         await writeAsync(LifeManaWire602.BuildMana(LifeManaWire602.TypeMax, mpMax), ct).ConfigureAwait(false);
+        await writeAsync(LifeManaWire602.BuildMana(LifeManaWire602.TypeCurrent, mp), ct).ConfigureAwait(false);
     }
 
     public static bool TrySeedGameEntryFromJoin(GameRosterEntry entry, ReadOnlySpan<byte> joinPkt)
@@ -72,12 +86,25 @@ public static class RosterVitalsLifecycle
         return true;
     }
 
-    public static void ApplyVitals(CharacterRosterVitals v, ref int currentHp, ref int maxHp, ref int currentMp, ref int maxMp, ref long zen)
+    public static void ApplyVitals(
+        CharacterRosterVitals v,
+        ref int currentHp,
+        ref int maxHp,
+        ref int currentMp,
+        ref int maxMp,
+        ref long zen,
+        ref int currentShield,
+        ref int maxShield)
     {
         currentHp = v.CurrentHp;
         maxHp = v.MaxHp;
         currentMp = v.CurrentMp;
         maxMp = v.MaxMp;
         zen = v.Zen;
+        if (v.HasShield)
+        {
+            currentShield = v.CurrentShield;
+            maxShield = v.MaxShield;
+        }
     }
 }

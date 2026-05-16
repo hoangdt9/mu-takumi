@@ -20,7 +20,7 @@
 | `src/Takumi.Server.Protocol/` | **M2** shared Season 6 wire builders (character list, join map, login/connect packets). |
 | `src/Takumi.Server.Join/` | **M5** session ticket store (in-memory; validate from future game TCP). |
 | `src/Takumi.Server.Persistence/` | **M4b** Npgsql: `character_roster` + **`inventory_slot`** (`PostgresCharacterRosterRepository`, **`PostgresInventorySlotRepository`**, **`TakumiPostgresMirror`**, **`JoinInventoryPacket602`**) when **`TAKUMI_ROSTER_DB_SYNC=1`**. |
-| `sql/init/` | Postgres **first-init** scripts: `001_character_roster.sql`, **`002_inventory_slot.sql`**, **`003_session_ticket.sql`**, **`004_character_roster_vitals.sql`** (M7 vitals columns). **Existing DB volume:** re-apply with **`./scripts/apply-sql.sh`** (runs `*.sql` in **lexical** order) or `psql` (see **Postgres migrations** below). |
+| `sql/init/` | Postgres **first-init** scripts: `001_character_roster.sql`, **`002_inventory_slot.sql`**, **`003_session_ticket.sql`**, **`004_character_roster_vitals.sql`** (M7 vitals), **`008_character_roster_shield.sql`** (M7 SD columns on `character_roster` + `character_domain`). **Existing DB volume:** re-apply with **`./scripts/apply-sql.sh`** (runs `*.sql` in **lexical** order) or `psql` (see **Postgres migrations** below). |
 | `scripts/apply-sql.sh` | Runs every `sql/init/*.sql` against a **libpq** URI (`postgresql://user:pass@host:port/db`). |
 | `src/Takumi.Server.Tests/` | **M2** golden-byte xUnit tests for `Takumi.Server.Protocol`. |
 | `.env.lan.example` | Copy to `.env` and set `TAKUMI_PUBLIC_HOST` / URLs (replace `YOUR_LAN_IP`). |

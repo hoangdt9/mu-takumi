@@ -15,11 +15,26 @@ public readonly struct CharacterRosterVitals
 
     public long Zen { get; init; }
 
+    /// <summary>SD / shield (legacy <c>GCLifeSend</c> second word).</summary>
+    public int CurrentShield { get; init; }
+
+    public int MaxShield { get; init; }
+
     public bool HasHp => this.MaxHp > 0;
 
     public bool HasMp => this.MaxMp > 0;
 
-    public static CharacterRosterVitals FromInts(int currentHp, int maxHp, int currentMp, int maxMp, long zen) =>
+    /// <summary>Persisted max shield &gt; 0 — join + life wire use SD bar.</summary>
+    public bool HasShield => this.MaxShield > 0;
+
+    public static CharacterRosterVitals FromInts(
+        int currentHp,
+        int maxHp,
+        int currentMp,
+        int maxMp,
+        long zen,
+        int currentShield = 0,
+        int maxShield = 0) =>
         new()
         {
             CurrentHp = currentHp,
@@ -27,6 +42,8 @@ public readonly struct CharacterRosterVitals
             CurrentMp = currentMp,
             MaxMp = maxMp,
             Zen = zen,
+            CurrentShield = currentShield,
+            MaxShield = maxShield,
         };
 
     internal ushort ClampU16(int value) => (ushort)Math.Clamp(value, 0, ushort.MaxValue);

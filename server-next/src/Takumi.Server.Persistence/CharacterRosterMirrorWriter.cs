@@ -59,7 +59,9 @@ public static class CharacterRosterMirrorWriter
         int currentHp,
         int maxHp,
         int currentMp,
-        int maxMp)
+        int maxMp,
+        int currentShield = 0,
+        int maxShield = 0)
     {
         var repo = TakumiPostgresMirror.CharacterRoster;
         if (repo is null || string.IsNullOrEmpty(accountId) || string.IsNullOrWhiteSpace(characterName))
@@ -74,7 +76,7 @@ public static class CharacterRosterMirrorWriter
             {
                 try
                 {
-                    await repo.UpsertVitalsAsync(accountId, name, currentHp, maxHp, currentMp, maxMp, CancellationToken.None)
+                    await repo.UpsertVitalsAsync(accountId, name, currentHp, maxHp, currentMp, maxMp, currentShield, maxShield, CancellationToken.None)
                         .ConfigureAwait(false);
                     CharacterRosterMirrorHealth.RecordUpsertSuccess();
                 }

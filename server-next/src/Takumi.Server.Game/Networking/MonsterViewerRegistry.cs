@@ -46,6 +46,11 @@ public sealed class MonsterViewerSession
     public Action<int, int>? OnShieldVitalsChanged { get; set; }
 
     public Action<byte, byte, byte>? OnRosterPositionChanged { get; set; }
+
+    /// <summary>Last HP sent on outbound 0x26 (throttle duplicate life packets under AI burst).</summary>
+    internal int LastOutboundLifeHp { get; set; } = -1;
+
+    internal long LastOutboundLifeUtcTicks { get; set; }
 }
 
 public readonly record struct MonsterViewerTarget(
@@ -282,12 +287,7 @@ public static class MonsterViewerRegistry
 
         var dmgPkt = MonsterDamageWire602.Build(victim.ClientHeroWireKey, dmg, victim.CurrentHp, hitSuccess: true);
         await GamePortOutboundWire.WriteAsync(victim.Connection, victim.Protect, dmgPkt, ct).ConfigureAwait(false);
-        var sdWire = (ushort)Math.Clamp(victim.CurrentShield, 0, ushort.MaxValue);
-        var lifePkt = LifeManaWire602.BuildLife(
-            LifeManaWire602.TypeCurrent,
-            (ushort)Math.Min(victim.CurrentHp, ushort.MaxValue),
-            sdWire);
-        await GamePortOutboundWire.WriteAsync(victim.Connection, victim.Protect, lifePkt, ct).ConfigureAwait(false);
+        await TrySendThrottledLifeAsync(victim, ct).ConfigureAwait(false);
 
         Console.WriteLine(
             "[m10c] pvp hit victim={0} dmg={1} hp={2}/{3} from={4}",
@@ -478,13 +478,7 @@ public static class MonsterViewerRegistry
             session.CurrentHp,
             hitSuccess: true);
         await GamePortOutboundWire.WriteAsync(session.Connection, session.Protect, dmgPkt, ct).ConfigureAwait(false);
-
-        var sdWire = (ushort)Math.Clamp(session.CurrentShield, 0, ushort.MaxValue);
-        var lifePkt = LifeManaWire602.BuildLife(
-            LifeManaWire602.TypeCurrent,
-            (ushort)Math.Clamp(session.CurrentHp, 0, ushort.MaxValue),
-            sdWire);
-        await GamePortOutboundWire.WriteAsync(session.Connection, session.Protect, lifePkt, ct).ConfigureAwait(false);
+        await TrySendThrottledLifeAsync(session, ct).ConfigureAwait(false);
 
         if (session.CurrentHp <= 0)
         {
@@ -504,6 +498,27 @@ public static class MonsterViewerRegistry
             monsterClass,
             useTxt,
             playerDef);
+    }
+
+    static async Task TrySendThrottledLifeAsync(MonsterViewerSession session, CancellationToken ct)
+    {
+        var hp = Math.Clamp(session.CurrentHp, 0, ushort.MaxValue);
+        var now = Environment.TickCount64;
+        var minIntervalMs = ParseIntEnv("TAKUMI_PLAYER_LIFE_PACKET_MIN_MS", 400, 100, 3000);
+        if (session.LastOutboundLifeHp == hp
+            && (now - session.LastOutboundLifeUtcTicks) < minIntervalMs)
+        {
+            return;
+        }
+
+        session.LastOutboundLifeHp = hp;
+        session.LastOutboundLifeUtcTicks = now;
+        var sdWire = (ushort)Math.Clamp(session.CurrentShield, 0, ushort.MaxValue);
+        var lifePkt = LifeManaWire602.BuildLife(
+            LifeManaWire602.TypeCurrent,
+            (ushort)hp,
+            sdWire);
+        await GamePortOutboundWire.WriteAsync(session.Connection, session.Protect, lifePkt, ct).ConfigureAwait(false);
     }
 
     static int ParseIntEnv(string key, int defaultValue, int min, int max)

@@ -3674,15 +3674,16 @@ static void TakumiRecalcHeroMaxVitalsForLevel()
 	CharacterAttribute->PrintPlayer.ViewCurMP = CharacterAttribute->ManaMax;
 }
 
-static void TakumiOnHeroLevelGained()
+static void TakumiOnHeroLevelsGained(int levelsGained)
 {
-	if (CharacterAttribute == nullptr)
+	if (CharacterAttribute == nullptr || levelsGained <= 0)
 	{
 		return;
 	}
 
-	const int pts = TakumiLevelUpPointsPerLevel();
-	CharacterAttribute->LevelUpPoint = (WORD)min((int)CharacterAttribute->LevelUpPoint + pts, 65535);
+	const int ptsPerLevel = TakumiLevelUpPointsPerLevel();
+	const int totalPts = ptsPerLevel * levelsGained;
+	CharacterAttribute->LevelUpPoint = (WORD)min((int)CharacterAttribute->LevelUpPoint + totalPts, 65535);
 	CharacterAttribute->PrintPlayer.ViewPoint = CharacterAttribute->LevelUpPoint;
 
 	TakumiRecalcHeroMaxVitalsForLevel();
@@ -3695,11 +3696,12 @@ static void TakumiOnHeroLevelGained()
 
 #if defined(__ANDROID__)
 	g_ErrorReport.Write(
-		"[Exp] level up Lv=%d +%d statPts=%u maxHp=%u\r\n",
+		"[Exp] level up Lv=%d +%d statPts=%u maxHp=%u (+%d levels)\r\n",
 		(int)CharacterAttribute->Level,
-		pts,
+		totalPts,
 		(unsigned)CharacterAttribute->LevelUpPoint,
-		(unsigned)CharacterAttribute->LifeMax);
+		(unsigned)CharacterAttribute->LifeMax,
+		levelsGained);
 #endif
 }
 
@@ -6768,6 +6770,7 @@ BOOL ReceiveDieExp(BYTE *ReceiveBuffer,BOOL bEncrypted)
 
 		TakumiEnsureExperienceThresholds();
 
+		int levelsGainedFromKill = 0;
 		while (CharacterAttribute->NextExperince > 0
 			&& CharacterAttribute->Experience >= CharacterAttribute->NextExperince
 			&& CharacterAttribute->Level < 400)
@@ -6775,7 +6778,12 @@ BOOL ReceiveDieExp(BYTE *ReceiveBuffer,BOOL bEncrypted)
 			CharacterAttribute->Level++;
 			CharacterAttribute->NextExperince =
 				(int)TakumiMuCumulativeExperienceForLevel(CharacterAttribute->Level);
-			TakumiOnHeroLevelGained();
+			++levelsGainedFromKill;
+		}
+
+		if (levelsGainedFromKill > 0)
+		{
+			TakumiOnHeroLevelsGained(levelsGainedFromKill);
 		}
 
 		TakumiEnsureExperienceThresholds();
@@ -6859,6 +6867,7 @@ BOOL ReceiveDieExpLarge(BYTE *ReceiveBuffer,BOOL bEncrypted)
 
 		TakumiEnsureExperienceThresholds();
 
+		int levelsGainedFromKill = 0;
 		while (CharacterAttribute->NextExperince > 0
 			&& CharacterAttribute->Experience >= CharacterAttribute->NextExperince
 			&& CharacterAttribute->Level < 400)
@@ -6866,7 +6875,12 @@ BOOL ReceiveDieExpLarge(BYTE *ReceiveBuffer,BOOL bEncrypted)
 			CharacterAttribute->Level++;
 			CharacterAttribute->NextExperince =
 				(int)TakumiMuCumulativeExperienceForLevel(CharacterAttribute->Level);
-			TakumiOnHeroLevelGained();
+			++levelsGainedFromKill;
+		}
+
+		if (levelsGainedFromKill > 0)
+		{
+			TakumiOnHeroLevelsGained(levelsGainedFromKill);
 		}
 
 		TakumiEnsureExperienceThresholds();
@@ -7628,6 +7642,11 @@ namespace
 	constexpr int kLevelUpPointsPerTick = 4;
 }
 
+#if defined(__ANDROID__)
+static bool s_pendingCharacterCalculateAll = false;
+constexpr int kProtocolPacketsPerFrame = 20;
+#endif
+
 void TakumiScheduleLevelUpPoints(BYTE statType, int count)
 {
 	if (count <= 0)
@@ -7723,7 +7742,11 @@ void ReceiveAddPoint( BYTE *ReceiveBuffer )
 		CharacterAttribute->SkillManaMax = Data->SkillManaMax;
 		CharacterAttribute->ShieldMax = Data->ShieldMax;
 	}
+#if defined(__ANDROID__)
+    s_pendingCharacterCalculateAll = true;
+#else
     CharacterMachine->CalculateAll();
+#endif
 }
 
 void ReceiveLife( BYTE *ReceiveBuffer )
@@ -13308,14 +13331,26 @@ void ProtocolCompiler( CWsctlc *pSocketClient, int iTranslation, int iParam)
 #endif
 	int HeadCode;
 	int Size = 0;
+#if defined(__ANDROID__)
+	int packetsThisCall = 0;
+#endif
 	
 	while(1)
 	{
+#if defined(__ANDROID__)
+		if (packetsThisCall >= kProtocolPacketsPerFrame)
+		{
+			break;
+		}
+#endif
 		BYTE *ReceiveBuffer = pSocketClient->GetReadMsg();
 		if( ReceiveBuffer == NULL )
 		{
 			break;
 		}
+#if defined(__ANDROID__)
+		++packetsThisCall;
+#endif
 		else 
 		{
 			BOOL bEncrypted = FALSE;
@@ -13434,6 +13469,11 @@ void ProtocolCompiler( CWsctlc *pSocketClient, int iTranslation, int iParam)
 	--s_protocolCompilerDepth;
 	if (outerCall)
 	{
+		if (s_pendingCharacterCalculateAll && CharacterMachine != nullptr)
+		{
+			CharacterMachine->CalculateAll();
+			s_pendingCharacterCalculateAll = false;
+		}
 		wglMakeCurrent(nullptr, nullptr);
 		g_protocol_lock->unlock();
 	}

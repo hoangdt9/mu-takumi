@@ -600,7 +600,7 @@ constexpr int kVirtualUtilityButtonChat = 3;
 constexpr int kVirtualZoomButtonMinus = 0;
 constexpr int kVirtualZoomButtonPlus = 1;
 constexpr uint32_t kVirtualMiniMapButtonCooldownMs = 220;
-constexpr uint32_t kVirtualAttackRepeatMs = 140;
+constexpr uint32_t kVirtualAttackRepeatMs = 320;
 constexpr uint32_t kVirtualUtilityButtonCooldownMs = 200;
 constexpr uint32_t kVirtualSkillAssignLongPressMs = 480;
 constexpr uint32_t kVirtualAssignModeTimeoutMs = 9000;
@@ -2938,6 +2938,14 @@ static bool TrySendHeroMeleeAttackPacket(int targetIndex)
     c->TargetCharacter = targetIndex;
     c->Skill = 0;
     const int dir = static_cast<int>(((BYTE)((Hero->Object.Angle[2] + 22.5f) / 360.f * 8.f + 1.f)) % 8);
+    static uint32_t s_lastMeleeAttackSendMs = 0;
+    const uint32_t nowMs = MU_MobileGetTicks();
+    if (s_lastMeleeAttackSendMs != 0 && (nowMs - s_lastMeleeAttackSendMs) < 280u)
+    {
+        return true;
+    }
+
+    s_lastMeleeAttackSendMs = nowMs;
     TakumiSendMeleeAttack(CharactersClient[targetIndex].Key, static_cast<BYTE>(dir));
     return true;
 }

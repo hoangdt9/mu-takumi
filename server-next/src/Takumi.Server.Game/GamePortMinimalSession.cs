@@ -778,7 +778,20 @@ public static class GamePortMinimalSession
 
                     if (!await AccountCredentialGate.TryValidateLoginAsync(id, pass, accounts, ct).ConfigureAwait(false))
                     {
-                        Console.WriteLine("[{0}] login rejected: bad credentials '{1}'", remote, id);
+                        if (verbose)
+                        {
+                            Console.WriteLine(
+                                "[{0}] login rejected: bad credentials '{1}' passLen={2} passPreview={3}",
+                                remote,
+                                id,
+                                pass.Length,
+                                pass.Length <= 12 ? pass : pass[..12] + "…");
+                        }
+                        else
+                        {
+                            Console.WriteLine("[{0}] login rejected: bad credentials '{1}'", remote, id);
+                        }
+
                         await WriteLoginResultAsync(connection, protect, 0x00, ct).ConfigureAwait(false);
                         return;
                     }

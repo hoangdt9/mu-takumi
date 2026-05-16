@@ -303,6 +303,18 @@ public static class GamePacketFinders
     public static bool TryUnpackAccountLoginFrame(ReadOnlySpan<byte> packet, out byte[] loginFrame)
     {
         loginFrame = Array.Empty<byte>();
+        // Android M6 login: post-SM frame is a single C3/C1 F1 01 (59 B). Do not scan in-payload
+        // false C3/C1 matches or peel stream-XOR when [2..3] are already F1 01 (corrupts password).
+        if (packet.Length >= 59
+            && packet[0] is 0xC1 or 0xC3
+            && packet[1] == packet.Length
+            && packet[2] == 0xF1
+            && packet[3] == 0x01)
+        {
+            loginFrame = packet.ToArray();
+            return true;
+        }
+
         Span<byte> xorScratch = stackalloc byte[256];
 
         for (var i = 0; i <= packet.Length - 5; i++)

@@ -140,6 +140,39 @@ namespace
 		g_pRenderText->SetTextColor(backupTextColor);
 		g_pRenderText->SetBgColor(backupBgColor);
 	}
+
+	// Same virtual coords as DrawBarForm / RenderCaptchaNumber — do not use RenderInputBox here
+	// (it divides Pos by g_fScreenRate and shrinks W/H, which misaligns or hides typed text on mobile).
+	void RenderRegisterFieldInput(
+		float posX,
+		float posY,
+		CUITextInputBox*& input,
+		UIOPTIONS option,
+		int maxChar,
+		bool isPassword)
+	{
+		const int fieldW = static_cast<int>(kInputWidth);
+		const int fieldH = 14;
+
+		if (input == NULL)
+		{
+			input = new CUITextInputBox;
+			input->Init(g_hWnd, fieldW, fieldH, maxChar, isPassword);
+			input->SetTextColor(255, 255, 255, 255);
+			input->SetBackColor(255, 0, 0, 0);
+			input->SetFont(g_hFont);
+			input->SetState(UISTATE_NORMAL);
+			input->SetOption(option);
+		}
+		else
+		{
+			input->SetSize(fieldW, fieldH);
+		}
+
+		input->SetPosition(static_cast<int>(posX), static_cast<int>(posY));
+		input->Render();
+		input->DoAction();
+	}
 }
 
 CB_DangKyInGame::CB_DangKyInGame()
@@ -379,20 +412,15 @@ bool CB_DangKyInGame::RenderWindow(int X, int Y)
 
 	for (int i = 0; i < TYPE_INPUT_DKTK::eMaxINPUT; ++i)
 	{
-		const float fieldScreenX = startX + 120.0f;
-		const float fieldScreenY = startY + 50.0f;
-		const int fieldVirtW = static_cast<int>(kInputWidth / g_fScreenRate_x);
-		const int fieldVirtH = static_cast<int>(14.0f / g_fScreenRate_y);
+		const float fieldX = startX + 120.0f;
+		const float fieldY = startY + 50.0f;
 
 		RenderRegisterText(g_hFontBold, startX + 18.0f, startY + 48.0f, 96.0f, 16.0f, 1, labels[i]);
-		gInterface.DrawBarForm((fieldScreenX) - 3.0f, (fieldScreenY) - 3.0f, kInputWidth, 16.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+		gInterface.DrawBarForm(fieldX - 3.0f, fieldY - 3.0f, kInputWidth, 16.0f, 0.0f, 0.0f, 0.0f, 1.0f);
 
-		g_pBCustomMenuInfo->RenderInputBox(
-			fieldScreenX,
-			fieldScreenY,
-			static_cast<float>(fieldVirtW),
-			static_cast<float>(fieldVirtH),
-			"",
+		RenderRegisterFieldInput(
+			fieldX,
+			fieldY,
 			CInputData[i],
 			(UIOPTIONS)inputOptions[i],
 			maxInput[i],
@@ -461,12 +489,6 @@ bool CB_DangKyInGame::RenderWindow(int X, int Y)
 	}
 
 	gInterface.RenderCaptchaNumber(captchaX, captchaY, CInputCaptCha, m_ExpectedCaptcha.c_str());
-	if (CInputCaptCha != NULL)
-	{
-		CInputCaptCha->SetPosition(
-			static_cast<int>((captchaX + 60.0f) / g_fScreenRate_x),
-			static_cast<int>((captchaY + 6.5f) / g_fScreenRate_y));
-	}
 
 	startY += 30.0f;
 

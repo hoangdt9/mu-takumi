@@ -1775,6 +1775,7 @@ bool SEASON3B::CNewUISystem::Update()
 			if (!CUIMng::Instance().m_MsgWin.IsShow())
 			{
 				::SetFocus(nullptr);
+				MU_MobileStopTextInput();
 			}
 		}
 #endif

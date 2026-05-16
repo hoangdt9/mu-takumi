@@ -809,6 +809,10 @@ void ReceiveCharacterList( BYTE *ReceiveBuffer )
 	#else
 		g_ErrorReport.Write("[ReceiveList Count %d Max class %d entry=%d]",Data->Value,Data->MaxClass,entrySize);
 	#endif
+	if (Data->Value == 0)
+	{
+		g_ErrorReport.Write("[ReceiveCharacterList] empty roster (client guard 2026-05-16)\r\n");
+	}
 	CharacterAttribute->IsVaultExtended = Data->ExtWarehouse;
 	for(int i=0;i<Data->Value;i++)
 	{
@@ -898,6 +902,11 @@ void ReceiveCharacterList( BYTE *ReceiveBuffer )
 		Offset += entrySize;
 	}
 	CurrentProtocolState = RECEIVE_CHARACTERS_LIST;
+	// Empty roster → CharMakeWin is opened from CreateCharacterScene() via
+	// m_CharSelMainWin.UpdateDisplay() after CUIMng::CreateCharacterScene().
+	// Do not call UpdateDisplay here: SceneFlag may already be CHARACTER_SCENE while
+	// InitCharacterScene is still false (packet before first NewMoveCharacterScene),
+	// and ShowWin(&m_CharMakeWin) on an uncreated window crashes (SIGSEGV @ ~0x8).
 }
 CHARACTER_ENABLE g_CharCardEnable;
 

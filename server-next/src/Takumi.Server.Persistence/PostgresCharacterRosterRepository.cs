@@ -13,9 +13,9 @@ public sealed class PostgresCharacterRosterRepository : IAsyncDisposable
     public static string? BuildConnectionStringFromEnv()
     {
         var direct = Environment.GetEnvironmentVariable("TAKUMI_PG_CONNECTION_STRING")?.Trim();
-        if (!string.IsNullOrEmpty(direct))
+        if (!string.IsNullOrEmpty(direct) && LooksLikeCompletePostgresConnection(direct))
         {
-            return direct;
+            return NormalizeForNpgsql(direct);
         }
 
         var host = Environment.GetEnvironmentVariable("TAKUMI_PG_HOST")?.Trim();
@@ -34,6 +34,78 @@ public sealed class PostgresCharacterRosterRepository : IAsyncDisposable
         var password = Environment.GetEnvironmentVariable("TAKUMI_PG_PASSWORD")?.Trim() ?? "takumi";
         var database = Environment.GetEnvironmentVariable("TAKUMI_PG_DATABASE")?.Trim() ?? "takumi_runtime";
         return $"Host={host};Port={p};Username={user};Password={password};Database={database}";
+    }
+
+    /// <summary>
+    /// Rejects values truncated by shell <c>source</c> (semicolon splits) — e.g. only <c>Host=127.0.0.1</c> → libpq DB = OS user.
+    /// </summary>
+    public static bool LooksLikeCompletePostgresConnection(string value)
+    {
+        if (value.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase)
+            || value.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        foreach (var part in value.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            var eq = part.IndexOf('=');
+            if (eq <= 0)
+            {
+                continue;
+            }
+
+            var key = part[..eq].Trim();
+            if (key.Equals("Database", StringComparison.OrdinalIgnoreCase)
+                || key.Equals("DB", StringComparison.OrdinalIgnoreCase))
+            {
+                return part[(eq + 1)..].Trim().Length > 0;
+            }
+        }
+
+        return false;
+    }
+
+    static string NormalizeForNpgsql(string value)
+    {
+        if (TryParsePostgresUri(value, out var fromUri))
+        {
+            return fromUri;
+        }
+
+        return value;
+    }
+
+    static bool TryParsePostgresUri(string value, out string connectionString)
+    {
+        connectionString = string.Empty;
+        if (!value.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase)
+            && !value.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        var uri = new Uri(value);
+        var userInfo = uri.UserInfo.Split(':', 2);
+        var user = userInfo.Length > 0 ? Uri.UnescapeDataString(userInfo[0]) : string.Empty;
+        var password = userInfo.Length > 1 ? Uri.UnescapeDataString(userInfo[1]) : string.Empty;
+        var database = uri.AbsolutePath.TrimStart('/');
+        if (string.IsNullOrEmpty(database))
+        {
+            return false;
+        }
+
+        var port = uri.IsDefaultPort ? 5432 : uri.Port;
+        var builder = new NpgsqlConnectionStringBuilder
+        {
+            Host = uri.Host,
+            Port = port,
+            Username = user,
+            Password = password,
+            Database = database,
+        };
+        connectionString = builder.ConnectionString;
+        return true;
     }
 
     public async Task<IReadOnlyList<CharacterRosterRow>> LoadByAccountAsync(string accountLogin, CancellationToken ct = default)

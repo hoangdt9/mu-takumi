@@ -132,6 +132,10 @@ void Interface::DrawMessageBox()
 	{
 		return;
 	}
+	if (g_pBCustomMenuInfo == nullptr)
+	{
+		return;
+	}
 	float CuaSoW = 220;
 	float CuaSoH = 80 + (this->MsgLine * 10);
 
@@ -177,11 +181,6 @@ void Interface::DrawMessageBox()
 
 void Interface::OpenMessageBox(char* caption, char* Format, ...)
 {
-	if (gInterface.Data[eWindowMessageBox].OnShow)
-	{
-		return;
-	}
-
 	char text[1024] = { 0 };
 	va_list va;
 	va_start(va, Format);
@@ -764,16 +763,41 @@ std::string Interface::generateCaptcha(int n)
 {
 	time_t t;
 	srand((unsigned)time(&t));
-	char* required_chars = "0123456789";
-	std::string captcha = "";
-	while (n--)
-		captcha.push_back(required_chars[rand() % sizeof(required_chars)]);
+	const char* required_chars = "0123456789";
+	const int digitCount = 10;
+	std::string captcha;
+	captcha.reserve(static_cast<size_t>(n > 0 ? n : 0));
+	while (n-- > 0)
+	{
+		captcha.push_back(required_chars[rand() % digitCount]);
+	}
+
 	return captcha;
 }
 
 bool Interface::check_Captcha(std::string& captcha, std::string& user_input)
 {
-	return captcha.compare(user_input) == 0;
+	auto trimInPlace = [](std::string& value)
+	{
+		while (!value.empty() && (value.front() == ' ' || value.front() == '\t' || value.front() == '\r' || value.front() == '\n'))
+		{
+			value.erase(value.begin());
+		}
+
+		while (!value.empty() && (value.back() == ' ' || value.back() == '\t' || value.back() == '\r' || value.back() == '\n'))
+		{
+			value.pop_back();
+		}
+	};
+
+	trimInPlace(captcha);
+	trimInPlace(user_input);
+	if (captcha.empty() || user_input.empty())
+	{
+		return false;
+	}
+
+	return captcha == user_input;
 }
 void Interface::RenderCaptchaNumber(float PosX, float PosY, CUITextInputBox* a6, LPCSTR Text, ...)
 {

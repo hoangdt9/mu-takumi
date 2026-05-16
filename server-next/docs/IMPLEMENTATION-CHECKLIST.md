@@ -1,6 +1,6 @@
 # Takumi Server Next - Implementation Checklist
 
-Last updated: 2026-05-16 (`main` @ `0fee99a`: M8/M9 gameplay, M7 vitals, M10 presence, M4/M7 migration docs)
+Last updated: 2026-05-16 (M14 account Postgres: login + in-game `C1 D3 05` register)
 
 **Phân vùng dev (tránh conflict):** **`docs/WORKSTREAM-OWNERSHIP.md`**.  
 **M4 + M7 (nhân vật + item, port từ `Source/`):** **`docs/M4-M7-CHARACTER-ITEM-MIGRATION.md`** — owner đề xuất **`mac-m1`**.
@@ -91,6 +91,7 @@ Use this to avoid unnecessary rebuilds.
 
 - [x] **M4b observability:** `CharacterRosterMirrorHealth` — merge/upsert success+fail counts; upsert errors log `[roster-health] …` snapshot; **`TAKUMI_ROSTER_HEALTH_LOG`** logs snapshot after **`TryDrainPendingUpserts`** (`docs/M4-WORLD-POSITION-CHECKLIST.md`).
 - [x] **M4b SSOT (minimal hosts):** `TAKUMI_ROSTER_DB_PRIMARY`, `character_domain` mirror, `character_staging` importer — **`docs/M4-WORLD-POSITION-CHECKLIST.md`**, **`docs/M4-ROSTER-SSOT.md`**. **M11 (partial):** warehouse/trade/guild/skill stubs trên minimal hosts — **`docs/M11-SOCIAL-WAREHOUSE-SKILLS.md`**; EF full `Takumi.Server.Host` vẫn backlog.
+- [x] **M14 account Postgres (minimal hosts):** `public.account` (`sql/init/010_account.sql`), BCrypt `password_hash`, `security_code` + `phone`; **`TAKUMI_ACCOUNT_DB=1`**; login `F1 01` + in-game register **`C1 D3 05`** qua **`AccountCredentialGate`** / **`PostgresAccountRepository`** — **`docs/M14-ACCOUNT-PERSISTENCE-CHECKLIST.md`**. Trước đây chỉ dict `TAKUMI_ACCOUNTS` (mất sau restart).
 - [ ] **M6+ / M7–M10:** Full **`Takumi.Server.Game`** protocol after join (map/scope/combat) when client uses **only** game TCP — **`docs/M7-CHARACTER-PERSISTENCE-CHECKLIST.md`**, **`docs/M8-M10-WORLD-RUNTIME-CHECKLIST.md`**.
 - [x] **Split-stack login handoff (Postgres):** `sql/init/003_session_ticket.sql` + **`PostgresSessionHandoffRepository`**; **`TAKUMI_SESSION_HANDOFF_DB=1`** → `LegacyLoginHost` persists pending row after F1 01; optional **`TAKUMI_GAME_REQUIRE_LOGIN_HANDOFF=1`** on **GameHost** consumes one row before F1 01 success (**IP match** default on, override with **`TAKUMI_GAME_HANDOFF_MATCH_IP=0`**). Optional **signed wire path:** **`TAKUMI_SESSION_TICKET_HMAC_KEY`** + **`TAKUMI_GAME_TICKET_WIRE=1`** — Legacy pushes **`F1 A5`**, client **`F1 A6`** before game **`F1 01`**, consume on attach (see **`docs/M6-GAME-TCP-CHECKLIST.md`**). Plain IP handoff does not send ticket bytes on wire.
 - [x] **M5 split processes:** `Takumi.Server.LoginHost` + `Takumi.Server.ConnectHost` (shared `LegacyLoginHost.Runner` / `ConnectServerHostRunner`); Docker profile **`splitstack`**; scripts `run-login-host.sh` / `run-connect-host.sh`. Combined `LegacyLoginHost` unchanged for default Docker.
@@ -108,6 +109,8 @@ Use this to avoid unnecessary rebuilds.
 - [x] Define character schema/entities for real list/select behavior.
 - [x] Add ETL/staging import pipeline entrypoint from `takumi_legacy` tables at host startup.
 - [x] Map staging data into runtime schema (`takumi_runtime`) for account + character domain (startup importer).
+- [x] Runtime **`account`** table (`sql/init/010_account.sql`) + **`PostgresAccountRepository`** — login + **`C1 D3 05`** in-game register when **`TAKUMI_ACCOUNT_DB=1`** (**`docs/M14-ACCOUNT-PERSISTENCE-CHECKLIST.md`**); dev seed từ **`TAKUMI_ACCOUNTS`**.
+- [ ] **`MEMB_INFO`** staging → `account` ETL; wire reset-password (`security_code` + `phone`).
 - [x] Runtime **`inventory_slot`** table (`sql/init/002_inventory_slot.sql`) + **`PostgresInventorySlotRepository`** / **`JoinInventoryPacket602`** (12-byte `item` wire blobs; apply SQL on existing volumes via **`./scripts/apply-sql.sh`**).
 - [ ] Staging **`inventory_staging`** + startup importer (flat `ItemIndex` → 12-byte encoding / parity `ItemByteConvert`).
 - [x] After `F3 03` (and move-map restub), send Season 6 **`F3 10`** from **`inventory_slot`** when **`TAKUMI_ROSTER_DB_SYNC`** is on; otherwise empty list.
@@ -151,18 +154,22 @@ Use this to avoid unnecessary rebuilds.
    - [x] **`inventory_slot` write** sau shop buy/sell/repair — `InventorySlotMirrorWriter` (đọc `F3 10` đã có từ trước).
    - [x] **M4b SSOT Postgres-only (minimal hosts)** — **`TAKUMI_ROSTER_DB_PRIMARY`**, **`character_domain`** mirror (`TAKUMI_CHARACTER_DOMAIN_SYNC`); item `0x22`–`0x24` + potion **`0x26`** — **`ItemWorldHandler`**.
 
-5. **M5 — Join handoff (`3.JoinServer` parity)** *(partial — see **`docs/M5-JOIN-HANDOFF-CHECKLIST.md`**)*  
+5. **M14 — Account credentials (`MEMB_INFO` / OpenMU `Account`)** — **`docs/M14-ACCOUNT-PERSISTENCE-CHECKLIST.md`**  
+   - [x] `public.account` + BCrypt; login `F1 01` + in-game **`C1 D3 05`** on minimal hosts (`TAKUMI_ACCOUNT_DB=1`).  
+   - [ ] Reset-password wire; `MEMB_INFO` ETL; `bloc_code` ban parity.
+
+6. **M5 — Join handoff (`3.JoinServer` parity)** *(partial — see **`docs/M5-JOIN-HANDOFF-CHECKLIST.md`**)*  
    - [x] **F4 03** advertised port (`TAKUMI_GAME_PORT`) + in-memory session ticket TTL / Touch / Revoke.  
    - [x] Postgres **`session_ticket`** pending row + optional GameHost consume (**`TAKUMI_SESSION_HANDOFF_DB`**, **`TAKUMI_GAME_REQUIRE_LOGIN_HANDOFF`**) + signed wire **`F1 A5` / `F1 A6`** (**`TAKUMI_SESSION_TICKET_HMAC_KEY`**, **`TAKUMI_GAME_TICKET_WIRE`**).  
    - [x] Standalone processes: **`Takumi.Server.LoginHost`** + **`Takumi.Server.ConnectHost`** (profile **`splitstack`**); combined **`LegacyLoginHost`** for single-container QA.
 
-6. **M6 — Game TCP host (`Takumi.Server.Game`) — skeleton `4.GameServer`** *(bootstrap + split-port minimal-login — **`docs/M6-GAME-TCP-CHECKLIST.md`**)*  
+7. **M6 — Game TCP host (`Takumi.Server.Game`) — skeleton `4.GameServer`** *(bootstrap + split-port minimal-login — **`docs/M6-GAME-TCP-CHECKLIST.md`**)*  
    - [x] Project `src/Takumi.Server.Game` + **`Takumi.Server.GameHost`**: accept, decrypt, join, **minimal-login** (F1 01 + roster JSON + F3 00 + **F3 01/02** + F3 03 join + move stub + walk roster + **`GamePortKeepAliveRunner`** + F1 02 ack) khi có `TAKUMI_ACCOUNTS` + serial.  
    - [x] Docker profile **`gamehost`** + `TAKUMI_GAME_PUBLISH`.  
    - [x] Structured log **`[event=decrypted_rx]`** (`TAKUMI_VERBOSE` hoặc **`TAKUMI_STRUCTURED_LOG`**); mirror **`character_roster`** khi save (cùng `CharacterRosterMirrorWriter` như Legacy).  
    - [x] Cross-process session ticket on wire / signed (**`SessionTicketWire602`**, **`PostgresSessionHandoffRepository.TryConsumeSignedWireAttachAsync`**); Postgres consume for IP-only handoff remains **`TAKUMI_GAME_REQUIRE_LOGIN_HANDOFF`** (skipped when **`TAKUMI_GAME_TICKET_WIRE`** is on).
 
-7. **M7 — Persistence vòng đời nhân vật** — **`docs/M7-CHARACTER-PERSISTENCE-CHECKLIST.md`** + port map **`docs/M4-M7-CHARACTER-ITEM-MIGRATION.md`** §B  
+8. **M7 — Persistence vòng đời nhân vật** — **`docs/M7-CHARACTER-PERSISTENCE-CHECKLIST.md`** + port map **`docs/M4-M7-CHARACTER-ITEM-MIGRATION.md`** §B  
    - [x] SQL prep: **`004_character_roster_vitals.sql`**.  
    - [x] **M7b–c:** vitals trên roster + join **`F3 03`**; tests **`JoinMapVitals602Tests`**.  
    - [x] **M7d (partial):** `JoinMapVitalsSeed`, `LifeManaWire602`, `RosterVitalsOutboundTracker`, **`TAKUMI_SEND_LIFE_MANA_AFTER_JOIN`**.  
@@ -171,13 +178,13 @@ Use this to avoid unnecessary rebuilds.
    - [x] **M7 + M4:** `inventory_slot` upsert sau buy/sell/repair — `InventorySlotMirrorWriter`.  
    - [ ] Migration EF bổ sung (nếu dùng song song với `sql/init`).
 
-8. **M8 — Dữ liệu tĩnh thế giới (ETL)** — **`docs/M8-M10-WORLD-RUNTIME-CHECKLIST.md`** §M8  
+9. **M8 — Dữ liệu tĩnh thế giới (ETL)** — **`docs/M8-M10-WORLD-RUNTIME-CHECKLIST.md`** §M8  
    - [x] **`sql/init/005_monster_spawn.sql`** + **`PostgresMonsterSpawnRepository`** + **`MonsterSpawnDbImporter`** / **`scripts/import-monster-spawn.sh`**.  
    - [x] Runtime: **`TAKUMI_MONSTER_SPAWN_DB=1`** → **`MapMonsterWorld`** đọc Postgres (fallback file).  
    - [x] Gates / shops / Custom: **`006_map_gate_npc_shop_custom.sql`**, ETL + **`MapGateCatalog`** / **`NpcShopCatalog`**; env **`TAKUMI_WORLD_STATIC_DB=1`** (hoặc từng flag `TAKUMI_MAP_GATE_DB`, `TAKUMI_NPC_SHOP_DB`, `TAKUMI_CUSTOM_WORLD_DB`).  
    - [x] Wire handlers: gate teleport `0x1C`, NPC talk → shop `0x31` (`WorldGameplayHandlers`, `MapGateService`, `NpcShopWire602`).
 
-9. **M9 — NPC & monster runtime** *(**`docs/M9-NPC-MONSTER-CHECKLIST.md`**, **`docs/M9-MONSTER-AI-PORT-CHECKLIST.md`**, **`docs/M9-M8-NPC-GAMEPLAY-OWNERSHIP.md`**, **`server-next/test/M9-monster-combat-qa.md`**, **`docs/WORKSTREAM-OWNERSHIP.md`**)*  
+10. **M9 — NPC & monster runtime** *(**`docs/M9-NPC-MONSTER-CHECKLIST.md`**, **`docs/M9-MONSTER-AI-PORT-CHECKLIST.md`**, **`docs/M9-M8-NPC-GAMEPLAY-OWNERSHIP.md`**, **`server-next/test/M9-monster-combat-qa.md`**, **`docs/WORKSTREAM-OWNERSHIP.md`**)*  
    - [x] Spawn theo map từ **MonsterSetBase.txt** + **Monster.txt** (file + **Postgres** khi `TAKUMI_MONSTER_SPAWN_DB=1`).  
    - [x] Gói **`C2 0x13`** scope spawn sau join + incremental on walk (`MonsterViewportWire602`, `MonsterViewportTracker`); **`C1 0x14`** destroy khi rời view.  
    - [x] Regen delay từ `Monster.txt` (`MapMonsterInstance.TryRegen`).  
@@ -187,19 +194,19 @@ Use this to avoid unnecessary rebuilds.
    - [~] **M9c:** `ItemValue.txt` + `GCItemValueSend` (`C2 F3 E9`), AoE `0xDB`, PvP stub, quest NPC dialog stub (P4.4 partial).  
    - [ ] Element/exp/invasion (P3.2–P4), pathfinding BFS đầy đủ — **M9b P2.3+**.
 
-10. **M10 — Movement & visibility** — **`docs/M8-M10-WORLD-RUNTIME-CHECKLIST.md`** §M10; owner: **`docs/WORKSTREAM-OWNERSHIP.md`**  
+11. **M10 — Movement & visibility** — **`docs/M8-M10-WORLD-RUNTIME-CHECKLIST.md`** §M10; owner: **`docs/WORKSTREAM-OWNERSHIP.md`**  
     - [x] Walk / instant move → roster tile (`LegacyLoginHost`, `GamePortMinimalSession`).  
     - [x] **M10a:** broadcast `C1 0x15` / `0x18` + rate-limit (`GameMapPresenceRegistry`, `TAKUMI_PRESENCE_MAX_BROADCASTS_PER_SECOND`).  
     - [x] **M10b:** player viewport `C2 0x12` on join + walk view range + `0x14` on leave/disconnect (`PlayerViewportWire602`, `PlayerViewportTracker`, `TAKUMI_PLAYER_VIEWPORT_*`).  
     - [ ] Vitals mid-combat broadcast đầy đủ (M7).
 
-11. **M11 — DataServer merge**  
+12. **M11 — DataServer merge**  
     - [ ] Quyết định: Postgres-only vs bridge tới MSSQL legacy; API nội bộ cho `Takumi.Server.Game`.
 
-12. **M12 — GetMainInfo / version**  
+13. **M12 — GetMainInfo / version**  
     - [ ] Parity `6.GetMainInfo` nếu client vẫn gọi HTTP/TCP riêng.
 
-13. **M13 — Vận hành**  
+14. **M13 — Vận hành**  
     - [x] `docker-compose.yml`: Postgres + LegacyLoginHost; optional profile **`datazip`** (`./scripts/docker-stack.sh` mặc định; **`--no-datazip`** nếu không cần nginx).  
     - [x] Optional profile **`gamehost`** + **`./scripts/docker-stack.sh --detach --with-gamehost`** (M6 `game-host`).  
     - [ ] CI: integration test client script hoặc pcap replay tới cổng đúng.

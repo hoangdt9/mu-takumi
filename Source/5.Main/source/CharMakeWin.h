@@ -41,6 +41,7 @@ public:
 	void UpdateDisplay();
 protected:
 	void PreRelease();
+	void UpdateWhileShow(double dDeltaTick);
 	void UpdateWhileActive(double dDeltaTick);
 	void RenderControls();
 

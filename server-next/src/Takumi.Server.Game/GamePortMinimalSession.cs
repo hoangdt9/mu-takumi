@@ -29,7 +29,7 @@ public static class GamePortMinimalSession
         GamePortListenOptions options,
         CancellationToken ct)
     {
-        var accounts = options.AuthAccounts!;
+        var accounts = options.AuthAccounts ?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         var serverSerial = options.AuthServerSerial16!;
         var joinVersion = options.JoinVersion5;
         var verbose = options.Verbose;
@@ -291,6 +291,21 @@ public static class GamePortMinimalSession
                             "[{0}] F1 A6 signed session-ticket verified accountNorm={1}",
                             remote,
                             wireVerifiedAccountNorm);
+                        return;
+                    }
+
+                    if (!loginLatch.IsLoggedIn
+                        && GameInGameRegistration.TryFindRequest(packet, out var regOff)
+                        && GameInGameRegistration.TryParseRequest(packet, regOff, out var regReq))
+                    {
+                        var regResult = await AccountCredentialGate.RegisterAsync(regReq, accounts, ct).ConfigureAwait(false);
+                        var regAck = GameInGameRegistration.BuildResponse(regResult);
+                        await GamePortOutboundWire.WriteAsync(connection, protect, regAck, ct).ConfigureAwait(false);
+                        Console.WriteLine(
+                            "[{0}] in-game register account='{1}' result={2}",
+                            remote,
+                            regReq.Account,
+                            regResult);
                         return;
                     }
 
@@ -820,7 +835,7 @@ public static class GamePortMinimalSession
                         return;
                     }
 
-                    if (!accounts.TryGetValue(id, out var okPass) || okPass != pass)
+                    if (!await AccountCredentialGate.TryValidateLoginAsync(id, pass, accounts, ct).ConfigureAwait(false))
                     {
                         Console.WriteLine("[{0}] login rejected: bad credentials '{1}'", remote, id);
                         await WriteLoginResultAsync(connection, protect, 0x00, ct).ConfigureAwait(false);

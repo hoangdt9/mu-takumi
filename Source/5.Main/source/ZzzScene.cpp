@@ -48,6 +48,7 @@
 #include "./Time/Timer.h"
 #include "Input.h"
 #include "UIMng.h"
+#include "TakumiUserNotify.h"
 #include "LoadingScene.h"
 #include "CDirection.h"
 #include "GM_Kanturu_3rd.h"
@@ -679,6 +680,10 @@ void RenderInfomation()
     
 	CUIMng::Instance().Render();
 
+	// Custom modal (register success, captcha errors, etc.) — must run on login/character scenes,
+	// not only from CB_DangKyInGame::RenderWindow while the register form is open.
+	TakumiUserNotify_Draw();
+
 	if(SceneFlag == LOG_IN_SCENE || SceneFlag == CHARACTER_SCENE)
 	{
 		RenderCursor();
@@ -946,6 +951,9 @@ bool MoveMainCamera();
 
 void StartGame()
 {
+	if (SelectedHero < 0 || SelectedHero >= 5 || !CharactersClient[SelectedHero].Object.Live)
+		return;
+
 	{
 		if (CTLCODE_01BLOCKCHAR & CharactersClient[SelectedHero].CtlCode)
 			CUIMng::Instance().PopUpMsgWin(MESSAGE_BLOCKED_CHARACTER);
@@ -1336,7 +1344,9 @@ bool NewRenderCharacterScene(HDC hDC)
 	
 	CreateFrustrum((float)Width / 640.0f, (float)(Height - 50) / 480.0f, pos);
 
-	OBJECT *o = &CharactersClient[SelectedHero].Object;
+	OBJECT *o = nullptr;
+	if (SelectedHero >= 0 && SelectedHero < 5)
+		o = &CharactersClient[SelectedHero].Object;
 
 	CreateScreenVector(MouseX,MouseY,MouseTarget);
 	for(int i = 0; i < 5; i++)
@@ -1345,7 +1355,7 @@ bool NewRenderCharacterScene(HDC hDC)
 		Vector ( 0.0f, 0.0f, 0.0f, CharactersClient[i].Object.Light );
 	}
 
-	if(SelectedHero!=-1 && o->Live)
+	if (o != nullptr && SelectedHero != -1 && o->Live)
 	{
 		EnableAlphaBlend();
 		vec3_t Light;
@@ -1395,7 +1405,7 @@ bool NewRenderCharacterScene(HDC hDC)
 	RenderObjects_AfterCharacter();
 	CheckSprites();
 
-	if(SelectedHero!=-1 && o->Live)
+	if (o != nullptr && SelectedHero != -1 && o->Live)
 	{
 		vec3_t vLight;
 		
@@ -1541,17 +1551,24 @@ void NewMoveLogInScene()
 		MU_AndroidStopLoginBackgroundMovie();
 		CUIMng::Instance().SetMoving(false);
 #endif
-		g_ErrorReport.Write( "> Request Character list\r\n");
-
 		CCameraMove::GetInstancePtr()->SetTourMode(FALSE);
 
 		SceneFlag = CHARACTER_SCENE;
 
-		#ifdef NEW_PROTOCOL_SYSTEM
+		// Server may already have sent F3 00 (auto after F1 01); do not request again.
+		if (CurrentProtocolState != RECEIVE_CHARACTERS_LIST)
+		{
+			g_ErrorReport.Write("> Request Character list\r\n");
+#ifdef NEW_PROTOCOL_SYSTEM
 			gProtocolSend.SendRequestCharactersListNew();
-		#else
+#else
 			SendRequestCharactersList(g_pMultiLanguage->GetLanguage());
-		#endif
+#endif
+		}
+		else
+		{
+			g_ErrorReport.Write("> Character list already received (skip duplicate F3 request)\r\n");
+		}
 
         ReleaseLogoSceneData();
 
@@ -2279,7 +2296,7 @@ bool MoveMainCamera()
             CameraPosition[2] = 255.f;//700
         }
 		else if (CCameraMove::GetInstancePtr()->IsTourMode());
-        else
+        else if (Hero != nullptr && Hero->Object.Live)
         {
             CameraPosition[2] = Hero->Object.Position[2];//700
         }

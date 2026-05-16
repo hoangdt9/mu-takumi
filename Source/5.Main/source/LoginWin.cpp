@@ -250,6 +250,16 @@ void CLoginWin::UpdateWhileActive(double dDeltaTick)
 
 void CLoginWin::UpdateWhileShow(double dDeltaTick)
 {
+#if(CB_DANGKYINGAME)
+	if (gInterface.Data[eWindow_DangKyInGame].OnShow && gCB_DangKyInGame != NULL)
+	{
+#if defined(__ANDROID__) || defined(MU_IOS)
+		gCB_DangKyInGame->UpdateMobileInput();
+#endif
+		return;
+	}
+#endif
+
 	m_pIDInputBox->DoAction();
 	m_pPassInputBox->DoAction();
 

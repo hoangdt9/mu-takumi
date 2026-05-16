@@ -446,6 +446,8 @@ def patchNativeDirTo16k = { File dir, String label ->
 android {
     namespace 'com.muonline.client'
     compileSdk 35
+    // Use an installed NDK (AGP 8.7 defaults to 27.x which may be missing offline).
+    ndkVersion "26.1.10909125"
 
     // `preloadDatafresh` = separate applicationId → empty scoped storage → Preload always runs data.zip download.
     flavorDimensions 'target', 'preload'

@@ -12,6 +12,13 @@ using Takumi.Server.Protocol;
 RepoEnvLoader.ApplyDefaultsAndLocalEnv();
 DockerRuntimeEnv.ApplyStackOverridesIfEnabled();
 TakumiPostgresMirror.InitIfEnabled();
+TakumiPostgresMirror.InitAccountDbIfEnabled();
+await LegacySchemaPromoter.TryPromoteAllAsync().ConfigureAwait(false);
+
+if (LegacySchemaPromoter.IsPromoteOnlyMode())
+{
+    return 0;
+}
 
 if (CharacterRosterJsonMigrator.IsMigrateOnlyMode())
 {
@@ -81,6 +88,11 @@ if (accounts is { Count: > 0 } && (serverSerial is null || serverSerial.Length !
     Console.Error.WriteLine(
         "TAKUMI_ACCOUNTS is set but TAKUMI_SERVER_SERIAL must be 16 ASCII bytes (same as LegacyLoginHost / client Data).");
     return 1;
+}
+
+if (accounts is { Count: > 0 })
+{
+    await AccountCredentialGate.SeedEnvAccountsAsync(accounts, cts.Token).ConfigureAwait(false);
 }
 
 var skipAutoCharList = string.Equals(Environment.GetEnvironmentVariable("TAKUMI_SKIP_AUTO_CHARLIST"), "1", StringComparison.OrdinalIgnoreCase);

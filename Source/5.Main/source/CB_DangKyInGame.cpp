@@ -1,5 +1,6 @@
 #include "StdAfx.h"
 #include "CB_DangKyInGame.h"
+#include "TakumiUserNotify.h"
 #include "NewUISystem.h"
 #include "CBInterface.h"
 #include "CUIController.h"
@@ -10,16 +11,104 @@
 #include "Other.h"
 #include "ZzzInterface.h"
 #include "UIMng.h"
+#include "Utilities/Log/ErrorReport.h"
+#if defined(__ANDROID__) || defined(MU_IOS)
+#include "Platform/PlatformDefs.h"
+#include "Platform/MobilePlatform.h"
+#include "Input.h"
+#endif
+
+extern float g_fScreenRate_x;
+extern float g_fScreenRate_y;
 
 CB_DangKyInGame* gCB_DangKyInGame;
 
 namespace
 {
+#if defined(__ANDROID__)
+	DWORD ReadRegisterResultCode(const BYTE* packet)
+	{
+		if (packet == NULL)
+		{
+			return 0;
+		}
+
+		if (packet[0] == 0xC1 && packet[1] >= 8)
+		{
+			DWORD result = 0;
+			memcpy(&result, packet + 4, sizeof(result));
+			return result;
+		}
+
+		return reinterpret_cast<const XULY_CGPACKET*>(packet)->ThaoTac;
+	}
+#endif
 	const DWORD kRegisterTextColor = 0xFFFFFFFF;
 	const float kRegisterWindowWidth = 262.0f;
 	const float kRegisterWindowHeight = 250.0f;
 	const float kInputWidth = 110.0f;
 	const float kInputSpacing = 20.0f;
+
+#if defined(__ANDROID__) || defined(MU_IOS)
+	bool CursorInRegisterRectVirt(float virtX, float virtY, float virtW, float virtH)
+	{
+		const POINT pt = CInput::Instance().GetCursorPos();
+		const float x = virtX * g_fScreenRate_x;
+		const float y = virtY * g_fScreenRate_y;
+		const float w = virtW * g_fScreenRate_x;
+		const float h = virtH * g_fScreenRate_y;
+		return static_cast<float>(pt.x) >= x
+			&& static_cast<float>(pt.x) < x + w
+			&& static_cast<float>(pt.y) >= y
+			&& static_cast<float>(pt.y) < y + h;
+	}
+
+	bool CursorInTextInputBox(CUITextInputBox* input)
+	{
+		if (input == NULL)
+		{
+			return false;
+		}
+
+		return CursorInRegisterRectVirt(
+			static_cast<float>(input->GetPosition_x()),
+			static_cast<float>(input->GetPosition_y()),
+			static_cast<float>(input->GetWidth()),
+			static_cast<float>(input->GetHeight()));
+	}
+
+	void GetRegisterWindowVirt(float& startX, float& startY)
+	{
+		if (gInterface.Data[eWindow_DangKyInGame].FirstLoad)
+		{
+			startX = gInterface.Data[eWindow_DangKyInGame].X;
+			startY = gInterface.Data[eWindow_DangKyInGame].Y;
+		}
+		else
+		{
+			startX = (MAX_WIN_WIDTH / 2) - (kRegisterWindowWidth / 2);
+			startY = 150.0f;
+		}
+	}
+
+	void ComputeRegisterButtonVirt(float& buttonX, float& buttonY)
+	{
+		float startX = 0.0f;
+		float startY = 0.0f;
+		GetRegisterWindowVirt(startX, startY);
+		startY += 30.0f;
+		startY += 4.0f * kInputSpacing;
+		startY += 20.0f + 30.0f;
+		buttonX = startX + 100.0f;
+		buttonY = startY + 45.0f;
+	}
+
+	void DismissRegisterTextInput()
+	{
+		::SetFocus(nullptr);
+		MU_MobileStopTextInput();
+	}
+#endif
 
 	const char* ResolveRegisterLabel(const char* text, const char* fallback)
 	{
@@ -63,6 +152,7 @@ CB_DangKyInGame::CB_DangKyInGame()
 	CInputCaptCha = NULL;
 	TimeSendRegTK = GetTickCount();
 	OpenDKTK = false;
+	m_ExpectedCaptcha.clear();
 }
 
 CB_DangKyInGame::~CB_DangKyInGame()
@@ -81,6 +171,38 @@ void CB_DangKyInGame::Clear()
 
 	TimeSendRegTK = GetTickCount();
 	OpenDKTK = false;
+	m_ExpectedCaptcha.clear();
+}
+
+void CB_DangKyInGame::PrepareCloseRegisterWindow()
+{
+	auto releaseInput = [](CUITextInputBox* input)
+	{
+		if (input == NULL)
+		{
+			return;
+		}
+
+		if (input->HaveFocus())
+		{
+#if defined(__ANDROID__) || defined(MU_IOS)
+			::SetFocus(nullptr);
+			MU_MobileStopTextInput();
+#else
+			SetFocus(g_hWnd);
+#endif
+		}
+
+		input->SetTabTarget(NULL);
+		input->SetState(UISTATE_HIDE);
+	};
+
+	for (int i = 0; i < TYPE_INPUT_DKTK::eMaxINPUT; ++i)
+	{
+		releaseInput(CInputData[i]);
+	}
+
+	releaseInput(CInputCaptCha);
 }
 
 void CB_DangKyInGame::OpenOnOff()
@@ -101,8 +223,73 @@ void CB_DangKyInGame::OpenOnOff()
 
 	gInterface.Data[eWindow_DangKyInGame].Open();
 	OpenDKTK = true;
-	gInterface.vCaptcha = gInterface.generateCaptcha(4);
+	m_ExpectedCaptcha = gInterface.generateCaptcha(4);
+	gInterface.vCaptcha = m_ExpectedCaptcha;
 }
+
+#if defined(__ANDROID__) || defined(MU_IOS)
+void CB_DangKyInGame::UpdateMobileInput()
+{
+	if (!gInterface.Data[eWindow_DangKyInGame].OnShow)
+	{
+		return;
+	}
+
+	if (!CInput::Instance().IsLBtnDn())
+	{
+		return;
+	}
+
+	float winX = 0.0f;
+	float winY = 0.0f;
+	GetRegisterWindowVirt(winX, winY);
+
+	if (!CursorInRegisterRectVirt(winX, winY, kRegisterWindowWidth, kRegisterWindowHeight))
+	{
+		if (AndroidHasFocusedTextInput())
+		{
+			DismissRegisterTextInput();
+		}
+		return;
+	}
+
+	float fieldY = winY + 30.0f;
+	for (int i = 0; i < TYPE_INPUT_DKTK::eMaxINPUT; ++i)
+	{
+		const float fieldX = winX + 120.0f;
+		const float fieldYTop = fieldY + 50.0f;
+		if (CursorInTextInputBox(CInputData[i])
+			|| CursorInRegisterRectVirt(fieldX, fieldYTop, kInputWidth, 14.0f))
+		{
+			if (CInputData[i] != NULL)
+			{
+				CInputData[i]->GiveFocus(TRUE);
+			}
+			return;
+		}
+		fieldY += kInputSpacing;
+	}
+
+	if (CursorInTextInputBox(CInputCaptCha)
+		|| CursorInRegisterRectVirt(winX + 105.0f, fieldY + 45.0f, 120.0f, 30.0f))
+	{
+		if (CInputCaptCha != NULL)
+		{
+			CInputCaptCha->GiveFocus(TRUE);
+		}
+		return;
+	}
+
+	float buttonX = 0.0f;
+	float buttonY = 0.0f;
+	ComputeRegisterButtonVirt(buttonX, buttonY);
+	const bool onRegisterButton = CursorInRegisterRectVirt(buttonX, buttonY, 100.0f, 12.0f);
+	if (!onRegisterButton && AndroidHasFocusedTextInput())
+	{
+		DismissRegisterTextInput();
+	}
+}
+#endif
 
 bool CB_DangKyInGame::RenderWindow(int X, int Y)
 {
@@ -170,13 +357,15 @@ bool CB_DangKyInGame::RenderWindow(int X, int Y)
 			return;
 		}
 
+		CInputCaptCha->DoAction(TRUE);
 		char captchaText[8] = { 0 };
 		CInputCaptCha->GetText(captchaText, sizeof(captchaText));
 		std::string captchaInput(captchaText);
+		std::string expectedCaptcha = m_ExpectedCaptcha;
 
-		if (!gInterface.check_Captcha(gInterface.vCaptcha, captchaInput))
+		if (!gInterface.check_Captcha(expectedCaptcha, captchaInput))
 		{
-			gInterface.OpenMessageBox("Error", "Invalid Captcha");
+			TakumiUserNotify_ShowError("Invalid Captcha");
 			return;
 		}
 
@@ -190,14 +379,21 @@ bool CB_DangKyInGame::RenderWindow(int X, int Y)
 
 	for (int i = 0; i < TYPE_INPUT_DKTK::eMaxINPUT; ++i)
 	{
+		const float fieldScreenX = startX + 120.0f;
+		const float fieldScreenY = startY + 50.0f;
+		const int fieldVirtX = static_cast<int>(fieldScreenX / g_fScreenRate_x);
+		const int fieldVirtY = static_cast<int>(fieldScreenY / g_fScreenRate_y);
+		const int fieldVirtW = static_cast<int>(kInputWidth / g_fScreenRate_x);
+		const int fieldVirtH = static_cast<int>(14.0f / g_fScreenRate_y);
+
 		RenderRegisterText(g_hFontBold, startX + 18.0f, startY + 48.0f, 96.0f, 16.0f, 1, labels[i]);
-		gInterface.DrawBarForm((startX + 120.0f) - 3.0f, (startY + 50.0f) - 3.0f, kInputWidth, 16.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+		gInterface.DrawBarForm((fieldScreenX) - 3.0f, (fieldScreenY) - 3.0f, kInputWidth, 16.0f, 0.0f, 0.0f, 0.0f, 1.0f);
 
 		g_pBCustomMenuInfo->RenderInputBox(
-			startX + 120.0f,
-			startY + 50.0f,
-			kInputWidth,
-			14.0f,
+			static_cast<float>(fieldVirtX),
+			static_cast<float>(fieldVirtY),
+			static_cast<float>(fieldVirtW),
+			static_cast<float>(fieldVirtH),
 			"",
 			CInputData[i],
 			(UIOPTIONS)inputOptions[i],
@@ -259,10 +455,20 @@ bool CB_DangKyInGame::RenderWindow(int X, int Y)
 
 	if (CInputCaptCha != NULL)
 	{
+#if defined(__ANDROID__) || defined(MU_IOS)
 		CInputCaptCha->SetTabTarget(NULL);
+#else
+		CInputCaptCha->SetTabTarget(CInputData[Account]);
+#endif
 	}
 
-	gInterface.RenderCaptchaNumber(captchaX, captchaY, CInputCaptCha, gInterface.vCaptcha.c_str());
+	gInterface.RenderCaptchaNumber(captchaX, captchaY, CInputCaptCha, m_ExpectedCaptcha.c_str());
+	if (CInputCaptCha != NULL)
+	{
+		CInputCaptCha->SetPosition(
+			static_cast<int>((captchaX + 60.0f) / g_fScreenRate_x),
+			static_cast<int>((captchaY + 6.5f) / g_fScreenRate_y));
+	}
 
 	startY += 30.0f;
 
@@ -284,7 +490,6 @@ bool CB_DangKyInGame::RenderWindow(int X, int Y)
 	}
 #endif
 
-	gInterface.DrawMessageBox();
 	return true;
 }
 
@@ -360,7 +565,8 @@ bool CB_DangKyInGame::RequsetDKTK()
 
 	DataSend((LPBYTE)&pMsg, pMsg.header.size);
 
-	gInterface.vCaptcha = gInterface.generateCaptcha(4);
+	m_ExpectedCaptcha = gInterface.generateCaptcha(4);
+	gInterface.vCaptcha = m_ExpectedCaptcha;
 	TimeSendRegTK = GetTickCount() + 5000;
 
 	return true;
@@ -386,25 +592,46 @@ void CB_DangKyInGame::RecvKQRegInGame(XULY_CGPACKET* lpMsg)
 		CInputData[Pass]->GetText(szPass, sizeof(szPass));
 	}
 
-	switch (lpMsg->ThaoTac)
+#if defined(__ANDROID__)
+	const DWORD thaoTac = ReadRegisterResultCode(reinterpret_cast<const BYTE*>(lpMsg));
+#else
+	const DWORD thaoTac = lpMsg->ThaoTac;
+#endif
+
+	switch (thaoTac)
 	{
 	case CB_DangKyInGame::eDangKyThanhCong:
 		{
-			gInterface.OpenMessageBox("Ket Qua", "Dang ky thanh cong\nID : %s", szID);
 			CUIMng& rUIMng = CUIMng::Instance();
-			rUIMng.m_LoginWin.GetIDInputBox()->SetText(szID);
-			rUIMng.m_LoginWin.GetPassInputBox()->SetText(szPass);
+			if (CUITextInputBox* idBox = rUIMng.m_LoginWin.GetIDInputBox())
+			{
+				idBox->SetText(szID);
+			}
+
+			if (CUITextInputBox* passBox = rUIMng.m_LoginWin.GetPassInputBox())
+			{
+				passBox->SetText(szPass);
+			}
+
+			PrepareCloseRegisterWindow();
 			gInterface.Data[eWindow_DangKyInGame].Close();
-			Clear();
+			// Defer SAFE_DELETE of register inputs until RenderWindow sees OnShow==false
+			// (avoids SIGABRT when focused CUITextInputBox HWND is destroyed mid-frame).
+			OpenDKTK = true;
+
+			TakumiUserNotify_ShowInfo("Ket Qua", "Dang ky thanh cong\nTai khoan: %s", szID);
+			g_ErrorReport.Write("[DangKyInGame] notify ok account=%s\r\n", szID);
 		}
 		break;
 
 	case CB_DangKyInGame::eTaiKhoanDaTonTai:
-		gInterface.OpenMessageBox("Ket Qua", "ID %s da ton tai", szID);
+		gInterface.OpenMessageBox("Error", "ID %s da ton tai", szID);
+		g_ErrorReport.Write("[DangKyInGame] account exists account=%s\r\n", szID);
 		break;
 
 	case CB_DangKyInGame::eDuLieuNhapKhongDung:
-		gInterface.OpenMessageBox("Ket Qua", "Thong tin nhap khong hop le");
+		gInterface.OpenMessageBox("Error", "Thong tin nhap khong hop le");
+		g_ErrorReport.Write("[DangKyInGame] invalid input\r\n");
 		break;
 
 	default:

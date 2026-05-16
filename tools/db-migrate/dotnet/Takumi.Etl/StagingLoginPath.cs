@@ -7,7 +7,7 @@ using NpgsqlTypes;
 namespace Takumi.Etl;
 
 /// <summary>
-/// Creates <c>takumi_staging.legacy_*</c> mirrors of MEMB_INFO and Character; optional full reload from MSSQL.
+/// Creates <c>takumi_legacy.legacy_*</c> mirrors of MEMB_INFO and Character; optional full reload from MSSQL.
 /// </summary>
 internal static class StagingLoginPath
 {
@@ -84,7 +84,7 @@ internal static class StagingLoginPath
             await ExecAsync(pg, $"DROP TABLE IF EXISTS {schQuote}.{LegacyMssql.QuotePgIdent("legacy_character")};");
             await CreateMirrorTableAsync(pg, "legacy_memb_info", membCols);
             await CreateMirrorTableAsync(pg, "legacy_character", charCols);
-            Console.WriteLine("RECREATE: takumi_staging.legacy_memb_info + legacy_character");
+            Console.WriteLine("RECREATE: takumi_legacy.legacy_memb_info + legacy_character");
         }
         else
             await GuardTablesExistAsync(pg);
@@ -104,9 +104,9 @@ internal static class StagingLoginPath
         await using var cmd = new NpgsqlCommand(
             """
             SELECT NOT EXISTS (SELECT 1 FROM information_schema.tables t
-              WHERE t.table_schema = 'takumi_staging' AND t.table_name = 'legacy_memb_info')
+              WHERE t.table_schema = 'takumi_legacy' AND t.table_name = 'legacy_memb_info')
               OR NOT EXISTS (SELECT 1 FROM information_schema.tables t
-              WHERE t.table_schema = 'takumi_staging' AND t.table_name = 'legacy_character')
+              WHERE t.table_schema = 'takumi_legacy' AND t.table_name = 'legacy_character')
             """,
             pg);
         var missing = (bool)(await cmd.ExecuteScalarAsync() ?? true);

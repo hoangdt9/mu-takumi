@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Mirror MEMB_INFO + Character into Postgres schema takumi_staging (Gate 2 dev).
+# Mirror MEMB_INFO + Character into Postgres schema takumi_legacy (Gate 2 dev).
 # NEVER run against prod.
 # Copies db-migrate.env.sample → tools/db-migrate/.env for connection strings if you have not exported them.
 # Optional: bash auto-sources tools/db-migrate/.env.

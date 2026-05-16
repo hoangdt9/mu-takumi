@@ -3,5 +3,14 @@
     "java.import.gradle.enabled": true,
     "java.import.gradle.wrapper.enabled": true,
     "java.project.importOnFirstTimeStartup": "automatic",
-    "java.server.launchMode": "Standard"
+    "java.server.launchMode": "Standard",
+    "java.import.exclusions": [
+        "**/app/src/main/cpp/**",
+        "**/build/**",
+        "**/.gradle/**"
+    ],
+    "files.watcherExclude": {
+        "**/app/src/main/cpp/**": true,
+        "**/build/**": true
+    }
 }

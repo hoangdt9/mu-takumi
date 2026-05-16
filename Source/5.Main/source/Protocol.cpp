@@ -594,7 +594,10 @@ BOOL ProtocolCoreEx(BYTE head, BYTE* lpMsg, int size, int key) // OK
 #endif
 #if(CB_DANGKYINGAME)
 			case 0x05:
-				gCB_DangKyInGame->RecvKQRegInGame((XULY_CGPACKET*)lpMsg);
+				if (gCB_DangKyInGame != NULL)
+				{
+					gCB_DangKyInGame->RecvKQRegInGame((XULY_CGPACKET*)lpMsg);
+				}
 				break;
 #endif
 

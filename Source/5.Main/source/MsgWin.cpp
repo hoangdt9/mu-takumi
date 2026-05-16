@@ -34,7 +34,7 @@ extern float g_fScreenRate_y;
 
 namespace
 {
-constexpr int kDeleteCharGuardDigits = 6;
+constexpr int kDeleteCharGuardDigits = 7;
 // Client-side captcha for character delete (shown on 2nd line of MsgWin).
 char s_DeleteCharGuardCode[kDeleteCharGuardDigits + 1];
 
@@ -519,7 +519,7 @@ void CMsgWin::PopUp(int nMsgCode, char* pszMsg)
 		// ASCII-only for NDK; must fit in m_aszMsg[][MW_MSG_ROW_MAX] (52) when SetMsg copies two lines.
 		sprintf(
 			szTempMsg,
-			"Vui long go %d so ben duoi trung ma hien thi.",
+			"Vui long nhap %d so bao mat ben duoi trung ma hien thi.",
 			kDeleteCharGuardDigits);
 		lpszMsg = szTempMsg;
 		lpszMsg2 = s_DeleteCharGuardCode;

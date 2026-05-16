@@ -26,7 +26,7 @@ public sealed class GamePortListenOptions
     public bool ReuseAddress { get; init; }
 
     /// <summary>When set with <see cref="AuthServerSerial16"/>, enables login + roster + join on this TCP (split <c>TAKUMI_GAME_PORT</c>).</summary>
-    public IReadOnlyDictionary<string, string>? AuthAccounts { get; init; }
+    public Dictionary<string, string>? AuthAccounts { get; init; }
 
     public byte[]? AuthServerSerial16 { get; init; }
 

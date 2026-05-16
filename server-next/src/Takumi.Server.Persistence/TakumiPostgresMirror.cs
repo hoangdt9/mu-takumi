@@ -23,6 +23,9 @@ public static class TakumiPostgresMirror
 
     public static PostgresCustomWorldConfigRepository? CustomWorld { get; private set; }
 
+    /// <summary>Runtime <c>account</c> table when <c>TAKUMI_ACCOUNT_DB=1</c> (login + in-game register).</summary>
+    public static PostgresAccountRepository? Accounts { get; private set; }
+
     /// <summary>Reads <c>TAKUMI_ROSTER_DB_SYNC</c> and connection env; no-op when disabled or misconfigured.</summary>
     public static void InitIfEnabled()
     {
@@ -58,7 +61,6 @@ public static class TakumiPostgresMirror
             Console.Error.WriteLine(
                 "[postgres-mirror] roster + inventory_slot + warehouse_slot enabled; character_domain={0}",
                 CharacterDomain is not null);
-            _ = CharacterLegacyWorldImporter.TryImportAsync();
         }
         catch (Exception ex)
         {
@@ -195,6 +197,38 @@ public static class TakumiPostgresMirror
             MapGate = null;
             NpcShop = null;
             CustomWorld = null;
+        }
+    }
+
+    /// <summary>
+    /// Enables <see cref="Accounts"/> when <c>TAKUMI_ACCOUNT_DB=1</c> (or <c>true</c>) and a Postgres connection string is set.
+    /// Requires <c>sql/init/010_account.sql</c> applied.
+    /// </summary>
+    public static void InitAccountDbIfEnabled()
+    {
+        Accounts = null;
+        if (!EnvOn("TAKUMI_ACCOUNT_DB"))
+        {
+            return;
+        }
+
+        var cs = PostgresCharacterRosterRepository.BuildConnectionStringFromEnv();
+        if (string.IsNullOrEmpty(cs))
+        {
+            Console.Error.WriteLine(
+                "[account-db] TAKUMI_ACCOUNT_DB is set but no connection string: set TAKUMI_PG_CONNECTION_STRING or TAKUMI_PG_HOST.");
+            return;
+        }
+
+        try
+        {
+            Accounts = new PostgresAccountRepository(cs);
+            Console.Error.WriteLine("[account-db] public.account enabled (login + C1 D3 05 register).");
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine("[account-db] init failed: {0}", ex.Message);
+            Accounts = null;
         }
     }
 

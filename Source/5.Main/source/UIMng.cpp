@@ -666,6 +666,7 @@ void CUIMng::Update(double dDeltaTick)
 			if (AndroidHasFocusedTextInput())
 			{
 				::SetFocus(nullptr);
+				MU_MobileStopTextInput();
 			}
 #endif
 		}

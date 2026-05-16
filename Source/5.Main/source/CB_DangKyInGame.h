@@ -38,12 +38,17 @@ public:
 	bool RequsetDKTK();
 	void RecvKQRegInGame(XULY_CGPACKET* lpMsg);
 	void Clear();
-	
+	void PrepareCloseRegisterWindow();
+#if defined(__ANDROID__) || defined(MU_IOS)
+	void UpdateMobileInput();
+#endif
+
 protected:
 	CUITextInputBox* CInputData[TYPE_INPUT_DKTK::eMaxINPUT];
 	CUITextInputBox* CInputCaptCha;
 	DWORD TimeSendRegTK;
 	bool OpenDKTK;
+	std::string m_ExpectedCaptcha;
 };
 
 extern CB_DangKyInGame* gCB_DangKyInGame;

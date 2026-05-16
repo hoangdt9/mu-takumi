@@ -72,5 +72,5 @@ internal static class LegacyMssql
     public static string QuotePgIdent(string name) =>
         "\"" + name.Replace("\"", "\"\"", StringComparison.Ordinal) + "\"";
 
-    public static string PGStagingSchema => "takumi_staging";
+    public static string PGStagingSchema => "takumi_legacy";
 }

@@ -38,6 +38,8 @@ public static class LegacyLoginHostRunner
     public static async Task<int> RunAsync(LegacyLoginHostRunOptions? runOptions, CancellationToken appCancellationToken)
     {
         TakumiPostgresMirror.InitIfEnabled();
+        TakumiPostgresMirror.InitAccountDbIfEnabled();
+        await LegacySchemaPromoter.TryPromoteAllAsync(appCancellationToken).ConfigureAwait(false);
         TakumiPostgresMirror.InitSessionHandoffIfEnabled();
         TakumiPostgresMirror.InitMonsterSpawnIfEnabled();
         TakumiPostgresMirror.InitWorldStaticDataIfEnabled();
@@ -91,6 +93,8 @@ public static class LegacyLoginHostRunner
                 "Missing TAKUMI_ACCOUNTS (user:pass pairs, use | or ; between pairs). Set in server-next/env.defaults or .env.");
             return 1;
         }
+
+        await AccountCredentialGate.SeedEnvAccountsAsync(accounts, appCancellationToken).ConfigureAwait(false);
 
         var (serverDecryptKeys, decryptKeysTag) = Season6ClientToServerDecryptSession.LoadServerDecryptKeysFromDec2OrEnv();
 
@@ -471,7 +475,7 @@ public static class LegacyLoginHostRunner
         TcpClient tcp,
         byte[] joinVersion,
         byte[] serverSerial,
-        IReadOnlyDictionary<string, string> accounts,
+        Dictionary<string, string> accounts,
         SimpleModulusKeys serverDecryptKeys,
         bool verbose,
         InMemorySessionTicketStore sessionTicketStore,
@@ -664,6 +668,23 @@ public static class LegacyLoginHostRunner
                         packet[2],
                         packet[3],
                         Convert.ToHexString(packet));
+                }
+
+                // In-game register C1 D3 05 (login screen, before F1 01) — same handler as GamePortMinimalSession.
+                if (!loginLatch.IsLoggedIn
+                    && GameInGameRegistration.TryFindRequest(packet, out var regOff)
+                    && GameInGameRegistration.TryParseRequest(packet, regOff, out var regReq))
+                {
+                    var regResult = await AccountCredentialGate.RegisterAsync(regReq, accounts, ct).ConfigureAwait(false);
+                    var regAck = GameInGameRegistration.BuildResponse(regResult);
+                    await connection.Output.WriteAsync(regAck, ct).ConfigureAwait(false);
+                    await connection.Output.FlushAsync(ct).ConfigureAwait(false);
+                    Console.WriteLine(
+                        "[{0}] in-game register account='{1}' result={2}",
+                        remote,
+                        regReq.Account,
+                        regResult);
+                    return;
                 }
 
                 // Create character F3 01: C1 0F F3 01 + name[10] + packed class byte.
@@ -1344,7 +1365,7 @@ public static class LegacyLoginHostRunner
                     return;
                 }
 
-                if (!accounts.TryGetValue(id, out var okPass) || okPass != pass)
+                if (!await AccountCredentialGate.TryValidateLoginAsync(id, pass, accounts, ct).ConfigureAwait(false))
                 {
                     Console.WriteLine("[{0}] login rejected: bad id/password for '{1}'", remote, id);
                     await WriteLoginResultAsync(connection, 0x00, ct).ConfigureAwait(false);

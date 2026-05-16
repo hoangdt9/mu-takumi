@@ -27,7 +27,9 @@ public static class DockerRuntimeEnv
     static void ApplyPostgresServiceEndpoint()
     {
         var user = Environment.GetEnvironmentVariable("TAKUMI_PG_USER")?.Trim();
-        if (string.IsNullOrEmpty(user))
+        // Host .env often sets postgres (superuser name); compose DB user is takumi.
+        if (string.IsNullOrEmpty(user)
+            || string.Equals(user, "postgres", StringComparison.OrdinalIgnoreCase))
         {
             user = "takumi";
         }

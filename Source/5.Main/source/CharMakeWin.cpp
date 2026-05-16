@@ -20,7 +20,8 @@
 #include "CharacterManager.h"
 
 #if defined(__ANDROID__) || defined(MU_IOS)
-#include <SDL.h>
+#include "Platform/PlatformDefs.h"
+#include "Platform/MobilePlatform.h"
 #endif
 
 #define	CMW_OK		0
@@ -30,16 +31,18 @@ extern float g_fScreenRate_x;
 extern float g_fScreenRate_y;
 extern int g_iChatInputType;
 extern CUITextInputBox* g_pSingleTextInputBox;
-#if defined(__ANDROID__) || defined(MU_IOS)
-extern bool    g_charNameInputActive;
-extern wchar_t g_charNameBuf[11];
-extern int     g_charNameLen;
-#endif
 
 void MoveCharacterCamera(vec3_t Origin,vec3_t Position,vec3_t Angle);
 
 namespace
 {
+	// Default panel was 108px — Vietnamese labels need a wider stat column.
+	const int kStatPanelWidth = 138;
+	const int kStatPanelExtraLeft = kStatPanelWidth - 108;
+	const int kStatPadX = 6;
+	const int kStatValueColumnW = 22;
+	const int kStatLabelValueGap = 10;
+
 	const char* const kWizardStats[4] = { "28", "20", "25", "10" };
 	const char* const kKnightStats[4] = { "18", "18", "15", "30" };
 	const char* const kElfStats[4] = { "22", "25", "20", "15" };
@@ -111,25 +114,6 @@ namespace
 		}
 	}
 
-#if defined(__ANDROID__) || defined(MU_IOS)
-	void CopyAndroidCharNameToAscii(char* output, size_t outputSize)
-	{
-		if (output == NULL || outputSize == 0)
-		{
-			return;
-		}
-
-		size_t writeIndex = 0;
-
-		for (int readIndex = 0; g_charNameBuf[readIndex] != L'\0' && writeIndex + 1 < outputSize; ++readIndex)
-		{
-			const wchar_t character = g_charNameBuf[readIndex];
-			output[writeIndex++] = (character >= 0x20 && character <= 0x7E) ? static_cast<char>(character) : '?';
-		}
-
-		output[writeIndex] = '\0';
-	}
-#endif
 }
 
 CCharMakeWin::CCharMakeWin()
@@ -151,7 +135,7 @@ void CCharMakeWin::Create()
 
 	m_asprBack[CMW_SPR_INPUT].Create(346, 38, BITMAP_LOG_IN);
 
-	m_asprBack[CMW_SPR_STAT].Create(108, 80);
+	m_asprBack[CMW_SPR_STAT].Create(kStatPanelWidth, 80);
 
 	m_asprBack[CMW_SPR_DESC].Create(454, 51);
 
@@ -220,7 +204,7 @@ void CCharMakeWin::SetPosition(int nXCoord, int nYCoord)
 	if (gProtect.m_MainInfo.RemoveClass == 1)
 	{
 		nBaseY = nYCoord + (246 - nBtnHeight);
-		m_asprBack[CMW_SPR_STAT].SetPosition(nBaseX, nBaseY - 107);
+		m_asprBack[CMW_SPR_STAT].SetPosition(nBaseX - kStatPanelExtraLeft, nBaseY - 107);
 
 		for (int i = 0; i < 4; ++i)
 		{
@@ -230,7 +214,7 @@ void CCharMakeWin::SetPosition(int nXCoord, int nYCoord)
 	else if (gProtect.m_MainInfo.RemoveClass == 2)
 	{
 		nBaseY += (nBtnHeight + nBtnHeight);
-		m_asprBack[CMW_SPR_STAT].SetPosition(nBaseX, nBaseY - 107);
+		m_asprBack[CMW_SPR_STAT].SetPosition(nBaseX - kStatPanelExtraLeft, nBaseY - 107);
 
 		for (int i = 0; i < 3; ++i)
 		{
@@ -245,7 +229,7 @@ void CCharMakeWin::SetPosition(int nXCoord, int nYCoord)
 	else if (gProtect.m_MainInfo.RemoveClass == 3)
 	{
 		nBaseY += nBtnHeight;
-		m_asprBack[CMW_SPR_STAT].SetPosition(nBaseX, nBaseY - 107);
+		m_asprBack[CMW_SPR_STAT].SetPosition(nBaseX - kStatPanelExtraLeft, nBaseY - 107);
 
 		for (int i = 0; i < 3; ++i)
 			m_abtnJob[i].SetPosition(nBaseX, nBaseY + i * nBtnHeight);
@@ -258,7 +242,7 @@ void CCharMakeWin::SetPosition(int nXCoord, int nYCoord)
 	}
 	else
 	{
-		m_asprBack[CMW_SPR_STAT].SetPosition(nBaseX, nYCoord + 24);
+		m_asprBack[CMW_SPR_STAT].SetPosition(nBaseX - kStatPanelExtraLeft, nYCoord + 24);
 
 		for (int i = 0; i < 3; ++i)
 			m_abtnJob[i].SetPosition(nBaseX, nBaseY + i * nBtnHeight);
@@ -309,44 +293,29 @@ void CCharMakeWin::Show(bool bShow)
 		InputEnable = true;
 		InputNumber = 1;
 		InputTextMax[0] = MAX_ID_SIZE;
-		if (g_iChatInputType == 1)
+		if (g_iChatInputType == 1 && g_pSingleTextInputBox != NULL)
 		{
-#if defined(__ANDROID__) || defined(MU_IOS)
-			g_charNameLen = 0;
-			g_charNameBuf[0] = L'\0';
-			g_charNameInputActive = true;
-			if (g_pSingleTextInputBox != NULL)
-			{
-				g_pSingleTextInputBox->SetText(NULL);
-				g_pSingleTextInputBox->SetState(UISTATE_HIDE);
-			}
-			MU_MobileStartTextInput();
-#else
 			g_pSingleTextInputBox->SetState(UISTATE_NORMAL);
 			g_pSingleTextInputBox->SetOption(UIOPTION_NULL);
 			g_pSingleTextInputBox->SetBackColor(0, 0, 0, 0);
 			g_pSingleTextInputBox->SetTextLimit(10);
-			g_pSingleTextInputBox->GiveFocus();
-#endif
+			g_pSingleTextInputBox->SetText(NULL);
+			g_pSingleTextInputBox->GiveFocus(TRUE);
 		}
 	}
 	else
 	{
-		if (g_iChatInputType == 1)
+		if (g_iChatInputType == 1 && g_pSingleTextInputBox != NULL)
 		{
 #if defined(__ANDROID__) || defined(MU_IOS)
-			g_charNameInputActive = false;
-			g_charNameLen = 0;
-			g_charNameBuf[0] = L'\0';
-			MU_MobileStopTextInput();
-			if (g_pSingleTextInputBox != NULL)
+			if (g_pSingleTextInputBox->HaveFocus())
 			{
-				g_pSingleTextInputBox->SetState(UISTATE_HIDE);
+				::SetFocus(nullptr);
+				MU_MobileStopTextInput();
 			}
-#else
+#endif
 			g_pSingleTextInputBox->SetText(NULL);
 			g_pSingleTextInputBox->SetState(UISTATE_HIDE);
-#endif
 		}
 	}
 }
@@ -402,6 +371,45 @@ void CCharMakeWin::UpdateDisplay()
 	SelectCreateCharacter();
 }
 
+void CCharMakeWin::UpdateWhileShow(double dDeltaTick)
+{
+	(void)dDeltaTick;
+
+#if defined(__ANDROID__) || defined(MU_IOS)
+	if (!m_bShow || g_iChatInputType != 1 || g_pSingleTextInputBox == NULL)
+	{
+		return;
+	}
+
+	if (g_pSingleTextInputBox->GetState() == UISTATE_NORMAL)
+	{
+		g_pSingleTextInputBox->DoAction();
+	}
+
+	if (CInput::Instance().IsLBtnDn())
+	{
+		if (m_asprBack[CMW_SPR_INPUT].CursorInObject())
+		{
+			g_pSingleTextInputBox->GiveFocus(TRUE);
+		}
+		else
+		{
+			bool onButton = m_aBtn[CMW_OK].CursorInObject() || m_aBtn[CMW_CANCEL].CursorInObject();
+			for (int i = 0; i < MAX_CLASS; ++i)
+			{
+				onButton = onButton || m_abtnJob[i].CursorInObject();
+			}
+
+			if (!onButton && AndroidHasFocusedTextInput())
+			{
+				::SetFocus(nullptr);
+				MU_MobileStopTextInput();
+			}
+		}
+	}
+#endif
+}
+
 void CCharMakeWin::UpdateWhileActive(double dDeltaTick)
 {
 	int i, j;
@@ -425,24 +433,6 @@ void CCharMakeWin::UpdateWhileActive(double dDeltaTick)
 	}
 
 	{
-		if (g_iChatInputType == 1 && MouseLButtonPush)
-		{
-			const int inputX = int((m_asprBack[CMW_SPR_INPUT].GetXPos() + 78) / g_fScreenRate_x);
-			const int inputY = int((m_asprBack[CMW_SPR_INPUT].GetYPos() + 21) / g_fScreenRate_y);
-#if defined(__ANDROID__) || defined(MU_IOS)
-			if (::CheckMouseIn(inputX - 10, inputY - 6, 220, 28))
-			{
-				g_charNameInputActive = true;
-				MU_MobileStartTextInput();
-			}
-#else
-			if (::CheckMouseIn(inputX - 10, inputY - 6, 220, 28))
-			{
-				g_pSingleTextInputBox->GiveFocus();
-			}
-#endif
-		}
-
 		if(m_aBtn[CMW_OK].IsClick())
 		{
 			RequestCreateCharacter();
@@ -451,7 +441,7 @@ void CCharMakeWin::UpdateWhileActive(double dDeltaTick)
 		{
 			CUIMng::Instance().HideWin(this);
 		}
-		else if (CInput::Instance().IsKeyDown(VK_RETURN))
+		else if (CInput::Instance().IsKeyDown(VK_RETURN) || IsEnterPressed())
 		{
 			::PlayBuffer(SOUND_CLICK01);
 			RequestCreateCharacter();
@@ -468,13 +458,9 @@ void CCharMakeWin::UpdateWhileActive(double dDeltaTick)
 
 void CCharMakeWin::RequestCreateCharacter()
 {
-	if (g_iChatInputType == 1)
+	if (g_iChatInputType == 1 && g_pSingleTextInputBox != NULL)
 	{
-#if defined(__ANDROID__) || defined(MU_IOS)
-		CopyAndroidCharNameToAscii(InputText[0], MAX_ID_SIZE + 1);
-#else
 		g_pSingleTextInputBox->GetText(InputText[0]);
-#endif
 	}
 
 	CUIMng& rUIMng = CUIMng::Instance();
@@ -509,29 +495,44 @@ void CCharMakeWin::RenderControls()
 	g_pRenderText->SetBgColor(0);
 
 	const char* const* apszStat = GetCreateCharacterStats(m_nSelJob);
-	int nStatBaseX = m_asprBack[CMW_SPR_STAT].GetXPos() + 22;
+	const int nStatPanelX = m_asprBack[CMW_SPR_STAT].GetXPos();
+	const int nStatPanelW = m_asprBack[CMW_SPR_STAT].GetWidth();
+	const int nStatVirtLeft = int((nStatPanelX + kStatPadX) / g_fScreenRate_x);
+	const int nStatVirtRight = int((nStatPanelX + nStatPanelW - kStatPadX) / g_fScreenRate_x);
+	const int nStatVirtInnerW = nStatVirtRight - nStatVirtLeft;
+	const int nStatLabelVirtW = nStatVirtInnerW - kStatValueColumnW - kStatLabelValueGap;
+	const int nStatValueVirtX = nStatVirtRight - kStatValueColumnW;
 	int nStatY;
+
+	auto renderStatRow = [&](int rowIndex, const char* label, const char* value)
+	{
+		nStatY = int((m_asprBack[CMW_SPR_STAT].GetYPos() + 10 + rowIndex * 17) / g_fScreenRate_y);
+		g_pRenderText->SetTextColor(CLRDW_WHITE);
+		g_pRenderText->RenderText(
+			nStatVirtLeft,
+			nStatY,
+			label,
+			nStatLabelVirtW,
+			0,
+			RT3_SORT_LEFT_CLIP);
+		g_pRenderText->SetTextColor(CLRDW_ORANGE);
+		g_pRenderText->RenderText(
+			nStatValueVirtX,
+			nStatY,
+			value,
+			kStatValueColumnW,
+			0,
+			RT3_SORT_RIGHT);
+	};
+
 	for (i = 0; i < 4; ++i)
 	{
-		nStatY = int((m_asprBack[CMW_SPR_STAT].GetYPos() + 10 + i * 17)
-			/ g_fScreenRate_y);
-
-		g_pRenderText->SetTextColor(CLRDW_ORANGE);
-		g_pRenderText->RenderText(int((nStatBaseX + 54) / g_fScreenRate_x), nStatY,
-			apszStat[i]);
-		g_pRenderText->SetTextColor(CLRDW_WHITE);
-		g_pRenderText->RenderText(int(nStatBaseX / g_fScreenRate_x), nStatY,
-			GlobalText[1701 + i]);
+		renderStatRow(i, GlobalText[1701 + i], apszStat[i]);
 	}
 
 	if (m_nSelJob == CLASS_DARK_LORD)
 	{
-		nStatY = int((m_asprBack[CMW_SPR_STAT].GetYPos() + 10 + 4 * 17)	/ g_fScreenRate_y);
-
-		g_pRenderText->SetTextColor(CLRDW_ORANGE);
-		g_pRenderText->RenderText(int((nStatBaseX + 54) / g_fScreenRate_x), nStatY, "25");
-		g_pRenderText->SetTextColor(CLRDW_WHITE);
-		g_pRenderText->RenderText(int(nStatBaseX / g_fScreenRate_x), nStatY, GlobalText[1738]);
+		renderStatRow(4, GlobalText[1738], "25");
 	}
 
 	{
@@ -545,31 +546,9 @@ void CCharMakeWin::RenderControls()
 
 	g_pRenderText->SetFont(g_hFont);
 	
-	if (g_iChatInputType == 1)
+	if (g_iChatInputType == 1 && g_pSingleTextInputBox != NULL)
 	{
-#if defined(__ANDROID__) || defined(MU_IOS)
-		char inputText[MAX_ID_SIZE + 1] = { 0 };
-		const int textX = int((m_asprBack[CMW_SPR_INPUT].GetXPos() + 78) / g_fScreenRate_x);
-		const int textY = int((m_asprBack[CMW_SPR_INPUT].GetYPos() + 21) / g_fScreenRate_y);
-		CopyAndroidCharNameToAscii(inputText, sizeof(inputText));
-		g_pRenderText->SetTextColor(CLRDW_WHITE);
-		g_pRenderText->SetBgColor(0);
-		if (inputText[0] != '\0')
-		{
-			g_pRenderText->RenderText(textX, textY, inputText);
-		}
-		if (g_charNameInputActive != false && (MU_MobileGetTicks() / 500u) % 2u == 0u)
-		{
-			SIZE textSize = { 0, 0 };
-			if (inputText[0] != '\0')
-			{
-				g_pMultiLanguage->_GetTextExtentPoint32(g_pRenderText->GetFontDC(), inputText, strlen(inputText), &textSize);
-			}
-			g_pRenderText->RenderText(textX + int(textSize.cx / g_fScreenRate_x), textY, "|");
-		}
-#else
 		g_pSingleTextInputBox->Render();
-#endif
 	}
 	else if (g_iChatInputType == 0)
 		::RenderInputText(

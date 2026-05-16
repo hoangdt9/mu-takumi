@@ -25,6 +25,17 @@ cd server-next
 - `TAKUMI_PUBLIC_HOST` = LAN IP Mac
 - `TAKUMI_GAME_PORT=55901` (if using gamehost profile)
 - `TAKUMI_ROSTER_DB_SYNC=1` + Postgres (Docker sets host automatically)
+- **Không** set `TAKUMI_PG_USER=postgres` — user DB compose là **`takumi`** (DockerRuntimeEnv remap nếu lỡ set postgres).
+
+Reset roster QA:
+
+```bash
+./scripts/reset-roster-account.sh test
+TAKUMI_PG_CONNECTION_STRING='Host=127.0.0.1;Port=54444;Username=takumi;Password=takumi;Database=takumi_runtime' \
+  TAKUMI_ROSTER_DB_SYNC=1 TAKUMI_MIGRATE_ROSTER_JSON_ONLY=1 \
+  dotnet run --project src/Takumi.Server.LegacyLoginHost/Takumi.Server.LegacyLoginHost.csproj -c Release --no-build
+docker compose restart game-host legacy-login
+```
 
 Apply SQL on old volumes if needed:
 

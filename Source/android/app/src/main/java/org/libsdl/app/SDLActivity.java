@@ -16,7 +16,10 @@ import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
+import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.StateListDrawable;
 import android.hardware.Sensor;
 import android.net.Uri;
 import android.os.Build;
@@ -49,6 +52,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.text.BreakIterator;
 import java.util.Hashtable;
 import java.util.Locale;
 
@@ -61,6 +65,12 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
     private static final int SDL_MAJOR_VERSION = 2;
     private static final int SDL_MINOR_VERSION = 28;
     private static final int SDL_MICRO_VERSION = 5;
+
+    /* SDL_messagebox.h */
+    private static final int SDL_MESSAGEBOX_ERROR = 0x00000010;
+    private static final int SDL_MESSAGEBOX_WARNING = 0x00000020;
+    private static final int SDL_MESSAGEBOX_INFORMATION = 0x00000040;
+    private static final int SDL_MESSAGEBOX_BUTTONS_RIGHT_TO_LEFT = 0x00000100;
 /*
     // Display InputType.SOURCE/CLASS of events and devices
     //
@@ -384,6 +394,8 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
 
         // Set up the surface
         mSurface = createSDLSurface(this);
+        // Register accelerometer early; events are only delivered after the native thread starts.
+        mSurface.enableSensor(Sensor.TYPE_ACCELEROMETER, true);
 
         mLayout = new RelativeLayout(this);
         mLayout.addView(mSurface);
@@ -695,10 +707,7 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
         if (mNextNativeState == NativeState.RESUMED) {
             if (mSurface.mIsSurfaceReady && mHasFocus && mIsResumedCalled) {
                 if (mSDLThread == null) {
-                    // This is the entry point to the C app.
-                    // Start up the C app thread and enable sensor input for the first time
-                    // FIXME: Why aren't we enabling sensor input at start?
-
+                    // Entry point to the C app (sensor already registered in onCreate).
                     mSDLThread = new Thread(null, new SDLMain(), "SDLThread", 8 * 1024 * 1024); // 8MB stack to prevent overflow during heavy combat rendering
                     mSurface.enableSensor(Sensor.TYPE_ACCELEROMETER, true);
                     mSDLThread.start();
@@ -1486,9 +1495,61 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
         return messageboxSelection[0];
     }
 
+    private static Drawable createMessageboxButtonDrawable(
+            int borderColor, int backgroundColor, int selectedColor) {
+        final float cornerRadiusPx = 8f;
+        final int strokePx = 2;
+
+        GradientDrawable normal = new GradientDrawable();
+        normal.setShape(GradientDrawable.RECTANGLE);
+        normal.setCornerRadius(cornerRadiusPx);
+        if (backgroundColor != Color.TRANSPARENT) {
+            normal.setColor(backgroundColor);
+        }
+        if (borderColor != Color.TRANSPARENT) {
+            normal.setStroke(strokePx, borderColor);
+        }
+
+        if (selectedColor == Color.TRANSPARENT) {
+            return normal;
+        }
+
+        GradientDrawable selected = new GradientDrawable();
+        selected.setShape(GradientDrawable.RECTANGLE);
+        selected.setCornerRadius(cornerRadiusPx);
+        selected.setColor(selectedColor);
+        if (borderColor != Color.TRANSPARENT) {
+            selected.setStroke(strokePx, borderColor);
+        }
+
+        StateListDrawable states = new StateListDrawable();
+        states.addState(new int[] { android.R.attr.state_pressed }, selected);
+        states.addState(new int[] { android.R.attr.state_focused }, selected);
+        states.addState(new int[] { android.R.attr.state_selected }, selected);
+        states.addState(new int[] {}, normal);
+        return states;
+    }
+
+    /** Heuristic: software keyboard visible when the root view is significantly shorter than the display. */
+    static boolean isSoftwareKeyboardVisible() {
+        if (mLayout == null) {
+            return false;
+        }
+
+        Rect visible = new Rect();
+        mLayout.getWindowVisibleDisplayFrame(visible);
+        int rootHeight = mLayout.getRootView().getHeight();
+        if (rootHeight <= 0) {
+            return false;
+        }
+
+        int keypadHeight = rootHeight - visible.bottom;
+        return keypadHeight > rootHeight / 6;
+    }
+
     protected void messageboxCreateAndShow(Bundle args) {
 
-        // TODO set values from "flags" to messagebox dialog
+        final int messageboxFlags = args.getInt("flags", 0);
 
         // get colors
 
@@ -1517,6 +1578,13 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
 
         final AlertDialog dialog = new AlertDialog.Builder(this).create();
         dialog.setTitle(args.getString("title"));
+        if ((messageboxFlags & SDL_MESSAGEBOX_ERROR) != 0) {
+            dialog.setIcon(android.R.drawable.ic_dialog_alert);
+        } else if ((messageboxFlags & SDL_MESSAGEBOX_WARNING) != 0) {
+            dialog.setIcon(android.R.drawable.ic_dialog_alert);
+        } else if ((messageboxFlags & SDL_MESSAGEBOX_INFORMATION) != 0) {
+            dialog.setIcon(android.R.drawable.ic_dialog_info);
+        }
         dialog.setCancelable(false);
         dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
             @Override
@@ -1547,6 +1615,9 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
         LinearLayout buttons = new LinearLayout(this);
         buttons.setOrientation(LinearLayout.HORIZONTAL);
         buttons.setGravity(Gravity.CENTER);
+        if ((messageboxFlags & SDL_MESSAGEBOX_BUTTONS_RIGHT_TO_LEFT) != 0) {
+            buttons.setLayoutDirection(View.LAYOUT_DIRECTION_RTL);
+        }
         for (int i = 0; i < buttonTexts.length; ++i) {
             Button button = new Button(this);
             final int id = buttonIds[i];
@@ -1570,21 +1641,12 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
             if (textColor != Color.TRANSPARENT) {
                 button.setTextColor(textColor);
             }
-            if (buttonBorderColor != Color.TRANSPARENT) {
-                // TODO set color for border of messagebox button
-            }
-            if (buttonBackgroundColor != Color.TRANSPARENT) {
-                Drawable drawable = button.getBackground();
-                if (drawable == null) {
-                    // setting the color this way removes the style
-                    button.setBackgroundColor(buttonBackgroundColor);
-                } else {
-                    // setting the color this way keeps the style (gradient, padding, etc.)
-                    drawable.setColorFilter(buttonBackgroundColor, PorterDuff.Mode.MULTIPLY);
-                }
-            }
-            if (buttonSelectedColor != Color.TRANSPARENT) {
-                // TODO set color for selected messagebox button
+            if (buttonBorderColor != Color.TRANSPARENT
+                    || buttonBackgroundColor != Color.TRANSPARENT
+                    || buttonSelectedColor != Color.TRANSPARENT) {
+                button.setBackground(
+                        createMessageboxButtonDrawable(
+                                buttonBorderColor, buttonBackgroundColor, buttonSelectedColor));
             }
             buttons.addView(button);
         }
@@ -2058,14 +2120,8 @@ class DummyEdit extends View implements View.OnKeyListener {
     //
     @Override
     public boolean onKeyPreIme (int keyCode, KeyEvent event) {
-        // As seen on StackOverflow: http://stackoverflow.com/questions/7634346/keyboard-hide-event
-        // FIXME: Discussion at http://bugzilla.libsdl.org/show_bug.cgi?id=1639
-        // FIXME: This is not a 100% effective solution to the problem of detecting if the keyboard is showing or not
-        // FIXME: A more effective solution would be to assume our Layout to be RelativeLayout or LinearLayout
-        // FIXME: And determine the keyboard presence doing this: http://stackoverflow.com/questions/2150078/how-to-check-visibility-of-software-keyboard-in-android
-        // FIXME: An even more effective way would be if Android provided this out of the box, but where would the fun be in that :)
-        if (event.getAction()==KeyEvent.ACTION_UP && keyCode == KeyEvent.KEYCODE_BACK) {
-            if (SDLActivity.mTextEdit != null && SDLActivity.mTextEdit.getVisibility() == View.VISIBLE) {
+        if (event.getAction() == KeyEvent.ACTION_UP && keyCode == KeyEvent.KEYCODE_BACK) {
+            if (SDLActivity.isSoftwareKeyboardVisible()) {
                 SDLActivity.onNativeKeyboardFocusLost();
             }
         }
@@ -2196,22 +2252,14 @@ class SDLInputConnection extends BaseInputConnection {
         }
 
         String text = content.toString();
-        int compareLength = Math.min(text.length(), mCommittedText.length());
-        int matchLength, offset;
+        int matchLength = graphemeCommonPrefixLength(mCommittedText, text);
+        int offset;
 
-        /* Backspace over characters that are no longer in the string */
-        for (matchLength = 0; matchLength < compareLength; ) {
-            int codePoint = mCommittedText.codePointAt(matchLength);
-            if (codePoint != text.codePointAt(matchLength)) {
-                break;
-            }
-            matchLength += Character.charCount(codePoint);
-        }
-        /* FIXME: This doesn't handle graphemes, like '🌬️' */
-        for (offset = matchLength; offset < mCommittedText.length(); ) {
-            int codePoint = mCommittedText.codePointAt(offset);
+        /* Backspace over grapheme clusters that are no longer in the string */
+        for (offset = mCommittedText.length(); offset > matchLength; ) {
+            int prev = precedingGraphemeBoundary(mCommittedText, offset);
             nativeGenerateScancodeForUnichar('\b');
-            offset += Character.charCount(codePoint);
+            offset = prev;
         }
 
         if (matchLength < text.length()) {
@@ -2237,6 +2285,43 @@ class SDLInputConnection extends BaseInputConnection {
             }
         }
         mCommittedText = text;
+    }
+
+    /** Index in {@code s} after the longest common grapheme-cluster prefix with {@code other}. */
+    static int graphemeCommonPrefixLength(String s, String other) {
+        BreakIterator left = BreakIterator.getCharacterInstance();
+        BreakIterator right = BreakIterator.getCharacterInstance();
+        left.setText(s);
+        right.setText(other);
+
+        int startLeft = left.first();
+        int endLeft = left.next();
+        int startRight = right.first();
+        int endRight = right.next();
+
+        while (endLeft != BreakIterator.DONE && endRight != BreakIterator.DONE) {
+            int lenLeft = endLeft - startLeft;
+            int lenRight = endRight - startRight;
+            if (lenLeft != lenRight || !s.regionMatches(startLeft, other, startRight, lenLeft)) {
+                break;
+            }
+            startLeft = endLeft;
+            endLeft = left.next();
+            startRight = endRight;
+            endRight = right.next();
+        }
+
+        return startLeft;
+    }
+
+    static int precedingGraphemeBoundary(String s, int offset) {
+        if (offset <= 0) {
+            return 0;
+        }
+        BreakIterator it = BreakIterator.getCharacterInstance();
+        it.setText(s);
+        int boundary = it.preceding(offset);
+        return boundary == BreakIterator.DONE ? 0 : boundary;
     }
 
     public static native void nativeCommitText(String text, int newCursorPosition);

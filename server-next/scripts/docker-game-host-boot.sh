@@ -11,5 +11,12 @@ rm -rf /tmp/takumi-gamehost 2>/dev/null || true
 dotnet restore src/Takumi.Server.GameHost/Takumi.Server.GameHost.csproj --force-evaluate -nologo -v q
 dotnet build src/Takumi.Server.GameHost/Takumi.Server.GameHost.csproj -c Release --no-restore -nologo -v q
 
+GAMEHOST_DLL="/tmp/takumi-gamehost/bin/Takumi.Server.GameHost/Release/net10.0/Takumi.Server.GameHost.dll"
+if [ ! -f "$GAMEHOST_DLL" ]; then
+  echo "[game-host] FATAL: missing $GAMEHOST_DLL (Directory.Build.props BaseOutputPath)" >&2
+  find /tmp/takumi-gamehost -name 'Takumi.Server.GameHost.dll' 2>/dev/null || true
+  exit 1
+fi
+
 echo "[game-host] listening on *:${TAKUMI_GAME_PORT:-55901} (F4 03 target)…"
-exec dotnet run --project src/Takumi.Server.GameHost/Takumi.Server.GameHost.csproj -c Release --no-build
+exec dotnet exec "$GAMEHOST_DLL"

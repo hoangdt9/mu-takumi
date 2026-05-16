@@ -86,16 +86,30 @@ services:
       TAKUMI_ROSTER_DB_SYNC: "${TAKUMI_ROSTER_DB_SYNC:-1}"
       TAKUMI_ROSTER_DB_PRIMARY: "${TAKUMI_ROSTER_DB_PRIMARY:-1}"
       TAKUMI_CHARACTER_DOMAIN_SYNC: "${TAKUMI_CHARACTER_DOMAIN_SYNC:-1}"
+      TAKUMI_ACCOUNT_DB: "${TAKUMI_ACCOUNT_DB:-1}"
+      TAKUMI_LEGACY_PROMOTE: "${TAKUMI_LEGACY_PROMOTE:-1}"
+      TAKUMI_DROP_EF_RUNTIME_SCHEMA: "${TAKUMI_DROP_EF_RUNTIME_SCHEMA:-1}"
+      # When 1 + host --host-build: skip in-container compile; run via dotnet exec on IL DLL (not macOS apphost).
+      TAKUMI_SKIP_CONTAINER_BUILD: "${TAKUMI_SKIP_CONTAINER_BUILD:-0}"
       DOTNET_ENVIRONMENT: "${DOTNET_ENVIRONMENT:-Development}"
     # Build then run so a stale bin/Release from the host volume cannot mask Program.cs changes.
     command:
       - /bin/sh
-      - -c
-      - >-
-        echo "[legacy-login] starting (bind-mount /app). dotnet build Release next — wait 1–3 min before ports answer…"
-        && dotnet build src/Takumi.Server.LegacyLoginHost/Takumi.Server.LegacyLoginHost.csproj -c Release -nologo -v q
-        && echo "[legacy-login] build OK — exec LegacyLoginHost (44605 connect + TAKUMI_LOGIN_PORT game)…"
-        && exec dotnet run --project src/Takumi.Server.LegacyLoginHost/Takumi.Server.LegacyLoginHost.csproj -c Release --no-build
+      - -ec
+      - |
+        LEGACY_DLL=src/Takumi.Server.LegacyLoginHost/bin/Release/net10.0/Takumi.Server.LegacyLoginHost.dll
+        if [ "$$TAKUMI_SKIP_CONTAINER_BUILD" = "1" ] || [ "$$TAKUMI_SKIP_CONTAINER_BUILD" = "true" ]; then
+          echo "[legacy-login] TAKUMI_SKIP_CONTAINER_BUILD=1 — using host-built IL (./scripts/docker-stack.sh --host-build); dotnet exec DLL (not macOS apphost)"
+          if [ ! -f "$$LEGACY_DLL" ]; then
+            echo "[legacy-login] ERROR: missing $$LEGACY_DLL — run: dotnet build src/Takumi.Server.LegacyLoginHost/Takumi.Server.LegacyLoginHost.csproj -c Release" >&2
+            exit 1
+          fi
+        else
+          echo "[legacy-login] dotnet build Release on bind-mount — wait 1–3 min before ports answer…"
+          dotnet build src/Takumi.Server.LegacyLoginHost/Takumi.Server.LegacyLoginHost.csproj -c Release -nologo -v q
+        fi
+        echo "[legacy-login] build OK — exec LegacyLoginHost (44605 connect + TAKUMI_LOGIN_PORT game)…"
+        exec dotnet exec "$$LEGACY_DLL"
 
   # M5 — split Connect + Login (parity Source/1.ConnectServer + 3.JoinServer). Profile **splitstack**.
   # Replaces legacy-login for QA when you want two processes; do not run legacy-login at the same time (same ports).
@@ -202,6 +216,9 @@ services:
       TAKUMI_ROSTER_DB_SYNC: "${TAKUMI_ROSTER_DB_SYNC:-1}"
       TAKUMI_ROSTER_DB_PRIMARY: "${TAKUMI_ROSTER_DB_PRIMARY:-1}"
       TAKUMI_CHARACTER_DOMAIN_SYNC: "${TAKUMI_CHARACTER_DOMAIN_SYNC:-1}"
+      TAKUMI_ACCOUNT_DB: "${TAKUMI_ACCOUNT_DB:-1}"
+      TAKUMI_LEGACY_PROMOTE: "${TAKUMI_LEGACY_PROMOTE:-1}"
+      TAKUMI_DROP_EF_RUNTIME_SCHEMA: "${TAKUMI_DROP_EF_RUNTIME_SCHEMA:-1}"
       DOTNET_ENVIRONMENT: "${DOTNET_ENVIRONMENT:-Development}"
     # Bind-mount + host obj → NETSDK1064; script uses TAKUMI_DOCKER_GAMEHOST + Directory.Build.props for /tmp outputs (no shared rm).
     command:

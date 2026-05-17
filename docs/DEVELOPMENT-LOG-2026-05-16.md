@@ -2,6 +2,8 @@
 
 Ghi lại các hạng mục **đã merge trên `main`** (xem `git log` để chi tiết diff). Dùng kèm **`server-next/docs/IMPLEMENTATION-CHECKLIST.md`**.
 
+**Tiếp theo (2026-05-17):** shop F3 E9/ED, inventory 0x24, level-up FLARE VFX — **`DEVELOPMENT-LOG-2026-05-17.md`**.
+
 **Tham chiếu commit (mới → cũ):**
 
 | Commit | Tóm tắt |

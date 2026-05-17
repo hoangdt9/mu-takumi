@@ -1,9 +1,9 @@
 # M7 — Character persistence lifecycle (HP / MP / zen / map / tile)
 
-Last updated: 2026-05-16
+Last updated: 2026-05-17
 
 **Quy ước:** chỉ tick `[x]` khi đã có trong git và có thể chứng minh (test hoặc QA ghi rõ). Cập nhật file này khi merge.  
-**Nhật ký Android + combat:** **`../../docs/DEVELOPMENT-LOG-2026-05-16.md`**.
+**Nhật ký:** **`../../docs/DEVELOPMENT-LOG-2026-05-17.md`** (shop/inventory/VFX), **`../../docs/DEVELOPMENT-LOG-2026-05-16.md`** (combat/EXP/FPS).
 
 **Phụ thuộc:** **`docs/M4-TILE-AND-COORDINATES.md`**, **`docs/M4-ROSTER-SSOT.md`**, **`docs/M6-GAME-TCP-CHECKLIST.md`**.  
 **Port từ `Source/` (character + item):** **`docs/M4-M7-CHARACTER-ITEM-MIGRATION.md`**. **Không chặn M5** (join/ticket).
@@ -77,7 +77,8 @@ Last updated: 2026-05-16
 
 - [x] **`F3 10`** đọc `inventory_slot` (12-byte) — `JoinInventoryPacket602` (xem M4 checklist §M5+).
 - [x] **Ghi** `inventory_slot` sau buy/sell/repair — `InventorySlotMirrorWriter` + `PostgresInventorySlotRepository` (upsert/delete/replace); disconnect flush `PlayerShopSession.FlushInventoryMirrorOnDisconnect`. Cần **`TAKUMI_ROSTER_DB_SYNC=1`**.
-- [x] Port `ItemManager` pick/drop/move (`0x22`–`0x24`) từ `Source/4.GameServer` — `ItemWorldHandler` (bag + wear slot 0–11, storage flag 0); trade/warehouse flags **OPEN**.
+- [x] Port `ItemManager` pick/drop/move (`0x22`–`0x24`) — `ItemWorldHandler` + **`InventoryBagGrid`** / BMD footprints; server gửi **`0x24` trước `F3 10`** trên inv→inv; client plain **`C4 F3 10`** + footprint clear (`6330de9`). Trade/warehouse flags **OPEN**.
+- [x] **Level-up VFX (client, 2026-05-17):** FLARE spiral + white disc — không liên quan wire M7; xem **`../../docs/DEVELOPMENT-LOG-2026-05-17.md`**.
 - [x] **M7d (partial):** potion use `CGItemUseRecv` (`C1`/`C3` `0x26`) — `ItemWorldHandler` + `InventoryConsumableRules` (HP/MP/SD potions); `0x28` delete / `0x2A` durability; **SD persist:** `current_shield`/`max_shield` DB + roster JSON + `GCLifeSend` shield word; monster/PvP hit giảm SD trước HP (parity `Attack.cpp`). Trade/warehouse/scroll **OPEN**.
 
 ---

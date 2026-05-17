@@ -2,7 +2,7 @@
 
 **Iteration status:** **COMPLETE** (2026-05-15) — split-stack **minimal-login** on `game-host`, Docker profile **`gamehost`**, real-device Android smoke from Connect **44605** through **F4 06 → F4 03 → game TCP** to **Main Scene**.
 
-Last updated: 2026-05-16 — **in-world combat** smoke (melee `0x11`, kill EXP, `F3 E1`); **`./scripts/docker-stack.sh --host-build --recreate`**; client FPS packet budget (`13cc5f0`+). Session log: **`../../docs/DEVELOPMENT-LOG-2026-05-16.md`**.
+Last updated: 2026-05-17 — shop/inventory wire + level-up VFX; session logs: **`../../docs/DEVELOPMENT-LOG-2026-05-17.md`**, **`../../docs/DEVELOPMENT-LOG-2026-05-16.md`** (combat/FPS baseline).
 
 **2026-05-15 baseline:** Android RX order **SM+XOR then strip `gProtect`**; `[event=decrypted_rx]`; APK resets SM serial per `Connect`; `docker-stack.sh` force-recreates `legacy-login` + `game-host`.
 
@@ -52,7 +52,8 @@ Use this table when closing a QA round; values assume default LAN ports (**44605
 | F4 03 | `ReceiveServerConnect` → `TCP session start … port=55901` | `[connect] recv … F403` → `ServerInfo ip=<LAN> port=55901` |
 | Game join | `ReceiveJoinServer result=0x01`, `Post-CS redirect … gamePort=55901` | `listening on *:55901`, `sent join C1 F1 00`, `m6_minimal_session_begin`, `protect_inbound_pump on` |
 | Login / char / world | `Try to Login`, `ReceiveList`, `Character scene`, `Main Scene init success` | `login ok id=…`, `[event=decrypted_rx]`, `F3 00`, `sent … F3 03` + `F3 10` |
-| In-world combat (2026-05-16) | `[Combat] hit mob`, `mob died`, `[Exp] level up` | `[m9] combat hit`, `[m7-exp]`, `sent join` + `F3 E1` / vitals |
+| In-world combat | Melee `0x11`, kill EXP, level-up (FLARE VFX client-side) | `[m9] combat hit`, `[m7-exp]`, `sent join` + `F3 E1` / vitals |
+| Shop / inventory (2026-05-17) | NPC shop → `F3 E9` prices; buy + inv drag | `[m8] shop buy`, `F3 10` resync, `0x24` move |
 
 **Stack command (recommended):** `./scripts/docker-stack.sh --host-build --recreate --detach` from `server-next/` — host `dotnet build` sanity check, pull, up, **force-recreates** `legacy-login` and `game-host`. Wait for **`[legacy-login] build OK`** (hoặc `TAKUMI_SKIP_CONTAINER_BUILD=1` + host-built DLL). Optional: set **`TAKUMI_SKIP_CONTAINER_BUILD=1`** in `.env` when dùng `--host-build` để container `dotnet exec` IL thay vì build lại trong Linux VM.
 

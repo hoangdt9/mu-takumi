@@ -1,6 +1,6 @@
 # M8/M9 — NPC gameplay ownership (tránh duplicate)
 
-Last updated: 2026-05-16 · **Đã trên `main`** (merge `34d44c9` + dedup `0fee99a`)
+Last updated: 2026-05-17 · **Đã trên `main`** (shop F3 E9/ED, inventory 0x24 — xem **`../../docs/DEVELOPMENT-LOG-2026-05-17.md`**)
 
 ## Đã làm trên `mac-m4` — **đừng re-implement**
 
@@ -11,7 +11,8 @@ Last updated: 2026-05-16 · **Đã trên `main`** (merge `34d44c9` + dedup `0fee
 | C | Player↔mob combat stub | `MonsterCombatHandler`, `MonsterCombatCalculator` | `TAKUMI_COMBAT_*` |
 | D | **NPC talk → shop list** | `WorldGameplayHandlers.TryHandleNpcTalkAsync`, `NpcShopWire602` | `NpcShopCatalog`, `ShopManager.txt` |
 | E | **Gate teleport** | `WorldGameplayHandlers`, `MapGateService`, `TeleportWire602` | `MapGateCatalog`, `TAKUMI_GATE_SKIP_PROXIMITY` |
-| F | **Shop buy/sell/repair** | `ShopCommerceHandler`, `PlayerShopSession`, `ShopCommerceWire602` | `TAKUMI_SHOP_*` |
+| F | **Shop buy/sell/repair** | `ShopCommerceHandler`, `ShopItemValueResolver`, `PlayerShopSession`, `ShopCommerceWire602` | `TAKUMI_SHOP_*`, **`TAKUMI_SHOP_BUY_CONFIRM`** |
+| F2 | **Item values on wire** | `ShopItemValueSender` → **`C2 F3 E9`**; client **`ShopItemValueCache`** | `ItemValue.txt` |
 | G | Hook TCP sau join | `LegacyLoginHostRunner.cs` (`CharacterRosterEntry` bridge), `GamePortMinimalSession.cs` | block `// [M8 gameplay]` |
 
 **Bạn thấy NPC trong town** nhờ **(A)** spawn + sort NPC-first, không phải shop wire alone.
@@ -21,9 +22,9 @@ Last updated: 2026-05-16 · **Đã trên `main`** (merge `34d44c9` + dedup `0fee
 | # | Tính năng | Gợi ý owner |
 |---|-----------|-------------|
 | H | ~~`0xDB` / `0x19` magic AoE~~ | Done (stub) |
-| I | Buy confirm `F3 ED` (env `TAKUMI_SHOP_BUY_CONFIRM=1`); coin-only shop rows | Client `ReceiveBuyConfirm` + msgbox; server prompt wired. Coin-only = reject + log; WCoin ledger **OPEN** |
-| J | ~~`GCItemValueSend` / `ItemValue.txt`~~ | Done — server `F3 E9` + client `ShopItemValueCache` tooltip parity |
-| K | ~~Persist `inventory_slot`~~ | Done (`InventorySlotPersist`) |
+| I | ~~Buy confirm `F3 ED`~~ | **Done** — `TAKUMI_SHOP_BUY_CONFIRM=1`; client `ReceiveBuyConfirm` + NPC shop msgbox (`65e0e36`). Coin-only shop rows / WCoin ledger **OPEN** |
+| J | ~~`GCItemValueSend` / `ItemValue.txt`~~ | **Done** — server `F3 E9` + `ShopItemValueResolver` + client `ShopItemValueCache` (`1d77d94`, `3c36cf0`) |
+| K | ~~Persist `inventory_slot`~~ | **Done** (`InventorySlotPersist`); **2026-05-17:** `0x24`/`F3 10` move sync + BMD footprints (`6330de9`) |
 | L | ~~Encrypted `EncTerrain*.att`~~ | Done (`ModulusCryptor` in `MapAttWalkability`) |
 | M | NPC quest / warehouse / guild NPC | M11+ |
 | N | ~~Player viewport walk `C2 0x12`~~ | Done (`PlayerViewportTracker` + M10b) |

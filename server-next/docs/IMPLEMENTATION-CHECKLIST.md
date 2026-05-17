@@ -1,12 +1,12 @@
 # Takumi Server Next - Implementation Checklist
 
-Last updated: 2026-05-16 (Android in-world combat + FPS; M7 F3 E1; Docker LAN stack)
+Last updated: 2026-05-17 (shop F3 E9/ED, inventory 0x24, level-up FLARE VFX)
 
 **Phân vùng dev (tránh conflict):** **`docs/WORKSTREAM-OWNERSHIP.md`**.  
 **M4 + M7 (nhân vật + item, port từ `Source/`):** **`docs/M4-M7-CHARACTER-ITEM-MIGRATION.md`** — owner đề xuất **`mac-m1`**.  
-**Nhật ký giao hàng gần đây (git):** **`../../docs/DEVELOPMENT-LOG-2026-05-16.md`**.
+**Nhật ký giao hàng gần đây (git):** **`../../docs/DEVELOPMENT-LOG-2026-05-17.md`** (mới nhất), **`../../docs/DEVELOPMENT-LOG-2026-05-16.md`**.
 
-## Recent deliverables (git `main`, 2026-05-05 → 2026-05-16)
+## Recent deliverables (git `main`, 2026-05-05 → 2026-05-17)
 
 Tóm tắt theo commit; diff đầy đủ: `git log --oneline 2672bfd..HEAD` trong repo `mu-takumi`.
 
@@ -14,13 +14,15 @@ Tóm tắt theo commit; diff đầy đủ: `git log --oneline 2672bfd..HEAD` tro
 |------|-------------------|-------------|
 | **Docker LAN** | `docker-stack.sh`, profiles `datazip` + `gamehost`, force-recreate, `--host-build` | `67c888b`, `bfe8017` |
 | **M6 split game TCP** | F4 03 → **55901**, `GamePortMinimalSession`, gProtect, handoff/ticket (optional) | `67c888b`, `3de80bb` |
-| **M7 EXP/stats** | EXP on kill + DB mirror; `F3 06` batch; **`C1 F3 E1`** combat HUD | `2672bfd`, `4e84ff3` |
+| **M7 EXP/stats** | EXP on kill + DB mirror; `F3 06` batch; **`C1 F3 E1`** combat HUD | `2672bfd`, `4e84ff3`, `5e729d4` |
 | **M9 combat** | `0x11` hit/die, AI dmg, viewport `0x13`; throttle life `0x26` under burst | `53fc5b9`+, `13cc5f0` |
-| **Android client** | Melee `0x11`, stat pump, login wait `F1 00`, LAN bootstrap, FPS fixes | `4e84ff3`–`57f37a3` |
-| **Move map (M)** | `8E 02` → `Move.txt` index → gate → `8E 03` + `0x1C` + join-map reload | (this change) |
+| **Shop (M9c)** | `F3 E9` item values, **`F3 ED`** buy confirm, `ShopItemValueResolver`, client `ShopItemValueCache` | `1d77d94`–`65e0e36`, `3c36cf0` |
+| **Inventory** | `0x24` + `F3 10` sync, BMD footprints, plain `C4` on Android, post-buy resync | `6330de9` |
+| **Android client** | Melee `0x11`, stat pump, login wait `F1 00`, **FLARE level-up VFX**, register UI | `4e84ff3`–`5e729d4`, `fd6ddf8` |
+| **Move map (M)** | `8E 02` → `Move.txt` index → gate → `8E 03` + `0x1C` + join-map reload | (earlier) |
 | **Death/revive** | Town `F3 04`, HeroKey vitals | `e428749`, `7d65d8d` |
 
-**Android device QA (2026-05-16):** login → Lorencia → đánh quái → level-up + EXP log OK; xem **`../../docs/DEVELOPMENT-LOG-2026-05-16.md`** § QA.
+**Android device QA:** 2026-05-16 combat/EXP — **`../../docs/DEVELOPMENT-LOG-2026-05-16.md`** § QA. 2026-05-17 shop/inventory/level-up VFX — **`../../docs/DEVELOPMENT-LOG-2026-05-17.md`** § QA.
 
 ## Repository vs checklist (read first)
 
@@ -31,6 +33,7 @@ Tóm tắt theo commit; diff đầy đủ: `git log --oneline 2672bfd..HEAD` tro
   - Character select (touch → `StartGame`, ray pick, IME sau login): **`../../docs/DEVELOPMENT-LOG-2026-05-12.md`**
   - IME toàn cục / modal / xóa nhân vật (captcha 6 số phía client), JNI **Done** → Return, `UpdateMouseFromTouch` trước handler: **`../../docs/DEVELOPMENT-LOG-2026-05-14.md`**
   - In-world combat, stat points, FPS, Docker LAN QA: **`../../docs/DEVELOPMENT-LOG-2026-05-16.md`**
+  - Shop, inventory sync, level-up VFX: **`../../docs/DEVELOPMENT-LOG-2026-05-17.md`**
 
 ## Client APK, `data.zip`, and Docker (what to redo when)
 
@@ -93,7 +96,9 @@ Use this to avoid unnecessary rebuilds.
   - [x] reject when not authenticated (`F3 00`)
   - [x] reject unknown character select (`F3 03`)
 - [x] **M6 (scaffold + split-port minimal-login):** `Takumi.Server.Game` — `GameListenHost` (**minimal-login** …); **`Takumi.Server.GameHost`** + **`TakumiPostgresMirror`**; **`docs/M6-GAME-TCP-CHECKLIST.md`**. **Đã có:** `[event=decrypted_rx]`, mirror **`character_roster`**, `F3 10` từ DB, optional **`session_ticket`** + **`TAKUMI_GAME_REQUIRE_LOGIN_HANDOFF`**, **signed ticket on wire** (`F1 A5` / `F1 A6`, **`TAKUMI_GAME_TICKET_WIRE`**, **`TAKUMI_SESSION_TICKET_HMAC_KEY`**). **Còn thiếu:** SSOT Postgres-only cho roster (tách khỏi JSON).
-- [x] **Android in-world (2026-05-16, partial MVP):** split port login → game **55901**; melee `C1 0x11`; HUD **`F3 E1`**; kill EXP + multi-level batch effects; stat `F3 06` pump; FPS packet budget — **`../../docs/DEVELOPMENT-LOG-2026-05-16.md`**.
+- [x] **Android in-world (2026-05-16+, partial MVP):** split port login → game **55901**; melee `C1 0x11`; HUD **`F3 E1`**; kill EXP + multi-level batch effects; stat `F3 06` pump; FPS packet budget — **`../../docs/DEVELOPMENT-LOG-2026-05-16.md`**.
+- [x] **Shop + inventory (2026-05-17):** server **`F3 E9`** / **`F3 ED`** + client `ShopItemValueCache`; inv move **`0x24`** + **`F3 10`** + plain **`C4`** on Android — **`../../docs/DEVELOPMENT-LOG-2026-05-17.md`**, **`docs/M9-M8-NPC-GAMEPLAY-OWNERSHIP.md`**.
+- [x] **Level-up VFX (2026-05-17):** vanilla **FLARE** spiral (gold tint) + white disc; debounce; không dùng `MAGIC+2/0` ground rings — **`../../docs/DEVELOPMENT-LOG-2026-05-17.md`**.
 - [x] **Reproducible LAN / dev env (no committed machine IP):**
   - [x] Committed **`server-next/env.defaults`** (ports, join version, serial, `TAKUMI_ACCOUNTS` format) + gitignored **`server-next/.env`** from **`.env.lan.example`** (`YOUR_LAN_IP`).
   - [x] **`RepoEnvLoader`**: load `env.defaults` (fill unset) then `.env` (override) before `LegacyLoginHost` reads configuration.
@@ -211,7 +216,7 @@ Use this to avoid unnecessary rebuilds.
    - [x] Combat stub: `C1 0x11` hit / `0x19` skill → damage, `C1 0x14` destroy, `C1 0x16` die (`MonsterCombatHandler`); damage trừ Defense từ `Monster.txt`.  
    - [x] Gate / NPC shop / buy-sell-repair stub (`MapGateService`, `WorldGameplayHandlers`, `ShopCommerceHandler`).
    - [~] **M9b AI:** wander/chase/`0xD4`/`0x18`, monster→player dmg từ `Monster.txt` (+ defense stub theo level), periodic viewport 1s, regen broadcast — **`docs/M9-MONSTER-AI-PORT-CHECKLIST.md`**.  
-   - [~] **M9c:** `ItemValue.txt` + `GCItemValueSend` (`C2 F3 E9`) + client cache/tooltip/zen debit notice; buy confirm `F3 ED` when `TAKUMI_SHOP_BUY_CONFIRM=1`. AoE `0xDB`, PvP stub, quest NPC dialog stub (P4.4 partial).  
+   - [x] **M9c (partial):** `ItemValue.txt` + **`C2 F3 E9`** + client **`ShopItemValueCache`**; buy confirm **`F3 ED`** when `TAKUMI_SHOP_BUY_CONFIRM=1` (`65e0e36`, `1d77d94`). AoE `0xDB`, PvP stub, quest NPC dialog stub (P4.4) still open.  
    - [ ] Element/exp/invasion (P3.2–P4), pathfinding BFS đầy đủ — **M9b P2.3+**.
 
 11. **M10 — Movement & visibility** — **`docs/M8-M10-WORLD-RUNTIME-CHECKLIST.md`** §M10; owner: **`docs/WORKSTREAM-OWNERSHIP.md`**  

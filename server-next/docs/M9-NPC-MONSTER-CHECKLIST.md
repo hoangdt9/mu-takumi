@@ -1,6 +1,6 @@
 # M9 — NPC & monster runtime (scope A)
 
-Last updated: 2026-05-16
+Last updated: 2026-05-17
 
 ## Scope A (this iteration)
 
@@ -38,7 +38,7 @@ Last updated: 2026-05-16
 | Hook (game port) | `GamePortMinimalSession.cs` |
 | Hook (legacy login) | `LegacyLoginHost.Runner/LegacyLoginHostRunner.cs` |
 
-**Android QA (2026-05-16):** device log `[Combat] hit mob` / server `[m9] combat hit` — **`../../docs/DEVELOPMENT-LOG-2026-05-16.md`**.
+**QA:** combat/EXP **`../../docs/DEVELOPMENT-LOG-2026-05-16.md`**; shop + level-up VFX **`../../docs/DEVELOPMENT-LOG-2026-05-17.md`**.
 
 ## Env
 

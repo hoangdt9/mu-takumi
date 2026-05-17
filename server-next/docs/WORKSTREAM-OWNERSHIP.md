@@ -1,7 +1,8 @@
 # Workstream ownership (tránh conflict giữa dev / nhánh)
 
-Last updated: 2026-05-16  
-**Nhánh tích hợp hiện tại:** `mac-m4` (đã merge `origin/main` — M4/M7 item + M8 ETL + M9 gameplay + M10 presence/viewport)
+Last updated: 2026-05-17  
+**Nhật ký:** **`../../docs/DEVELOPMENT-LOG-2026-05-17.md`**, **`../../docs/DEVELOPMENT-LOG-2026-05-16.md`**.  
+**Nhánh tích hợp hiện tại:** `main` — M4/M7 item + M8 ETL + M9 gameplay + shop F3 E9/ED + level-up VFX
 
 **M4 / M7 (nhân vật + item):** migration map + ownership — **`docs/M4-M7-CHARACTER-ITEM-MIGRATION.md`** (owner đề xuất: **`mac-m1`**).
 
@@ -62,7 +63,8 @@ Last updated: 2026-05-16
 |----------|------------|----------------|
 | Postgres-only roster SSOT | **OPEN** | `docs/M4-ROSTER-SSOT.md`, `character` domain — **đừng** song song 2 writer |
 | `inventory_slot` **write** sau shop buy/sell | **Done** | `InventorySlotMirrorWriter`, `PostgresInventorySlotRepository` — **`TAKUMI_ROSTER_DB_SYNC=1`** |
-| Item pick/drop/move `0x22`–`0x24` | **OPEN** | `ItemWorldHandler` — PR riêng |
+| Item pick/drop/move `0x22`–`0x24` | **Partial** | `ItemWorldHandler`, `InventoryBagGrid` — inv sync `6330de9`; trade/warehouse **OPEN** |
+| Shop F3 E9 / F3 ED | **Done** | `ShopItemValueResolver`, client `ShopItemValueCache` — `../../docs/DEVELOPMENT-LOG-2026-05-17.md` |
 | Combat-driven `GCLifeSend` / vitals mid-fight | **OPEN** | M7d — `RosterVitalsOutboundTracker` mở rộng |
 | `inventory_staging` ETL → 12-byte | **OPEN** | `IMPLEMENTATION-CHECKLIST` §Data & Migration |
 

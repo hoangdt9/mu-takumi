@@ -1,8 +1,11 @@
 # M8–M10 — World data, NPC runtime, movement visibility
 
+Last updated: 2026-05-17
+
 **Quy ước:** giống các checklist khác — `[x]` chỉ khi đã merge thật. File này gom **M8 / M9 / M10** vì chúng cùng chuỗi “thế giới sau login”.
 
-**Phụ thuộc:** **M7** (`docs/M7-CHARACTER-PERSISTENCE-CHECKLIST.md`) cho stats persist; **M6** (`docs/M6-GAME-TCP-CHECKLIST.md`) cho listener game TCP; **M1** cho opcode map.
+**Phụ thuộc:** **M7** (`docs/M7-CHARACTER-PERSISTENCE-CHECKLIST.md`) cho stats persist; **M6** (`docs/M6-GAME-TCP-CHECKLIST.md`) cho listener game TCP; **M1** cho opcode map.  
+**Nhật ký gần đây:** **`../../docs/DEVELOPMENT-LOG-2026-05-17.md`**.
 
 ---
 
@@ -17,6 +20,8 @@
 - [x] **Custom:** `custom_world_config` (JSONB table/raw snapshot) — **`CustomWorldConfigDbImporter`** (`Custom/*.txt` + `.ini`/`.xml` raw); `TAKUMI_CUSTOM_WORLD_DB`.
 - [x] Script gộp: **`scripts/import-world-static-data.sh`** (cần `TAKUMI_GAMESERVER_DATA_PATH` hoặc auto-detect MuServer Data).
 - [x] Runtime gameplay: `C1 0x1C` teleport / `C2 0x31` shop list (`WorldGameplayHandlers`, `MapGateService`, `NpcShopWire602`).
+- [x] **Shop wire (2026-05-17):** `F3 E9` item values (`ShopItemValueResolver`), optional **`F3 ED`** buy confirm; client `ShopItemValueCache`.
+- [x] **Inventory placement:** `InventoryBagGrid` + BMD footprints; `0x24` + `F3 10` resync (`6330de9`).
 - [x] **Move map (M):** `C1 0A 8E 02` → `MoveMapCatalog` + `MoveMapHandler` (zen/level gate, `8E 03` + `0x1C` + join reload).
 - [~] **Move map parity:** chi tiết từng rule → **`docs/M8-MOVE-MAP-PARITY-CHECKLIST.md`** (`8E 01` checksum + key validate mới thêm).
 

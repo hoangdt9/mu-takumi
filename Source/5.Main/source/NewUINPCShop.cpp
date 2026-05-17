@@ -3,6 +3,7 @@
 
 #include "stdafx.h"
 #include "NewUINPCShop.h"
+#include "ShopItemValueCache.h"
 #include "NewUISystem.h"
 #include "NewUICommonMessageBox.h"
 #include "ZzzInventory.h"
@@ -110,9 +111,15 @@ bool SEASON3B::CNewUINPCShop::UpdateMouseEvent()
 				int iIndex = (pItem->y * m_pNewInventoryCtrl->GetNumberOfColumn()) + pItem->x;
 				GambleSystem& _gambleSys = GambleSystem::Instance();
 
+				int buyCost = 0;
+				if (!ShopItemValueCache_TryGetBuy(pItem, &buyCost))
+				{
+					buyCost = ItemValue(pItem, 0);
+				}
+
 				if( _gambleSys.IsGambleShop() )
 				{
-					_gambleSys.SetBuyItemInfo(iIndex, ItemValue(pItem, 0));
+					_gambleSys.SetBuyItemInfo(iIndex, buyCost);
 					g_pNPCShop->SetStandbyItemKey(pItem->Key);
 					
 					SEASON3B::CreateMessageBox(MSGBOX_LAYOUT_CLASS(SEASON3B::CGambleBuyMsgBoxLayout));
@@ -123,7 +130,7 @@ bool SEASON3B::CNewUINPCShop::UpdateMouseEvent()
 				{
 					if(BuyCost == 0)
 					{
-						SendRequestBuy(iIndex, ItemValue(pItem, 0));
+						SendRequestBuy(iIndex, buyCost);
 					}	
 
 					return false;
@@ -529,4 +536,22 @@ void SEASON3B::CNewUINPCShop::SetSellingItem(bool bFlag)
 bool SEASON3B::CNewUINPCShop::IsSellingItem()
 {
 	return m_bSellingItem;
+}
+
+void SEASON3B::CNewUINPCShop::OpenBuyConfirmDialog(BYTE slot)
+{
+	if (m_pNewInventoryCtrl == nullptr)
+	{
+		return;
+	}
+
+	ITEM* pItem = m_pNewInventoryCtrl->FindItem(slot);
+	if (pItem == nullptr)
+	{
+		return;
+	}
+
+	SetStandbyItemKey(pItem->Key);
+	SetNpcShopBuyConfirmSlot(slot);
+	SEASON3B::CreateMessageBox(MSGBOX_LAYOUT_CLASS(SEASON3B::CNPCShopBuyMsgBoxLayout));
 }

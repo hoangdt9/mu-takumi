@@ -211,7 +211,7 @@ Use this to avoid unnecessary rebuilds.
    - [x] Combat stub: `C1 0x11` hit / `0x19` skill → damage, `C1 0x14` destroy, `C1 0x16` die (`MonsterCombatHandler`); damage trừ Defense từ `Monster.txt`.  
    - [x] Gate / NPC shop / buy-sell-repair stub (`MapGateService`, `WorldGameplayHandlers`, `ShopCommerceHandler`).
    - [~] **M9b AI:** wander/chase/`0xD4`/`0x18`, monster→player dmg từ `Monster.txt` (+ defense stub theo level), periodic viewport 1s, regen broadcast — **`docs/M9-MONSTER-AI-PORT-CHECKLIST.md`**.  
-   - [~] **M9c:** `ItemValue.txt` + `GCItemValueSend` (`C2 F3 E9`), AoE `0xDB`, PvP stub, quest NPC dialog stub (P4.4 partial).  
+   - [~] **M9c:** `ItemValue.txt` + `GCItemValueSend` (`C2 F3 E9`) + client cache/tooltip/zen debit notice; buy confirm `F3 ED` when `TAKUMI_SHOP_BUY_CONFIRM=1`. AoE `0xDB`, PvP stub, quest NPC dialog stub (P4.4 partial).  
    - [ ] Element/exp/invasion (P3.2–P4), pathfinding BFS đầy đủ — **M9b P2.3+**.
 
 11. **M10 — Movement & visibility** — **`docs/M8-M10-WORLD-RUNTIME-CHECKLIST.md`** §M10; owner: **`docs/WORKSTREAM-OWNERSHIP.md`**  

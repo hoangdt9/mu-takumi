@@ -7660,6 +7660,17 @@ void ReceiveItemValueList(BYTE* ReceiveBuffer)
 	g_ConsoleDebug->Write(MCD_RECEIVE, "0xF3 [ReceiveItemValueList]");
 }
 
+void ReceiveBuyConfirm(BYTE* ReceiveBuffer)
+{
+	const BYTE slot = ReceiveBuffer[4];
+	if (g_pNPCShop != nullptr)
+	{
+		g_pNPCShop->OpenBuyConfirmDialog(slot);
+	}
+
+	g_ConsoleDebug->Write(MCD_RECEIVE, "0xF3 [ReceiveBuyConfirm slot=%d]", slot);
+}
+
 void ReceiveBuy( BYTE *ReceiveBuffer )
 {
 	auto Data = (LPPHEADER_DEFAULT_ITEM)ReceiveBuffer;
@@ -14979,6 +14990,9 @@ BOOL TranslateProtocol( int HeadCode, BYTE *ReceiveBuffer, int Size, BOOL bEncry
 				break;
 			case 0xE9:
 				ReceiveItemValueList(ReceiveBuffer);
+				break;
+			case 0xED:
+				ReceiveBuyConfirm(ReceiveBuffer);
 				break;
             case 0x30:
                 ReceiveOption(ReceiveBuffer);

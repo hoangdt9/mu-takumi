@@ -100,6 +100,8 @@ namespace SEASON3B
 		void SetSellingItem(bool bFlag);
 		bool IsSellingItem();
 
+		void OpenBuyConfirmDialog(BYTE slot);
+
 	private:
 		void Init();
 		void SetButtonInfo();

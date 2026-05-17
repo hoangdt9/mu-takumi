@@ -21,8 +21,8 @@ Last updated: 2026-05-16 · **Đã trên `main`** (merge `34d44c9` + dedup `0fee
 | # | Tính năng | Gợi ý owner |
 |---|-----------|-------------|
 | H | ~~`0xDB` / `0x19` magic AoE~~ | Done (stub) |
-| I | Buy confirm `F3 ED` (env `TAKUMI_SHOP_BUY_CONFIRM`), coin-only shop rows | M8 — coin-only = reject buy + log (`ItemValueCatalog.IsCoinOnlyPrice`); full WCoin ledger **OPEN** |
-| J | ~~`GCItemValueSend` / `ItemValue.txt`~~ | Done (`ItemValueWire602` after `0x31`) |
+| I | Buy confirm `F3 ED` (env `TAKUMI_SHOP_BUY_CONFIRM=1`); coin-only shop rows | Client `ReceiveBuyConfirm` + msgbox; server prompt wired. Coin-only = reject + log; WCoin ledger **OPEN** |
+| J | ~~`GCItemValueSend` / `ItemValue.txt`~~ | Done — server `F3 E9` + client `ShopItemValueCache` tooltip parity |
 | K | ~~Persist `inventory_slot`~~ | Done (`InventorySlotPersist`) |
 | L | ~~Encrypted `EncTerrain*.att`~~ | Done (`ModulusCryptor` in `MapAttWalkability`) |
 | M | NPC quest / warehouse / guild NPC | M11+ |

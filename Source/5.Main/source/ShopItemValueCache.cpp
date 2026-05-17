@@ -35,6 +35,83 @@ namespace
 	};
 
 	std::unordered_map<Key, Value, KeyHash> g_cache;
+
+	int DecodeWireItemIndex(const BYTE* wire)
+	{
+		// Parity ItemWire602.DecodeItemIndex / CNewUIItemMng::ExtractItemType.
+		return wire[0] + ((wire[3] & 128) << 1) + ((wire[5] & 240) << 5);
+	}
+
+	Key KeyFromWire(const BYTE* wire)
+	{
+		return {
+			DecodeWireItemIndex(wire),
+			(wire[1] >> 3) & 15,
+			wire[3] & 0x3F,
+		};
+	}
+
+	bool TryLookup(const Key& key, int* outPrice, int* outPriceType, int* outSell)
+	{
+		const auto it = g_cache.find(key);
+		if (it == g_cache.end())
+		{
+			return false;
+		}
+
+		if (outPrice != nullptr)
+		{
+			*outPrice = it->second.buy;
+		}
+
+		if (outPriceType != nullptr)
+		{
+			*outPriceType = it->second.priceType;
+		}
+
+		if (outSell != nullptr)
+		{
+			*outSell = it->second.sell;
+		}
+
+		return true;
+	}
+
+	bool TryLookupWithFallbacks(const Key& key, int* outPrice, int* outPriceType, int* outSell)
+	{
+		if (TryLookup(key, outPrice, outPriceType, outSell))
+		{
+			return true;
+		}
+
+		// F3 E9 may key exc differently than post-ItemConvert tooltip item; try index+level.
+		for (const auto& entry : g_cache)
+		{
+			if (entry.first.index == key.index
+				&& entry.first.level == key.level
+				&& entry.second.priceType == 0)
+			{
+				if (outPrice != nullptr)
+				{
+					*outPrice = entry.second.buy;
+				}
+
+				if (outPriceType != nullptr)
+				{
+					*outPriceType = 0;
+				}
+
+				if (outSell != nullptr)
+				{
+					*outSell = entry.second.sell;
+				}
+
+				return true;
+			}
+		}
+
+		return false;
+	}
 }
 
 void ShopItemValueCache_Clear()
@@ -80,6 +157,16 @@ static Key MakeKey(const tagITEM* ip)
 	return { index, level, newopt };
 }
 
+bool ShopItemValueCache_TryGetPriceFromWire(const BYTE* itemWire, int* outPrice, int* outPriceType)
+{
+	if (itemWire == nullptr || outPrice == nullptr || outPriceType == nullptr)
+	{
+		return false;
+	}
+
+	return TryLookupWithFallbacks(KeyFromWire(itemWire), outPrice, outPriceType, nullptr);
+}
+
 bool ShopItemValueCache_TryGetPrice(const tagITEM* ip, int* outPrice, int* outPriceType)
 {
 	if (ip == nullptr || outPrice == nullptr || outPriceType == nullptr)
@@ -87,15 +174,7 @@ bool ShopItemValueCache_TryGetPrice(const tagITEM* ip, int* outPrice, int* outPr
 		return false;
 	}
 
-	const auto it = g_cache.find(MakeKey(ip));
-	if (it == g_cache.end())
-	{
-		return false;
-	}
-
-	*outPrice = it->second.buy;
-	*outPriceType = it->second.priceType;
-	return true;
+	return TryLookupWithFallbacks(MakeKey(ip), outPrice, outPriceType, nullptr);
 }
 
 bool ShopItemValueCache_IsCoinPrice(const tagITEM* ip)
@@ -128,12 +207,21 @@ bool ShopItemValueCache_TryGetSell(const tagITEM* ip, int* outSell)
 		return false;
 	}
 
-	const auto it = g_cache.find(MakeKey(ip));
-	if (it == g_cache.end())
+	return TryLookupWithFallbacks(MakeKey(ip), nullptr, nullptr, outSell);
+}
+
+bool ShopItemValueCache_TryGetBuyFromWire(const BYTE* itemWire, int* outBuy)
+{
+	if (itemWire == nullptr || outBuy == nullptr)
 	{
 		return false;
 	}
 
-	*outSell = it->second.sell;
-	return true;
+	int priceType = 0;
+	if (!ShopItemValueCache_TryGetPriceFromWire(itemWire, outBuy, &priceType))
+	{
+		return false;
+	}
+
+	return priceType == 0;
 }

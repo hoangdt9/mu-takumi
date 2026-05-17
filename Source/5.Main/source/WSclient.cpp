@@ -1664,6 +1664,12 @@ void TakumiProcessAndroidPendingLoadWorld()
 		LoadingWorld = 30;
 	}
 	TakumiAndroidOnWorldJoinLoaded();
+	// Join batch: C2 0x13 is processed before this deferred LoadWorld (which calls
+	// DeleteNpcs/DeleteMonsters). Ask game-host to resend viewport after terrain is ready.
+	SendRequestFinishLoading();
+	g_ErrorReport.Write(
+		"[AndroidLogin] deferred LoadWorld map=%d — sent F3 12 finish loading (viewport resync)\r\n",
+		map);
 }
 #endif
 
@@ -7409,6 +7415,29 @@ static void ShopNotifyZenDelta(int deltaGold)
 	}
 }
 
+// Set by ReceiveBuy from F3 E9 / SendRequestBuy cost; consumed on the next 0x22 zen pick sync.
+static int s_pendingShopZenSpend = 0;
+
+static void TakumiApplyGoldPickSync(int newGold)
+{
+	if (s_pendingShopZenSpend > 0)
+	{
+		CharacterMachine->Gold = newGold;
+		ShopNotifyZenDelta(-s_pendingShopZenSpend);
+		s_pendingShopZenSpend = 0;
+		return;
+	}
+
+	const int backupGold = CharacterMachine->Gold;
+	CharacterMachine->Gold = newGold;
+	const int deltaGold = newGold - backupGold;
+	// backupGold==0: server sent absolute balance (shop buy/sell/repair); avoid "Nhận <full wallet>" spam.
+	if (deltaGold != 0 && backupGold != 0)
+	{
+		ShopNotifyZenDelta(deltaGold);
+	}
+}
+
 void ReceiveGetItem( BYTE *ReceiveBuffer )
 {
 	auto Data = (LPPRECEIVE_GET_ITEM)ReceiveBuffer;
@@ -7419,14 +7448,8 @@ void ReceiveGetItem( BYTE *ReceiveBuffer )
 	{
 		if (Data->Result == GET_ITEM_ZEN)
 		{
-			const int backupGold = CharacterMachine->Gold;
 			const int newGold = (Data->Item[0] << 24) + (Data->Item[1] << 16) + (Data->Item[2] << 8) + Data->Item[3];
-			CharacterMachine->Gold = newGold;
-			const int deltaGold = newGold - backupGold;
-			if (deltaGold != 0)
-			{
-				ShopNotifyZenDelta(deltaGold);
-			}
+			TakumiApplyGoldPickSync(newGold);
 		}
 		else
 		{
@@ -7908,6 +7931,7 @@ void ReceiveBuy( BYTE *ReceiveBuffer )
 	auto Data = (LPPHEADER_DEFAULT_ITEM)ReceiveBuffer;
 	if (Data->Index == 0xff)
 	{
+		s_pendingShopZenSpend = 0;
 		SEASON3B::CNewUIInventoryCtrl::BackupPickedItem();
 		g_pChatListBox->AddText(
 			Hero->ID,
@@ -7916,6 +7940,17 @@ void ReceiveBuy( BYTE *ReceiveBuffer )
 	}
 	else if (Data->Index != 0xfe)
 	{
+		int spend = BuyCost;
+		if (spend <= 0)
+		{
+			ShopItemValueCache_TryGetBuyFromWire(Data->Item, &spend);
+		}
+
+		if (spend > 0)
+		{
+			s_pendingShopZenSpend = spend;
+		}
+
 		if (Data->Index >= MAX_EQUIPMENT_INDEX && Data->Index < MAX_MY_INVENTORY_INDEX)
 		{
 			g_pMyInventory->InsertItem(Data->Index, Data->Item);
@@ -7977,9 +8012,7 @@ void ReceiveSell( BYTE *ReceiveBuffer )
 		{
 			SEASON3B::CNewUIInventoryCtrl::DeletePickedItem();
 
-			const int backupGold = CharacterMachine->Gold;
-			CharacterMachine->Gold = Data->Gold;
-			ShopNotifyZenDelta(CharacterMachine->Gold - backupGold);
+			TakumiApplyGoldPickSync(Data->Gold);
 			
 			PlayBuffer(SOUND_GET_ITEM01);
 
@@ -7998,9 +8031,7 @@ void ReceiveRepair( BYTE *ReceiveBuffer )
 	
     if(Data->Gold != 0)
 	{
-		const int backupGold = CharacterMachine->Gold;
-		CharacterMachine->Gold = Data->Gold;
-		ShopNotifyZenDelta(CharacterMachine->Gold - backupGold);
+		TakumiApplyGoldPickSync(Data->Gold);
         CharacterMachine->CalculateAll();
         PlayBuffer(SOUND_REPAIR);
 	}

@@ -11,7 +11,18 @@ public static class ShopItemValueSender
 
         foreach (var item in shopItems)
         {
-            entries.Add(ShopItemValueResolver.ToWireEntry(item));
+            var blob = new byte[ItemWire602.WireBytes];
+            ItemWire602.WriteSeason6Item(
+                blob,
+                item.ItemGroup,
+                item.ItemIndex,
+                item.ItemLevel,
+                item.Durability,
+                item.Skill != 0,
+                item.Luck != 0,
+                item.Option,
+                item.ExcOpt);
+            entries.Add(ShopItemValueResolver.ToWireEntry(item, blob));
         }
 
         foreach (var (slot, blob) in bagSlots)

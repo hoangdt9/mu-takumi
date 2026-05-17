@@ -1226,6 +1226,26 @@ static_assert(offsetof(PMSG_LEVEL_UP_POINT_RECV, ViewPoint) == 11, "F3 06 ViewPo
 static_assert(offsetof(PMSG_LEVEL_UP_POINT_RECV, ViewStrength) == 31, "F3 06 ViewStrength wire offset");
 #endif
 
+static void TakumiSyncCharacterMachineBaseStats()
+{
+	if (CharacterMachine == nullptr || CharacterAttribute == nullptr)
+	{
+		return;
+	}
+
+	// F3 06 updates CharacterAttribute; CalculateDamage() reads CharacterMachine->Character.*.
+	CharacterMachine->Character.Strength = CharacterAttribute->Strength;
+	CharacterMachine->Character.Dexterity = CharacterAttribute->Dexterity;
+	CharacterMachine->Character.Vitality = CharacterAttribute->Vitality;
+	CharacterMachine->Character.Energy = CharacterAttribute->Energy;
+	CharacterMachine->Character.Charisma = CharacterAttribute->Charisma;
+	CharacterMachine->Character.LevelUpPoint = CharacterAttribute->LevelUpPoint;
+	CharacterMachine->Character.LifeMax = CharacterAttribute->LifeMax;
+	CharacterMachine->Character.ManaMax = CharacterAttribute->ManaMax;
+	CharacterMachine->Character.ShieldMax = CharacterAttribute->ShieldMax;
+	CharacterMachine->Character.SkillManaMax = CharacterAttribute->SkillManaMax;
+}
+
 void GCLevelUpPointRecv(PMSG_LEVEL_UP_POINT_RECV* lpMsg) // OK
 {
 	if (lpMsg->result < 16 || lpMsg->result > 20)
@@ -1270,6 +1290,8 @@ void GCLevelUpPointRecv(PMSG_LEVEL_UP_POINT_RECV* lpMsg) // OK
 	CharacterAttribute->PrintPlayer.ViewVitality = lpMsg->ViewVitality;
 	CharacterAttribute->PrintPlayer.ViewEnergy = lpMsg->ViewEnergy;
 	CharacterAttribute->PrintPlayer.ViewLeadership = lpMsg->ViewLeadership;
+
+	TakumiSyncCharacterMachineBaseStats();
 
 #if defined(__ANDROID__)
 	TakumiDeferCharacterCalculateAll();

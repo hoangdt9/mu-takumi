@@ -54,9 +54,14 @@ public static class ShopItemValueResolver
         return Math.Max(1, buy / 3);
     }
 
-    public static ItemValueWire602.ItemValueEntry ToWireEntry(NpcShopItemEntry item)
+    public static ItemValueWire602.ItemValueEntry ToWireEntry(NpcShopItemEntry item, ReadOnlySpan<byte> itemWire12 = default)
     {
         var index = (item.ItemGroup * 512) + item.ItemIndex;
+        if (itemWire12.Length >= ItemWire602.WireBytes)
+        {
+            index = ItemWire602.DecodeItemIndex(itemWire12);
+        }
+
         if (ItemValueCatalog.TryGetWirePrice(index, item.ItemLevel, item.ExcOpt, out var priceType, out var value, out var sell)
             && priceType > 0)
         {

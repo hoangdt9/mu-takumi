@@ -155,7 +155,8 @@ public static class ItemWorldHandler
                     ItemWorldWire602.BuildMoveSuccess(dstFlag, dstSlot, moveResult.TargetItem),
                     ct)
                 .ConfigureAwait(false);
-            PlayerShopSession.CompactBagForPlacement(presenceSessionId);
+            // Do not CompactBagForPlacement here — RepackBagSlots top-left repacks the item back
+            // (e.g. 12→44 becomes 12 again) while 0x24 still says dstSlot=44 → client/server desync.
             var invSync = PlayerShopSession.BuildInventoryListPacket(presenceSessionId);
             await writeAsync(invSync, ct).ConfigureAwait(false);
             if (PlayerShopSession.TryGetSessionSlots(presenceSessionId, out var snap))
@@ -182,6 +183,59 @@ public static class ItemWorldHandler
                     dstSlot,
                     remote);
             }
+        }
+        else if (srcFlag == ItemStorageFlags602.Inventory && dstFlag == ItemStorageFlags602.Warehouse)
+        {
+            await writeAsync(ItemWorldWire602.BuildItemDelete(srcSlot), ct).ConfigureAwait(false);
+            await writeAsync(
+                    ItemWorldWire602.BuildMoveSuccess(dstFlag, dstSlot, moveResult.TargetItem),
+                    ct)
+                .ConfigureAwait(false);
+            Console.WriteLine(
+                "[m7] item move inv→wh 0x24 f2:{0} + 0x28 inv:{1} {2}",
+                dstSlot,
+                srcSlot,
+                remote);
+        }
+        else if (srcFlag == ItemStorageFlags602.Warehouse && dstFlag == ItemStorageFlags602.Inventory)
+        {
+            await writeAsync(
+                    ItemWorldWire602.BuildMoveSuccess(dstFlag, dstSlot, moveResult.TargetItem),
+                    ct)
+                .ConfigureAwait(false);
+            var emptyWh = new byte[ItemWire602.WireBytes];
+            Array.Fill(emptyWh, (byte)0xFF);
+            await writeAsync(
+                    ItemWorldWire602.BuildMoveSuccess(ItemStorageFlags602.Warehouse, srcSlot, emptyWh),
+                    ct)
+                .ConfigureAwait(false);
+            Console.WriteLine(
+                "[m7] item move wh→inv 0x24 f0:{0} + clear wh:{1} {2}",
+                dstSlot,
+                srcSlot,
+                remote);
+        }
+        else if (srcFlag == ItemStorageFlags602.Warehouse && dstFlag == ItemStorageFlags602.Warehouse)
+        {
+            await writeAsync(
+                    ItemWorldWire602.BuildMoveSuccess(dstFlag, dstSlot, moveResult.TargetItem),
+                    ct)
+                .ConfigureAwait(false);
+            if (srcSlot != dstSlot)
+            {
+                var emptyWh = new byte[ItemWire602.WireBytes];
+                Array.Fill(emptyWh, (byte)0xFF);
+                await writeAsync(
+                        ItemWorldWire602.BuildMoveSuccess(ItemStorageFlags602.Warehouse, srcSlot, emptyWh),
+                        ct)
+                    .ConfigureAwait(false);
+            }
+
+            Console.WriteLine(
+                "[m7] item move wh→wh 0x24 f2:{0} + clear f2:{1} {2}",
+                dstSlot,
+                srcSlot,
+                remote);
         }
         else
         {
@@ -254,9 +308,10 @@ public static class ItemWorldHandler
                 return (false, Array.Empty<byte>(), null, "empty-inv-source");
             }
 
-            if (PlayerWarehouseSession.TryGetSlot(presenceSessionId, dstSlot, out var dest) && !ItemWire602.IsEmpty(dest))
+            if (!PlayerWarehouseSession.TryGetSessionSlots(presenceSessionId, out var whSlots)
+                || !WarehouseBagGrid.CanPlaceAtWithHeal(whSlots, item, dstSlot, ignoreWireSlot: null))
             {
-                return (false, Array.Empty<byte>(), null, "warehouse-dest-occupied");
+                return (false, Array.Empty<byte>(), null, "warehouse-footprint");
             }
 
             var moved = item.ToArray();
@@ -283,9 +338,10 @@ public static class ItemWorldHandler
                 return (false, Array.Empty<byte>(), null, "invalid-inv-dest");
             }
 
-            if (PlayerShopSession.TryGetSlot(presenceSessionId, dstSlot, out var dest) && !ItemWire602.IsEmpty(dest))
+            if (!PlayerShopSession.TryGetSessionSlots(presenceSessionId, out var invSlots)
+                || !InventoryBagGrid.CanPlaceAt(invSlots, item, dstSlot, ignoreWireSlot: null))
             {
-                return (false, Array.Empty<byte>(), null, "inv-dest-occupied");
+                return (false, Array.Empty<byte>(), null, "inv-footprint");
             }
 
             var moved = item.ToArray();

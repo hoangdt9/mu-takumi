@@ -345,18 +345,51 @@ int CNewUIStorageInventoryExt::FindEmptySlot(const ITEM* pItemObj) const
 
 void CNewUIStorageInventoryExt::ProcessToReceiveStorageItems(int nIndex, BYTE* pbyItemPacket)
 {
+    if (nullptr == m_pNewInventoryCtrl || nullptr == pbyItemPacket)
+        return;
+
+    if (nIndex < MAX_SHOP_INVENTORY || nIndex >= MAX_SHOP_INVENTORY + MAX_SHOP_INVENTORY)
+        return;
+
+    if (pbyItemPacket[0] == 0xFF)
+    {
+        if (ITEM* pItem = m_pNewInventoryCtrl->FindItem(nIndex))
+            m_pNewInventoryCtrl->RemoveItem(pItem);
+        CNewUIInventoryCtrl::DeletePickedItem();
+        SetItemAutoMove(false);
+        return;
+    }
+
+    CNewUIPickedItem* pPickedItem = CNewUIInventoryCtrl::GetPickedItem();
+    if (pPickedItem)
+    {
+        ITEM* pSrcItem = pPickedItem->GetItem();
+        CNewUIInventoryCtrl* pSrcInv = pPickedItem->GetOwnerInventory();
+        if (pSrcItem && pSrcInv)
+        {
+            const int srcPos = pPickedItem->GetSourceLinealPos();
+            pSrcInv->ClearItemFootprint(srcPos, pSrcItem->Type);
+            if (ITEM* pStale = pSrcInv->FindItem(srcPos))
+                pSrcInv->RemoveItem(pStale);
+        }
+    }
+
     CNewUIInventoryCtrl::DeletePickedItem();
 
     if (IsItemAutoMove())
     {
         CNewUIInventoryCtrl* pMyInvenCtrl = g_pMyInventory->GetInventoryCtrl();
         ITEM* pItemObj = pMyInvenCtrl->FindItemAtPt(m_nBackupMouseX, m_nBackupMouseY);
-        g_pMyInventory->GetInventoryCtrl()->RemoveItem(pItemObj);
-
+        if (pItemObj)
+            g_pMyInventory->GetInventoryCtrl()->RemoveItem(pItemObj);
         SetItemAutoMove(false);
     }
 
-    InsertItem(nIndex, pbyItemPacket);
+    if (ITEM* pConflict = m_pNewInventoryCtrl->FindItem(nIndex))
+        m_pNewInventoryCtrl->RemoveItem(pConflict);
+
+    if (!InsertItem(nIndex, pbyItemPacket))
+        CNewUIInventoryCtrl::BackupPickedItem();
 }
 
 void CNewUIStorageInventoryExt::ProcessStorageItemAutoMoveSuccess()

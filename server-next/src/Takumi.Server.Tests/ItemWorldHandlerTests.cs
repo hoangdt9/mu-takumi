@@ -95,6 +95,32 @@ public sealed class ItemWorldHandlerTests
     }
 
     [Fact]
+    public void BuildInventoryListPacket_after_bag_move_keeps_target_anchor_not_repacked()
+    {
+        var sid = Guid.NewGuid();
+        var bow = new byte[ItemWire602.WireBytes];
+        ItemWire602.WriteSeason6Item(bow, 4, 7, 0, 40, false, false, 0, 0);
+        PlayerShopSession.SetSlot(sid, 12, bow);
+
+        Assert.True(PlayerShopSession.TryMoveInventorySlot(sid, 12, 44, out _, out _, out _));
+
+        var pkt = PlayerShopSession.BuildInventoryListPacket(sid);
+        var slotsInWire = new List<byte>();
+        for (var o = 6; o + 13 <= pkt.Length; o += 13)
+        {
+            slotsInWire.Add(pkt[o]);
+        }
+
+        Assert.Contains((byte)44, slotsInWire);
+        Assert.DoesNotContain((byte)12, slotsInWire);
+
+        PlayerShopSession.CompactBagForPlacement(sid);
+        Assert.True(PlayerShopSession.TryGetSlot(sid, 12, out var repacked));
+        Assert.False(ItemWire602.IsEmpty(repacked));
+        Assert.False(PlayerShopSession.TryGetSlot(sid, 44, out var at44) && !ItemWire602.IsEmpty(at44));
+    }
+
+    [Fact]
     public void MapGroundItemStore_drop_and_take_roundtrip()
     {
         var item = new byte[ItemWire602.WireBytes];
@@ -234,6 +260,27 @@ public sealed class ItemWorldHandlerTests
     }
 
     [Fact]
+    public void TryFindEmptyBagSlot_with_scattered_items_does_not_repack_existing_anchors()
+    {
+        var sid = Guid.NewGuid();
+        var potion = new byte[ItemWire602.WireBytes];
+        ItemWire602.WriteSeason6Item(potion, 14, 0, 0, 255, false, false, 0, 0);
+        PlayerShopSession.SetSlot(sid, 29, potion);
+        PlayerShopSession.SetSlot(sid, 24, potion);
+
+        var armor = new byte[ItemWire602.WireBytes];
+        ItemWire602.WriteSeason6Item(armor, 7, 0, 0, 40, false, false, 0, 0);
+        Assert.True(PlayerShopSession.TryFindEmptyBagSlot(sid, armor, out var freeSlot));
+
+        Assert.True(PlayerShopSession.TryGetSlot(sid, 29, out var still29));
+        Assert.True(PlayerShopSession.TryGetSlot(sid, 24, out var still24));
+        Assert.False(ItemWire602.IsEmpty(still29));
+        Assert.False(ItemWire602.IsEmpty(still24));
+        Assert.NotEqual((byte)29, freeSlot);
+        Assert.NotEqual((byte)24, freeSlot);
+    }
+
+    [Fact]
     public void TryFindEmptyBagSlot_after_repack_uses_top_left_not_high_anchor()
     {
         var sid = Guid.NewGuid();
@@ -304,6 +351,36 @@ public sealed class ItemWorldHandlerTests
         Assert.True(map.TryGetValue(tigerBow, out var size));
         Assert.Equal(2, size.Width);
         Assert.Equal(4, size.Height);
+    }
+
+    [Fact]
+    public void WarehouseBagGrid_compact_dedupes_duplicate_anchors()
+    {
+        ItemSizeCatalog.EnsureInitialized();
+        var bow = new byte[ItemWire602.WireBytes];
+        ItemWire602.WriteSeason6Item(bow, 4, 4, 9, 40, false, false, 0, 0);
+        var slots = new Dictionary<byte, byte[]>
+        {
+            [21] = bow.ToArray(),
+            [22] = bow.ToArray(),
+            [52] = bow.ToArray(),
+        };
+
+        Assert.True(WarehouseBagGrid.CompactWarehouseSlots(slots));
+        Assert.Single(slots);
+        Assert.True(slots.ContainsKey(0) || slots.ContainsKey(21));
+    }
+
+    [Fact]
+    public void WarehouseBagGrid_maps_main_and_extended_pages()
+    {
+        Assert.True(WarehouseBagGrid.WireToCell(0, out var c0, out var r0));
+        Assert.Equal(0, c0);
+        Assert.Equal(0, r0);
+        Assert.True(WarehouseBagGrid.WireToCell(120, out var c1, out var r1));
+        Assert.Equal(0, c1);
+        Assert.Equal(0, r1);
+        Assert.False(WarehouseBagGrid.WireToCell(240, out _, out _));
     }
 
     [Fact]

@@ -344,7 +344,7 @@ public static class PlayerShopSession
         return InventoryBagGrid.TryFindEmptyAnchor(s.Slots, item12, out slot);
     }
 
-    /// <summary>Prune, merge stacks, repack bag before shop buy / F3 10 (parity OpenMU CheckInvSpace).</summary>
+    /// <summary>Prune, merge stacks, repack bag (join heal / explicit compact only — not shop buy or inv move).</summary>
     public static void CompactBagForPlacement(Guid sessionId)
     {
         if (!Sessions.TryGetValue(sessionId, out var s))

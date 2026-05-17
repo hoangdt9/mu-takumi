@@ -38,6 +38,50 @@ public static class PlayerWarehouseSession
             return;
         }
 
+        await LoadFromMirrorAsync(s, accountLogin, ct).ConfigureAwait(false);
+    }
+
+    /// <summary>Reload from DB, repack footprints, persist healed layout (call on each warehouse open).</summary>
+    public static async Task ReloadAndHealForOpenAsync(
+        Guid sessionId,
+        string? accountLogin,
+        CancellationToken ct)
+    {
+        var s = Sessions.GetOrAdd(sessionId, _ => new WarehouseState(false, new Dictionary<byte, byte[]>()));
+        s.Slots.Clear();
+        if (!string.IsNullOrEmpty(accountLogin))
+        {
+            await LoadFromMirrorAsync(s, accountLogin, ct).ConfigureAwait(false);
+        }
+
+        if (s.Slots.Count == 0)
+        {
+            return;
+        }
+
+        ItemSizeCatalog.EnsureInitialized();
+        var anchorsBefore = s.Slots.Keys.OrderBy(static x => x).ToArray();
+        var healed = WarehouseBagGrid.CompactWarehouseSlots(s.Slots);
+        if (!healed)
+        {
+            return;
+        }
+
+        var anchorsAfter = s.Slots.Keys.OrderBy(static x => x).ToArray();
+        Console.WriteLine(
+            "[warehouse] repack healed account={0} anchors [{1}] → [{2}]",
+            accountLogin,
+            string.Join(',', anchorsBefore),
+            string.Join(',', anchorsAfter));
+
+        if (!string.IsNullOrEmpty(accountLogin) && TakumiPostgresMirror.WarehouseSlots is not null)
+        {
+            WarehouseSlotMirrorWriter.ScheduleReplaceAccount(accountLogin, BuildSnapshot(sessionId));
+        }
+    }
+
+    static async Task LoadFromMirrorAsync(WarehouseState s, string accountLogin, CancellationToken ct)
+    {
         var repo = TakumiPostgresMirror.WarehouseSlots;
         if (repo is null)
         {
@@ -82,12 +126,24 @@ public static class PlayerWarehouseSession
         }
     }
 
+    public static bool TryGetSessionSlots(Guid sessionId, out Dictionary<byte, byte[]> slots)
+    {
+        if (!Sessions.TryGetValue(sessionId, out var s))
+        {
+            slots = new Dictionary<byte, byte[]>();
+            return false;
+        }
+
+        slots = s.Slots;
+        return true;
+    }
+
     public static bool TryMoveSlot(Guid sessionId, byte sourceSlot, byte targetSlot, out byte[] targetItem12)
     {
         targetItem12 = Array.Empty<byte>();
         if (sourceSlot == targetSlot
-            || sourceSlot > ItemStorageFlags602.MaxWarehouseSlot
-            || targetSlot > ItemStorageFlags602.MaxWarehouseSlot)
+            || !WarehouseBagGrid.IsWarehouseSlot(sourceSlot)
+            || !WarehouseBagGrid.IsWarehouseSlot(targetSlot))
         {
             return false;
         }
@@ -105,11 +161,22 @@ public static class PlayerWarehouseSession
         var moved = sourceItem.ToArray();
         if (ItemWire602.IsEmpty(destItem))
         {
+            if (!WarehouseBagGrid.CanPlaceAtWithHeal(s.Slots, moved, targetSlot, ignoreWireSlot: sourceSlot))
+            {
+                return false;
+            }
+
             s.Slots.Remove(sourceSlot);
             s.Slots[targetSlot] = moved;
         }
         else
         {
+            if (!WarehouseBagGrid.CanPlaceAtWithHeal(s.Slots, moved, targetSlot, ignoreWireSlot: sourceSlot)
+                || !WarehouseBagGrid.CanPlaceAtWithHeal(s.Slots, destItem, sourceSlot, ignoreWireSlot: targetSlot))
+            {
+                return false;
+            }
+
             s.Slots[sourceSlot] = destItem.ToArray();
             s.Slots[targetSlot] = moved;
         }

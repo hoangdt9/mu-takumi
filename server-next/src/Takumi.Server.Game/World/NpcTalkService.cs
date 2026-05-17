@@ -30,7 +30,8 @@ public static class NpcTalkService
         CancellationToken ct)
     {
         PlayerWarehouseSession.Open(presenceSessionId);
-        await PlayerWarehouseSession.EnsureLoadedAsync(presenceSessionId, accountId, ct).ConfigureAwait(false);
+        await PlayerWarehouseSession.ReloadAndHealForOpenAsync(presenceSessionId, accountId, ct)
+            .ConfigureAwait(false);
 
         await writeAsync(NpcTalkWire602.Build(TalkResultWarehouse), ct).ConfigureAwait(false);
 

@@ -144,7 +144,7 @@ public static class ShopCommerceHandler
         await PlayerShopSession.EnsureInventoryLoadedAsync(presenceSessionId, accountId, characterName10, ct)
             .ConfigureAwait(false);
 
-        var price = ShopItemPricing.BuyPrice(shopItem);
+        var price = ShopItemValueResolver.ResolveBuy(shopItem);
         var indexForCoin = (shopItem.ItemGroup * 512) + shopItem.ItemIndex;
         if (ItemValueCatalog.IsCoinOnlyPrice(indexForCoin, shopItem.ItemLevel, shopItem.ExcOpt))
         {
@@ -176,12 +176,6 @@ public static class ShopCommerceHandler
             shopItem.Option,
             shopItem.ExcOpt);
 
-        await PlayerShopSession.EnsureInventoryLoadedAsync(presenceSessionId, accountId, characterName10, ct)
-            .ConfigureAwait(false);
-        PlayerShopSession.CompactBagForPlacement(presenceSessionId);
-        await PlayerShopSession.PersistAsync(presenceSessionId, accountId, characterName10, player.Zen, ct)
-            .ConfigureAwait(false);
-
         byte bagSlot;
         byte[] buyWire;
         if (PlayerShopSession.TryStackIntoBag(presenceSessionId, blob, out bagSlot)
@@ -204,16 +198,17 @@ public static class ShopCommerceHandler
         onRosterDirty?.Invoke();
 
         ItemSizeCatalog.GetSize(buyWire, out var iw, out var ih);
+        // Parity OpenMU BuyNpcItemAction + legacy ReceiveBuy: C1 0x32 InsertItem at slot only (no F3 10 wipe).
         await writeAsync(ShopCommerceWire602.BuildBuy(bagSlot, buyWire), ct).ConfigureAwait(false);
-        var invSync = PlayerShopSession.BuildInventoryListPacket(presenceSessionId);
-        await writeAsync(invSync, ct).ConfigureAwait(false);
+        await writeAsync(ItemWorldWire602.BuildInventoryMoneyUpdate((uint)Math.Clamp(player.Zen, 0, uint.MaxValue)), ct)
+            .ConfigureAwait(false);
         await PlayerShopSession.PersistAsync(presenceSessionId, accountId, characterName10, player.Zen, ct)
             .ConfigureAwait(false);
         if (PlayerShopSession.TryGetSessionSlots(presenceSessionId, out var snap))
         {
             var cells = InventoryBagGrid.CountOccupiedBagCells(snap);
             Console.WriteLine(
-                "[m8] shop buy shop={0} slot={1} → inv={2} ({3}x{4}) zen={5} bagCells={6}/{7} F3 10={8}B {9}",
+                "[m8] shop buy shop={0} slot={1} → inv={2} ({3}x{4}) zen={5} bagCells={6}/{7} price={8} {9}",
                 shopIndex,
                 shopSlot,
                 bagSlot,
@@ -222,7 +217,7 @@ public static class ShopCommerceHandler
                 player.Zen,
                 cells,
                 InventoryBagGrid.CellCount,
-                invSync.Length,
+                price,
                 remote);
         }
         return true;

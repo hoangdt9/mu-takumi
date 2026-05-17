@@ -27,4 +27,44 @@ public sealed class MoveMapKeyGeneratorTests
         var packet = MoveMapWire602.BuildChecksum(0xAABBCCDD);
         Assert.Equal(new byte[] { 0xC1, 0x08, 0x8E, 0x01, 0xDD, 0xCC, 0xBB, 0xAA }, packet);
     }
+
+    [Fact]
+    public void TryValidateBlockKey_accepts_server_seed_chain()
+    {
+        var session = Guid.NewGuid();
+        var seed = 99u;
+        MoveMapSessionState.Reset(session, seed);
+        var key = MoveMapKeyGenerator.GenerateKeyValue(seed);
+
+        Assert.True(MoveMapKeyGenerator.TryValidateBlockKey(session, key, out var legacy));
+        Assert.False(legacy);
+        Assert.True(MoveMapSessionState.TryGet(session, out var next));
+        Assert.Equal(key, next);
+        MoveMapSessionState.Remove(session);
+    }
+
+    [Fact]
+    public void TryValidateBlockKey_falls_back_to_client_seed_zero()
+    {
+        var session = Guid.NewGuid();
+        MoveMapSessionState.Reset(session, 424242u);
+        var legacyKey = MoveMapKeyGenerator.GenerateKeyValue(0);
+
+        Assert.True(MoveMapKeyGenerator.TryValidateBlockKey(session, legacyKey, out var legacy));
+        Assert.True(legacy);
+        Assert.True(MoveMapSessionState.TryGet(session, out var next));
+        Assert.Equal(legacyKey, next);
+        MoveMapSessionState.Remove(session);
+    }
+
+    [Fact]
+    public void TryValidateBlockKey_accepts_when_no_session_seed()
+    {
+        var session = Guid.NewGuid();
+        var key = MoveMapKeyGenerator.GenerateKeyValue(0);
+
+        Assert.True(MoveMapKeyGenerator.TryValidateBlockKey(session, key, out var legacy));
+        Assert.True(legacy);
+        MoveMapSessionState.Remove(session);
+    }
 }

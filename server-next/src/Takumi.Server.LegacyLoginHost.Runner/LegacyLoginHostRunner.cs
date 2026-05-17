@@ -746,7 +746,13 @@ public static class LegacyLoginHostRunner
 
                     var spawn = new JoinMapSpawnWire(picked.MapId, picked.PosX, picked.PosY, picked.Angle);
                     var joinPkt = JoinMapServerWire602.Build(ToWireWithSheet(picked), spawn);
-                    var invPkt = await JoinInventoryPacket602.BuildAsync(TakumiPostgresMirror.InventorySlots, loggedAccountId, joinName10, ct).ConfigureAwait(false);
+                    var invPkt = await JoinInventoryLifecycle.BuildJoinPacketAsync(
+                            TakumiPostgresMirror.InventorySlots,
+                            loggedAccountId,
+                            joinName10,
+                            presenceSessionId,
+                            ct)
+                        .ConfigureAwait(false);
                     await WriteOutboundAsync(joinPkt);
                     await WriteOutboundAsync(invPkt);
                     await WriteOutboundAsync(MagicListWire602.BuildEmpty());

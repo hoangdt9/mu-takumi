@@ -1885,6 +1885,9 @@ BOOL ReceiveInventory(BYTE *ReceiveBuffer, BOOL bEncrypted)
 //	}
 //	g_pChatListBox->AddText("", "ReceiveInventory ", SEASON3B::TYPE_ERROR_MESSAGE);
 //#endif
+	// Drop cursor pick before wiping grid (avoids stale footprint after move + F3 10 resync).
+	SEASON3B::CNewUIInventoryCtrl::DeletePickedItem();
+
 	g_pMyInventory->UnequipAllItems();
 	g_pMyInventory->DeleteAllItems();
     g_pMyInventoryExt->DeleteAllItems();
@@ -1941,7 +1944,8 @@ BOOL ReceiveInventory(BYTE *ReceiveBuffer, BOOL bEncrypted)
 		CreatePetDarkSpirit_Now(Hero);
 	}
 	
-	g_ConsoleDebug->Write(MCD_RECEIVE, "0x10 [ReceiveInventory]");
+	g_ConsoleDebug->Write(MCD_RECEIVE, "0x10 [ReceiveInventory] count=%d", Data->Value);
+	g_ErrorReport.Write("[ReceiveInventory] count=%d\r\n", Data->Value);
 	
 	return ( TRUE);
 }
@@ -1958,6 +1962,15 @@ void ReceiveDeleteInventory( BYTE *ReceiveBuffer )
 		}
 		else if (itemindex >= MAX_EQUIPMENT_INDEX && itemindex < MAX_MY_INVENTORY_INDEX)
 		{
+			SEASON3B::CNewUIPickedItem* pPickedItem = SEASON3B::CNewUIInventoryCtrl::GetPickedItem();
+			if (pPickedItem && pPickedItem->GetOwnerInventory() == g_pMyInventory->GetInventoryCtrl())
+			{
+				ITEM* pSrcItem = pPickedItem->GetItem();
+				if (pSrcItem && pPickedItem->GetSourceLinealPos() == itemindex)
+				{
+					g_pMyInventory->GetInventoryCtrl()->ClearItemFootprint(itemindex, pSrcItem->Type);
+				}
+			}
 			g_pMyInventory->DeleteItem(itemindex);
 		}
 		else if (itemindex >= MAX_MY_INVENTORY_INDEX && itemindex < MAX_MY_INVENTORY_EX_INDEX)
@@ -7240,7 +7253,16 @@ BOOL ReceiveEquipmentItem(BYTE *ReceiveBuffer, BOOL bEncrypted)
 #endif
 		if (storageType == STORAGE_TYPE::INVENTORY)
 		{
-
+			// Clear stale occupancy at drag source before insert (large items can leave ghost cells).
+			if (pPickedItem)
+			{
+				ITEM* pSrcItem = pPickedItem->GetItem();
+				SEASON3B::CNewUIInventoryCtrl* pSrcInv = pPickedItem->GetOwnerInventory();
+				if (pSrcItem != nullptr && pSrcInv != nullptr)
+				{
+					pSrcInv->ClearItemFootprint(pPickedItem->GetSourceLinealPos(), pSrcItem->Type);
+				}
+			}
 
 			SEASON3B::CNewUIInventoryCtrl::DeletePickedItem();
 
@@ -13370,6 +13392,25 @@ void ProtocolCompiler( CWsctlc *pSocketClient, int iTranslation, int iParam)
 			else if( ReceiveBuffer[0] == 0xC3 || ReceiveBuffer[0] == 0xC4)
 			{
 				int iSize;
+				// Takumi game-host sends plain C4 (e.g. F3 10 inventory list) without SimpleModulus.
+				// SM-decrypt would fail and the packet is dropped — picked items never land.
+				if (ReceiveBuffer[0] == 0xC4)
+				{
+					const int wireLen = ((int)ReceiveBuffer[1] << 8) | ReceiveBuffer[2];
+					if (wireLen == Size && Size >= 6)
+					{
+						LPPWMSG_HEADER pHeader = (LPPWMSG_HEADER)byDec;
+						pHeader->Code = 0xC2;
+						pHeader->SizeH = ReceiveBuffer[1];
+						pHeader->SizeL = ReceiveBuffer[2];
+						std::memcpy(byDec + 3, ReceiveBuffer + 3, static_cast<size_t>(Size - 3));
+						HeadCode = ReceiveBuffer[3];
+						ReceiveBuffer = (BYTE*)pHeader;
+						bEncrypted = FALSE;
+						goto plain_c4_done;
+					}
+				}
+
 				if ( ReceiveBuffer[0] == 0xC3)
 				{
 					LPPBMSG_ENCRYPTED lpHeader = (LPPBMSG_ENCRYPTED)ReceiveBuffer;
@@ -13426,6 +13467,7 @@ void ProtocolCompiler( CWsctlc *pSocketClient, int iTranslation, int iParam)
 				}
 				Size = iSize;
 			}
+plain_c4_done:
 			TotalPacketSize += Size;       
 #ifdef SAVE_PACKET
 			SOCKET socket = pSocketClient->GetSocket();

@@ -536,6 +536,40 @@ void SEASON3B::CNewUIInventoryCtrl::RemoveItem(ITEM * pItem)
 	}
 }
 
+void SEASON3B::CNewUIInventoryCtrl::ClearItemFootprint(int iLinealPos, int iItemType)
+{
+	if (m_pdwItemCheckBox == nullptr || iItemType < 0 || iItemType >= MAX_ITEM)
+	{
+		return;
+	}
+
+	iLinealPos -= m_nIndexOffset;
+	if (iLinealPos < 0 || iLinealPos >= m_nColumn * m_nRow)
+	{
+		return;
+	}
+
+	const int iColumnX = iLinealPos % m_nColumn;
+	const int iRowY = iLinealPos / m_nColumn;
+	const ITEM_ATTRIBUTE* pItemAttr = &ItemAttribute[iItemType];
+
+	for (int y = 0; y < pItemAttr->Height; y++)
+	{
+		for (int x = 0; x < pItemAttr->Width; x++)
+		{
+			const int col = iColumnX + x;
+			const int row = iRowY + y;
+			if (col < 0 || col >= m_nColumn || row < 0 || row >= m_nRow)
+			{
+				continue;
+			}
+
+			const int iCurIndex = row * m_nColumn + col;
+			m_pdwItemCheckBox[iCurIndex] = 0;
+		}
+	}
+}
+
 void SEASON3B::CNewUIInventoryCtrl::RemoveAllItems()
 {
 	memset(m_pdwItemCheckBox, 0, sizeof(DWORD) * m_nColumn * m_nRow);

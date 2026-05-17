@@ -70,6 +70,31 @@ public static class PlayerShopSession
         return false;
     }
 
+    public static void ReplaceSlots(Guid sessionId, IReadOnlyDictionary<byte, byte[]> slots)
+    {
+        var copy = new Dictionary<byte, byte[]>(slots.Count);
+        foreach (var kv in slots)
+        {
+            if (kv.Value.Length == ItemWire602.WireBytes && !ItemWire602.IsEmpty(kv.Value))
+            {
+                copy[kv.Key] = kv.Value.ToArray();
+            }
+        }
+
+        Sessions.AddOrUpdate(
+            sessionId,
+            _ => new SessionState(-1, null, copy),
+            (_, existing) => existing with { Slots = copy });
+    }
+
+    public static void ClearSlots(Guid sessionId)
+    {
+        if (Sessions.TryGetValue(sessionId, out var s))
+        {
+            s.Slots.Clear();
+        }
+    }
+
     public static async Task EnsureInventoryLoadedAsync(
         Guid sessionId,
         string? accountId,
@@ -93,6 +118,11 @@ public static class PlayerShopSession
         foreach (var row in rows)
         {
             s.Slots[row.Slot] = row.Item12.ToArray();
+        }
+
+        if (s.Slots.Count > 0)
+        {
+            InventoryBagGrid.RepackBagSlots(s.Slots);
         }
     }
 
@@ -195,13 +225,22 @@ public static class PlayerShopSession
     public static bool IsInventorySlot(byte slot) => slot <= ItemWire602.LastBagSlot;
 
     /// <summary>Move or swap between inventory slots (flags 0→0).</summary>
-    public static bool TryMoveInventorySlot(Guid sessionId, byte sourceSlot, byte targetSlot, out byte[] targetItem12)
+    public static bool TryMoveInventorySlot(
+        Guid sessionId,
+        byte sourceSlot,
+        byte targetSlot,
+        out byte[] targetItem12,
+        out byte[]? swappedIntoSource,
+        out string? failReason)
     {
         targetItem12 = Array.Empty<byte>();
+        swappedIntoSource = null;
+        failReason = null;
         if (sourceSlot == targetSlot
             || sourceSlot > ItemWire602.LastBagSlot
             || targetSlot > ItemWire602.LastBagSlot)
         {
+            failReason = "invalid-slot";
             return false;
         }
 
@@ -210,16 +249,28 @@ public static class PlayerShopSession
         sourceItem ??= Array.Empty<byte>();
         if (ItemWire602.IsEmpty(sourceItem))
         {
+            failReason = "empty-source";
             return false;
         }
 
         if (!InventoryEquipRules.CanMoveBetweenSlots(sourceSlot, targetSlot, sourceItem))
         {
+            failReason = "equip-rule";
             return false;
         }
 
         s.Slots.TryGetValue(targetSlot, out var destItem);
         destItem ??= Array.Empty<byte>();
+
+        if (ItemWire602.IsBagSlot(sourceSlot)
+            && ItemWire602.IsBagSlot(targetSlot)
+            && ItemWire602.IsEmpty(destItem)
+            && !InventoryBagGrid.CanPlaceAt(s.Slots, sourceItem, targetSlot, sourceSlot))
+        {
+            ItemSizeCatalog.GetSize(sourceItem, out var w, out var h);
+            failReason = $"footprint-blocked size={w}x{h}";
+            return false;
+        }
         var moved = sourceItem.ToArray();
         if (ItemWire602.IsEmpty(destItem))
         {
@@ -228,7 +279,8 @@ public static class PlayerShopSession
         }
         else
         {
-            s.Slots[sourceSlot] = destItem.ToArray();
+            swappedIntoSource = destItem.ToArray();
+            s.Slots[sourceSlot] = swappedIntoSource;
             s.Slots[targetSlot] = moved;
         }
 
@@ -275,20 +327,70 @@ public static class PlayerShopSession
             return false;
         }
 
-        for (var i = ItemWire602.FirstBagSlot; i <= ItemWire602.LastBagSlot; i++)
+        var probe = new byte[ItemWire602.WireBytes];
+        ItemWire602.WriteSeason6Item(probe, 0, 0, 0, 1, false, false, 0, 0);
+        return InventoryBagGrid.TryFindEmptyAnchor(s.Slots, probe, out slot);
+    }
+
+    public static bool TryFindEmptyBagSlot(Guid sessionId, ReadOnlySpan<byte> item12, out byte slot)
+    {
+        if (!Sessions.TryGetValue(sessionId, out var s))
         {
-            if (!s.Slots.TryGetValue((byte)i, out var blob) || ItemWire602.IsEmpty(blob))
-            {
-                slot = (byte)i;
-                return true;
-            }
+            slot = 0;
+            return false;
         }
 
-        slot = 0;
-        return false;
+        ItemSizeCatalog.EnsureInitialized();
+        return InventoryBagGrid.TryFindEmptyAnchor(s.Slots, item12, out slot);
+    }
+
+    /// <summary>Prune, merge stacks, repack bag before shop buy / F3 10 (parity OpenMU CheckInvSpace).</summary>
+    public static void CompactBagForPlacement(Guid sessionId)
+    {
+        if (!Sessions.TryGetValue(sessionId, out var s))
+        {
+            return;
+        }
+
+        ItemSizeCatalog.EnsureInitialized();
+        var dropped = InventoryBagGrid.CompactBagSlots(s.Slots);
+        if (dropped > 0)
+        {
+            Console.WriteLine("[m8] CompactBagForPlacement: removed {0} orphan anchor(s)", dropped);
+        }
     }
 
     public static void RemoveSession(Guid sessionId) => Sessions.TryRemove(sessionId, out _);
+
+    public static void RepackLoadedBag(Guid sessionId)
+    {
+        if (Sessions.TryGetValue(sessionId, out var s) && s.Slots.Count > 0)
+        {
+            InventoryBagGrid.RepackBagSlots(s.Slots);
+        }
+    }
+
+    /// <summary>Full <c>F3 10</c> inventory list for client resync after shop/repack.</summary>
+    public static byte[] BuildInventoryListPacket(Guid sessionId)
+    {
+        if (!Sessions.TryGetValue(sessionId, out var s) || s.Slots.Count == 0)
+        {
+            return InventoryListWire602.BuildEmpty();
+        }
+
+        ItemSizeCatalog.EnsureInitialized();
+        var copy = new Dictionary<byte, byte[]>(s.Slots.Count);
+        foreach (var kv in s.Slots)
+        {
+            if (!ItemWire602.IsEmpty(kv.Value))
+            {
+                copy[kv.Key] = kv.Value.ToArray();
+            }
+        }
+
+        JoinInventoryLifecycle.PruneInvalidSlots(copy);
+        return JoinInventoryLifecycle.BuildPacketFromSlots(copy);
+    }
 
     public static bool TryGetSessionSlots(Guid sessionId, out IReadOnlyDictionary<byte, byte[]> slots)
     {

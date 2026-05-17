@@ -401,7 +401,13 @@ public static class GamePortMinimalSession
 
                         var spawn = new JoinMapSpawnWire(picked.MapId, picked.PosX, picked.PosY, picked.Angle);
                         var joinPkt = JoinMapServerWire602.Build(picked.ToWireWithSheet(), spawn);
-                        var invPkt = await JoinInventoryPacket602.BuildAsync(TakumiPostgresMirror.InventorySlots, loggedAccountId, joinName10, ct).ConfigureAwait(false);
+                        var invPkt = await JoinInventoryLifecycle.BuildJoinPacketAsync(
+                                TakumiPostgresMirror.InventorySlots,
+                                loggedAccountId,
+                                joinName10,
+                                presenceSessionId,
+                                ct)
+                            .ConfigureAwait(false);
                         await GamePortOutboundWire.WriteAsync(connection, protect, joinPkt, ct, TrackVitalsOutbound).ConfigureAwait(false);
                         await GamePortOutboundWire.WriteAsync(connection, protect, invPkt, ct, TrackVitalsOutbound).ConfigureAwait(false);
                         await GamePortOutboundWire.WriteAsync(

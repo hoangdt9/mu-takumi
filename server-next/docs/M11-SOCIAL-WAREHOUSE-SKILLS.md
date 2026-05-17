@@ -8,7 +8,8 @@ Parity stubs for GameServer features still missing from `LegacyLoginHost` / `Gam
 
 | Feature | Wire | Status |
 |---------|------|--------|
-| Warehouse | `0x81`/`0x83` money/state, `C2 0x31` item list, move flag `2` | **Partial** — DB `warehouse_slot`, NPC 240 open, inv↔vault moves |
+| Warehouse | `0x81`/`0x83` money/state, `C2 0x31` item list, move flag `2` | **Partial** — DB `warehouse_slot` + `account.warehouse_zen`, NPC 240/383/384 open, inv↔wh moves, `0x81` deposit/withdraw |
+| Coin shop | `F3 E9` priceType 1–3 | **Partial** — `account.wcoin_*` / `goblin_point` debit on buy; seed balances manually for QA |
 | Trade | `0x36`–`0x3D` | **Partial** — request/accept between map-presence players, trade window moves |
 | Guild | `0x50`–`0x67`, … | **Stub** — empty ack (no guild domain yet) |
 | Skill list | `F3 11` | **Partial** — empty list after join (no skill DB yet) |

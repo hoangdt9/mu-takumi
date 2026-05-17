@@ -31,6 +31,7 @@ namespace
 	{
 		int buy;
 		int sell;
+		int priceType;
 	};
 
 	std::unordered_map<Key, Value, KeyHash> g_cache;
@@ -62,9 +63,10 @@ void ShopItemValueCache_ApplyPacket(const BYTE* receiveBuffer, int size)
 		const int index = *(const int*)(receiveBuffer + offset);
 		const int level = *(const int*)(receiveBuffer + offset + 4);
 		const int newopt = *(const int*)(receiveBuffer + offset + 8);
+		const int priceType = *(const int*)(receiveBuffer + offset + 12);
 		const int value = *(const int*)(receiveBuffer + offset + 16);
 		const int sellvalue = *(const int*)(receiveBuffer + offset + 24);
-		g_cache[{ index, level, newopt }] = { value, sellvalue };
+		g_cache[{ index, level, newopt }] = { value, sellvalue, priceType };
 		offset += 28;
 	}
 }
@@ -73,13 +75,14 @@ static Key MakeKey(const tagITEM* ip)
 {
 	const int index = ip->Type;
 	const int level = (ip->Level >> 3) & 15;
-	const int newopt = ip->ExtOption & 0x3F;
+	// Excellent options live in wire byte 3 (ITEM::Option1 after CreateItem), not ExtOption (byte 4).
+	const int newopt = ip->Option1 & 0x3F;
 	return { index, level, newopt };
 }
 
-bool ShopItemValueCache_TryGetBuy(const tagITEM* ip, int* outBuy)
+bool ShopItemValueCache_TryGetPrice(const tagITEM* ip, int* outPrice, int* outPriceType)
 {
-	if (ip == nullptr || outBuy == nullptr)
+	if (ip == nullptr || outPrice == nullptr || outPriceType == nullptr)
 	{
 		return false;
 	}
@@ -90,8 +93,32 @@ bool ShopItemValueCache_TryGetBuy(const tagITEM* ip, int* outBuy)
 		return false;
 	}
 
-	*outBuy = it->second.buy;
+	*outPrice = it->second.buy;
+	*outPriceType = it->second.priceType;
 	return true;
+}
+
+bool ShopItemValueCache_IsCoinPrice(const tagITEM* ip)
+{
+	int price = 0;
+	int priceType = 0;
+	return ShopItemValueCache_TryGetPrice(ip, &price, &priceType) && priceType > 0;
+}
+
+bool ShopItemValueCache_TryGetBuy(const tagITEM* ip, int* outBuy)
+{
+	if (ip == nullptr || outBuy == nullptr)
+	{
+		return false;
+	}
+
+	int priceType = 0;
+	if (!ShopItemValueCache_TryGetPrice(ip, outBuy, &priceType))
+	{
+		return false;
+	}
+
+	return priceType == 0;
 }
 
 bool ShopItemValueCache_TryGetSell(const tagITEM* ip, int* outSell)

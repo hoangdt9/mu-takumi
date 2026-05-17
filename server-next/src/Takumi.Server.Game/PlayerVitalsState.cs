@@ -7,8 +7,9 @@ public static class PlayerVitalsState
 {
     static readonly ConcurrentDictionary<Guid, long> ReviveAtMs = new();
 
+    /// <summary>True from first death until <see cref="TryClearDead"/> after revive wire is sent.</summary>
     public static bool IsDead(Guid sessionId) =>
-        ReviveAtMs.TryGetValue(sessionId, out var until) && until > Environment.TickCount64;
+        ReviveAtMs.ContainsKey(sessionId);
 
     /// <summary>Marks dead once per death; returns false if already dead / revive pending.</summary>
     public static bool TryMarkDead(Guid sessionId, TimeSpan reviveDelay)
@@ -48,7 +49,7 @@ public static class PlayerVitalsState
 
     public static TimeSpan ReviveDelayFromEnv()
     {
-        var sec = 2;
+        var sec = 3;
         var raw = Environment.GetEnvironmentVariable("TAKUMI_PLAYER_REVIVE_SECONDS");
         if (!string.IsNullOrWhiteSpace(raw) && int.TryParse(raw, out var v))
         {

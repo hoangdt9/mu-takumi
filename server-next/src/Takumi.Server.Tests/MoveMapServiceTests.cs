@@ -25,6 +25,27 @@ public sealed class MoveMapServiceTests
         Assert.Equal(MoveMapService.DenyReason.None, deny);
         Assert.Equal(2000, zen);
         Assert.NotEqual(2, dest.MapId);
+        Assert.False(dest.MapChanged);
+    }
+
+    [Fact]
+    public void TryResolve_noria_from_lorencia_sets_map_changed()
+    {
+        MapGateCatalog.EnsureInitialized();
+        MoveMapCatalog.LoadForTests(
+        [
+            new MoveMapEntry { Index = 3, Money = 2000, MinLevel = 10, MaxLevel = 10000, Gate = 22 },
+        ]);
+
+        if (!MapGateCatalog.TryGetGate(22, out var gate) || gate.MapId == 0)
+        {
+            return;
+        }
+
+        var ok = MoveMapService.TryResolve(3, playerLevel: 50, playerZen: 50000, previousMap: 0, out var dest, out _, out _);
+        Assert.True(ok);
+        Assert.NotEqual(0, dest.MapId);
+        Assert.True(dest.MapChanged);
     }
 
     [Fact]

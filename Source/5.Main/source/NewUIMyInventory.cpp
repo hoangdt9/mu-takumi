@@ -167,8 +167,7 @@ bool CNewUIMyInventory::EquipItem(int iIndex, BYTE* pbyItemPacket)
 
 		ITEM* pTempItem = g_pNewItemMng->CreateItem(pbyItemPacket);
 
-		if (nullptr == pTempItem)
-			//if(NULL == pTempItem || false == IsEquipable(iIndex, pTempItem))
+		if (nullptr == pTempItem || pTempItem->Type < 0 || pTempItem->Type >= MAX_ITEM)
 		{
 			return false;
 		}
@@ -1112,6 +1111,11 @@ ITEM* CNewUIMyInventory::GetStandbyItem() const
 
 void CNewUIMyInventory::CreateEquippingEffect(ITEM * pItem)
 {
+	if (Hero == nullptr || pItem == nullptr)
+	{
+		return;
+	}
+
 	SetCharacterClass(Hero);
 	OBJECT* pHeroObject = &Hero->Object;
 	if (false == gMapManager.InChaosCastle())

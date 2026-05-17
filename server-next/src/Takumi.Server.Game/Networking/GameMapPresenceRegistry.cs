@@ -399,6 +399,36 @@ public static class GameMapPresenceRegistry
         return Math.Clamp(v, min, max);
     }
 
+    /// <summary>Send <c>C1 0x11</c> damage to other players on the same map (PvP observers).</summary>
+    public static async Task BroadcastPlayerDamageAsync(
+        byte mapId,
+        ReadOnlyMemory<byte> damagePacket,
+        Guid excludeSessionId,
+        CancellationToken ct)
+    {
+        if (!IsEnabled || damagePacket.Length == 0)
+        {
+            return;
+        }
+
+        var sent = 0;
+        foreach (var other in Sessions.Values)
+        {
+            if (other.SessionId == excludeSessionId || other.MapId != mapId)
+            {
+                continue;
+            }
+
+            sent++;
+            await GamePortOutboundWire.WriteAsync(other.Connection, other.Protect, damagePacket, ct).ConfigureAwait(false);
+        }
+
+        if (sent > 0)
+        {
+            Console.WriteLine("[m10c] broadcast PvP damage packet peers={0} map={1}", sent, mapId);
+        }
+    }
+
     public static async Task BroadcastActionAsync(
         Guid sessionId,
         byte mapId,

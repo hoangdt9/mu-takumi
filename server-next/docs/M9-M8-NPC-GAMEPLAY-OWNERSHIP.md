@@ -22,8 +22,8 @@ Last updated: 2026-05-17 · **Đã trên `main`** (shop F3 E9/ED, inventory 0x24
 | # | Tính năng | Gợi ý owner |
 |---|-----------|-------------|
 | H | ~~`0xDB` / `0x19` magic AoE~~ | Done (stub) |
-| I | ~~Buy confirm `F3 ED`~~ | **Done** — `TAKUMI_SHOP_BUY_CONFIRM=1`; client `ReceiveBuyConfirm` + NPC shop msgbox (`65e0e36`). Coin-only shop rows / WCoin ledger **OPEN** |
-| J | ~~`GCItemValueSend` / `ItemValue.txt`~~ | **Done** — server `F3 E9` + `ShopItemValueResolver` + client `ShopItemValueCache` (`1d77d94`, `3c36cf0`) |
+| I | ~~Buy confirm `F3 ED`~~ | **Done** — `TAKUMI_SHOP_BUY_CONFIRM=1`; client `ReceiveBuyConfirm` + NPC shop msgbox. Coin-only shop: server debits `account.wcoin_*` / `goblin_point` (`012_account_wallet.sql`) |
+| J | ~~`GCItemValueSend` / `ItemValue.txt`~~ | **Done** — server `F3 E9` + `ShopItemValueResolver` + client `ShopItemValueCache` (excellent key `Option1`, zen chat from server delta) |
 | K | ~~Persist `inventory_slot`~~ | **Done** (`InventorySlotPersist`); **2026-05-17:** `0x24`/`F3 10` move sync + BMD footprints (`6330de9`) |
 | L | ~~Encrypted `EncTerrain*.att`~~ | Done (`ModulusCryptor` in `MapAttWalkability`) |
 | M | NPC quest / warehouse / guild NPC | M11+ |

@@ -327,6 +327,24 @@ public static class MonsterViewerRegistry
             viewCurSd: victim.CurrentShield,
             shieldDamage: sdTaken);
         await GamePortOutboundWire.WriteAsync(victim.Connection, victim.Protect, dmgPkt, ct).ConfigureAwait(false);
+
+        if (victim.PlayerObjectKey != 0 && victim.PlayerObjectKey != victim.ClientHeroWireKey)
+        {
+            var observerPkt = MonsterDamageWire602.Build(
+                victim.PlayerObjectKey,
+                remaining,
+                victim.CurrentHp,
+                hitSuccess: true,
+                viewCurSd: victim.CurrentShield,
+                shieldDamage: sdTaken);
+            await GameMapPresenceRegistry.BroadcastPlayerDamageAsync(
+                    mapId,
+                    observerPkt,
+                    victim.SessionId,
+                    ct)
+                .ConfigureAwait(false);
+        }
+
         await TrySendThrottledLifeAsync(victim, ct).ConfigureAwait(false);
 
         Console.WriteLine(

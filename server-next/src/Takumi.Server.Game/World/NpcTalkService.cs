@@ -45,8 +45,9 @@ public static class NpcTalkService
         }
 
         await writeAsync(NpcShopWire602.Build(wireItems, listType: 0), ct).ConfigureAwait(false);
+        await AccountWalletSession.EnsureLoadedAsync(accountId, ct).ConfigureAwait(false);
         var invMoney = (uint)Math.Clamp(player.Zen, 0, uint.MaxValue);
-        var whMoney = (uint)Math.Clamp(player.Zen, 0, uint.MaxValue);
+        var whMoney = (uint)Math.Clamp(AccountWalletSession.GetWarehouseZen(accountId), 0, uint.MaxValue);
         await writeAsync(WarehouseWire602.BuildMoney(invMoney, whMoney), ct).ConfigureAwait(false);
         await writeAsync(WarehouseWire602.BuildState(0), ct).ConfigureAwait(false);
         return true;

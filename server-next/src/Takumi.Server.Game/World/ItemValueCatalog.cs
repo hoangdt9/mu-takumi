@@ -41,11 +41,87 @@ public static class ItemValueCatalog
         EnsureInitialized();
         buyValue = 0;
         sellValue = 0;
-        if (TryMatchRow(itemIndex, level, excellent, out var row))
+        if (!TryMatchRow(itemIndex, level, excellent, out var row) || row is null)
         {
-            buyValue = row!.Value;
-            sellValue = row.Sell > 0 ? row.Sell : Math.Max(1, row.Value / 3);
-            return true;
+            return false;
+        }
+
+        buyValue = row.Value;
+        sellValue = row.Sell > 0 ? row.Sell : Math.Max(1, row.Value / 3);
+        return true;
+    }
+
+    /// <summary>Exact <c>Level</c> + <c>OpExe</c> row only (no <c>*</c> grade wildcard).</summary>
+    public static bool TryGetBuySellExact(
+        int itemIndex,
+        int level,
+        int excellent,
+        out int buyValue,
+        out int sellValue)
+    {
+        EnsureInitialized();
+        buyValue = 0;
+        sellValue = 0;
+        if (!TryMatchRowExact(itemIndex, level, excellent, out var row) || row is null)
+        {
+            return false;
+        }
+
+        buyValue = row.Value;
+        sellValue = row.Sell > 0 ? row.Sell : Math.Max(1, row.Value / 3);
+        return true;
+    }
+
+    /// <summary>Wire row for <c>GCItemValueSend</c> (parity <c>CShop::GCItemValueSend</c> coin type fields).</summary>
+    public static bool TryGetWirePrice(
+        int itemIndex,
+        int level,
+        int excellent,
+        out int priceType,
+        out int value,
+        out int sellValue)
+    {
+        EnsureInitialized();
+        priceType = 0;
+        value = 0;
+        sellValue = 0;
+        if (!TryMatchRow(itemIndex, level, excellent, out var row) || row is null)
+        {
+            return false;
+        }
+
+        priceType = 0;
+        value = row.Value;
+        sellValue = row.Sell > 0 ? row.Sell : Math.Max(1, row.Value / 3);
+        if (row.Coin3 > 0)
+        {
+            priceType = 3;
+            value = row.Coin3;
+        }
+        else if (row.Coin2 > 0)
+        {
+            priceType = 2;
+            value = row.Coin2;
+        }
+        else if (row.Coin1 > 0)
+        {
+            priceType = 1;
+            value = row.Coin1;
+        }
+
+        return true;
+    }
+
+    static bool TryMatchRowExact(int itemIndex, int level, int excellent, out ItemValueRow? row)
+    {
+        row = null;
+        foreach (var candidate in _rows)
+        {
+            if (candidate.Index == itemIndex && candidate.Level == level && candidate.Grade == excellent)
+            {
+                row = candidate;
+                return true;
+            }
         }
 
         return false;

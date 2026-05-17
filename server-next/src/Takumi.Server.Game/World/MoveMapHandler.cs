@@ -102,35 +102,32 @@ public static class MoveMapHandler
         await WriteAsync(connection, clientProtectOutbound, writeAsync, MoveMapWire602.BuildAnswer(result), ct)
             .ConfigureAwait(false);
 
-        var flag = (ushort)(dest.MapChanged ? 1 : 0);
-        var tele = TeleportWire602.Build(flag, dest.MapId, dest.X, dest.Y, dest.Angle);
-        await WriteAsync(connection, clientProtectOutbound, writeAsync, tele, ct).ConfigureAwait(false);
-
-        if (dest.MapChanged && accountId is not null)
+        // Cross-map: C1 0x1C flag=1 then F3 03 reload. Same-map: skip 0x1C flag=0 (client mis-parses XY —
+        // see IMPLEMENTATION-CHECKLIST M7d / ReceiveTeleport); F3 03 in-place reposition only.
+        if (dest.MapChanged)
         {
-            tracker.ResetForMap(dest.MapId, dest.X, dest.Y);
-            var spawn = new JoinMapSpawnWire(dest.MapId, dest.X, dest.Y, dest.Angle);
-            var joinPkt = JoinMapServerWire602.Build(player.ToWireWithSheet(), spawn);
-            var invPkt = await JoinInventoryPacket602
-                .BuildAsync(TakumiPostgresMirror.InventorySlots, accountId, characterName10, ct)
-                .ConfigureAwait(false);
-            await WriteAsync(connection, clientProtectOutbound, writeAsync, joinPkt, ct).ConfigureAwait(false);
-            await WriteAsync(connection, clientProtectOutbound, writeAsync, invPkt, ct).ConfigureAwait(false);
-            MonsterViewerRegistry.UpdatePosition(presenceSessionId, dest.MapId, dest.X, dest.Y);
-            if (connection is not null)
-            {
-                await MapMonsterScopeSender.TrySendAfterJoinAsync(
-                        tracker,
-                        connection,
-                        clientProtectOutbound,
-                        dest.MapId,
-                        dest.X,
-                        dest.Y,
-                        remote,
-                        ct)
-                    .ConfigureAwait(false);
-            }
+            var tele = TeleportWire602.Build(1, dest.MapId, dest.X, dest.Y, dest.Angle);
+            await WriteAsync(connection, clientProtectOutbound, writeAsync, tele, ct).ConfigureAwait(false);
         }
+
+        if (accountId is not null)
+        {
+            await MoveWarpJoinReload.SendAsync(
+                    player,
+                    tracker,
+                    connection,
+                    clientProtectOutbound,
+                    accountId,
+                    characterName10,
+                    presenceSessionId,
+                    dest,
+                    writeAsync,
+                    remote,
+                    ct)
+                .ConfigureAwait(false);
+        }
+
+        var flag = (ushort)(dest.MapChanged ? 1 : 0);
 
         if (!MoveMapSessionState.SkipKeyCheck())
         {

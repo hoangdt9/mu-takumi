@@ -21,6 +21,38 @@ public static class WarehouseWire602
         return buf;
     }
 
+    /// <summary>Client <c>SendRequestStorageGold</c>: <c>C1 len 0x81 flag gold:dword</c>.</summary>
+    public static bool TryFindStorageGoldRequest(
+        ReadOnlySpan<byte> packet,
+        out int frameOffset,
+        out byte flag,
+        out uint gold)
+    {
+        frameOffset = 0;
+        flag = 0;
+        gold = 0;
+        for (var i = 0; i + 7 <= packet.Length; i++)
+        {
+            if (packet[i] != 0xC1 || packet[i + 2] != MoneyHead)
+            {
+                continue;
+            }
+
+            var len = packet[i + 1];
+            if (len < 7 || i + len > packet.Length)
+            {
+                continue;
+            }
+
+            frameOffset = i;
+            flag = packet[i + 3];
+            gold = BinaryPrimitives.ReadUInt32LittleEndian(packet.Slice(i + 4, 4));
+            return true;
+        }
+
+        return false;
+    }
+
     /// <summary><c>PMSG_WAREHOUSE_STATE_SEND</c> — 0 = unlocked, no password.</summary>
     public static byte[] BuildState(byte state = 0)
     {

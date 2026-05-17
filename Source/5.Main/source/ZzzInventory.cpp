@@ -2825,12 +2825,27 @@ void RenderItemInfo(int sx, int sy, ITEM* ip, bool Sell, int Inventype, bool bIt
 			else
 			{
 				int buyPrice = 0;
-				if (!ShopItemValueCache_TryGetBuy(ip, &buyPrice))
+				int priceType = 0;
+				if (ShopItemValueCache_TryGetPrice(ip, &buyPrice, &priceType))
+				{
+					ConvertGold(buyPrice, Text);
+					if (priceType > 0)
+					{
+						char line[160];
+						sprintf(line, "%s — %s", GlobalText[783 + priceType], Text);
+						sprintf(TextList[TextNum], "%s", line);
+					}
+					else
+					{
+						sprintf(TextList[TextNum], GlobalText[63], Text);
+					}
+				}
+				else
 				{
 					buyPrice = ItemValue(ip, 1);
+					ConvertGold(buyPrice, Text);
+					sprintf(TextList[TextNum], GlobalText[63], Text);
 				}
-				ConvertGold(buyPrice, Text);
-				sprintf(TextList[TextNum], GlobalText[63], Text);
 			}
 
 			TextListColor[TextNum] = color;
@@ -3544,12 +3559,27 @@ void RenderItemInfo(int sx,int sy,ITEM *ip,bool Sell, int Inventype, bool bItemT
 			else
 			{
 				int buyPrice = 0;
-				if (!ShopItemValueCache_TryGetBuy(ip, &buyPrice))
+				int priceType = 0;
+				if (ShopItemValueCache_TryGetPrice(ip, &buyPrice, &priceType))
+				{
+					ConvertGold(buyPrice, Text);
+					if (priceType > 0)
+					{
+						char line[160];
+						sprintf(line, "%s — %s", GlobalText[783 + priceType], Text);
+						sprintf(TextList[TextNum], "%s", line);
+					}
+					else
+					{
+						sprintf(TextList[TextNum], GlobalText[63], Text);
+					}
+				}
+				else
 				{
 					buyPrice = ItemValue(ip, 1);
+					ConvertGold(buyPrice, Text);
+					sprintf(TextList[TextNum], GlobalText[63], Text);
 				}
-				ConvertGold(buyPrice, Text);
-				sprintf(TextList[TextNum], GlobalText[63], Text);
 			}
 
 			TextListColor[TextNum] = Color;

@@ -88,6 +88,19 @@ public static class WorldGameplayHandlers
             return true;
         }
 
+        if (await WarehouseGameplayHandler.TryHandlePacketAsync(
+                player,
+                presenceSessionId,
+                accountId,
+                packet,
+                remote,
+                writeAsync,
+                onRosterDirty,
+                ct).ConfigureAwait(false))
+        {
+            return true;
+        }
+
         if (await ShopCommerceHandler.TryHandlePacketAsync(
                 player,
                 presenceSessionId,
@@ -201,33 +214,30 @@ public static class WorldGameplayHandlers
         player.Angle = dest.Angle;
         onRosterDirty?.Invoke();
 
-        var flag = (ushort)(dest.MapChanged ? 1 : 0);
-        var tele = TeleportWire602.Build(flag, dest.MapId, dest.X, dest.Y, dest.Angle);
-        await WriteGameplayAsync(connection, clientProtectOutbound, writeAsync, tele, ct).ConfigureAwait(false);
-
-        if (dest.MapChanged && connection is not null && accountId is not null)
+        if (dest.MapChanged)
         {
-            tracker.ResetForMap(dest.MapId, dest.X, dest.Y);
-            var spawn = new JoinMapSpawnWire(dest.MapId, dest.X, dest.Y, dest.Angle);
-            var joinPkt = JoinMapServerWire602.Build(player.ToWireWithSheet(), spawn);
-            var invPkt = await JoinInventoryPacket602
-                .BuildAsync(TakumiPostgresMirror.InventorySlots, accountId, characterName10, ct)
-                .ConfigureAwait(false);
-            await WriteGameplayAsync(connection, clientProtectOutbound, writeAsync, joinPkt, ct).ConfigureAwait(false);
-            await WriteGameplayAsync(connection, clientProtectOutbound, writeAsync, invPkt, ct).ConfigureAwait(false);
-            MonsterViewerRegistry.UpdatePosition(presenceSessionId, dest.MapId, dest.X, dest.Y);
-            await MapMonsterScopeSender.TrySendAfterJoinAsync(
+            var tele = TeleportWire602.Build(1, dest.MapId, dest.X, dest.Y, dest.Angle);
+            await WriteGameplayAsync(connection, clientProtectOutbound, writeAsync, tele, ct).ConfigureAwait(false);
+        }
+
+        if (accountId is not null)
+        {
+            await MoveWarpJoinReload.SendAsync(
+                    player,
                     tracker,
                     connection,
                     clientProtectOutbound,
-                    dest.MapId,
-                    dest.X,
-                    dest.Y,
+                    accountId,
+                    characterName10,
+                    presenceSessionId,
+                    dest,
+                    writeAsync,
                     remote,
                     ct)
                 .ConfigureAwait(false);
         }
 
+        var flag = (ushort)(dest.MapChanged ? 1 : 0);
         Console.WriteLine(
             "[m8] teleport gate={0} → map={1} xy=({2},{3}) flag={4} {5}",
             gate,

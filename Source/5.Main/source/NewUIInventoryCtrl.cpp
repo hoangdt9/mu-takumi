@@ -426,6 +426,12 @@ bool SEASON3B::CNewUIInventoryCtrl::AddItem(int iColumnX, int iRowY, BYTE * pbyI
 	if (nullptr == pNewItem)
 		return false;
 
+	if (pNewItem->Type < 0 || pNewItem->Type >= MAX_ITEM)
+	{
+		m_pNewItemMng->DeleteItem(pNewItem);
+		return false;
+	}
+
 	if (!CanMove(iColumnX, iRowY, pNewItem))
 	{
 		m_pNewItemMng->DeleteItem(pNewItem);
@@ -457,6 +463,12 @@ bool SEASON3B::CNewUIInventoryCtrl::AddItem(int iColumnX, int iRowY, ITEM * pIte
 	ITEM * pNewItem = m_pNewItemMng->CreateItem(pItem);
 	if (nullptr == pNewItem)
 		return false;
+
+	if (pNewItem->Type < 0 || pNewItem->Type >= MAX_ITEM)
+	{
+		m_pNewItemMng->DeleteItem(pNewItem);
+		return false;
+	}
 
 	if (!CanMove(iColumnX, iRowY, pNewItem))
 	{

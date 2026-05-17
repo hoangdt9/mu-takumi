@@ -26,6 +26,9 @@ public static class TakumiPostgresMirror
     /// <summary>Runtime <c>account</c> table when <c>TAKUMI_ACCOUNT_DB=1</c> (login + in-game register).</summary>
     public static PostgresAccountRepository? Accounts { get; private set; }
 
+    /// <summary><c>account.warehouse_zen</c> + coin columns when roster/account DB is enabled.</summary>
+    public static PostgresAccountWalletRepository? AccountWallet { get; private set; }
+
     /// <summary>Reads <c>TAKUMI_ROSTER_DB_SYNC</c> and connection env; no-op when disabled or misconfigured.</summary>
     public static void InitIfEnabled()
     {
@@ -33,6 +36,7 @@ public static class TakumiPostgresMirror
         CharacterDomain = null;
         InventorySlots = null;
         WarehouseSlots = null;
+        AccountWallet = null;
         var sync = string.Equals(Environment.GetEnvironmentVariable("TAKUMI_ROSTER_DB_SYNC"), "1", StringComparison.OrdinalIgnoreCase)
                    || string.Equals(Environment.GetEnvironmentVariable("TAKUMI_ROSTER_DB_SYNC"), "true", StringComparison.OrdinalIgnoreCase);
         if (!sync)
@@ -58,8 +62,9 @@ public static class TakumiPostgresMirror
 
             InventorySlots = new PostgresInventorySlotRepository(cs);
             WarehouseSlots = new PostgresWarehouseSlotRepository(cs);
+            AccountWallet = new PostgresAccountWalletRepository(cs);
             Console.Error.WriteLine(
-                "[postgres-mirror] roster + inventory_slot + warehouse_slot enabled; character_domain={0}",
+                "[postgres-mirror] roster + inventory_slot + warehouse_slot + account_wallet enabled; character_domain={0}",
                 CharacterDomain is not null);
         }
         catch (Exception ex)
@@ -69,6 +74,7 @@ public static class TakumiPostgresMirror
             CharacterDomain = null;
             InventorySlots = null;
             WarehouseSlots = null;
+            AccountWallet = null;
         }
     }
 

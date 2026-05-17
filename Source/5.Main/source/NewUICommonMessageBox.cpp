@@ -22,6 +22,7 @@
 #include "GambleSystem.h"
 #include "CharacterManager.h"
 #include "SkillManager.h"
+#include "ShopItemValueCache.h"
 
 #if defined(__ANDROID__) || defined(MU_IOS)
 #include "MobilePlatform.h"
@@ -3807,7 +3808,7 @@ bool SEASON3B::CNPCShopBuyMsgBoxLayout::SetLayout()
 CALLBACK_RESULT SEASON3B::CNPCShopBuyMsgBoxLayout::OkBtnDown(class CNewUIMessageBoxBase* pOwner, const leaf::xstreambuf& xParam)
 {
 	const int slot = GetNpcShopBuyConfirmSlot();
-	if (slot >= 0)
+	if (slot >= 0 && g_pNPCShop != nullptr)
 	{
 		SendRequestBuyConfirm(slot);
 	}

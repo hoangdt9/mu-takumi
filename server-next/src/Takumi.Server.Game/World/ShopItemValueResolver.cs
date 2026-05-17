@@ -8,7 +8,14 @@ public static class ShopItemValueResolver
     public static long ResolveBuy(NpcShopItemEntry item)
     {
         var index = (item.ItemGroup * 512) + item.ItemIndex;
-        if (ItemValueCatalog.TryGetBuySell(index, item.ItemLevel, item.ExcOpt, out var buy, out _))
+        if (ItemValueCatalog.TryGetBuySellExact(index, item.ItemLevel, item.ExcOpt, out var buy, out _))
+        {
+            return buy;
+        }
+
+        // Wildcard OpExe (*) rows ignore excellent options; use legacy CItem::Value for exc shop stock.
+        if (item.ExcOpt == 0
+            && ItemValueCatalog.TryGetBuySell(index, item.ItemLevel, 0, out buy, out _))
         {
             return buy;
         }
@@ -50,8 +57,21 @@ public static class ShopItemValueResolver
     public static ItemValueWire602.ItemValueEntry ToWireEntry(NpcShopItemEntry item)
     {
         var index = (item.ItemGroup * 512) + item.ItemIndex;
+        if (ItemValueCatalog.TryGetWirePrice(index, item.ItemLevel, item.ExcOpt, out var priceType, out var value, out var sell)
+            && priceType > 0)
+        {
+            return new(
+                index,
+                item.ItemLevel,
+                item.ExcOpt,
+                priceType,
+                value,
+                0,
+                Math.Clamp(sell, 0, int.MaxValue));
+        }
+
         var buy = (int)Math.Clamp(ResolveBuy(item), 0, int.MaxValue);
-        var sell = (int)Math.Clamp(Math.Max(1, buy / 3), 0, int.MaxValue);
+        sell = (int)Math.Clamp(Math.Max(1, buy / 3), 0, int.MaxValue);
         return new(index, item.ItemLevel, item.ExcOpt, 0, buy, 0, sell);
     }
 }

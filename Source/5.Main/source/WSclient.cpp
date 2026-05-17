@@ -1399,12 +1399,34 @@ BOOL ReceiveJoinMapServer(BYTE *ReceiveBuffer, BOOL bEncrypted)
 		gMapManager.LoadWorld(joinMap);
 #endif
 	}
+	else if (SceneFlag == MAIN_SCENE)
+	{
+		// In-game same-map F3 03 (move-map / gate): reposition only. Do not call
+		// DeleteObjects() — it releases BITMAP_MAPTILE without reload (white terrain).
+		// Do not require Hero->Object.Live; move-map can arrive while hero is mid-reset.
+#if defined(__ANDROID__)
+		g_ErrorReport.Write(
+			"[AndroidLogin] ReceiveJoinMapServer same-map warp map=%d xy=(%d,%d) hero=%p live=%d\r\n",
+			joinMap,
+			Data->PositionX,
+			Data->PositionY,
+			Hero,
+			(Hero != NULL) ? (int)Hero->Object.Live : -1);
+#endif
+		ClearItems();
+		ClearCharacters(HeroKey);
+		DeleteMonsters();
+		DeleteNpcs();
+		RemoveAllShopTitleExceptHero();
+		SendRequestFinishLoading();
+	}
 	else
 	{
 #if defined(__ANDROID__)
 		g_ErrorReport.Write(
-			"[AndroidLogin] ReceiveJoinMapServer same map=%d — skip LoadWorld (character reselect)\r\n",
-			joinMap);
+			"[AndroidLogin] ReceiveJoinMapServer same map=%d scene=%d — LoadWorld\r\n",
+			joinMap,
+			SceneFlag);
 #endif
 		gMapManager.DeleteObjects();
 		DeleteNpcs();
@@ -1873,6 +1895,11 @@ void ReceiveRevival( BYTE *ReceiveBuffer )
 
 void ReceiveMagicList( BYTE *ReceiveBuffer )
 {
+	if (ReceiveBuffer == nullptr || CharacterAttribute == nullptr)
+	{
+		return;
+	}
+
 	int Master_Skill_Bool = -1;
 	int Skill_Bool = -1;
 
@@ -1908,7 +1935,7 @@ void ReceiveMagicList( BYTE *ReceiveBuffer )
 			CharacterAttribute->Skill[Data2->Index] = Data2->Type;
 			Offset += sizeof(PRECEIVE_MAGIC_LIST);
 		}
-        if (gCharacterManager.GetBaseClass( Hero->Class )==CLASS_DARK_LORD )
+        if (Hero != nullptr && gCharacterManager.GetBaseClass(Hero->Class) == CLASS_DARK_LORD)
         {
             for ( int i=0; i<PET_CMD_END; ++i )
             {
@@ -1927,23 +1954,41 @@ void ReceiveMagicList( BYTE *ReceiveBuffer )
 		if ( SkillType!=0 )
 		{
 			CharacterAttribute->SkillNumber++;
-            BYTE SkillUseType = SkillAttribute[SkillType].SkillUseType;
-            if ( SkillUseType==SKILL_USE_TYPE_MASTER )
-            {
-				CharacterAttribute->SkillMasterNumber++;
-            }
+			if (SkillType >= 0 && SkillType < MAX_SKILLS)
+			{
+				const BYTE SkillUseType = SkillAttribute[SkillType].SkillUseType;
+				if ( SkillUseType==SKILL_USE_TYPE_MASTER )
+				{
+					CharacterAttribute->SkillMasterNumber++;
+				}
+			}
 		}
 	}
-	if(Hero->CurrentSkill >= CharacterAttribute->SkillNumber)
-		Hero->CurrentSkill = 0;
-    if(CharacterAttribute->SkillNumber == 1)
-		Hero->CurrentSkill = 0;
-    if(Hero->CurrentSkill>=0 && CharacterAttribute->Skill[Hero->CurrentSkill]==0)
-		Hero->CurrentSkill = 0;
+	if (Hero != nullptr)
+	{
+		if (Hero->CurrentSkill >= CharacterAttribute->SkillNumber)
+		{
+			Hero->CurrentSkill = 0;
+		}
+		if (CharacterAttribute->SkillNumber == 1)
+		{
+			Hero->CurrentSkill = 0;
+		}
+		if (Hero->CurrentSkill >= 0 && Hero->CurrentSkill < MAX_SKILLS
+			&& CharacterAttribute->Skill[Hero->CurrentSkill] == 0)
+		{
+			Hero->CurrentSkill = 0;
+		}
+	}
 	int Skill = 0;
 
 	for(int i = 0; i < MAX_SKILLS; i++)
 	{
+		if (Hero == nullptr || Hero->CurrentSkill < 0 || Hero->CurrentSkill >= MAX_SKILLS)
+		{
+			break;
+		}
+
 		Skill = CharacterAttribute->Skill[Hero->CurrentSkill];
 		if ( Skill>= AT_SKILL_STUN && Skill<=AT_SKILL_REMOVAL_BUFF )
 			Hero->CurrentSkill++;
@@ -1973,11 +2018,56 @@ void ReceiveMagicList( BYTE *ReceiveBuffer )
 
 }
 
+namespace
+{
+	int TakumiWirePacketSize(const BYTE* buf)
+	{
+		if (buf == nullptr)
+		{
+			return 0;
+		}
+
+		if (buf[0] == 0xC1 || buf[0] == 0xC3)
+		{
+			return buf[1];
+		}
+
+		if (buf[0] == 0xC2 || buf[0] == 0xC4)
+		{
+			return ((int)buf[1] << 8) | buf[2];
+		}
+
+		return 0;
+	}
+
+	bool TakumiIsValidItemWire(const BYTE* itemWire)
+	{
+		if (itemWire == nullptr || g_pNewItemMng == nullptr)
+		{
+			return false;
+		}
+
+		const WORD wType = g_pNewItemMng->ExtractItemType(const_cast<BYTE*>(itemWire));
+		if (wType == 0 || wType >= MAX_ITEM)
+		{
+			return false;
+		}
+
+		return true;
+	}
+}
+
 BOOL ReceiveInventory(BYTE *ReceiveBuffer, BOOL bEncrypted)
 {
 	if (g_pMyInventory == nullptr || g_pMyInventoryExt == nullptr || g_pMyShopInventory == nullptr)
 	{
 		g_ErrorReport.Write("[ReceiveInventory] skip — inventory UI not ready\r\n");
+		return TRUE;
+	}
+
+	if (ReceiveBuffer == nullptr || CharacterMachine == nullptr)
+	{
+		g_ErrorReport.Write("[ReceiveInventory] skip — null buffer or CharacterMachine\r\n");
 		return TRUE;
 	}
 
@@ -2014,13 +2104,48 @@ BOOL ReceiveInventory(BYTE *ReceiveBuffer, BOOL bEncrypted)
 //#endif
 	
 	LPPHEADER_DEFAULT_SUBCODE_WORD Data = (LPPHEADER_DEFAULT_SUBCODE_WORD)ReceiveBuffer; //LPPHEADER_DEFAULT_SUBCODE_WORD 6byte
-	int Offset = sizeof(PHEADER_DEFAULT_SUBCODE_WORD);
+	const int wireSize = TakumiWirePacketSize(ReceiveBuffer);
+	const int headerLen = (int)sizeof(PHEADER_DEFAULT_SUBCODE_WORD);
+	const int entryLen = (int)sizeof(PRECEIVE_INVENTORY);
+	int Offset = headerLen;
+	int itemCount = Data->Value;
+	const int maxItemsByWire = (wireSize > headerLen) ? ((wireSize - headerLen) / entryLen) : 0;
+	if (itemCount > maxItemsByWire)
+	{
+#if defined(__ANDROID__)
+		g_ErrorReport.Write(
+			"[ReceiveInventory] clamp count %d -> %d (wireSize=%d)\r\n",
+			itemCount,
+			maxItemsByWire,
+			wireSize);
+#endif
+		itemCount = maxItemsByWire;
+	}
 	// F3 03 recreates Hero immediately before F3 10 — do not DeletePet here (crash on fast reselect).
 
-	for(int i=0;i<Data->Value;i++)
+	int applied = 0;
+	for (int i = 0; i < itemCount; ++i)
 	{
-		LPPRECEIVE_INVENTORY Data2 = (LPPRECEIVE_INVENTORY)(ReceiveBuffer+Offset); //LPPRECEIVE_INVENTORY 8byte
-		
+		if (Offset + entryLen > wireSize)
+		{
+			break;
+		}
+
+		LPPRECEIVE_INVENTORY Data2 = (LPPRECEIVE_INVENTORY)(ReceiveBuffer + Offset);
+		if (!TakumiIsValidItemWire(Data2->Item))
+		{
+#if defined(__ANDROID__)
+			g_ErrorReport.Write(
+				"[ReceiveInventory] skip invalid item slot=%u wire=%02X%02X%02X\r\n",
+				(unsigned)Data2->Index,
+				Data2->Item[0],
+				Data2->Item[1],
+				Data2->Item[2]);
+#endif
+			Offset += entryLen;
+			continue;
+		}
+
 		SEASON3B::CNewUIInventoryCtrl::DeletePickedItem();
 		int itemindex = Data2->Index;
 		if (itemindex >= 0 && itemindex < MAX_EQUIPMENT_INDEX)
@@ -2040,7 +2165,8 @@ BOOL ReceiveInventory(BYTE *ReceiveBuffer, BOOL bEncrypted)
 			itemindex = itemindex - (MAX_MY_INVENTORY_EX_INDEX);
 			g_pMyShopInventory->InsertItem(itemindex, Data2->Item);
 		}
-		Offset += sizeof(PRECEIVE_INVENTORY);
+		Offset += entryLen;
+		++applied;
 	}
 
 	// F3 03 runs before F3 10 in the join burst — refresh hero mesh from equipment now.
@@ -2050,8 +2176,8 @@ BOOL ReceiveInventory(BYTE *ReceiveBuffer, BOOL bEncrypted)
 		CreatePetDarkSpirit_Now(Hero);
 	}
 	
-	g_ConsoleDebug->Write(MCD_RECEIVE, "0x10 [ReceiveInventory] count=%d", Data->Value);
-	g_ErrorReport.Write("[ReceiveInventory] count=%d\r\n", Data->Value);
+	g_ConsoleDebug->Write(MCD_RECEIVE, "0x10 [ReceiveInventory] count=%d applied=%d", Data->Value, applied);
+	g_ErrorReport.Write("[ReceiveInventory] count=%d applied=%d\r\n", Data->Value, applied);
 	
 	return ( TRUE);
 }
@@ -2120,6 +2246,7 @@ void ReceiveTradeInventory( BYTE *ReceiveBuffer )
     }
 	else
 	{
+		ShopItemValueCache_Clear();
 		for(int i=0;i<MAX_SHOP_INVENTORY;i++)
 		{
 			ShopInventory[i].Type = -1;
@@ -3371,9 +3498,24 @@ void AppearMonster(CHARACTER *c)
 void ReceiveCreateMonsterViewport( BYTE *ReceiveBuffer )
 {
 	LPPWHEADER_DEFAULT_WORD Data = (LPPWHEADER_DEFAULT_WORD)ReceiveBuffer;
-	int Offset = sizeof(PWHEADER_DEFAULT_WORD);
-	for(int i=0;i<Data->Value;i++)
+	const int wireSize = TakumiWirePacketSize(ReceiveBuffer);
+	const int headerLen = (int)sizeof(PWHEADER_DEFAULT_WORD);
+	int Offset = headerLen;
+	const int shortEntryLen = 10;
+	int mobCount = Data->Value;
+	const int maxByWire = (wireSize > headerLen) ? ((wireSize - headerLen) / shortEntryLen) : 0;
+	if (mobCount > maxByWire)
 	{
+		mobCount = maxByWire;
+	}
+
+	for (int i = 0; i < mobCount; ++i)
+	{
+		if (Offset + shortEntryLen > wireSize)
+		{
+			break;
+		}
+
 		LPPCREATE_MONSTER Data2 = (LPPCREATE_MONSTER)(ReceiveBuffer+Offset);
 		WORD Key       = ((WORD)(Data2->KeyH)<<8) + Data2->KeyL;
 		
@@ -3397,7 +3539,9 @@ void ReceiveCreateMonsterViewport( BYTE *ReceiveBuffer )
 
 		OBJECT *o = &c->Object;
 
-		for( int j = 0; j < Data2->s_BuffCount; ++j )
+		// server-next C2 0x13: 10-byte entries; byte 9 is s_BuffCount (always 0, no buff array).
+		const int buffCount = (int)Data2->s_BuffCount;
+		for (int j = 0; j < buffCount && j < MAX_BUFF_SLOT_INDEX; ++j)
 		{
 			RegisterBuff(static_cast<eBuffState>(Data2->s_BuffEffectState[j]), o);
 
@@ -3493,14 +3637,13 @@ void ReceiveCreateMonsterViewport( BYTE *ReceiveBuffer )
 			c->Movement = false;
 		}
 
-		// server-next C2 0x13 uses 10-byte entries (buff count byte only, no buff array).
-		if (Data2->s_BuffCount == 0)
+		if (buffCount == 0)
 		{
-			Offset += 10;
+			Offset += shortEntryLen;
 		}
 		else
 		{
-			Offset += (sizeof(PCREATE_MONSTER) - (sizeof(BYTE) * (MAX_BUFF_SLOT_INDEX - Data2->s_BuffCount)));
+			Offset += (sizeof(PCREATE_MONSTER) - (sizeof(BYTE) * (MAX_BUFF_SLOT_INDEX - buffCount)));
 		}
 	}
 }
@@ -7234,6 +7377,31 @@ static  const   BYTE    NOT_GET_ITEM = 0xff;
 static  const   BYTE    GET_ITEM_ZEN = 0xfe;
 static  const   BYTE    GET_ITEM_MULTI=0xfd;
 extern int ItemKey;
+
+static void ShopNotifyZenDelta(int deltaGold)
+{
+	if (deltaGold == 0)
+	{
+		return;
+	}
+
+	unicode::t_char amountText[64] = {};
+	const int magnitude = deltaGold > 0 ? deltaGold : -deltaGold;
+	ConvertGold((double)magnitude, amountText);
+
+	char szMessage[160];
+	if (deltaGold > 0)
+	{
+		sprintf(szMessage, "Nhận %s Zen", amountText);
+		g_pChatListBox->AddText("", szMessage, SEASON3B::TYPE_SYSTEM_MESSAGE);
+	}
+	else
+	{
+		sprintf(szMessage, "Đã trả %s Zen", amountText);
+		g_pChatListBox->AddText("", szMessage, SEASON3B::TYPE_ERROR_MESSAGE);
+	}
+}
+
 void ReceiveGetItem( BYTE *ReceiveBuffer )
 {
 	auto Data = (LPPRECEIVE_GET_ITEM)ReceiveBuffer;
@@ -7244,21 +7412,13 @@ void ReceiveGetItem( BYTE *ReceiveBuffer )
 	{
 		if (Data->Result == GET_ITEM_ZEN)
 		{
-			char szMessage[128];
-			int backupGold = CharacterMachine->Gold;
-			CharacterMachine->Gold = (Data->Item[0] << 24) + (Data->Item[1] << 16) + (Data->Item[2] << 8) + (Data->Item[3]);
-
-			int deltaGold = CharacterMachine->Gold - backupGold;
-
-			if (deltaGold > 0)
+			const int backupGold = CharacterMachine->Gold;
+			const int newGold = (Data->Item[0] << 24) + (Data->Item[1] << 16) + (Data->Item[2] << 8) + Data->Item[3];
+			CharacterMachine->Gold = newGold;
+			const int deltaGold = newGold - backupGold;
+			if (deltaGold != 0)
 			{
-				sprintf(szMessage, "%d %s %s", deltaGold, GlobalText[224], GlobalText[918]);
-				g_pChatListBox->AddText("", szMessage, SEASON3B::TYPE_SYSTEM_MESSAGE);
-			}
-			else if (deltaGold < 0)
-			{
-				sprintf(szMessage, "%d Zen", -deltaGold);
-				g_pChatListBox->AddText("", szMessage, SEASON3B::TYPE_SYSTEM_MESSAGE);
+				ShopNotifyZenDelta(deltaGold);
 			}
 		}
 		else
@@ -7281,7 +7441,7 @@ void ReceiveGetItem( BYTE *ReceiveBuffer )
 			GetItemName(Items[ItemKey].Item.Type, level, szItem);
 
 			char szMessage[128];
-			sprintf(szMessage, "%s %s", szItem, GlobalText[918]);
+			sprintf(szMessage, "Đã nhặt: %s", szItem);
 			g_pChatListBox->AddText("", szMessage, SEASON3B::TYPE_SYSTEM_MESSAGE);
 		}
 #ifdef FOR_WORK
@@ -7742,7 +7902,10 @@ void ReceiveBuy( BYTE *ReceiveBuffer )
 	if (Data->Index == 0xff)
 	{
 		SEASON3B::CNewUIInventoryCtrl::BackupPickedItem();
-		g_pChatListBox->AddText(Hero->ID, GlobalText[732], SEASON3B::TYPE_ERROR_MESSAGE);
+		g_pChatListBox->AddText(
+			Hero->ID,
+			"Mua thất bại (thiếu Zen, túi đầy hoặc không mua được).",
+			SEASON3B::TYPE_ERROR_MESSAGE);
 	}
 	else if (Data->Index != 0xfe)
 	{
@@ -7769,14 +7932,14 @@ void ReceiveBuy( BYTE *ReceiveBuffer )
 		GetItemName(itemType, level, szItem);
 
 		char szMessage[128];
-		sprintf(szMessage, "%s %s", szItem, GlobalText[918]);
+		sprintf(szMessage, "Đã mua: %s", szItem);
 		g_pChatListBox->AddText("", szMessage, SEASON3B::TYPE_SYSTEM_MESSAGE);
 	}
 	else
 	{
 		g_pNewUISystem->HideAll();
 
-		g_pChatListBox->AddText(Hero->ID, GlobalText[732], SEASON3B::TYPE_ERROR_MESSAGE);
+		g_pChatListBox->AddText(Hero->ID, "Cửa hàng đã đóng.", SEASON3B::TYPE_ERROR_MESSAGE);
 	}
 	BuyCost = 0;
 	
@@ -7792,19 +7955,24 @@ void ReceiveSell( BYTE *ReceiveBuffer )
 		{
 			SEASON3B::CNewUIInventoryCtrl::BackupPickedItem();
 
-			g_pChatListBox->AddText(Hero->ID,GlobalText[733], SEASON3B::TYPE_ERROR_MESSAGE);
+			g_pChatListBox->AddText(
+				Hero->ID,
+				"Bán thất bại (không bán được vật phẩm này).",
+				SEASON3B::TYPE_ERROR_MESSAGE);
 		}
 		else if( Data->Flag == 0xfe )
 		{
 			g_pNewUISystem->HideAll();
 
-			g_pChatListBox->AddText(Hero->ID,GlobalText[733], SEASON3B::TYPE_ERROR_MESSAGE);
+			g_pChatListBox->AddText(Hero->ID, "Cửa hàng đã đóng.", SEASON3B::TYPE_ERROR_MESSAGE);
 		}
 		else 
 		{
 			SEASON3B::CNewUIInventoryCtrl::DeletePickedItem();
-			
+
+			const int backupGold = CharacterMachine->Gold;
 			CharacterMachine->Gold = Data->Gold;
+			ShopNotifyZenDelta(CharacterMachine->Gold - backupGold);
 			
 			PlayBuffer(SOUND_GET_ITEM01);
 
@@ -7823,7 +7991,9 @@ void ReceiveRepair( BYTE *ReceiveBuffer )
 	
     if(Data->Gold != 0)
 	{
+		const int backupGold = CharacterMachine->Gold;
 		CharacterMachine->Gold = Data->Gold;
+		ShopNotifyZenDelta(CharacterMachine->Gold - backupGold);
         CharacterMachine->CalculateAll();
         PlayBuffer(SOUND_REPAIR);
 	}

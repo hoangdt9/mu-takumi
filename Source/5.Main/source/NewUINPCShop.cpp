@@ -114,7 +114,7 @@ bool SEASON3B::CNewUINPCShop::UpdateMouseEvent()
 				int buyCost = 0;
 				if (!ShopItemValueCache_TryGetBuy(pItem, &buyCost))
 				{
-					buyCost = ItemValue(pItem, 0);
+					buyCost = ItemValue(pItem, 1);
 				}
 
 				if( _gambleSys.IsGambleShop() )
@@ -548,6 +548,16 @@ void SEASON3B::CNewUINPCShop::OpenBuyConfirmDialog(BYTE slot)
 	ITEM* pItem = m_pNewInventoryCtrl->FindItem(slot);
 	if (pItem == nullptr)
 	{
+		return;
+	}
+
+	if (ShopItemValueCache_IsCoinPrice(pItem))
+	{
+		int priceType = 0;
+		int coinPrice = 0;
+		ShopItemValueCache_TryGetPrice(pItem, &coinPrice, &priceType);
+		const int msgIndex = 783 + (priceType > 0 ? priceType : 1);
+		g_pChatListBox->AddText(Hero->ID, GlobalText[msgIndex], SEASON3B::TYPE_ERROR_MESSAGE);
 		return;
 	}
 

@@ -181,6 +181,17 @@ public sealed class ItemWorldHandlerTests
     }
 
     [Fact]
+    public void PlayerVitalsState_mark_dead_does_not_extend_timer()
+    {
+        var id = Guid.NewGuid();
+        PlayerVitalsState.MarkDead(id, TimeSpan.Zero);
+        Assert.True(PlayerVitalsState.TryGetReviveDue(id, out var due) && due);
+        PlayerVitalsState.MarkDead(id, TimeSpan.FromSeconds(60));
+        Assert.True(PlayerVitalsState.TryGetReviveDue(id, out var stillDue) && stillDue);
+        PlayerVitalsState.TryClearDead(id);
+    }
+
+    [Fact]
     public void TryFindItemUseRequest_parses_C1_0x26()
     {
         var pkt = new byte[] { 0xC1, 0x05, 0x26, 14, 0 };

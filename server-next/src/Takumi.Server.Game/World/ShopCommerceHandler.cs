@@ -144,24 +144,46 @@ public static class ShopCommerceHandler
         await PlayerShopSession.EnsureInventoryLoadedAsync(presenceSessionId, accountId, characterName10, ct)
             .ConfigureAwait(false);
 
-        var price = ShopItemValueResolver.ResolveBuy(shopItem);
         var indexForCoin = (shopItem.ItemGroup * 512) + shopItem.ItemIndex;
-        if (ItemValueCatalog.IsCoinOnlyPrice(indexForCoin, shopItem.ItemLevel, shopItem.ExcOpt))
+        var usesCoin = ItemValueCatalog.IsCoinOnlyPrice(indexForCoin, shopItem.ItemLevel, shopItem.ExcOpt);
+        long price;
+        int coinPriceType;
+        if (usesCoin)
         {
-            await writeAsync(ShopCommerceWire602.BuildBuyFail(), ct).ConfigureAwait(false);
-            Console.WriteLine(
-                "[m8] shop buy rejected coin-only item index={0} lvl={1} (no zen price in ItemValue.txt) {2}",
-                indexForCoin,
-                shopItem.ItemLevel,
-                remote);
-            return true;
-        }
+            if (!ItemValueCatalog.TryGetWirePrice(indexForCoin, shopItem.ItemLevel, shopItem.ExcOpt, out coinPriceType, out var coinPrice, out _)
+                || coinPriceType is < 1 or > 3
+                || coinPrice <= 0)
+            {
+                await writeAsync(ShopCommerceWire602.BuildBuyFail(), ct).ConfigureAwait(false);
+                Console.WriteLine("[m8] shop buy coin price missing index={0} {1}", indexForCoin, remote);
+                return true;
+            }
 
-        if (player.Zen < price)
+            await AccountWalletSession.EnsureLoadedAsync(accountId, ct).ConfigureAwait(false);
+            if (!AccountWalletSession.TryDebitCoin(accountId, coinPriceType, coinPrice, out var coinReason))
+            {
+                await writeAsync(ShopCommerceWire602.BuildBuyFail(), ct).ConfigureAwait(false);
+                Console.WriteLine(
+                    "[m8] shop buy coin debit fail type={0} need={1} reason={2} {3}",
+                    coinPriceType,
+                    coinPrice,
+                    coinReason,
+                    remote);
+                return true;
+            }
+
+            price = 0;
+        }
+        else
         {
-            await writeAsync(ShopCommerceWire602.BuildBuyFail(), ct).ConfigureAwait(false);
-            Console.WriteLine("[m8] shop buy no zen need={0} have={1} {2}", price, player.Zen, remote);
-            return true;
+            coinPriceType = 0;
+            price = ShopItemValueResolver.ResolveBuy(shopItem);
+            if (player.Zen < price)
+            {
+                await writeAsync(ShopCommerceWire602.BuildBuyFail(), ct).ConfigureAwait(false);
+                Console.WriteLine("[m8] shop buy no zen need={0} have={1} {2}", price, player.Zen, remote);
+                return true;
+            }
         }
 
         var blob = new byte[ItemWire602.WireBytes];
@@ -208,7 +230,9 @@ public static class ShopCommerceHandler
         {
             var cells = InventoryBagGrid.CountOccupiedBagCells(snap);
             Console.WriteLine(
-                "[m8] shop buy shop={0} slot={1} → inv={2} ({3}x{4}) zen={5} bagCells={6}/{7} price={8} {9}",
+                usesCoin
+                    ? "[m8] shop buy shop={0} slot={1} → inv={2} ({3}x{4}) zen={5} bagCells={6}/{7} coinType={8} {9}"
+                    : "[m8] shop buy shop={0} slot={1} → inv={2} ({3}x{4}) zen={5} bagCells={6}/{7} price={8} {9}",
                 shopIndex,
                 shopSlot,
                 bagSlot,
@@ -217,7 +241,7 @@ public static class ShopCommerceHandler
                 player.Zen,
                 cells,
                 InventoryBagGrid.CellCount,
-                price,
+                usesCoin ? coinPriceType : price,
                 remote);
         }
         return true;

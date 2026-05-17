@@ -26,4 +26,31 @@ public sealed class ShopItemValueResolverTests
         Assert.True(price > 100_000, $"expected legacy-scale price, got {price}");
         Assert.NotEqual(4880, price);
     }
+
+    [Fact]
+    public void ResolveBuy_exc_item_not_undercut_by_itemvalue_grade_wildcard()
+    {
+        ItemValueCatalog.EnsureInitialized();
+        var item = new NpcShopItemEntry
+        {
+            ShopIndex = 6,
+            Slot = 0,
+            ItemGroup = 12,
+            ItemIndex = 36,
+            ItemLevel = 0,
+            Durability = 255,
+            Skill = 0,
+            Luck = 1,
+            Option = 7,
+            ExcOpt = 63,
+        };
+
+        var index = (item.ItemGroup * 512) + item.ItemIndex;
+        _ = ItemValueCatalog.TryGetBuySell(index, item.ItemLevel, item.ExcOpt, out var wildcardBuy, out _);
+        var price = ShopItemValueResolver.ResolveBuy(item);
+        if (wildcardBuy > 0)
+        {
+            Assert.True(price > wildcardBuy, $"resolve={price} wildcard={wildcardBuy}");
+        }
+    }
 }

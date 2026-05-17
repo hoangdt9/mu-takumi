@@ -79,9 +79,11 @@ extern bool g_TakumiServerNextTicketPendingValid;
 void Takumi_ClearServerNextSessionTicketPending();
 void ReceiveServerNextSessionTicket( BYTE* ReceiveBuffer, int Size );
 
-/// Queue <c>C1 F3 06</c> stat allocations (throttled in <see cref="TakumiPumpLevelUpPoints"/>).
-void TakumiScheduleLevelUpPoints(BYTE statType, int count);
-void TakumiPumpLevelUpPoints();
+/// Send one bulk <c>C1 F3 06</c> (stat type + count) — server applies all points and mirrors DB once.
+void TakumiSendLevelUpPointsBulk(BYTE statType, int count);
+/// Called from <c>GCLevelUpPointRecv</c> after applying or rejecting <c>C1 F3 06</c>.
+void TakumiOnLevelUpPointRecv(bool success);
+bool TakumiHasLevelUpPointWorkPending();
 void TakumiDeferCharacterCalculateAll();
 void TakumiSendMeleeAttack(WORD targetKey, BYTE dir);
 

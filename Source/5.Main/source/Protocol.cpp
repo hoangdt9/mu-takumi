@@ -1250,6 +1250,7 @@ void GCLevelUpPointRecv(PMSG_LEVEL_UP_POINT_RECV* lpMsg) // OK
 {
 	if (lpMsg->result < 16 || lpMsg->result > 20)
 	{
+		TakumiOnLevelUpPointRecv(false);
 		return;
 	}
 
@@ -1301,6 +1302,8 @@ void GCLevelUpPointRecv(PMSG_LEVEL_UP_POINT_RECV* lpMsg) // OK
 		CharacterMachine->CalculateAll();
 	}
 #endif
+
+	TakumiOnLevelUpPointRecv(true);
 }
 
 void GCMonsterDamageRecv(PMSG_MONSTER_DAMAGE_RECV* lpMsg) // OK

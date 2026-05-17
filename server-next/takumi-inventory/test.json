@@ -1,0 +1,15 @@
+{
+  "characters": [
+    {
+      "name": "mg001",
+      "slots": [
+        { "slot": 0, "itemHex": "0affff7f0050000000000000" },
+        { "slot": 2, "itemHex": "2effff7f0070000000000000" },
+        { "slot": 3, "itemHex": "2effff7f0080000000000000" },
+        { "slot": 4, "itemHex": "2effff7f0090000000000000" },
+        { "slot": 5, "itemHex": "2effff7f00a0000000000000" },
+        { "slot": 6, "itemHex": "2effff7f00b0000000000000" }
+      ]
+    }
+  ]
+}

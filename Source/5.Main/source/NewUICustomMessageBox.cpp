@@ -7893,6 +7893,11 @@ CALLBACK_RESULT CAddStatPointMsgBoxLayout::ProcessOk(CNewUIMessageBoxBase* pOwne
 
 	if (iValue > 0 && iValue <= 65535)
 	{
+		if (TakumiHasLevelUpPointWorkPending())
+		{
+			return CALLBACK_BREAK;
+		}
+
 		int count = iValue;
 		const int available = static_cast<int>(CharacterAttribute->LevelUpPoint);
 		if (available <= 0)
@@ -7904,7 +7909,7 @@ CALLBACK_RESULT CAddStatPointMsgBoxLayout::ProcessOk(CNewUIMessageBoxBase* pOwne
 			count = available;
 		}
 
-		TakumiScheduleLevelUpPoints(static_cast<BYTE>(g_SelectedStatType), count);
+		TakumiSendLevelUpPointsBulk(static_cast<BYTE>(g_SelectedStatType), count);
 
 		PlayBuffer(SOUND_CLICK01);
 #if defined(__ANDROID__) || defined(MU_IOS)

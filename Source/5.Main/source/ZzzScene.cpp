@@ -2627,8 +2627,6 @@ void MoveMainScene()
 	g_GameCensorship->Update();
 
 	g_ConsoleDebug->UpdateMainScene();
-
-	TakumiPumpLevelUpPoints();
 }
 
 bool RenderMainScene()

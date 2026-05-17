@@ -32,7 +32,7 @@ PathMap* CCustomMap::GetMapInfo(int world)
 	return NULL;
 }
 
-char* CCustomMap::GetNameMap(int world)
+const char* CCustomMap::GetNameMap(int world)
 {
 	listMap::iterator li = this->MapPath.find(world);
 
@@ -40,17 +40,16 @@ char* CCustomMap::GetNameMap(int world)
 	{
 		return li->second.MapName;
 	}
-	return "No Found";
+	return nullptr;
 }
 
-char* CCustomMap::GetMapName(int iMap)
+const char* CCustomMap::GetMapName(int iMap)
 {
 	if (iMap >= 82)
 	{
 		return gCustomMap.GetNameMap(iMap);
 	}
-	else
-	{
-		//return pGetMapName(iMap);
-	}
+
+	//return pGetMapName(iMap);
+	return nullptr;
 }

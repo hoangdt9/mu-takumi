@@ -44,11 +44,14 @@ public static class LegacyLoginHostRunner
         TakumiPostgresMirror.InitMonsterSpawnIfEnabled();
         TakumiPostgresMirror.InitWorldStaticDataIfEnabled();
         MapGateCatalog.EnsureInitialized();
+        MapManagerCatalog.EnsureInitialized();
         MoveMapCatalog.EnsureInitialized();
+        CustomArenaCatalog.EnsureInitialized();
         NpcShopCatalog.EnsureInitialized();
         MapMonsterWorld.EnsureInitialized();
         MonsterAiLoop.Start(appCancellationToken);
         PlayerVitalsLoop.Start(appCancellationToken);
+        CustomArenaScheduleLoop.Start(appCancellationToken);
 
         if (!int.TryParse(
                 Environment.GetEnvironmentVariable("TAKUMI_LOGIN_PORT"),
@@ -981,6 +984,7 @@ public static class LegacyLoginHostRunner
                                 remote,
                                 (m, _) => WriteOutboundAsync(m),
                                 () => Volatile.Write(ref rosterDirty, 1),
+                                onRosterSave: null,
                                 ct).ConfigureAwait(false))
                         {
                             CopyGameRosterBack(pickedGameplay, gameRoster);

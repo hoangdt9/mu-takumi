@@ -208,6 +208,7 @@ Use this to avoid unnecessary rebuilds.
    - [x] Runtime: **`TAKUMI_MONSTER_SPAWN_DB=1`** → **`MapMonsterWorld`** đọc Postgres (fallback file).  
    - [x] Gates / shops / Custom: **`006_map_gate_npc_shop_custom.sql`**, ETL + **`MapGateCatalog`** / **`NpcShopCatalog`**; env **`TAKUMI_WORLD_STATIC_DB=1`** (hoặc từng flag `TAKUMI_MAP_GATE_DB`, `TAKUMI_NPC_SHOP_DB`, `TAKUMI_CUSTOM_WORLD_DB`).  
    - [x] Wire handlers: gate teleport `0x1C`, NPC talk → shop `0x31` (`WorldGameplayHandlers`, `MapGateService`, `NpcShopWire602`).
+   - [x] **M8 move-map parity (2026-05-17):** `0x8E` checksum/key/warp, `MoveMapService` rules (zen/level/reset/PK/equip/gens/custom arena), walk ATT + `0xD4` echo, `PlayerUiSession` / pshop block, `smoke-m8.sh` — **`docs/M8-MOVE-MAP-PARITY-CHECKLIST.md`** (P0–P4 server done; P5 client QA: **`docs/M8-MOVE-MAP-P5-CLIENT-QA-CHECKLIST.md`**).
 
 10. **M9 — NPC & monster runtime** *(**`docs/M9-NPC-MONSTER-CHECKLIST.md`**, **`docs/M9-MONSTER-AI-PORT-CHECKLIST.md`**, **`docs/M9-M8-NPC-GAMEPLAY-OWNERSHIP.md`**, **`server-next/test/M9-monster-combat-qa.md`**, **`docs/WORKSTREAM-OWNERSHIP.md`**)*  
    - [x] Spawn theo map từ **MonsterSetBase.txt** + **Monster.txt** (file + **Postgres** khi `TAKUMI_MONSTER_SPAWN_DB=1`).  

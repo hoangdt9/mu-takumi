@@ -20,6 +20,7 @@ public static class WorldGameplayHandlers
         string remote,
         Func<ReadOnlyMemory<byte>, CancellationToken, Task> writeAsync,
         Action? onRosterDirty,
+        Action? onRosterSave,
         CancellationToken ct)
     {
         if (await CharacterStatPointHandler.TryHandleAsync(
@@ -28,6 +29,16 @@ public static class WorldGameplayHandlers
                 packet,
                 writeAsync,
                 onRosterDirty,
+                ct).ConfigureAwait(false))
+        {
+            return true;
+        }
+
+        if (await PersonalShopGameplayHandler.TryHandlePacketAsync(
+                presenceSessionId,
+                packet,
+                remote,
+                writeAsync,
                 ct).ConfigureAwait(false))
         {
             return true;
@@ -45,6 +56,7 @@ public static class WorldGameplayHandlers
                 remote,
                 writeAsync,
                 onRosterDirty,
+                onRosterSave,
                 ct).ConfigureAwait(false))
         {
             return true;
@@ -54,6 +66,7 @@ public static class WorldGameplayHandlers
         {
             PlayerShopSession.CloseShop(presenceSessionId);
             PlayerWarehouseSession.Close(presenceSessionId);
+            PlayerUiSession.SetPersonalShop(presenceSessionId, false);
             Console.WriteLine("[m8] shop exit 0x31 from {0}", remote);
             return true;
         }
@@ -184,69 +197,84 @@ public static class WorldGameplayHandlers
         string remote,
         CancellationToken ct)
     {
-        var prevMap = player.MapId;
-        MapGateService.TeleportDestination dest;
-        if (gate == 0)
+        MoveMapSessionState.SetTeleportInProgress(presenceSessionId, true);
+        try
         {
-            if (!MapGateService.TryResolveSkillTeleport(player.MapId, tx, ty, player.Angle, prevMap, out dest))
+            var prevMap = player.MapId;
+            MapGateService.TeleportDestination dest;
+            if (gate == 0)
             {
-                return false;
+                if (!MapGateService.TryResolveSkillTeleport(player.MapId, tx, ty, player.Angle, prevMap, out dest))
+                {
+                    return false;
+                }
             }
-        }
-        else if (!MapGateService.TryResolveGateTeleport(
-                     gate,
-                     player.MapId,
-                     player.PosX,
-                     player.PosY,
-                     player.Level,
-                     prevMap,
-                     out dest))
-        {
-            var fail = TeleportWire602.Build(0, player.MapId, player.PosX, player.PosY, player.Angle);
-            await writeAsync(fail, ct).ConfigureAwait(false);
-            Console.WriteLine("[m8] gate {0} denied for {1} map={2} xy=({3},{4})", gate, remote, player.MapId, player.PosX, player.PosY);
-            return true;
-        }
+            else if (!MapGateService.TryResolveGateTeleport(
+                         gate,
+                         player.MapId,
+                         player.PosX,
+                         player.PosY,
+                         player.Level,
+                         prevMap,
+                         out dest))
+            {
+                var fail = TeleportWire602.Build(0, player.MapId, player.PosX, player.PosY, player.Angle);
+                await writeAsync(fail, ct).ConfigureAwait(false);
+                Console.WriteLine("[m8] gate {0} denied for {1} map={2} xy=({3},{4})", gate, remote, player.MapId, player.PosX, player.PosY);
+                return true;
+            }
 
-        player.MapId = dest.MapId;
-        player.PosX = dest.X;
-        player.PosY = dest.Y;
-        player.Angle = dest.Angle;
-        onRosterDirty?.Invoke();
+            player.MapId = dest.MapId;
+            player.PosX = dest.X;
+            player.PosY = dest.Y;
+            player.Angle = dest.Angle;
+            onRosterDirty?.Invoke();
 
-        if (dest.MapChanged)
-        {
-            var tele = TeleportWire602.Build(1, dest.MapId, dest.X, dest.Y, dest.Angle);
-            await WriteGameplayAsync(connection, clientProtectOutbound, writeAsync, tele, ct).ConfigureAwait(false);
-        }
+            if (dest.MapChanged)
+            {
+                var tele = TeleportWire602.Build(1, dest.MapId, dest.X, dest.Y, dest.Angle);
+                await WriteGameplayAsync(connection, clientProtectOutbound, writeAsync, tele, ct).ConfigureAwait(false);
+            }
 
-        if (accountId is not null)
-        {
-            await MoveWarpJoinReload.SendAsync(
-                    player,
-                    tracker,
+            if (accountId is not null)
+            {
+                await MoveWarpJoinReload.SendAsync(
+                        player,
+                        tracker,
+                        connection,
+                        clientProtectOutbound,
+                        accountId,
+                        characterName10,
+                        presenceSessionId,
+                        dest,
+                        writeAsync,
+                        remote,
+                        ct)
+                    .ConfigureAwait(false);
+            }
+
+            await MoveMapPostWarp.SendPersonalShopViewportRedrawAsync(
                     connection,
                     clientProtectOutbound,
-                    accountId,
-                    characterName10,
-                    presenceSessionId,
-                    dest,
                     writeAsync,
-                    remote,
                     ct)
                 .ConfigureAwait(false);
-        }
 
-        var flag = (ushort)(dest.MapChanged ? 1 : 0);
-        Console.WriteLine(
-            "[m8] teleport gate={0} → map={1} xy=({2},{3}) flag={4} {5}",
-            gate,
-            dest.MapId,
-            dest.X,
-            dest.Y,
-            flag,
-            remote);
-        return true;
+            var flag = (ushort)(dest.MapChanged ? 1 : 0);
+            Console.WriteLine(
+                "[m8] teleport gate={0} -> map={1} xy=({2},{3}) flag={4} {5}",
+                gate,
+                dest.MapId,
+                dest.X,
+                dest.Y,
+                flag,
+                remote);
+            return true;
+        }
+        finally
+        {
+            MoveMapSessionState.SetTeleportInProgress(presenceSessionId, false);
+        }
     }
 
     static async Task<bool> TryHandleNpcTalkAsync(
@@ -338,13 +366,10 @@ public static class WorldGameplayHandlers
         await writeAsync(pkt, ct).ConfigureAwait(false);
         PlayerShopSession.OpenShop(presenceSessionId, shopIndex);
 
-        if (PlayerShopSession.TryGetSessionSlots(presenceSessionId, out var bagSlots))
+        var valuePkt = ShopItemValueSender.BuildForShop(items);
+        if (valuePkt.Length > 0)
         {
-            var valuePkt = ShopItemValueSender.BuildForShop(items, bagSlots);
-            if (valuePkt.Length > 0)
-            {
-                await writeAsync(valuePkt, ct).ConfigureAwait(false);
-            }
+            await writeAsync(valuePkt, ct).ConfigureAwait(false);
         }
 
         Console.WriteLine("[m8] sent shop 0x31 index={0} count={1} npc={2} {3}", shopIndex, wireItems.Count, mob.MonsterClass, remote);

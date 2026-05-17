@@ -147,6 +147,16 @@ if compose_has_gamehost; then
 fi
 
 echo ""
+if [[ -x "$SCRIPT_DIR/smoke-m8.sh" ]]; then
+  echo "== M8 smoke (full) =="
+  "$SCRIPT_DIR/smoke-m8.sh" --no-recreate || true
+  echo ""
+elif [[ -x "$SCRIPT_DIR/smoke-m8-move-catalog.sh" ]]; then
+  echo "== M8 smoke: MoveMapCatalog =="
+  "$SCRIPT_DIR/smoke-m8-move-catalog.sh" || true
+  echo ""
+fi
+
 echo "== Port listeners (Mac) =="
 "$SCRIPT_DIR/check-lan-connect-ports.sh"
 

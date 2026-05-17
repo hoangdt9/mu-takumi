@@ -13,6 +13,7 @@ public static class PlayerWarehouseSession
 
     public static void Open(Guid sessionId)
     {
+        PlayerUiSession.SetWarehouse(sessionId, true);
         Sessions.AddOrUpdate(
             sessionId,
             _ => new WarehouseState(true, new Dictionary<byte, byte[]>()),
@@ -21,6 +22,7 @@ public static class PlayerWarehouseSession
 
     public static void Close(Guid sessionId)
     {
+        PlayerUiSession.SetWarehouse(sessionId, false);
         if (Sessions.TryGetValue(sessionId, out var s))
         {
             Sessions[sessionId] = s with { IsOpen = false };

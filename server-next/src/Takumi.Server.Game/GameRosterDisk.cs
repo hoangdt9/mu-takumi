@@ -49,6 +49,15 @@ public sealed class GameRosterEntry
     public int CurrentBp { get; set; }
 
     public int MaxBp { get; set; }
+
+    /// <summary>M8: character reset count (0 when unset).</summary>
+    public int Reset { get; set; }
+
+    /// <summary>M8: VIP / account level for move-map (<c>MOVE_INFO.AccountLevel</c>).</summary>
+    public int AccountLevel { get; set; }
+
+    /// <summary>M8: Gens family (0 = none, 1 = Vanert, 2 = Duprian).</summary>
+    public byte GensFamily { get; set; }
 }
 
 public static class GameSpawnEnv
@@ -210,6 +219,8 @@ public static class GameRosterDisk
                     LevelUpPoint = c.LevelUpPoint,
                     CurrentBp = c.CurrentBp,
                     MaxBp = c.MaxBp,
+                    Reset = c.Reset,
+                    AccountLevel = c.AccountLevel,
                 };
                 ApplyLegacySpawnIfUnset(entry);
                 list.Add(entry);
@@ -270,6 +281,10 @@ public static class GameRosterDisk
         public int CurrentBp { get; set; }
 
         public int MaxBp { get; set; }
+
+        public int Reset { get; set; }
+
+        public int AccountLevel { get; set; }
     }
 }
 

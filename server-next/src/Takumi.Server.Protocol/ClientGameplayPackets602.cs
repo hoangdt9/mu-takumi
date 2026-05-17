@@ -390,4 +390,50 @@ public static class ClientGameplayPackets602
 
         return false;
     }
+
+    public static bool TryFindPersonalShopOpenRequest(ReadOnlySpan<byte> packet, out int frameOffset)
+    {
+        frameOffset = -1;
+        for (var i = 0; i <= packet.Length - 5; i++)
+        {
+            if (packet[i] is not (0xC1 or 0xC3))
+            {
+                continue;
+            }
+
+            var headOff = i + 2;
+            if (headOff + 1 >= packet.Length || packet[headOff] != 0x3F || packet[headOff + 1] != 0x02)
+            {
+                continue;
+            }
+
+            frameOffset = i;
+            return true;
+        }
+
+        return false;
+    }
+
+    public static bool TryFindPersonalShopCloseRequest(ReadOnlySpan<byte> packet, out int frameOffset)
+    {
+        frameOffset = -1;
+        for (var i = 0; i <= packet.Length - 5; i++)
+        {
+            if (packet[i] is not (0xC1 or 0xC3))
+            {
+                continue;
+            }
+
+            var headOff = i + 2;
+            if (headOff + 1 >= packet.Length || packet[headOff] != 0x3F || packet[headOff + 1] != 0x03)
+            {
+                continue;
+            }
+
+            frameOffset = i;
+            return true;
+        }
+
+        return false;
+    }
 }

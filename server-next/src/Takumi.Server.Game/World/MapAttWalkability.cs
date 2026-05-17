@@ -44,6 +44,47 @@ public static class MapAttWalkability
         return (flags & 0x0001) != 0; // TWFlags.SafeZone
     }
 
+    /// <summary>When <paramref name="x"/>/<paramref name="y"/> are blocked, search outward for a walkable tile (spawn / warp heal).</summary>
+    public static bool TryFindNearestWalkable(byte mapId, byte x, byte y, out byte walkX, out byte walkY, int maxRadius = 12)
+    {
+        walkX = x;
+        walkY = y;
+        if (CanWalk(mapId, x, y))
+        {
+            return true;
+        }
+
+        for (var r = 1; r <= maxRadius; r++)
+        {
+            for (var dy = -r; dy <= r; dy++)
+            {
+                for (var dx = -r; dx <= r; dx++)
+                {
+                    if (Math.Abs(dx) != r && Math.Abs(dy) != r)
+                    {
+                        continue;
+                    }
+
+                    var px = x + dx;
+                    var py = y + dy;
+                    if (px is < 0 or > 255 || py is < 0 or > 255)
+                    {
+                        continue;
+                    }
+
+                    if (CanWalk(mapId, (byte)px, (byte)py))
+                    {
+                        walkX = (byte)px;
+                        walkY = (byte)py;
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
     static bool TryGetFlags(byte mapId, byte x, byte y, out ushort flags)
     {
         flags = 0;
@@ -110,14 +151,30 @@ public static class MapAttWalkability
             world = $"World{mapId}";
         }
 
-        var dir = Path.Combine(root, world);
-        var enc = Path.Combine(dir, $"EncTerrain{mapId}.att");
-        if (File.Exists(enc))
+        foreach (var dir in ResolveWorldDirectories(root, mapId, world))
         {
-            return enc;
+            var enc = Path.Combine(dir, $"EncTerrain{mapId}.att");
+            if (File.Exists(enc))
+            {
+                return enc;
+            }
+
+            var plain = Path.Combine(dir, "Terrain.att");
+            if (File.Exists(plain))
+            {
+                return plain;
+            }
         }
 
-        return Path.Combine(dir, "Terrain.att");
+        return null;
+    }
+
+    static IEnumerable<string> ResolveWorldDirectories(string root, byte mapId, string worldName)
+    {
+        yield return Path.Combine(root, worldName);
+        yield return Path.Combine(root, $"World{mapId + 1}");
+        yield return Path.Combine(root, "Terrain");
+        yield return Path.Combine(root, "World75"); // Takumi client alias for Lorencia assets
     }
 
     static string? ResolveDefaultDataRoot()

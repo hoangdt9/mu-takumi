@@ -3,8 +3,8 @@
 # Usage:
 #   cd takumi/server-next
 #   cp -n .env.lan.example .env   # set TAKUMI_LAN_IP to this machine's LAN IP (same Wi‑Fi as the phone)
-#   docker compose up -d
-#   ./scripts/docker-stack.sh              # pull + up (postgres + legacy-login + data.zip) + docker logs -f
+#   docker compose up -d                   # with .env COMPOSE_PROFILES=datazip,gamehost → + datazip + game-host
+#   ./scripts/docker-stack.sh              # pull + up (postgres + legacy-login + data.zip + game-host) + docker logs -f
 #   ./scripts/docker-stack.sh --detach     # same, không bám log
 #
 # After the first `up`, Docker Desktop restarts will bring containers back if they were running
@@ -17,9 +17,9 @@
 #   # or: COMPOSE_PROFILES=datazip in .env (docker-stack bật datazip mặc định)
 # Place file at ../docker/data-zip/host/data.zip → http://<LAN-IP>:18080/data.zip
 
-# Optional dedicated game TCP (M6): `docker compose --profile gamehost up -d`
-# Set TAKUMI_GAME_PORT (e.g. 55901) in .env to match ConnectServer F4 03; publish with TAKUMI_GAME_PUBLISH.
-# LegacyLoginHost must advertise the same port (empty TAKUMI_GAME_PORT in legacy-login = login port only).
+# Dedicated game TCP (M6), profile **gamehost** — bật mặc định qua COMPOSE_PROFILES=gamehost trong .env (xem .env.lan.example).
+# Hoặc: `docker compose --profile gamehost up -d`
+# Set TAKUMI_GAME_PORT (e.g. 55901) to match ConnectServer F4 03; publish with TAKUMI_GAME_PUBLISH.
 
 services:
   postgres:
@@ -81,6 +81,7 @@ services:
       TAKUMI_GAMESERVER_DATA_PATH: "${TAKUMI_GAMESERVER_DATA_PATH:-/muserver-data}"
       # M8 move map: set to 1 to skip block-key check entirely (parity C++ GS). Default off — server accepts legacy seed 0 fallback.
       TAKUMI_MOVE_MAP_SKIP_KEY_CHECK: "${TAKUMI_MOVE_MAP_SKIP_KEY_CHECK:-}"
+      TAKUMI_CUSTOM_ARENA_SKIP_SCHEDULE: "${TAKUMI_CUSTOM_ARENA_SKIP_SCHEDULE:-}"
       TAKUMI_MONSTER_SET_BASE_PATH: "${TAKUMI_MONSTER_SET_BASE_PATH:-/muserver-data/Monster/MonsterSetBase.txt}"
       TAKUMI_MONSTER_INFO_PATH: "${TAKUMI_MONSTER_INFO_PATH:-/muserver-data/Monster/Monster.txt}"
       TAKUMI_ATT_DATA_ROOT: "${TAKUMI_ATT_DATA_ROOT:-/att-data}"
@@ -221,6 +222,7 @@ services:
       TAKUMI_ITEM_BMD_PATH: "${TAKUMI_ITEM_BMD_PATH:-}"
       # M8 move map: set to 1 to skip block-key check entirely (parity C++ GS). Default off — server accepts legacy seed 0 fallback.
       TAKUMI_MOVE_MAP_SKIP_KEY_CHECK: "${TAKUMI_MOVE_MAP_SKIP_KEY_CHECK:-}"
+      TAKUMI_CUSTOM_ARENA_SKIP_SCHEDULE: "${TAKUMI_CUSTOM_ARENA_SKIP_SCHEDULE:-}"
       TAKUMI_MONSTER_SET_BASE_PATH: "${TAKUMI_MONSTER_SET_BASE_PATH:-/muserver-data/Monster/MonsterSetBase.txt}"
       TAKUMI_MONSTER_INFO_PATH: "${TAKUMI_MONSTER_INFO_PATH:-/muserver-data/Monster/Monster.txt}"
       TAKUMI_PG_CONNECTION_STRING: "${TAKUMI_PG_CONNECTION_STRING:-Host=postgres;Port=5432;Username=takumi;Password=takumi;Database=takumi_runtime}"

@@ -18,19 +18,23 @@ public static class PlayerTradeSession
 
     public static void OpenPair(Guid sessionA, Guid sessionB)
     {
+        PlayerUiSession.SetTrade(sessionA, true);
+        PlayerUiSession.SetTrade(sessionB, true);
         Sessions[sessionA] = new TradeState(true, sessionB, new Dictionary<byte, byte[]>());
         Sessions[sessionB] = new TradeState(true, sessionA, new Dictionary<byte, byte[]>());
     }
 
     public static void Close(Guid sessionId)
     {
+        PlayerUiSession.SetTrade(sessionId, false);
         if (!Sessions.TryRemove(sessionId, out var s))
         {
             return;
         }
 
-        if (s.PartnerSessionId is { } partner && Sessions.TryGetValue(partner, out _))
+        if (s.PartnerSessionId is { } partner)
         {
+            PlayerUiSession.SetTrade(partner, false);
             Sessions.TryRemove(partner, out _);
         }
     }

@@ -20,6 +20,7 @@ public static class MoveMapHandler
         string remote,
         Func<ReadOnlyMemory<byte>, CancellationToken, Task> writeAsync,
         Action? onRosterDirty,
+        Action? onRosterSave,
         CancellationToken ct)
     {
         if (!GamePacketFinders.TryFindMoveMapRequest(packet.AsSpan(), out var moveOff, out var blockKey, out var mapIdx))
@@ -49,14 +50,20 @@ public static class MoveMapHandler
                 remote);
         }
 
+        if (!string.IsNullOrEmpty(accountId))
+        {
+            await PlayerShopSession.EnsureInventoryLoadedAsync(presenceSessionId, accountId, characterName10, ct)
+                .ConfigureAwait(false);
+        }
+
         var prevMap = player.MapId;
+        var moveCtx = MoveMapSessionRules.BuildContext(player, presenceSessionId);
         byte result;
         int zenCost = 0;
         MapGateService.TeleportDestination dest = default;
         if (MoveMapService.TryResolve(
                 mapIdx,
-                player.Level,
-                player.Zen,
+                moveCtx,
                 prevMap,
                 out dest,
                 out var deny,
@@ -97,7 +104,9 @@ public static class MoveMapHandler
         player.PosX = dest.X;
         player.PosY = dest.Y;
         player.Angle = dest.Angle;
+        PlayerWalkHandler.HealSpawnTile(player);
         onRosterDirty?.Invoke();
+        onRosterSave?.Invoke();
 
         await WriteAsync(connection, clientProtectOutbound, writeAsync, MoveMapWire602.BuildAnswer(result), ct)
             .ConfigureAwait(false);
@@ -126,6 +135,13 @@ public static class MoveMapHandler
                     ct)
                 .ConfigureAwait(false);
         }
+
+        await MoveMapPostWarp.SendPersonalShopViewportRedrawAsync(
+                connection,
+                clientProtectOutbound,
+                writeAsync,
+                ct)
+            .ConfigureAwait(false);
 
         var flag = (ushort)(dest.MapChanged ? 1 : 0);
 

@@ -1,4 +1,6 @@
--- QA seed: MG character mg001 on account `test` — lv400, Hoàng Long +15, 50k stat points, 2B warehouse zen.
+-- QA seed: MG character mg001 on account `test` — lv400 Duel Master (3rd class),
+-- set Thánh Thần MG +15 (380, no helm), Kiếm Thánh Thần (MG) 0,58 +15, Cánh Lôi Vũ (12,39) +15,
+-- full MG skill list on join (server F3 11), 50k stat points, 2B warehouse zen.
 -- Apply: ./scripts/apply-sql.sh "$TAKUMI_PG_CONNECTION_STRING" sql/patches/013_test_account_mg001_seed.sql
 -- Disconnect in-game before apply so a live session does not overwrite rows.
 
@@ -18,11 +20,11 @@ INSERT INTO character_roster (
     current_bp, max_bp, updated_at
 )
 VALUES (
-    'test', 'mg001', 96, 400, 3822148080,
-    0, 143, 83, 6,
+    'test', 'mg001', 120, 400, 3822148080,
+    0, 130, 125, 6,
     0, 0, 0, 0, 0,
     0, 0,
-    26, 26, 26, 26, 0, 50000,
+    800, 600, 300, 250, 0, 0,
     0, 0, now()
 )
 ON CONFLICT (account_login, character_name) DO UPDATE SET
@@ -59,11 +61,11 @@ INSERT INTO character_domain (
     current_bp, max_bp, updated_at
 )
 VALUES (
-    'test', 'mg001', 96, 400, 3822148080,
-    0, 143, 83, 6,
+    'test', 'mg001', 120, 400, 3822148080,
+    0, 130, 125, 6,
     0, 0, 0, 0, 0,
     0, 0,
-    26, 26, 26, 26, 0, 50000,
+    800, 600, 300, 250, 0, 0,
     0, 0, now()
 )
 ON CONFLICT (account_login, character_name) DO UPDATE SET
@@ -94,20 +96,23 @@ ON CONFLICT (account_login, character_name) DO UPDATE SET
 DELETE FROM inventory_slot
 WHERE account_login = 'test' AND character_name = 'mg001';
 
--- Wear slots: 0 weapon (Gậy Hỏa Long +15 exc — MG phép), 2–6 Hoàng Long set +15 exc
+-- Wear (ItemWire602 / Season 6): 0,58 Kiếm Thánh Thần (MG); 7,39 Cánh Lôi Vũ (MG 380 tier-3);
+-- NOT 12,36 Cuồng Phong (DK), NOT 12,37 Thiên Sứ (DW).
+-- 8–11,142 Thánh Thần MG set; no helm. NOT 5,54 Khuyển (SUM) nor 0,57 DK Thánh Thần kiếm.
 INSERT INTO inventory_slot (account_login, character_name, slot_idx, item, updated_at) VALUES
-    ('test', 'mg001', 0, decode('0AFFFF7F0050000000000000', 'hex'), now()),
-    ('test', 'mg001', 2, decode('2EFFFF7F0070000000000000', 'hex'), now()),
-    ('test', 'mg001', 3, decode('2EFFFF7F0080000000000000', 'hex'), now()),
-    ('test', 'mg001', 4, decode('2EFFFF7F0090000000000000', 'hex'), now()),
-    ('test', 'mg001', 5, decode('2EFFFF7F00A0000000000000', 'hex'), now()),
-    ('test', 'mg001', 6, decode('2EFFFF7F00B0000000000000', 'hex'), now());
+    ('test', 'mg001', 0, decode('3AFFFF7F0000000000000000', 'hex'), now()),
+    ('test', 'mg001', 7, decode('27FFFF7F00C0000000000000', 'hex'), now()),
+    ('test', 'mg001', 3, decode('8EFFFF7F0080000000000000', 'hex'), now()),
+    ('test', 'mg001', 4, decode('8EFFFF7F0090000000000000', 'hex'), now()),
+    ('test', 'mg001', 5, decode('8EFFFF7F00A0000000000000', 'hex'), now()),
+    ('test', 'mg001', 6, decode('8EFFFF7F00B0000000000000', 'hex'), now());
 
 COMMIT;
 
 SELECT account_login, warehouse_zen FROM account WHERE account_login = 'test';
 
-SELECT character_name, server_class, level, experience, level_up_point, zen
+SELECT character_name, server_class, level, experience, level_up_point, zen,
+       strength, dexterity, vitality, energy
 FROM character_roster
 WHERE account_login = 'test' AND character_name = 'mg001';
 

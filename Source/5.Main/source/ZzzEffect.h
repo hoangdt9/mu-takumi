@@ -55,6 +55,7 @@ void CreatePoint(vec3_t Position,int Value,vec3_t Color,float scale=15.f, bool b
 #endif //PBG_ADD_NEWCHAR_MONK_SKILL
 void RenderPoints( BYTE byRenderOneMore=0 );
 void MovePoints();
+void ClearEffectPoints();
 
 void CreatePointer(int Type,vec3_t Position,float Angle,vec3_t Light,float Scale=1.f);
 void RenderPointers();

@@ -772,13 +772,17 @@ bool PathFinding2(int sx,int sy,int tx,int ty,PATH_t *a, float fDistance, int iD
 	if(Success)
 	{
 		int PathNum = path->GetPath();
+		if(PathNum > MAX_PATH_FIND)
+		{
+			PathNum = MAX_PATH_FIND;
+		}
 		if(PathNum > 1)
 		{
-			a->PathNum = PathNum;
+			a->PathNum = (unsigned char)PathNum;
 			unsigned char *x = path->GetPathX();
 			unsigned char *y = path->GetPathY();
 
-			for(int i=0;i<a->PathNum;i++)
+			for(int i= 0; i < a->PathNum; ++i)
 			{
 				a->PathX[i] = x[i];
 				a->PathY[i] = y[i];

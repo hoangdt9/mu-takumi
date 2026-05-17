@@ -230,6 +230,13 @@ lsof -nP -iTCP:${TAKUMI_GAME_PORT:-55901} -sTCP:LISTEN   # sau khi start GameHos
 
 **Lưu ý:** Agent không có `adb` tới máy của bạn; bước 1–4 bạn tự chạy trên máy LAN. Build `GameHost` + `LegacyLoginHost` trên repo: **Release build OK** (xác minh compile CI-local).
 
+### F3 10 inventory resync sau join (2026-05-18)
+
+- [x] Server: `GamePortMinimalSession` gửi **`F3 03` + `F3 10`** sau character select (`name='mg001'` trong log host).
+- [x] Client: `ReceiveInventory` → `SetCharacterClass(Hero)` + `CreatePetDarkSpirit_Now` — refresh mesh từ equipment, không chỉ UI grid.
+- [x] Android log: `[ReceiveInventory] slot=N type=… canEquip=…` + `[TakumiWear] weapon0/wing … meshs=…` — xem **`../../docs/DEVELOPMENT-LOG-2026-05-18.md`**.
+- [ ] Device QA: MG cánh **Lôi Vũ (6183)** + kiếm 58 `meshs>0` sau rebuild APK.
+
 ## Env reference
 
 | Variable | Purpose |

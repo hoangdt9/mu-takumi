@@ -264,6 +264,9 @@ Use this to avoid unnecessary rebuilds.
   - [ ] focus/select character
   - [ ] enter game from character screen **without hardware keyboard** (double-tap on hero or ~0.5s hold on 3D viewport after selection — native `ZzzScene.cpp`; rebuild APK)
   - [ ] complete minimal transition after character selection (visible world, not black screen)
+  - [x] **F3 00 equip preview (17 byte):** `CharacterListEquipPreview602` + `CharacterListPacket602` — wear slot 0–8 → CharSet preview; tests `CharacterListEquipPreview602Tests`. **Nhật ký:** `../../docs/DEVELOPMENT-LOG-2026-05-18.md`.
+  - [x] **QA seed `mg001`:** `sql/patches/013_test_account_mg001_seed.sql` — Kiếm Thánh Thần (MG) 0,58, **Cánh Lôi Vũ 12,39** (không Cuồng Phong DK / Thiên Sứ DW), set 142 +15, STR/DEX đủ equip.
+  - [x] **Client wear parity:** `ZzzCharacter.cpp` tier-3 wing mesh theo item; lazy-load kiếm 380; `ReceiveInventory` → `SetCharacterClass`; `[TakumiWear]` logcat Android.
 
 ---
 

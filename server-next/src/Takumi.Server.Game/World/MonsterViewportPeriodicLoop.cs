@@ -52,7 +52,7 @@ public static class MonsterViewportPeriodicLoop
     static async Task TickAllSessionsAsync(CancellationToken ct)
     {
         MapMonsterWorld.EnsureInitialized();
-        var viewRange = ParseIntEnv("TAKUMI_MONSTER_VIEW_RANGE", 15, 1, 32);
+        var viewRange = ParseIntEnv("TAKUMI_MONSTER_VIEW_RANGE", 20, 1, 32);
         var maxNpcs = ParseIntEnv("TAKUMI_MONSTER_VIEWPORT_MAX_NPC", 32, 1, 80);
         var maxMobs = ParseIntEnv("TAKUMI_MONSTER_VIEWPORT_MAX_MOB", 48, 1, 80);
 

@@ -20,6 +20,7 @@ void ReleaseCharacterSceneData();
 
 void OpenPlayerTextures();
 void OpenItemTextures();
+void LoadItemModel(int index, const char* folder, const char* name, int value);
 
 void OpenSkillHotKey(char *File);
 void SaveOptions();

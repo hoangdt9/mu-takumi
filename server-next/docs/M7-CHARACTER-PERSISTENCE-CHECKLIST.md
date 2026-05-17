@@ -1,9 +1,9 @@
 # M7 — Character persistence lifecycle (HP / MP / zen / map / tile)
 
-Last updated: 2026-05-17
+Last updated: 2026-05-18
 
 **Quy ước:** chỉ tick `[x]` khi đã có trong git và có thể chứng minh (test hoặc QA ghi rõ). Cập nhật file này khi merge.  
-**Nhật ký:** **`../../docs/DEVELOPMENT-LOG-2026-05-17.md`** (shop/inventory/VFX), **`../../docs/DEVELOPMENT-LOG-2026-05-16.md`** (combat/EXP/FPS).
+**Nhật ký:** **`../../docs/DEVELOPMENT-LOG-2026-05-18.md`** (F3 00 preview / mg001 QA wear), **`../../docs/DEVELOPMENT-LOG-2026-05-17.md`** (shop/inventory/VFX), **`../../docs/DEVELOPMENT-LOG-2026-05-16.md`** (combat/EXP/FPS).
 
 **Phụ thuộc:** **`docs/M4-TILE-AND-COORDINATES.md`**, **`docs/M4-ROSTER-SSOT.md`**, **`docs/M6-GAME-TCP-CHECKLIST.md`**.  
 **Port từ `Source/` (character + item):** **`docs/M4-M7-CHARACTER-ITEM-MIGRATION.md`**. **Không chặn M5** (join/ticket).
@@ -80,6 +80,14 @@ Last updated: 2026-05-17
 - [x] Port `ItemManager` pick/drop/move (`0x22`–`0x24`) — `ItemWorldHandler` + **`InventoryBagGrid`** / BMD footprints; server gửi **`0x24` trước `F3 10`** trên inv→inv; client plain **`C4 F3 10`** + footprint clear (`6330de9`). Trade/warehouse flags **OPEN**.
 - [x] **Level-up VFX (client, 2026-05-17):** FLARE spiral + white disc — không liên quan wire M7; xem **`../../docs/DEVELOPMENT-LOG-2026-05-17.md`**.
 - [x] **M7d (partial):** potion use `CGItemUseRecv` (`C1`/`C3` `0x26`) — `ItemWorldHandler` + `InventoryConsumableRules` (HP/MP/SD potions); `0x28` delete / `0x2A` durability; **SD persist:** `current_shield`/`max_shield` DB + roster JSON + `GCLifeSend` shield word; monster/PvP hit giảm SD trước HP (parity `Attack.cpp`). Trade/warehouse/scroll **OPEN**.
+
+---
+
+## M7h — QA wear seed (`mg001`)
+
+- [x] **`sql/patches/013_test_account_mg001_seed.sql`:** account `test`, char `mg001` lv400, STR/DEX đủ +15 380, wear slot 0 = 0,58 kiếm MG, slot 7 = **12,39 Cánh Lôi Vũ** (`27FFFF7F…`).
+- [x] **`takumi-inventory/test.json`** mirror hex wear cho tooling.
+- [ ] Device: thoát game trước `apply-sql.sh`; logcat `type=6183` wing + `meshs>0` weapon — **`../../docs/DEVELOPMENT-LOG-2026-05-18.md`**.
 
 ---
 

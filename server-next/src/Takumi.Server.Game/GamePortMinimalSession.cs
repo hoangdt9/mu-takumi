@@ -432,7 +432,7 @@ public static class GamePortMinimalSession
                         await GamePortOutboundWire.WriteAsync(
                                 connection,
                                 protect,
-                                MagicListWire602.BuildEmpty(),
+                                MagicListWire602.BuildForServerClass(picked.ServerClass),
                                 ct,
                                 TrackVitalsOutbound)
                             .ConfigureAwait(false);
@@ -709,7 +709,9 @@ public static class GamePortMinimalSession
 
                     if (listReq)
                     {
-                        var list = roster.Count > 0 ? CharacterListWire602.Build(MapRosterToWire(roster)) : CharacterListWire602.BuildEmpty();
+                        var list = roster.Count > 0
+                            ? await CharacterListPacket602.BuildAsync(loggedAccountId, MapRosterToWire(roster), ct).ConfigureAwait(false)
+                            : CharacterListWire602.BuildEmpty();
                         LogCharacterListWire(remote, list, "F3 00");
                         await GamePortOutboundWire.WriteAsync(connection, protect, list, ct).ConfigureAwait(false);
                         return;
@@ -894,7 +896,9 @@ public static class GamePortMinimalSession
 
                     if (!options.SkipAutoCharacterList)
                     {
-                        var list = roster.Count > 0 ? CharacterListWire602.Build(MapRosterToWire(roster)) : CharacterListWire602.BuildEmpty();
+                        var list = roster.Count > 0
+                            ? await CharacterListPacket602.BuildAsync(loggedAccountId, MapRosterToWire(roster), ct).ConfigureAwait(false)
+                            : CharacterListWire602.BuildEmpty();
                         LogCharacterListWire(remote, list, "after login (auto)");
                         await GamePortOutboundWire.WriteAsync(connection, protect, list, ct).ConfigureAwait(false);
                     }

@@ -91,10 +91,15 @@ void TakumiSendMeleeAttack(WORD targetKey, BYTE dir);
 void TakumiSyncHeroCurrentVitals(DWORD curHp, DWORD curSd);
 void TakumiSyncHeroMaxVitals(DWORD maxHp, DWORD maxSd);
 #if defined(__ANDROID__)
+/// True while F3 03 join/warp deferred <c>LoadWorld</c> has not run yet (movement must stay blocked without LoadingWorld=9999998).
+bool TakumiIsAndroidWorldLoadPending();
 /// Run deferred map load on the main loop (after F3 03) to avoid blocking inside packet dispatch.
 void TakumiProcessAndroidPendingLoadWorld();
 /// Reset adaptive perf penalties for a few seconds after terrain/world load.
 void TakumiAndroidOnWorldJoinLoaded();
+/// Skip monster PathFinding2 right after deferred LoadWorld (join burst C2 0x13).
+bool TakumiShouldSkipMonsterViewportPathfinding();
+void TakumiClearMonsterViewportPathfindingSkip();
 #endif
 void TakumiGetHudVitals(DWORD& curHp, DWORD& maxHp, DWORD& curMp, DWORD& maxMp, DWORD& curAg, DWORD& maxAg);
 /// <summary>EXP fill 0..1 for current level (cumulative segment, or Experience/NextExperince fallback).</summary>
@@ -599,7 +604,8 @@ typedef struct {
 	BYTE         Equipment[EQUIPMENT_LENGTH];
 } PRECEIVE_EQUIPMENT, * LPPRECEIVE_EQUIPMENT;
 
-//receive other map character
+//receive other map character (must match server-next PlayerViewportWire602 38-byte entry)
+#pragma pack(push, 1)
 typedef struct {
 	BYTE         KeyH;
 	BYTE         KeyL;
@@ -617,6 +623,7 @@ typedef struct {
 	BYTE         s_BuffCount;
 	BYTE		 s_BuffEffectState[MAX_BUFF_SLOT_INDEX];
 } PCREATE_CHARACTER, * LPPCREATE_CHARACTER;
+#pragma pack(pop)
 
 //receive other map character
 typedef struct 

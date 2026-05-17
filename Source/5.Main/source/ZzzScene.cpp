@@ -997,6 +997,7 @@ void CreateCharacterScene()
 	CUIMng::Instance().CreateCharacterScene();
 
     ClearInventory();
+    ClearEffectPoints();
     CharacterAttribute->SkillNumber = 0;
 
 	for(int i=0;i<MAX_MAGIC;i++)

@@ -46,6 +46,7 @@
 #include "GM3rdChangeUp.h"
 #include "Input.h"
 #include "ChangeRingManager.h"
+#include "CustomItem.h"
 #include "Event.h"
 #include "PartyManager.h"
 #include "GMNewTown.h"
@@ -66,6 +67,9 @@
 #ifdef PBG_ADD_NEWCHAR_MONK
 #include "MonkSystem.h"
 #endif //PBG_ADD_NEWCHAR_MONK
+#ifdef __ANDROID__
+#include "./Utilities/Log/ErrorReport.h"
+#endif
 #include <algorithm>
 extern float CameraDistanceTarget;
 
@@ -10770,7 +10774,15 @@ void RenderCharacter(CHARACTER *c,OBJECT *o,int Select)
 					}
 					else
 #endif //PBG_ADD_NEWCHAR_MONK
-					b->Skin = gCharacterManager.GetBaseClass(c->Class)*2 + gCharacterManager.IsSecondClass(c->Class);
+					if(gCharacterManager.GetBaseClass(c->Class) == CLASS_DARK)
+					{
+						// Magic Gladiator / Duel Master: GetSkinModelIndex (e.g. 17), not base*2+second (7).
+						b->Skin = gCharacterManager.GetSkinModelIndex(c->Class);
+					}
+					else
+					{
+						b->Skin = gCharacterManager.GetBaseClass(c->Class)*2 + gCharacterManager.IsSecondClass(c->Class);
+					}
 
                     if ( gCharacterManager.GetBaseClass(c->Class)==CLASS_DARK_LORD && i==BODYPART_HELM )
                     {
@@ -13488,7 +13500,7 @@ CHARACTER *CreateCharacter(int Key,int Type,unsigned char PositionX,unsigned cha
 		}
 	}
 
-	return &CharactersClient[MAX_CHARACTERS_CLIENT];
+	return NULL;
 }
 
 void SetCharacterScale(CHARACTER *c)
@@ -13585,6 +13597,14 @@ void SetCharacterScale(CHARACTER *c)
 #endif //PJH_NEW_SERVER_SELECT_MAP
 }
 
+static void TakumiEnsureCharacterWearModelsLoaded(CHARACTER* c);
+static int TakumiNormalizeMgWeaponItemIndex(int itemIndex);
+static int TakumiTier3WingModelForClass(BYTE clientClass, int rosterNibble);
+int TakumiWingModelFromItemIndex(int itemIndex, BYTE clientClass);
+static bool TakumiPreviewHasTier3Wing(const BYTE* equipment);
+static void TakumiApplyPreviewTier3Wing(CHARACTER* c, const BYTE* equipment);
+static int DecodePreviewWeaponExtType(const BYTE* equipment, int weaponIndex);
+
 void SetCharacterClass(CHARACTER *c)
 {
 	if(c->Object.Type != MODEL_PLAYER)
@@ -13600,7 +13620,13 @@ void SetCharacterClass(CHARACTER *c)
 	}
 	else
 	{
-	    c->Weapon[0].Type = p[EQUIPMENT_WEAPON_RIGHT].Type+MODEL_ITEM;
+		int weaponType = p[EQUIPMENT_WEAPON_RIGHT].Type;
+		if (gCharacterManager.GetBaseClass(c->Class) == CLASS_DARK)
+		{
+			weaponType = TakumiNormalizeMgWeaponItemIndex(weaponType);
+		}
+
+		c->Weapon[0].Type = weaponType + MODEL_ITEM;
 	}
 
 	if(p[EQUIPMENT_WEAPON_LEFT].Type == -1)
@@ -13609,7 +13635,13 @@ void SetCharacterClass(CHARACTER *c)
 	}
 	else
 	{
-    	c->Weapon[1].Type = p[EQUIPMENT_WEAPON_LEFT].Type+MODEL_ITEM;
+		int weaponType = p[EQUIPMENT_WEAPON_LEFT].Type;
+		if (gCharacterManager.GetBaseClass(c->Class) == CLASS_DARK)
+		{
+			weaponType = TakumiNormalizeMgWeaponItemIndex(weaponType);
+		}
+
+		c->Weapon[1].Type = weaponType + MODEL_ITEM;
 	}
 
 	if(p[EQUIPMENT_WING].Type == -1)
@@ -13618,7 +13650,7 @@ void SetCharacterClass(CHARACTER *c)
 	}
 	else
 	{
-		c->Wing.Type = p[EQUIPMENT_WING].Type+MODEL_ITEM;
+		c->Wing.Type = TakumiWingModelFromItemIndex(p[EQUIPMENT_WING].Type, c->Class);
 	}
 
 	if(p[EQUIPMENT_HELPER].Type == -1)
@@ -13731,6 +13763,8 @@ void SetCharacterClass(CHARACTER *c)
     }
 
     CharacterMachine->CalculateAll();
+
+	TakumiEnsureCharacterWearModelsLoaded(c);
 }
 
 void SetChangeClass(CHARACTER *c)
@@ -13864,6 +13898,528 @@ void MakeElfHelper(CHARACTER* c)
 	o->BoundingBoxMax[2] += 70.f;
 }
 
+static bool IsRosterEmptyEquipPreview(const BYTE* equipment)
+{
+	bool allFf = true;
+	for (int i = 0; i < 17; ++i)
+	{
+		if (equipment[i] != 0xFF)
+		{
+			allFf = false;
+			break;
+		}
+	}
+
+	if (allFf)
+	{
+		return true;
+	}
+
+	// server-next empty wear: 16×0xFF + legacy helper marker in CharSet[5] (Equipment[4]&3==3).
+	for (int i = 0; i < 16; ++i)
+	{
+		if (equipment[i] != 0xFF)
+		{
+			return false;
+		}
+	}
+
+	return (equipment[16] == 0xFF) || ((equipment[4] & 3) == 3);
+}
+
+static short PreviewWearModelType(int modelBase, short extType)
+{
+	if (extType == 0x1FF)
+	{
+		return (short)0x1FF;
+	}
+
+	return (short)(modelBase + extType);
+}
+
+static void TakumiEnsurePreviewPartModelLoaded(int modelType, int modelBase)
+{
+	if (modelType == 0x1FF || modelType < 0)
+	{
+		return;
+	}
+
+	BMD* b = &Models[modelType];
+	if (b->NumMeshs > 0)
+	{
+		return;
+	}
+
+	const int itemIndex = modelType - MODEL_ITEM;
+	if (itemIndex >= 0 && itemIndex < MAX_ITEM)
+	{
+		CUSTOM_ITEM_INFO* custom = gCustomItem.GetInfoByItem(itemIndex);
+		if (custom != nullptr)
+		{
+			const char* folder = (itemIndex >= BConverITEM(7, 0) && itemIndex < BConverITEM(12, 0))
+				? "Player\\"
+				: "Item\\";
+			LoadItemModel(modelType, folder, custom->ModelName, -1);
+			if (b->NumMeshs > 0)
+			{
+				gLoadData.OpenTexture(modelType, const_cast<char*>(folder));
+			}
+
+			return;
+		}
+	}
+
+	if (modelBase < MODEL_HELM || modelBase > MODEL_BOOTS)
+	{
+		return;
+	}
+
+	const int extIndex = modelType - modelBase;
+	if (extIndex < 0 || extIndex >= MAX_ITEM_INDEX)
+	{
+		return;
+	}
+
+	const char* baseName = nullptr;
+	switch (modelBase)
+	{
+	case MODEL_HELM:
+		baseName = "HelmMale";
+		break;
+	case MODEL_ARMOR:
+		baseName = "ArmorMale";
+		break;
+	case MODEL_PANTS:
+		baseName = "PantMale";
+		break;
+	case MODEL_GLOVES:
+		baseName = "GloveMale";
+		break;
+	case MODEL_BOOTS:
+		baseName = "BootMale";
+		break;
+	default:
+		return;
+	}
+
+	const int loadValues[] = { extIndex + 1, extIndex, -1 };
+	for (int loadValue : loadValues)
+	{
+		gLoadData.AccessModel(modelType, "Data\\Player\\", const_cast<char*>(baseName), loadValue);
+		if (b->NumMeshs > 0)
+		{
+			gLoadData.OpenTexture(modelType, "Player\\");
+			return;
+		}
+	}
+
+	if (extIndex >= 29 && extIndex < 34)
+	{
+		gLoadData.AccessModel(modelType, "Data\\Player\\", "HDK_ArmorMale", extIndex - 28);
+		if (b->NumMeshs > 0)
+		{
+			gLoadData.OpenTexture(modelType, "Player\\");
+			return;
+		}
+	}
+
+	if (extIndex >= 34 && extIndex < 39)
+	{
+		gLoadData.AccessModel(modelType, "Data\\Player\\", "CW_ArmorMale", extIndex - 33);
+		if (b->NumMeshs > 0)
+		{
+			gLoadData.OpenTexture(modelType, "Player\\");
+			return;
+		}
+	}
+
+	// High-tier sets (e.g. Saint index 142): wire index != BMD file number on Season 20 data.
+	// Assets use *Male184.bmd + Player\Item3109_*.ozj while item sub-index stays 142 (+42 mesh slot).
+	if (extIndex >= 74)
+	{
+		const char* partFile = baseName;
+		switch (modelBase)
+		{
+		case MODEL_HELM:
+			partFile = "HelmMale";
+			break;
+		case MODEL_PANTS:
+			partFile = "PantMale";
+			break;
+		case MODEL_GLOVES:
+			partFile = "GloveMale";
+			break;
+		case MODEL_BOOTS:
+			partFile = "BootMale";
+			break;
+		default:
+			break;
+		}
+
+		const int meshFileNums[] = { extIndex + 42, extIndex + 1, extIndex, -1 };
+		for (int meshFileNum : meshFileNums)
+		{
+			if (meshFileNum < 1)
+			{
+				continue;
+			}
+
+			gLoadData.AccessModel(modelType, "Data\\Player\\", const_cast<char*>(partFile), meshFileNum);
+			if (b->NumMeshs > 0)
+			{
+				gLoadData.OpenTexture(modelType, "Player\\");
+				return;
+			}
+		}
+
+		LoadItemModel(modelType, "Item\\", "saint", -1);
+		if (b->NumMeshs > 0)
+		{
+			gLoadData.OpenTexture(modelType, "Player\\");
+			return;
+		}
+
+		LoadItemModel(modelType, "Item\\", "Saint", -1);
+		if (b->NumMeshs > 0)
+		{
+			gLoadData.OpenTexture(modelType, "Player\\");
+		}
+	}
+}
+
+static void TakumiOpenWeaponTextures(int modelType)
+{
+	if (Models[modelType].NumMeshs > 0)
+	{
+		gLoadData.OpenTexture(modelType, "Item\\");
+	}
+}
+
+static bool TakumiPreviewHasTier3Wing(const BYTE* equipment)
+{
+	if (equipment == nullptr)
+	{
+		return false;
+	}
+
+	const int wingTier = (equipment[4] >> 2) & 3;
+	const int rosterNibble = equipment[8] & 7;
+	return wingTier == 3 && rosterNibble >= 1 && rosterNibble <= 4;
+}
+
+static void TakumiApplyPreviewTier3Wing(CHARACTER* c, const BYTE* equipment)
+{
+	if (c == nullptr || !TakumiPreviewHasTier3Wing(equipment))
+	{
+		return;
+	}
+
+	c->Wing.Type = TakumiTier3WingModelForClass(c->Class, equipment[8] & 7);
+}
+
+int TakumiWingModelFromItemIndex(int itemIndex, BYTE clientClass)
+{
+	if (itemIndex < 0)
+	{
+		return -1;
+	}
+
+	const int group = itemIndex / MAX_ITEM_INDEX;
+	const int subIndex = itemIndex % MAX_ITEM_INDEX;
+	if (group == 12 && subIndex >= 36 && subIndex <= 40)
+	{
+		return TakumiTier3WingModelForClass(clientClass, subIndex - 35);
+	}
+
+	return MODEL_ITEM + itemIndex;
+}
+
+// Item 12,36–40 tier-3 wings: mesh follows equipped item index (MODEL_WING+36..+40), not wearer class.
+// Item.txt tier-3: 12,36 Cuồng Phong (DK), 12,37 Thiên Sứ (DW), 12,39 Lôi Vũ (MG) — mesh = MODEL_WING+itemSub.
+static int TakumiTier3WingModelForClass(BYTE clientClass, int rosterNibble)
+{
+	(void)clientClass;
+	if (rosterNibble < 1 || rosterNibble > 5)
+	{
+		return MODEL_WING + 35 + rosterNibble;
+	}
+
+	return MODEL_WING + 35 + rosterNibble;
+}
+
+// Item.txt: MG 380 swords are group 0 sub 44/55/58/63 (…); Khuyển (5,54…) is SUM column.
+static bool TakumiIsMgSwordSubIndex(int subIndex)
+{
+	switch (subIndex)
+	{
+	case 44:
+	case 55:
+	case 58:
+	case 63:
+		return true;
+	default:
+		return false;
+	}
+}
+
+static int TakumiNormalizeMgWeaponItemIndex(int itemIndex)
+{
+	int subIndex = itemIndex % MAX_ITEM_INDEX;
+	int group = itemIndex / MAX_ITEM_INDEX;
+
+	if (group == 0)
+	{
+		if (TakumiIsMgSwordSubIndex(subIndex))
+		{
+			return itemIndex;
+		}
+
+		// Wrong sword/staff on MG (DK 57, SUM Khuyển 54, DW gậy 53, …) → Kiếm Thánh Thần (MG) 58.
+		return 58;
+	}
+
+	if (group == 5)
+	{
+		// Legacy roster preview sometimes carries only sub-index 54 (SUM Khuyển) without group byte.
+		return 58;
+	}
+
+	return itemIndex;
+}
+
+static int DecodePreviewWeaponExtType(const BYTE* equipment, int weaponIndex)
+{
+	if (equipment == nullptr)
+	{
+		return 0x0FFF;
+	}
+
+	const BYTE low = weaponIndex == 0 ? equipment[0] : equipment[1];
+	BYTE high = weaponIndex == 0 ? equipment[11] : equipment[12];
+
+	// Legacy CharSet[12]/[13] spill: right-hand high nibble can land in Equipment[12] when [11] is 0.
+	if (weaponIndex == 0 && (high & 0xF0) == 0 && (equipment[12] & 0xF0) != 0)
+	{
+		high = equipment[12];
+	}
+
+	return ((high & 0xF0) << 4) | (low & 0xFF);
+}
+
+static bool TakumiTryLoadNamedItemModels(int modelType, BMD* b, const char* const* modelNames)
+{
+	for (int i = 0; modelNames[i] != nullptr; ++i)
+	{
+		LoadItemModel(modelType, "Item\\", modelNames[i], -1);
+		if (b->NumMeshs > 0)
+		{
+			TakumiOpenWeaponTextures(modelType);
+			return true;
+		}
+	}
+
+	return false;
+}
+
+static void TakumiEnsurePreviewWeaponModelLoaded(int modelType, CHARACTER* c)
+{
+	if (modelType < MODEL_ITEM)
+	{
+		return;
+	}
+
+	BMD* b = &Models[modelType];
+	if (b->NumMeshs > 0)
+	{
+		return;
+	}
+
+	const int itemIndex = modelType - MODEL_ITEM;
+	if (itemIndex < 0 || itemIndex >= MAX_ITEM)
+	{
+		return;
+	}
+
+	CUSTOM_ITEM_INFO* custom = gCustomItem.GetInfoByItem(itemIndex);
+	if (custom != nullptr)
+	{
+		LoadItemModel(modelType, "Item\\", custom->ModelName, -1);
+		TakumiOpenWeaponTextures(modelType);
+		return;
+	}
+
+	const int index = itemIndex % MAX_ITEM_INDEX;
+	const int group = itemIndex / MAX_ITEM_INDEX;
+	if (group == 5)
+	{
+		const bool isMg = c != nullptr && gCharacterManager.GetBaseClass(c->Class) == CLASS_DARK;
+		const bool useMgStickMesh = isMg;
+
+		if (useMgStickMesh)
+		{
+			static const char* mgScepterModels[] = {
+				"HolyAngelStick",
+				"absolute_stick",
+				"bloodangelstick01",
+				"DarkangelStick",
+				"gamble_stick",
+				nullptr
+			};
+
+			if (TakumiTryLoadNamedItemModels(modelType, b, mgScepterModels))
+			{
+				return;
+			}
+
+			// Do not try Staff(index+1) first — Staff55 is often another class; prefer exact index.
+			if (index >= 1)
+			{
+				gLoadData.AccessModel(modelType, "Data\\Item\\", "Staff", index);
+				if (b->NumMeshs > 0)
+				{
+					TakumiOpenWeaponTextures(modelType);
+					return;
+				}
+			}
+		}
+		else
+		{
+			const int staffNums[] = { index + 1, index, -1 };
+			for (int staffNum : staffNums)
+			{
+				if (staffNum < 1)
+				{
+					continue;
+				}
+
+				gLoadData.AccessModel(modelType, "Data\\Item\\", "Staff", staffNum);
+				if (b->NumMeshs > 0)
+				{
+					TakumiOpenWeaponTextures(modelType);
+					return;
+				}
+			}
+
+			if (index >= 30)
+			{
+				char staffName[32] = { 0 };
+				sprintf(staffName, "Staff_%d", index + 1);
+				LoadItemModel(modelType, "Item\\", staffName, -1);
+				if (b->NumMeshs > 0)
+				{
+					TakumiOpenWeaponTextures(modelType);
+					return;
+				}
+			}
+
+			static const char* wizardStaffModels[] = {
+				"HolyAngelStaff",
+				"MiracleStaff",
+				"absolute02_staff",
+				"mastery_staff",
+				nullptr
+			};
+
+			if (TakumiTryLoadNamedItemModels(modelType, b, wizardStaffModels))
+			{
+				return;
+			}
+		}
+	}
+	else if (group == 0)
+	{
+		const int swordNums[] = { index, index + 1, index - 1, -1 };
+		for (int swordNum : swordNums)
+		{
+			if (swordNum < 1)
+			{
+				continue;
+			}
+
+			gLoadData.AccessModel(modelType, "Data\\Item\\", "Sword", swordNum);
+			if (b->NumMeshs > 0)
+			{
+				TakumiOpenWeaponTextures(modelType);
+				return;
+			}
+		}
+
+		static const char* saintSwordModels[] = {
+			"absolute02_sword",
+			"mastery_sword",
+			"bloodangel_sword01",
+			"HolyAngelSword",
+			nullptr
+		};
+
+		if (TakumiTryLoadNamedItemModels(modelType, b, saintSwordModels))
+		{
+			return;
+		}
+
+		TakumiOpenWeaponTextures(modelType);
+	}
+}
+
+static void TakumiEnsureCharacterWearModelsLoaded(CHARACTER* c)
+{
+	if (c == nullptr || c->Object.Type != MODEL_PLAYER)
+	{
+		return;
+	}
+
+	TakumiEnsurePreviewPartModelLoaded(c->BodyPart[BODYPART_HELM].Type, MODEL_HELM);
+	TakumiEnsurePreviewPartModelLoaded(c->BodyPart[BODYPART_ARMOR].Type, MODEL_ARMOR);
+	TakumiEnsurePreviewPartModelLoaded(c->BodyPart[BODYPART_PANTS].Type, MODEL_PANTS);
+	TakumiEnsurePreviewPartModelLoaded(c->BodyPart[BODYPART_GLOVES].Type, MODEL_GLOVES);
+	TakumiEnsurePreviewPartModelLoaded(c->BodyPart[BODYPART_BOOTS].Type, MODEL_BOOTS);
+
+	if (c->Weapon[0].Type >= MODEL_ITEM)
+	{
+		TakumiEnsurePreviewWeaponModelLoaded(c->Weapon[0].Type, c);
+	}
+
+	if (c->Weapon[1].Type >= MODEL_ITEM)
+	{
+		TakumiEnsurePreviewWeaponModelLoaded(c->Weapon[1].Type, c);
+	}
+
+#ifdef __ANDROID__
+	const int armorModel = c->BodyPart[BODYPART_ARMOR].Type;
+	if (armorModel >= MODEL_ARMOR)
+	{
+		const int armorExt = armorModel - MODEL_ARMOR;
+		if (armorExt >= 74)
+		{
+			g_ErrorReport.Write(
+				"[TakumiWear] armor ext=%d model=%d meshs=%d\r\n",
+				armorExt,
+				armorModel,
+				Models[armorModel].NumMeshs);
+		}
+	}
+
+	if (c->Weapon[0].Type >= MODEL_ITEM)
+	{
+		g_ErrorReport.Write(
+			"[TakumiWear] weapon0 type=%d model=%d meshs=%d\r\n",
+			c->Weapon[0].Type - MODEL_ITEM,
+			c->Weapon[0].Type,
+			Models[c->Weapon[0].Type].NumMeshs);
+	}
+
+	if (c->Wing.Type >= MODEL_WING)
+	{
+		g_ErrorReport.Write(
+			"[TakumiWear] wing item=%d model=%d class=%d meshs=%d\r\n",
+			c->Wing.Type - MODEL_ITEM,
+			c->Wing.Type,
+			c->Class,
+			Models[c->Wing.Type].NumMeshs);
+	}
+#endif
+}
+
 void ChangeCharacterExt(int Key,BYTE *Equipment, CHARACTER * pCharacter, OBJECT * pHelper)
 {
 
@@ -13882,18 +14438,12 @@ void ChangeCharacterExt(int Key,BYTE *Equipment, CHARACTER * pCharacter, OBJECT 
 	// treat 0xFF as wings/mounts (horse + Fenrir). Reset to class default underwear / no helpers.
 	if (Equipment != NULL)
 	{
-		bool allFf = true;
-		for (int i = 0; i < 17; ++i)
+		if (IsRosterEmptyEquipPreview(Equipment))
 		{
-			if (Equipment[i] != 0xFF)
-			{
-				allFf = false;
-				break;
-			}
-		}
-		if (allFf)
-		{
-			BYTE base = gCharacterManager.GetBaseClass(c->Class);
+			// Roster F3 00 sends 17×0xFF (no item preview). Use skin index, not GetBaseClass:
+			// 3rd-class wire bytes (e.g. Duel Master 0x78 → class 27) need GetSkinModelIndex (e.g. 17),
+			// not (27 & 7)==3 — wrong body slot → white untextured model on character select.
+			const BYTE skinIndex = gCharacterManager.GetSkinModelIndex(c->Class);
 			DeleteBug(o);
 			ThePetProcess().DeletePet(c, c->Helper.Type, true);
 			c->Weapon[0].Type = -1;
@@ -13912,12 +14462,13 @@ void ChangeCharacterExt(int Key,BYTE *Equipment, CHARACTER * pCharacter, OBJECT 
 			c->WingCache = -1;
 			c->CacheTimeAttack_WING = 0;
 #endif
-			c->BodyPart[BODYPART_HELM  ].Type = MODEL_BODY_HELM + base;
-			c->BodyPart[BODYPART_ARMOR ].Type = MODEL_BODY_ARMOR + base;
-			c->BodyPart[BODYPART_PANTS ].Type = MODEL_BODY_PANTS + base;
-			c->BodyPart[BODYPART_GLOVES].Type = MODEL_BODY_GLOVES + base;
-			c->BodyPart[BODYPART_BOOTS ].Type = MODEL_BODY_BOOTS + base;
+			c->BodyPart[BODYPART_HELM  ].Type = MODEL_BODY_HELM + skinIndex;
+			c->BodyPart[BODYPART_ARMOR ].Type = MODEL_BODY_ARMOR + skinIndex;
+			c->BodyPart[BODYPART_PANTS ].Type = MODEL_BODY_PANTS + skinIndex;
+			c->BodyPart[BODYPART_GLOVES].Type = MODEL_BODY_GLOVES + skinIndex;
+			c->BodyPart[BODYPART_BOOTS ].Type = MODEL_BODY_BOOTS + skinIndex;
 			SetCharacterScale(c);
+			o->Alpha = 1.f;
 			return;
 		}
 	}
@@ -13926,24 +14477,36 @@ void ChangeCharacterExt(int Key,BYTE *Equipment, CHARACTER * pCharacter, OBJECT 
 	BYTE ExtBit = 0;
 	short ExtType = 0;
 
-	Type = Equipment[0];
-	ExtType = Equipment[11]&240;
-	ExtType = (ExtType<<4) | Type;
-
-	if(ExtType == 0x0FFF)
-    {
-		c->Weapon[0].Type = -1;
-        c->Weapon[0].Option1 = 0;
-        c->Weapon[0].ExtOption = 0;
-    }
-	else
+	auto AssignWeaponFromPreview = [](CHARACTER* character, int weaponIndex, int extType)
 	{
-		c->Weapon[0].Type = MODEL_SWORD + ExtType;
-	}
+		if (extType == 0x0FFF)
+		{
+			character->Weapon[weaponIndex].Type = -1;
+			character->Weapon[weaponIndex].Option1 = 0;
+			character->Weapon[weaponIndex].ExtOption = 0;
+			return;
+		}
 
-	Type = Equipment[1];
-	ExtType = Equipment[12]&240;
-	ExtType = (ExtType<<4) | Type;
+		if (gCharacterManager.GetBaseClass(character->Class) == CLASS_DARK)
+		{
+			extType = TakumiNormalizeMgWeaponItemIndex(extType);
+		}
+
+		// Roster preview encodes full GET_ITEM index (e.g. staff 5,54 → 2614). MODEL_SWORD+2614 is invalid.
+		if (extType >= MAX_ITEM_INDEX)
+		{
+			character->Weapon[weaponIndex].Type = MODEL_ITEM + extType;
+		}
+		else
+		{
+			character->Weapon[weaponIndex].Type = MODEL_SWORD + extType;
+		}
+	};
+
+	ExtType = (short)DecodePreviewWeaponExtType(Equipment, 0);
+	AssignWeaponFromPreview(c, 0, ExtType);
+
+	ExtType = (short)DecodePreviewWeaponExtType(Equipment, 1);
 
 	if(ExtType == 0x0FFF)
     {
@@ -13963,12 +14526,22 @@ void ChangeCharacterExt(int Key,BYTE *Equipment, CHARACTER * pCharacter, OBJECT 
         }
         else
         {
-		    c->Weapon[1].Type = MODEL_SWORD + ExtType;
+			AssignWeaponFromPreview(c, 1, ExtType);
         }
     }
 
 	Type = (Equipment[4]>>2)&3;
 #ifdef PBG_ADD_NEWCHAR_MONK_ITEM
+	// Spurious wing tier from packed boots/pants in CharSet[5] (or legacy empty-wing |=12): no CharSet[9] wing index.
+	if (Type != 0 && (Equipment[8] & 0x07) == 0 && (Equipment[9] & 0x07) == 0)
+	{
+		Type = 0;
+	}
+	// server-next once set CharSet[5]|=12 on empty wing; that made Type==3 with no wing index → fly pose.
+	if (Type == 3 && (Equipment[8] & 0x07) == 0)
+	{
+		Type = 0;
+	}
 	//½Å±ÔÄ³¸¯ÅÍ Ãß°¡·Î ÀÎÇÑ ³¯°³ ÀÎµ¦½º È®Àå ±¸Á¶º¯°æ
 	if(Type == 1)			//1Â÷ ³¯°³
 	{
@@ -14018,7 +14591,7 @@ void ChangeCharacterExt(int Key,BYTE *Equipment, CHARACTER * pCharacter, OBJECT 
 		case 7:		c->Wing.Type = MODEL_WING+50; break;
 		case 12:		c->Wing.Type = MODEL_WING+50; break;
 		default:
-			c->Wing.Type = MODEL_WING + 35+Type;
+			c->Wing.Type = TakumiTier3WingModelForClass(c->Class, Type);
 			break;
 		}
 	}
@@ -14028,6 +14601,49 @@ void ChangeCharacterExt(int Key,BYTE *Equipment, CHARACTER * pCharacter, OBJECT 
         c->Wing.Option1 = 0;
         c->Wing.ExtOption = 0;
 	}
+
+	if (!TakumiPreviewHasTier3Wing(Equipment))
+	{
+		Type = (Equipment[15] >> 2) & 0x07;
+		if (Type > 0 && c->Wing.Type != -1)
+		{
+			switch (Type)
+			{
+			case 6:
+				c->Wing.Type = MODEL_WING + 43;
+				break;
+			default:
+				c->Wing.Type = TakumiTier3WingModelForClass(c->Class, Type);
+				break;
+			}
+		}
+
+		Type = (Equipment[16] >> 5);
+		if (Type > 0)
+		{
+			switch (Type)
+			{
+			case 0x01: c->Wing.Type = MODEL_WING+130;	break;
+			case 0x02: c->Wing.Type = MODEL_WING+131;	break;
+			case 0x03: c->Wing.Type = MODEL_WING+132;	break;
+			case 0x04: c->Wing.Type = MODEL_WING+133;	break;
+			case 0x05: c->Wing.Type = MODEL_WING+134;	break;
+			}
+		}
+	}
+
+	TakumiApplyPreviewTier3Wing(c, Equipment);
+#ifdef __ANDROID__
+	if (c->Wing.Type >= MODEL_WING)
+	{
+		g_ErrorReport.Write(
+			"[TakumiWear] preview wing item=%d model=%d class=%d meshs=%d\r\n",
+			c->Wing.Type - MODEL_ITEM,
+			c->Wing.Type,
+			c->Class,
+			Models[c->Wing.Type].NumMeshs);
+	}
+#endif
 #else //PBG_ADD_NEWCHAR_MONK_ITEM
 	if(Type == 3)
     {
@@ -14054,28 +14670,37 @@ void ChangeCharacterExt(int Key,BYTE *Equipment, CHARACTER * pCharacter, OBJECT 
 		c->Wing.Type = MODEL_WING + Type;
 	}
 
-	Type = (Equipment[15] >> 2) & 0x07;
-	if(Type > 0)
+	if (!TakumiPreviewHasTier3Wing(Equipment))
 	{
-		switch (Type)
+		Type = (Equipment[15] >> 2) & 0x07;
+		if (Type > 0 && c->Wing.Type != -1)
 		{
-		case 6:		c->Wing.Type = MODEL_WING+43;	break;
-		default:	c->Wing.Type = MODEL_WING+35+Type;
+			switch (Type)
+			{
+			case 6:
+				c->Wing.Type = MODEL_WING + 43;
+				break;
+			default:
+				c->Wing.Type = TakumiTier3WingModelForClass(c->Class, Type);
+				break;
+			}
+		}
+
+		Type = (Equipment[16] >> 5);
+		if (Type > 0)
+		{
+			switch (Type)
+			{
+			case 0x01: c->Wing.Type = MODEL_WING+130;	break;
+			case 0x02: c->Wing.Type = MODEL_WING+131;	break;
+			case 0x03: c->Wing.Type = MODEL_WING+132;	break;
+			case 0x04: c->Wing.Type = MODEL_WING+133;	break;
+			case 0x05: c->Wing.Type = MODEL_WING+134;	break;
+			}
 		}
 	}
 
-	Type = (Equipment[16] >> 5);
-	if(Type > 0)
-	{
-		switch (Type)
-		{
-		case 0x01: c->Wing.Type = MODEL_WING+130;	break;
-		case 0x02: c->Wing.Type = MODEL_WING+131;	break;
-		case 0x03: c->Wing.Type = MODEL_WING+132;	break;
-		case 0x04: c->Wing.Type = MODEL_WING+133;	break;
-		case 0x05: c->Wing.Type = MODEL_WING+134;	break;
-		}
-	}
+	TakumiApplyPreviewTier3Wing(c, Equipment);
 #endif //PBG_ADD_NEWCHAR_MONK_ITEM
 	if (pHelper == NULL)
 	{
@@ -14087,7 +14712,14 @@ void ChangeCharacterExt(int Key,BYTE *Equipment, CHARACTER * pCharacter, OBJECT 
 		pHelper->Live = false;
 	}
 	Type = Equipment[4]&3;
-	if(Type == 3)
+	if (SceneFlag == CHARACTER_SCENE && Type == 3)
+	{
+		// Legacy CharSet[5]|=3 (no helper). Do not read Equipment[9] — excellent bits spawn pegasus/angel.
+		c->Helper.Type = -1;
+		c->Helper.Option1 = 0;
+		c->Helper.ExtOption = 0;
+	}
+	else if(Type == 3)
 	{
         Type = Equipment[9]&0x01;
         if ( Type==1 )
@@ -14128,22 +14760,33 @@ void ChangeCharacterExt(int Key,BYTE *Equipment, CHARACTER * pCharacter, OBJECT 
 		}
 		else
 		{
-			c->Helper.Type = MODEL_HELPER+Type;
-			int HelperType = 0;
-			BOOL bCreateHelper = TRUE;
-			switch(Type)
+			// Legacy empty helper is CharSet[5]|=3 (Equipment[4]&3==3). Type==0 is unpacked armor/boots
+			// in the same byte — must not spawn Guardian Angel on character select.
+			if (SceneFlag == CHARACTER_SCENE && Type == 0)
 			{
-			case 0:HelperType = MODEL_HELPER;break;
-			case 2:HelperType = MODEL_UNICON;break;
-			case 3:HelperType = MODEL_PEGASUS;break;
-			default:bCreateHelper = FALSE;break;
+				c->Helper.Type = -1;
+				c->Helper.Option1 = 0;
+				c->Helper.ExtOption = 0;
 			}
-			if (bCreateHelper == TRUE)
+			else
 			{
-				if (pHelper == NULL)
-					CreateBug( HelperType, o->Position,o);
-				else
-					CreateBugSub( HelperType, o->Position,o,pHelper);
+				c->Helper.Type = MODEL_HELPER+Type;
+				int HelperType = 0;
+				BOOL bCreateHelper = TRUE;
+				switch(Type)
+				{
+				case 0:HelperType = MODEL_HELPER;break;
+				case 2:HelperType = MODEL_UNICON;break;
+				case 3:HelperType = MODEL_PEGASUS;break;
+				default:bCreateHelper = FALSE;break;
+				}
+				if (bCreateHelper == TRUE)
+				{
+					if (pHelper == NULL)
+						CreateBug( HelperType, o->Position,o);
+					else
+						CreateBugSub( HelperType, o->Position,o,pHelper);
+				}
 			}
 		}
 	}
@@ -14201,7 +14844,12 @@ void ChangeCharacterExt(int Key,BYTE *Equipment, CHARACTER * pCharacter, OBJECT 
 				CreateBugSub(MODEL_FENRIR_RED, o->Position, o, pHelper);
 		}
 	}
-	//===Custom pet
+	//===Custom pet (skip on character select when roster preview marks empty helper — stale pet DB)
+	const bool skipSelectScreenCustomPet =
+		(SceneFlag == CHARACTER_SCENE && Equipment != NULL && (Equipment[4] & 3) == 3);
+
+	if (!skipSelectScreenCustomPet)
+	{
 	PMSG_NEW_CHARACTER_CHARSET_RECV* SelectCharSet = GetNewCharSetSelectCharacter(c->ID);
 
 	if (SceneFlag == 4)
@@ -14368,7 +15016,15 @@ void ChangeCharacterExt(int Key,BYTE *Equipment, CHARACTER * pCharacter, OBJECT 
 				CreateBugSub(c->Helper.Type, o->Position, o, pHelper);
 		}
 	}
+	} // !skipSelectScreenCustomPet
+
     DeleteParts ( c );
+
+	if (SceneFlag == CHARACTER_SCENE && o->Type == MODEL_PLAYER)
+	{
+		o->Alpha = 1.f;
+	}
+
     Type = (Equipment[11]>>1)&0x01;
     if ( Type==1 )
     {
@@ -14401,7 +15057,7 @@ void ChangeCharacterExt(int Key,BYTE *Equipment, CHARACTER * pCharacter, OBJECT 
 	}
 	else
 	{
-		c->BodyPart[BODYPART_HELM].Type = MODEL_HELM+ExtType;
+		c->BodyPart[BODYPART_HELM].Type = PreviewWearModelType(MODEL_HELM, ExtType);
 	}
 
 	ExtType = (Equipment[2]&15)+((Equipment[8]>>6)&1)*16 +((Equipment[13]>>4)&15)*32;
@@ -14411,7 +15067,7 @@ void ChangeCharacterExt(int Key,BYTE *Equipment, CHARACTER * pCharacter, OBJECT 
 	}
 	else
 	{
-		c->BodyPart[BODYPART_ARMOR].Type = MODEL_ARMOR+ExtType;
+		c->BodyPart[BODYPART_ARMOR].Type = PreviewWearModelType(MODEL_ARMOR, ExtType);
 	}
 	
 	ExtType = (Equipment[3]>>4)+((Equipment[8]>>5)&1)*16 +(Equipment[13]&15)*32;
@@ -14421,7 +15077,7 @@ void ChangeCharacterExt(int Key,BYTE *Equipment, CHARACTER * pCharacter, OBJECT 
 	}
 	else
 	{
-		c->BodyPart[BODYPART_PANTS].Type = MODEL_PANTS+ExtType;
+		c->BodyPart[BODYPART_PANTS].Type = PreviewWearModelType(MODEL_PANTS, ExtType);
 	}
 	
 	ExtType = (Equipment[3]&15)+((Equipment[8]>>4)&1)*16 +((Equipment[14]>>4)&15)*32;
@@ -14431,7 +15087,7 @@ void ChangeCharacterExt(int Key,BYTE *Equipment, CHARACTER * pCharacter, OBJECT 
 	}
 	else
 	{
-		c->BodyPart[BODYPART_GLOVES].Type = MODEL_GLOVES+ExtType;
+		c->BodyPart[BODYPART_GLOVES].Type = PreviewWearModelType(MODEL_GLOVES, ExtType);
 	}
 	
 	ExtType = (Equipment[4]>>4)+((Equipment[8]>>3)&1)*16 +(Equipment[14]&15)*32;
@@ -14441,7 +15097,7 @@ void ChangeCharacterExt(int Key,BYTE *Equipment, CHARACTER * pCharacter, OBJECT 
 	}
 	else
 	{
-		c->BodyPart[BODYPART_BOOTS].Type = MODEL_BOOTS+ExtType;
+		c->BodyPart[BODYPART_BOOTS].Type = PreviewWearModelType(MODEL_BOOTS, ExtType);
 	}
 
 	c->BodyPart[BODYPART_HELM  ].Level = LevelConvert((Level>> 6)&7);
@@ -14470,10 +15126,23 @@ void ChangeCharacterExt(int Key,BYTE *Equipment, CHARACTER * pCharacter, OBJECT 
     c->ExtendState = Equipment[10]&0x01;
 
     ChangeChaosCastleUnit (c);
-	SetCharacterScale(c);	
+	SetCharacterScale(c);
+
+	TakumiEnsureCharacterWearModelsLoaded(c);
 }
 
 extern int HeroIndex;
+
+static void CopyCharacterIdSafe(CHARACTER* character, const char* source)
+{
+	if (character == nullptr || source == nullptr)
+	{
+		return;
+	}
+
+	strncpy(character->ID, source, sizeof(character->ID) - 1);
+	character->ID[sizeof(character->ID) - 1] = '\0';
+}
 
 void Setting_Monster(CHARACTER *c,int Type,int PositionX,int PositionY)
 {
@@ -14496,8 +15165,7 @@ void Setting_Monster(CHARACTER *c,int Type,int PositionX,int PositionY)
 		{
 			if(Type == MonsterScript[i].Type)
 			{
-	     		strcpy(c->ID,MonsterScript[i].Name);
-	
+				CopyCharacterIdSafe(c, MonsterScript[i].Name);
 				break;
 			}
 		}
@@ -14505,7 +15173,7 @@ void Setting_Monster(CHARACTER *c,int Type,int PositionX,int PositionY)
 
 		if (NpcName != 0)
 		{
-			strcpy(c->ID, NpcName->Name);
+			CopyCharacterIdSafe(c, NpcName->Name);
 		}
 
 		c->MonsterIndex = Type;
@@ -14708,7 +15376,7 @@ CHARACTER *CreateMonster(int Type,int PositionX,int PositionY,int Key)
 	if (BossClass)
 	{
 		c = CreateCharacter(Key, MODEL_PLAYER, PositionX, PositionY);
-		strcpy(c->ID, BossClass->Name);
+		CopyCharacterIdSafe(c, BossClass->Name);
 		c->BodyPart[BODYPART_HELM].Type = MODEL_HELM + BossClass->SetID;
 		c->BodyPart[BODYPART_HELM].Level = 7;
 		c->BodyPart[BODYPART_HELM].Option1 = 1;
@@ -14783,7 +15451,7 @@ CHARACTER *CreateMonster(int Type,int PositionX,int PositionY,int Key)
 			}
 NexCustomMonter:
 			c = CreateCharacter(Key, ModelID, PositionX, PositionY);
-			strcpy(c->ID, lpInfo->Name);
+			CopyCharacterIdSafe(c, lpInfo->Name);
 			c->Object.Scale = lpInfo->Size;
 			if (c != NULL)
 			{
@@ -14800,7 +15468,7 @@ NexCustomMonter:
 			OpenMonsterModel(Type);
 			int ModelID = Type + MODEL_MONSTER01;
 			c = CreateCharacter(Key, ModelID, PositionX, PositionY);
-			strcpy(c->ID, lpInfo->Name);
+			CopyCharacterIdSafe(c, lpInfo->Name);
 			c->Object.Scale = lpInfo->Size;
 			if (c != NULL)
 			{
@@ -14824,7 +15492,7 @@ NexCustomMonter:
         c->Object.SubType = rand()%2+10;
 		c->Weapon[0].Type = -1;
 		c->Weapon[1].Type = -1;
-		strcpy( c->ID, "±aÀ§º´" );
+		CopyCharacterIdSafe(c, "±aÀ§º´" );
 		break;		
 #ifdef ADD_ELF_SUMMON
     case 276:
@@ -14852,7 +15520,7 @@ NexCustomMonter:
         o->PriorAnimationFrame = 10.f;
         o->AnimationFrame = 10;
         o->BlendMesh = -1;
-		strcpy(c->ID,"");
+		CopyCharacterIdSafe(c,"");
        break;
     case 162 :
     case 164 :
@@ -14921,7 +15589,7 @@ NexCustomMonter:
 		c->Weapon[0].Type = MODEL_STAFF;
 		c->Weapon[0].Level = 11;
 		c->Object.Scale = 1.2f;
-		strcpy(c->ID,"¸¶¹ýÇØ°ñ");
+		CopyCharacterIdSafe(c,"¸¶¹ýÇØ°ñ");
         break;
     case 131 :
     	OpenMonsterModel(61);
@@ -14929,7 +15597,7 @@ NexCustomMonter:
         c->m_bFixForm = true;
 		c->Object.Scale = 0.8f;
         c->Object.EnableShadow = false;
-		strcpy(c->ID,"¼º¹®");
+		CopyCharacterIdSafe(c,"¼º¹®");
         break;
     case 132 :
     	OpenMonsterModel(60);
@@ -14937,7 +15605,7 @@ NexCustomMonter:
         c->m_bFixForm = true;
 		c->Object.Scale = 0.8f;
         c->Object.EnableShadow = false;
-		strcpy(c->ID,"¼ºÀÚÀÇ¼®°ü");
+		CopyCharacterIdSafe(c,"¼ºÀÚÀÇ¼®°ü");
 		break;
 	case 133:
 		OpenMonsterModel(60);
@@ -14945,7 +15613,7 @@ NexCustomMonter:
         c->m_bFixForm = true;
 		c->Object.Scale = 0.8f;
         c->Object.EnableShadow = false;
-		strcpy(c->ID,"¼ºÀÚÀÇ¼®°ü");
+		CopyCharacterIdSafe(c,"¼ºÀÚÀÇ¼®°ü");
 		break;
 	case 134:
 		OpenMonsterModel(60);
@@ -14953,7 +15621,7 @@ NexCustomMonter:
         c->m_bFixForm = true;
 		c->Object.Scale = 0.8f;
         c->Object.EnableShadow = false;
-		strcpy(c->ID,"¼ºÀÚÀÇ¼®°ü");
+		CopyCharacterIdSafe(c,"¼ºÀÚÀÇ¼®°ü");
         break;
 	case 84 :
 	case 90 :
@@ -14998,7 +15666,7 @@ NexCustomMonter:
 		c->Weapon[1].Type = MODEL_AXE+8;
 		c->Weapon[1].Level = 0;
 		c->Object.Scale = 1.0f;
-		strcpy(c->ID,"ÈæÇØ°ñÀü»ç");
+		CopyCharacterIdSafe(c,"ÈæÇØ°ñÀü»ç");
         break;
     case 87 :
 	case 93 :
@@ -15011,7 +15679,7 @@ NexCustomMonter:
     	OpenMonsterModel(58);
 		c = CreateCharacter(Key,MODEL_MONSTER01+58,PositionX,PositionY);
 		c->Object.Scale = 0.8f;
-		strcpy(c->ID,"ÀÚÀÌ¾ðÆ®¿À¿ì°Å");
+		CopyCharacterIdSafe(c,"ÀÚÀÌ¾ðÆ®¿À¿ì°Å");
         break;
     case 88 :
 	case 94 :
@@ -15031,7 +15699,7 @@ NexCustomMonter:
 			c->Weapon[0].Level = 0;
 		
 		c->Object.Scale = 1.19f;
-		strcpy(c->ID,"ºÓÀºÇØ°ñ±â»ç");
+		CopyCharacterIdSafe(c,"ºÓÀºÇØ°ñ±â»ç");
         break;
 	case 78:
     	OpenMonsterModel(19);
@@ -15039,12 +15707,12 @@ NexCustomMonter:
 		c->Weapon[0].Type = MODEL_AXE;
 		c->Weapon[0].Level = 9;
 		c->Object.Scale = 0.8f;
-		strcpy(c->ID,"°íºí¸°");
+		CopyCharacterIdSafe(c,"°íºí¸°");
 		break;
 	case 79:
     	OpenMonsterModel(31);
 		c = CreateCharacter(Key,MODEL_MONSTER01+31,PositionX,PositionY);
-		strcpy(c->ID,"µå·¡°ï");
+		CopyCharacterIdSafe(c,"µå·¡°ï");
 		c->Object.Scale = 0.9f;
 		break;
 	case 80:
@@ -15208,14 +15876,14 @@ NexCustomMonter:
     	OpenMonsterModel(156);
 		c = CreateCharacter(Key,MODEL_MONSTER01+156,PositionX,PositionY);
 		c->Object.Scale = 0.9f;
-		strcpy(c->ID,"ÀúÁÖ¹ÞÀº °íºí¸°");
+		CopyCharacterIdSafe(c,"ÀúÁÖ¹ÞÀº °íºí¸°");
 		o = &c->Object;
 		break;
 	case 476:
     	OpenMonsterModel(155);
 		c = CreateCharacter(Key,MODEL_MONSTER01+155,PositionX,PositionY);
 		c->Object.Scale = 1.7f;
-		strcpy(c->ID,"ÀúÁÖ¹ÞÀº »êÅ¸");
+		CopyCharacterIdSafe(c,"ÀúÁÖ¹ÞÀº »êÅ¸");
 		o = &c->Object;
 		break;
 	case 300:
@@ -15335,32 +16003,32 @@ NexCustomMonter:
 	case 150:
     	OpenMonsterModel(32);
 		c = CreateCharacter(Key,MODEL_MONSTER01+32,PositionX,PositionY);
-		strcpy(c->ID,"¹ß¸®");
+		CopyCharacterIdSafe(c,"¹ß¸®");
 		c->Object.Scale = 0.12f;
 		break;
 	case 44:
     	OpenMonsterModel(31);
 		c = CreateCharacter(Key,MODEL_MONSTER01+31,PositionX,PositionY);
-		strcpy(c->ID,"µå·¡°ï");
+		CopyCharacterIdSafe(c,"µå·¡°ï");
 		c->Object.Scale = 0.9f;
 		break;
 	case 43:
     	OpenMonsterModel(2);
 		c = CreateCharacter(Key,MODEL_MONSTER01+2,PositionX,PositionY);
-		strcpy(c->ID,"È²±Ý¹öÁöµå·¡°ï");
+		CopyCharacterIdSafe(c,"È²±Ý¹öÁöµå·¡°ï");
 		c->Object.Scale = 0.7f;
 		break;
 	case 42:
     	OpenMonsterModel(31);
 		c = CreateCharacter(Key,MODEL_MONSTER01+31,PositionX,PositionY);
-		strcpy(c->ID,"ÄïµÐ");
+		CopyCharacterIdSafe(c,"ÄïµÐ");
 		c->Object.Scale = 1.3f;
       	Vector(200.f,150.f,280.f,c->Object.BoundingBoxMax);
 		break;
 	case 41:
     	OpenMonsterModel(30);
 		c = CreateCharacter(Key,MODEL_MONSTER01+30,PositionX,PositionY);
-		strcpy(c->ID,"µ¥¾² Ä«¿ì");
+		CopyCharacterIdSafe(c,"µ¥¾² Ä«¿ì");
 		c->Weapon[0].Type = MODEL_MACE+3;
 		//c->Weapon[0].Type = MODEL_SWORD+14;
 		c->Object.Scale = 1.1f;
@@ -15369,7 +16037,7 @@ NexCustomMonter:
 	case 40:
     	OpenMonsterModel(29);
 		c = CreateCharacter(Key,MODEL_MONSTER01+29,PositionX,PositionY);
-		strcpy(c->ID,"µ¥¾² ³ªÀÌÆ®");
+		CopyCharacterIdSafe(c,"µ¥¾² ³ªÀÌÆ®");
 		c->Weapon[0].Type = MODEL_SWORD+15;
 		c->Weapon[0].Type = MODEL_SWORD+14;
 		//c->Weapon[1].Type = MODEL_SHIELD+8;
@@ -15379,7 +16047,7 @@ NexCustomMonter:
 	case 39:
     	OpenMonsterModel(28);
 		c = CreateCharacter(Key,MODEL_MONSTER01+28,PositionX,PositionY);
-		strcpy(c->ID,"Æ÷ÀÌÁð ½¦µµ¿ì");
+		CopyCharacterIdSafe(c,"Æ÷ÀÌÁð ½¦µµ¿ì");
 		c->Object.Scale = 1.2f;
 		c->Level = 1;
 		break;
@@ -15387,7 +16055,7 @@ NexCustomMonter:
 	case 67:	//¹ß·Ï2
     	OpenMonsterModel(27);
 		c = CreateCharacter(Key,MODEL_MONSTER01+27,PositionX,PositionY);
-		strcpy(c->ID,"¹ß·Ï");
+		CopyCharacterIdSafe(c,"¹ß·Ï");
 		c->Weapon[0].Type = MODEL_SPEAR+9;
 		c->Weapon[0].Level = 9;
 		c->Object.Scale = 1.6f;
@@ -15395,18 +16063,18 @@ NexCustomMonter:
 	case 37:
     	OpenMonsterModel(26);
 		c = CreateCharacter(Key,MODEL_MONSTER01+26,PositionX,PositionY);
-		strcpy(c->ID,"µ¥ºô");
+		CopyCharacterIdSafe(c,"µ¥ºô");
 		c->Object.Scale = 1.1f;
 		break;
 	case 36:
     	OpenMonsterModel(28);
 		c = CreateCharacter(Key,MODEL_MONSTER01+28,PositionX,PositionY);
-		strcpy(c->ID,"½¦µµ¿ì");
+		CopyCharacterIdSafe(c,"½¦µµ¿ì");
 		c->Object.Scale = 1.2f;
 		break;
     	/*OpenMonsterModel(7);
 		c = CreateCharacter(Key,MODEL_MONSTER01+7,PositionX,PositionY);
-		strcpy(c->ID,"ºí·¯µå °í½ºÆ®");
+		CopyCharacterIdSafe(c,"ºí·¯µå °í½ºÆ®");
 		c->Object.AlphaTarget = 0.4f;
 		c->MoveSpeed = 15;
 		c->Blood = true;
@@ -15415,7 +16083,7 @@ NexCustomMonter:
 	case 35:
     	OpenMonsterModel(11);
 		c = CreateCharacter(Key,MODEL_MONSTER01+11,PositionX,PositionY);
-		strcpy(c->ID,"µ¥¾² °í¸£°ï");
+		CopyCharacterIdSafe(c,"µ¥¾² °í¸£°ï");
 		c->Object.Scale = 1.3f;
 		c->Weapon[0].Type = MODEL_AXE+8;
 		c->Weapon[1].Type = MODEL_AXE+8;
@@ -15425,7 +16093,7 @@ NexCustomMonter:
 		break;
 	case 34:
 		c = CreateCharacter(Key,MODEL_PLAYER,PositionX,PositionY);
-		strcpy(c->ID,"ÀúÁÖ¹ÞÀº ¹ý»ç");
+		CopyCharacterIdSafe(c,"ÀúÁÖ¹ÞÀº ¹ý»ç");
 		c->BodyPart[BODYPART_HELM  ].Type = MODEL_HELM  +3;
 		c->BodyPart[BODYPART_ARMOR ].Type = MODEL_ARMOR +3;
 		c->BodyPart[BODYPART_PANTS ].Type = MODEL_PANTS +3;
@@ -15450,7 +16118,7 @@ NexCustomMonter:
 		break;
     	/*OpenMonsterModel(5);
 		c = CreateCharacter(Key,MODEL_MONSTER01+5,PositionX,PositionY);
-		strcpy(c->ID,"ÀÚÀÌ¾ðÆ®");
+		CopyCharacterIdSafe(c,"ÀÚÀÌ¾ðÆ®");
 		c->Weapon[0].Type = MODEL_AXE+2;
 		c->Weapon[1].Type = MODEL_AXE+2;
 		c->Object.Scale = 0.7f;
@@ -15463,17 +16131,17 @@ NexCustomMonter:
 		c->Weapon[1].Type = MODEL_SHIELD+1;
 		c->Object.Scale = 1.2f;
 		c->Level = 1;
-		strcpy(c->ID,"°íºí¸° ´ëÀå");
+		CopyCharacterIdSafe(c,"°íºí¸° ´ëÀå");
 		break;
 	case 32:
     	OpenMonsterModel(25);
 		c = CreateCharacter(Key,MODEL_MONSTER01+25,PositionX,PositionY);
-		strcpy(c->ID,"µ¹±«¹°");
+		CopyCharacterIdSafe(c,"µ¹±«¹°");
 		break;
 	case 31:
     	OpenMonsterModel(24);
 		c = CreateCharacter(Key,MODEL_MONSTER01+24,PositionX,PositionY);
-		strcpy(c->ID,"¾Æ°ï");
+		CopyCharacterIdSafe(c,"¾Æ°ï");
 		c->Object.Scale = 1.3f;
 		c->Weapon[0].Type = MODEL_SWORD+8;
 		c->Weapon[1].Type = MODEL_SWORD+8;
@@ -15481,13 +16149,13 @@ NexCustomMonter:
 	case 30:
     	OpenMonsterModel(23);
 		c = CreateCharacter(Key,MODEL_MONSTER01+23,PositionX,PositionY);
-		strcpy(c->ID,"½£ÀÇ±«¹°");
+		CopyCharacterIdSafe(c,"½£ÀÇ±«¹°");
 		c->Object.Scale = 0.75f;
 		break;
 	case 29:
     	OpenMonsterModel(22);
 		c = CreateCharacter(Key,MODEL_MONSTER01+22,PositionX,PositionY);
-		strcpy(c->ID,"ÇåÅÍ");
+		CopyCharacterIdSafe(c,"ÇåÅÍ");
 		c->Weapon[0].Type = MODEL_BOW+10;
 		c->Object.Scale = 0.95f;
 		break;
@@ -15496,21 +16164,21 @@ NexCustomMonter:
 		c = CreateCharacter(Key,MODEL_MONSTER01+21,PositionX,PositionY);
 		c->Weapon[0].Type = MODEL_SPEAR+1;
 		c->Object.Scale = 0.8f;
-		strcpy(c->ID,"Ç³µ­ÀÌ±«¹°");
+		CopyCharacterIdSafe(c,"Ç³µ­ÀÌ±«¹°");
 		c->Object.BlendMesh = 1;
 		break;
 	case 27:
     	OpenMonsterModel(20);
 		c = CreateCharacter(Key,MODEL_MONSTER01+20,PositionX,PositionY);
 		c->Object.Scale = 1.1f;
-		strcpy(c->ID,"°í¸®Àü°¥");
+		CopyCharacterIdSafe(c,"°í¸®Àü°¥");
 		break;
 	case 26:
     	OpenMonsterModel(19);
 		c = CreateCharacter(Key,MODEL_MONSTER01+19,PositionX,PositionY);
 		c->Weapon[0].Type = MODEL_AXE;
 		c->Object.Scale = 0.8f;
-		strcpy(c->ID,"°íºí¸°");
+		CopyCharacterIdSafe(c,"°íºí¸°");
 		break;
 	case 25:
     	OpenMonsterModel(18);
@@ -15521,12 +16189,12 @@ NexCustomMonter:
 		c->Object.Scale = 1.1f;
 		c->Object.LightEnable = false;
 		c->Level = 3;
-		strcpy(c->ID,"¾ÆÀÌ½ºÄý");
+		CopyCharacterIdSafe(c,"¾ÆÀÌ½ºÄý");
 		break;
 	case 24:
     	OpenMonsterModel(17);
 		c = CreateCharacter(Key,MODEL_MONSTER01+17,PositionX,PositionY);
-		strcpy(c->ID,"¿ú");
+		CopyCharacterIdSafe(c,"¿ú");
 		break;
 	case 23:
     	OpenMonsterModel(16);
@@ -15534,37 +16202,37 @@ NexCustomMonter:
 		c->Weapon[0].Type = MODEL_AXE+7;
 		c->Weapon[1].Type = MODEL_SHIELD+10;
 		c->Object.Scale = 1.15f;
-		strcpy(c->ID,"È£¸Óµå");
+		CopyCharacterIdSafe(c,"È£¸Óµå");
 		break;
 	case 22:
     	OpenMonsterModel(15);
 		c = CreateCharacter(Key,MODEL_MONSTER01+15,PositionX,PositionY);
 		c->Object.BlendMesh = 0;
 		c->Object.BlendMeshLight = 1.f;
-		strcpy(c->ID,"¾óÀ½±«¹°");
+		CopyCharacterIdSafe(c,"¾óÀ½±«¹°");
 		break;
 	case 21:
     	OpenMonsterModel(14);
 		c = CreateCharacter(Key,MODEL_MONSTER01+14,PositionX,PositionY);
 		c->Object.Scale = 0.95f;
-		strcpy(c->ID,"¾Ï»ìÀÚ");
+		CopyCharacterIdSafe(c,"¾Ï»ìÀÚ");
 		break;
 	case 20:
     	OpenMonsterModel(13);
 		c = CreateCharacter(Key,MODEL_MONSTER01+13,PositionX,PositionY);
-		strcpy(c->ID,"¼³ÀÎ ´ëÀå");
+		CopyCharacterIdSafe(c,"¼³ÀÎ ´ëÀå");
 		c->Object.Scale = 1.4f;
 		break;
 	case 19:
     	OpenMonsterModel(12);
 		c = CreateCharacter(Key,MODEL_MONSTER01+12,PositionX,PositionY);
-		strcpy(c->ID,"¼³ÀÎ");
+		CopyCharacterIdSafe(c,"¼³ÀÎ");
 		c->Object.Scale = 1.1f;
 		break;
 	case 18:
     	OpenMonsterModel(11);
 		c = CreateCharacter(Key,MODEL_MONSTER01+11,PositionX,PositionY);
-		strcpy(c->ID,"°í¸£°ï");
+		CopyCharacterIdSafe(c,"°í¸£°ï");
 		c->Object.Scale = 1.5f;
 		c->Weapon[0].Type = MODEL_STAFF+4;
 		c->Object.BlendMesh = 1;
@@ -15573,13 +16241,13 @@ NexCustomMonter:
 	case 3:
     	OpenMonsterModel(9);
 		c = CreateCharacter(Key,MODEL_MONSTER01+9,PositionX,PositionY);
-		strcpy(c->ID,"°Å¹Ì");
+		CopyCharacterIdSafe(c,"°Å¹Ì");
 		c->Object.Scale = 0.4f;
 		break;
 	case 17:
     	OpenMonsterModel(10);
 		c = CreateCharacter(Key,MODEL_MONSTER01+10,PositionX,PositionY);
-		strcpy(c->ID,"½ÎÀÌÅ©·Ó½º");
+		CopyCharacterIdSafe(c,"½ÎÀÌÅ©·Ó½º");
 		c->Weapon[0].Type = MODEL_AXE+8;
 		//c->Weapon[1].Type = MODEL_MACE+2;
 		//c->Object.HiddenMesh = 2;
@@ -15593,21 +16261,21 @@ NexCustomMonter:
 		if(Type==0)
 		{
 			c->Object.HiddenMesh = 0;
-			strcpy(c->ID,"¼Ò»ÔÀü»ç");
+			CopyCharacterIdSafe(c,"¼Ò»ÔÀü»ç");
 			c->Object.Scale = 0.8f;
 			c->Weapon[0].Type = MODEL_AXE+6;
 		}
 		else if(Type==4)
 		{
 			c->Weapon[0].Type = MODEL_SPEAR+7;
-			strcpy(c->ID,"¼Ò»ÔÀü»ç ´ëÀå");
+			CopyCharacterIdSafe(c,"¼Ò»ÔÀü»ç ´ëÀå");
 			c->Object.Scale = 1.15f;
 			c->Level = 1;
 		}
 		else if(Type==8)
 		{
 			c->Weapon[0].Type = MODEL_SPEAR+8;
-			strcpy(c->ID,"Æ÷ÀÌÁð ¼Ò»ÔÀü»ç");
+			CopyCharacterIdSafe(c,"Æ÷ÀÌÁð ¼Ò»ÔÀü»ç");
 			c->Object.Scale = 1.f;
 			c->Level = 2;
 
@@ -15617,7 +16285,7 @@ NexCustomMonter:
 	case 11:
     	OpenMonsterModel(7);
 		c = CreateCharacter(Key,MODEL_MONSTER01+7,PositionX,PositionY);
-		strcpy(c->ID,"°í½ºÆ®");
+		CopyCharacterIdSafe(c,"°í½ºÆ®");
 		c->Object.AlphaTarget = 0.4f;
 		c->MoveSpeed = 15;
 		c->Blood = true;
@@ -15625,13 +16293,13 @@ NexCustomMonter:
 	case 12:
     	OpenMonsterModel(6);
 		c = CreateCharacter(Key,MODEL_MONSTER01+6,PositionX,PositionY);
-		strcpy(c->ID,"À¯Ãæ");
+		CopyCharacterIdSafe(c,"À¯Ãæ");
 		c->Object.Scale = 0.6f;
 		break;
 	case 13:
     	OpenMonsterModel(8);
 		c = CreateCharacter(Key,MODEL_MONSTER01+8,PositionX,PositionY);
-		strcpy(c->ID,"Çï½ºÆÄÀÌ´õ");
+		CopyCharacterIdSafe(c,"Çï½ºÆÄÀÌ´õ");
 		c->Weapon[0].Type = MODEL_STAFF+2;
 		c->Object.Scale = 1.1f;
 		break;
@@ -15642,7 +16310,7 @@ NexCustomMonter:
 		if(Type==1)
 		{
 			c->Object.HiddenMesh = 0;
-			strcpy(c->ID,"ÇÏ¿îµå");
+			CopyCharacterIdSafe(c,"ÇÏ¿îµå");
 			c->Object.Scale = 0.85f;
 			c->Weapon[0].Type = MODEL_SWORD+4;
 		}
@@ -15651,7 +16319,7 @@ NexCustomMonter:
 			c->Object.HiddenMesh = 1;
 			c->Weapon[0].Type = MODEL_SWORD+7;
 			c->Weapon[1].Type = MODEL_SHIELD+9;
-			strcpy(c->ID,"ÇïÇÏ¿îµå");
+			CopyCharacterIdSafe(c,"ÇïÇÏ¿îµå");
 			c->Object.Scale = 1.1f;
 			c->Level = 1;
 		}
@@ -15660,14 +16328,14 @@ NexCustomMonter:
 	case 2:
     	OpenMonsterModel(2);
 		c = CreateCharacter(Key, MODEL_MONSTER01+2, PositionX, PositionY);
-		strcpy(c->ID,"Unknown2");
+		CopyCharacterIdSafe(c,"Unknown2");
 		c->Object.Scale = 0.5f;
 		break;
 		
 	case 10:
     	OpenMonsterModel(3);
 		c = CreateCharacter(Key,MODEL_MONSTER01+3,PositionX,PositionY);
-		strcpy(c->ID,"Unknown10");
+		CopyCharacterIdSafe(c,"Unknown10");
 		c->Object.Scale = 0.8f;
 		c->Level = 1;
 		c->Weapon[0].Type = MODEL_SWORD+13;
@@ -15678,13 +16346,13 @@ NexCustomMonter:
 		c = CreateCharacter(Key,MODEL_MONSTER01+4,PositionX,PositionY);
 		if(Type==6)
 		{
-			strcpy(c->ID,"¸®Ä¡");
+			CopyCharacterIdSafe(c,"¸®Ä¡");
 			c->Weapon[0].Type = MODEL_STAFF+2;
 			c->Object.Scale = 0.85f;
 		}
 		else
 		{
-			strcpy(c->ID,"½ã´õ ¸®Ä¡");
+			CopyCharacterIdSafe(c,"½ã´õ ¸®Ä¡");
 			c->Weapon[0].Type = MODEL_STAFF+3;
 			c->Level = 1;
 			c->Object.Scale = 1.1f;
@@ -15693,7 +16361,7 @@ NexCustomMonter:
 	case 7:
     	OpenMonsterModel(5);
 		c = CreateCharacter(Key,MODEL_MONSTER01+5,PositionX,PositionY);
-		strcpy(c->ID,"ÀÚÀÌ¾ðÆ®");
+		CopyCharacterIdSafe(c,"ÀÚÀÌ¾ðÆ®");
 		c->Weapon[0].Type = MODEL_AXE+2;
 		c->Weapon[1].Type = MODEL_AXE+2;
 		c->Object.Scale = 1.6f;
@@ -15703,7 +16371,7 @@ NexCustomMonter:
 	case 55:
 	case 56:
 		c = CreateCharacter(Key,MODEL_PLAYER,PositionX,PositionY);
-		strcpy(c->ID,"ÇØ°ñÀü»ç");
+		CopyCharacterIdSafe(c,"ÇØ°ñÀü»ç");
 		c->Object.SubType = MODEL_SKELETON1;
 		c->Blood = true;
 		if(Type==14)
@@ -15726,7 +16394,7 @@ NexCustomMonter:
 		break;
 	case 15:
 		c = CreateCharacter(Key,MODEL_PLAYER,PositionX,PositionY);
-		strcpy(c->ID,"ÇØ°ñ±Ã¼ö");
+		CopyCharacterIdSafe(c,"ÇØ°ñ±Ã¼ö");
 		c->Object.Scale = 1.1f;
 		c->Weapon[1].Type = MODEL_BOW+2;
 		c->Object.SubType = MODEL_SKELETON2;
@@ -15735,7 +16403,7 @@ NexCustomMonter:
 		break;
 	case 16:
 		c = CreateCharacter(Key,MODEL_PLAYER,PositionX,PositionY);
-		strcpy(c->ID,"ÇØ°ñÀü»ç ´ëÀå");
+		CopyCharacterIdSafe(c,"ÇØ°ñÀü»ç ´ëÀå");
 		c->Object.Scale = 1.2f;
 		c->Weapon[0].Type = MODEL_AXE+3;
 		c->Weapon[1].Type = MODEL_SHIELD+6;
@@ -15745,32 +16413,32 @@ NexCustomMonter:
 		break;
 	case 372:
 		c = CreateCharacter(Key, MODEL_PLAYER, PositionX, PositionY);
-		::strcpy(c->ID, "¿¤¸®Æ® ÇØ°ñÀü»ç");
+		::CopyCharacterIdSafe(c, "¿¤¸®Æ® ÇØ°ñÀü»ç");
 		c->Object.Scale = 0.95f;
 		c->Object.SubType = MODEL_SKELETON_PCBANG;
 		break;
 	case 373:
 		c = CreateCharacter(Key, MODEL_PLAYER, PositionX, PositionY);
-		::strcpy(c->ID, "Àè ¿À·£ÅÏ");
+		::CopyCharacterIdSafe(c, "Àè ¿À·£ÅÏ");
 		c->Object.Scale = 0.95f;
 		c->Object.SubType = MODEL_HALLOWEEN;
 		break;
 	case 374:
 		c = CreateCharacter(Key, MODEL_PLAYER, PositionX, PositionY);
-		::strcpy(c->ID, "Å©¸®½º¸¶½º °É");
+		::CopyCharacterIdSafe(c, "Å©¸®½º¸¶½º °É");
 		c->Object.Scale = 0.85f;
 		c->Object.SubType = MODEL_XMAS_EVENT_CHANGE_GIRL;
 		break;
 	case 378:
 		c = CreateCharacter(Key, MODEL_PLAYER, PositionX, PositionY);
-		::strcpy(c->ID, "GameMaster");
+		::CopyCharacterIdSafe(c, "GameMaster");
 		c->Object.Scale = 1.0f;
 		c->Object.SubType = MODEL_GM_CHARACTER;
 		break;
 	case 53:
     	OpenMonsterModel(39);
 		c = CreateCharacter(Key,MODEL_MONSTER01+39,PositionX,PositionY);
-		strcpy(c->ID,"Å¸ÀÌÅº");
+		CopyCharacterIdSafe(c,"Å¸ÀÌÅº");
     	c->Object.Scale = 1.8f;
 		c->Object.BlendMesh = 2;
 		c->Object.BlendMeshLight = 1.f;
@@ -15782,7 +16450,7 @@ NexCustomMonter:
 	case 151:
     	OpenMonsterModel(40);
 		c = CreateCharacter(Key,MODEL_MONSTER01+40,PositionX,PositionY);
-		strcpy(c->ID,"¼ÖÁ®");
+		CopyCharacterIdSafe(c,"¼ÖÁ®");
 		c->Weapon[1].Type = MODEL_BOW+14;
 		if(Type == 54)
           	c->Object.Scale = 1.1f;
@@ -15814,26 +16482,26 @@ NexCustomMonter:
     case 226:
    		OpenNpc ( MODEL_NPC_BREEDER );
 		c = CreateCharacter ( Key, MODEL_NPC_BREEDER, PositionX, PositionY );
-		strcpy ( c->ID, "Á¶·Ã»ç NPC" );
+		CopyCharacterIdSafe(c, "Á¶·Ã»ç NPC");
         break;
 
 #ifdef _PVP_MURDERER_HERO_ITEM
     case 227:
     	OpenNpc(MODEL_MASTER);
 		c = CreateCharacter(Key,MODEL_MASTER,PositionX,PositionY);
-		strcpy(c->ID,"»ìÀÎ¸¶»óÁ¡");
+		CopyCharacterIdSafe(c,"»ìÀÎ¸¶»óÁ¡");
         break;
 
     case 228:
 		OpenNpc(MODEL_HERO_SHOP);
 		c = CreateCharacter(Key,MODEL_HERO_SHOP,PositionX,PositionY);
-		strcpy(c->ID,"¿µ¿õ»óÁ¡");
+		CopyCharacterIdSafe(c,"¿µ¿õ»óÁ¡");
         break;
 #endif	// _PVP_MURDERER_HERO_ITEM
 
 	case 229 :
 		c = CreateCharacter ( Key, MODEL_PLAYER, PositionX, PositionY );
-		strcpy ( c->ID, "¸»·Ð" );
+		CopyCharacterIdSafe(c, "¸»·Ð");
 		c->BodyPart[BODYPART_HELM  ].Type = MODEL_HELM  +9;
 		c->BodyPart[BODYPART_HELM  ].Level= 7;
 		c->BodyPart[BODYPART_ARMOR ].Type = MODEL_ARMOR +9;
@@ -15852,7 +16520,7 @@ NexCustomMonter:
 	case 230:
 		OpenNpc(MODEL_MERCHANT_MAN);
 		c = CreateCharacter(Key,MODEL_MERCHANT_MAN,PositionX,PositionY);
-		strcpy(c->ID,"·Î·£Ãß°¡»óÀÎ");
+		CopyCharacterIdSafe(c,"·Î·£Ãß°¡»óÀÎ");
 		c->BodyPart[BODYPART_HELM  ].Type = MODEL_MERCHANT_MAN_HEAD;
 		c->BodyPart[BODYPART_ARMOR ].Type = MODEL_MERCHANT_MAN_UPPER+1;
 		c->BodyPart[BODYPART_GLOVES].Type = MODEL_MERCHANT_MAN_GLOVES+1;
@@ -15861,7 +16529,7 @@ NexCustomMonter:
 	case 231:
     	OpenNpc(MODEL_DEVIAS_TRADER);
 		c = CreateCharacter(Key,MODEL_DEVIAS_TRADER,PositionX,PositionY);
-		strcpy(c->ID,"µ¥ºñÃß°¡»óÀÎ");
+		CopyCharacterIdSafe(c,"µ¥ºñÃß°¡»óÀÎ");
 		break;
 
 	case 232:
@@ -15937,24 +16605,24 @@ NexCustomMonter:
 	case 241:
     	OpenNpc(MODEL_MASTER);
 		c = CreateCharacter(Key,MODEL_MASTER,PositionX,PositionY);
-		strcpy(c->ID,"¸¶½ºÅÍ");
+		CopyCharacterIdSafe(c,"¸¶½ºÅÍ");
 		break;
 	case 256:
 		OpenNpc(MODEL_NPC_SERBIS);
 		c = CreateCharacter(Key, MODEL_NPC_SERBIS, PositionX, PositionY);
-		strcpy(c->ID, "¼¼¸£ºñ½º");
+		CopyCharacterIdSafe(c, "¼¼¸£ºñ½º");
 		break;
 	case 257:
 		c = CreateCharacter(Key, MODEL_PLAYER, PositionX, PositionY);
 		MakeElfHelper(c);
-		strcpy(c->ID, "ÆäÀÌ¾Æ");
+		CopyCharacterIdSafe(c, "ÆäÀÌ¾Æ");
 		o = &c->Object;
 		CreateJoint(BITMAP_FLARE, o->Position, o->Position, o->Angle, 42, o, 15.f);
 		break;
 	case 242:
     	OpenNpc(MODEL_ELF_WIZARD);
 		c = CreateCharacter(Key,MODEL_ELF_WIZARD,PositionX,PositionY);
-		strcpy(c->ID,"¶ó¶ó ¿äÁ¤");
+		CopyCharacterIdSafe(c,"¶ó¶ó ¿äÁ¤");
 		o = &c->Object;
 		o->BlendMesh = 1;
     	o->Position[2] = RequestTerrainHeight(o->Position[0],o->Position[1]) + 140.f;
@@ -15962,26 +16630,26 @@ NexCustomMonter:
 	case 243:
     	OpenNpc(MODEL_ELF_MERCHANT);
 		c = CreateCharacter(Key,MODEL_ELF_MERCHANT,PositionX,PositionY);
-		strcpy(c->ID,"ÀåÀÎ");
+		CopyCharacterIdSafe(c,"ÀåÀÎ");
 		break;
 	case 244:
     	OpenNpc(MODEL_SNOW_MERCHANT);
 		c = CreateCharacter(Key,MODEL_SNOW_MERCHANT,PositionX,PositionY);
-		strcpy(c->ID,"¼úÁý¸¶´ã");
+		CopyCharacterIdSafe(c,"¼úÁý¸¶´ã");
 		break;
 	case 245:
     	OpenNpc(MODEL_SNOW_WIZARD);
 		c = CreateCharacter(Key,MODEL_SNOW_WIZARD,PositionX,PositionY);
-		strcpy(c->ID,"¸¶¹ý»ç");
+		CopyCharacterIdSafe(c,"¸¶¹ý»ç");
 		break;
 	case 246:
     	OpenNpc(MODEL_SNOW_SMITH);
 		c = CreateCharacter(Key,MODEL_SNOW_SMITH,PositionX,PositionY);
-		strcpy(c->ID,"¹«±â»óÀÎ");
+		CopyCharacterIdSafe(c,"¹«±â»óÀÎ");
 		break;
 	case 247:
 		c = CreateCharacter(Key,MODEL_PLAYER,PositionX,PositionY);
-		strcpy(c->ID,"°æºñº´");
+		CopyCharacterIdSafe(c,"°æºñº´");
 		c->BodyPart[BODYPART_HELM  ].Type = MODEL_HELM  +9;
 		c->BodyPart[BODYPART_ARMOR ].Type = MODEL_ARMOR +9;
 		c->BodyPart[BODYPART_PANTS ].Type = MODEL_PANTS +9;
@@ -15994,7 +16662,7 @@ NexCustomMonter:
 	case 248:
    		OpenNpc(MODEL_MERCHANT_MAN);
 		c = CreateCharacter(Key,MODEL_MERCHANT_MAN,PositionX,PositionY);
-		strcpy(c->ID,"¶°µ¹ÀÌ »óÀÎ");
+		CopyCharacterIdSafe(c,"¶°µ¹ÀÌ »óÀÎ");
 		c->BodyPart[BODYPART_HELM  ].Type = MODEL_MERCHANT_MAN_HEAD+1;
 		c->BodyPart[BODYPART_ARMOR ].Type = MODEL_MERCHANT_MAN_UPPER+1;
 		c->BodyPart[BODYPART_GLOVES].Type = MODEL_MERCHANT_MAN_GLOVES+1;
@@ -16002,7 +16670,7 @@ NexCustomMonter:
 		break;
 	case 249:
 		c = CreateCharacter(Key,MODEL_PLAYER,PositionX,PositionY);
-		strcpy(c->ID,"°æºñº´");
+		CopyCharacterIdSafe(c,"°æºñº´");
 		c->BodyPart[BODYPART_HELM  ].Type = MODEL_HELM  +9;
 		c->BodyPart[BODYPART_ARMOR ].Type = MODEL_ARMOR +9;
 		c->BodyPart[BODYPART_PANTS ].Type = MODEL_PANTS +9;
@@ -16014,7 +16682,7 @@ NexCustomMonter:
 	case 250:
     	OpenNpc(MODEL_MERCHANT_MAN);
 		c = CreateCharacter(Key,MODEL_MERCHANT_MAN,PositionX,PositionY);
-		strcpy(c->ID,"¶°µ¹ÀÌ »óÀÎ");
+		CopyCharacterIdSafe(c,"¶°µ¹ÀÌ »óÀÎ");
 		c->BodyPart[BODYPART_HELM  ].Type = MODEL_MERCHANT_MAN_HEAD;
 		c->BodyPart[BODYPART_ARMOR ].Type = MODEL_MERCHANT_MAN_UPPER;
 		c->BodyPart[BODYPART_GLOVES].Type = MODEL_MERCHANT_MAN_GLOVES;
@@ -16023,13 +16691,13 @@ NexCustomMonter:
 	case 251:
    		OpenNpc(MODEL_SMITH);
 		c = CreateCharacter(Key,MODEL_SMITH,PositionX,PositionY);
-		strcpy(c->ID,"´ëÀåÀåÀÌ ÇÑ½º");
+		CopyCharacterIdSafe(c,"´ëÀåÀåÀÌ ÇÑ½º");
 		c->Object.Scale = 0.95f;
 		break;
 	case 253:
     	OpenNpc(MODEL_MERCHANT_GIRL);
 		c = CreateCharacter(Key,MODEL_MERCHANT_GIRL,PositionX,PositionY);
-		strcpy(c->ID,"¹°¾àÆÄ´Â ¼Ò³à");
+		CopyCharacterIdSafe(c,"¹°¾àÆÄ´Â ¼Ò³à");
 		c->BodyPart[BODYPART_HELM  ].Type = MODEL_MERCHANT_GIRL_HEAD;
 		c->BodyPart[BODYPART_ARMOR ].Type = MODEL_MERCHANT_GIRL_UPPER;
 		c->BodyPart[BODYPART_PANTS ].Type = MODEL_MERCHANT_GIRL_LOWER;
@@ -16037,12 +16705,12 @@ NexCustomMonter:
 	case 254:
     	OpenNpc(MODEL_SCIENTIST);
 		c = CreateCharacter(Key,MODEL_SCIENTIST,PositionX,PositionY);
-		strcpy(c->ID,"¸¶¹ý»ç ÆÄ½Ã");
+		CopyCharacterIdSafe(c,"¸¶¹ý»ç ÆÄ½Ã");
 		break;
 	case 255:
     	OpenNpc(MODEL_MERCHANT_FEMALE);
 		c = CreateCharacter(Key,MODEL_MERCHANT_FEMALE,PositionX,PositionY);
-		strcpy(c->ID,"¼úÁý¸¶´ã ¸®¾Æ¸Õ");
+		CopyCharacterIdSafe(c,"¼úÁý¸¶´ã ¸®¾Æ¸Õ");
 		c->BodyPart[BODYPART_HELM].Type  = MODEL_MERCHANT_FEMALE_HEAD+1;
 		c->BodyPart[BODYPART_ARMOR].Type = MODEL_MERCHANT_FEMALE_UPPER+1;
 		c->BodyPart[BODYPART_PANTS].Type = MODEL_MERCHANT_FEMALE_LOWER+1;
@@ -16051,13 +16719,13 @@ NexCustomMonter:
 	case 204:
 		OpenNpc(MODEL_CRYWOLF_STATUE);
 		c = CreateCharacter(Key,MODEL_CRYWOLF_STATUE,PositionX,PositionY);
-		strcpy(c->ID,"¼®»ó");
+		CopyCharacterIdSafe(c,"¼®»ó");
 		c->Object.Live = false;
 		break;
 	case 205:
 		OpenNpc(MODEL_CRYWOLF_ALTAR1);
 		c = CreateCharacter(Key,MODEL_CRYWOLF_ALTAR1,PositionX,PositionY);
-		strcpy(c->ID,"Á¦´Ü1");
+		CopyCharacterIdSafe(c,"Á¦´Ü1");
 		c->Object.Position[2] -= 10.0f;
 		c->Object.HiddenMesh = -2;
 		c->Object.Visible = false;
@@ -16066,7 +16734,7 @@ NexCustomMonter:
 	case 206:
 		OpenNpc(MODEL_CRYWOLF_ALTAR2);
 		c = CreateCharacter(Key,MODEL_CRYWOLF_ALTAR2,PositionX,PositionY);
-		strcpy(c->ID,"Á¦´Ü2");
+		CopyCharacterIdSafe(c,"Á¦´Ü2");
 		c->Object.HiddenMesh = -2;
 		c->Object.Position[2] -= 10.0f;
 		c->Object.Visible = false;
@@ -16075,7 +16743,7 @@ NexCustomMonter:
 	case 207:
 		OpenNpc(MODEL_CRYWOLF_ALTAR3);
 		c = CreateCharacter(Key,MODEL_CRYWOLF_ALTAR3,PositionX,PositionY);
-		strcpy(c->ID,"Á¦´Ü3");
+		CopyCharacterIdSafe(c,"Á¦´Ü3");
 		c->Object.HiddenMesh = -2;
 		c->Object.Position[2] -= 10.0f;
 		c->Object.Visible = false;
@@ -16084,7 +16752,7 @@ NexCustomMonter:
 	case 208:
 		OpenNpc(MODEL_CRYWOLF_ALTAR4);
 		c = CreateCharacter(Key,MODEL_CRYWOLF_ALTAR4,PositionX,PositionY);
-		strcpy(c->ID,"Á¦´Ü4");
+		CopyCharacterIdSafe(c,"Á¦´Ü4");
 		c->Object.HiddenMesh = -2;
 		c->Object.Position[2] -= 10.0f;
 		c->Object.Visible = false;
@@ -16093,7 +16761,7 @@ NexCustomMonter:
 	case 209:
 		OpenNpc(MODEL_CRYWOLF_ALTAR5);
 		c = CreateCharacter(Key,MODEL_CRYWOLF_ALTAR5,PositionX,PositionY);
-		strcpy(c->ID,"Á¦´Ü5");
+		CopyCharacterIdSafe(c,"Á¦´Ü5");
 		c->Object.HiddenMesh = -2;
 		c->Object.Position[2] -= 10.0f;
 		c->Object.Visible = false;
@@ -16102,7 +16770,7 @@ NexCustomMonter:
 	case 368:
 		OpenNpc(MODEL_SMELTING_NPC);
 		c = CreateCharacter(Key,MODEL_SMELTING_NPC,PositionX+1,PositionY-1);
-		strcpy(c->ID,"Á¦·ÃÀÇÅ¾NPC");
+		CopyCharacterIdSafe(c,"Á¦·ÃÀÇÅ¾NPC");
 		c->Object.Scale = 2.5f;
 		c->Object.EnableShadow = false;
 		c->Object.m_bRenderShadow = false;
@@ -16110,7 +16778,7 @@ NexCustomMonter:
 	case 379:
 		OpenNpc(MODEL_WEDDING_NPC);
 		c = CreateCharacter(Key,MODEL_WEDDING_NPC,PositionX,PositionY);
-		strcpy(c->ID,"WeddingNPC");
+		CopyCharacterIdSafe(c,"WeddingNPC");
 		c->Object.Scale = 1.1f;
 		c->Object.EnableShadow = false;
 		c->Object.m_bRenderShadow = false;
@@ -16119,7 +16787,7 @@ NexCustomMonter:
 	case 371:
 	case 414:
 		c = CreateCharacter(Key,MODEL_PLAYER,PositionX,PositionY);
-		strcpy(c->ID,"HelperName");
+		CopyCharacterIdSafe(c,"HelperName");
 		c->BodyPart[BODYPART_HELM  ].Type = MODEL_HELM  +9;
 		c->BodyPart[BODYPART_ARMOR ].Type = MODEL_ARMOR +9;
 		c->BodyPart[BODYPART_PANTS ].Type = MODEL_PANTS +9;
@@ -16133,12 +16801,12 @@ NexCustomMonter:
     	OpenNpc(MODEL_KALIMA_SHOP);
 		c = CreateCharacter(Key,MODEL_KALIMA_SHOP,PositionX,PositionY);
 		c->Object.Position[2] += 140.0f;
-		strcpy(c->ID,"KalimaShop");
+		CopyCharacterIdSafe(c,"KalimaShop");
 		break;
 	case 375:
 		{
 			c = CreateCharacter(Key, MODEL_PLAYER, PositionX, PositionY);
-			strcpy(c->ID,"ChaosCard");
+			CopyCharacterIdSafe(c,"ChaosCard");
 			c->BodyPart[BODYPART_HELM  ].Type = MODEL_HELM  +30;
 			c->BodyPart[BODYPART_ARMOR ].Type = MODEL_ARMOR +30;
 			c->BodyPart[BODYPART_PANTS ].Type = MODEL_PANTS +30;
@@ -16160,7 +16828,7 @@ NexCustomMonter:
 		{
 			OpenNpc(MODEL_BC_NPC1);
 			c = CreateCharacter(Key, MODEL_BC_NPC1, PositionX, PositionY);
-			strcpy(c->ID,"°ø¼º NPC");
+			CopyCharacterIdSafe(c,"°ø¼º NPC");
 			c->Object.Scale = 1.0f;
 			c->Object.Angle[2] = 0.f;
 			CreateObject(MODEL_BC_BOX, c->Object.Position, c->Object.Angle);
@@ -16170,7 +16838,7 @@ NexCustomMonter:
 		{
 			OpenNpc(MODEL_BC_NPC2);
 			c = CreateCharacter(Key, MODEL_BC_NPC2, PositionX, PositionY);
-			strcpy(c->ID,"°ø¼º NPC");
+			CopyCharacterIdSafe(c,"°ø¼º NPC");
 			c->Object.Scale = 1.0f;
 			c->Object.Angle[2] = 90.f;
 			CreateObject(MODEL_BC_BOX, c->Object.Position, c->Object.Angle);
@@ -16179,18 +16847,18 @@ NexCustomMonter:
 	case 406:
 		OpenNpc(MODEL_NPC_DEVIN);
 		c = CreateCharacter(Key,MODEL_NPC_DEVIN,PositionX,PositionY);
-		strcpy(c->ID,"»çÁ¦µ¥ºó");
+		CopyCharacterIdSafe(c,"»çÁ¦µ¥ºó");
 		break;
 	case 407:
 		OpenNpc(MODEL_NPC_QUARREL);
 		c = CreateCharacter(Key,MODEL_NPC_QUARREL,PositionX,PositionY);
-		strcpy(c->ID,"¿þ¾î¿ïÇÁÄõ·¼");
+		CopyCharacterIdSafe(c,"¿þ¾î¿ïÇÁÄõ·¼");
 		c->Object.Scale = 1.9f;
 		break;
 	case 408:
 		OpenNpc(MODEL_NPC_CASTEL_GATE);
 		c = CreateCharacter(Key,MODEL_NPC_CASTEL_GATE,PositionX,PositionY, 90.f);
-		strcpy(c->ID,"¼º¹®");
+		CopyCharacterIdSafe(c,"¼º¹®");
 		o = &c->Object;
 		o->Position[2] = RequestTerrainHeight(o->Position[0],o->Position[1]) + 240.f;
 		c->Object.Scale = 1.2f;
@@ -16202,7 +16870,7 @@ NexCustomMonter:
 		{
 			OpenMonsterModel(127);
 			c = CreateCharacter(Key, MODEL_MONSTER01+127, PositionX, PositionY);
-			strcpy(c->ID,"´ÞÅä³¢");
+			CopyCharacterIdSafe(c,"´ÞÅä³¢");
 			c->Object.Scale = 0.8f;
 			c->Weapon[0].Type = -1;
 			c->Weapon[1].Type = -1;
@@ -16224,7 +16892,7 @@ NexCustomMonter:
 			c->Object.m_fEdgeScale = 1.08f;
 			o = &c->Object;
 			o->Position[2] = RequestTerrainHeight(o->Position[0],o->Position[1]) + 170.f;
-			strcpy( c->ID, "º¢²ÉÀÇÁ¤·É" );
+			CopyCharacterIdSafe(c, "º¢²ÉÀÇÁ¤·É" );
 		}
 		break;
 	case 451:
@@ -16234,7 +16902,7 @@ NexCustomMonter:
 			c->Object.Scale = 1.0f;
 			c->Object.m_fEdgeScale = 0.0f;
 			c->Object.m_bRenderShadow = false;
-			strcpy( c->ID, "º¢²É³ª¹«" );
+			CopyCharacterIdSafe(c, "º¢²É³ª¹«" );
 		}
 		break;
 
@@ -16242,7 +16910,7 @@ NexCustomMonter:
 	case 579:
 		OpenNpc(MODEL_LUCKYITEM_NPC);
 		c = CreateCharacter(Key,MODEL_LUCKYITEM_NPC,PositionX,PositionY);
-		strcpy(c->ID,"´aºñµå");
+		CopyCharacterIdSafe(c,"´aºñµå");
 		c->Object.Scale = 0.95f;
 		c->Object.m_fEdgeScale				= 1.2f;
 		Models[MODEL_LUCKYITEM_NPC].Actions[0].PlaySpeed	= 0.45f;
@@ -16256,14 +16924,14 @@ NexCustomMonter:
 	case 452:
    		OpenNpc(MODEL_SEED_MASTER);
 		c = CreateCharacter(Key,MODEL_SEED_MASTER,PositionX,PositionY);
-		strcpy(c->ID,"½Ãµå¸¶½ºÅÍ");
+		CopyCharacterIdSafe(c,"½Ãµå¸¶½ºÅÍ");
 		c->Object.Scale = 1.1f;
 		c->Object.m_fEdgeScale = 1.2f;
 		break;
 	case 453:
    		OpenNpc(MODEL_SEED_INVESTIGATOR);
 		c = CreateCharacter(Key,MODEL_SEED_INVESTIGATOR,PositionX,PositionY);
-		strcpy(c->ID,"½Ãµå¿¬±¸°¡");
+		CopyCharacterIdSafe(c,"½Ãµå¿¬±¸°¡");
 		c->Object.Scale = 0.9f;
 		c->Object.m_fEdgeScale = 1.15f;
 		//Models[MODEL_SEED_INVESTIGATOR].Actions[0].PlaySpeed = 0.2f;
@@ -16273,7 +16941,7 @@ NexCustomMonter:
 		{
 			c = CreateCharacter(Key,MODEL_PLAYER,PositionX,PositionY);
 			//c->Class = 2;
-			strcpy(c->ID,"ÃÊ±âÈ­ µµ¿ì¹Ì");
+			CopyCharacterIdSafe(c,"ÃÊ±âÈ­ µµ¿ì¹Ì");
 			
 			c->BodyPart[BODYPART_HELM  ].Type = MODEL_HELM  +9;
 			c->BodyPart[BODYPART_ARMOR ].Type = MODEL_ARMOR +9;
@@ -16290,20 +16958,20 @@ NexCustomMonter:
 	case 477:
 		OpenNpc(MODEL_XMAS2008_SNOWMAN);
 		c = CreateCharacter(Key,MODEL_XMAS2008_SNOWMAN,PositionX,PositionY);
-		::strcpy(c->ID, "Unknown");
+		::CopyCharacterIdSafe(c, "Unknown");
 		c->Object.LifeTime = 100;
 		c->Object.Scale = 1.3f;
 		break;
 #ifdef PJH_ADD_PANDA_CHANGERING
 	case 503:
 		c = CreateCharacter(Key, MODEL_PLAYER, PositionX, PositionY);
-		::strcpy(c->ID, "Unknown");
+		::CopyCharacterIdSafe(c, "Unknown");
 		c->Object.SubType = MODEL_PANDA;
 		break;
 #endif //PJH_ADD_PANDA_CHANGERING
 	case 548:
 		c = CreateCharacter(Key, MODEL_PLAYER, PositionX, PositionY);
-		::strcpy(c->ID, "Unknown");
+		::CopyCharacterIdSafe(c, "Unknown");
 		c->Object.SubType = MODEL_SKELETON_CHANGED;
 		break;
 	case 468:
@@ -16335,20 +17003,20 @@ NexCustomMonter:
 					Models[_Model_NpcIndex].Actions[i].PlaySpeed = 0.5f;
 				}
 			}
-		 	strcpy(c->ID, "little santa");
+		 	CopyCharacterIdSafe(c, "little santa");
 		}
 		break;
 	case 478:
 		//µ¨°¡µµ
 		OpenNpc(MODEL_NPC_SERBIS);
 		c = CreateCharacter(Key, MODEL_NPC_SERBIS, PositionX, PositionY);
-		strcpy(c->ID, "Unknown");
+		CopyCharacterIdSafe(c, "Unknown");
 		break;
 	case 479:
 		// °áÅõÀå ¹®Áö±â NPC Å¸ÀÌÅõ½º
 		OpenNpc(MODEL_DUEL_NPC_TITUS);
 		c = CreateCharacter(Key, MODEL_DUEL_NPC_TITUS, PositionX, PositionY);
-		strcpy(c->ID, "Unknown");
+		CopyCharacterIdSafe(c, "Unknown");
 		c->Object.Scale = 1.1f;
 		c->Object.m_fEdgeScale = 1.2f;
 		break;
@@ -16356,7 +17024,7 @@ NexCustomMonter:
 		{
 			OpenNpc(MODEL_GAMBLE_NPC_MOSS);
 			c = CreateCharacter(Key, MODEL_GAMBLE_NPC_MOSS, PositionX, PositionY);
-			strcpy(c->ID, "Unknown");
+			CopyCharacterIdSafe(c, "Unknown");
 			c->Object.LifeTime = 100;
  			c->Object.Scale = 0.8f;
 			c->Object.m_fEdgeScale = 1.1f;
@@ -16370,7 +17038,7 @@ NexCustomMonter:
 	case 502:
 		OpenMonsterModel(128);
 		c = CreateCharacter(Key, MODEL_MONSTER01+128, PositionX, PositionY);
-		strcpy(c->ID,"Unknown");
+		CopyCharacterIdSafe(c,"Unknown");
 		c->Object.Scale = 1.0f * 0.95f;
 		c->Weapon[0].Type = -1;
 		c->Weapon[1].Type = -1;
@@ -16378,7 +17046,7 @@ NexCustomMonter:
 	case 493:
 		OpenMonsterModel(3);
 		c = CreateCharacter(Key,MODEL_MONSTER01+3,PositionX,PositionY);
-		strcpy(c->ID,"Unknown");
+		CopyCharacterIdSafe(c,"Unknown");
 		c->Object.Scale = 0.8f;
 		c->Level = 1;
 		c->Weapon[0].Type = MODEL_SWORD+13;
@@ -16387,7 +17055,7 @@ NexCustomMonter:
 	case 494:
 		OpenMonsterModel(26);
 		c = CreateCharacter(Key,MODEL_MONSTER01+26,PositionX,PositionY);
-		strcpy(c->ID,"Unknown");
+		CopyCharacterIdSafe(c,"Unknown");
 		c->Object.Scale = 1.1f;
 		break;
 	case 495:
@@ -16417,7 +17085,7 @@ NexCustomMonter:
 		c->Object.Scale = 1.3f;
 		c->Weapon[0].Type = -1;
 		c->Weapon[1].Type = -1;
-		strcpy( c->ID, "Unknown" );
+		CopyCharacterIdSafe(c, "Unknown" );
 		break;
 	case 498:
 		OpenMonsterModel(115);
@@ -16434,7 +17102,7 @@ NexCustomMonter:
 	case 499:
 		OpenMonsterModel(149);
 		c = CreateCharacter(Key, MODEL_MONSTER01+149, PositionX, PositionY);
-		strcpy(c->ID, "Unknown");
+		CopyCharacterIdSafe(c, "Unknown");
 		c->Object.Scale = 1.5f;
 		c->Weapon[0].Type = -1;
 		c->Weapon[1].Type = -1;
@@ -16442,7 +17110,7 @@ NexCustomMonter:
 	case 500:
 		OpenMonsterModel(142);
 		c = CreateCharacter(Key,MODEL_MONSTER01+142,PositionX,PositionY);
-		strcpy(c->ID,"Unknown");
+		CopyCharacterIdSafe(c,"Unknown");
 		c->Object.Scale = 0.95f;
 		c->Weapon[0].Type = -1;
 		c->Weapon[1].Type = -1;
@@ -16450,7 +17118,7 @@ NexCustomMonter:
 	case 501:
 		OpenMonsterModel(31);
 		c = CreateCharacter(Key,MODEL_MONSTER01+31,PositionX,PositionY);
-		strcpy(c->ID,"Unknown");
+		CopyCharacterIdSafe(c,"Unknown");
 		c->Object.Scale = 0.95f;
 		c->Weapon[0].Type = -1;
 		c->Weapon[1].Type = -1;
@@ -16458,54 +17126,54 @@ NexCustomMonter:
 	case 540:
 		OpenNpc(MODEL_DOPPELGANGER_NPC_LUGARD);
 		c = CreateCharacter(Key, MODEL_DOPPELGANGER_NPC_LUGARD, PositionX, PositionY);
-		strcpy(c->ID, "Unknown");
+		CopyCharacterIdSafe(c, "Unknown");
 		c->Object.Scale = 1.1f;
 		c->Object.m_fEdgeScale = 1.2f;
 		break;
 	case 541:
 		OpenNpc(MODEL_DOPPELGANGER_NPC_BOX);
 		c = CreateCharacter(Key, MODEL_DOPPELGANGER_NPC_BOX, PositionX, PositionY);
-		strcpy(c->ID, "Unknown");
+		CopyCharacterIdSafe(c, "Unknown");
 		c->Object.Scale = 2.3f;
 		c->Object.m_fEdgeScale = 1.1f;
 		break;
 	case 542:
 		OpenNpc(MODEL_DOPPELGANGER_NPC_GOLDENBOX);
 		c = CreateCharacter(Key, MODEL_DOPPELGANGER_NPC_GOLDENBOX, PositionX, PositionY);
-		strcpy(c->ID, "Unknown");
+		CopyCharacterIdSafe(c, "Unknown");
 		c->Object.Scale = 3.3f;
 		c->Object.m_fEdgeScale = 1.1f;
 		break;
 	case 543:
 		OpenNpc(MODAL_GENS_NPC_DUPRIAN);
 		c = CreateCharacter(Key, MODAL_GENS_NPC_DUPRIAN, PositionX, PositionY);
-		strcpy(c->ID, "Unknown");
+		CopyCharacterIdSafe(c, "Unknown");
 		c->Object.Scale = 1.0f;
 		break;
 	case 544:
 		OpenNpc(MODAL_GENS_NPC_BARNERT);
 		c = CreateCharacter(Key, MODAL_GENS_NPC_BARNERT, PositionX, PositionY);
-		strcpy(c->ID, "Unknown");
+		CopyCharacterIdSafe(c, "Unknown");
 		c->Object.Scale = 1.0f;
 		break;
 	case 545:
 		OpenNpc(MODEL_UNITEDMARKETPLACE_CHRISTIN);
 		c = CreateCharacter(Key, MODEL_UNITEDMARKETPLACE_CHRISTIN, PositionX, PositionY);
-		strcpy(c->ID, "Unknown");
+		CopyCharacterIdSafe(c, "Unknown");
 		c->Object.Scale = 1.1f;
 		c->Object.m_fEdgeScale = 1.2f;
 		break;
 	case 546:
 		OpenNpc(MODEL_UNITEDMARKETPLACE_RAUL);
 		c = CreateCharacter(Key, MODEL_UNITEDMARKETPLACE_RAUL, PositionX, PositionY);
-		strcpy(c->ID, "Unknown");
+		CopyCharacterIdSafe(c, "Unknown");
 		c->Object.Scale = 1.0f;
 		c->Object.m_fEdgeScale = 1.15f;
 		break;
 	case 547:
 		OpenNpc(MODEL_UNITEDMARKETPLACE_JULIA);
 		c = CreateCharacter(Key, MODEL_UNITEDMARKETPLACE_JULIA, PositionX, PositionY);
-		strcpy(c->ID, "Unknown");
+		CopyCharacterIdSafe(c, "Unknown");
 		c->Object.Scale = 1.0f;
 		c->Object.m_fEdgeScale = 1.1f;
 		break;
@@ -16513,20 +17181,20 @@ NexCustomMonter:
 	case 566:
 		OpenNpc(MODEL_TIME_LIMIT_QUEST_NPC_TERSIA);
 		c = CreateCharacter(Key, MODEL_TIME_LIMIT_QUEST_NPC_TERSIA, PositionX, PositionY);
-		strcpy(c->ID, "±æµå°ü¸®ÀÎ Å×¸£½Ã¾Æ");
+		CopyCharacterIdSafe(c, "±æµå°ü¸®ÀÎ Å×¸£½Ã¾Æ");
 		c->Object.Scale = 0.93f;
 		break;
 	case 567:
 		OpenNpc(MODEL_TIME_LIMIT_QUEST_NPC_BENA);
 		c = CreateCharacter(Key, MODEL_TIME_LIMIT_QUEST_NPC_BENA, PositionX, PositionY);
-		strcpy(c->ID, "½Å³à º£ÀÌ³ª");
+		CopyCharacterIdSafe(c, "½Å³à º£ÀÌ³ª");
 		c->Object.Position[2] += 145.0f;
 		break;
 	case 568:
 		{
 			OpenNpc(MODEL_TIME_LIMIT_QUEST_NPC_ZAIRO);
 			c = CreateCharacter(Key, MODEL_TIME_LIMIT_QUEST_NPC_ZAIRO, PositionX, PositionY);
-			strcpy(c->ID, "¶°µ¹ÀÌ»óÀÎ ÀÚÀÌ·Î");
+			CopyCharacterIdSafe(c, "¶°µ¹ÀÌ»óÀÎ ÀÚÀÌ·Î");
 			c->Object.LifeTime = 100;
 			c->Object.Scale = 0.8f;
 			c->Object.m_fEdgeScale = 1.1f;
@@ -16541,18 +17209,23 @@ NexCustomMonter:
 	case 577:
 		OpenNpc(MODEL_KARUTAN_NPC_REINA);
 		c = CreateCharacter(Key, MODEL_KARUTAN_NPC_REINA, PositionX, PositionY);
-		strcpy(c->ID, "ÀâÈ­»óÀÎ ·¹ÀÌ³ª");
+		CopyCharacterIdSafe(c, "ÀâÈ­»óÀÎ ·¹ÀÌ³ª");
 		c->Object.Scale = 1.1f;
 		c->Object.m_fEdgeScale = 1.2f;
 		break;
 	case 578:
 		OpenNpc(MODEL_KARUTAN_NPC_VOLVO);
 		c = CreateCharacter(Key, MODEL_KARUTAN_NPC_VOLVO, PositionX, PositionY);
-		strcpy(c->ID, "¹«±â»óÀÎ º¼·Î");
+		CopyCharacterIdSafe(c, "¹«±â»óÀÎ º¼·Î");
 		c->Object.Scale = 0.9f;
 		break;
 #endif	// ASG_ADD_KARUTAN_NPC
 		//==Add Custom Monter o day
+	}
+
+	if (c == NULL)
+	{
+		return NULL;
 	}
 
 	Setting_Monster(c,Type, PositionX, PositionY);
@@ -16633,7 +17306,8 @@ CHARACTER*  CreateHellGate ( BYTE* ID, int Key, int Index, int x, int y, int Cre
 	if(portal->Level == 7)
 		portal->Object.SubType = 1;
 
-    memcpy ( portal->ID, Text, sizeof( char )*32 );
+    strncpy(portal->ID, Text, sizeof(portal->ID) - 1);
+    portal->ID[sizeof(portal->ID) - 1] = '\0';
 
     if ( CreateFlag )
     {

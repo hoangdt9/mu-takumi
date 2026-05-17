@@ -944,10 +944,29 @@ void ReceiveCharacterList( BYTE *ReceiveBuffer )
 
 		ChangeCharacterExt(slot, const_cast<BYTE*>(equipForChangeExt));
 
+#if defined(__ANDROID__)
+		if (equipForChangeExt != nullptr)
+		{
+			g_ErrorReport.Write(
+				"[ReceiveCharacterList] slot=%u classWire=%u classClient=%d name=%.10s equip=%02X%02X%02X%02X%02X...\r\n",
+				static_cast<unsigned>(slot),
+				entrySize == 34 ? static_cast<unsigned>(e[15]) : static_cast<unsigned>(e[14]),
+				iClass,
+				e + 1,
+				equipForChangeExt[0],
+				equipForChangeExt[1],
+				equipForChangeExt[2],
+				equipForChangeExt[3],
+				equipForChangeExt[4]);
+		}
+#endif
+
 		c->GuildStatus = guildStatus;
 		Offset += entrySize;
 	}
 	CurrentProtocolState = RECEIVE_CHARACTERS_LIST;
+
+	ClearEffectPoints();
 
 	// Refresh select UI when roster arrives after scene init (re-request after ClearCharacters).
 	extern bool InitCharacterScene;
@@ -1307,8 +1326,90 @@ int HeroIndex;
 
 static void TakumiTryCreateJoinWarpRingEffect(OBJECT* o);
 
+static int TakumiWirePacketSize(const BYTE* buf)
+{
+	if (buf == nullptr)
+	{
+		return 0;
+	}
+
+	if (buf[0] == 0xC1 || buf[0] == 0xC3)
+	{
+		return buf[1];
+	}
+
+	if (buf[0] == 0xC2 || buf[0] == 0xC4)
+	{
+		return ((int)buf[1] << 8) | buf[2];
+	}
+
+	return 0;
+}
+
+// Wire entry sizes (parity server-next Takumi.Server.Protocol.*ViewportWire602).
+static constexpr int kTakumiMonsterViewportEntryBytes = 10;
+static constexpr int kTakumiPlayerViewportEntryBytesZeroBuff = 38;
+
 #if defined(__ANDROID__)
 static int s_androidDeferredLoadWorldMap = -1;
+static bool s_androidDeferMonsterViewportPackets = false;
+static bool s_androidSkipMonsterViewportPathfinding = false;
+static uint32_t s_androidMonsterViewportGraceUntil = 0;
+static std::vector<std::vector<BYTE>> s_androidQueuedMonsterViewportPackets;
+
+bool TakumiShouldSkipMonsterViewportPathfinding()
+{
+	if (s_androidSkipMonsterViewportPathfinding)
+	{
+		return true;
+	}
+
+	return s_androidMonsterViewportGraceUntil != 0
+		&& GetTickCount() < s_androidMonsterViewportGraceUntil;
+}
+
+void TakumiClearMonsterViewportPathfindingSkip()
+{
+	s_androidSkipMonsterViewportPathfinding = false;
+	s_androidDeferMonsterViewportPackets = false;
+	s_androidMonsterViewportGraceUntil = 0;
+}
+
+bool TakumiIsAndroidWorldLoadPending()
+{
+	return s_androidDeferredLoadWorldMap >= 0;
+}
+
+void ReceiveCreateMonsterViewport(BYTE* ReceiveBuffer);
+
+static void TakumiQueueMonsterViewportPacket(const BYTE* receiveBuffer)
+{
+	const int wireSize = TakumiWirePacketSize(receiveBuffer);
+	if (wireSize <= 0)
+	{
+		return;
+	}
+
+	std::vector<BYTE> copy(receiveBuffer, receiveBuffer + wireSize);
+	s_androidQueuedMonsterViewportPackets.push_back(std::move(copy));
+}
+
+static void TakumiFlushQueuedMonsterViewportPackets()
+{
+	s_androidSkipMonsterViewportPathfinding = true;
+	for (const auto& pkt : s_androidQueuedMonsterViewportPackets)
+	{
+		ReceiveCreateMonsterViewport(const_cast<BYTE*>(pkt.data()));
+	}
+
+	s_androidQueuedMonsterViewportPackets.clear();
+}
+
+static void TakumiSendFinishLoadingLogged()
+{
+	g_ErrorReport.Write("[AndroidLogin] SendRequestFinishLoading C1 F3 12 (viewport resync)\r\n");
+	SendRequestFinishLoading();
+}
 #endif
 
 static UINT64 TakumiReadWireUInt64LE(const BYTE* bytes)
@@ -1392,9 +1493,10 @@ BOOL ReceiveJoinMapServer(BYTE *ReceiveBuffer, BOOL bEncrypted)
 	{
 #if defined(__ANDROID__)
 		s_androidDeferredLoadWorldMap = joinMap;
+		s_androidDeferMonsterViewportPackets = true;
 		deferredWorldLoad = true;
 		g_ErrorReport.Write(
-			"[AndroidLogin] ReceiveJoinMapServer defer LoadWorld map=%d (next main frame)\r\n",
+			"[AndroidLogin] ReceiveJoinMapServer defer LoadWorld map=%d (after join packet batch)\r\n",
 			joinMap);
 #else
 		gMapManager.LoadWorld(joinMap);
@@ -1426,6 +1528,7 @@ BOOL ReceiveJoinMapServer(BYTE *ReceiveBuffer, BOOL bEncrypted)
 		// Same map during login/loading: reload terrain assets (never DeleteObjects alone).
 #if defined(__ANDROID__)
 		s_androidDeferredLoadWorldMap = joinMap;
+		s_androidDeferMonsterViewportPackets = true;
 		deferredWorldLoad = true;
 		g_ErrorReport.Write(
 			"[AndroidLogin] ReceiveJoinMapServer same map=%d scene=%d — defer LoadWorld\r\n",
@@ -1600,7 +1703,8 @@ BOOL ReceiveJoinMapServer(BYTE *ReceiveBuffer, BOOL bEncrypted)
     LockInputStatus = false;
     CheckIME_Status(true,0);
 	
-    LoadingWorld = deferredWorldLoad ? 9999998 : 30;
+    // Do not use LoadingWorld=9999998 — ZzzInterface blocks all movement while LoadingWorld>30.
+    LoadingWorld = deferredWorldLoad ? 0 : 30;
     MouseUpdateTime = 0;
     MouseUpdateTimeMax = 6;
 
@@ -1725,12 +1829,21 @@ void TakumiProcessAndroidPendingLoadWorld()
 	{
 		LoadingWorld = 30;
 	}
+	TakumiFlushQueuedMonsterViewportPackets();
 	TakumiAndroidOnWorldJoinLoaded();
-	// Join batch: C2 0x13 is processed before this deferred LoadWorld (which calls
-	// DeleteNpcs/DeleteMonsters). Ask game-host to resend viewport after terrain is ready.
-	SendRequestFinishLoading();
+	// Join batch: C2 0x13 can arrive before LoadWorld; queue + flush above, then F3 12
+	// so game-host resets viewport tracker and sends NPCs in range (warehouse ~147,145).
+	TakumiSendFinishLoadingLogged();
+	// F3 12 triggers a second C2 0x13 refresh — flush if already in the same TCP batch.
+	if (!s_androidQueuedMonsterViewportPackets.empty())
+	{
+		TakumiFlushQueuedMonsterViewportPackets();
+	}
+	s_androidDeferMonsterViewportPackets = false;
+	s_androidSkipMonsterViewportPathfinding = true;
+	s_androidMonsterViewportGraceUntil = GetTickCount() + 3000u;
 	g_ErrorReport.Write(
-		"[AndroidLogin] deferred LoadWorld map=%d — sent F3 12 finish loading (viewport resync)\r\n",
+		"[AndroidLogin] deferred LoadWorld map=%d complete (viewport flushed + F3 12)\r\n",
 		map);
 }
 #endif
@@ -2088,26 +2201,6 @@ void ReceiveMagicList( BYTE *ReceiveBuffer )
 
 namespace
 {
-	int TakumiWirePacketSize(const BYTE* buf)
-	{
-		if (buf == nullptr)
-		{
-			return 0;
-		}
-
-		if (buf[0] == 0xC1 || buf[0] == 0xC3)
-		{
-			return buf[1];
-		}
-
-		if (buf[0] == 0xC2 || buf[0] == 0xC4)
-		{
-			return ((int)buf[1] << 8) | buf[2];
-		}
-
-		return 0;
-	}
-
 	WORD TakumiExtractItemTypeFromWire(const BYTE* itemWire)
 	{
 		// Parity CNewUIItemMng::ExtractItemType (protected) — Season 6 item blob bytes 0/3/5.
@@ -2249,6 +2342,23 @@ BOOL ReceiveInventory(BYTE *ReceiveBuffer, BOOL bEncrypted)
 	{
 		SetCharacterClass(Hero);
 		CreatePetDarkSpirit_Now(Hero);
+#if defined(__ANDROID__)
+		for (int eq = 0; eq < MAX_EQUIPMENT_INDEX; ++eq)
+		{
+			ITEM* it = &CharacterMachine->Equipment[eq];
+			if (it->Type == -1)
+			{
+				continue;
+			}
+
+			const bool canEquip = g_pMyInventory->IsEquipable(eq, it);
+			g_ErrorReport.Write(
+				"[ReceiveInventory] slot=%d type=%d canEquip=%d\r\n",
+				eq,
+				it->Type,
+				canEquip ? 1 : 0);
+		}
+#endif
 	}
 	
 	g_ConsoleDebug->Write(MCD_RECEIVE, "0x10 [ReceiveInventory] count=%d applied=%d", Data->Value, applied);
@@ -2663,6 +2773,46 @@ void ReceiveMovePosition( BYTE *ReceiveBuffer )
 
 extern int EnableEvent;
 
+/// <summary>Parse C1 0x1C — Pegasus WORD gate (9 B) vs OpenMU MapChanged075 byte flag (8 B).</summary>
+static void TakumiParseTeleportWire(
+	const BYTE* buf,
+	WORD* outFlag,
+	BYTE* outMap,
+	BYTE* outX,
+	BYTE* outY,
+	BYTE* outAngle)
+{
+	const BYTE packetLen = buf[1];
+
+	// OpenMU MapChanged075 / 8-byte body: flag@3, map@4, x@5, y@6, rot@7
+	if (packetLen <= 8)
+	{
+		*outFlag = buf[3];
+		*outMap = buf[4];
+		*outX = buf[5];
+		*outY = buf[6];
+		*outAngle = buf[7];
+		return;
+	}
+
+	// Pegasus GCTeleportSend / TeleportWire602: WORD flag@3, map@5, x@6, y@7, dir@8
+	*outFlag = (WORD)(buf[3] | (buf[4] << 8));
+	*outMap = buf[5];
+	*outX = buf[6];
+	*outY = buf[7];
+	*outAngle = buf[8];
+
+	// Misread when X>127 lands in map field (e.g. Devias gate x=215): use byte layout.
+	if (*outMap > WD_ENDMAP && buf[4] <= WD_ENDMAP)
+	{
+		*outFlag = buf[3];
+		*outMap = buf[4];
+		*outX = buf[5];
+		*outY = buf[6];
+		*outAngle = buf[7];
+	}
+}
+
 BOOL ReceiveTeleport(BYTE *ReceiveBuffer, BOOL bEncrypted)
 {
 //#ifndef NEW_PROTOCOL_SYSTEM
@@ -2676,9 +2826,31 @@ BOOL ReceiveTeleport(BYTE *ReceiveBuffer, BOOL bEncrypted)
 	
 	SEASON3B::CNewUIInventoryCtrl::BackupPickedItem();
 	
-	LPPRECEIVE_TELEPORT_POSITION Data = (LPPRECEIVE_TELEPORT_POSITION)ReceiveBuffer;
-	Hero->PositionX = Data->PositionX;
-	Hero->PositionY = Data->PositionY;
+	if (ReceiveBuffer == nullptr || Hero == nullptr)
+	{
+		return FALSE;
+	}
+
+	WORD teleFlag = 0;
+	BYTE teleMap = 0;
+	BYTE teleX = 0;
+	BYTE teleY = 0;
+	BYTE teleAngle = 0;
+	TakumiParseTeleportWire(ReceiveBuffer, &teleFlag, &teleMap, &teleX, &teleY, &teleAngle);
+
+#if defined(__ANDROID__)
+	g_ErrorReport.Write(
+		"[AndroidLogin] ReceiveTeleport flag=%u map=%u xy=(%u,%u) len=%u worldBefore=%d\r\n",
+		(unsigned)teleFlag,
+		(unsigned)teleMap,
+		(unsigned)teleX,
+		(unsigned)teleY,
+		(unsigned)ReceiveBuffer[1],
+		gMapManager.WorldActive);
+#endif
+
+	Hero->PositionX = teleX;
+	Hero->PositionY = teleY;
 	
 	Hero->JumpTime = 0;
 	
@@ -2700,7 +2872,7 @@ BOOL ReceiveTeleport(BYTE *ReceiveBuffer, BOOL bEncrypted)
 	
 	if( gMapManager.WorldActive >= WD_45CURSEDTEMPLE_LV1 && gMapManager.WorldActive <= WD_45CURSEDTEMPLE_LV6 )
 	{
-		if( !(Data->Map >= WD_45CURSEDTEMPLE_LV1 && Data->Map <= WD_45CURSEDTEMPLE_LV6) )
+		if( !(teleMap >= WD_45CURSEDTEMPLE_LV1 && teleMap <= WD_45CURSEDTEMPLE_LV6) )
 		{
 			g_CursedTemple->ResetCursedTemple();
 			g_pNewUISystem->Hide(SEASON3B::INTERFACE_CURSEDTEMPLE_GAMESYSTEM);
@@ -2709,8 +2881,8 @@ BOOL ReceiveTeleport(BYTE *ReceiveBuffer, BOOL bEncrypted)
 	
 	int iEtcPart = Hero->EtcPart;
 	
-	o->Angle[2]    = ((float)(Data->Angle)-1.f)*45.f;
-	if(Data->Flag == 0)
+	o->Angle[2]    = ((float)(teleAngle)-1.f)*45.f;
+	if(teleFlag == 0)
 	{
         CreateTeleportEnd(o);
 		Teleport = false;
@@ -2718,7 +2890,7 @@ BOOL ReceiveTeleport(BYTE *ReceiveBuffer, BOOL bEncrypted)
 		{
 			Hero->Dead = false;
 			o->Live = true;
-			g_ErrorReport.Write("[ReceiveTeleport] town revive flag=0 map=%d xy=(%d,%d)\r\n", Data->Map, Data->PositionX, Data->PositionY);
+			g_ErrorReport.Write("[ReceiveTeleport] town revive flag=0 map=%d xy=(%d,%d)\r\n", teleMap, teleX, teleY);
 		}
 	}
 	else
@@ -2726,12 +2898,20 @@ BOOL ReceiveTeleport(BYTE *ReceiveBuffer, BOOL bEncrypted)
         ClearItems();
 		ClearCharacters(HeroKey);
 		RemoveAllShopTitleExceptHero();
-		if(gMapManager.WorldActive != Data->Map)
+		if(gMapManager.WorldActive != teleMap)
 		{
             int OldWorld = gMapManager.WorldActive;
 			
-			gMapManager.WorldActive = Data->Map;
+			gMapManager.WorldActive = teleMap;
+#if defined(__ANDROID__)
+			// server-next always follows 0x1C flag=1 with F3 03 join-map; defer LoadWorld there.
+			g_ErrorReport.Write(
+				"[AndroidLogin] ReceiveTeleport cross-map %d→%d — skip LoadWorld (wait F3 03)\r\n",
+				OldWorld,
+				teleMap);
+#else
 			gMapManager.LoadWorld(gMapManager.WorldActive);
+#endif
 			
 			if(gMapManager.WorldActive == WD_34CRYWOLF_1ST)
 				SendRequestCrywolfInfo();
@@ -2820,7 +3000,7 @@ BOOL ReceiveTeleport(BYTE *ReceiveBuffer, BOOL bEncrypted)
     Hero->Movement = false;
     SetPlayerStop(Hero);
 	
-	if(Data->Flag) 
+	if(teleFlag) 
 		g_pUIMapName->ShowMapName();	// rozy
 
 	CreateMyGensInfluenceGroundEffect();
@@ -2830,7 +3010,7 @@ BOOL ReceiveTeleport(BYTE *ReceiveBuffer, BOOL bEncrypted)
 		Hero->EtcPart = iEtcPart;
 	}
 	
-	g_ConsoleDebug->Write(MCD_RECEIVE, "0x1C [ReceiveTeleport(%d)]", Data->Flag);
+	g_ConsoleDebug->Write(MCD_RECEIVE, "0x1C [ReceiveTeleport(%d)]", teleFlag);
 	
 	return (TRUE);
 }
@@ -2999,7 +3179,7 @@ void ReceiveChangePlayer( BYTE *ReceiveBuffer )
 		}
 		else
 		{
-			c->Wing.Type = MODEL_ITEM + Type;
+			c->Wing.Type = TakumiWingModelFromItemIndex(Type, c->Class);
 			c->Wing.Level = 0;
 			if (c->Wing.Type == MODEL_WING+39 ||
 				c->Wing.Type==MODEL_HELPER+30 ||
@@ -3087,15 +3267,61 @@ void RegisterBuff( eBuffState buff, OBJECT* o, const int bufftime = 0 );
 
 void UnRegisterBuff( eBuffState buff, OBJECT* o );
 
+static bool TakumiViewportEquipmentIsUnset(const BYTE* equipment)
+{
+	if (equipment == nullptr)
+	{
+		return true;
+	}
+
+	for (int i = 0; i < EQUIPMENT_LENGTH; ++i)
+	{
+		if (equipment[i] != 0xFF)
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
+
+static int TakumiPlayerViewportEntryStride(const BYTE* entry)
+{
+	if (entry == nullptr)
+	{
+		return kTakumiPlayerViewportEntryBytesZeroBuff;
+	}
+
+	// server-next C2 0x12: fixed 38-byte entries, s_BuffCount wire byte is always 0.
+	const BYTE buffCount = entry[37];
+	if (buffCount == 0)
+	{
+		return kTakumiPlayerViewportEntryBytesZeroBuff;
+	}
+
+	const int packedStride = static_cast<int>(sizeof(PCREATE_CHARACTER))
+		- static_cast<int>(sizeof(BYTE) * (MAX_BUFF_SLOT_INDEX - buffCount));
+	return (packedStride > kTakumiPlayerViewportEntryBytesZeroBuff)
+		? packedStride
+		: kTakumiPlayerViewportEntryBytesZeroBuff;
+}
+
 void ReceiveCreatePlayerViewport(BYTE *ReceiveBuffer,int Size)
 {
 
 	LPPWHEADER_DEFAULT_WORD Data = (LPPWHEADER_DEFAULT_WORD)ReceiveBuffer;
 	int Offset = sizeof(PWHEADER_DEFAULT_WORD);
+	const int wireSize = TakumiWirePacketSize(ReceiveBuffer);
 	
 	for(int i=0;i<Data->Value;i++)
 	{
+		if (Offset + kTakumiPlayerViewportEntryBytesZeroBuff > wireSize)
+		{
+			break;
+		}
+
 		LPPCREATE_CHARACTER Data2 = (LPPCREATE_CHARACTER)(ReceiveBuffer+Offset);
+		const int entryStride = TakumiPlayerViewportEntryStride(reinterpret_cast<const BYTE*>(Data2));
 		WORD Key = ((WORD)(Data2->KeyH)<<8) + Data2->KeyL;
 		int CreateFlag = (Key>>15);
 		Key &= 0x7FFF;
@@ -3248,9 +3474,15 @@ void ReceiveCreatePlayerViewport(BYTE *ReceiveBuffer,int Size)
 				}
 			}
 
-			ChangeCharacterExt(FindCharacterIndex(Key),Data2->Equipment);
+			if (!TakumiViewportEquipmentIsUnset(Data2->Equipment))
+			{
+				ChangeCharacterExt(FindCharacterIndex(Key), Data2->Equipment);
+			}
 #else
-			ChangeCharacterExt(FindCharacterIndex(Key),Data2->Equipment);
+			if (!TakumiViewportEquipmentIsUnset(Data2->Equipment))
+			{
+				ChangeCharacterExt(FindCharacterIndex(Key), Data2->Equipment);
+			}
 				
 			if( (Data2->Class&0x07) == 1 && Index != MAX_CHARACTERS_CLIENT )
 			{	
@@ -3289,7 +3521,14 @@ void ReceiveCreatePlayerViewport(BYTE *ReceiveBuffer,int Size)
 				c->EtcPart = EtcPart;
 			}
 						
-			for( int j = 0; j < Data2->s_BuffCount; ++j )
+			// server-next wire entry is 38 bytes; buff tail is not on the wire (s_BuffCount byte is always 0).
+			const int buffCount = (entryStride == kTakumiPlayerViewportEntryBytesZeroBuff)
+				? 0
+				: (int)Data2->s_BuffCount;
+			const int safeBuffCount = (buffCount < 0)
+				? 0
+				: ((buffCount > MAX_BUFF_SLOT_INDEX) ? MAX_BUFF_SLOT_INDEX : buffCount);
+			for( int j = 0; j < safeBuffCount; ++j )
 			{
 				RegisterBuff(static_cast<eBuffState>(Data2->s_BuffEffectState[j]), o);
 
@@ -3332,8 +3571,8 @@ void ReceiveCreatePlayerViewport(BYTE *ReceiveBuffer,int Size)
 #endif
 
         }
-		
-		Offset += (sizeof(PCREATE_CHARACTER)-(sizeof(BYTE)*(MAX_BUFF_SLOT_INDEX-Data2->s_BuffCount)));
+
+		Offset += entryStride;
 	}
 	
 	g_ConsoleDebug->Write(MCD_RECEIVE, "0x12 [ReceiveCreatePlayerViewport(%d)]", Data->Value);
@@ -3572,11 +3811,19 @@ void AppearMonster(CHARACTER *c)
 
 void ReceiveCreateMonsterViewport( BYTE *ReceiveBuffer )
 {
+#if defined(__ANDROID__)
+	if (s_androidDeferMonsterViewportPackets)
+	{
+		TakumiQueueMonsterViewportPacket(ReceiveBuffer);
+		return;
+	}
+#endif
+
 	LPPWHEADER_DEFAULT_WORD Data = (LPPWHEADER_DEFAULT_WORD)ReceiveBuffer;
 	const int wireSize = TakumiWirePacketSize(ReceiveBuffer);
 	const int headerLen = (int)sizeof(PWHEADER_DEFAULT_WORD);
 	int Offset = headerLen;
-	const int shortEntryLen = 10;
+	const int shortEntryLen = kTakumiMonsterViewportEntryBytes;
 	int mobCount = Data->Value;
 	const int maxByWire = (wireSize > headerLen) ? ((wireSize - headerLen) / shortEntryLen) : 0;
 	if (mobCount > maxByWire)
@@ -3606,22 +3853,52 @@ void ReceiveCreateMonsterViewport( BYTE *ReceiveBuffer )
 		int TeleportFlag = (Data2->KeyH&0x40)>>6;
 		
 		Key &= 0x7FFF;
+
+		const int existingIndex = FindCharacterIndex(Key);
+		if (existingIndex != MAX_CHARACTERS_CLIENT && CharactersClient[existingIndex].Object.Live)
+		{
+			CHARACTER* existing = &CharactersClient[existingIndex];
+			existing->PositionX = Data2->PositionX;
+			existing->PositionY = Data2->PositionY;
+			existing->TargetX = Data2->TargetX;
+			existing->TargetY = Data2->TargetY;
+			Offset += shortEntryLen;
+			continue;
+		}
+
 		CHARACTER *c = CreateMonster(Type,Data2->PositionX,Data2->PositionY,Key);
 		
 		g_ConsoleDebug->Write(MCD_RECEIVE, "0x13 [ReceiveCreateMonsterViewport(Type : %d | Key : %d)]", Type, Key);
 		
-		if(c == NULL) break;
+		if (c == NULL)
+		{
+#if defined(__ANDROID__)
+			g_ErrorReport.Write(
+				"[ReceiveCreateMonsterViewport] skip — no free slot type=%d key=%d\r\n",
+				Type,
+				Key);
+#endif
+			Offset += shortEntryLen;
+			continue;
+		}
+
+		const ptrdiff_t charSlot = c - CharactersClient;
+		if (charSlot < 0 || charSlot >= MAX_CHARACTERS_CLIENT)
+		{
+#if defined(__ANDROID__)
+			g_ErrorReport.Write(
+				"[ReceiveCreateMonsterViewport] skip — invalid slot type=%d key=%d\r\n",
+				Type,
+				Key);
+#endif
+			Offset += shortEntryLen;
+			continue;
+		}
 
 		OBJECT *o = &c->Object;
 
-		// server-next C2 0x13: 10-byte entries; byte 9 is s_BuffCount (always 0, no buff array).
-		const int buffCount = (int)Data2->s_BuffCount;
-		for (int j = 0; j < buffCount && j < MAX_BUFF_SLOT_INDEX; ++j)
-		{
-			RegisterBuff(static_cast<eBuffState>(Data2->s_BuffEffectState[j]), o);
-
-			g_ConsoleDebug->Write(MCD_RECEIVE, "ID : %s, Buff : %d", c->ID, static_cast<int>(Data2->s_BuffEffectState[j]));
-		}
+		// server-next C2 0x13: fixed 10-byte entries; byte 9 is always 0 (no buff tail on wire).
+		const int buffCount = 0;
 		
 		float fAngle = 45.0f;
 		if(o->Type == MODEL_MONSTER01+99)
@@ -3703,6 +3980,12 @@ void ReceiveCreateMonsterViewport( BYTE *ReceiveBuffer )
 			iDefaultWall = TW_NOMOVE;
 		}
 
+#if defined(__ANDROID__)
+		else if (TakumiShouldSkipMonsterViewportPathfinding())
+		{
+			c->Movement = false;
+		}
+#endif
 		else if(PathFinding2(c->PositionX, c->PositionY, Data2->TargetX, Data2->TargetY, &c->Path, 0.0f, iDefaultWall))
 		{
 			c->Movement = true;
@@ -3712,14 +3995,7 @@ void ReceiveCreateMonsterViewport( BYTE *ReceiveBuffer )
 			c->Movement = false;
 		}
 
-		if (buffCount == 0)
-		{
-			Offset += shortEntryLen;
-		}
-		else
-		{
-			Offset += (sizeof(PCREATE_MONSTER) - (sizeof(BYTE) * (MAX_BUFF_SLOT_INDEX - buffCount)));
-		}
+		Offset += shortEntryLen;
 	}
 }
 
@@ -4505,6 +4781,12 @@ void ReceiveAttackDamage( BYTE *ReceiveBuffer )
 {
 	const int pktSize = ReceiveBuffer[1];
 	LPPRECEIVE_ATTACK Data = (LPPRECEIVE_ATTACK)ReceiveBuffer;
+
+	// Combat packets can still arrive while on character select; do not spawn damage numbers on roster models.
+	if (SceneFlag != MAIN_SCENE)
+	{
+		return;
+	}
 
 	if(gMapManager.InChaosCastle())
 	{
@@ -8178,6 +8460,12 @@ void TakumiSendLevelUpPointsBulk(BYTE statType, int count)
 	spe << static_cast<BYTE>(0x06) << statType << static_cast<WORD>(count);
 	spe.Send();
 	s_statPointRequestInFlight = true;
+#if defined(__ANDROID__)
+	g_ErrorReport.Write(
+		"[Android Stat] bulk send type=%u count=%d wire=C1 F3 06 (7 bytes)\r\n",
+		static_cast<unsigned>(statType),
+		count);
+#endif
 }
 
 bool TakumiHasLevelUpPointWorkPending()
@@ -13936,6 +14224,8 @@ plain_c4_done:
 	--s_protocolCompilerDepth;
 	if (outerCall)
 	{
+		// Run deferred LoadWorld after full join batch (F3 03 then C2 0x13), not next frame.
+		TakumiProcessAndroidPendingLoadWorld();
 		if (s_pendingCharacterCalculateAll && CharacterMachine != nullptr)
 		{
 			CharacterMachine->CalculateAll();

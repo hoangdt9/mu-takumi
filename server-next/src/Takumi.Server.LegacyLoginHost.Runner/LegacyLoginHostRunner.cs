@@ -755,7 +755,7 @@ public static class LegacyLoginHostRunner
                         .ConfigureAwait(false);
                     await WriteOutboundAsync(joinPkt);
                     await WriteOutboundAsync(invPkt);
-                    await WriteOutboundAsync(MagicListWire602.BuildEmpty());
+                    await WriteOutboundAsync(MagicListWire602.BuildForServerClass(picked.ServerClass));
                     if (SyncLegacyEntryFromJoin(picked, joinPkt))
                     {
                         Volatile.Write(ref rosterDirty, 1);
@@ -1143,7 +1143,9 @@ public static class LegacyLoginHostRunner
 
                 if (listReq)
                 {
-                    var list = roster.Count > 0 ? CharacterListWire602.Build(MapRosterToWire(roster)) : CharacterListWire602.BuildEmpty();
+                    var list = roster.Count > 0
+                        ? await CharacterListPacket602.BuildAsync(loggedAccountId, MapRosterToWire(roster), ct).ConfigureAwait(false)
+                        : CharacterListWire602.BuildEmpty();
                     LogCharacterListWire(remote, list, "on F3 00 request");
                     await connection.Output.WriteAsync(list, ct).ConfigureAwait(false);
                     await connection.Output.FlushAsync(ct).ConfigureAwait(false);
@@ -1332,7 +1334,9 @@ public static class LegacyLoginHostRunner
                 // Scene switches to character select and client sends F3 00; push list from disk (or empty) (disable with TAKUMI_SKIP_AUTO_CHARLIST=1).
                 if (!string.Equals(Environment.GetEnvironmentVariable("TAKUMI_SKIP_AUTO_CHARLIST"), "1", StringComparison.Ordinal))
                 {
-                    var list = roster.Count > 0 ? CharacterListWire602.Build(MapRosterToWire(roster)) : CharacterListWire602.BuildEmpty();
+                    var list = roster.Count > 0
+                        ? await CharacterListPacket602.BuildAsync(loggedAccountId, MapRosterToWire(roster), ct).ConfigureAwait(false)
+                        : CharacterListWire602.BuildEmpty();
                     LogCharacterListWire(remote, list, "after login (auto)");
                     await connection.Output.WriteAsync(list, ct).ConfigureAwait(false);
                     await connection.Output.FlushAsync(ct).ConfigureAwait(false);

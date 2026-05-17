@@ -44,4 +44,15 @@ public sealed class MapGateServiceTests
         Assert.Equal(130, pkt[7]);
         Assert.Equal(2, pkt[8]);
     }
+
+    [Fact]
+    public void TeleportWire602_devias_gate_keeps_map_byte_before_high_x()
+    {
+        // Lorencia→Devias gate: map=2, x=215 — client must read pkt[5]=2, not 215 (World216 crash).
+        var pkt = TeleportWire602.Build(1, 2, 215, 38, 0);
+        Assert.Equal(9, pkt[1]);
+        Assert.Equal(2, pkt[5]);
+        Assert.Equal(215, pkt[6]);
+        Assert.Equal(38, pkt[7]);
+    }
 }

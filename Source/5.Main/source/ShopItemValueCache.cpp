@@ -85,32 +85,48 @@ namespace
 		}
 
 		// F3 E9 may key exc differently than post-ItemConvert tooltip item; try index+level.
+		// If several rows match (should not happen after server sends shop-only E9), pick lowest zen buy.
+		int bestBuy = 0;
+		int bestSell = 0;
+		bool found = false;
 		for (const auto& entry : g_cache)
 		{
-			if (entry.first.index == key.index
-				&& entry.first.level == key.level
-				&& entry.second.priceType == 0)
+			if (entry.first.index != key.index
+				|| entry.first.level != key.level
+				|| entry.second.priceType != 0)
 			{
-				if (outPrice != nullptr)
-				{
-					*outPrice = entry.second.buy;
-				}
+				continue;
+			}
 
-				if (outPriceType != nullptr)
-				{
-					*outPriceType = 0;
-				}
-
-				if (outSell != nullptr)
-				{
-					*outSell = entry.second.sell;
-				}
-
-				return true;
+			if (!found || entry.second.buy < bestBuy)
+			{
+				bestBuy = entry.second.buy;
+				bestSell = entry.second.sell;
+				found = true;
 			}
 		}
 
-		return false;
+		if (!found)
+		{
+			return false;
+		}
+
+		if (outPrice != nullptr)
+		{
+			*outPrice = bestBuy;
+		}
+
+		if (outPriceType != nullptr)
+		{
+			*outPriceType = 0;
+		}
+
+		if (outSell != nullptr)
+		{
+			*outSell = bestSell;
+		}
+
+		return true;
 	}
 }
 
@@ -148,12 +164,23 @@ void ShopItemValueCache_ApplyPacket(const BYTE* receiveBuffer, int size)
 	}
 }
 
+static int ExcellentKeyBits(const tagITEM* ip)
+{
+	// Wire byte 3 is stored in Option1 before ItemConvert; wings may also use ExtOption.
+	int bits = ip->Option1 & 0x3F;
+	if (bits == 0 && (ip->ExtOption & 0x3F) != 0)
+	{
+		bits = ip->ExtOption & 0x3F;
+	}
+
+	return bits;
+}
+
 static Key MakeKey(const tagITEM* ip)
 {
 	const int index = ip->Type;
 	const int level = (ip->Level >> 3) & 15;
-	// Excellent options live in wire byte 3 (ITEM::Option1 after CreateItem), not ExtOption (byte 4).
-	const int newopt = ip->Option1 & 0x3F;
+	const int newopt = ExcellentKeyBits(ip);
 	return { index, level, newopt };
 }
 

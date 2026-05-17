@@ -418,6 +418,7 @@ public static class GamePortMinimalSession
                             return;
                         }
 
+                        PlayerWalkHandler.HealSpawnTile(picked);
                         var spawn = new JoinMapSpawnWire(picked.MapId, picked.PosX, picked.PosY, picked.Angle);
                         var joinPkt = JoinMapServerWire602.Build(picked.ToWireWithSheet(), spawn);
                         var invPkt = await JoinInventoryLifecycle.BuildJoinPacketAsync(
@@ -573,6 +574,14 @@ public static class GamePortMinimalSession
                                 remote,
                                 async (m, t) => await GamePortOutboundWire.WriteAsync(connection, protect, m, t, TrackVitalsOutbound).ConfigureAwait(false),
                                 () => Volatile.Write(ref rosterDirty, 1),
+                                () =>
+                                {
+                                    Volatile.Write(ref rosterDirty, 1);
+                                    if (!string.IsNullOrEmpty(loggedAccountId))
+                                    {
+                                        SaveRoster(loggedAccountId, roster);
+                                    }
+                                },
                                 ct).ConfigureAwait(false))
                         {
                             return;
@@ -647,36 +656,26 @@ public static class GamePortMinimalSession
 
                     if (loginLatch.IsLoggedIn
                         && sessionJoinCharacterName10 is not null
-                        && ClientWalkPackets602.TryFindWalkEndTile(packet, out _, out var walkX, out var walkY, out var walkAng, out var walkMoved))
+                        && ClientWalkPackets602.TryFindWalkEndTile(packet, out var walkOff, out var walkX, out var walkY, out var walkAng, out var walkMoved))
                     {
                         var pickedWalk = FindRosterEntry(roster, sessionJoinCharacterName10);
                         if (pickedWalk is not null)
                         {
-                            if (walkMoved)
-                            {
-                                pickedWalk.PosX = walkX;
-                                pickedWalk.PosY = walkY;
-                                await MapMonsterScopeSender.TrySendOnMoveAsync(
-                                    monsterViewportTracker,
+                            await PlayerWalkHandler.HandleWalkAsync(
+                                    presenceSessionId,
                                     connection,
                                     protect,
-                                    pickedWalk.MapId,
+                                    pickedWalk,
+                                    packet[walkOff + 3],
+                                    packet[walkOff + 4],
                                     walkX,
                                     walkY,
+                                    walkAng,
+                                    walkMoved,
                                     remote,
-                                    ct).ConfigureAwait(false);
-                                MonsterViewerRegistry.UpdatePosition(presenceSessionId, pickedWalk.MapId, walkX, walkY);
-                                await GameMapPresenceRegistry.BroadcastPositionAsync(
-                                        presenceSessionId,
-                                        pickedWalk.MapId,
-                                        walkX,
-                                        walkY,
-                                        remote,
-                                        ct)
-                                    .ConfigureAwait(false);
-                            }
-
-                            pickedWalk.Angle = walkAng;
+                                    monsterViewportTracker,
+                                    ct)
+                                .ConfigureAwait(false);
                             Volatile.Write(ref rosterDirty, 1);
                         }
 
@@ -955,6 +954,7 @@ public static class GamePortMinimalSession
             PlayerShopSession.FlushInventoryMirrorOnDisconnect(loggedAccountId, sessionJoinCharacterName10, presenceSessionId);
             PlayerWarehouseSession.FlushOnDisconnect(loggedAccountId, presenceSessionId);
             PlayerTradeSession.Close(presenceSessionId);
+            PlayerUiSession.Clear(presenceSessionId);
             InventorySlotMirrorWriter.TryDrainPendingOps(TimeSpan.FromMilliseconds(900));
             WarehouseSlotMirrorWriter.TryDrainPendingOps(TimeSpan.FromMilliseconds(900));
 

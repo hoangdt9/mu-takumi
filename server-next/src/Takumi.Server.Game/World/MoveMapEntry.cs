@@ -7,13 +7,13 @@ public sealed class MoveMapEntry
 
     public int Money { get; init; }
 
-    public int MinLevel { get; init; }
+    public int MinLevel { get; init; } = -1;
 
-    public int MaxLevel { get; init; }
+    public int MaxLevel { get; init; } = -1;
 
-    public int MinReset { get; init; }
+    public int MinReset { get; init; } = -1;
 
-    public int MaxReset { get; init; }
+    public int MaxReset { get; init; } = -1;
 
     public int AccountLevel { get; init; }
 

@@ -17,8 +17,8 @@ public:
 	//void	ReadList(char * File);
 	void	Load();
 	enum SHOW_STATE { HIDE, FADEIN, SHOW, FADEOUT };
-	char* GetNameMap(int world);
-	char* GetMapName(int iMap);
+	const char* GetNameMap(int world);
+	const char* GetMapName(int iMap);
 	PathMap* GetMapInfo(int world);
 	void OpenScritp(PathMap* thisa);
 

@@ -1600,11 +1600,11 @@ BOOL ReceiveJoinMapServer(BYTE *ReceiveBuffer, BOOL bEncrypted)
 	if (gMapManager.WorldActive >= WD_65DOPPLEGANGER1 && gMapManager.WorldActive <= WD_68DOPPLEGANGER4);
 	else
 	{
-		char Text[256];
-		sprintf(Text,"%s%s",GlobalText[484],gMapManager.GetMapName(gMapManager.WorldActive));
-		
-		if (g_pChatListBox != nullptr)
+		const char* mapName = gMapManager.GetMapName(gMapManager.WorldActive);
+		if (mapName != nullptr && mapName[0] != '\0' && g_pChatListBox != nullptr)
 		{
+			char Text[256];
+			sprintf(Text, "%s%s", GlobalText[484], mapName);
 			g_pChatListBox->AddText("", Text, SEASON3B::TYPE_SYSTEM_MESSAGE);
 		}
 	}
@@ -2717,10 +2717,13 @@ BOOL ReceiveTeleport(BYTE *ReceiveBuffer, BOOL bEncrypted)
 			if (gMapManager.WorldActive >= WD_65DOPPLEGANGER1 && gMapManager.WorldActive <= WD_68DOPPLEGANGER4);
 			else
 			{
-				char Text[256];
-				sprintf(Text,"%s%s",GlobalText[484],gMapManager.GetMapName(gMapManager.WorldActive));
-			
-				g_pChatListBox->AddText("", Text, SEASON3B::TYPE_SYSTEM_MESSAGE);
+				const char* mapName = gMapManager.GetMapName(gMapManager.WorldActive);
+				if (mapName != nullptr && mapName[0] != '\0' && g_pChatListBox != nullptr)
+				{
+					char Text[256];
+					sprintf(Text, "%s%s", GlobalText[484], mapName);
+					g_pChatListBox->AddText("", Text, SEASON3B::TYPE_SYSTEM_MESSAGE);
+				}
 			}
 		}
 		SendRequestFinishLoading();
@@ -14134,27 +14137,61 @@ bool ReceiveRequestMoveMap(BYTE* ReceiveBuffer)
 {
 	LPPMSG_ANS_MAPMOVE Data = (LPPMSG_ANS_MAPMOVE)ReceiveBuffer;
 
-	if (Data->btResult == 0)
+	if (Data->btResult == 0x01)
 	{
-		
-	}
-	else
-	{
-		
+		return true;
 	}
 
-// 	MAPMOVE_SUCCESS	
-// 	MAPMOVE_FAILED,	
-// 	MAPMOVE_FAILED_TELEPORT,
-// 	MAPMOVE_FAILED_PSHOP_OPEN,
-// 	MAPMOVE_FAILED_RECALLED,
-// 	MAPMOVE_FAILED_NOT_ENOUGH_EQUIP,
-// 	MAPMOVE_FAILED_WEARING_EQUIP,
-// 	MAPMOVE_FAILED_MURDERER,	
-// 	MAPMOVE_FAILED_NOT_ENOUGH_LEVEL,
-// 	MAPMOVE_FAILED_NOT_ENOUGH_ZEN,	
-// 	MAPMOVE_FORCED_EVENT_END		= 20,
-// 	MAPMOVE_FORCED_GM			
+	if (g_pChatListBox == nullptr)
+	{
+		return true;
+	}
+
+	const char* msg = nullptr;
+	switch (Data->btResult)
+	{
+	case 0x00:
+		msg = GlobalText[226];
+		break;
+	case 0x02:
+		msg = GlobalText[226];
+		break;
+	case 0x03:
+		msg = GlobalText[226];
+		break;
+	case 0x04:
+		msg = GlobalText[226];
+		break;
+	case 0x05:
+		msg = GlobalText[228];
+		break;
+	case 0x06:
+		msg = GlobalText[274];
+		break;
+	case 0x07:
+		msg = GlobalText[225];
+		break;
+	case 0x08:
+		msg = GlobalText[224];
+		break;
+	case 0x09:
+		msg = GlobalText[227];
+		break;
+	case 0x0A:
+		msg = GlobalText[229];
+		break;
+	case 0x0B:
+		msg = GlobalText[226];
+		break;
+	default:
+		msg = GlobalText[226];
+		break;
+	}
+
+	if (msg != nullptr && msg[0] != '\0')
+	{
+		g_pChatListBox->AddText("", (char*)msg, SEASON3B::TYPE_SYSTEM_MESSAGE);
+	}
 
 	return true;
 }

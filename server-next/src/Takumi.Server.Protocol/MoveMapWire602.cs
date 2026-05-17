@@ -9,8 +9,16 @@ public static class MoveMapWire602
 
     public const byte ResultSuccess = 0x01;
     public const byte ResultFailed = 0x00;
+    public const byte ResultFailedTeleport = 0x02;
+    public const byte ResultFailedPShopOpen = 0x03;
+    public const byte ResultFailedRecalled = 0x04;
+    public const byte ResultNotEnoughEquip = 0x05;
+    public const byte ResultWearingEquip = 0x06;
     public const byte ResultNotEnoughZen = 0x07;
     public const byte ResultNotEnoughLevel = 0x08;
+    public const byte ResultMurderer = 0x09;
+    public const byte ResultGensRequired = 0x0A;
+    public const byte ResultCustomArena = 0x0B;
 
     /// <summary><c>C1 08 8E 01</c> + little-endian seed (<c>PMSG_MAPMOVE_CHECKSUM</c>).</summary>
     public static byte[] BuildChecksum(uint keyValue)

@@ -213,6 +213,18 @@ public static class MonsterViewerRegistry
         };
     }
 
+    public static bool TryGetClientHeroWireKey(Guid sessionId, out int clientHeroWireKey)
+    {
+        clientHeroWireKey = 0;
+        if (!Sessions.TryGetValue(sessionId, out var session))
+        {
+            return false;
+        }
+
+        clientHeroWireKey = session.ClientHeroWireKey;
+        return true;
+    }
+
     public static void UpdatePosition(Guid sessionId, byte mapId, byte x, byte y)
     {
         if (Sessions.TryGetValue(sessionId, out var session))

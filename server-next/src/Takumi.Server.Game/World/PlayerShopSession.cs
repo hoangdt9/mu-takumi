@@ -12,11 +12,14 @@ public static class PlayerShopSession
 
     public readonly record struct SessionState(int ShopIndex, byte? PendingBuySlot, Dictionary<byte, byte[]> Slots);
 
-    public static void OpenShop(Guid sessionId, int shopIndex) =>
+    public static void OpenShop(Guid sessionId, int shopIndex)
+    {
+        PlayerUiSession.SetNpcShop(sessionId, true);
         Sessions.AddOrUpdate(
             sessionId,
             _ => new SessionState(shopIndex, null, new Dictionary<byte, byte[]>()),
             (_, existing) => existing with { ShopIndex = shopIndex, PendingBuySlot = null });
+    }
 
     public static void SetPendingBuy(Guid sessionId, byte shopSlot)
     {
@@ -52,6 +55,7 @@ public static class PlayerShopSession
 
     public static void CloseShop(Guid sessionId)
     {
+        PlayerUiSession.SetNpcShop(sessionId, false);
         if (Sessions.TryGetValue(sessionId, out var s))
         {
             Sessions[sessionId] = s with { ShopIndex = -1, PendingBuySlot = null };

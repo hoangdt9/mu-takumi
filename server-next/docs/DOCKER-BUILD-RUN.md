@@ -48,7 +48,8 @@ Stack `server-next` **không** bake code C# vào Docker image.
 3. Sửa `.env`:
    - `TAKUMI_PUBLIC_HOST` = IP LAN máy (cùng Wi‑Fi với điện thoại), ví dụ `192.168.1.50`.
    - `TAKUMI_LAN_IP` = cùng IP (nếu doc/script yêu cầu).
-   - `TAKUMI_DATA_ZIP_URL=http://<IP>:18080/data.zip` (nếu dùng profile **datazip**).
+   - `COMPOSE_PROFILES=datazip,gamehost` (mặc định trong `.env.lan.example` — Docker Desktop / `docker compose ps` thấy `takumi-game-host` :55901).
+   - `TAKUMI_DATA_ZIP_URL=http://<IP>:18080/data.zip` (profile **datazip**).
 4. **`keys/Dec2.dat`** — cùng file với client `Data/Dec2.dat` (mount vào container tại `/keys/Dec2.dat`).
 5. Tắt stack khác trùng cổng (vd. `takumi-openmu` **44505**) khi test `server-next` (**44605** / **44606**).
 
@@ -60,7 +61,7 @@ Stack `server-next` **không** bake code C# vào Docker image.
 | Login / game (một TCP) | **44606** | `TAKUMI_LEGACY_LOGIN_PUBLISH` |
 | Postgres | **54444** | `TAKUMI_POSTGRES_PUBLISH_PORT` |
 | `data.zip` (nginx) | **18080** | profile **datazip** |
-| GameHost (M6, tùy chọn) | **55901** | `TAKUMI_GAME_PUBLISH` + `TAKUMI_GAME_PORT` |
+| GameHost (M6) | **55901** | profile **gamehost** (bật qua `COMPOSE_PROFILES`) + `TAKUMI_GAME_PUBLISH` |
 
 Kiểm tra port: `./scripts/check-lan-connect-ports.sh` hoặc `./scripts/check-takumi-ports.sh`.
 

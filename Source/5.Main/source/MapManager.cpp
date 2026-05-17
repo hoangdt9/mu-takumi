@@ -1815,7 +1815,12 @@ const char* CMapManager::GetMapName( int iMap)
 {
 	if (iMap > NUM_WD)
 	{
-		return gCustomMap.GetNameMap(iMap); //Custom Map
+		const char* custom = gCustomMap.GetNameMap(iMap);
+		if (custom != nullptr && custom[0] != '\0')
+		{
+			return custom;
+		}
+		// Custom map id from server but not in MainInfo m_MapInfo — fall through to GlobalText[30+iMap].
 	}
 	if(iMap == WD_34CRYWOLF_1ST)
 	{

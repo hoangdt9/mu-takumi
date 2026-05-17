@@ -69,7 +69,7 @@ void ShopItemValueCache_ApplyPacket(const BYTE* receiveBuffer, int size)
 	}
 }
 
-static Key MakeKey(const ITEM* ip)
+static Key MakeKey(const tagITEM* ip)
 {
 	const int index = ip->Type;
 	const int level = (ip->Level >> 3) & 15;
@@ -77,7 +77,7 @@ static Key MakeKey(const ITEM* ip)
 	return { index, level, newopt };
 }
 
-bool ShopItemValueCache_TryGetBuy(const ITEM* ip, int* outBuy)
+bool ShopItemValueCache_TryGetBuy(const tagITEM* ip, int* outBuy)
 {
 	if (ip == nullptr || outBuy == nullptr)
 	{
@@ -94,7 +94,7 @@ bool ShopItemValueCache_TryGetBuy(const ITEM* ip, int* outBuy)
 	return true;
 }
 
-bool ShopItemValueCache_TryGetSell(const ITEM* ip, int* outSell)
+bool ShopItemValueCache_TryGetSell(const tagITEM* ip, int* outSell)
 {
 	if (ip == nullptr || outSell == nullptr)
 	{

@@ -128,6 +128,7 @@ set_target_properties(mpg123 PROPERTIES IMPORTED_LOCATION "${JNI_LIBS_DIR}/libmp
 
 file(GLOB_RECURSE GAME_SOURCES "${GAME_SRC_DIR}/*.cpp")
 list(APPEND GAME_SOURCES "${GAME_SRC_DIR}/ScenePerfTelemetry.cpp")
+list(APPEND GAME_SOURCES "${GAME_SRC_DIR}/ShopItemValueCache.cpp")
 list(APPEND GAME_SOURCES "${GAME_SRC_DIR}/Platform/AndroidLoginUi.cpp")
 # Protect.cpp uses CCRC32; glob only picks lowercase .cpp (not CCRC32.Cpp).
 set(_MU_CCRC32_SRC "${GAME_SRC_DIR}/Utilities/CCRC32.Cpp")

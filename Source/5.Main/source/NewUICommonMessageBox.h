@@ -772,6 +772,17 @@ namespace SEASON3B
 		static CALLBACK_RESULT CancelBtnDown(class CNewUIMessageBoxBase* pOwner, const leaf::xstreambuf& xParam);		
 	};
 
+	class CNPCShopBuyMsgBoxLayout : public TMsgBoxLayout<CNewUI3DItemCommonMsgBox>
+	{
+	public:
+		bool SetLayout();
+		static CALLBACK_RESULT OkBtnDown(class CNewUIMessageBoxBase* pOwner, const leaf::xstreambuf& xParam);
+		static CALLBACK_RESULT CancelBtnDown(class CNewUIMessageBoxBase* pOwner, const leaf::xstreambuf& xParam);
+	};
+
+	void SetNpcShopBuyConfirmSlot(int slot);
+	int GetNpcShopBuyConfirmSlot();
+
 	class CEmpireGuardianMsgBoxLayout : public TMsgBoxLayout<CNewUICommonMessageBox>
 	{
 	public:

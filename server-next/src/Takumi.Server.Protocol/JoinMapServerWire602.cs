@@ -158,7 +158,7 @@ file sealed class JoinMapStatWire
         var sdMax = merged.ClampU16(merged.MaxShield);
         var bpCur = computed.SkillMana;
         var bpMax = computed.SkillManaMax;
-        var gold = merged.Zen > 0 ? merged.ClampGold() : 0u;
+        var gold = JoinMapEconomy602.ResolveJoinWireGold(merged.Zen);
 
         var view = new ViewDwordBlock
         {

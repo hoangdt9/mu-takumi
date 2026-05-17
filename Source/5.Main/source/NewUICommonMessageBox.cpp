@@ -3767,6 +3767,64 @@ CALLBACK_RESULT SEASON3B::CGambleBuyMsgBoxLayout::CancelBtnDown(class CNewUIMess
 	return CALLBACK_BREAK;
 }
 
+static int s_npcShopConfirmSlot = -1;
+
+void SEASON3B::SetNpcShopBuyConfirmSlot(int slot)
+{
+	s_npcShopConfirmSlot = slot;
+}
+
+int SEASON3B::GetNpcShopBuyConfirmSlot()
+{
+	return s_npcShopConfirmSlot;
+}
+
+bool SEASON3B::CNPCShopBuyMsgBoxLayout::SetLayout()
+{
+	CNewUI3DItemCommonMsgBox* pMsgBox = GetMsgBox();
+	if (pMsgBox == nullptr)
+	{
+		return false;
+	}
+	if (false == pMsgBox->Create(MSGBOX_COMMON_TYPE_OKCANCEL))
+	{
+		return false;
+	}
+
+	ITEM* pItem = g_pNPCShop->GetStandbyItem();
+	if (pItem == nullptr)
+	{
+		return false;
+	}
+
+	pMsgBox->Set3DItem(pItem);
+	pMsgBox->AddMsg(GlobalText[1612]);
+	pMsgBox->AddCallbackFunc(CNPCShopBuyMsgBoxLayout::OkBtnDown, MSGBOX_EVENT_USER_COMMON_OK);
+	pMsgBox->AddCallbackFunc(CNPCShopBuyMsgBoxLayout::CancelBtnDown, MSGBOX_EVENT_USER_COMMON_CANCEL);
+	return true;
+}
+
+CALLBACK_RESULT SEASON3B::CNPCShopBuyMsgBoxLayout::OkBtnDown(class CNewUIMessageBoxBase* pOwner, const leaf::xstreambuf& xParam)
+{
+	const int slot = GetNpcShopBuyConfirmSlot();
+	if (slot >= 0)
+	{
+		SendRequestBuyConfirm(slot);
+	}
+
+	PlayBuffer(SOUND_CLICK01);
+	g_MessageBox->SendEvent(pOwner, MSGBOX_EVENT_DESTROY);
+	return CALLBACK_BREAK;
+}
+
+CALLBACK_RESULT SEASON3B::CNPCShopBuyMsgBoxLayout::CancelBtnDown(class CNewUIMessageBoxBase* pOwner, const leaf::xstreambuf& xParam)
+{
+	BuyCost = 0;
+	PlayBuffer(SOUND_CLICK01);
+	g_MessageBox->SendEvent(pOwner, MSGBOX_EVENT_DESTROY);
+	return CALLBACK_BREAK;
+}
+
 bool SEASON3B::CEmpireGuardianMsgBoxLayout::SetLayout()
 {
 	CNewUICommonMessageBox* pMsgBox = GetMsgBox();

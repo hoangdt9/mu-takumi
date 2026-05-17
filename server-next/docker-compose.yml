@@ -53,7 +53,7 @@ services:
       - ${TAKUMI_DEC2_HOST_DIR:-./keys}:/keys:ro
       # MuServer Data (MonsterSetBase, gates, shops). Override TAKUMI_GAMESERVER_DATA_HOST if your tree differs.
       - ${TAKUMI_GAMESERVER_DATA_HOST:-../MuServer/4.GameServer/Data}:/muserver-data:ro
-      # Client terrain ATT (Lorencia/Terrain.att, …) for monster pathfinding. Default: docker data.zip host Data.
+      # Client terrain ATT + Item_*.bmd (inventory footprints). Default: docker data.zip host Data.
       - ${TAKUMI_ATT_DATA_HOST:-../docker/data-zip/host/Data}:/att-data:ro
     ports:
       - "${TAKUMI_CONNECT_PUBLISH:-44605}:${TAKUMI_CONNECT_PORT:-44605}"
@@ -79,9 +79,14 @@ services:
       TAKUMI_CS_CONNECT_COUNT: "${TAKUMI_CS_CONNECT_COUNT:-}"
       TAKUMI_VERBOSE: "${TAKUMI_VERBOSE:-1}"
       TAKUMI_GAMESERVER_DATA_PATH: "${TAKUMI_GAMESERVER_DATA_PATH:-/muserver-data}"
+      # M8 move map: set to 1 to skip block-key check entirely (parity C++ GS). Default off — server accepts legacy seed 0 fallback.
+      TAKUMI_MOVE_MAP_SKIP_KEY_CHECK: "${TAKUMI_MOVE_MAP_SKIP_KEY_CHECK:-}"
       TAKUMI_MONSTER_SET_BASE_PATH: "${TAKUMI_MONSTER_SET_BASE_PATH:-/muserver-data/Monster/MonsterSetBase.txt}"
       TAKUMI_MONSTER_INFO_PATH: "${TAKUMI_MONSTER_INFO_PATH:-/muserver-data/Monster/Monster.txt}"
       TAKUMI_ATT_DATA_ROOT: "${TAKUMI_ATT_DATA_ROOT:-/att-data}"
+      TAKUMI_CLIENT_DATA_ROOT: "${TAKUMI_CLIENT_DATA_ROOT:-/att-data}"
+      TAKUMI_ITEM_BMD_LOCALE: "${TAKUMI_ITEM_BMD_LOCALE:-Eng}"
+      TAKUMI_ITEM_BMD_PATH: "${TAKUMI_ITEM_BMD_PATH:-}"
       TAKUMI_PG_CONNECTION_STRING: "${TAKUMI_PG_CONNECTION_STRING:-Host=postgres;Port=5432;Username=takumi;Password=takumi;Database=takumi_runtime}"
       TAKUMI_ROSTER_DB_SYNC: "${TAKUMI_ROSTER_DB_SYNC:-1}"
       TAKUMI_ROSTER_DB_PRIMARY: "${TAKUMI_ROSTER_DB_PRIMARY:-1}"
@@ -186,6 +191,7 @@ services:
       - .:/app
       - ${TAKUMI_DEC2_HOST_DIR:-./keys}:/keys:ro
       - ${TAKUMI_GAMESERVER_DATA_HOST:-../MuServer/4.GameServer/Data}:/muserver-data:ro
+      - ${TAKUMI_ATT_DATA_HOST:-../docker/data-zip/host/Data}:/att-data:ro
     ports:
       - "${TAKUMI_GAME_PUBLISH:-55901}:${TAKUMI_GAME_PORT:-55901}"
     environment:
@@ -210,6 +216,11 @@ services:
       TAKUMI_JOIN_VERSION: "${TAKUMI_JOIN_VERSION:-10405}"
       TAKUMI_VERBOSE: "${TAKUMI_VERBOSE:-1}"
       TAKUMI_GAMESERVER_DATA_PATH: "${TAKUMI_GAMESERVER_DATA_PATH:-/muserver-data}"
+      TAKUMI_CLIENT_DATA_ROOT: "${TAKUMI_CLIENT_DATA_ROOT:-/att-data}"
+      TAKUMI_ITEM_BMD_LOCALE: "${TAKUMI_ITEM_BMD_LOCALE:-Eng}"
+      TAKUMI_ITEM_BMD_PATH: "${TAKUMI_ITEM_BMD_PATH:-}"
+      # M8 move map: set to 1 to skip block-key check entirely (parity C++ GS). Default off — server accepts legacy seed 0 fallback.
+      TAKUMI_MOVE_MAP_SKIP_KEY_CHECK: "${TAKUMI_MOVE_MAP_SKIP_KEY_CHECK:-}"
       TAKUMI_MONSTER_SET_BASE_PATH: "${TAKUMI_MONSTER_SET_BASE_PATH:-/muserver-data/Monster/MonsterSetBase.txt}"
       TAKUMI_MONSTER_INFO_PATH: "${TAKUMI_MONSTER_INFO_PATH:-/muserver-data/Monster/Monster.txt}"
       TAKUMI_PG_CONNECTION_STRING: "${TAKUMI_PG_CONNECTION_STRING:-Host=postgres;Port=5432;Username=takumi;Password=takumi;Database=takumi_runtime}"

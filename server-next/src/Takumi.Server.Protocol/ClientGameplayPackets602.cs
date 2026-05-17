@@ -283,13 +283,13 @@ public static class ClientGameplayPackets602
         targetSlot = 0;
         for (var i = 0; i <= packet.Length - ItemMoveFrameLength; i++)
         {
-            if (packet[i] != 0xC1)
+            if (packet[i] is not (0xC1 or 0xC3))
             {
                 continue;
             }
 
             var len = packet[i + 1];
-            if (len < ItemMoveFrameLength || i + len > packet.Length)
+            if (len != ItemMoveFrameLength || i + len > packet.Length)
             {
                 continue;
             }

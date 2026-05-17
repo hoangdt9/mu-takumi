@@ -253,6 +253,9 @@ namespace SEASON3B
 		void SetRepairMode(bool bRepair);
 		bool IsRepairMode();
 
+		/// Clear occupancy grid cells for an item footprint (fixes ghost cells after drag/move).
+		void ClearItemFootprint(int iLinealPos, int iItemType);
+
 		bool AreItemsStackable(ITEM* pSourceItem, ITEM* pTargetItem);
 		bool CanPushItem();
 		bool CanUpgradeItem(ITEM* pSourceItem, ITEM* pTargetItem);

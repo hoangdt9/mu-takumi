@@ -41,25 +41,53 @@ public static class ItemValueCatalog
         EnsureInitialized();
         buyValue = 0;
         sellValue = 0;
-        foreach (var row in _rows)
+        if (TryMatchRow(itemIndex, level, excellent, out var row))
         {
-            if (row.Index != itemIndex)
-            {
-                continue;
-            }
-
-            if (row.Level != -1 && row.Level != level)
-            {
-                continue;
-            }
-
-            if (row.Grade != -1 && row.Grade != excellent)
-            {
-                continue;
-            }
-
-            buyValue = row.Value;
+            buyValue = row!.Value;
             sellValue = row.Sell > 0 ? row.Sell : Math.Max(1, row.Value / 3);
+            return true;
+        }
+
+        return false;
+    }
+
+    static bool TryMatchRow(int itemIndex, int level, int excellent, out ItemValueRow? row)
+    {
+        row = null;
+        ItemValueRow? best = null;
+        foreach (var candidate in _rows)
+        {
+            if (candidate.Index != itemIndex)
+            {
+                continue;
+            }
+
+            if (candidate.Level == level && candidate.Grade == excellent)
+            {
+                row = candidate;
+                return true;
+            }
+
+            if (candidate.Level == level && candidate.Grade == -1)
+            {
+                best ??= candidate;
+            }
+            else if (candidate.Level == -1 && candidate.Grade == excellent)
+            {
+                best ??= candidate;
+            }
+            else if (candidate.Level == -1 || candidate.Level == level)
+            {
+                if (candidate.Grade == -1 || candidate.Grade == excellent)
+                {
+                    best ??= candidate;
+                }
+            }
+        }
+
+        if (best is not null)
+        {
+            row = best;
             return true;
         }
 
@@ -125,8 +153,8 @@ public static class ItemValueCatalog
             rows.Add(
                 new ItemValueRow(
                     index,
-                    ParseInt(parts[1]),
-                    ParseInt(parts[2]),
+                    ParseLevelOrGrade(parts[1]),
+                    ParseLevelOrGrade(parts[2]),
                     ParseInt(parts[3]),
                     ParseInt(parts[4]),
                     ParseInt(parts[5]),
@@ -139,6 +167,9 @@ public static class ItemValueCatalog
 
     static int ParseInt(string s) =>
         int.TryParse(s, NumberStyles.Integer, CultureInfo.InvariantCulture, out var v) ? v : 0;
+
+    static int ParseLevelOrGrade(string s) =>
+        s is "*" or "-1" ? -1 : ParseInt(s);
 
     static string? ResolvePath()
     {

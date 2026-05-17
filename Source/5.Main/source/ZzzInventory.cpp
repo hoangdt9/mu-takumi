@@ -2,6 +2,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include "stdafx.h"
+#include "ShopItemValueCache.h"
 #include "UIManager.h"
 #include "ZzzOpenglUtil.h"
 #include "ZzzBMD.h"
@@ -2823,7 +2824,12 @@ void RenderItemInfo(int sx, int sy, ITEM* ip, bool Sell, int Inventype, bool bIt
 			}
 			else
 			{
-				ConvertGold(ItemValue(ip, 1), Text);
+				int buyPrice = 0;
+				if (!ShopItemValueCache_TryGetBuy(ip, &buyPrice))
+				{
+					buyPrice = ItemValue(ip, 1);
+				}
+				ConvertGold(buyPrice, Text);
 				sprintf(TextList[TextNum], GlobalText[63], Text);
 			}
 
@@ -3537,8 +3543,13 @@ void RenderItemInfo(int sx,int sy,ITEM *ip,bool Sell, int Inventype, bool bItemT
 			}
 			else
 			{
-				ConvertGold(ItemValue(ip,1),Text);
-				sprintf(TextList[TextNum],GlobalText[63],Text);
+				int buyPrice = 0;
+				if (!ShopItemValueCache_TryGetBuy(ip, &buyPrice))
+				{
+					buyPrice = ItemValue(ip, 1);
+				}
+				ConvertGold(buyPrice, Text);
+				sprintf(TextList[TextNum], GlobalText[63], Text);
 			}
 
 			TextListColor[TextNum] = Color;

@@ -27,23 +27,26 @@ public static class MoveMapHandler
             return false;
         }
 
-        if (!MoveMapSessionState.SkipKeyCheck())
+        if (!MoveMapKeyGenerator.TryValidateBlockKey(presenceSessionId, blockKey, out var usedLegacySeedZero))
         {
-            if (!MoveMapSessionState.TryGet(presenceSessionId, out var seed)
-                || !MoveMapKeyGenerator.TryAcceptKey(ref seed, blockKey))
-            {
-                await WriteAsync(connection, clientProtectOutbound, writeAsync, MoveMapWire602.BuildAnswer(MoveMapWire602.ResultFailed), ct)
-                    .ConfigureAwait(false);
-                Console.WriteLine(
-                    "[m8] move map denied index={0} bad block key=0x{1:X8} {2} frame@{3}",
-                    mapIdx,
-                    blockKey,
-                    remote,
-                    moveOff);
-                return true;
-            }
+            await WriteAsync(connection, clientProtectOutbound, writeAsync, MoveMapWire602.BuildAnswer(MoveMapWire602.ResultFailed), ct)
+                .ConfigureAwait(false);
+            Console.WriteLine(
+                "[m8] move map denied index={0} bad block key=0x{1:X8} {2} frame@{3}",
+                mapIdx,
+                blockKey,
+                remote,
+                moveOff);
+            return true;
+        }
 
-            MoveMapSessionState.Reset(presenceSessionId, seed);
+        if (usedLegacySeedZero)
+        {
+            Console.WriteLine(
+                "[m8] move map key accepted via legacy seed=0 (no 8E 01 or mismatch) index={0} key=0x{1:X8} {2}",
+                mapIdx,
+                blockKey,
+                remote);
         }
 
         var prevMap = player.MapId;
@@ -80,6 +83,15 @@ public static class MoveMapHandler
         {
             player.Zen = Math.Max(0, player.Zen - zenCost);
         }
+
+        var wireGold = (uint)Math.Clamp(player.Zen, 0, uint.MaxValue);
+        await WriteAsync(
+                connection,
+                clientProtectOutbound,
+                writeAsync,
+                ShopCommerceWire602.BuildRepair(wireGold),
+                ct)
+            .ConfigureAwait(false);
 
         player.MapId = dest.MapId;
         player.PosX = dest.X;
@@ -118,6 +130,17 @@ public static class MoveMapHandler
                         ct)
                     .ConfigureAwait(false);
             }
+        }
+
+        if (!MoveMapSessionState.SkipKeyCheck())
+        {
+            await MoveMapOutbound.TrySendChecksumAfterJoinAsync(
+                    presenceSessionId,
+                    connection,
+                    clientProtectOutbound,
+                    writeAsync: null,
+                    ct)
+                .ConfigureAwait(false);
         }
 
         Console.WriteLine(

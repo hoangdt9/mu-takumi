@@ -78,6 +78,17 @@ public sealed class JoinMapVitals602Tests
         var lifeMax = BinaryPrimitives.ReadUInt16LittleEndian(pkt.AsSpan(36));
         Assert.True(life > 0);
         Assert.Equal(lifeMax, life);
-        Assert.Equal(0u, BinaryPrimitives.ReadUInt32LittleEndian(pkt.AsSpan(50)));
+        Assert.Equal(JoinMapEconomy602.DefaultMinZenWhenUnset, BinaryPrimitives.ReadUInt32LittleEndian(pkt.AsSpan(50)));
+    }
+
+    [Fact]
+    public void Join_uses_roster_zen_when_positive()
+    {
+        var name = new byte[10];
+        "Rich"u8.CopyTo(name);
+        var vitals = CharacterRosterVitals.FromInts(100, 100, 50, 50, zen: 9_876);
+        var pkt = JoinMapServerWire602.Build(new CharacterRosterWire(name, serverClass: 0x00, level: 5, vitals));
+
+        Assert.Equal(9_876u, BinaryPrimitives.ReadUInt32LittleEndian(pkt.AsSpan(50)));
     }
 }

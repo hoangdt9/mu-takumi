@@ -40,5 +40,35 @@ public static class MoveMapKeyGenerator
         return true;
     }
 
+    /// <summary>
+    /// Validates move-map block key and advances stored seed.
+    /// Falls back to client seed <c>0</c> when session has no seed or primary check fails (parity: legacy GS never sends <c>8E 01</c>).
+    /// </summary>
+    public static bool TryValidateBlockKey(Guid presenceSessionId, uint receivedKey, out bool usedLegacySeedZero)
+    {
+        usedLegacySeedZero = false;
+        if (MoveMapSessionState.SkipKeyCheck())
+        {
+            return true;
+        }
+
+        if (MoveMapSessionState.TryGet(presenceSessionId, out var seed)
+            && TryAcceptKey(ref seed, receivedKey))
+        {
+            MoveMapSessionState.Reset(presenceSessionId, seed);
+            return true;
+        }
+
+        var legacySeed = 0u;
+        if (TryAcceptKey(ref legacySeed, receivedKey))
+        {
+            MoveMapSessionState.Reset(presenceSessionId, legacySeed);
+            usedLegacySeedZero = true;
+            return true;
+        }
+
+        return false;
+    }
+
     public static uint CreateSeed() => (uint)Random.Shared.Next(1, int.MaxValue);
 }

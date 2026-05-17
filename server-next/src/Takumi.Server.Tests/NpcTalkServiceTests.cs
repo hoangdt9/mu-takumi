@@ -23,6 +23,17 @@ public sealed class NpcTalkServiceTests
     }
 
     [Fact]
+    public void NpcTalkWire_C1_length_matches_buffer()
+    {
+        var pkt = NpcTalkWire602.Build(NpcTalkService.TalkResultShop);
+        Assert.Equal(9, pkt.Length);
+        Assert.Equal(0xC1, pkt[0]);
+        Assert.Equal(0x09, pkt[1]);
+        Assert.Equal(NpcTalkWire602.Head, pkt[2]);
+        Assert.Equal(NpcTalkService.TalkResultShop, pkt[3]);
+    }
+
+    [Fact]
     public void Warehouse_money_packet_layout()
     {
         var pkt = WarehouseWire602.BuildMoney(inventoryMoney: 1_000, warehouseMoney: 500);

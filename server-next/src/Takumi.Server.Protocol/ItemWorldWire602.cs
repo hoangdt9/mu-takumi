@@ -31,6 +31,14 @@ public static class ItemWorldWire602
     public static byte[] BuildPickFail() =>
         BuildPick(PickFail, stackalloc byte[ItemWire602.WireBytes]);
 
+    /// <summary>C1 0x22 / result 0xFE — absolute inventory zen (legacy <c>ReceiveGetItem</c> / OpenMU InventoryMoneyUpdate).</summary>
+    public static byte[] BuildInventoryMoneyUpdate(uint zen)
+    {
+        var zenWire = new byte[ItemWire602.WireBytes];
+        ItemWire602.WriteZenPickTotal(zenWire, zen);
+        return BuildPick(PickZen, zenWire);
+    }
+
     /// <summary><c>PHEADER_DEFAULT_KEY</c> — KeyH=success, KeyL=slot.</summary>
     public static byte[] BuildDrop(byte keyH, byte slot)
     {

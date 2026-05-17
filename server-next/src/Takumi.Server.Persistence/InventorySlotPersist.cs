@@ -1,3 +1,5 @@
+using System.Text;
+
 namespace Takumi.Server.Persistence;
 
 /// <summary>Persist bag slots + zen after NPC shop (M9 P4.3).</summary>
@@ -22,9 +24,36 @@ public static class InventorySlotPersist
             return;
         }
 
-        var name = CharacterRosterMerge.NormaliseName(
-            System.Text.Encoding.ASCII.GetString(characterName10).TrimEnd('\0'));
-        await repo.ReplaceCharacterSlotsAsync(accountLogin, name, slots, ct).ConfigureAwait(false);
+        var name = NormaliseCharacterName(characterName10);
+        var snapshot = new Dictionary<byte, byte[]>(slots.Count);
+        foreach (var kv in slots)
+        {
+            if (kv.Value.Length != 12 || IsEmptyItem12(kv.Value))
+            {
+                continue;
+            }
+
+            snapshot[kv.Key] = kv.Value;
+        }
+
+        await repo.ReplaceCharacterSlotsAsync(accountLogin, name, snapshot, ct).ConfigureAwait(false);
+    }
+
+    static string NormaliseCharacterName(byte[] characterName10) =>
+        CharacterRosterMerge.NormaliseName(
+            Encoding.ASCII.GetString(characterName10.AsSpan(0, Math.Min(10, characterName10.Length))));
+
+    static bool IsEmptyItem12(byte[] item12)
+    {
+        for (var i = 0; i < item12.Length; i++)
+        {
+            if (item12[i] != 0)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     public static async Task SaveZenAsync(
@@ -39,8 +68,7 @@ public static class InventorySlotPersist
             return;
         }
 
-        var name = CharacterRosterMerge.NormaliseName(
-            System.Text.Encoding.ASCII.GetString(characterName10).TrimEnd('\0'));
+        var name = NormaliseCharacterName(characterName10);
         await roster.UpdateZenAsync(accountLogin, name, zen, ct).ConfigureAwait(false);
     }
 }

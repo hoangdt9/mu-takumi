@@ -342,7 +342,7 @@ void CNewUIStorageInventory::ProcessInventoryCtrl()
 		ITEM* pItemObj = pPickedItem->GetItem();
 		if (NULL == pItemObj)	return;
 		
-		if (SEASON3B::IsPress(VK_LBUTTON) || GetKeyState(VK_LBUTTON) & 0x8000)
+		if (SEASON3B::IsRelease(VK_LBUTTON))
 		{
 			
 			if (pPickedItem->GetOwnerInventory() == g_pMyInventory->GetInventoryCtrl() || g_pMyInventoryExt->GetOwnerOf(pPickedItem))
@@ -701,33 +701,58 @@ void CNewUIStorageInventory::ProcessToReceiveStorageStatus(BYTE byStatus)
 
 void CNewUIStorageInventory::ProcessToReceiveStorageItems(int nIndex, BYTE* pbyItemPacket)
 {
+	if (nullptr == m_pNewInventoryCtrl || nullptr == pbyItemPacket)
+		return;
+
+	// Wire slot on main warehouse page (0–119); ext page uses CNewUIStorageInventoryExt.
+	if (nIndex < 0 || nIndex >= MAX_SHOP_INVENTORY)
+		return;
+
+	if (pbyItemPacket[0] == 0xFF)
+	{
+		if (ITEM* pItem = m_pNewInventoryCtrl->FindItem(nIndex))
+			m_pNewInventoryCtrl->RemoveItem(pItem);
+		SEASON3B::CNewUIInventoryCtrl::DeletePickedItem();
+		SetItemAutoMove(false);
+		return;
+	}
+
+	SEASON3B::CNewUIPickedItem* pPickedItem = SEASON3B::CNewUIInventoryCtrl::GetPickedItem();
+	if (pPickedItem)
+	{
+		ITEM* pSrcItem = pPickedItem->GetItem();
+		SEASON3B::CNewUIInventoryCtrl* pSrcInv = pPickedItem->GetOwnerInventory();
+		if (pSrcItem && pSrcInv)
+		{
+			const int srcPos = pPickedItem->GetSourceLinealPos();
+			pSrcInv->ClearItemFootprint(srcPos, pSrcItem->Type);
+			if (ITEM* pStale = pSrcInv->FindItem(srcPos))
+				pSrcInv->RemoveItem(pStale);
+		}
+	}
+
 	SEASON3B::CNewUIInventoryCtrl::DeletePickedItem();
 
-	if (nIndex >= 0 && nIndex < (m_pNewInventoryCtrl->GetNumberOfColumn()
-		* m_pNewInventoryCtrl->GetNumberOfRow()))
+	if (IsItemAutoMove())
 	{
-		if (IsItemAutoMove())
+		CNewUIInventoryCtrl* pMyInvenCtrl = g_pMyInventory->GetInventoryCtrl();
+		ITEM* pItemObj = pMyInvenCtrl->FindItemAtPt(m_nBackupMouseX, m_nBackupMouseY);
+		if (pItemObj)
+			g_pMyInventory->GetInventoryCtrl()->RemoveItem(pItemObj);
+		else
 		{
-			CNewUIInventoryCtrl* pMyInvenCtrl = g_pMyInventory->GetInventoryCtrl();
-			ITEM* pItemObj = pMyInvenCtrl->FindItemAtPt(m_nBackupMouseX, m_nBackupMouseY);
+			pItemObj = g_pMyInventoryExt->FindItemAtPt(m_nBackupMouseX, m_nBackupMouseY);
 			if (pItemObj)
-			{
-				g_pMyInventory->GetInventoryCtrl()->RemoveItem(pItemObj);
-			}
-			else
-			{
-			//==Fix R Click Move
-				pItemObj = g_pMyInventoryExt->FindItemAtPt(m_nBackupMouseX, m_nBackupMouseY);
-				if (pItemObj)
-				{
-					g_pMyInventoryExt->GetInventoryCtrl()->RemoveItem(pItemObj);
-				}
-			}
-			SetItemAutoMove(false);
+				g_pMyInventoryExt->GetInventoryCtrl()->RemoveItem(pItemObj);
 		}
-
-		InsertItem(nIndex, pbyItemPacket);
+		SetItemAutoMove(false);
 	}
+
+	if (ITEM* pConflict = m_pNewInventoryCtrl->FindItem(nIndex))
+		m_pNewInventoryCtrl->RemoveItem(pConflict);
+
+	if (!InsertItem(nIndex, pbyItemPacket))
+		SEASON3B::CNewUIInventoryCtrl::BackupPickedItem();
 }
 
 void CNewUIStorageInventory::ProcessStorageItemAutoMoveSuccess()

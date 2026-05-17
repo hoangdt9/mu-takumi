@@ -782,6 +782,18 @@ __forceinline void SendRequestBuy(int Index,int Cost)
 	g_ConsoleDebug->Write(MCD_SEND, "0x32 [SendRequestBuy(%d)]", Index);
 }
 
+__forceinline void SendRequestBuyConfirm(int Index)
+{
+	CStreamPacketEngine spe;
+	spe.Init(0xC1, 0xF3);
+	spe << (BYTE)0xED;
+	spe << (BYTE)Index;
+	spe.Send(TRUE);
+	BuyCost = 0;
+
+	g_ConsoleDebug->Write(MCD_SEND, "0xF3 [SendRequestBuyConfirm(%d)]", Index);
+}
+
 #define SendRequestRepair( p_Index, p_AddGold)\
 {\
 	CStreamPacketEngine spe;\

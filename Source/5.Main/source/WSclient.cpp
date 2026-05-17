@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include "ShopItemValueCache.h"
 #include "UIManager.h"
 #include "GuildCache.h"
 #include "ZzzBMD.h"
@@ -1156,6 +1157,53 @@ void InitGame()
 	g_pGuildInfoWindow->NoticeClear();
 }
 
+static void TakumiClearStorageInventoryGrid(SEASON3B::CNewUIStorageInventory* storage)
+{
+	if (storage == nullptr)
+	{
+		return;
+	}
+
+	if (SEASON3B::CNewUIInventoryCtrl* ctrl = storage->GetInventoryCtrl())
+	{
+		ctrl->RemoveAllItems();
+	}
+}
+
+static void TakumiClearStorageExtGrid(SEASON3B::CNewUIStorageInventoryExt* storage)
+{
+	if (storage == nullptr)
+	{
+		return;
+	}
+
+	if (SEASON3B::CNewUIInventoryCtrl* ctrl = storage->GetInventoryCtrl())
+	{
+		ctrl->RemoveAllItems();
+	}
+}
+
+// Clears warehouse UI grids before character scene switch (avoids stale picked item / ghost cells).
+static void TakumiResetItemUiForCharacterChange()
+{
+	SEASON3B::CNewUIInventoryCtrl::DeletePickedItem();
+
+	if (g_pNewUISystem != nullptr)
+	{
+		if (g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_STORAGE))
+		{
+			g_pNewUISystem->Hide(SEASON3B::INTERFACE_STORAGE);
+		}
+		if (g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_ExpandWarehouse))
+		{
+			g_pNewUISystem->Hide(SEASON3B::INTERFACE_ExpandWarehouse);
+		}
+	}
+
+	TakumiClearStorageInventoryGrid(g_pStorageInventory);
+	TakumiClearStorageExtGrid(g_pStorageInventoryExt);
+}
+
 BOOL ReceiveLogOut(BYTE *ReceiveBuffer, BOOL bEncrypted)
 {
 	LogOut = false;
@@ -1186,6 +1234,7 @@ BOOL ReceiveLogOut(BYTE *ReceiveBuffer, BOOL bEncrypted)
         AllStopSound();
 		
 		SEASON3B::CNewUIInventoryCtrl::BackupPickedItem();
+		TakumiResetItemUiForCharacterChange();
 		
 		ReleaseMainData();
 		CryWolfMVPInit();
@@ -1211,6 +1260,7 @@ BOOL ReceiveLogOut(BYTE *ReceiveBuffer, BOOL bEncrypted)
 			StopMusic();
             AllStopSound();
 			SEASON3B::CNewUIInventoryCtrl::BackupPickedItem();
+			TakumiResetItemUiForCharacterChange();
 			ReleaseMainData();
 		}
 		
@@ -1481,6 +1531,7 @@ BOOL ReceiveJoinMapServer(BYTE *ReceiveBuffer, BOOL bEncrypted)
 	{
 		g_pNewUISystem->HideAll();
 	}
+	TakumiResetItemUiForCharacterChange();
 	
     SelectedItem		= -1;
     SelectedNpc			= -1;
@@ -1945,6 +1996,9 @@ BOOL ReceiveInventory(BYTE *ReceiveBuffer, BOOL bEncrypted)
 //	}
 //	g_pChatListBox->AddText("", "ReceiveInventory ", SEASON3B::TYPE_ERROR_MESSAGE);
 //#endif
+	// Drop cursor pick before wiping grid (avoids stale footprint after move + F3 10 resync).
+	SEASON3B::CNewUIInventoryCtrl::DeletePickedItem();
+
 	g_pMyInventory->UnequipAllItems();
 	g_pMyInventory->DeleteAllItems();
     g_pMyInventoryExt->DeleteAllItems();
@@ -1961,12 +2015,7 @@ BOOL ReceiveInventory(BYTE *ReceiveBuffer, BOOL bEncrypted)
 	
 	LPPHEADER_DEFAULT_SUBCODE_WORD Data = (LPPHEADER_DEFAULT_SUBCODE_WORD)ReceiveBuffer; //LPPHEADER_DEFAULT_SUBCODE_WORD 6byte
 	int Offset = sizeof(PHEADER_DEFAULT_SUBCODE_WORD);
-	if (Hero != nullptr)
-	{
-		DeleteBug(&Hero->Object);
-		giPetManager::DeletePet(Hero);
-		ThePetProcess().DeletePet(Hero);
-	}
+	// F3 03 recreates Hero immediately before F3 10 — do not DeletePet here (crash on fast reselect).
 
 	for(int i=0;i<Data->Value;i++)
 	{
@@ -1995,13 +2044,14 @@ BOOL ReceiveInventory(BYTE *ReceiveBuffer, BOOL bEncrypted)
 	}
 
 	// F3 03 runs before F3 10 in the join burst — refresh hero mesh from equipment now.
-	if (Hero != nullptr && Hero->Object.Type == MODEL_PLAYER)
+	if (Hero != nullptr && Hero->Object.Live && Hero->Object.Type == MODEL_PLAYER)
 	{
 		SetCharacterClass(Hero);
 		CreatePetDarkSpirit_Now(Hero);
 	}
 	
-	g_ConsoleDebug->Write(MCD_RECEIVE, "0x10 [ReceiveInventory]");
+	g_ConsoleDebug->Write(MCD_RECEIVE, "0x10 [ReceiveInventory] count=%d", Data->Value);
+	g_ErrorReport.Write("[ReceiveInventory] count=%d\r\n", Data->Value);
 	
 	return ( TRUE);
 }
@@ -2018,6 +2068,15 @@ void ReceiveDeleteInventory( BYTE *ReceiveBuffer )
 		}
 		else if (itemindex >= MAX_EQUIPMENT_INDEX && itemindex < MAX_MY_INVENTORY_INDEX)
 		{
+			SEASON3B::CNewUIPickedItem* pPickedItem = SEASON3B::CNewUIInventoryCtrl::GetPickedItem();
+			if (pPickedItem && pPickedItem->GetOwnerInventory() == g_pMyInventory->GetInventoryCtrl())
+			{
+				ITEM* pSrcItem = pPickedItem->GetItem();
+				if (pSrcItem && pPickedItem->GetSourceLinealPos() == itemindex)
+				{
+					g_pMyInventory->GetInventoryCtrl()->ClearItemFootprint(itemindex, pSrcItem->Type);
+				}
+			}
 			g_pMyInventory->DeleteItem(itemindex);
 		}
 		else if (itemindex >= MAX_MY_INVENTORY_INDEX && itemindex < MAX_MY_INVENTORY_EX_INDEX)
@@ -2066,6 +2125,14 @@ void ReceiveTradeInventory( BYTE *ReceiveBuffer )
 			ShopInventory[i].Type = -1;
 			ShopInventory[i].Number = 0;
 		}
+	}
+
+	if (g_pNewUISystem != nullptr
+		&& g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_STORAGE)
+		&& Data->SubCode != 3 && Data->SubCode != 5)
+	{
+		TakumiClearStorageInventoryGrid(g_pStorageInventory);
+		TakumiClearStorageExtGrid(g_pStorageInventoryExt);
 	}
 
 	for(int i=0;i<Data->Value;i++)
@@ -7181,11 +7248,16 @@ void ReceiveGetItem( BYTE *ReceiveBuffer )
 			int backupGold = CharacterMachine->Gold;
 			CharacterMachine->Gold = (Data->Item[0] << 24) + (Data->Item[1] << 16) + (Data->Item[2] << 8) + (Data->Item[3]);
 
-			int getGold = CharacterMachine->Gold - backupGold;
+			int deltaGold = CharacterMachine->Gold - backupGold;
 
-			if (getGold > 0)
+			if (deltaGold > 0)
 			{
-				sprintf(szMessage, "%d %s %s", getGold, GlobalText[224], GlobalText[918]);
+				sprintf(szMessage, "%d %s %s", deltaGold, GlobalText[224], GlobalText[918]);
+				g_pChatListBox->AddText("", szMessage, SEASON3B::TYPE_SYSTEM_MESSAGE);
+			}
+			else if (deltaGold < 0)
+			{
+				sprintf(szMessage, "%d Zen", -deltaGold);
 				g_pChatListBox->AddText("", szMessage, SEASON3B::TYPE_SYSTEM_MESSAGE);
 			}
 		}
@@ -7305,7 +7377,22 @@ BOOL ReceiveEquipmentItem(BYTE *ReceiveBuffer, BOOL bEncrypted)
 #endif
 		if (storageType == STORAGE_TYPE::INVENTORY)
 		{
-
+			// Clear stale occupancy at drag source before insert (large items can leave ghost cells).
+			if (pPickedItem)
+			{
+				ITEM* pSrcItem = pPickedItem->GetItem();
+				SEASON3B::CNewUIInventoryCtrl* pSrcInv = pPickedItem->GetOwnerInventory();
+				if (pSrcItem != nullptr && pSrcInv != nullptr)
+				{
+					const int srcPos = pPickedItem->GetSourceLinealPos();
+					pSrcInv->ClearItemFootprint(srcPos, pSrcItem->Type);
+					if (pSrcInv == g_pStorageInventory->GetInventoryCtrl())
+						pSrcInv->RemoveItem(pSrcItem);
+					else if (g_pStorageInventoryExt->GetInventoryCtrl()
+						&& pSrcInv == g_pStorageInventoryExt->GetInventoryCtrl())
+						pSrcInv->RemoveItem(pSrcItem);
+				}
+			}
 
 			SEASON3B::CNewUIInventoryCtrl::DeletePickedItem();
 
@@ -7343,6 +7430,24 @@ BOOL ReceiveEquipmentItem(BYTE *ReceiveBuffer, BOOL bEncrypted)
 		}
 		else if (storageType == STORAGE_TYPE::VAULT)
 		{
+			if (pPickedItem)
+			{
+				ITEM* pSrcItem = pPickedItem->GetItem();
+				SEASON3B::CNewUIInventoryCtrl* pSrcInv = pPickedItem->GetOwnerInventory();
+				if (pSrcItem != nullptr && pSrcInv != nullptr)
+				{
+					const int srcPos = pPickedItem->GetSourceLinealPos();
+					pSrcInv->ClearItemFootprint(srcPos, pSrcItem->Type);
+					if (pSrcInv == g_pStorageInventory->GetInventoryCtrl()
+						|| (g_pStorageInventoryExt->GetInventoryCtrl()
+							&& pSrcInv == g_pStorageInventoryExt->GetInventoryCtrl()))
+					{
+						if (ITEM* pStale = pSrcInv->FindItem(srcPos))
+							pSrcInv->RemoveItem(pStale);
+					}
+				}
+			}
+
 			if (Data->Index < MAX_SHOP_INVENTORY)
 			{
 				g_pStorageInventory->ProcessToReceiveStorageItems(Data->Index, Data->Item);
@@ -7613,10 +7718,33 @@ BOOL ReceiveTalk(BYTE *ReceiveBuffer, BOOL bEncrypted)
 	return ( TRUE);
 }
 
+void ReceiveItemValueList(BYTE* ReceiveBuffer)
+{
+	const int size = ((int)ReceiveBuffer[1] << 8) | (int)ReceiveBuffer[2];
+	ShopItemValueCache_ApplyPacket(ReceiveBuffer, size);
+	g_ConsoleDebug->Write(MCD_RECEIVE, "0xF3 [ReceiveItemValueList]");
+}
+
+void ReceiveBuyConfirm(BYTE* ReceiveBuffer)
+{
+	const BYTE slot = ReceiveBuffer[4];
+	if (g_pNPCShop != nullptr)
+	{
+		g_pNPCShop->OpenBuyConfirmDialog(slot);
+	}
+
+	g_ConsoleDebug->Write(MCD_RECEIVE, "0xF3 [ReceiveBuyConfirm slot=%d]", slot);
+}
+
 void ReceiveBuy( BYTE *ReceiveBuffer )
 {
 	auto Data = (LPPHEADER_DEFAULT_ITEM)ReceiveBuffer;
-	if (Data->Index != 255)
+	if (Data->Index == 0xff)
+	{
+		SEASON3B::CNewUIInventoryCtrl::BackupPickedItem();
+		g_pChatListBox->AddText(Hero->ID, GlobalText[732], SEASON3B::TYPE_ERROR_MESSAGE);
+	}
+	else if (Data->Index != 0xfe)
 	{
 		if (Data->Index >= MAX_EQUIPMENT_INDEX && Data->Index < MAX_MY_INVENTORY_INDEX)
 		{
@@ -7634,8 +7762,17 @@ void ReceiveBuy( BYTE *ReceiveBuffer )
 		}
 
 		PlayBuffer(SOUND_GET_ITEM01);
+
+		char szItem[64] = { 0, };
+		const int itemType = ConvertItemType(Data->Item);
+		const int level = (Data->Item[1] >> 3) & 15;
+		GetItemName(itemType, level, szItem);
+
+		char szMessage[128];
+		sprintf(szMessage, "%s %s", szItem, GlobalText[918]);
+		g_pChatListBox->AddText("", szMessage, SEASON3B::TYPE_SYSTEM_MESSAGE);
 	}
-	if (Data->Index == 0xfe)
+	else
 	{
 		g_pNewUISystem->HideAll();
 
@@ -13410,6 +13547,27 @@ void ProtocolCompiler( CWsctlc *pSocketClient, int iTranslation, int iParam)
 			else if( ReceiveBuffer[0] == 0xC3 || ReceiveBuffer[0] == 0xC4)
 			{
 				int iSize;
+				// Takumi game-host sends plain C4 (e.g. F3 10 inventory list) without SimpleModulus.
+				// SM-decrypt would fail and the packet is dropped — picked items never land.
+				if (ReceiveBuffer[0] == 0xC4)
+				{
+					const int wireLen = ((int)ReceiveBuffer[1] << 8) | ReceiveBuffer[2];
+					// Size is still 0 here (only set for C1/C2 above) — compare wireLen, not Size.
+					if (wireLen >= 6 && wireLen <= MAX_SPE_BUFFERSIZE_)
+					{
+						Size = wireLen;
+						LPPWMSG_HEADER pHeader = (LPPWMSG_HEADER)byDec;
+						pHeader->Code = 0xC2;
+						pHeader->SizeH = ReceiveBuffer[1];
+						pHeader->SizeL = ReceiveBuffer[2];
+						std::memcpy(byDec + 3, ReceiveBuffer + 3, static_cast<size_t>(Size - 3));
+						HeadCode = ReceiveBuffer[3];
+						ReceiveBuffer = (BYTE*)pHeader;
+						bEncrypted = FALSE;
+						goto plain_c4_done;
+					}
+				}
+
 				if ( ReceiveBuffer[0] == 0xC3)
 				{
 					LPPBMSG_ENCRYPTED lpHeader = (LPPBMSG_ENCRYPTED)ReceiveBuffer;
@@ -13466,6 +13624,7 @@ void ProtocolCompiler( CWsctlc *pSocketClient, int iTranslation, int iParam)
 				}
 				Size = iSize;
 			}
+plain_c4_done:
 			TotalPacketSize += Size;       
 #ifdef SAVE_PACKET
 			SOCKET socket = pSocketClient->GetSocket();
@@ -14868,6 +15027,12 @@ BOOL TranslateProtocol( int HeadCode, BYTE *ReceiveBuffer, int Size, BOOL bEncry
 				break;
 			case 0x23:
                 ReceiveSoccerScore(ReceiveBuffer);
+				break;
+			case 0xE9:
+				ReceiveItemValueList(ReceiveBuffer);
+				break;
+			case 0xED:
+				ReceiveBuyConfirm(ReceiveBuffer);
 				break;
             case 0x30:
                 ReceiveOption(ReceiveBuffer);

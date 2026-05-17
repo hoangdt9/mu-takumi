@@ -132,7 +132,7 @@ public sealed class PostgresInventorySlotRepository : IAsyncDisposable
             await del.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
         }
 
-        foreach (var row in rows)
+        foreach (var row in DedupeRowsBySlot(rows))
         {
             if (row.Item12.Length != 12)
             {
@@ -143,6 +143,8 @@ public sealed class PostgresInventorySlotRepository : IAsyncDisposable
                 """
                 INSERT INTO inventory_slot (account_login, character_name, slot_idx, item, updated_at)
                 VALUES ($1, $2, $3, $4, now())
+                ON CONFLICT (account_login, character_name, slot_idx)
+                DO UPDATE SET item = EXCLUDED.item, updated_at = now()
                 """,
                 conn,
                 tx);
@@ -154,6 +156,22 @@ public sealed class PostgresInventorySlotRepository : IAsyncDisposable
         }
 
         await tx.CommitAsync(ct).ConfigureAwait(false);
+    }
+
+    static IEnumerable<InventorySlotRow> DedupeRowsBySlot(IReadOnlyList<InventorySlotRow> rows)
+    {
+        if (rows.Count <= 1)
+        {
+            return rows;
+        }
+
+        var bySlot = new Dictionary<byte, InventorySlotRow>(rows.Count);
+        foreach (var row in rows)
+        {
+            bySlot[row.Slot] = row;
+        }
+
+        return bySlot.Values;
     }
 
     public async ValueTask DisposeAsync() => await this._dataSource.DisposeAsync().ConfigureAwait(false);

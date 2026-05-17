@@ -1387,6 +1387,7 @@ BOOL ReceiveJoinMapServer(BYTE *ReceiveBuffer, BOOL bEncrypted)
 	gMapManager.WorldActive = joinMap;
 
 	bool deferredWorldLoad = false;
+	bool liteSameMapWarp = false;
 	if (previousMap != joinMap)
 	{
 #if defined(__ANDROID__)
@@ -1401,9 +1402,9 @@ BOOL ReceiveJoinMapServer(BYTE *ReceiveBuffer, BOOL bEncrypted)
 	}
 	else if (SceneFlag == MAIN_SCENE)
 	{
-		// In-game same-map F3 03 (move-map / gate): reposition only. Do not call
+		// In-game same-map F3 03 (move-map / gate): reposition only. Never call
 		// DeleteObjects() — it releases BITMAP_MAPTILE without reload (white terrain).
-		// Do not require Hero->Object.Live; move-map can arrive while hero is mid-reset.
+		liteSameMapWarp = true;
 #if defined(__ANDROID__)
 		g_ErrorReport.Write(
 			"[AndroidLogin] ReceiveJoinMapServer same-map warp map=%d xy=(%d,%d) hero=%p live=%d\r\n",
@@ -1422,17 +1423,78 @@ BOOL ReceiveJoinMapServer(BYTE *ReceiveBuffer, BOOL bEncrypted)
 	}
 	else
 	{
+		// Same map during login/loading: reload terrain assets (never DeleteObjects alone).
 #if defined(__ANDROID__)
+		s_androidDeferredLoadWorldMap = joinMap;
+		deferredWorldLoad = true;
 		g_ErrorReport.Write(
-			"[AndroidLogin] ReceiveJoinMapServer same map=%d scene=%d — LoadWorld\r\n",
+			"[AndroidLogin] ReceiveJoinMapServer same map=%d scene=%d — defer LoadWorld\r\n",
 			joinMap,
 			SceneFlag);
+#else
+		gMapManager.LoadWorld(joinMap);
 #endif
-		gMapManager.DeleteObjects();
-		DeleteNpcs();
-		DeleteMonsters();
-		ClearItems();
-		RemoveAllShopTitleExceptHero();
+	}
+
+	if (liteSameMapWarp && Hero != NULL)
+	{
+		Hero->PositionX = Data->PositionX;
+		Hero->PositionY = Data->PositionY;
+		Hero->PK = Data->PK;
+		Hero->CtlCode = Data->CtlCode;
+		Hero->JumpTime = 0;
+
+		OBJECT* o = &Hero->Object;
+		o->Angle[2] = ((float)(Data->Angle) - 1.f) * 45.f;
+		o->Position[0] = ((float)(Hero->PositionX) + 0.5f) * TERRAIN_SCALE;
+		o->Position[1] = ((float)(Hero->PositionY) + 0.5f) * TERRAIN_SCALE;
+		if (gMapManager.WorldActive == -1 || Hero->Helper.Type != MODEL_HELPER + 3 || Hero->SafeZone)
+		{
+			o->Position[2] = RequestTerrainHeight(o->Position[0], o->Position[1]);
+		}
+		else if (gMapManager.WorldActive == WD_8TARKAN || gMapManager.WorldActive == WD_10HEAVEN)
+		{
+			o->Position[2] = RequestTerrainHeight(o->Position[0], o->Position[1]) + 90.f;
+		}
+		else
+		{
+			o->Position[2] = RequestTerrainHeight(o->Position[0], o->Position[1]) + 30.f;
+		}
+
+		CurrentProtocolState = RECEIVE_JOIN_MAP_SERVER;
+		LockInputStatus = false;
+		CheckIME_Status(true, 0);
+		LoadingWorld = 0;
+		MouseUpdateTime = 0;
+		MouseUpdateTimeMax = 6;
+
+		TakumiTryCreateJoinWarpRingEffect(o);
+		Hero->Movement = false;
+		SetPlayerStop(Hero);
+		o->Alpha = 0.f;
+
+		CreatePetDarkSpirit_Now(Hero);
+		CreateMyGensInfluenceGroundEffect();
+
+		SelectedItem = -1;
+		SelectedNpc = -1;
+		SelectedCharacter = -1;
+		SelectedOperate = -1;
+		Attacking = -1;
+		RepairEnable = 0;
+
+		g_ConsoleDebug->Write(
+			MCD_RECEIVE,
+			"0x03 [ReceiveJoinMapServer] same-map warp Key: %d Map: %d X: %d Y:%d",
+			Hero->Key,
+			gMapManager.WorldActive,
+			Data->PositionX,
+			Data->PositionY);
+
+#if defined(__ANDROID__)
+		TakumiAndroidOnWorldJoinLoaded();
+#endif
+		return TRUE;
 	}
 
 	if (Hero != NULL && Hero->Object.Live)
@@ -8070,9 +8132,7 @@ void ReceiveLevelUp( BYTE *ReceiveBuffer )
 
 namespace
 {
-	int s_pendingLevelUpStatCount = 0;
-	BYTE s_pendingLevelUpStatType = 0;
-	constexpr int kLevelUpPointsPerTick = 4;
+	bool s_statPointRequestInFlight = false;
 }
 
 #if defined(__ANDROID__)
@@ -8085,49 +8145,49 @@ void TakumiDeferCharacterCalculateAll()
 constexpr int kProtocolPacketsPerFrame = 20;
 #endif
 
-void TakumiScheduleLevelUpPoints(BYTE statType, int count)
+void TakumiSendLevelUpPointsBulk(BYTE statType, int count)
 {
-	if (count <= 0)
-	{
-		return;
-	}
-
-	s_pendingLevelUpStatType = statType;
-	s_pendingLevelUpStatCount += count;
-	if (s_pendingLevelUpStatCount > 65535)
-	{
-		s_pendingLevelUpStatCount = 65535;
-	}
-}
-
-void TakumiPumpLevelUpPoints()
-{
-	if (s_pendingLevelUpStatCount <= 0)
+	if (count <= 0 || CharacterAttribute == nullptr || s_statPointRequestInFlight)
 	{
 		return;
 	}
 
 	if (SocketClient.GetSocket() == INVALID_SOCKET || !g_bGameServerConnected)
 	{
-		s_pendingLevelUpStatCount = 0;
 		return;
 	}
 
-	int budget = kLevelUpPointsPerTick;
-	while (budget-- > 0 && s_pendingLevelUpStatCount > 0)
+	const int available = static_cast<int>(CharacterAttribute->LevelUpPoint);
+	if (available <= 0)
 	{
-		if (CharacterAttribute == nullptr || CharacterAttribute->LevelUpPoint <= 0)
-		{
-			s_pendingLevelUpStatCount = 0;
-			break;
-		}
-
-		CStreamPacketEngine spe;
-		spe.Init(0xC1, 0xF3);
-		spe << static_cast<BYTE>(0x06) << s_pendingLevelUpStatType;
-		spe.Send();
-		--s_pendingLevelUpStatCount;
+		return;
 	}
+
+	if (count > available)
+	{
+		count = available;
+	}
+
+	if (count > 65535)
+	{
+		count = 65535;
+	}
+
+	CStreamPacketEngine spe;
+	spe.Init(0xC1, 0xF3);
+	spe << static_cast<BYTE>(0x06) << statType << static_cast<WORD>(count);
+	spe.Send();
+	s_statPointRequestInFlight = true;
+}
+
+bool TakumiHasLevelUpPointWorkPending()
+{
+	return s_statPointRequestInFlight;
+}
+
+void TakumiOnLevelUpPointRecv(bool success)
+{
+	s_statPointRequestInFlight = false;
 }
 
 void TakumiSendMeleeAttack(WORD targetKey, BYTE dir)

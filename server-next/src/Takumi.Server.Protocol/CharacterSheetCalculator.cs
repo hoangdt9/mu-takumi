@@ -180,6 +180,80 @@ public static class CharacterSheetCalculator
         }
     }
 
+    /// <summary>Apply up to <paramref name="count"/> points in one update (capped by remaining level-up points and ushort stat max).</summary>
+    public static int TryAddStatPoints(ref CharacterSheetStats sheet, byte statType, int count, out ushort maxLifeOrMana)
+    {
+        maxLifeOrMana = 0;
+        if (count <= 0 || sheet.LevelUpPoint == 0)
+        {
+            return 0;
+        }
+
+        var toApply = Math.Min(count, (int)sheet.LevelUpPoint);
+        var statRoom = StatRoomForAdd(sheet, statType);
+        if (statRoom <= 0)
+        {
+            return 0;
+        }
+
+        if (toApply > statRoom)
+        {
+            toApply = statRoom;
+        }
+
+        switch (statType)
+        {
+            case 0:
+                sheet = sheet with
+                {
+                    Strength = (ushort)(sheet.Strength + toApply),
+                    LevelUpPoint = (ushort)(sheet.LevelUpPoint - toApply),
+                };
+                return toApply;
+            case 1:
+                sheet = sheet with
+                {
+                    Dexterity = (ushort)(sheet.Dexterity + toApply),
+                    LevelUpPoint = (ushort)(sheet.LevelUpPoint - toApply),
+                };
+                return toApply;
+            case 2:
+                sheet = sheet with
+                {
+                    Vitality = (ushort)(sheet.Vitality + toApply),
+                    LevelUpPoint = (ushort)(sheet.LevelUpPoint - toApply),
+                };
+                return toApply;
+            case 3:
+                sheet = sheet with
+                {
+                    Energy = (ushort)(sheet.Energy + toApply),
+                    LevelUpPoint = (ushort)(sheet.LevelUpPoint - toApply),
+                };
+                return toApply;
+            case 4:
+                sheet = sheet with
+                {
+                    Leadership = (ushort)(sheet.Leadership + toApply),
+                    LevelUpPoint = (ushort)(sheet.LevelUpPoint - toApply),
+                };
+                return toApply;
+            default:
+                return 0;
+        }
+    }
+
+    static int StatRoomForAdd(CharacterSheetStats sheet, byte statType) =>
+        statType switch
+        {
+            0 => ushort.MaxValue - sheet.Strength,
+            1 => ushort.MaxValue - sheet.Dexterity,
+            2 => ushort.MaxValue - sheet.Vitality,
+            3 => ushort.MaxValue - sheet.Energy,
+            4 => ushort.MaxValue - sheet.Leadership,
+            _ => 0,
+        };
+
     public static ushort MaxAfterStatAdd(byte serverClass, ushort level, CharacterSheetStats sheet, byte statType)
     {
         var computed = ComputeMaxVitals(serverClass, level, sheet);

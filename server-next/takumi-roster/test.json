@@ -59,6 +59,21 @@
       "currentMp": 42,
       "maxMp": 42,
       "zen": 2000000000
+    },
+    {
+      "name": "mg001",
+      "serverClass": 96,
+      "level": 400,
+      "experience": 3822148080,
+      "mapId": 0,
+      "posX": 143,
+      "posY": 83,
+      "angle": 6,
+      "currentHp": 0,
+      "maxHp": 0,
+      "currentMp": 0,
+      "maxMp": 0,
+      "zen": 0
     }
   ]
 }

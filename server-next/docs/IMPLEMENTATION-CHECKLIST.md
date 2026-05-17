@@ -1,6 +1,6 @@
 # Takumi Server Next - Implementation Checklist
 
-Last updated: 2026-05-17 (shop F3 E9/ED, inventory 0x24, level-up FLARE VFX)
+Last updated: 2026-05-17 (shop tooltip buy/sell parity, F3 E9/ED, inventory 0x24, level-up FLARE VFX)
 
 **Phân vùng dev (tránh conflict):** **`docs/WORKSTREAM-OWNERSHIP.md`**.  
 **M4 + M7 (nhân vật + item, port từ `Source/`):** **`docs/M4-M7-CHARACTER-ITEM-MIGRATION.md`** — owner đề xuất **`mac-m1`**.  
@@ -16,7 +16,7 @@ Tóm tắt theo commit; diff đầy đủ: `git log --oneline 2672bfd..HEAD` tro
 | **M6 split game TCP** | F4 03 → **55901**, `GamePortMinimalSession`, gProtect, handoff/ticket (optional) | `67c888b`, `3de80bb` |
 | **M7 EXP/stats** | EXP on kill + DB mirror; `F3 06` batch; **`C1 F3 E1`** combat HUD | `2672bfd`, `4e84ff3`, `5e729d4` |
 | **M9 combat** | `0x11` hit/die, AI dmg, viewport `0x13`; throttle life `0x26` under burst | `53fc5b9`+, `13cc5f0` |
-| **Shop (M9c)** | `F3 E9` item values, **`F3 ED`** buy confirm, `ShopItemValueResolver`, client `ShopItemValueCache` | `1d77d94`–`65e0e36`, `3c36cf0` |
+| **Shop (M9c)** | `F3 E9` / **`F3 ED`**; `ShopItemValueResolver` + potion `EstimatePotionBuy`; client tooltip **buy/sell parity**, two-tap buy, confirm debounce | `1d77d94`–`65e0e36`, `3c36cf0`, *(pending)* |
 | **Inventory** | `0x24` + `F3 10` sync, BMD footprints, plain `C4` on Android, post-buy resync | `6330de9` |
 | **Android client** | Melee `0x11`, stat pump, login wait `F1 00`, **FLARE level-up VFX**, register UI | `4e84ff3`–`5e729d4`, `fd6ddf8` |
 | **Move map (M)** | `8E 02` → `Move.txt` index → gate → `8E 03` + `0x1C` + join-map reload | (earlier) |
@@ -98,6 +98,7 @@ Use this to avoid unnecessary rebuilds.
 - [x] **M6 (scaffold + split-port minimal-login):** `Takumi.Server.Game` — `GameListenHost` (**minimal-login** …); **`Takumi.Server.GameHost`** + **`TakumiPostgresMirror`**; **`docs/M6-GAME-TCP-CHECKLIST.md`**. **Đã có:** `[event=decrypted_rx]`, mirror **`character_roster`**, `F3 10` từ DB, optional **`session_ticket`** + **`TAKUMI_GAME_REQUIRE_LOGIN_HANDOFF`**, **signed ticket on wire** (`F1 A5` / `F1 A6`, **`TAKUMI_GAME_TICKET_WIRE`**, **`TAKUMI_SESSION_TICKET_HMAC_KEY`**). **Còn thiếu:** SSOT Postgres-only cho roster (tách khỏi JSON).
 - [x] **Android in-world (2026-05-16+, partial MVP):** split port login → game **55901**; melee `C1 0x11`; HUD **`F3 E1`**; kill EXP + multi-level batch effects; stat `F3 06` pump; FPS packet budget — **`../../docs/DEVELOPMENT-LOG-2026-05-16.md`**.
 - [x] **Shop + inventory (2026-05-17):** server **`F3 E9`** / **`F3 ED`** + client `ShopItemValueCache`; inv move **`0x24`** + **`F3 10`** + plain **`C4`** on Android — **`../../docs/DEVELOPMENT-LOG-2026-05-17.md`**, **`docs/M9-M8-NPC-GAMEPLAY-OWNERSHIP.md`**.
+- [x] **Shop tooltip Zen parity (2026-05-17, Android):** kho NPC hiển thị **Giá mua** (F3 E9); túi khi bán hiển thị **Giá bán** (`ItemValue` cho exc, cache exact-only); potion stack server `/3`; không ảnh hưởng luồng mua sau fix `Sell` flag — **`../../docs/DEVELOPMENT-LOG-2026-05-17.md`** § Shop chiều.
 - [x] **Level-up VFX (2026-05-17):** vanilla **FLARE** spiral (gold tint) + white disc; debounce; không dùng `MAGIC+2/0` ground rings — **`../../docs/DEVELOPMENT-LOG-2026-05-17.md`**.
 - [x] **Reproducible LAN / dev env (no committed machine IP):**
   - [x] Committed **`server-next/env.defaults`** (ports, join version, serial, `TAKUMI_ACCOUNTS` format) + gitignored **`server-next/.env`** from **`.env.lan.example`** (`YOUR_LAN_IP`).
@@ -217,7 +218,7 @@ Use this to avoid unnecessary rebuilds.
    - [x] Combat stub: `C1 0x11` hit / `0x19` skill → damage, `C1 0x14` destroy, `C1 0x16` die (`MonsterCombatHandler`); damage trừ Defense từ `Monster.txt`.  
    - [x] Gate / NPC shop / buy-sell-repair stub (`MapGateService`, `WorldGameplayHandlers`, `ShopCommerceHandler`).
    - [~] **M9b AI:** wander/chase/`0xD4`/`0x18`, monster→player dmg từ `Monster.txt` (+ defense stub theo level), periodic viewport 1s, regen broadcast — **`docs/M9-MONSTER-AI-PORT-CHECKLIST.md`**.  
-   - [x] **M9c (partial):** `ItemValue.txt` + **`C2 F3 E9`** + client **`ShopItemValueCache`**; buy confirm **`F3 ED`** when `TAKUMI_SHOP_BUY_CONFIRM=1` (`65e0e36`, `1d77d94`). AoE `0xDB`, PvP stub, quest NPC dialog stub (P4.4) still open.  
+   - [x] **M9c (partial):** `ItemValue.txt` + **`C2 F3 E9`** + client **`ShopItemValueCache`**; buy confirm **`F3 ED`** when `TAKUMI_SHOP_BUY_CONFIRM=1`; **tooltip buy/sell Zen** khớp charge/receive trên Android (2026-05-17 chiều). AoE `0xDB`, PvP stub, quest NPC dialog stub (P4.4) still open.  
    - [ ] Element/exp/invasion (P3.2–P4), pathfinding BFS đầy đủ — **M9b P2.3+**.
 
 11. **M10 — Movement & visibility** — **`docs/M8-M10-WORLD-RUNTIME-CHECKLIST.md`** §M10; owner: **`docs/WORKSTREAM-OWNERSHIP.md`**  

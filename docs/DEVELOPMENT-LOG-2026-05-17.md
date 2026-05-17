@@ -6,6 +6,7 @@ Ghi tiếp từ **`DEVELOPMENT-LOG-2026-05-16.md`**. Dùng kèm **`server-next/d
 
 | Commit | Tóm tắt |
 |--------|---------|
+| *(pending)* | NPC shop tooltip buy/sell parity (Android): `Sell` flag, exc sell `ItemValue`, potion `/3`, two-tap buy, confirm debounce |
 | `135634f` | Merge `origin/main` — resolve `AndroidLoginUi.cpp` (loopback + protocol drain) |
 | `5e729d4` | Level-up **FLARE** spiral (gold tint) + white disc; bỏ `MAGIC+2` ground rings; gỡ log debug |
 | `3c36cf0` | `ShopItemValueCache` link vào CMake/Android build |
@@ -38,11 +39,26 @@ Ghi tiếp từ **`DEVELOPMENT-LOG-2026-05-16.md`**. Dùng kèm **`server-next/d
 
 **File chính:** `WSclient.cpp` (`TakumiSpawnLevelUpDiscAndColumn`), `ZzzEffect.cpp`, `ZzzEffectJoint.cpp`, `ZzzScene.cpp`.
 
-### Shop (client)
+### Shop (client) — sáng + chiều 2026-05-17
+
+**Sáng (đã commit trước):**
 
 - **`ShopItemValueCache`**: cache giá từ **`C2 F3 E9`** cho tooltip / debit UI.
 - **`ReceiveBuyConfirm`**: xử lý **`F3 ED`** khi server bật `TAKUMI_SHOP_BUY_CONFIRM=1` → message box + `SendRequestBuyConfirm`.
 - **`NewUINPCShop`**: click mua dùng giá cache thay hardcode.
+
+**Chiều (tooltip Zen parity — QA Android Noria):**
+
+| Triệu chứng | Nguyên nhân | Sửa |
+|-------------|-------------|-----|
+| Tooltip **Giá mua** ~382k, chat **Đã trả** ~191k (bình máu x255) | `TOOLTIP_TYPE_NPC_SHOP` gọi `RenderItemInfo(..., Sell=true)` → nhánh **giá bán** `ItemValue(ip,0)` | Shop stock: `Sell=false` → **Giá mua** từ F3 E9 |
+| Tooltip **Giá bán** ~16M, nhận ~40M (quần exc +9) | Cache F3 E9 fallback `exc=0` / `buy/3` thấp hơn `ItemValue(ip,0)` với excellent | Đồ exc: `ItemValue(ip,0)`; `TryGetSell` / `TryGetBuyExact` chỉ khớp key chính xác |
+| Confirm mua bấm OK 2 lần / mua đôi | Msgbox + `ReceiveBuyConfirm` re-entry | Debounce OK, khóa shop khi msgbox, `LockOkButton`, Android press-on-OK |
+| Hai chạm: hover = tooltip, tap 2 = mua | UX mobile | `m_bShopTooltipPinned` + `OpenBuyConfirmDialog` lần 2 |
+
+**File chính (chiều):** `NewUIInventoryCtrl.cpp`, `ZzzInventory.cpp` (`ResolveNpcShopSellZen`), `ShopItemValueCache.cpp`, `NewUINPCShop.cpp`, `NewUICommonMessageBox.cpp`, `WSclient.cpp` (`ShopNotifyZenDelta` / `s_pendingShopZenSpend`).
+
+**Server (chiều):** `LegacyShopBuyPriceEstimate.EstimatePotionBuy` — parity `ItemValue(ip,1)` (1500 cho potion +3/+6, `×255`, `/3`); test `ResolveBuy_large_healing_potion_stack_matches_client_itemvalue_buy`. **`NpcShopTaxWire602`** (`B2 1A`) khi mở shop.
 
 ### Inventory / wire
 
@@ -61,10 +77,11 @@ Ghi tiếp từ **`DEVELOPMENT-LOG-2026-05-16.md`**. Dùng kèm **`server-next/d
 
 ### Shop commerce
 
-- **`ShopItemValueResolver`**, **`LegacyShopBuyPriceEstimate`**: giá mua khớp client + `ItemValue.txt`.
-- **`ShopCommerceHandler`**: buy confirm wire **`F3 ED`**; full **`F3 10`** sau buy.
-- **`JoinMapEconomy602`**: zen / economy fields trên join khi cần shop QA.
-- Test: **`ShopItemValueResolverTests`**, cập nhật **`ShopCommerceWire602Tests`**.
+- **`ShopItemValueResolver`**, **`LegacyShopBuyPriceEstimate`**: giá mua khớp client + `ItemValue.txt`; potion stack dùng **`EstimatePotionBuy`** (`/3`, base 1500 cho +3/+6).
+- **`ShopCommerceHandler`**: buy confirm wire **`F3 ED`**; charge = **`ResolveChargedBuy`**; sell = **`ShopItemPricing.SellPrice`** → **`ResolveSell`** (exc = legacy estimate `/3`).
+- **`ShopItemValueSender`**: F3 E9 chỉ stock shop (không merge túi player — tránh overwrite giá).
+- **`PlayerShopSession`**: tax % per session; gửi tax info khi mở shop.
+- Test: **`ShopItemValueResolverTests`** (+ potion stack), cập nhật **`ShopCommerceWire602Tests`**.
 
 ### Inventory
 
@@ -86,16 +103,17 @@ Ghi tiếp từ **`DEVELOPMENT-LOG-2026-05-16.md`**. Dùng kèm **`server-next/d
 cd server-next
 ./scripts/docker-stack.sh --host-build --recreate --detach
 
-# APK
+# APK (release QA shop — đường dẫn đúng)
 cd Source/android
-./gradlew :app:assembleRealDevicePreloadDefaultDebug
-adb install -r app/build/outputs/apk/realDevicePreloadDefault/debug/*.apk
+./gradlew :app:assembleRealDevicePreloadDefaultRelease -PmuBootstrapAdbReverse=true
+adb install -r app/build/outputs/apk/realDevicePreloadDefault/release/app-realDevice-preloadDefault-release.apk
 ```
 
 **Smoke gợi ý (05-17):**
 
 1. Login → Lorencia → đánh quái → **level-up**: cột xoắn vàng (FLARE) + đĩa trắng; **không** vòng đỏ `MAGIC+2/0` chồng.
-2. NPC shop → tooltip giá từ F3 E9 → mua (F3 ED confirm nếu env bật).
-3. Kéo item trong túi → `0x24` + `F3 10` khớp server; không mất slot sau buy.
+2. NPC shop Noria: hover **bình máu** trong shop → **Giá mua** khớp Zen trừ khi mua; hover **đồ exc** trong túi → **Giá bán** ~40M khớp chat **Nhận … Zen** khi bán.
+3. Mua: tap 1 = tooltip, tap 2 = confirm (F3 ED nếu env bật); OK một lần, không mua đôi.
+4. Kéo item trong túi → `0x24` + `F3 10` khớp server; không mất slot sau buy.
 
 **Docs liên quan:** `server-next/docs/M9-M8-NPC-GAMEPLAY-OWNERSHIP.md`, `server-next/docs/M7-CHARACTER-PERSISTENCE-CHECKLIST.md`, `server-next/docs/M6-GAME-TCP-CHECKLIST.md`.

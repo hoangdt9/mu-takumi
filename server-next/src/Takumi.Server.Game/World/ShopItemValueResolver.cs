@@ -29,6 +29,18 @@ public static class ShopItemValueResolver
             item.Skill != 0);
     }
 
+    /// <summary>Buy zen charged on <c>0x32</c> (base + NPC shop tax). Same value as F3 E9 wire <c>Value</c>.</summary>
+    public static long ResolveChargedBuy(NpcShopItemEntry item, int taxRatePercent)
+    {
+        var buy = ResolveBuy(item);
+        if (taxRatePercent <= 0)
+        {
+            return buy;
+        }
+
+        return buy + (buy * taxRatePercent / 100);
+    }
+
     public static long ResolveSell(ReadOnlySpan<byte> item12)
     {
         if (ItemWire602.IsEmpty(item12))
@@ -54,7 +66,10 @@ public static class ShopItemValueResolver
         return Math.Max(1, buy / 3);
     }
 
-    public static ItemValueWire602.ItemValueEntry ToWireEntry(NpcShopItemEntry item, ReadOnlySpan<byte> itemWire12 = default)
+    public static ItemValueWire602.ItemValueEntry ToWireEntry(
+        NpcShopItemEntry item,
+        int taxRatePercent,
+        ReadOnlySpan<byte> itemWire12 = default)
     {
         var index = (item.ItemGroup * 512) + item.ItemIndex;
         if (itemWire12.Length >= ItemWire602.WireBytes)
@@ -75,8 +90,8 @@ public static class ShopItemValueResolver
                 Math.Clamp(sell, 0, int.MaxValue));
         }
 
-        var buy = (int)Math.Clamp(ResolveBuy(item), 0, int.MaxValue);
-        sell = (int)Math.Clamp(Math.Max(1, buy / 3), 0, int.MaxValue);
-        return new(index, item.ItemLevel, item.ExcOpt, 0, buy, 0, sell);
+        var chargedBuy = (int)Math.Clamp(ResolveChargedBuy(item, taxRatePercent), 0, int.MaxValue);
+        sell = (int)Math.Clamp(Math.Max(1, chargedBuy / 3), 0, int.MaxValue);
+        return new(index, item.ItemLevel, item.ExcOpt, 0, chargedBuy, 0, sell);
     }
 }

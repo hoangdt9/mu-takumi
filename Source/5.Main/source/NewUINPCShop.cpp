@@ -7,6 +7,7 @@
 #include "NewUISystem.h"
 #include "NewUICommonMessageBox.h"
 #include "ZzzInventory.h"
+#include "ZzzInfomation.h"
 #include "wsclientinline.h"
 #include "GambleSystem.h"
 
@@ -32,6 +33,9 @@ void SEASON3B::CNewUINPCShop::Init()
 	m_bRepairShop = false;
 	m_bIsNPCShopOpen = false;
 	m_dwStandbyItemKey = 0;
+	m_dwShopTooltipItemKey = 0;
+	m_bShopTooltipPinned = false;
+	m_bShopPressForBuy = false;
 	m_bSellingItem = false;
 }
 
@@ -90,6 +94,13 @@ void SEASON3B::CNewUINPCShop::SetPos(int x, int y)
 
 bool SEASON3B::CNewUINPCShop::UpdateMouseEvent()
 {
+	// Modal buy confirm is on g_MessageBox; its manager always returns true from
+	// UpdateMouseEvent so lower panels still run — block shop input while open.
+	if (g_MessageBox != nullptr && !g_MessageBox->IsEmpty())
+	{
+		return false;
+	}
+
 	if(m_pNewInventoryCtrl)
 	{	
 		if(false == m_pNewInventoryCtrl->UpdateMouseEvent())
@@ -105,6 +116,12 @@ bool SEASON3B::CNewUINPCShop::UpdateMouseEvent()
 		if(m_pNewInventoryCtrl->CheckPtInRect(MouseX, MouseY) == true)
 		{
 			ITEM* pItem = m_pNewInventoryCtrl->FindItemAtPt(MouseX, MouseY);
+
+			if((m_bIsNPCShopOpen == true) && (pItem))
+			{
+				m_pNewInventoryCtrl->SetToolTipType(TOOLTIP_TYPE_NPC_SHOP);
+				m_pNewInventoryCtrl->CreateItemToolTip(pItem);
+			}
 
 			if((m_bIsNPCShopOpen == true) && (pItem) && (SEASON3B::IsRelease(VK_LBUTTON)))
 			{
@@ -130,8 +147,20 @@ bool SEASON3B::CNewUINPCShop::UpdateMouseEvent()
 				{
 					if(BuyCost == 0)
 					{
-						SendRequestBuy(iIndex, buyCost);
-					}	
+						if(m_bShopTooltipPinned && m_dwShopTooltipItemKey == pItem->Key)
+						{
+							OpenBuyConfirmDialog((BYTE)iIndex);
+							m_bShopTooltipPinned = false;
+							m_dwShopTooltipItemKey = 0;
+						}
+						else
+						{
+							m_bShopTooltipPinned = true;
+							m_dwShopTooltipItemKey = pItem->Key;
+							m_pNewInventoryCtrl->SetToolTipType(TOOLTIP_TYPE_NPC_SHOP);
+							m_pNewInventoryCtrl->CreateItemToolTip(pItem);
+						}
+					}
 
 					return false;
 				}
@@ -139,6 +168,11 @@ bool SEASON3B::CNewUINPCShop::UpdateMouseEvent()
 			else if(SEASON3B::IsRelease(VK_LBUTTON))
 			{
 				m_bIsNPCShopOpen = true;
+				if(pItem == nullptr)
+				{
+					m_bShopTooltipPinned = false;
+					m_dwShopTooltipItemKey = 0;
+				}
 				return false;
 			}
 			else if(SEASON3B::IsPress(VK_LBUTTON))
@@ -434,6 +468,10 @@ void SEASON3B::CNewUINPCShop::OpenningProcess()
 	{
 		m_bIsNPCShopOpen = true;
 	}
+
+	m_dwShopTooltipItemKey = 0;
+	m_bShopTooltipPinned = false;
+	m_bShopPressForBuy = false;
 }
 
 void SEASON3B::CNewUINPCShop::ClosingProcess()
@@ -444,6 +482,9 @@ void SEASON3B::CNewUINPCShop::ClosingProcess()
 	m_iTaxRate = 0;
 	m_bRepairShop = false;
 	m_dwStandbyItemKey = 0;
+	m_dwShopTooltipItemKey = 0;
+	m_bShopTooltipPinned = false;
+	m_bShopPressForBuy = false;
 
 	m_bIsNPCShopOpen = false;
 
@@ -538,6 +579,38 @@ bool SEASON3B::CNewUINPCShop::IsSellingItem()
 	return m_bSellingItem;
 }
 
+void SEASON3B::CNewUINPCShop::ResetShopItemClickState()
+{
+	m_bIsNPCShopOpen = true;
+	m_dwStandbyItemKey = 0;
+	m_dwShopTooltipItemKey = 0;
+	m_bShopTooltipPinned = false;
+	m_bShopPressForBuy = false;
+	SetNpcShopBuyConfirmSlot(-1);
+}
+
+int SEASON3B::CNewUINPCShop::ResolveBuyZen(const ITEM* pItem)
+{
+	if (pItem == nullptr)
+	{
+		return 0;
+	}
+
+	int buyCost = 0;
+	if (!ShopItemValueCache_TryGetBuy(pItem, &buyCost))
+	{
+		buyCost = ItemValue(const_cast<ITEM*>(pItem), 1);
+	}
+
+	return buyCost;
+}
+
+int SEASON3B::CNewUINPCShop::ResolveBuyZenWithTax(const ITEM* pItem)
+{
+	// F3 E9 Value is already the charged buy zen from server (base + tax).
+	return ResolveBuyZen(pItem);
+}
+
 void SEASON3B::CNewUINPCShop::OpenBuyConfirmDialog(BYTE slot)
 {
 	if (m_pNewInventoryCtrl == nullptr)
@@ -562,6 +635,28 @@ void SEASON3B::CNewUINPCShop::OpenBuyConfirmDialog(BYTE slot)
 	}
 
 	SetStandbyItemKey(pItem->Key);
-	SetNpcShopBuyConfirmSlot(slot);
-	SEASON3B::CreateMessageBox(MSGBOX_LAYOUT_CLASS(SEASON3B::CNPCShopBuyMsgBoxLayout));
+
+	const int buyZenWithTax = ResolveBuyZenWithTax(pItem);
+	if (buyZenWithTax > 0 && buyZenWithTax > (int)CharacterMachine->Gold)
+	{
+		g_pChatListBox->AddText(
+			Hero->ID,
+			"Không đủ Zen để mua vật phẩm này.",
+			SEASON3B::TYPE_ERROR_MESSAGE);
+		return;
+	}
+
+	if (buyZenWithTax > 10000000)
+	{
+		if (g_MessageBox != nullptr && !g_MessageBox->IsEmpty())
+		{
+			return;
+		}
+
+		SetNpcShopBuyConfirmSlot(slot);
+		SEASON3B::CreateMessageBox(MSGBOX_LAYOUT_CLASS(SEASON3B::CNPCShopBuyMsgBoxLayout));
+		return;
+	}
+
+	SendRequestBuyConfirm(slot);
 }

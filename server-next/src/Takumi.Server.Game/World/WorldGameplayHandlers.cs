@@ -366,13 +366,16 @@ public static class WorldGameplayHandlers
         await writeAsync(pkt, ct).ConfigureAwait(false);
         PlayerShopSession.OpenShop(presenceSessionId, shopIndex);
 
-        var valuePkt = ShopItemValueSender.BuildForShop(items);
+        var taxRate = PlayerShopSession.GetTaxRatePercent(presenceSessionId);
+        await writeAsync(NpcShopTaxWire602.Build((byte)taxRate), ct).ConfigureAwait(false);
+
+        var valuePkt = ShopItemValueSender.BuildForShop(items, taxRate);
         if (valuePkt.Length > 0)
         {
             await writeAsync(valuePkt, ct).ConfigureAwait(false);
         }
 
-        Console.WriteLine("[m8] sent shop 0x31 index={0} count={1} npc={2} {3}", shopIndex, wireItems.Count, mob.MonsterClass, remote);
+        Console.WriteLine("[m8] sent shop 0x31 index={0} count={1} npc={2} tax={3}% {4}", shopIndex, wireItems.Count, mob.MonsterClass, taxRate, remote);
         return true;
     }
 

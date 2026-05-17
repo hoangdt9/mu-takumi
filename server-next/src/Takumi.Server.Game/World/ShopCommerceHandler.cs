@@ -177,7 +177,9 @@ public static class ShopCommerceHandler
         else
         {
             coinPriceType = 0;
-            price = ShopItemValueResolver.ResolveBuy(shopItem);
+            price = ShopItemValueResolver.ResolveChargedBuy(
+                shopItem,
+                PlayerShopSession.GetTaxRatePercent(presenceSessionId));
             if (player.Zen < price)
             {
                 await writeAsync(ShopCommerceWire602.BuildBuyFail(), ct).ConfigureAwait(false);
@@ -198,23 +200,15 @@ public static class ShopCommerceHandler
             shopItem.Option,
             shopItem.ExcOpt);
 
-        byte bagSlot;
-        byte[] buyWire;
-        if (PlayerShopSession.TryStackIntoBag(presenceSessionId, blob, out bagSlot)
-            && PlayerShopSession.TryGetSlot(presenceSessionId, bagSlot, out var stacked))
-        {
-            buyWire = stacked;
-        }
-        else if (!PlayerShopSession.TryFindEmptyBagSlot(presenceSessionId, blob, out bagSlot))
+        // NPC shop: always a new bag anchor (no durability merge — repeat buys stack visually as one item).
+        if (!PlayerShopSession.TryFindEmptyBagSlot(presenceSessionId, blob, out var bagSlot))
         {
             await writeAsync(ShopCommerceWire602.BuildBuyFail(), ct).ConfigureAwait(false);
             return true;
         }
-        else
-        {
-            buyWire = blob;
-            PlayerShopSession.SetSlot(presenceSessionId, bagSlot, blob);
-        }
+
+        PlayerShopSession.SetSlot(presenceSessionId, bagSlot, blob);
+        var buyWire = blob;
 
         player.Zen -= price;
         onRosterDirty?.Invoke();
@@ -222,8 +216,9 @@ public static class ShopCommerceHandler
         ItemSizeCatalog.GetSize(buyWire, out var iw, out var ih);
         // Parity OpenMU BuyNpcItemAction + legacy ReceiveBuy: C1 0x32 InsertItem at slot only (no F3 10 wipe).
         await writeAsync(ShopCommerceWire602.BuildBuy(bagSlot, buyWire), ct).ConfigureAwait(false);
-        await writeAsync(ItemWorldWire602.BuildInventoryMoneyUpdate((uint)Math.Clamp(player.Zen, 0, uint.MaxValue)), ct)
-            .ConfigureAwait(false);
+        var wireGold = (uint)Math.Clamp(player.Zen, 0, uint.MaxValue);
+        await writeAsync(ItemWorldWire602.BuildInventoryMoneyUpdate(wireGold), ct).ConfigureAwait(false);
+        await writeAsync(ShopCommerceWire602.BuildRepair(wireGold), ct).ConfigureAwait(false);
         await PlayerShopSession.PersistAsync(presenceSessionId, accountId, characterName10, player.Zen, ct)
             .ConfigureAwait(false);
         if (PlayerShopSession.TryGetSessionSlots(presenceSessionId, out var snap))

@@ -10,15 +10,37 @@ public static class PlayerShopSession
 {
     static readonly ConcurrentDictionary<Guid, SessionState> Sessions = new();
 
-    public readonly record struct SessionState(int ShopIndex, byte? PendingBuySlot, Dictionary<byte, byte[]> Slots);
+    public readonly record struct SessionState(int ShopIndex, byte? PendingBuySlot, int TaxRatePercent, Dictionary<byte, byte[]> Slots);
 
     public static void OpenShop(Guid sessionId, int shopIndex)
     {
         PlayerUiSession.SetNpcShop(sessionId, true);
+        var taxRate = ReadDefaultTaxRatePercent();
         Sessions.AddOrUpdate(
             sessionId,
-            _ => new SessionState(shopIndex, null, new Dictionary<byte, byte[]>()),
-            (_, existing) => existing with { ShopIndex = shopIndex, PendingBuySlot = null });
+            _ => new SessionState(shopIndex, null, taxRate, new Dictionary<byte, byte[]>()),
+            (_, existing) => existing with { ShopIndex = shopIndex, PendingBuySlot = null, TaxRatePercent = taxRate });
+    }
+
+    public static int GetTaxRatePercent(Guid sessionId)
+    {
+        if (Sessions.TryGetValue(sessionId, out var s) && s.ShopIndex >= 0)
+        {
+            return s.TaxRatePercent;
+        }
+
+        return ReadDefaultTaxRatePercent();
+    }
+
+    public static int ReadDefaultTaxRatePercent()
+    {
+        var raw = Environment.GetEnvironmentVariable("TAKUMI_NPC_SHOP_TAX_RATE");
+        if (string.IsNullOrWhiteSpace(raw) || !int.TryParse(raw.Trim(), out var rate))
+        {
+            return 0;
+        }
+
+        return Math.Clamp(rate, 0, 100);
     }
 
     public static void SetPendingBuy(Guid sessionId, byte shopSlot)
@@ -87,7 +109,7 @@ public static class PlayerShopSession
 
         Sessions.AddOrUpdate(
             sessionId,
-            _ => new SessionState(-1, null, copy),
+            _ => new SessionState(-1, null, 0, copy),
             (_, existing) => existing with { Slots = copy });
     }
 
@@ -107,7 +129,7 @@ public static class PlayerShopSession
     {
         if (!Sessions.TryGetValue(sessionId, out var s))
         {
-            s = new SessionState(-1, null, new Dictionary<byte, byte[]>());
+            s = new SessionState(-1, null, 0, new Dictionary<byte, byte[]>());
             Sessions[sessionId] = s;
         }
 
@@ -149,7 +171,7 @@ public static class PlayerShopSession
 
     public static void SetSlot(Guid sessionId, byte slot, byte[] item12)
     {
-        var s = Sessions.GetOrAdd(sessionId, _ => new SessionState(-1, null, new Dictionary<byte, byte[]>()));
+        var s = Sessions.GetOrAdd(sessionId, _ => new SessionState(-1, null, 0, new Dictionary<byte, byte[]>()));
         if (ItemWire602.IsEmpty(item12))
         {
             s.Slots.Remove(slot);
@@ -248,7 +270,7 @@ public static class PlayerShopSession
             return false;
         }
 
-        var s = Sessions.GetOrAdd(sessionId, _ => new SessionState(-1, null, new Dictionary<byte, byte[]>()));
+        var s = Sessions.GetOrAdd(sessionId, _ => new SessionState(-1, null, 0, new Dictionary<byte, byte[]>()));
         s.Slots.TryGetValue(sourceSlot, out var sourceItem);
         sourceItem ??= Array.Empty<byte>();
         if (ItemWire602.IsEmpty(sourceItem))
@@ -296,6 +318,12 @@ public static class PlayerShopSession
     {
         resultSlot = 0;
         if (ItemWire602.IsEmpty(item12) || ItemWire602.IsZenItem(item12))
+        {
+            return false;
+        }
+
+        ItemSizeCatalog.GetSize(item12, out var w, out var h);
+        if (w != 1 || h != 1)
         {
             return false;
         }

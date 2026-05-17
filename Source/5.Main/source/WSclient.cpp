@@ -7485,21 +7485,24 @@ static int s_pendingShopZenSpend = 0;
 
 static void TakumiApplyGoldPickSync(int newGold)
 {
-	if (s_pendingShopZenSpend > 0)
-	{
-		CharacterMachine->Gold = newGold;
-		ShopNotifyZenDelta(-s_pendingShopZenSpend);
-		s_pendingShopZenSpend = 0;
-		return;
-	}
-
 	const int backupGold = CharacterMachine->Gold;
 	CharacterMachine->Gold = newGold;
+
+	const int pendingSpend = s_pendingShopZenSpend;
+	s_pendingShopZenSpend = 0;
+
 	const int deltaGold = newGold - backupGold;
-	// backupGold==0: server sent absolute balance (shop buy/sell/repair); avoid "Nhận <full wallet>" spam.
-	if (deltaGold != 0 && backupGold != 0)
+	// Absolute balance from server (shop/repair): skip chat when we had no prior gold (join edge).
+	if (backupGold != 0)
 	{
-		ShopNotifyZenDelta(deltaGold);
+		if (pendingSpend > 0 && deltaGold < 0 && -deltaGold != pendingSpend)
+		{
+			ShopNotifyZenDelta(-pendingSpend);
+		}
+		else if (deltaGold != 0)
+		{
+			ShopNotifyZenDelta(deltaGold);
+		}
 	}
 }
 
@@ -7983,6 +7986,19 @@ void ReceiveItemValueList(BYTE* ReceiveBuffer)
 void ReceiveBuyConfirm(BYTE* ReceiveBuffer)
 {
 	const BYTE slot = ReceiveBuffer[4];
+	// Server prompt after direct 0x32 buy — not an ack for client F3 ED confirm.
+	if (BuyCost != 0)
+	{
+		g_ConsoleDebug->Write(MCD_RECEIVE, "0xF3 [ReceiveBuyConfirm slot=%d] ignored (buy in flight)", slot);
+		return;
+	}
+
+	if (g_MessageBox != nullptr && !g_MessageBox->IsEmpty())
+	{
+		g_ConsoleDebug->Write(MCD_RECEIVE, "0xF3 [ReceiveBuyConfirm slot=%d] ignored (dialog open)", slot);
+		return;
+	}
+
 	if (g_pNPCShop != nullptr)
 	{
 		g_pNPCShop->OpenBuyConfirmDialog(slot);
@@ -8000,15 +8016,15 @@ void ReceiveBuy( BYTE *ReceiveBuffer )
 		SEASON3B::CNewUIInventoryCtrl::BackupPickedItem();
 		g_pChatListBox->AddText(
 			Hero->ID,
-			"Mua thất bại (thiếu Zen, túi đầy hoặc không mua được).",
+			"Mua thất bại (không đủ Zen, túi đầy hoặc cửa hàng đã đóng).",
 			SEASON3B::TYPE_ERROR_MESSAGE);
 	}
 	else if (Data->Index != 0xfe)
 	{
-		int spend = BuyCost;
-		if (spend <= 0)
+		int spend = 0;
+		if (!ShopItemValueCache_TryGetBuyFromWire(Data->Item, &spend) || spend <= 0)
 		{
-			ShopItemValueCache_TryGetBuyFromWire(Data->Item, &spend);
+			spend = BuyCost;
 		}
 
 		if (spend > 0)
@@ -8049,7 +8065,8 @@ void ReceiveBuy( BYTE *ReceiveBuffer )
 		g_pChatListBox->AddText(Hero->ID, "Cửa hàng đã đóng.", SEASON3B::TYPE_ERROR_MESSAGE);
 	}
 	BuyCost = 0;
-	
+	SEASON3B::SetNpcShopBuyConfirmSlot(-1);
+
 	g_ConsoleDebug->Write(MCD_RECEIVE, "0x32 [ReceiveBuy(%d)]", Data->Index);
 }
 

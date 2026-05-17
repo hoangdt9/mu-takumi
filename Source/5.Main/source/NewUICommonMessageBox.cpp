@@ -23,6 +23,8 @@
 #include "CharacterManager.h"
 #include "SkillManager.h"
 #include "ShopItemValueCache.h"
+#include "ZzzInventory.h"
+#include "NewUINPCShop.h"
 
 #if defined(__ANDROID__) || defined(MU_IOS)
 #include "MobilePlatform.h"
@@ -701,6 +703,11 @@ void SEASON3B::CNewUICommonMessageBox::LockOkButton()
 	m_BtnOk.SetEnable(false);
 }
 
+void SEASON3B::CNewUI3DItemCommonMsgBox::LockOkButton()
+{
+	m_BtnOk.SetEnable(false);
+}
+
 CALLBACK_RESULT SEASON3B::CNewUICommonMessageBox::LButtonUp(class CNewUIMessageBoxBase* pOwner, const leaf::xstreambuf& xParam)
 {
 	CNewUICommonMessageBox* pMsgBox = dynamic_cast<CNewUICommonMessageBox*>(pOwner);
@@ -915,7 +922,9 @@ bool SEASON3B::CNewUI3DItemCommonMsgBox::Update()
 	}
 
 #if defined(__ANDROID__) || defined(MU_IOS)
-	if (SEASON3B::IsRelease(VK_LBUTTON))
+	// Touch: fire OK/Cancel on press (release often misses IsMouseIn). OkBtnDown
+	// debounces duplicate USER_COMMON_OK from LButtonUp in the same gesture.
+	if (SEASON3B::IsPress(VK_LBUTTON))
 	{
 		switch (m_dwType)
 		{
@@ -3769,10 +3778,15 @@ CALLBACK_RESULT SEASON3B::CGambleBuyMsgBoxLayout::CancelBtnDown(class CNewUIMess
 }
 
 static int s_npcShopConfirmSlot = -1;
+static bool s_npcShopBuyOkPending = false;
 
 void SEASON3B::SetNpcShopBuyConfirmSlot(int slot)
 {
 	s_npcShopConfirmSlot = slot;
+	if (slot < 0)
+	{
+		s_npcShopBuyOkPending = false;
+	}
 }
 
 int SEASON3B::GetNpcShopBuyConfirmSlot()
@@ -3799,7 +3813,25 @@ bool SEASON3B::CNPCShopBuyMsgBoxLayout::SetLayout()
 	}
 
 	pMsgBox->Set3DItem(pItem);
-	pMsgBox->AddMsg(GlobalText[1612]);
+
+	char szItem[64] = {};
+	const int itemLevel = (pItem->Level >> 3) & 15;
+	GetItemName(pItem->Type, itemLevel, szItem);
+
+	char szPrompt[160] = {};
+	sprintf(szPrompt, "Bạn có đồng ý mua %s không?", szItem);
+	pMsgBox->AddMsg(szPrompt);
+
+	int buyZen = 0;
+	if (ShopItemValueCache_TryGetBuy(pItem, &buyZen) && buyZen > 0)
+	{
+		char szPrice[64] = {};
+		ConvertGold(buyZen, szPrice);
+		char szPriceLine[128] = {};
+		sprintf(szPriceLine, "Giá mua: %s Zen", szPrice);
+		pMsgBox->AddMsg(szPriceLine);
+	}
+
 	pMsgBox->AddCallbackFunc(CNPCShopBuyMsgBoxLayout::OkBtnDown, MSGBOX_EVENT_USER_COMMON_OK);
 	pMsgBox->AddCallbackFunc(CNPCShopBuyMsgBoxLayout::CancelBtnDown, MSGBOX_EVENT_USER_COMMON_CANCEL);
 	return true;
@@ -3807,9 +3839,24 @@ bool SEASON3B::CNPCShopBuyMsgBoxLayout::SetLayout()
 
 CALLBACK_RESULT SEASON3B::CNPCShopBuyMsgBoxLayout::OkBtnDown(class CNewUIMessageBoxBase* pOwner, const leaf::xstreambuf& xParam)
 {
+	if (s_npcShopBuyOkPending)
+	{
+		return CALLBACK_BREAK;
+	}
+
 	const int slot = GetNpcShopBuyConfirmSlot();
+	SetNpcShopBuyConfirmSlot(-1);
+
 	if (slot >= 0 && g_pNPCShop != nullptr)
 	{
+		s_npcShopBuyOkPending = true;
+
+		if (auto* p3dMsgBox = dynamic_cast<CNewUI3DItemCommonMsgBox*>(pOwner))
+		{
+			p3dMsgBox->LockOkButton();
+		}
+
+		g_pNPCShop->ResetShopItemClickState();
 		SendRequestBuyConfirm(slot);
 	}
 
@@ -3821,6 +3868,11 @@ CALLBACK_RESULT SEASON3B::CNPCShopBuyMsgBoxLayout::OkBtnDown(class CNewUIMessage
 CALLBACK_RESULT SEASON3B::CNPCShopBuyMsgBoxLayout::CancelBtnDown(class CNewUIMessageBoxBase* pOwner, const leaf::xstreambuf& xParam)
 {
 	BuyCost = 0;
+	SetNpcShopBuyConfirmSlot(-1);
+	if (g_pNPCShop != nullptr)
+	{
+		g_pNPCShop->ResetShopItemClickState();
+	}
 	PlayBuffer(SOUND_CLICK01);
 	g_MessageBox->SendEvent(pOwner, MSGBOX_EVENT_DESTROY);
 	return CALLBACK_BREAK;

@@ -1165,6 +1165,67 @@ void ConvertGold64(__int64 Gold,unicode::t_char* Text)
 		unicode::_sprintf(Text,"%d",Gold1);
 }
 
+static bool InventoryItemHasExcellentOptions(const ITEM* ip)
+{
+	if (ip == nullptr)
+	{
+		return false;
+	}
+
+	if ((ip->Option1 & 0x3F) != 0 || (ip->ExtOption & 0x3F) != 0)
+	{
+		return true;
+	}
+
+	for (int i = 0; i < ip->SpecialNum; ++i)
+	{
+		switch (ip->Special[i])
+		{
+		case AT_IMPROVE_LIFE:
+		case AT_IMPROVE_MANA:
+		case AT_DECREASE_DAMAGE:
+		case AT_REFLECTION_DAMAGE:
+		case AT_IMPROVE_BLOCKING_PERCENT:
+		case AT_IMPROVE_GAIN_GOLD:
+		case AT_EXCELLENT_DAMAGE:
+		case AT_IMPROVE_DAMAGE_LEVEL:
+		case AT_IMPROVE_DAMAGE_PERCENT:
+		case AT_IMPROVE_MAGIC_LEVEL:
+		case AT_IMPROVE_MAGIC_PERCENT:
+		case AT_IMPROVE_ATTACK_SPEED:
+		case AT_IMPROVE_GAIN_LIFE:
+		case AT_IMPROVE_GAIN_MANA:
+			return true;
+		}
+	}
+
+	return false;
+}
+
+// NPC shop sell zen: excellent gear uses ItemValue(ip,0) (parity server ResolveSell);
+// plain stock may use exact F3 E9 row only (no exc=0 undercut).
+static int ResolveNpcShopSellZen(const ITEM* ip)
+{
+	if (InventoryItemHasExcellentOptions(ip))
+	{
+		return ItemValue(const_cast<ITEM*>(ip), 0);
+	}
+
+	int sellZen = 0;
+	if (ShopItemValueCache_TryGetSell(ip, &sellZen) && sellZen > 0)
+	{
+		return sellZen;
+	}
+
+	int buyZen = 0;
+	if (ShopItemValueCache_TryGetBuyExact(ip, &buyZen) && buyZen > 0)
+	{
+		return buyZen / 3;
+	}
+
+	return ItemValue(const_cast<ITEM*>(ip), 0);
+}
+
 void ConvertTaxGold(DWORD Gold,char *Text)
 {
 	Gold += ((LONGLONG)Gold * g_pNPCShop->GetTaxRate()) / 100;
@@ -2815,12 +2876,10 @@ void RenderItemInfo(int sx, int sy, ITEM* ip, bool Sell, int Inventype, bool bIt
 		{
 			if (Sell)
 			{
-				DWORD dwValue = ItemValue(ip, 0);
+				const DWORD dwValue = (DWORD)ResolveNpcShopSellZen(ip);
 				ConvertGold(dwValue, Text);
-				char Text2[100];
-
-				ConvertTaxGold(ItemValue(ip, 0), Text2);
-				sprintf(TextList[TextNum], GlobalText[1620], Text2, Text);
+				// Server pays dwValue (no sell tax); show same amount for both 1620 slots.
+				sprintf(TextList[TextNum], GlobalText[1620], Text, Text);
 			}
 			else
 			{
@@ -3549,12 +3608,9 @@ void RenderItemInfo(int sx,int sy,ITEM *ip,bool Sell, int Inventype, bool bItemT
 		{
 			if(Sell)
 			{
-				DWORD dwValue = ItemValue(ip, 0);
+				const DWORD dwValue = (DWORD)ResolveNpcShopSellZen(ip);
 				ConvertGold(dwValue, Text);
-				char Text2[100];
-
-				ConvertTaxGold(ItemValue(ip,0),Text2);
-				sprintf(TextList[TextNum],GlobalText[1620],Text2,Text);
+				sprintf(TextList[TextNum], GlobalText[1620], Text, Text);
 			}
 			else
 			{

@@ -1,6 +1,6 @@
 # Docker — build & run (Takumi `server-next`)
 
-Last updated: 2026-05-16
+Last updated: 2026-05-17
 
 Hướng dẫn **một chỗ** cho QA Android / dev LAN: chạy Postgres + server .NET trong Docker, biết **khi nào cần làm gì** (không nhầm *build image* với *build C# trong container*).
 
@@ -90,9 +90,12 @@ docker compose logs legacy-login game-host | grep -E 'build OK|listening|connect
 
 # 5) APK (Gradle đọc server-next/.env)
 cd ../Source/android
-./gradlew :app:assembleRealDevicePreloadDefaultDebug \
-  -PmuRequiredAbis=armeabi-v7a,arm64-v8a
-adb install -r app/build/outputs/apk/realDevicePreloadDefault/debug/*.apk
+# Release QA (shop parity, v.v.):
+./gradlew :app:assembleRealDevicePreloadDefaultRelease -PmuBootstrapAdbReverse=true
+adb install -r app/build/outputs/apk/realDevicePreloadDefault/release/app-realDevice-preloadDefault-release.apk
+# Debug nhanh:
+# ./gradlew :app:assembleRealDevicePreloadDefaultDebug -PmuRequiredAbis=armeabi-v7a,arm64-v8a
+# adb install -r app/build/outputs/apk/realDevicePreloadDefault/debug/*.apk
 ```
 
 **Logcat — connect thành công (LAN):**

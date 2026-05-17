@@ -57,6 +57,9 @@ namespace SEASON3B
 		CNewUIButton m_BtnRepairAll;
 		
 		DWORD m_dwStandbyItemKey;
+		DWORD m_dwShopTooltipItemKey;
+		bool m_bShopTooltipPinned;
+		bool m_bShopPressForBuy;
 
 		bool m_bSellingItem;
 		
@@ -101,6 +104,10 @@ namespace SEASON3B
 		bool IsSellingItem();
 
 		void OpenBuyConfirmDialog(BYTE slot);
+		void ResetShopItemClickState();
+
+		static int ResolveBuyZen(const ITEM* pItem);
+		static int ResolveBuyZenWithTax(const ITEM* pItem);
 
 	private:
 		void Init();

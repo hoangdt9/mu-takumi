@@ -8,7 +8,7 @@ public static class ShopItemValueSender
     /// <c>C2 F3 E9</c> buy/sell zen for NPC shop stock only.
     /// Do not merge player bag rows here — same index/level/exc would overwrite shop buy with sell×3 and tooltips show ~1B instead of ~1M.
     /// </summary>
-    public static byte[] BuildForShop(IReadOnlyList<NpcShopItemEntry> shopItems)
+    public static byte[] BuildForShop(IReadOnlyList<NpcShopItemEntry> shopItems, int taxRatePercent)
     {
         ItemValueCatalog.EnsureInitialized();
         var entries = new List<ItemValueWire602.ItemValueEntry>(shopItems.Count);
@@ -26,7 +26,7 @@ public static class ShopItemValueSender
                 item.Luck != 0,
                 item.Option,
                 item.ExcOpt);
-            entries.Add(ShopItemValueResolver.ToWireEntry(item, blob));
+            entries.Add(ShopItemValueResolver.ToWireEntry(item, taxRatePercent, blob));
         }
 
         return ItemValueWire602.Build(entries);

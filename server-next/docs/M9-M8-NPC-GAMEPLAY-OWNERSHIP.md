@@ -1,6 +1,6 @@
 # M8/M9 — NPC gameplay ownership (tránh duplicate)
 
-Last updated: 2026-05-17 · **Đã trên `main`** (shop F3 E9/ED, inventory 0x24 — xem **`../../docs/DEVELOPMENT-LOG-2026-05-17.md`**)
+Last updated: 2026-05-17 (shop tooltip buy/sell parity) · **Đã trên `main`** (F3 E9/ED, inventory 0x24 — xem **`../../docs/DEVELOPMENT-LOG-2026-05-17.md`**)
 
 ## Đã làm trên `mac-m4` — **đừng re-implement**
 
@@ -23,7 +23,7 @@ Last updated: 2026-05-17 · **Đã trên `main`** (shop F3 E9/ED, inventory 0x24
 |---|-----------|-------------|
 | H | ~~`0xDB` / `0x19` magic AoE~~ | Done (stub) |
 | I | ~~Buy confirm `F3 ED`~~ | **Done** — `TAKUMI_SHOP_BUY_CONFIRM=1`; client `ReceiveBuyConfirm` + NPC shop msgbox. Coin-only shop: server debits `account.wcoin_*` / `goblin_point` (`012_account_wallet.sql`) |
-| J | ~~`GCItemValueSend` / `ItemValue.txt`~~ | **Done** — server `F3 E9` + `ShopItemValueResolver` + client `ShopItemValueCache` (excellent key `Option1`, zen chat from server delta) |
+| J | ~~`GCItemValueSend` / `ItemValue.txt`~~ | **Done** — server `F3 E9` + `ShopItemValueResolver` + client `ShopItemValueCache`. **2026-05-17:** tooltip **Giá mua** (shop grid, `Sell=false`) + **Giá bán** (túi, exc → `ItemValue(ip,0)`); potion `EstimatePotionBuy` server |
 | K | ~~Persist `inventory_slot`~~ | **Done** (`InventorySlotPersist`); **2026-05-17:** `0x24`/`F3 10` move sync + BMD footprints (`6330de9`) |
 | L | ~~Encrypted `EncTerrain*.att`~~ | Done (`ModulusCryptor` in `MapAttWalkability`) |
 | M | NPC quest / warehouse / guild NPC | M11+ |
@@ -39,8 +39,10 @@ Last updated: 2026-05-17 · **Đã trên `main`** (shop F3 E9/ED, inventory 0x24
 ## QA nhanh shop
 
 1. Login Lorencia → click NPC potion → log `[m8] sent shop 0x31`
-2. Buy slot 0 → log `[m8] shop buy` + item trong túi (slot ≥ 12)
-3. Sell item → zen tăng (`0x33` + gold trong packet)
-4. Repair → `0x34`, durability full
+2. **Mua:** hover bình máu trong **Người bán** → **Giá mua** khớp Zen trừ; tap 2 → confirm (một OK)
+3. **Bán:** hover đồ **exc** trong **Trang bị** → **Giá bán** khớp chat **Nhận … Zen** (~40M cho quần +9 exc đã QA)
+4. Sell wire → zen tăng (`0x33` + gold sync); repair → `0x34`, durability full
+
+**APK path (release):** `Source/android/app/build/outputs/apk/realDevicePreloadDefault/release/app-realDevice-preloadDefault-release.apk` (không có `/` giữa `realDevice` và `preloadDefault`).
 
 Xem **`docs/M9-MONSTER-AI-PORT-CHECKLIST.md`** (P4) và **`docs/M8-M10-WORLD-RUNTIME-CHECKLIST.md`**.

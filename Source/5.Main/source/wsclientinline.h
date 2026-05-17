@@ -17,6 +17,7 @@ extern ItemAddOptioninfo*			g_pItemAddOptioninfo;
 #include "./ExternalObject/leaf/stdleaf.h"
 #include "./Utilities/Log/muConsoleDebug.h"
 #include "NewUISystem.h" 
+#include "ShopItemValueCache.h"
 #include "ProtocolSend.h" 
 #include "Utilities/Log/DebugAngel.h" 
 #include "PacketManager.h"
@@ -784,14 +785,25 @@ __forceinline void SendRequestBuy(int Index,int Cost)
 
 __forceinline void SendRequestBuyConfirm(int Index)
 {
+	if (BuyCost != 0)
+	{
+		return;
+	}
+
+	int buyCost = 0;
+	if (g_pNPCShop != nullptr)
+	{
+		buyCost = SEASON3B::CNewUINPCShop::ResolveBuyZenWithTax(g_pNPCShop->GetStandbyItem());
+	}
+
 	CStreamPacketEngine spe;
 	spe.Init(0xC1, 0xF3);
 	spe << (BYTE)0xED;
 	spe << (BYTE)Index;
 	spe.Send(TRUE);
-	BuyCost = 0;
+	BuyCost = buyCost;
 
-	g_ConsoleDebug->Write(MCD_SEND, "0xF3 [SendRequestBuyConfirm(%d)]", Index);
+	g_ConsoleDebug->Write(MCD_SEND, "0xF3 [SendRequestBuyConfirm(%d)] cost=%d", Index, buyCost);
 }
 
 #define SendRequestRepair( p_Index, p_AddGold)\

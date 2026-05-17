@@ -224,6 +224,7 @@ namespace SEASON3B
 		void Render3D();
 
 		bool IsVisible() const;
+		void LockOkButton();
 
 	private:
 		void SetAddCallbackFunc();

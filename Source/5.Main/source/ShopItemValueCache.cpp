@@ -84,49 +84,14 @@ namespace
 			return true;
 		}
 
-		// F3 E9 may key exc differently than post-ItemConvert tooltip item; try index+level.
-		// If several rows match (should not happen after server sends shop-only E9), pick lowest zen buy.
-		int bestBuy = 0;
-		int bestSell = 0;
-		bool found = false;
-		for (const auto& entry : g_cache)
+		// F3 E9 may key exc differently than post-ItemConvert tooltip item; try plain stock (exc=0).
+		const Key plainKey = { key.index, key.level, 0 };
+		if (TryLookup(plainKey, outPrice, outPriceType, outSell))
 		{
-			if (entry.first.index != key.index
-				|| entry.first.level != key.level
-				|| entry.second.priceType != 0)
-			{
-				continue;
-			}
-
-			if (!found || entry.second.buy < bestBuy)
-			{
-				bestBuy = entry.second.buy;
-				bestSell = entry.second.sell;
-				found = true;
-			}
+			return true;
 		}
 
-		if (!found)
-		{
-			return false;
-		}
-
-		if (outPrice != nullptr)
-		{
-			*outPrice = bestBuy;
-		}
-
-		if (outPriceType != nullptr)
-		{
-			*outPriceType = 0;
-		}
-
-		if (outSell != nullptr)
-		{
-			*outSell = bestSell;
-		}
-
-		return true;
+		return false;
 	}
 }
 
@@ -234,7 +199,24 @@ bool ShopItemValueCache_TryGetSell(const tagITEM* ip, int* outSell)
 		return false;
 	}
 
-	return TryLookupWithFallbacks(MakeKey(ip), nullptr, nullptr, outSell);
+	// Sell tooltip must not use exc=0 fallback (undercuts excellent inventory items).
+	return TryLookup(MakeKey(ip), nullptr, nullptr, outSell);
+}
+
+bool ShopItemValueCache_TryGetBuyExact(const tagITEM* ip, int* outBuy)
+{
+	if (ip == nullptr || outBuy == nullptr)
+	{
+		return false;
+	}
+
+	int priceType = 0;
+	if (!TryLookup(MakeKey(ip), outBuy, &priceType, nullptr))
+	{
+		return false;
+	}
+
+	return priceType == 0;
 }
 
 bool ShopItemValueCache_TryGetBuyFromWire(const BYTE* itemWire, int* outBuy)

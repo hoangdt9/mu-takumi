@@ -1515,7 +1515,9 @@ void SEASON3B::CNewUIInventoryCtrl::RenderItemToolTip()
 
 		if (m_ToolTipType == TOOLTIP_TYPE_INVENTORY)
 		{
-			RenderItemInfo(iTargetX, iTargetY, m_pToolTipItem, false);
+			const bool showNpcSellPrice =
+				g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_NPCSHOP) != 0;
+			RenderItemInfo(iTargetX, iTargetY, m_pToolTipItem, showNpcSellPrice);
 		}
 		else if (m_ToolTipType == TOOLTIP_TYPE_REPAIR)
 		{
@@ -1523,7 +1525,8 @@ void SEASON3B::CNewUIInventoryCtrl::RenderItemToolTip()
 		}
 		else if (m_ToolTipType == TOOLTIP_TYPE_NPC_SHOP)
 		{
-			RenderItemInfo(iTargetX, iTargetY, m_pToolTipItem, true);
+			// Shop stock: player buys from NPC — show buy zen (F3 E9), not sell/ItemValue(ip,0).
+			RenderItemInfo(iTargetX, iTargetY, m_pToolTipItem, false);
 		}
 		else if (m_ToolTipType == TOOLTIP_TYPE_MY_SHOP)
 		{

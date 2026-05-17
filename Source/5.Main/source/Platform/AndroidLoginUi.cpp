@@ -462,6 +462,17 @@ void MU_AndroidNotifyServerSubPickStarted()
 	s_serverPickStartMs = MU_MobileGetTicks();
 	s_lastF403RetryMs = 0;
 	s_triedDirectGameLogin = false;
+
+	const SOCKET fd = SocketClient.GetSocket();
+	if (fd != INVALID_SOCKET && static_cast<int>(fd) > 0)
+	{
+		for (int pass = 0; pass < 8; ++pass)
+		{
+			SocketClient.AndroidSyncPollRecvPending();
+			ProtocolCompiler();
+		}
+	}
+
 	if (MuLanDefaults::kTakumiSplitGameHostStack)
 	{
 		g_ErrorReport.Write(

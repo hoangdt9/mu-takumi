@@ -533,7 +533,8 @@ __forceinline void SendCharacterMove(unsigned short Key,float Angle,unsigned cha
 
 #define SendRequestAttack( p_Key, p_Dir)\
 {\
-    if(!FindText2(Hero->ID,"webzen"))\
+    if(Hero->Dead > 0) {}\
+    else if(!FindText2(Hero->ID,"webzen"))\
 	{\
 		CStreamPacketEngine spe;\
 		spe.Init( 0xC1, PACKET_ATTACK);\

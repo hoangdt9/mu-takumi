@@ -61,6 +61,9 @@
 #include "CustomRankUser.h"
 #include "APICB.h"
 
+#if defined(__ANDROID__)
+#include "Platform/MobilePlatform.h"
+#endif
 
 extern int DisplayWinCDepthBox;
 extern int DisplayWin;
@@ -291,7 +294,7 @@ void SetIME_Status (bool halfShape)
 	
     data = ::ImmGetContext( g_hWnd );
 	
-    //  반각.
+    //  ???.
     dwConv = g_dwOldConv;
     dwSent = g_dwOldSent;
     if( halfShape )
@@ -453,8 +456,8 @@ void RenderTipText(int sx, int sy, const char* Text)
 	int BackupAlphaBlendType = AlphaBlendType;
 	EnableAlphaTest();
 	glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
-	RenderColor ((float)sx - 2, (float)sy - 3, (float)TextSize.cx / g_fScreenRate_x + 4, (float)1);	// 위
-	RenderColor ((float)sx - 2, (float)sy - 3, (float)1, (float)TextSize.cy / g_fScreenRate_y + 4);	// 좌
+	RenderColor ((float)sx - 2, (float)sy - 3, (float)TextSize.cx / g_fScreenRate_x + 4, (float)1);	// ??
+	RenderColor ((float)sx - 2, (float)sy - 3, (float)1, (float)TextSize.cy / g_fScreenRate_y + 4);	// ??
 	RenderColor ((float)sx - 2 + TextSize.cx / g_fScreenRate_x + 3, (float)sy - 3, (float)1, (float)TextSize.cy / g_fScreenRate_y + 4);	
 	RenderColor ((float)sx - 2, (float)sy - 3 + TextSize.cy / g_fScreenRate_y + 3, (float)TextSize.cx / g_fScreenRate_x + 4, (float)1);
 	
@@ -805,7 +808,7 @@ void SetBooleanPosition(CHAT* c)
 	SIZE Size[5];
 	memset(&Size[0], 0, sizeof(SIZE) * 5);
 
-	if (g_isCharacterBuff((&c->Owner->Object), eBuff_GMEffect) || // GM 일경우
+	if (g_isCharacterBuff((&c->Owner->Object), eBuff_GMEffect) || // GM ????
 		(c->Owner->CtlCode == CTLCODE_20OPERATOR) || (c->Owner->CtlCode == CTLCODE_08OPERATOR))
 	{
 		g_pRenderText->SetFont(g_hFontBold);
@@ -864,7 +867,7 @@ void SetPlayerColor(BYTE PK)
 	}
 }
 
-extern float g_fScreenRate_x;	// ※
+extern float g_fScreenRate_x;	// ??
 extern float g_fScreenRate_y;
 const int ciSystemColor = 240;
 #if(ShadowText)
@@ -1099,7 +1102,7 @@ void RenderBoolean(int x, int y, CHAT* c)
 			if (c->Guild && c->Guild[0])
 			{
 				::CreateGuildMark(c->Owner->GuildMarkIndex);
-				::RenderBitmap(BITMAP_GUILD, float(x - 20), float(y), 18, 18);// 길드 마크
+				::RenderBitmap(BITMAP_GUILD, float(x - 20), float(y), 18, 18);// ??? ???
 			}
 #endif
 		}
@@ -1341,7 +1344,7 @@ void RenderBoolean(int x, int y, CHAT* c)
 			if (c->Guild && c->Guild[0])
 			{
 				::CreateGuildMark(c->Owner->GuildMarkIndex);
-				::RenderBitmap(BITMAP_GUILD, float(x - 20), float(y), 18, 18);// 길드 마크
+				::RenderBitmap(BITMAP_GUILD, float(x - 20), float(y), 18, 18);// ??? ???
 			}
 		}
 #endif
@@ -1864,7 +1867,7 @@ bool CheckAttack_Fenrir(CHARACTER* c)
 				
 		}
 				
-		if( c->GuildRelationShip == GR_RIVAL || c->GuildRelationShip == GR_RIVALUNION )		//박종훈 표시
+		if( c->GuildRelationShip == GR_RIVAL || c->GuildRelationShip == GR_RIVALUNION )		//?????? ???
 		{
 			return true;
 		}
@@ -2257,6 +2260,57 @@ void LetHeroStop( CHARACTER * c, BOOL bSetMovementFalse)
 		c->Movement = false;
 	}
 }
+
+void CancelHeroClickMove(bool sendStopPacket)
+{
+	if (Hero == nullptr)
+	{
+		return;
+	}
+
+	DeleteEffect(MODEL_MOVE_TARGETPOSITION_EFFECT);
+
+	if (sendStopPacket && Hero->Movement)
+	{
+		LetHeroStop(Hero, TRUE);
+	}
+
+	Hero->Movement = false;
+	SetPlayerStop(Hero);
+	TargetX = Hero->PositionX;
+	TargetY = Hero->PositionY;
+	MouseUpdateTime = 0;
+	MouseUpdateTimeMax = 0;
+}
+
+#if defined(__ANDROID__)
+static void ClampMoveTargetNearHero(int heroX, int heroY, int& targetX, int& targetY, int maxTiles)
+{
+	int dx = targetX - heroX;
+	int dy = targetY - heroY;
+
+	if (dx > maxTiles)
+	{
+		dx = maxTiles;
+	}
+	else if (dx < -maxTiles)
+	{
+		dx = -maxTiles;
+	}
+
+	if (dy > maxTiles)
+	{
+		dy = maxTiles;
+	}
+	else if (dy < -maxTiles)
+	{
+		dy = -maxTiles;
+	}
+
+	targetX = heroX + dx;
+	targetY = heroY + dy;
+}
+#endif
 
 void SetCharacterPos ( CHARACTER* c, BYTE posX, BYTE posY, vec3_t position )
 {
@@ -5017,12 +5071,12 @@ void CheckChatText(char *Text)
 		SetActionClass(c,o,PLAYER_AWKWARD1,AT_AWKWARD1);
 		SendRequestAction(AT_AWKWARD1,((BYTE)((o->Angle[2]+22.5f)/360.f*8.f+1.f)%8));
 	}
-	else if(FindText(Text,"ㅠ.ㅠ") || FindText(Text,"ㅜ.ㅜ") || FindText(Text,"T_T") || FindText(Text,GlobalText[306]) || FindText(Text,GlobalText[307]) || FindText(Text,GlobalText[308]) || FindText(Text,GlobalText[309]))
+	else if(FindText(Text,"??.??") || FindText(Text,"??.??") || FindText(Text,"T_T") || FindText(Text,GlobalText[306]) || FindText(Text,GlobalText[307]) || FindText(Text,GlobalText[308]) || FindText(Text,GlobalText[309]))
 	{
 		SetActionClass(c,o,PLAYER_CRY1,AT_CRY1);
 		SendRequestAction(AT_CRY1,((BYTE)((o->Angle[2]+22.5f)/360.f*8.f+1.f)%8));
 	}
-	else if(FindText(Text,"ㅡ.ㅡ") || FindText(Text,"ㅡ.,ㅡ") || FindText(Text,"ㅡ,.ㅡ") || FindText(Text,"-.-") || FindText(Text,"-_-") || FindText(Text,GlobalText[310]) || FindText(Text,GlobalText[311]))
+	else if(FindText(Text,"??.??") || FindText(Text,"??.,??") || FindText(Text,"??,.??") || FindText(Text,"-.-") || FindText(Text,"-_-") || FindText(Text,GlobalText[310]) || FindText(Text,GlobalText[311]))
 	{
 		SetActionClass(c,o,PLAYER_SEE1,AT_SEE1);
 		SendRequestAction(AT_SEE1,((BYTE)((o->Angle[2]+22.5f)/360.f*8.f+1.f)%8));
@@ -5062,7 +5116,7 @@ void CheckChatText(char *Text)
 		SetActionClass(c,o,PLAYER_RESPECT1,AT_RESPECT1);
 		SendRequestAction(AT_RESPECT1,((BYTE)((o->Angle[2]+22.5f)/360.f*8.f+1.f)%8));
 	}
-	else if(FindText(Text,GlobalText[342]) || FindText(Text,GlobalText[343]) || FindText(Text,"/ㅡ") || FindText(Text,"ㅡ^"))
+	else if(FindText(Text,GlobalText[342]) || FindText(Text,GlobalText[343]) || FindText(Text,"/??") || FindText(Text,"??^"))
 	{
 		SetActionClass(c,o,PLAYER_SALUTE1,AT_SALUTE1);
 		SendRequestAction(AT_SALUTE1,((BYTE)((o->Angle[2]+22.5f)/360.f*8.f+1.f)%8));
@@ -8064,6 +8118,15 @@ void MoveHero()
 				SetPlayerStop(c);
 				HeroAngle = (int)c->Object.Angle[2];
 				StandTime = 0;
+
+				if (c == Hero
+					&& c->MovementType == MOVEMENT_MOVE
+					&& (c->PositionX != TargetX || c->PositionY != TargetY))
+				{
+					DeleteEffect(MODEL_MOVE_TARGETPOSITION_EFFECT);
+					TargetX = c->PositionX;
+					TargetY = c->PositionY;
+				}
 				
 				if (c->MovementType == MOVEMENT_OPERATE)
 					Action(c,o,false);
@@ -8360,6 +8423,12 @@ void MoveHero()
 						{
 							TargetX = (BYTE)(CollisionPosition[0]/TERRAIN_SCALE);
 							TargetY = (BYTE)(CollisionPosition[1]/TERRAIN_SCALE);
+#if defined(__ANDROID__)
+							if (MU_AndroidIsVirtualJoystickDrivingMouse())
+							{
+								ClampMoveTargetNearHero(c->PositionX, c->PositionY, TargetX, TargetY, 2);
+							}
+#endif
 							int Wall;
 							//if(CharacterMachine->Equipment[EQUIPMENT_WING].Type!=-1)
 							//	Wall = TW_NOMOVE;
@@ -8382,20 +8451,29 @@ void MoveHero()
 								{
 									c->MovementType = MOVEMENT_MOVE;
 									SendMove ( c, o );
-									OBJECT* pHeroObj = &Hero->Object;
-									vec3_t vLight, vPos;
-									Vector( 1.f, 1.f, 0.f, vLight );
-									VectorCopy( CollisionPosition, vPos );
-									DeleteEffect( MODEL_MOVE_TARGETPOSITION_EFFECT );
-
-									int iTerrainIndex = TERRAIN_INDEX( (int)SelectXF, (int)SelectYF );
-									if( (TerrainWall[iTerrainIndex]&TW_NOMOVE) != TW_NOMOVE )
+#if defined(__ANDROID__)
+									if (!MU_AndroidIsVirtualJoystickDrivingMouse())
+#endif
 									{
-										CreateEffect( MODEL_MOVE_TARGETPOSITION_EFFECT, vPos, pHeroObj->Angle, vLight, 0, pHeroObj, -1, 0, 0, 0, 0.6f);
+										OBJECT* pHeroObj = &Hero->Object;
+										vec3_t vLight, vPos;
+										Vector( 1.f, 1.f, 0.f, vLight );
+										VectorCopy( CollisionPosition, vPos );
+										DeleteEffect( MODEL_MOVE_TARGETPOSITION_EFFECT );
+
+										int iTerrainIndex = TERRAIN_INDEX( (int)SelectXF, (int)SelectYF );
+										if( (TerrainWall[iTerrainIndex]&TW_NOMOVE) != TW_NOMOVE )
+										{
+											CreateEffect( MODEL_MOVE_TARGETPOSITION_EFFECT, vPos, pHeroObj->Angle, vLight, 0, pHeroObj, -1, 0, 0, 0, 0.6f);
+										}
 									}
 								}
 								else
 								{
+									if (c == Hero)
+									{
+										CancelHeroClickMove(false);
+									}
 									MouseUpdateTime = MouseUpdateTimeMax;
 									MouseUpdateTime = 0;
 								}

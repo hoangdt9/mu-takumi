@@ -16,6 +16,7 @@ public static class CharacterRegenWire602
         ushort mana,
         ushort shield = 0,
         ushort bp = 0,
+        ulong experience = 0,
         uint gold = 0,
         uint? viewCurHp = null,
         uint? viewCurMp = null,
@@ -35,7 +36,8 @@ public static class CharacterRegenWire602
         WriteUInt16Le(buf, 10, mana);
         WriteUInt16Le(buf, 12, shield);
         WriteUInt16Le(buf, 14, bp);
-        // Experience[8] — zeros (client rebuilds from join state on full revival path).
+        // Experience[8] — client PRECEIVE_REVIVAL btMExp1..8 (ReceiveRevival overwrites CharacterAttribute->Experience).
+        BinaryPrimitives.WriteUInt64LittleEndian(buf.AsSpan(16), experience);
         BinaryPrimitives.WriteUInt32LittleEndian(buf.AsSpan(24), gold);
         BinaryPrimitives.WriteUInt32LittleEndian(buf.AsSpan(28), viewCurHp ?? life);
         BinaryPrimitives.WriteUInt32LittleEndian(buf.AsSpan(32), viewCurMp ?? mana);

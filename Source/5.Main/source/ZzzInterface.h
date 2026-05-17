@@ -141,6 +141,7 @@ bool CheckSkillUseCondition( OBJECT* o, int Type );
 bool CheckWall(int sx1,int sy1,int sx2,int sy2);
 bool CheckTile(CHARACTER *c,OBJECT *o,float Range);
 void LetHeroStop( CHARACTER * c = NULL, BOOL bSetMovementFalse = FALSE);
+void CancelHeroClickMove(bool sendStopPacket = true);
 void Attack(CHARACTER *c);
 
 int ExecuteSkill(CHARACTER* c, int Skill, float Distance);

@@ -63,6 +63,8 @@ void MU_AndroidDismissLoginWaitMsgIfShown();
 /** True after LAN connect failed and client should use 127.0.0.1 (adb reverse / Docker Desktop Mac). */
 bool MU_AndroidShouldPreferLoopbackTcp();
 void MU_AndroidSetPreferLoopbackTcp(bool prefer);
+/** True while virtual joystick simulates MouseLButton for click-to-walk. */
+bool MU_AndroidIsVirtualJoystickDrivingMouse();
 #endif
 
 #endif // defined(__ANDROID__) || defined(MU_IOS)

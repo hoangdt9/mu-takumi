@@ -38,6 +38,8 @@ public sealed class MonsterViewerSession
     public string? AccountLogin { get; set; }
     public string? CharacterName { get; set; }
     public ushort PlayerLevel { get; set; } = 1;
+    public ulong Experience { get; set; }
+    public uint Gold { get; set; }
     public byte ServerClass { get; set; }
     public CharacterSheetStats Sheet { get; set; }
     public MonsterViewportTracker? ViewportTracker { get; set; }
@@ -90,6 +92,8 @@ public static class MonsterViewerRegistry
         string? accountLogin = null,
         string? characterName = null,
         ushort playerLevel = 1,
+        ulong experience = 0,
+        uint gold = 0,
         byte serverClass = 0,
         CharacterSheetStats sheet = default,
         Action<int, int>? onVitalsChanged = null,
@@ -154,6 +158,16 @@ public static class MonsterViewerRegistry
                 existing.PlayerLevel = playerLevel;
             }
 
+            if (experience > 0)
+            {
+                existing.Experience = experience;
+            }
+
+            if (gold > 0)
+            {
+                existing.Gold = gold;
+            }
+
             if (serverClass != 0)
             {
                 existing.ServerClass = serverClass;
@@ -189,6 +203,8 @@ public static class MonsterViewerRegistry
             AccountLogin = accountLogin,
             CharacterName = characterName,
             PlayerLevel = playerLevel > (ushort)0 ? playerLevel : (ushort)1,
+            Experience = experience,
+            Gold = gold,
             ServerClass = serverClass,
             Sheet = sheet,
             OnVitalsChanged = onVitalsChanged,
@@ -217,6 +233,25 @@ public static class MonsterViewerRegistry
         if (Sessions.TryGetValue(sessionId, out var session))
         {
             session.PlayerLevel = playerLevel;
+        }
+    }
+
+    public static void TryUpdateProgress(Guid sessionId, ulong experience, ushort playerLevel, uint gold)
+    {
+        if (!Sessions.TryGetValue(sessionId, out var session))
+        {
+            return;
+        }
+
+        session.Experience = experience;
+        if (playerLevel > 0)
+        {
+            session.PlayerLevel = playerLevel;
+        }
+
+        if (gold > 0)
+        {
+            session.Gold = gold;
         }
     }
 
@@ -420,7 +455,7 @@ public static class MonsterViewerRegistry
             return;
         }
 
-        if (PlayerVitalsState.IsDead(targetSessionId))
+        if (PlayerVitalsState.IsDead(targetSessionId) || session.CurrentHp <= 0)
         {
             return;
         }
@@ -481,9 +516,12 @@ public static class MonsterViewerRegistry
 
         if (session.CurrentHp <= 0)
         {
-            PlayerVitalsState.MarkDead(targetSessionId, PlayerVitalsState.ReviveDelayFromEnv());
-            var diePkt = PlayerDieWire602.Build(session.ClientHeroWireKey, monsterObjectKey);
-            await GamePortOutboundWire.WriteAsync(session.Connection, session.Protect, diePkt, ct).ConfigureAwait(false);
+            if (PlayerVitalsState.TryMarkDead(targetSessionId, PlayerVitalsState.ReviveDelayFromEnv()))
+            {
+                var diePkt = PlayerDieWire602.Build(session.ClientHeroWireKey, monsterObjectKey);
+                await GamePortOutboundWire.WriteAsync(session.Connection, session.Protect, diePkt, ct).ConfigureAwait(false);
+                PlayerVitalsLoop.ScheduleReviveAfterDeath(session);
+            }
         }
 
         Console.WriteLine(

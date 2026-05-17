@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Globalization;
 using MUnique.OpenMU.Network;
 using Takumi.Server.Protocol;
@@ -6,6 +7,7 @@ namespace Takumi.Server.Game.World;
 
 public static class MapMonsterScopeSender
 {
+    static readonly ConcurrentDictionary<string, long> s_lastMoveSyncTickMs = new(StringComparer.Ordinal);
     public static byte[]? BuildViewportPacket(byte mapId, byte playerX, byte playerY)
     {
         return BuildViewportPacket(mapId, playerX, playerY, onlyNew: null);
@@ -106,6 +108,18 @@ public static class MapMonsterScopeSender
         if (!tracker.ShouldRescan(mapId, playerX, playerY, moveThreshold))
         {
             return;
+        }
+
+        var minIntervalMs = ParseIntEnv("TAKUMI_MONSTER_VIEWPORT_MIN_INTERVAL_MS", 400, 0, 5000);
+        if (minIntervalMs > 0)
+        {
+            var nowMs = Environment.TickCount64;
+            if (s_lastMoveSyncTickMs.TryGetValue(remote, out var lastMs) && nowMs - lastMs < minIntervalMs)
+            {
+                return;
+            }
+
+            s_lastMoveSyncTickMs[remote] = nowMs;
         }
 
         var viewRange = ParseIntEnv("TAKUMI_MONSTER_VIEW_RANGE", 15, 1, 32);

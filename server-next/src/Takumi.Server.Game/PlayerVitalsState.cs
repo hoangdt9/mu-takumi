@@ -10,9 +10,16 @@ public static class PlayerVitalsState
     public static bool IsDead(Guid sessionId) =>
         ReviveAtMs.TryGetValue(sessionId, out var until) && until > Environment.TickCount64;
 
+    /// <summary>Marks dead once per death; returns false if already dead / revive pending.</summary>
+    public static bool TryMarkDead(Guid sessionId, TimeSpan reviveDelay)
+    {
+        var until = Environment.TickCount64 + (long)reviveDelay.TotalMilliseconds;
+        return ReviveAtMs.TryAdd(sessionId, until);
+    }
+
     public static void MarkDead(Guid sessionId, TimeSpan reviveDelay)
     {
-        ReviveAtMs[sessionId] = Environment.TickCount64 + (long)reviveDelay.TotalMilliseconds;
+        _ = TryMarkDead(sessionId, reviveDelay);
     }
 
     public static bool TryClearDead(Guid sessionId)
@@ -41,7 +48,7 @@ public static class PlayerVitalsState
 
     public static TimeSpan ReviveDelayFromEnv()
     {
-        var sec = 5;
+        var sec = 2;
         var raw = Environment.GetEnvironmentVariable("TAKUMI_PLAYER_REVIVE_SECONDS");
         if (!string.IsNullOrWhiteSpace(raw) && int.TryParse(raw, out var v))
         {

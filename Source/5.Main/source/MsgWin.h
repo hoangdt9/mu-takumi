@@ -54,6 +54,6 @@ protected:
 	void ManageOKClick();
 	void ManageCancelClick();
 	void InitResidentNumInput();
-	void RequestDeleteCharacter();
+	void RequestDeleteCharacter(char* resident20);
 };
 

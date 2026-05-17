@@ -8356,6 +8356,10 @@ void MoveEffect(OBJECT * o, int iIndex)
 			o->Light[1] *= pow(1.0f / (1.1f), FPS_ANIMATION_FACTOR);
 			o->Light[2] *= pow(1.0f / (1.1f), FPS_ANIMATION_FACTOR);
 		}
+		else if (o->Type == BITMAP_MAGIC + 2 && o->SubType == 3 && o->Owner != NULL)
+		{
+			VectorCopy(o->Owner->Position, o->Position);
+		}
 		break;
 	case BITMAP_OUR_INFLUENCE_GROUND:
 	case BITMAP_ENEMY_INFLUENCE_GROUND:
@@ -19134,6 +19138,10 @@ void RenderEffects(bool bRenderBlendMesh)
 				}
 				break;
 				default:
+					if (RenderLevelUpMagicFx(o))
+					{
+						break;
+					}
 					if (o->Type >= MODEL_SKILL_BEGIN && o->Type < MODEL_SKILL_END)
 					{
 						RenderObject(o);
@@ -19191,6 +19199,68 @@ void RenderAfterEffects(bool bRenderBlendMesh)
 			}
 		}
 	}
+}
+
+bool RenderLevelUpMagicFx(OBJECT* o)
+{
+	if (o == nullptr || !o->Live)
+	{
+		return false;
+	}
+
+	vec3_t Light;
+	float Luminosity = 1.f;
+	float Scale = 0.f;
+
+	if (o->Type == BITMAP_MAGIC + 1 && o->SubType == 0)
+	{
+		if (o->LifeTime < 5)
+		{
+			Luminosity -= (float)(5 - o->LifeTime) * 0.2f;
+		}
+
+		Scale = (20 - o->LifeTime) * 0.15f;
+		Vector(Luminosity * 0.4f, Luminosity * 0.6f, Luminosity * 1.f, Light);
+		EnableAlphaBlend();
+		RenderTerrainAlphaBitmap(BITMAP_MAGIC + 1, o->Position[0], o->Position[1], Scale, Scale, Light, -o->Angle[2]);
+		DisableAlphaBlend();
+		return true;
+	}
+
+	return false;
+}
+
+bool HasActiveLevelUpGfx()
+{
+	if (Hero != nullptr)
+	{
+		const OBJECT* heroObj = &Hero->Object;
+		for (int i = 0; i < MAX_JOINTS; ++i)
+		{
+			const JOINT* j = &Joints[i];
+			if (j->Live && j->Type == BITMAP_FLARE && j->Target == heroObj
+				&& (j->SubType == 0 || j->SubType == 45 || j->SubType == 46))
+			{
+				return true;
+			}
+		}
+	}
+
+	for (int i = 0; i < MAX_EFFECTS; ++i)
+	{
+		const OBJECT* o = &Effects[i];
+		if (!o->Live)
+		{
+			continue;
+		}
+
+		if (o->Type == BITMAP_MAGIC + 1 && o->SubType == 0)
+		{
+			return true;
+		}
+	}
+
+	return false;
 }
 
 void RenderEffectShadows()
@@ -19281,6 +19351,10 @@ void RenderEffectShadows()
 					}
 					break;
 				case BITMAP_MAGIC + 1:
+					if (o->SubType == 0)
+					{
+						break;
+					}
 					Luminosity = 1.f;
 					if (o->LifeTime < 5)
 					{
@@ -19426,24 +19500,15 @@ void RenderEffectShadows()
 				}
 				break;
 				case BITMAP_MAGIC + 2:
+					if (o->SubType == 3)
+					{
+						break;
+					}
 					EnableAlphaBlend();
 					Rotation = (int)WorldTime % 3600 / (float)10.f;
 
 					Luminosity = 1.f;
-					if (o->SubType == 3)
-					{
-						// Level-up body column (gold tint). Join/respawn = SubType 0 (+ orange ground disc).
-						vec3_t goldTint;
-						vec3_t bodyPos;
-						Vector(1.f, 0.92f, 0.18f, goldTint);
-						VectorCopy(o->Position, bodyPos);
-						bodyPos[2] += 55.f;
-						RenderCircle(BITMAP_MAGIC + 2, bodyPos, 55.f, 125.f, 200.f, Rotation, 1.f, 0.f, goldTint);
-						RenderCircle(BITMAP_MAGIC + 2, bodyPos, 55.f, 125.f, 200.f, -Rotation, 1.f, 0.f, goldTint);
-
-						if (o->LifeTime < 5) Luminosity -= (float)(5 - o->LifeTime) * 0.2f;
-					}
-					else if (o->SubType != 2)
+					if (o->SubType != 2)
 					{
 						RenderCircle(BITMAP_MAGIC + 2, o->Position, 90.f, 130.f, 200.f, Rotation, 0.f, 0.f);
 						RenderCircle(BITMAP_MAGIC + 2, o->Position, 90.f, 130.f, 200.f, -Rotation, 0.f, 0.f);

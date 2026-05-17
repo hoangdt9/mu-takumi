@@ -382,6 +382,12 @@ bool CServerSelWin::ConnectServerButtonIndex(int iIndex)
 
 	CUIMng::Instance().HideWin(this);
 	SendRequestServerAddress(pServerInfo->m_iConnectIndex);
+#if defined(__ANDROID__)
+	g_ErrorReport.Write(
+		"[TakumiLoginBg] sent C1 F4 03 connectIndex=%d fd=%d\r\n",
+		pServerInfo->m_iConnectIndex,
+		static_cast<int>(SocketClient.GetSocket()));
+#endif
 
 	int iCensorshipIndex = CGameCensorship::STATE_12;
 

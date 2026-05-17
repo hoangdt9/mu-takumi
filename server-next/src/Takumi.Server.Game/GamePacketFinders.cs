@@ -503,6 +503,15 @@ public static class GamePacketFinders
                 TakumiStreamXorCodec.DecodeTakumiStreamXor(scratch, firstXorIndex: 3);
             }
 
+            if (scratch[2] != 0xF3 || scratch[3] != 0x02)
+            {
+                packet.Slice(i, kFrameLen).CopyTo(scratch);
+                for (var pass = 0; pass < 8 && (scratch[2] != 0xF3 || scratch[3] != 0x02); pass++)
+                {
+                    TakumiStreamXorCodec.DecodeTakumiStreamXor(scratch, firstXorIndex: 2);
+                }
+            }
+
             if (scratch[2] != 0xF3 || scratch[3] != 0x02 || scratch[1] != kFrameLen)
             {
                 continue;

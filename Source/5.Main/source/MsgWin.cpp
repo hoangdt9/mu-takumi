@@ -16,8 +16,10 @@
 #include "ZzzScene.h"
 #include "DSPlaySound.h"
 #include "wsclientinline.h"
+#include "WSclient.h"
 #include "UIControls.h"
 #include "ZzzOpenglUtil.h"
+#include "Utilities/Log/ErrorReport.h"
 #include <algorithm>
 
 #if defined(__ANDROID__) || defined(MU_IOS)
@@ -259,6 +261,25 @@ void CMsgWin::UpdateWhileShow(double dDeltaTick)
 			}
 		}
 	}
+	if (m_nMsgCode == MESSAGE_WAIT && CurrentProtocolState == REQUEST_DELETE_CHARACTER)
+	{
+		m_dDeltaTickSum += dDeltaTick;
+		extern bool EnableSocket;
+		extern CWsctlc SocketClient;
+		if (EnableSocket && SocketClient.GetSocket() != INVALID_SOCKET)
+		{
+			SocketClient.AndroidSyncPollRecvPending();
+			ProtocolCompiler();
+		}
+		if (m_dDeltaTickSum > 15000.0)
+		{
+			m_dDeltaTickSum = 0.0;
+			CurrentProtocolState = RECEIVE_CHARACTERS_LIST;
+			g_ErrorReport.Write(
+				"[AndroidLogin] delete character wait timeout (no F3 02 response within 15s)\r\n");
+			PopUp(MESSAGE_SERVER_LOST);
+		}
+	}
 #else
 	(void)dDeltaTick;
 #endif
@@ -430,6 +451,7 @@ void CMsgWin::PopUp(int nMsgCode, char* pszMsg)
 	case MESSAGE_WAIT:
 		lpszMsg = GlobalText[471];
 		eType = MWT_NON;
+		m_dDeltaTickSum = 0.0;
 		break;
 	case MESSAGE_SERVER_BUSY:
 	case RECEIVE_LOG_IN_FAIL_SERVER_BUSY:
@@ -650,9 +672,20 @@ void CMsgWin::ManageOKClick()
 		PopUp(MESSAGE_DELETE_CHARACTER_RESIDENT);
 		break;
 	case MESSAGE_DELETE_CHARACTER_RESIDENT:
-		RequestDeleteCharacter();
+	{
+		char resident20[21] = {};
+		if (g_iChatInputType == 1)
+		{
+			g_pSinglePasswdInputBox->GetText(resident20);
+		}
+		else
+		{
+			strncpy_s(resident20, sizeof(resident20), InputText[0], _TRUNCATE);
+		}
+		RequestDeleteCharacter(resident20);
 		PopUp(MESSAGE_WAIT);
 		break;
+	}
 	}
 }
 
@@ -694,17 +727,24 @@ void CMsgWin::InitResidentNumInput()
 	}
 }
 
-void CMsgWin::RequestDeleteCharacter()
+void CMsgWin::RequestDeleteCharacter(char* resident20)
 {
 	if (g_iChatInputType == 1)
 	{
-		g_pSinglePasswdInputBox->GetText(InputText[0]);
 		g_pSinglePasswdInputBox->SetText(NULL);
 		g_pSinglePasswdInputBox->SetState(UISTATE_HIDE);
 	}
 	InputEnable = false;
-	char resident20[21];
-	memset(resident20, 0, sizeof(resident20));
-	strncpy_s(resident20, sizeof(resident20), InputText[0], 20);
+	if (SelectedHero < 0 || SelectedHero >= 5)
+	{
+		g_ErrorReport.Write("[AndroidLogin] delete character aborted — invalid SelectedHero=%d\r\n", SelectedHero);
+		return;
+	}
+#if defined(__ANDROID__) || defined(MU_IOS)
+	g_ErrorReport.Write(
+		"[AndroidLogin] SendRequestDeleteCharacter hero=%s slot=%d\r\n",
+		CharactersClient[SelectedHero].ID,
+		SelectedHero);
+#endif
 	SendRequestDeleteCharacter(CharactersClient[SelectedHero].ID, resident20);
 }

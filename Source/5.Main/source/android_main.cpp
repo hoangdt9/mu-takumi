@@ -1897,6 +1897,7 @@ void ReleaseVirtualJoystickMouseDrive()
     MouseLButtonPush = false;
     MouseLButton = false;
     MouseLButtonPop = false;
+    CancelHeroClickMove(true);
 }
 
 void ClearVirtualJoystick()
@@ -4710,6 +4711,11 @@ void RenderVirtualPad()
 }
 } // namespace
 
+bool MU_AndroidIsVirtualJoystickDrivingMouse()
+{
+    return g_virtualJoystickDrivingMouse;
+}
+
 bool AndroidTriggerNormalAttackButton()
 {
     return AndroidTriggerNormalAttackButtonInternal();
@@ -5114,6 +5120,21 @@ void SetMaxMessagePerCycle(int messages)
     g_MaxMessagePerCycle = (messages > 0) ? std::max<int>(messages, custom_min) : messages;
 }
 
+static uint32_t g_androidWorldLoadGraceUntil = 0;
+
+void TakumiAndroidOnWorldJoinLoaded()
+{
+    g_androidWorldLoadGraceUntil = MU_MobileGetTicks() + 8000u;
+    const int restoreBudget = (g_MaxMessagePerCycle > 0 && g_MaxMessagePerCycle < 90)
+        ? 90
+        : 120;
+    if (g_MaxMessagePerCycle < restoreBudget)
+    {
+        SetMaxMessagePerCycle(restoreBudget);
+    }
+    LOGI("Android post-join grace 8s (maxMsgPerCycle=%d)", g_MaxMessagePerCycle);
+}
+
 namespace
 {
     float g_currentAdaptiveEffectScale = 1.0f;
@@ -5375,6 +5396,15 @@ namespace
         // Keep all effects enabled; only adjust spawn density to smooth spikes.
         // Render-level slider remains user-controlled.
 
+        const uint32_t nowTick = MU_MobileGetTicks();
+        const bool inWorldLoadGrace =
+            g_androidWorldLoadGraceUntil != 0 && nowTick < g_androidWorldLoadGraceUntil;
+        if (inWorldLoadGrace)
+        {
+            g_adaptivePerf.lowFpsStreak = 0;
+            g_adaptivePerf.renderDownStreak = 0;
+        }
+
         if (fps < g_adaptivePerf.lowFpsThreshold)
         {
             ++g_adaptivePerf.lowFpsStreak;
@@ -5410,7 +5440,6 @@ namespace
         }
 
         const double currentEffectScale = g_currentAdaptiveEffectScale;
-        const uint32_t nowTick = MU_MobileGetTicks();
         if (std::abs(currentEffectScale - targetEffectScale) >= g_adaptivePerf.effectScaleHysteresis &&
             (g_adaptivePerf.lastFxAdjustTick == 0 ||
                 (nowTick - g_adaptivePerf.lastFxAdjustTick) >= g_adaptivePerf.fxAdjustCooldownMs))
@@ -5431,7 +5460,7 @@ namespace
                 fps, frameMs, currentEffectScale, g_currentAdaptiveEffectScale, targetEffectScale);
         }
 
-        if (g_pOption && !g_adaptivePerf.isEmulator)
+        if (g_pOption && !g_adaptivePerf.isEmulator && !inWorldLoadGrace)
         {
             const int currentRenderLevel = ClampRenderLevel(g_pOption->GetRenderLevel());
             const bool shouldRenderDown = (frameMs >= 42.0 || fps < 24.0);
@@ -5481,7 +5510,8 @@ namespace
         }
 
         // Reduce per-frame packet budget if FPS stays low for 3+ windows.
-        if (g_adaptivePerf.lowFpsStreak >= 3 &&
+        if (!inWorldLoadGrace &&
+            g_adaptivePerf.lowFpsStreak >= 3 &&
             g_MaxMessagePerCycle > g_adaptivePerf.minMessageBudget)
         {
             const int newBudget = std::max(g_adaptivePerf.minMessageBudget,

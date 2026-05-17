@@ -121,6 +121,11 @@ public static class MonsterCombatHandler
         string? accountId = null,
         Action? onRosterDirty = null)
     {
+        if (IsPlayerCombatBlocked(presenceSessionId))
+        {
+            return;
+        }
+
         var aoeRange = ParseIntEnv("TAKUMI_COMBAT_AOE_RANGE", 3, 1, 8);
         var skillPct = ParseIntEnv("TAKUMI_COMBAT_SKILL_DAMAGE_PCT", 150, 50, 500);
         var processed = new HashSet<int>();
@@ -230,6 +235,26 @@ public static class MonsterCombatHandler
         return true;
     }
 
+    static bool IsPlayerCombatBlocked(Guid? presenceSessionId)
+    {
+        if (presenceSessionId is not { } sid)
+        {
+            return false;
+        }
+
+        if (PlayerVitalsState.IsDead(sid))
+        {
+            return true;
+        }
+
+        if (MonsterViewerRegistry.TryGetSession(sid, out var session) && session.CurrentHp <= 0)
+        {
+            return true;
+        }
+
+        return false;
+    }
+
     static async Task HandleHitAsync(
         MonsterViewportTracker tracker,
         Connection connection,
@@ -249,6 +274,11 @@ public static class MonsterCombatHandler
         string? accountId = null,
         Action? onRosterDirty = null)
     {
+        if (IsPlayerCombatBlocked(presenceSessionId))
+        {
+            return;
+        }
+
         var targetKey = targetId & 0x7FFF;
         if (await TryHandlePvPAsync(targetKey, mapId, playerLevel, skillPct: isSkill ? ParseIntEnv("TAKUMI_COMBAT_SKILL_DAMAGE_PCT", 150, 50, 500) : 100, presenceSessionId, remote, ct).ConfigureAwait(false))
         {
@@ -350,6 +380,14 @@ public static class MonsterCombatHandler
         if (player is not null)
         {
             RosterExperienceCombat.GrantKillExperience(player, expStub, accountId, onRosterDirty);
+            if (presenceSessionId is { } progressSid)
+            {
+                MonsterViewerRegistry.TryUpdateProgress(
+                    progressSid,
+                    player.Experience,
+                    player.Level,
+                    (uint)Math.Clamp(player.Zen, 0, uint.MaxValue));
+            }
         }
 
         var diePkt = MonsterDieWire602.Build(monster.ObjectKey, expStub, damage, dieSuccess: true);

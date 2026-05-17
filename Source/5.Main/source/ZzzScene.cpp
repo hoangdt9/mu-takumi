@@ -25,6 +25,7 @@
 #include "ZzzAI.h"
 #include "DSPlaySound.h"
 #include "wsclientinline.h"
+#include "WSclient.h"
 #include "SMD.h"
 #include "Local.h"
 #include "MatchEvent.h"
@@ -1077,6 +1078,20 @@ void NewMoveCharacterScene()
 		return;
 	}
 
+#if defined(__ANDROID__) || defined(MU_IOS)
+	// Character select stays on game TCP; aggressively drain F3 02 delete ACK while MESSAGE_WAIT is up.
+	if (EnableSocket && SocketClient.GetSocket() != INVALID_SOCKET
+		&& (CurrentProtocolState == REQUEST_DELETE_CHARACTER
+			|| CUIMng::Instance().m_MsgWin.IsShow()))
+	{
+		SocketClient.AndroidSyncPollRecvPending();
+		if (CurrentProtocolState == REQUEST_DELETE_CHARACTER)
+		{
+			ProtocolCompiler();
+		}
+	}
+#endif
+
 	if (!InitCharacterScene)
 	{
 		InitCharacterScene = true;
@@ -1571,6 +1586,14 @@ void NewMoveLogInScene()
 #endif
 	}
 
+#if defined(__ANDROID__)
+	// Must run before IsMoving() early-return: ServerSelWin hide animation blocks the
+	// main loop while F4 03 (ServerInfo) may already be on the wire — otherwise 15s timeout.
+	MU_AndroidTickLoginSceneConnectFallback();
+	MU_AndroidTickLoginAfterServerPickFallback();
+	MU_AndroidTickJoinServerWait();
+#endif
+
 #if defined(MOVIE_DIRECTSHOW) || defined(__ANDROID__)
 	if(CUIMng::Instance().IsMoving() == true)
 	{
@@ -1591,12 +1614,6 @@ void NewMoveLogInScene()
 		ThePetProcess().UpdatePets();
 		MoveCamera();
 	}
-
-#if defined(__ANDROID__)
-	MU_AndroidTickLoginSceneConnectFallback();
-	MU_AndroidTickLoginAfterServerPickFallback();
-	MU_AndroidTickJoinServerWait();
-#endif
 
 	if (CInput::Instance().IsKeyDown(VK_ESCAPE))
 	{
@@ -2486,6 +2503,10 @@ void MoveMainScene()
 		return;
 	}
 
+#if defined(__ANDROID__)
+	TakumiProcessAndroidPendingLoadWorld();
+#endif
+
 	if (IsWindowVisible(g_hWnd) == 0)
 	{
 
@@ -2755,7 +2776,7 @@ bool RenderMainScene()
 	if(!gMapManager.IsPKField()	&& !IsDoppelGanger2()) RenderObjects();
 
 	unsigned long long phaseStart = MainScenePerfNow();
-	if(!skipNonEssentialPasses)
+	if (!skipNonEssentialPasses || HasActiveLevelUpGfx())
 	{
 		RenderEffectShadows();
 		g_mainScenePerfSnapshot.shadowTicks += MainScenePerfElapsed(phaseStart);

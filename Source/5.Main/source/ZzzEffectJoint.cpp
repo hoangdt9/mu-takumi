@@ -133,6 +133,7 @@ void CreateJoint(int Type, vec3_t Position, vec3_t TargetPosition, vec3_t Angle,
 		}
 		if (!o->Live)
 		{
+			const bool hasCustomColor = (vPriorColor != nullptr);
 			o->Live = true;
 			o->Type = Type;
 			o->TexType = o->Type;
@@ -1747,7 +1748,10 @@ void CreateJoint(int Type, vec3_t Position, vec3_t TargetPosition, vec3_t Angle,
 						o->Direction[2] = (rand() % 250 + 200) / 100.f;
 					}
 
-					VectorCopy(o->Target->Light, o->Light);
+					if (!hasCustomColor && o->Target != nullptr)
+					{
+						VectorCopy(o->Target->Light, o->Light);
+					}
 				}
 				else if (o->SubType == 20)
 				{
@@ -2092,7 +2096,10 @@ void CreateJoint(int Type, vec3_t Position, vec3_t TargetPosition, vec3_t Angle,
 				}
 				else if (o->SubType == 45 || o->SubType == 46)
 				{
-					Vector(0.2f, 0.2f, 1.0f, o->Light);
+					if (!hasCustomColor)
+					{
+						Vector(0.2f, 0.2f, 1.0f, o->Light);
+					}
 					o->MultiUse = rand() % 10;
 					o->LifeTime = 30 + o->MultiUse;
 					o->MaxTails = 15;

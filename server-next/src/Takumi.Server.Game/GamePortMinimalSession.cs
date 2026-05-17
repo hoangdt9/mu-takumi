@@ -336,13 +336,20 @@ public static class GamePortMinimalSession
                         return;
                     }
 
-                    if (GamePacketFinders.TryFindDeleteCharacterRequest(packet, out var deleteOff, out var deleteName10, out _))
+                    if (GamePacketFinders.TryFindDeleteCharacterRequest(packet, out var deleteOff, out var deleteName10, out var deleteResident20))
                     {
                         if (!loginLatch.IsLoggedIn)
                         {
                             Console.WriteLine("[{0}] delete character (F3 02) before login — ignored", remote);
                             return;
                         }
+
+                        Console.WriteLine(
+                            "[{0}] delete character request name='{1}' frame@{2} wireLen={3}",
+                            remote,
+                            Encoding.ASCII.GetString(deleteName10).TrimEnd('\0'),
+                            deleteOff,
+                            packet.Length);
 
                         var pickedDel = FindRosterEntry(roster, deleteName10);
                         if (pickedDel is null)
@@ -384,6 +391,18 @@ public static class GamePortMinimalSession
                             roster.Count,
                             deleteOff);
                         return;
+                    }
+
+                    if (loginLatch.IsLoggedIn
+                        && packet.Length == 34
+                        && packet[0] == 0xC1
+                        && !GamePacketFinders.TryFindDeleteCharacterRequest(packet, out _, out _, out _))
+                    {
+                        var previewLen = Math.Min(40, packet.Length);
+                        Console.WriteLine(
+                            "[{0}] delete F3 02 peel failed (len=34) preview={1}",
+                            remote,
+                            Convert.ToHexString(packet.AsSpan(0, previewLen)));
                     }
 
                     if (loginLatch.IsLoggedIn
@@ -496,6 +515,8 @@ public static class GamePortMinimalSession
                             accountLogin: loggedAccountId,
                             characterName: Encoding.ASCII.GetString(picked.Name10).TrimEnd('\0'),
                             playerLevel: picked.Level,
+                            experience: picked.Experience,
+                            gold: (uint)Math.Clamp(picked.Zen, 0, uint.MaxValue),
                             serverClass: picked.ServerClass,
                             sheet: picked.ResolveSheet(),
                             onVitalsChanged: (hp, max) =>

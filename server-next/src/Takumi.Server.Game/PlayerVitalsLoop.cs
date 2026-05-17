@@ -9,9 +9,11 @@ namespace Takumi.Server.Game;
 public static class PlayerVitalsLoop
 {
     static Task? _loopTask;
+    static CancellationToken AppCancellation = CancellationToken.None;
 
     public static void Start(CancellationToken appCt)
     {
+        AppCancellation = appCt;
         if (_loopTask is not null)
         {
             return;
@@ -22,7 +24,7 @@ public static class PlayerVitalsLoop
 
     static async Task RunAsync(CancellationToken ct)
     {
-        var interval = TimeSpan.FromMilliseconds(ParseIntEnv("TAKUMI_PLAYER_VITALS_INTERVAL_MS", 2000, 500, 30_000));
+        var interval = TimeSpan.FromMilliseconds(ParseIntEnv("TAKUMI_PLAYER_VITALS_INTERVAL_MS", 500, 250, 30_000));
         while (!ct.IsCancellationRequested)
         {
             try
@@ -91,6 +93,39 @@ public static class PlayerVitalsLoop
         await GamePortOutboundWire.WriteAsync(session.Connection, session.Protect, pkt, ct).ConfigureAwait(false);
     }
 
+    public static async Task ReviveSessionAsync(MonsterViewerSession session, CancellationToken ct) =>
+        await TryReviveSessionAsync(session, ct).ConfigureAwait(false);
+
+    public static void ScheduleReviveAfterDeath(MonsterViewerSession session)
+    {
+        if (session.PlayerObjectKey == 0)
+        {
+            return;
+        }
+
+        var appCt = AppCancellation;
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await Task.Delay(PlayerVitalsState.ReviveDelayFromEnv(), appCt).ConfigureAwait(false);
+                if (!PlayerVitalsState.IsDead(session.SessionId) && session.CurrentHp > 0)
+                {
+                    return;
+                }
+
+                await TryReviveSessionAsync(session, appCt).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (appCt.IsCancellationRequested)
+            {
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("[m7d] scheduled revive error: {0}", ex.Message);
+            }
+        }, appCt);
+    }
+
     static async Task TryReviveSessionAsync(MonsterViewerSession session, CancellationToken ct)
     {
         PlayerVitalsState.TryClearDead(session.SessionId);
@@ -150,6 +185,8 @@ public static class PlayerVitalsLoop
             hp,
             mp,
             shield: sd,
+            experience: session.Experience,
+            gold: session.Gold,
             viewCurHp: (uint)session.CurrentHp,
             viewCurMp: (uint)session.CurrentMp,
             viewCurSd: sd);

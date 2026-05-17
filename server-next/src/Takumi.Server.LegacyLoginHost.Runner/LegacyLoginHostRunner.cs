@@ -845,6 +845,8 @@ public static class LegacyLoginHostRunner
                         accountLogin: loggedAccountId,
                         characterName: Encoding.ASCII.GetString(picked.Name10).TrimEnd('\0'),
                         playerLevel: picked.Level,
+                        experience: picked.Experience,
+                        gold: (uint)Math.Clamp(picked.Zen, 0, uint.MaxValue),
                         onVitalsChanged: (hp, max) =>
                         {
                             picked.CurrentHp = hp;

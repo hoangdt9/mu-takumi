@@ -1032,22 +1032,41 @@ void ReceiveCreateCharacter( BYTE *ReceiveBuffer )
 void ReceiveDeleteCharacter( BYTE *ReceiveBuffer )
 {
 	LPPHEADER_DEFAULT_SUBCODE Data = (LPPHEADER_DEFAULT_SUBCODE)ReceiveBuffer;
+#if defined(__ANDROID__) || defined(MU_IOS)
+	g_ErrorReport.Write(
+		"[AndroidLogin] ReceiveDeleteCharacter value=0x%02X heroSlot=%d\r\n",
+		Data->Value,
+		SelectedHero);
+#endif
 	switch (Data->Value)
 	{
 	case 1:
+	{
 		INT		iKey;
+		if (SelectedHero < 0 || SelectedHero >= 5)
+		{
+			g_ErrorReport.Write("[AndroidLogin] ReceiveDeleteCharacter success but invalid SelectedHero=%d\r\n", SelectedHero);
+			CurrentProtocolState = RECEIVE_CHARACTERS_LIST;
+			CUIMng::Instance().PopUpMsgWin(MESSAGE_SERVER_LOST);
+			break;
+		}
 		iKey = CharactersClient[SelectedHero].Key;
 		DeleteCharacter( iKey );
+		CurrentProtocolState = RECEIVE_CHARACTERS_LIST;
 		CUIMng::Instance().PopUpMsgWin(MESSAGE_DELETE_CHARACTER_SUCCESS);
 		break;
+	}
 	case 0:
+		CurrentProtocolState = RECEIVE_CHARACTERS_LIST;
 		CUIMng::Instance().PopUpMsgWin(MESSAGE_DELETE_CHARACTER_GUILDWARNING);
 		break;
 	case 3:
+		CurrentProtocolState = RECEIVE_CHARACTERS_LIST;
 		CUIMng::Instance().PopUpMsgWin(MESSAGE_DELETE_CHARACTER_ITEM_BLOCK);
 		break;
 	case 2:
 	default:
+		CurrentProtocolState = RECEIVE_CHARACTERS_LIST;
 		CUIMng::Instance().PopUpMsgWin(MESSAGE_STORAGE_RESIDENTWRONG);
 		break;
 	}
@@ -1236,6 +1255,12 @@ BOOL ReceiveLogOut(BYTE *ReceiveBuffer, BOOL bEncrypted)
 
 int HeroIndex;
 
+static void TakumiTryCreateJoinWarpRingEffect(OBJECT* o);
+
+#if defined(__ANDROID__)
+static int s_androidDeferredLoadWorldMap = -1;
+#endif
+
 static UINT64 TakumiReadWireUInt64LE(const BYTE* bytes)
 {
 	UINT64 value = 0;
@@ -1311,9 +1336,18 @@ BOOL ReceiveJoinMapServer(BYTE *ReceiveBuffer, BOOL bEncrypted)
 	const int joinMap = Data->Map;
 	gMapManager.WorldActive = joinMap;
 
+	bool deferredWorldLoad = false;
 	if (previousMap != joinMap)
 	{
+#if defined(__ANDROID__)
+		s_androidDeferredLoadWorldMap = joinMap;
+		deferredWorldLoad = true;
+		g_ErrorReport.Write(
+			"[AndroidLogin] ReceiveJoinMapServer defer LoadWorld map=%d (next main frame)\r\n",
+			joinMap);
+#else
 		gMapManager.LoadWorld(joinMap);
+#endif
 	}
 	else
 	{
@@ -1326,7 +1360,6 @@ BOOL ReceiveJoinMapServer(BYTE *ReceiveBuffer, BOOL bEncrypted)
 		DeleteNpcs();
 		DeleteMonsters();
 		ClearItems();
-		ClearCharacters();
 		RemoveAllShopTitleExceptHero();
 	}
 
@@ -1348,7 +1381,13 @@ BOOL ReceiveJoinMapServer(BYTE *ReceiveBuffer, BOOL bEncrypted)
 	
     matchEvent::CreateEventMatch ( gMapManager.WorldActive );
 
-	HeroIndex = rand()%MAX_CHARACTERS_CLIENT;
+#if defined(__ANDROID__)
+	HeroIndex = (SelectedHero >= 0 && SelectedHero < MAX_CHARACTERS_CLIENT)
+		? SelectedHero
+		: 0;
+#else
+	HeroIndex = rand() % MAX_CHARACTERS_CLIENT;
+#endif
 	CHARACTER *c = &CharactersClient[HeroIndex];
 	CreateCharacterPointer(c,MODEL_PLAYER,Data->PositionX,Data->PositionY,((float)Data->Angle-1.f)*45.f);
 	c->Key = HeroKey;
@@ -1409,14 +1448,6 @@ BOOL ReceiveJoinMapServer(BYTE *ReceiveBuffer, BOOL bEncrypted)
 	CharacterAttribute->PrintPlayer.ViewLeadership = CharacterAttribute->Charisma;
 	TakumiEnsureExperienceThresholds();
 
-#if defined(__ANDROID__)
-	g_ErrorReport.Write(
-		"[Exp] join exp=%llu next=%llu level=%u\r\n",
-		(unsigned long long)joinExperience,
-		(unsigned long long)joinNextExperience,
-		(unsigned)CharacterAttribute->Level);
-#endif
-
 	Hero = c;
 
 	if (CharacterAttribute != nullptr && CharacterAttribute->Name[0] != 0)
@@ -1428,14 +1459,14 @@ BOOL ReceiveJoinMapServer(BYTE *ReceiveBuffer, BOOL bEncrypted)
 		memcpy(c->ID, CharactersClient[SelectedHero].ID, MAX_ID_SIZE);
 	}
 	c->ID[MAX_ID_SIZE] = NULL;
-	CreateEffect(BITMAP_MAGIC+2,o->Position,o->Angle,o->Light,0,o);
+	TakumiTryCreateJoinWarpRingEffect(o);
 	
 	CurrentProtocolState = RECEIVE_JOIN_MAP_SERVER;
 	
     LockInputStatus = false;
     CheckIME_Status(true,0);
 	
-    LoadingWorld = 30; //Set Nay de An
+    LoadingWorld = deferredWorldLoad ? 9999998 : 30;
     MouseUpdateTime = 0;
     MouseUpdateTimeMax = 6;
 
@@ -1444,7 +1475,6 @@ BOOL ReceiveJoinMapServer(BYTE *ReceiveBuffer, BOOL bEncrypted)
 		CreatePetDarkSpirit_Now(Hero);
 	}
 
-	CreateEffect(BITMAP_MAGIC+2,o->Position,o->Angle,o->Light,0,o);
     o->Alpha = 0.f;
 	
 	if (g_pNewUISystem != nullptr)
@@ -1532,9 +1562,37 @@ BOOL ReceiveJoinMapServer(BYTE *ReceiveBuffer, BOOL bEncrypted)
 	}
 #endif
 	g_ConsoleDebug->Write(MCD_RECEIVE, "0x03 [ReceiveJoinMapServer]");
+
+#if defined(__ANDROID__)
+	if (!deferredWorldLoad)
+	{
+		TakumiAndroidOnWorldJoinLoaded();
+	}
+#endif
 	
 	return ( TRUE);
 }
+
+#if defined(__ANDROID__)
+void TakumiProcessAndroidPendingLoadWorld()
+{
+	if (s_androidDeferredLoadWorldMap < 0)
+	{
+		return;
+	}
+
+	const int map = s_androidDeferredLoadWorldMap;
+	s_androidDeferredLoadWorldMap = -1;
+	g_ErrorReport.Write("[AndroidLogin] deferred LoadWorld map=%d begin\r\n", map);
+	gMapManager.LoadWorld(map);
+	g_ErrorReport.Write("[AndroidLogin] deferred LoadWorld map=%d done\r\n", map);
+	if (LoadingWorld > 30)
+	{
+		LoadingWorld = 30;
+	}
+	TakumiAndroidOnWorldJoinLoaded();
+}
+#endif
 
 void ReceiveRevival( BYTE *ReceiveBuffer )
 {
@@ -1605,11 +1663,13 @@ void ReceiveRevival( BYTE *ReceiveBuffer )
 	//{
 	//	Master_Level_Data.lMasterLevel_Experince = Data_Exp;
 	//}
-	//else
+	// Server F3 04 must carry current EXP; zero would wipe the bar after town respawn.
+	if (Data_Exp != 0 || CharacterAttribute->Experience == 0)
 	{
 		CharacterAttribute->Experience = (int)Data_Exp;
 	}
-	
+	TakumiEnsureExperienceThresholds();
+
 	CharacterMachine->Gold         = Data->Gold;
 
 	CharacterAttribute->PrintPlayer.ViewCurHP = Data->ViewCurHP > 0 ? Data->ViewCurHP : (DWORD)Data->Life;
@@ -1680,7 +1740,7 @@ void ReceiveRevival( BYTE *ReceiveBuffer )
 #endif // PK_ATTACK_TESTSERVER_LOG
 	
 	SetPlayerStop(c);
-	CreateEffect(BITMAP_MAGIC+2,o->Position,o->Angle,o->Light,0,o);
+	TakumiTryCreateJoinWarpRingEffect(o);
     ClearItems();
 	ClearCharacters(HeroKey);
 	RemoveAllShopTitleExceptHero();
@@ -2475,7 +2535,7 @@ BOOL ReceiveTeleport(BYTE *ReceiveBuffer, BOOL bEncrypted)
 		g_pNewUISystem->HideAll();
 		
         CreatePetDarkSpirit_Now ( Hero );
-		CreateEffect(BITMAP_MAGIC+2,o->Position,o->Angle,o->Light,0,o);
+		TakumiTryCreateJoinWarpRingEffect(o);
 
 		o->Alpha = 0.f;
         EnableEvent = 0; //USE_EVENT_ELDORADO
@@ -2874,7 +2934,11 @@ void ReceiveCreatePlayerViewport(BYTE *ReceiveBuffer,int Size)
 			{
 				c->Object.Position[0] = (( c->PositionX)+0.5f)*TERRAIN_SCALE;
 				c->Object.Position[1] = (( c->PositionY)+0.5f)*TERRAIN_SCALE;
-				CreateEffect(BITMAP_MAGIC+2,o->Position,o->Angle,o->Light,0,o);
+				// Hero join/warp ring comes from ReceiveJoinMapServer / ReceiveTeleport — not viewport refresh.
+				if (c != Hero)
+				{
+					TakumiTryCreateJoinWarpRingEffect(o);
+				}
 				c->Object.Alpha = 0.f;
 			}
 			else if(PathFinding2(c->PositionX, c->PositionY, Data2->TargetX, Data2->TargetY, &c->Path))
@@ -3608,6 +3672,68 @@ static int TakumiLevelUpPointsPerLevel()
 	return 5;
 }
 
+static void TakumiTryCreateJoinWarpRingEffect(OBJECT* o)
+{
+	if (o == nullptr)
+	{
+		return;
+	}
+
+	CreateEffect(BITMAP_MAGIC + 2, o->Position, o->Angle, o->Light, 0, o);
+}
+
+namespace
+{
+	DWORD s_lastLevelUpFxTick = 0;
+	constexpr DWORD kLevelUpFxDebounceMs = 1200;
+}
+
+static void TakumiClearLevelUpEffects(OBJECT* o)
+{
+	if (o == nullptr)
+	{
+		return;
+	}
+
+	// Legacy level-up used FLARE joints; clear any still alive from older builds.
+	DeleteJoint(BITMAP_FLARE, o, 0);
+	DeleteJoint(BITMAP_FLARE, o, 45);
+	DeleteJoint(BITMAP_FLARE, o, 46);
+	DeleteEffect(BITMAP_MAGIC + 1, o, 0);
+	DeleteEffect(BITMAP_MAGIC + 2, o, 0);
+	DeleteEffect(BITMAP_MAGIC + 2, o, 3);
+}
+
+static void TakumiSpawnLevelUpDiscAndColumn(OBJECT* o)
+{
+	if (o == nullptr)
+	{
+		return;
+	}
+
+	// Vanilla level-up spiral = BITMAP_FLARE joints (not BITMAP_MAGIC+2/0 ground rings).
+	vec3_t goldLight;
+	Vector(1.f, 0.92f, 0.18f, goldLight);
+
+	if (Hero != nullptr && gCharacterManager.IsMasterLevel(Hero->Class))
+	{
+		CreateJoint(BITMAP_FLARE, o->Position, o->Position, o->Angle, 45, o, 80.f, 2, 0, 0, -1, goldLight);
+		for (int i = 0; i < 19; ++i)
+		{
+			CreateJoint(BITMAP_FLARE, o->Position, o->Position, o->Angle, 46, o, 80.f, 2, 0, 0, -1, goldLight);
+		}
+	}
+	else
+	{
+		for (int i = 0; i < 15; ++i)
+		{
+			CreateJoint(BITMAP_FLARE, o->Position, o->Position, o->Angle, 0, o, 40.f, 2, 0, 0, -1, goldLight);
+		}
+	}
+
+	CreateEffect(BITMAP_MAGIC + 1, o->Position, o->Angle, o->Light, 0, o);
+}
+
 static void TakumiPlayLevelUpEffects()
 {
 	if (Hero == nullptr)
@@ -3615,33 +3741,17 @@ static void TakumiPlayLevelUpEffects()
 		return;
 	}
 
+	const DWORD now = GetTickCount();
+	if (s_lastLevelUpFxTick != 0 && (now - s_lastLevelUpFxTick) < kLevelUpFxDebounceMs)
+	{
+		return;
+	}
+	s_lastLevelUpFxTick = now;
+
 	OBJECT* o = &Hero->Object;
-	if (gCharacterManager.IsMasterLevel(Hero->Class))
-	{
-		CreateJoint(BITMAP_FLARE, o->Position, o->Position, o->Angle, 45, o, 80, 2);
-		for (int i = 0; i < 19; ++i)
-		{
-			CreateJoint(BITMAP_FLARE, o->Position, o->Position, o->Angle, 46, o, 80, 2);
-		}
-		CreateEffect(BITMAP_MAGIC + 1, o->Position, o->Angle, o->Light, 0, o);
-		CreateEffect(BITMAP_MAGIC + 2, o->Position, o->Angle, o->Light, 3, o);
-	}
-	else
-	{
-		for (int i = 0; i < 15; ++i)
-		{
-			CreateJoint(BITMAP_FLARE, o->Position, o->Position, o->Angle, 0, o, 40, 2);
-		}
-		// Level-up: white ground (MAGIC+1/0) + gold body column (MAGIC+2/3). Join/respawn uses MAGIC+2/0 only.
-		CreateEffect(BITMAP_MAGIC + 1, o->Position, o->Angle, o->Light, 0, o);
-		CreateEffect(BITMAP_MAGIC + 2, o->Position, o->Angle, o->Light, 3, o);
-	}
-
+	TakumiClearLevelUpEffects(o);
+	TakumiSpawnLevelUpDiscAndColumn(o);
 	PlayBuffer(SOUND_LEVEL_UP);
-
-#if defined(__ANDROID__)
-	g_ErrorReport.Write("[LevelUpFx] flare + MAGIC+1/0 ground + MAGIC+2/3 gold column (not join/0)\r\n");
-#endif
 }
 
 static void TakumiRecalcHeroMaxVitalsForLevel()
@@ -3705,16 +3815,6 @@ static void TakumiOnHeroLevelsGained(int levelsGained)
 	{
 		Hero->Level = CharacterAttribute->Level;
 	}
-
-#if defined(__ANDROID__)
-	g_ErrorReport.Write(
-		"[Exp] level up Lv=%d +%d statPts=%u maxHp=%u (+%d levels)\r\n",
-		(int)CharacterAttribute->Level,
-		totalPts,
-		(unsigned)CharacterAttribute->LevelUpPoint,
-		(unsigned)CharacterAttribute->LifeMax,
-		levelsGained);
-#endif
 }
 
 void TakumiSyncHeroCurrentVitals(DWORD curHp, DWORD curSd)
@@ -4135,13 +4235,6 @@ void ReceiveAttackDamage( BYTE *ReceiveBuffer )
 	if (Index == MAX_CHARACTERS_CLIENT)
 	{
 		g_ConsoleDebug->Write(MCD_RECEIVE, "0x11 [ReceiveAttackDamage] unknown key=%d", Key);
-#if defined(__ANDROID__)
-		g_ErrorReport.Write(
-			"[Combat] 0x11 unknown target key=%d pktSize=%d dmgHL=%u\r\n",
-			Key,
-			pktSize,
-			(unsigned)(((WORD)Data->DamageH << 8) | Data->DamageL));
-#endif
 		return;
 	}
 	CHARACTER *c = &CharactersClient[Index];
@@ -4338,20 +4431,6 @@ void ReceiveAttackDamage( BYTE *ReceiveBuffer )
 	Takumi_UpdateMonsterHealBarFromAttack(c, o, Data, Damage, Success != 0);
 	c->Hit = Damage;
 
-#if defined(__ANDROID__)
-	if (Damage > 0 && Key != HeroKey)
-	{
-		g_ErrorReport.Write(
-			"[Combat] hit mob key=%d dmg=%llu hpView=%u success=%d\r\n",
-			Key,
-			(unsigned long long)Damage,
-			(unsigned)(Data->Header.Size >= kAttackWireExtended
-				? TakumiReadDwordLE(ReceiveBuffer, kAttackOffViewCurHp, pktSize)
-				: Data->ViewCurHP),
-			Success);
-	}
-#endif
-
 	g_ConsoleDebug->Write(MCD_RECEIVE, "0x15 [ReceiveAttackDamage(%d %d)]", AttackPlayer, Damage);
 }
 
@@ -4375,8 +4454,12 @@ void ReceiveAction(BYTE *ReceiveBuffer,int Size)
 	c->Object.Angle[2] = ((float)(Data->Angle)-1.f)*45.f;
 	c->Movement = false;
 	
-	c->Object.Position[0] = c->TargetX*TERRAIN_SCALE+TERRAIN_SCALE*0.5f;
-	c->Object.Position[1] = c->TargetY*TERRAIN_SCALE+TERRAIN_SCALE*0.5f;
+	// Do not snap Hero world position from action packets — causes tile ping-pong while walking/attacking.
+	if (Key != HeroKey)
+	{
+		c->Object.Position[0] = c->TargetX*TERRAIN_SCALE+TERRAIN_SCALE*0.5f;
+		c->Object.Position[1] = c->TargetY*TERRAIN_SCALE+TERRAIN_SCALE*0.5f;
+	}
 	switch(Data->Action)
 	{
 	case AT_STAND1:
@@ -6755,25 +6838,7 @@ BOOL ReceiveDieExp(BYTE *ReceiveBuffer,BOOL bEncrypted)
 			c->Dead = 1;
 		}
 		c->Movement = false;
-
-#if defined(__ANDROID__)
-		g_ErrorReport.Write(
-			"[Combat] mob died key=%d exp=%u success=%d live=%d\r\n",
-			Key,
-			(unsigned)Exp,
-			Success,
-			o->Live ? 1 : 0);
-#endif
 	}
-#if defined(__ANDROID__)
-	else if (Exp > 0)
-	{
-		g_ErrorReport.Write(
-			"[Combat] die exp key=%d exp=%u (mob already despawned)\r\n",
-			Key,
-			(unsigned)Exp);
-	}
-#endif
 
 	//if(gCharacterManager.IsMasterLevel(Hero->Class) == true)
 	//{
@@ -8886,18 +8951,9 @@ void Receive_Master_LevelUp( BYTE *ReceiveBuffer )
 	g_pChatListBox->AddText("", szText, SEASON3B::TYPE_SYSTEM_MESSAGE);
 	
 	CharacterMachine->CalulateMasterLevelNextExperience();
-	
-	OBJECT *o = &Hero->Object;
-	
-	if(gCharacterManager.IsMasterLevel(Hero->Class) == true)
-	{
-		CreateJoint(BITMAP_FLARE,o->Position,o->Position,o->Angle,45,o,80,2);
-		for ( int i=0; i<19; ++i )
-		{
-			CreateJoint(BITMAP_FLARE,o->Position,o->Position,o->Angle,46,o,80,2);
-		}
-	}
-	
+
+	TakumiPlayLevelUpEffects();
+
 	g_ConsoleDebug->Write(MCD_RECEIVE, "0x51 [Receive_Master_LevelUp]");
 }
 
@@ -10438,25 +10494,9 @@ void ReceiveDisplayEffectViewport(BYTE* ReceiveBuffer)
 				{
 					TakumiPlayLevelUpEffects();
 				}
-				else if (gCharacterManager.IsMasterLevel(pPlayer->Class) == true)
-				{
-					CreateJoint(BITMAP_FLARE, o->Position, o->Position, o->Angle, 45, o, 80, 2);
-					for (int i = 0; i < 19; ++i)
-					{
-						CreateJoint(BITMAP_FLARE, o->Position, o->Position, o->Angle, 46, o, 80, 2);
-					}
-					CreateEffect(BITMAP_MAGIC + 1, o->Position, o->Angle, o->Light, 0, o);
-					CreateEffect(BITMAP_MAGIC + 2, o->Position, o->Angle, o->Light, 3, o);
-					PlayBuffer(SOUND_LEVEL_UP);
-				}
 				else
 				{
-					for (int i = 0; i < 15; ++i)
-					{
-						CreateJoint(BITMAP_FLARE, o->Position, o->Position, o->Angle, 0, o, 40, 2);
-					}
-					CreateEffect(BITMAP_MAGIC + 1, o->Position, o->Angle, o->Light, 0, o);
-					CreateEffect(BITMAP_MAGIC + 2, o->Position, o->Angle, o->Light, 3, o);
+					TakumiSpawnLevelUpDiscAndColumn(o);
 					PlayBuffer(SOUND_LEVEL_UP);
 				}
 			}

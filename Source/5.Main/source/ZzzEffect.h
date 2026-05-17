@@ -75,6 +75,10 @@ void CheckClientArrow(OBJECT *o);
 void RenderEffects ( bool bRenderBlendMesh=false );
 void RenderAfterEffects ( bool bRenderBlendMesh=false );
 void RenderEffectShadows();
+/// True while level-up ground disc or gold body column effects are still live.
+bool HasActiveLevelUpGfx();
+/// Level-up only: MAGIC+1/0 white disc + MAGIC+2/3 gold column (RenderEffects pass).
+bool RenderLevelUpMagicFx(OBJECT* o);
 void CreateEffect(int Type,vec3_t Position,vec3_t Angle,vec3_t Light,int SubType=0,OBJECT *Target=NULL,short PKKey=-1,
 				  WORD SkillIndex=0,WORD Skill=0,WORD SkillSerialNum=0, float Scale = 0.0f, short int sTargetIndex = -1);
 void MoveEffects();

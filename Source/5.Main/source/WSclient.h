@@ -88,6 +88,12 @@ void TakumiSendMeleeAttack(WORD targetKey, BYTE dir);
 // Keep Life/Mana sheet and PrintPlayer view fields in sync (HUD orb + Android bars).
 void TakumiSyncHeroCurrentVitals(DWORD curHp, DWORD curSd);
 void TakumiSyncHeroMaxVitals(DWORD maxHp, DWORD maxSd);
+#if defined(__ANDROID__)
+/// Run deferred map load on the main loop (after F3 03) to avoid blocking inside packet dispatch.
+void TakumiProcessAndroidPendingLoadWorld();
+/// Reset adaptive perf penalties for a few seconds after terrain/world load.
+void TakumiAndroidOnWorldJoinLoaded();
+#endif
 void TakumiGetHudVitals(DWORD& curHp, DWORD& maxHp, DWORD& curMp, DWORD& maxMp, DWORD& curAg, DWORD& maxAg);
 /// <summary>EXP fill 0..1 for current level (cumulative segment, or Experience/NextExperince fallback).</summary>
 float TakumiComputeExperienceFill01(DWORD experience, DWORD nextExperience, int level);

@@ -835,11 +835,12 @@ int CWsctlc::sSend(SOCKET socket, char* buf, int len)
         return FALSE;
     }
 
+    const int c1WireLen = (len > 1 && buf[0] == 0xC1) ? static_cast<unsigned char>(buf[1]) : len;
     g_ErrorReport.Write(
-        "[Android Socket] send packet handle=%d type=0x%02X size=%d head=0x%02X sub=0x%02X\r\n",
+        "[Android Socket] send packet handle=%d type=0x%02X wireLen=%d head=0x%02X sub=0x%02X (stat bulk expect wireLen=7)\r\n",
         static_cast<int>(socket),
         static_cast<unsigned char>(buf[0]),
-        len,
+        c1WireLen,
         (len > 2) ? static_cast<unsigned char>(buf[2]) : 0,
         (len > 3) ? static_cast<unsigned char>(buf[3]) : 0);
 

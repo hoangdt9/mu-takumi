@@ -11,7 +11,14 @@ public static class CharacterListWire602
     /// <summary>PMSG_CHARACTER_LIST_SEND with ExtWarehouse (Season 6+ layout, 8 bytes total).</summary>
     public static byte[] BuildEmpty() => new byte[] { 0xC1, 0x08, 0xF3, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
-    public static byte[] Build(IReadOnlyList<CharacterRosterWire> roster)
+    public static byte[] Build(IReadOnlyList<CharacterRosterWire> roster) =>
+        Build(roster, equipPreview17: null);
+
+  /// <summary>
+  /// <paramref name="equipPreview17"/> is one 17-byte preview per roster entry (from <see cref="CharacterListEquipPreview602"/>).
+  /// When null or short, missing entries use 17×0xFF (client default underwear).
+  /// </summary>
+    public static byte[] Build(IReadOnlyList<CharacterRosterWire> roster, IReadOnlyList<byte[]>? equipPreview17)
     {
         const int headerSize = 8;
         const int entrySize = 34;
@@ -39,13 +46,24 @@ public static class CharacterListWire602
             off += 2;
             p[off++] = 0; // CtlCode
             p[off++] = e.ServerClass;
-            for (var k = 0; k < 17; k++)
+            var preview = equipPreview17 is not null && i < equipPreview17.Count
+                ? equipPreview17[i]
+                : null;
+            if (preview is { Length: >= CharacterListEquipPreview602.PreviewLength })
             {
-                p[off++] = 0xFF;
+                preview.AsSpan(0, CharacterListEquipPreview602.PreviewLength).CopyTo(p.AsSpan(off));
+                off += CharacterListEquipPreview602.PreviewLength;
+            }
+            else
+            {
+                for (var k = 0; k < CharacterListEquipPreview602.PreviewLength; k++)
+                {
+                    p[off++] = 0xFF;
+                }
             }
 
-            // G_NONE = (BYTE)-1
-            p[off++] = 0xFF;
+            // No guild on roster screen (0 = none; 0xFF confused client UI).
+            p[off++] = 0;
         }
 
         return p;

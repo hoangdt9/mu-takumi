@@ -8015,6 +8015,14 @@ void MoveHero()
 	if (c->Object.Live == 0)
 		return;
 
+#if defined(__ANDROID__)
+	if (TakumiIsAndroidWorldLoadPending())
+	{
+		SetPlayerStop(c);
+		return;
+	}
+#endif
+
 	if(LoadingWorld > 0) 
 	{
 		LoadingWorld--;

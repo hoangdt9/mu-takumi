@@ -21,7 +21,7 @@ public static class MapMonsterScopeSender
     {
         MapMonsterWorld.EnsureInitialized();
 
-        var viewRange = ParseIntEnv("TAKUMI_MONSTER_VIEW_RANGE", 15, 1, 32);
+        var viewRange = ParseIntEnv("TAKUMI_MONSTER_VIEW_RANGE", 20, 1, 32);
         var maxNpcs = ParseIntEnv("TAKUMI_MONSTER_VIEWPORT_MAX_NPC", 32, 1, 80);
         var maxMobs = ParseIntEnv("TAKUMI_MONSTER_VIEWPORT_MAX_MOB", 48, 1, 80);
         var monsters = onlyNew
@@ -85,7 +85,7 @@ public static class MapMonsterScopeSender
         CancellationToken ct)
     {
         tracker.ResetForMap(mapId, playerX, playerY);
-        var viewRange = ParseIntEnv("TAKUMI_MONSTER_VIEW_RANGE", 15, 1, 32);
+        var viewRange = ParseIntEnv("TAKUMI_MONSTER_VIEW_RANGE", 20, 1, 32);
         var maxNpcs = ParseIntEnv("TAKUMI_MONSTER_VIEWPORT_MAX_NPC", 32, 1, 80);
         var maxMobs = ParseIntEnv("TAKUMI_MONSTER_VIEWPORT_MAX_MOB", 48, 1, 80);
         var monsters = MapMonsterWorld.GetViewportEntities(mapId, playerX, playerY, viewRange, maxNpcs, maxMobs);
@@ -122,7 +122,7 @@ public static class MapMonsterScopeSender
             s_lastMoveSyncTickMs[remote] = nowMs;
         }
 
-        var viewRange = ParseIntEnv("TAKUMI_MONSTER_VIEW_RANGE", 15, 1, 32);
+        var viewRange = ParseIntEnv("TAKUMI_MONSTER_VIEW_RANGE", 20, 1, 32);
         var maxNpcs = ParseIntEnv("TAKUMI_MONSTER_VIEWPORT_MAX_NPC", 32, 1, 80);
         var maxMobs = ParseIntEnv("TAKUMI_MONSTER_VIEWPORT_MAX_MOB", 48, 1, 80);
         var monsters = MapMonsterWorld.GetViewportEntities(mapId, playerX, playerY, viewRange, maxNpcs, maxMobs);

@@ -1119,6 +1119,11 @@ void GCNewCharacterCalcRecv(BYTE* ReceiveBuffer)
 		return;
 	}
 
+	if (ReceiveBuffer[0] != 0xC1 || ReceiveBuffer[1] < 172)
+	{
+		return;
+	}
+
 	PMSG_NEW_CHARACTER_CALC_RECV* lpMsg = (PMSG_NEW_CHARACTER_CALC_RECV*)ReceiveBuffer;
 	CharacterAttribute->PrintPlayer.ViewCurHP = lpMsg->ViewCurHP;
 	CharacterAttribute->PrintPlayer.ViewMaxHP = lpMsg->ViewMaxHP;

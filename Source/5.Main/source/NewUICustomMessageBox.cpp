@@ -7873,7 +7873,7 @@ CALLBACK_RESULT CAddStatPointMsgBoxLayout::ProcessOk(CNewUIMessageBoxBase* pOwne
 {
 	static DWORD s_lastStatOkTick = 0;
 	const DWORD nowTick = GetTickCount();
-	if (nowTick - s_lastStatOkTick < 400)
+	if (nowTick - s_lastStatOkTick < 1000)
 	{
 		return CALLBACK_BREAK;
 	}

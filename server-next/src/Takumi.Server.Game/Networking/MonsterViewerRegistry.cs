@@ -418,7 +418,7 @@ public static class MonsterViewerRegistry
         byte[] packet,
         CancellationToken ct)
     {
-        var viewRange = ParseIntEnv("TAKUMI_MONSTER_VIEW_RANGE", 15, 1, 32);
+        var viewRange = ParseIntEnv("TAKUMI_MONSTER_VIEW_RANGE", 20, 1, 32);
         foreach (var viewer in Sessions.Values)
         {
             if (viewer.MapId != mapId)

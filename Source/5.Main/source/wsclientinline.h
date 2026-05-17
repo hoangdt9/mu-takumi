@@ -1307,10 +1307,7 @@ extern int SendDropItem;
 
 #define SendRequestAddPoint( p_Type)\
 {\
-	CStreamPacketEngine spe;\
-	spe.Init( 0xC1, 0xF3);\
-	spe << ( BYTE)0x06 << ( BYTE)( p_Type);\
-	spe.Send();\
+	TakumiSendLevelUpPointsBulk((BYTE)(p_Type), 1);\
     PlayBuffer(SOUND_CLICK01);\
 }
 

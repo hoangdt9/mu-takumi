@@ -30,6 +30,26 @@ public sealed class CharacterStatPointHandlerTests
     }
 
     [Fact]
+    public void TryFindNextAddPointRequest_multiple_legacy_packets_aggregate_in_buffer()
+    {
+        var packet = new byte[]
+        {
+            0xC1, 0x05, 0xF3, 0x06, 0x01,
+            0xC1, 0x05, 0xF3, 0x06, 0x01,
+            0xC1, 0x05, 0xF3, 0x06, 0x01,
+        };
+        var from = 0;
+        var total = 0;
+        while (CharacterStatPointHandler.TryFindNextAddPointRequest(packet, ref from, out _, out var count))
+        {
+            total += count;
+        }
+
+        Assert.Equal(3, total);
+        Assert.Equal(packet.Length, from);
+    }
+
+    [Fact]
     public void TryAddStatPoints_applies_bulk_and_caps_by_available_points()
     {
         var sheet = CharacterSheetStats.FromInts(100, 100, 100, 100, 0, 50000);

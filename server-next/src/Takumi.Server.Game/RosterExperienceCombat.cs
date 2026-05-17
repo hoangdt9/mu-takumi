@@ -13,7 +13,7 @@ public static class RosterExperienceCombat
         string? accountId,
         Action? onRosterDirty)
     {
-        if (expGain <= 0)
+        if (expGain <= 0 || player.Level >= ExperienceProgression602.MaxLevel)
         {
             return 0;
         }

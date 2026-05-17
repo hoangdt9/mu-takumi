@@ -63,11 +63,28 @@ public static class CharacterStatPointHandler
         var handledAny = false;
         byte lastStatType = 0;
         var failed = false;
+        Span<int> pendingByStat = stackalloc int[5];
 
         while (TryFindNextAddPointRequest(span, ref searchFrom, out var statType, out var count))
         {
+            if (statType >= pendingByStat.Length)
+            {
+                continue;
+            }
+
             handledAny = true;
             lastStatType = statType;
+            pendingByStat[statType] += count;
+        }
+
+        for (byte statType = 0; statType < pendingByStat.Length; statType++)
+        {
+            var count = pendingByStat[statType];
+            if (count <= 0)
+            {
+                continue;
+            }
+
             var applied = CharacterSheetCalculator.TryAddStatPoints(ref sheet, statType, count, out _);
             if (applied <= 0)
             {

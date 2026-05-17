@@ -7,6 +7,10 @@ extern bool WhisperEnable;
 
 extern bool LockInputStatus;
 
+#if defined(__ANDROID__)
+bool TakumiIsAndroidWorldLoadPending();
+#endif
+
 extern bool g_bAutoGetItem;
 
 extern bool InputEnable;

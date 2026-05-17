@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Threading;
 
 namespace Takumi.Server.Persistence;
@@ -6,8 +7,38 @@ namespace Takumi.Server.Persistence;
 public static class CharacterRosterMirrorWriter
 {
     private static int _pendingUpserts;
+    private static readonly ConcurrentDictionary<string, DebouncedProgressUpsert> ProgressDebounce = new();
+    private static readonly TimeSpan ProgressDebounceDelay = TimeSpan.FromMilliseconds(300);
 
     public static int PendingUpsertsForTests => Volatile.Read(ref _pendingUpserts);
+
+    private sealed class DebouncedProgressUpsert
+    {
+        public object Gate { get; } = new();
+        public ProgressUpsertArgs? Latest;
+        public int Generation;
+        public CancellationTokenSource? DebounceCts;
+    }
+
+    private readonly record struct ProgressUpsertArgs(
+        string AccountId,
+        string CharacterName,
+        ushort Level,
+        uint Experience,
+        ushort LevelUpPoint,
+        int CurrentHp,
+        int MaxHp,
+        int CurrentMp,
+        int MaxMp,
+        int CurrentShield,
+        int MaxShield,
+        int Strength,
+        int Dexterity,
+        int Vitality,
+        int Energy,
+        int Leadership,
+        int CurrentBp,
+        int MaxBp);
 
     public static void ScheduleReplaceAccountRoster(string accountId, IReadOnlyList<CharacterRosterRow> snapshot)
     {
@@ -80,71 +111,143 @@ public static class CharacterRosterMirrorWriter
         }
 
         var name = CharacterRosterMerge.NormaliseName(characterName);
-        var exp = (long)Math.Min(experience, long.MaxValue);
-        Interlocked.Increment(ref _pendingUpserts);
-        _ = Task.Run(
-            async () =>
-            {
-                try
-                {
-                    await repo.UpsertProgressAsync(
-                            accountId,
-                            name,
-                            level,
-                            exp,
-                            levelUpPoint,
-                            currentHp,
-                            maxHp,
-                            currentMp,
-                            maxMp,
-                            currentShield,
-                            maxShield,
-                            strength,
-                            dexterity,
-                            vitality,
-                            energy,
-                            leadership,
-                            currentBp,
-                            maxBp,
-                            CancellationToken.None)
-                        .ConfigureAwait(false);
-                    if (CharacterDomainMirrorWriter.IsEnabled() && TakumiPostgresMirror.CharacterDomain is { } domainRepo)
-                    {
-                        await domainRepo.UpsertProgressAsync(
-                                accountId,
-                                name,
-                                level,
-                                exp,
-                                levelUpPoint,
-                                currentHp,
-                                maxHp,
-                                currentMp,
-                                maxMp,
-                                currentShield,
-                                maxShield,
-                                strength,
-                                dexterity,
-                                vitality,
-                                energy,
-                                leadership,
-                                currentBp,
-                                maxBp,
-                                CancellationToken.None)
-                            .ConfigureAwait(false);
-                    }
+        var key = accountId + "\0" + name;
+        var slot = ProgressDebounce.GetOrAdd(key, static _ => new DebouncedProgressUpsert());
+        int generation;
+        CancellationToken debounceToken;
+        lock (slot.Gate)
+        {
+            slot.Latest = new ProgressUpsertArgs(
+                accountId,
+                name,
+                level,
+                experience,
+                levelUpPoint,
+                currentHp,
+                maxHp,
+                currentMp,
+                maxMp,
+                currentShield,
+                maxShield,
+                strength,
+                dexterity,
+                vitality,
+                energy,
+                leadership,
+                currentBp,
+                maxBp);
+            slot.Generation++;
+            generation = slot.Generation;
+            slot.DebounceCts?.Cancel();
+            slot.DebounceCts?.Dispose();
+            slot.DebounceCts = new CancellationTokenSource();
+            debounceToken = slot.DebounceCts.Token;
+        }
 
-                    CharacterRosterMirrorHealth.RecordUpsertSuccess();
-                }
-                catch (Exception ex)
-                {
-                    CharacterRosterMirrorHealth.RecordUpsertFail();
-                    Console.WriteLine("[roster-db] progress upsert failed for {0}/{1}: {2}", accountId, name, ex.Message);
-                }
-                finally
-                {
-                    Interlocked.Decrement(ref _pendingUpserts);
-                }
-            });
+        _ = RunDebouncedProgressUpsertAsync(slot, generation, debounceToken);
+    }
+
+    private static async Task RunDebouncedProgressUpsertAsync(
+        DebouncedProgressUpsert slot,
+        int generation,
+        CancellationToken debounceToken)
+    {
+        try
+        {
+            await Task.Delay(ProgressDebounceDelay, debounceToken).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+
+        ProgressUpsertArgs args;
+        lock (slot.Gate)
+        {
+            if (generation != slot.Generation || slot.Latest is null)
+            {
+                return;
+            }
+
+            args = slot.Latest.Value;
+        }
+
+        await ExecuteProgressUpsertAsync(args).ConfigureAwait(false);
+    }
+
+    private static async Task ExecuteProgressUpsertAsync(ProgressUpsertArgs args)
+    {
+        var repo = TakumiPostgresMirror.CharacterRoster;
+        if (repo is null)
+        {
+            return;
+        }
+
+        var exp = (long)Math.Min(args.Experience, long.MaxValue);
+        Interlocked.Increment(ref _pendingUpserts);
+        try
+        {
+            await repo.UpsertProgressAsync(
+                    args.AccountId,
+                    args.CharacterName,
+                    args.Level,
+                    exp,
+                    args.LevelUpPoint,
+                    args.CurrentHp,
+                    args.MaxHp,
+                    args.CurrentMp,
+                    args.MaxMp,
+                    args.CurrentShield,
+                    args.MaxShield,
+                    args.Strength,
+                    args.Dexterity,
+                    args.Vitality,
+                    args.Energy,
+                    args.Leadership,
+                    args.CurrentBp,
+                    args.MaxBp,
+                    CancellationToken.None)
+                .ConfigureAwait(false);
+            if (CharacterDomainMirrorWriter.IsEnabled() && TakumiPostgresMirror.CharacterDomain is { } domainRepo)
+            {
+                await domainRepo.UpsertProgressAsync(
+                        args.AccountId,
+                        args.CharacterName,
+                        args.Level,
+                        exp,
+                        args.LevelUpPoint,
+                        args.CurrentHp,
+                        args.MaxHp,
+                        args.CurrentMp,
+                        args.MaxMp,
+                        args.CurrentShield,
+                        args.MaxShield,
+                        args.Strength,
+                        args.Dexterity,
+                        args.Vitality,
+                        args.Energy,
+                        args.Leadership,
+                        args.CurrentBp,
+                        args.MaxBp,
+                        CancellationToken.None)
+                    .ConfigureAwait(false);
+            }
+
+            CharacterRosterMirrorHealth.RecordUpsertSuccess();
+        }
+        catch (Exception ex)
+        {
+            CharacterRosterMirrorHealth.RecordUpsertFail();
+            Console.WriteLine(
+                "[roster-db] progress upsert failed for {0}/{1}: {2}",
+                args.AccountId,
+                args.CharacterName,
+                ex.Message);
+        }
+        finally
+        {
+            Interlocked.Decrement(ref _pendingUpserts);
+        }
     }
 
     public static void ScheduleVitalsUpsert(

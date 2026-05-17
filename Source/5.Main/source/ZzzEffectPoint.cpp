@@ -19,6 +19,17 @@ PARTICLE  Points	[MAX_POINTS];
 
 int g_iLatestPoint = -1;
 
+void ClearEffectPoints()
+{
+	for (int i = 0; i < MAX_POINTS; ++i)
+	{
+		Points[i].Live = false;
+	}
+
+	mMAX_POINTS = 0;
+	g_iLatestPoint = -1;
+}
+
 #ifdef PBG_ADD_NEWCHAR_MONK_SKILL
 void CreatePoint(vec3_t Position, QWORD Value,vec3_t Color,float scale, bool bMove, bool bRepeatedly)
 #else //PBG_ADD_NEWCHAR_MONK_SKILL

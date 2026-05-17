@@ -2040,14 +2040,21 @@ namespace
 		return 0;
 	}
 
+	WORD TakumiExtractItemTypeFromWire(const BYTE* itemWire)
+	{
+		// Parity CNewUIItemMng::ExtractItemType (protected) — Season 6 item blob bytes 0/3/5.
+		return static_cast<WORD>(
+			itemWire[0] + ((itemWire[3] & 128) * 2) + ((itemWire[5] & 240) * 32));
+	}
+
 	bool TakumiIsValidItemWire(const BYTE* itemWire)
 	{
-		if (itemWire == nullptr || g_pNewItemMng == nullptr)
+		if (itemWire == nullptr)
 		{
 			return false;
 		}
 
-		const WORD wType = g_pNewItemMng->ExtractItemType(const_cast<BYTE*>(itemWire));
+		const WORD wType = TakumiExtractItemTypeFromWire(itemWire);
 		if (wType == 0 || wType >= MAX_ITEM)
 		{
 			return false;

@@ -3,6 +3,7 @@
 
 #include "stdafx.h"
 #include "ShopItemValueCache.h"
+#include "ShopPriceTrace.h"
 #include "UIManager.h"
 #include "ZzzOpenglUtil.h"
 #include "ZzzBMD.h"
@@ -1418,6 +1419,32 @@ void ConvertGold64(__int64 Gold,unicode::t_char* Text)
 		unicode::_sprintf(Text,"%d",Gold1);
 }
 
+// Parity Takumi.Server.Game.World.ShopSellDurabilityPenalty (wire dur vs 255, skip jewel group 14).
+static int ApplyNpcShopSellDurabilityDiscount(const ITEM* ip, int sellZen)
+{
+	if (sellZen <= 0 || ip == nullptr)
+	{
+		return sellZen;
+	}
+
+	const int index = ip->Type;
+	if (index >= 0 && (index / 512) == 14)
+	{
+		return sellZen;
+	}
+
+	const int durability = (int)ip->Durability;
+	const int maxDurability = 255;
+	if (durability >= maxDurability)
+	{
+		return sellZen;
+	}
+
+	const float missing = 1.f - ((float)durability / (float)maxDurability);
+	const DWORD repairGold = (DWORD)(sellZen * 0.6f * missing);
+	return (int)max(0, (int)sellZen - (int)repairGold);
+}
+
 // NPC shop sell zen: prefer F3 E9 sell column (matches server ResolveSell); never use ItemValue(...,0)
 // here — that path is buy-scale and made inventory tooltips show purchase zen as "sell".
 static int ResolveNpcShopSellZen(const ITEM* ip)
@@ -1425,17 +1452,37 @@ static int ResolveNpcShopSellZen(const ITEM* ip)
 	int sellZen = 0;
 	if (ShopItemValueCache_TryGetSell(ip, &sellZen) && sellZen > 0)
 	{
+		// F3 E9 sellValue is already server ResolveSell (same as 0x33 credit); do not re-apply durability.
+		ShopPriceTraceLogSellTooltip(ip, 1, sellZen, sellZen);
 		return sellZen;
 	}
 
+	// Parity server LegacyShopSellPriceEstimate + ItemValue(ip,1) (socket bonus, then /3).
+	const int itemValueSell = ItemValue(const_cast<ITEM*>(ip), 1);
+	const int afterDur = ApplyNpcShopSellDurabilityDiscount(ip, itemValueSell);
+	ShopPriceTraceLogSellTooltip(ip, 3, itemValueSell, afterDur);
+	return afterDur;
+}
+
+// NPC shop buy zen: F3 E9 charged buy (tax included). Prefer exact row, then cache fallbacks, then ItemValue.
+static int ResolveNpcShopBuyZen(const ITEM* ip)
+{
 	int buyZen = 0;
 	if (ShopItemValueCache_TryGetBuyExact(ip, &buyZen) && buyZen > 0)
 	{
-		return buyZen / 3;
+		ShopPriceTraceLogBuyTooltip(ip, 5, buyZen);
+		return buyZen;
 	}
 
-	// Client-only fallback: ItemValue(...,1) applies sell /3; ItemValue(...,0) is buy-scale.
-	return ItemValue(const_cast<ITEM*>(ip), 1);
+	if (ShopItemValueCache_TryGetBuy(ip, &buyZen) && buyZen > 0)
+	{
+		ShopPriceTraceLogBuyTooltip(ip, 2, buyZen);
+		return buyZen;
+	}
+
+	const int fallback = ItemValue(const_cast<ITEM*>(ip), 0);
+	ShopPriceTraceLogBuyTooltip(ip, 4, fallback);
+	return fallback;
 }
 
 void ConvertTaxGold(DWORD Gold,char *Text)
@@ -3110,23 +3157,16 @@ void RenderItemInfo(int sx, int sy, ITEM* ip, bool Sell, int Inventype, bool bIt
 			{
 				int buyPrice = 0;
 				int priceType = 0;
-				if (ShopItemValueCache_TryGetPrice(ip, &buyPrice, &priceType))
+				if (ShopItemValueCache_TryGetPrice(ip, &buyPrice, &priceType) && buyPrice > 0 && priceType > 0)
 				{
 					ConvertGold(buyPrice, Text);
-					if (priceType > 0)
-					{
-						char line[160];
-						sprintf(line, "%s — %s", GlobalText[783 + priceType], Text);
-						sprintf(TextList[TextNum], "%s", line);
-					}
-					else
-					{
-						sprintf(TextList[TextNum], GlobalText[1620], Text, Text);
-					}
+					char line[160];
+					sprintf(line, "%s — %s", GlobalText[783 + priceType], Text);
+					sprintf(TextList[TextNum], "%s", line);
 				}
 				else
 				{
-					buyPrice = ItemValue(ip, 0);
+					buyPrice = ResolveNpcShopBuyZen(ip);
 					ConvertGold(buyPrice, Text);
 					sprintf(TextList[TextNum], GlobalText[1620], Text, Text);
 				}
@@ -3847,23 +3887,16 @@ void RenderItemInfo(int sx,int sy,ITEM *ip,bool Sell, int Inventype, bool bItemT
 			{
 				int buyPrice = 0;
 				int priceType = 0;
-				if (ShopItemValueCache_TryGetPrice(ip, &buyPrice, &priceType))
+				if (ShopItemValueCache_TryGetPrice(ip, &buyPrice, &priceType) && buyPrice > 0 && priceType > 0)
 				{
 					ConvertGold(buyPrice, Text);
-					if (priceType > 0)
-					{
-						char line[160];
-						sprintf(line, "%s — %s", GlobalText[783 + priceType], Text);
-						sprintf(TextList[TextNum], "%s", line);
-					}
-					else
-					{
-						sprintf(TextList[TextNum], GlobalText[1620], Text, Text);
-					}
+					char line[160];
+					sprintf(line, "%s — %s", GlobalText[783 + priceType], Text);
+					sprintf(TextList[TextNum], "%s", line);
 				}
 				else
 				{
-					buyPrice = ItemValue(ip, 0);
+					buyPrice = ResolveNpcShopBuyZen(ip);
 					ConvertGold(buyPrice, Text);
 					sprintf(TextList[TextNum], GlobalText[1620], Text, Text);
 				}

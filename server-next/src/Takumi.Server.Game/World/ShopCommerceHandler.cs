@@ -201,6 +201,7 @@ public static class ShopCommerceHandler
         PlayerShopSession.SetSlot(presenceSessionId, bagSlot, blob);
         var buyWire = blob;
 
+        var zenBeforeBuy = player.Zen;
         player.Zen -= price;
         onRosterDirty?.Invoke();
 
@@ -212,6 +213,18 @@ public static class ShopCommerceHandler
         await writeAsync(ShopCommerceWire602.BuildRepair(wireGold), ct).ConfigureAwait(false);
         await PlayerShopSession.PersistAsync(presenceSessionId, accountId, characterName10, player.Zen, ct)
             .ConfigureAwait(false);
+        if (!usesCoin)
+        {
+            ShopPriceTrace.BuyTransaction(
+                remote,
+                shopSlot,
+                zenBeforeBuy,
+                price,
+                player.Zen,
+                shopItem,
+                PlayerShopSession.GetTaxRatePercent(presenceSessionId));
+        }
+
         if (PlayerShopSession.TryGetSessionSlots(presenceSessionId, out var snap))
         {
             var cells = InventoryBagGrid.CountOccupiedBagCells(snap);
@@ -271,6 +284,7 @@ public static class ShopCommerceHandler
             return true;
         }
 
+        var zenBefore = player.Zen;
         var price = ShopItemPricing.SellPrice(blob);
         player.Zen += price;
         onRosterDirty?.Invoke();
@@ -281,6 +295,7 @@ public static class ShopCommerceHandler
             .ConfigureAwait(false);
         await PlayerShopSession.PersistAsync(presenceSessionId, accountId, characterName10, player.Zen, ct)
             .ConfigureAwait(false);
+        ShopPriceTrace.SellTransaction(remote, invSlot, zenBefore, price, player.Zen, blob);
         Console.WriteLine("[m8] shop sell inv={0} +{1} zen={2} {3}", invSlot, price, player.Zen, remote);
         return true;
     }

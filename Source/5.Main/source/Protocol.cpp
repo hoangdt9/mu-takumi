@@ -64,6 +64,7 @@
 #include "CB_BotTrader.h"
 #include "CB_BXHTopDmg.h"
 #include "VongQuay.h"
+#include "ShopItemValueCache.h"
 
 extern int g_iLimitAttackTimeSet;
 bool StatusAutoReset = false;
@@ -279,8 +280,14 @@ BOOL ProtocolCoreEx(BYTE head, BYTE* lpMsg, int size, int key) // OK
 					gCustomEventTime.GCReqEventTime((PMSG_CUSTOM_EVENTTIME_RECV*)lpMsg);
 					return 1;
 				case 0xE9:
-					//gItemPrice.GCItemValueRecv((PMSG_ITEM_VALUE_RECV*)lpMsg);
+				{
+					// C2 F3 E9 — NPC shop buy/sell zen (must run before WSclient; ProtocolCoreEx returns early).
+					const int pktSize = (lpMsg[0] == 0xC1)
+						? (int)lpMsg[1]
+						: (((int)lpMsg[1] << 8) | (int)lpMsg[2]);
+					ShopItemValueCache_ApplyPacket(lpMsg, pktSize);
 					return 1;
+				}
 				case 0xEA:
 					GCRecvCoin((PMSG_COIN_RECV*)lpMsg);
 					return 1;

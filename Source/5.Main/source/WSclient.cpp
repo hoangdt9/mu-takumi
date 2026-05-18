@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "ShopItemValueCache.h"
+#include "ShopPriceTrace.h"
 #include "UIManager.h"
 #include "GuildCache.h"
 #include "ZzzBMD.h"
@@ -7796,6 +7797,7 @@ static void TakumiApplyGoldPickSync(int newGold)
 	s_pendingShopZenSpend = 0;
 
 	const int deltaGold = newGold - backupGold;
+	ShopPriceTraceLogZenSync("gold-sync", backupGold, newGold, pendingSpend);
 	// Absolute balance from server (shop/repair): skip chat when we had no prior gold (join edge).
 	if (backupGold != 0)
 	{
@@ -8336,6 +8338,19 @@ void ReceiveBuy( BYTE *ReceiveBuffer )
 			s_pendingShopZenSpend = spend;
 		}
 
+		{
+			int wireBuy = 0;
+			const bool hasWireBuy = ShopItemValueCache_TryGetBuyFromWire(Data->Item, &wireBuy);
+			ShopPriceTraceLog(
+				"recv-0x32-buy shopSlot=%d invSlot=%d cacheSpend=%d BuyCost=%d wireBuy=%d hasWireBuy=%d",
+				(int)Data->Index,
+				(int)Data->Index,
+				spend,
+				BuyCost,
+				hasWireBuy ? wireBuy : 0,
+				hasWireBuy ? 1 : 0);
+		}
+
 		if (Data->Index >= MAX_EQUIPMENT_INDEX && Data->Index < MAX_MY_INVENTORY_INDEX)
 		{
 			g_pMyInventory->InsertItem(Data->Index, Data->Item);
@@ -8398,6 +8413,10 @@ void ReceiveSell( BYTE *ReceiveBuffer )
 		{
 			SEASON3B::CNewUIInventoryCtrl::DeletePickedItem();
 
+			ShopPriceTraceLog(
+				"recv-0x33-sell-ok serverGold=%u backupGold=%d",
+				(unsigned)Data->Gold,
+				CharacterMachine->Gold);
 			TakumiApplyGoldPickSync(Data->Gold);
 			
 			PlayBuffer(SOUND_GET_ITEM01);

@@ -48,21 +48,95 @@ public static class ShopItemValueResolver
             return 0;
         }
 
-        var index = ItemWire602.DecodeItemIndex(item12);
-        var level = (item12[1] >> 3) & 0x0F;
-        var exc = item12[3] & 0x3F;
-        if (ItemValueCatalog.TryGetBuySell(index, level, exc, out _, out var sell))
+        long sell;
+        if (ShouldUseLegacySellFromWire(item12))
         {
-            return sell;
+            sell = LegacyShopSellPriceEstimate.EstimateFromWire(item12);
+        }
+        else
+        {
+            var index = ItemWire602.DecodeItemIndex(item12);
+            var level = (item12[1] >> 3) & 0x0F;
+            var exc = item12[3] & 0x3F;
+            sell = ResolveSellFromParts(
+                index,
+                level,
+                exc,
+                item12[1] & 0x07,
+                (item12[1] & 0x04) != 0,
+                (item12[1] & 0x80) != 0);
         }
 
-        var buy = LegacyShopBuyPriceEstimate.Estimate(
-            index,
-            level,
-            exc,
-            item12[1] & 0x07,
-            (item12[1] & 0x04) != 0,
-            (item12[1] & 0x80) != 0);
+        return ShopSellDurabilityPenalty.Apply(item12, sell);
+    }
+
+    internal static bool ShouldUseLegacySellFromWireForTrace(ReadOnlySpan<byte> item12) =>
+        ShouldUseLegacySellFromWire(item12);
+
+    internal static long ResolveSellFromPartsForTrace(
+        int index,
+        int level,
+        int exc,
+        int option,
+        bool luck,
+        bool skill,
+        out string path)
+    {
+        if (ItemValueCatalog.TryGetBuySellExact(index, level, exc, out var buyExact, out var sellExact))
+        {
+            path = sellExact > 0 ? "itemvalue-exact-sell" : "itemvalue-exact-buy/3";
+            return sellExact > 0 ? sellExact : Math.Max(1, buyExact / 3);
+        }
+
+        if (exc == 0
+            && ItemValueCatalog.TryGetBuySell(index, level, 0, out var buyPlain, out var sellPlain))
+        {
+            path = sellPlain > 0 ? "itemvalue-wildcard-sell" : "itemvalue-wildcard-buy/3";
+            return sellPlain > 0 ? sellPlain : Math.Max(1, buyPlain / 3);
+        }
+
+        path = "legacy-buy/3";
+        var buy = LegacyShopBuyPriceEstimate.Estimate(index, level, exc, option, luck, skill);
+        return Math.Max(1, buy / 3);
+    }
+
+    static bool ShouldUseLegacySellFromWire(ReadOnlySpan<byte> item12)
+    {
+        var index = ItemWire602.DecodeItemIndex(item12);
+        var exc = item12[3] & 0x3F;
+        if (exc != 0)
+        {
+            return true;
+        }
+
+        return SocketItemTypeCatalog.IsSocketItem(index / 512, index % 512, out _);
+    }
+
+    /// <summary>
+    /// Sell-back zen must follow the same <c>ItemValue.txt</c> / legacy rules as <see cref="ResolveBuy"/>.
+    /// Wildcard OpExe rows (exc=*) must not be used for excellent stock — they ignore exc multipliers and
+    /// made F3 E9 tooltips show ~13M sell while <c>0x32</c> credited ~4M.
+    /// </summary>
+    static long ResolveSellFromParts(
+        int index,
+        int level,
+        int exc,
+        int option,
+        bool luck,
+        bool skill)
+    {
+        if (ItemValueCatalog.TryGetBuySellExact(index, level, exc, out var buyExact, out var sellExact))
+        {
+            return sellExact > 0 ? sellExact : Math.Max(1, buyExact / 3);
+        }
+
+        if (exc == 0
+            && ItemValueCatalog.TryGetBuySell(index, level, 0, out var buyPlain, out var sellPlain))
+        {
+            return sellPlain > 0 ? sellPlain : Math.Max(1, buyPlain / 3);
+        }
+
+        var buy = LegacyShopBuyPriceEstimate.Estimate(index, level, exc, option, luck, skill);
         return Math.Max(1, buy / 3);
     }
 

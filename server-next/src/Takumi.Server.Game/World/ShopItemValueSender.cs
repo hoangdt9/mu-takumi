@@ -17,7 +17,14 @@ public static class ShopItemValueSender
         {
             var blob = new byte[ItemWire602.WireBytes];
             ShopItemWireEncoding.WriteShopEntry(blob, item);
-            entries.Add(ShopItemValueResolver.ToWireEntry(item, taxRatePercent, blob));
+            var entry = ShopItemValueResolver.ToWireEntry(item, taxRatePercent, blob);
+            ShopPriceTrace.F3E9Row(item, taxRatePercent, blob, entry);
+            entries.Add(entry);
+        }
+
+        if (ShopPriceTrace.IsEnabled)
+        {
+            ShopPriceTrace.Line("F3-E9", $"shopRows={entries.Count} tax%={taxRatePercent}");
         }
 
         return ItemValueWire602.Build(entries);

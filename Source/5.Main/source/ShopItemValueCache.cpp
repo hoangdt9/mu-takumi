@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "ShopItemValueCache.h"
+#include "ShopPriceTrace.h"
 #include "_struct.h"
 
 #include <unordered_map>
@@ -93,6 +94,65 @@ namespace
 
 		return false;
 	}
+
+	bool TryLookupClosestLevel(const Key& key, bool wantSell, int* outValue, int* outPriceType)
+	{
+		if (g_cache.empty() || outValue == nullptr)
+		{
+			return false;
+		}
+
+		bool found = false;
+		int bestDist = 1000;
+		int bestValue = 0;
+		int bestType = 0;
+		for (const auto& it : g_cache)
+		{
+			if (it.first.index != key.index || it.first.newopt != key.newopt)
+			{
+				continue;
+			}
+
+			const int dist = abs(it.first.level - key.level);
+			if (dist > bestDist)
+			{
+				continue;
+			}
+
+			int value = 0;
+			if (wantSell)
+			{
+				value = it.second.sell > 0 ? it.second.sell : (it.second.buy > 0 ? it.second.buy / 3 : 0);
+			}
+			else
+			{
+				value = it.second.buy;
+			}
+
+			if (value <= 0)
+			{
+				continue;
+			}
+
+			bestDist = dist;
+			bestValue = value;
+			bestType = it.second.priceType;
+			found = true;
+		}
+
+		if (!found)
+		{
+			return false;
+		}
+
+		*outValue = bestValue;
+		if (outPriceType != nullptr)
+		{
+			*outPriceType = bestType;
+		}
+
+		return true;
+	}
 }
 
 void ShopItemValueCache_Clear()
@@ -127,6 +187,8 @@ void ShopItemValueCache_ApplyPacket(const BYTE* receiveBuffer, int size)
 		g_cache[{ index, level, newopt }] = { value, sellvalue, priceType };
 		offset += 28;
 	}
+
+	ShopPriceTraceLogF3E9(count);
 }
 
 static int ExcellentKeyBits(const tagITEM* ip)
@@ -199,8 +261,14 @@ bool ShopItemValueCache_TryGetSell(const tagITEM* ip, int* outSell)
 		return false;
 	}
 
-	// Sell tooltip must not use exc=0 fallback (undercuts excellent inventory items).
-	return TryLookup(MakeKey(ip), nullptr, nullptr, outSell);
+	const Key key = MakeKey(ip);
+	if (TryLookup(key, nullptr, nullptr, outSell) && *outSell > 0)
+	{
+		return true;
+	}
+
+	// Inventory level may differ from shop stock row (+7 worn vs +9 in F3 E9).
+	return TryLookupClosestLevel(key, true, outSell, nullptr);
 }
 
 bool ShopItemValueCache_TryGetBuyExact(const tagITEM* ip, int* outBuy)
@@ -210,13 +278,21 @@ bool ShopItemValueCache_TryGetBuyExact(const tagITEM* ip, int* outBuy)
 		return false;
 	}
 
+	const Key key = MakeKey(ip);
 	int priceType = 0;
-	if (!TryLookup(MakeKey(ip), outBuy, &priceType, nullptr))
+	if (TryLookup(key, outBuy, &priceType, nullptr) && *outBuy > 0 && priceType == 0)
+	{
+		return true;
+	}
+
+	int buy = 0;
+	if (!TryLookupClosestLevel(key, false, &buy, &priceType) || buy <= 0 || priceType != 0)
 	{
 		return false;
 	}
 
-	return priceType == 0;
+	*outBuy = buy;
+	return true;
 }
 
 bool ShopItemValueCache_TryGetBuyFromWire(const BYTE* itemWire, int* outBuy)

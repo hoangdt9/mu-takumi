@@ -143,6 +143,7 @@ namespace SEASON3B
 		int GetAndroidTouchAssignSkillIndex() const;
 		void SetAndroidTouchAssignSkillIndex(int skillIndex);
 		int HitTestAndroidTouchSkillPicker(float uiX, float uiY) const;
+		bool TryToggleSkillPickerAtTouch(float uiX, float uiY);
 
 		bool IsSkillListUp();
 

@@ -58,6 +58,9 @@ public sealed class GameRosterEntry
 
     /// <summary>M8: Gens family (0 = none, 1 = Vanert, 2 = Duprian).</summary>
     public byte GensFamily { get; set; }
+
+    /// <summary>30-byte <c>C1 F3 30</c> option blob (skill hotkeys + QWER).</summary>
+    public byte[] KeyConfiguration { get; set; } = CharacterKeyConfiguration.CreateDefault();
 }
 
 public static class GameSpawnEnv
@@ -221,6 +224,7 @@ public static class GameRosterDisk
                     MaxBp = c.MaxBp,
                     Reset = c.Reset,
                     AccountLevel = c.AccountLevel,
+                    KeyConfiguration = DecodeKeyConfiguration(c.KeyConfigurationBase64),
                 };
                 ApplyLegacySpawnIfUnset(entry);
                 list.Add(entry);
@@ -273,6 +277,7 @@ public static class GameRosterDisk
                     MaxBp = e.MaxBp,
                     Reset = e.Reset,
                     AccountLevel = e.AccountLevel,
+                    KeyConfigurationBase64 = EncodeKeyConfiguration(e.KeyConfiguration),
                 });
         }
 
@@ -293,6 +298,26 @@ public static class GameRosterDisk
     sealed class RosterPersistRoot
     {
         public List<RosterPersistChar> Characters { get; set; } = new();
+    }
+
+    static string EncodeKeyConfiguration(byte[]? configuration) =>
+        Convert.ToBase64String(CharacterKeyConfiguration.Normalize(configuration ?? Array.Empty<byte>()));
+
+    static byte[] DecodeKeyConfiguration(string? base64)
+    {
+        if (string.IsNullOrWhiteSpace(base64))
+        {
+            return CharacterKeyConfiguration.CreateDefault();
+        }
+
+        try
+        {
+            return CharacterKeyConfiguration.Normalize(Convert.FromBase64String(base64));
+        }
+        catch (FormatException)
+        {
+            return CharacterKeyConfiguration.CreateDefault();
+        }
     }
 
     sealed class RosterPersistChar
@@ -341,6 +366,8 @@ public static class GameRosterDisk
         public int Reset { get; set; }
 
         public int AccountLevel { get; set; }
+
+        public string? KeyConfigurationBase64 { get; set; }
     }
 }
 

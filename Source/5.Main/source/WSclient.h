@@ -93,6 +93,8 @@ void TakumiSyncHeroMaxVitals(DWORD maxHp, DWORD maxSd);
 #if defined(__ANDROID__)
 /// True while F3 03 join/warp deferred <c>LoadWorld</c> has not run yet (movement must stay blocked without LoadingWorld=9999998).
 bool TakumiIsAndroidWorldLoadPending();
+/// Terrain textures match WorldActive and primary maptile is loaded (avoids white tiles).
+bool TakumiIsAndroidTerrainReady();
 /// Run deferred map load on the main loop (after F3 03) to avoid blocking inside packet dispatch.
 void TakumiProcessAndroidPendingLoadWorld();
 /// Reset adaptive perf penalties for a few seconds after terrain/world load.

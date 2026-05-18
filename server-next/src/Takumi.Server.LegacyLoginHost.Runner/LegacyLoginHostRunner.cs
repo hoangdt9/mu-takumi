@@ -759,6 +759,7 @@ public static class LegacyLoginHostRunner
                     await WriteOutboundAsync(joinPkt);
                     await WriteOutboundAsync(invPkt);
                     await WriteOutboundAsync(MagicListWire602.BuildForServerClass(picked.ServerClass));
+                    await WriteOutboundAsync(OptionDataWire602.BuildApply(picked.KeyConfiguration));
                     if (SyncLegacyEntryFromJoin(picked, joinPkt))
                     {
                         Volatile.Write(ref rosterDirty, 1);
@@ -1671,6 +1672,7 @@ public static class LegacyLoginHostRunner
                     LevelUpPoint = c.LevelUpPoint,
                     CurrentBp = c.CurrentBp,
                     MaxBp = c.MaxBp,
+                    KeyConfiguration = DecodeLegacyKeyConfiguration(c.KeyConfigurationBase64),
                 };
                 ApplyLegacySpawnIfUnset(entry);
                 roster.Add(entry);
@@ -1719,6 +1721,7 @@ public static class LegacyLoginHostRunner
                     LevelUpPoint = e.LevelUpPoint,
                     CurrentBp = e.CurrentBp,
                     MaxBp = e.MaxBp,
+                    KeyConfigurationBase64 = EncodeLegacyKeyConfiguration(e.KeyConfiguration),
                 });
         }
 
@@ -1911,6 +1914,7 @@ public static class LegacyLoginHostRunner
             LevelUpPoint = e.LevelUpPoint,
             CurrentBp = e.CurrentBp,
             MaxBp = e.MaxBp,
+            KeyConfiguration = CharacterKeyConfiguration.Normalize(e.KeyConfiguration),
         };
 
     static void CopyGameRosterBack(CharacterRosterEntry dst, GameRosterEntry src)
@@ -1937,6 +1941,27 @@ public static class LegacyLoginHostRunner
         dst.LevelUpPoint = src.LevelUpPoint;
         dst.CurrentBp = src.CurrentBp;
         dst.MaxBp = src.MaxBp;
+        dst.KeyConfiguration = CharacterKeyConfiguration.Normalize(src.KeyConfiguration);
+    }
+
+    static string EncodeLegacyKeyConfiguration(byte[]? configuration) =>
+        Convert.ToBase64String(CharacterKeyConfiguration.Normalize(configuration ?? Array.Empty<byte>()));
+
+    static byte[] DecodeLegacyKeyConfiguration(string? base64)
+    {
+        if (string.IsNullOrWhiteSpace(base64))
+        {
+            return CharacterKeyConfiguration.CreateDefault();
+        }
+
+        try
+        {
+            return CharacterKeyConfiguration.Normalize(Convert.FromBase64String(base64));
+        }
+        catch (FormatException)
+        {
+            return CharacterKeyConfiguration.CreateDefault();
+        }
     }
 
     static List<CharacterRosterWire> MapRosterToWire(List<CharacterRosterEntry> roster)
@@ -2324,6 +2349,8 @@ internal sealed class CharacterRosterEntry
     public ushort LevelUpPoint;
     public int CurrentBp;
     public int MaxBp;
+
+    public byte[] KeyConfiguration = CharacterKeyConfiguration.CreateDefault();
 }
 
 internal sealed class RosterPersistRoot
@@ -2373,6 +2400,8 @@ internal sealed class RosterPersistChar
     public int CurrentBp { get; set; }
 
     public int MaxBp { get; set; }
+
+    public string? KeyConfigurationBase64 { get; set; }
 }
 
 /// <summary>Thread-safe login flag for keepalive + packet gate (visibility across tasks).</summary>

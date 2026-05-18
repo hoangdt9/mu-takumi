@@ -14,6 +14,7 @@
 #include "ZzzLodTerrain.h"
 #include "zzzpath.h"
 #include "ZzzTexture.h"
+#include "GlobalBitmap.h"
 #include "ZzzInfomation.h"
 #include "ZzzObject.h"
 #include "ZzzCharacter.h"
@@ -1380,6 +1381,12 @@ static void TerrainBatch_Flush()
 
             if (q.textureId != curTex)
             {
+                const BITMAP_t* terrainBmp = Bitmaps.FindTexture(q.textureId);
+                if (terrainBmp == nullptr || terrainBmp->TextureNumber == 0)
+                {
+                    continue;
+                }
+
                 BindTexture(q.textureId);
                 curTex = q.textureId;
             }
@@ -3195,6 +3202,12 @@ void RenderTerrain(bool EditFlag)
 
 	if (g_pNewUISystem->GetUI_NewOptionWindow()->OnOffGrap[g_pNewUISystem->GetUI_NewOptionWindow()->eRenderTerrain] || SceneFlag != MAIN_SCENE) TerrainFlag = TERRAIN_MAP_NORMAL;
 
+#if defined(__ANDROID__)
+	if (!EditFlag && !TakumiIsAndroidTerrainReady())
+	{
+		return;
+	}
+#endif
 
 #if defined(__ANDROID__) || defined(MU_IOS)
     if (!EditFlag)

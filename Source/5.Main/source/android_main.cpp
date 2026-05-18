@@ -3460,6 +3460,15 @@ bool HandleVirtualFingerDown(const SDL_TouchFingerEvent& touch)
         return true;
     }
 
+#if defined(__ANDROID__) || defined(MU_IOS)
+    if (kUseLegacyMainHud
+        && g_pSkillList != nullptr
+        && g_pSkillList->TryToggleSkillPickerAtTouch(uiX, uiY))
+    {
+        return true;
+    }
+#endif
+
     // Season3B modal (guild invite, stat points, mix, …): do not steal the touch for
     // virtual attack/skill/joystick — let MouseLButton* reach g_MessageBox.
     if (g_MessageBox != nullptr && !g_MessageBox->IsEmpty())

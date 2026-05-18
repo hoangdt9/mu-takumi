@@ -75,6 +75,12 @@ APK buộc tải lại `data.zip` (package tách `.dataredl`): `assembleRealDevi
 
 See `PORTING_TAKUMI_ANDROID.md` in `Source/android`. Prebuilt `.so` live under `app/src/main/jniLibs/<abi>/`.
 
+## HUD — skill hotkey (legacy main frame)
+
+- Ô skill chính (cạnh MP) dùng picker legacy; cấu hình **lưu server** qua `SaveOptions` (`C1 F3 30`), load lại khi login (`ReceiveOption`).
+- Chưa chọn skill → ô **trống** (chỉ khung, không icon). Sau khi chọn, relog để QA persistence.
+- Spec đầy đủ: [`docs/takumi-game-spec/SKILL-HOTKEY-PERSISTENCE.md`](takumi-game-spec/SKILL-HOTKEY-PERSISTENCE.md).
+
 ## Optional flags
 
 - `-PmuEnableLogs=true` — verbose native logs (see `app/build.gradle`).

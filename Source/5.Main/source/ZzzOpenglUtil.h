@@ -100,6 +100,7 @@ void EnableAlphaBlend3();
 void EnableAlphaBlend4();
 void BindTexture(int tex);
 void BindTextureStream(int tex);
+void ResetTextureBindCache();
 void EndTextureStream();
 void BeginOpengl(int x=0,int y=0,int Width=640,int Height=480);
 void EndOpengl();

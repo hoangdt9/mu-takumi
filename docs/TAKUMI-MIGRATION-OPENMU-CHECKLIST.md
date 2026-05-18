@@ -115,6 +115,8 @@
 
 **4.3 — MVP gameplay (Gate 4a)**
 
+- [x] **Skill hotkey persistence (client):** `SaveOptions` / `C1 F3 30` ↔ `ReceiveOption`; ô skill chính trống khi chưa gán slot `0`; Android picker + `ApplySelectedSkillIndex` — chi tiết [`docs/takumi-game-spec/SKILL-HOTKEY-PERSISTENCE.md`](takumi-game-spec/SKILL-HOTKEY-PERSISTENCE.md).
+- [ ] **Skill hotkey E2E:** relog trên **OpenMU** và/hoặc **Takumi DataServer** xác nhận 10 ô + ô chính khớp DB.
 - [ ] Di chuyển + sync nhân vật.
 - [ ] Đánh quái / damage / die / respawn tối thiểu.
 - [ ] Nhặt / drop đơn giản + inventory đồng bộ packet.
@@ -189,6 +191,7 @@
 - [`docs/TAKUMI-FULL-FILE-MIGRATION-CHECKLIST.md`](TAKUMI-FULL-FILE-MIGRATION-CHECKLIST.md) — **danh sách đầy đủ** file/logic/data cần kiểm tra + manifest trong `docs/takumi-manifests/`.
 - [`docs/SERVER-PORT-PLAN.md`](SERVER-PORT-PLAN.md) — chiến lược A/B/C và phase tổng quát.
 - [`docs/ANDROID-DEV-MAC.md`](ANDROID-DEV-MAC.md) — build client test.
+- [`docs/takumi-game-spec/SKILL-HOTKEY-PERSISTENCE.md`](takumi-game-spec/SKILL-HOTKEY-PERSISTENCE.md) — skill hotkey client ↔ `F3 30` ↔ OpenMU `KeyConfiguration` / Takumi option DB.
 - ~~`docker/` Wine~~ — chỉ sandbox; **production target** là OpenMU Docker.
 
 _Khi checklist này cập nhật, đánh dấu owner + ngày ở từng phase trong issue tracker._

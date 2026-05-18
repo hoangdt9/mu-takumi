@@ -57,6 +57,9 @@ public sealed class CharacterRosterRow
 
     public int MaxBp { get; set; }
 
+    /// <summary>30-byte <c>C1 F3 30</c> option blob; null = client defaults.</summary>
+    public byte[]? KeyConfiguration { get; set; }
+
     public CharacterSheetStats ToSheet() =>
         CharacterSheetStats.FromInts(
             this.Strength,

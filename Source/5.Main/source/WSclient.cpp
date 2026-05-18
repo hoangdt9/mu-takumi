@@ -1383,6 +1383,22 @@ bool TakumiIsAndroidWorldLoadPending()
 	return s_androidDeferredLoadWorldMap >= 0;
 }
 
+bool TakumiIsAndroidTerrainReady()
+{
+	if (TakumiIsAndroidWorldLoadPending())
+	{
+		return false;
+	}
+
+	if (s_androidTerrainLoadedMap < 0 || s_androidTerrainLoadedMap != gMapManager.WorldActive)
+	{
+		return false;
+	}
+
+	const BITMAP_t* primaryTile = Bitmaps.FindTexture(BITMAP_MAPTILE);
+	return primaryTile != nullptr && primaryTile->TextureNumber != 0;
+}
+
 void ReceiveCreateMonsterViewport(BYTE* ReceiveBuffer);
 
 static void TakumiQueueMonsterViewportPacket(const BYTE* receiveBuffer)
@@ -1834,6 +1850,7 @@ void TakumiProcessAndroidPendingLoadWorld()
 	s_androidDeferredLoadWorldMap = -1;
 	g_ErrorReport.Write("[AndroidLogin] deferred LoadWorld map=%d begin\r\n", map);
 	gMapManager.LoadWorld(map);
+	ResetTextureBindCache();
 	s_androidTerrainLoadedMap = map;
 	g_ErrorReport.Write("[AndroidLogin] deferred LoadWorld map=%d done\r\n", map);
 	if (LoadingWorld > 30)
@@ -11869,6 +11886,17 @@ void ReceiveOption(BYTE* ReceiveBuffer)
 	BYTE wChatListBoxBackAlpha = Data->ChatLogBox & 0x0F;
 	
 	g_pMainFrame->SetItemHotKey(SEASON3B::HOTKEY_R, Data->KeyR+ITEM_POTION, byRLevel);
+
+	const int primarySkillIndex = g_pMainFrame->GetSkillHotKey(0);
+	if (Hero != NULL)
+	{
+		if (primarySkillIndex >= 0
+			&& primarySkillIndex < MAX_MAGIC
+			&& CharacterAttribute->Skill[primarySkillIndex] != 0)
+		{
+			Hero->CurrentSkill = static_cast<BYTE>(primarySkillIndex);
+		}
+	}
 }
 
 void ReceiveEventChipInfomation( BYTE* ReceiveBuffer )

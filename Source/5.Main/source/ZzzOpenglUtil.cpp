@@ -374,20 +374,34 @@ bool DepthMaskEnable;
 bool AlphaTestEnable;
 int  AlphaBlendType;
 
+void ResetTextureBindCache()
+{
+	CachTexture = -1;
+}
+
 void BindTexture(int tex)
 {
-	if(CachTexture != tex)
+	if (tex >= 0)
 	{
-      	CachTexture = tex;
-		if (tex >= 0)
+		BITMAP_t* b = Bitmaps.FindTexture(static_cast<GLuint>(tex));
+		if (b == nullptr || b->TextureNumber == 0)
 		{
-			BITMAP_t *b = &Bitmaps[tex];
-			glBindTexture(GL_TEXTURE_2D,b->TextureNumber);
+			ResetTextureBindCache();
+			return;
 		}
-		else
+
+		if (CachTexture != tex)
 		{
-			glBindTexture(GL_TEXTURE_2D, -1 * tex);
+			CachTexture = tex;
+			glBindTexture(GL_TEXTURE_2D, b->TextureNumber);
 		}
+		return;
+	}
+
+	if (CachTexture != tex)
+	{
+		CachTexture = tex;
+		glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(-tex));
 	}
 }
 
@@ -396,15 +410,23 @@ bool TextureStream = false;
 extern  int test;
 void BindTextureStream(int tex)
 {
-	if(CachTexture != tex)
+	BITMAP_t* b = Bitmaps.FindTexture(static_cast<GLuint>(tex));
+	if (b == nullptr || b->TextureNumber == 0)
+	{
+		ResetTextureBindCache();
+		return;
+	}
+
+	if (CachTexture != tex)
 	{
 		CachTexture = tex;
-		if(TextureStream)
+		if (TextureStream)
+		{
 			glEnd();
-		BITMAP_t *b = &Bitmaps[tex];
-		glBindTexture(GL_TEXTURE_2D,b->TextureNumber);
+		}
+		glBindTexture(GL_TEXTURE_2D, b->TextureNumber);
 
-        glBegin(GL_TRIANGLES);
+		glBegin(GL_TRIANGLES);
 		TextureStream = true;
 	}
 }

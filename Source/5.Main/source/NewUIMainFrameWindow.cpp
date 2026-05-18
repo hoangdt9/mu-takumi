@@ -37,6 +37,7 @@
 #include "CBInterface.h"
 #include "CustomEventTime.h"
 #include "CustomRanking.h"
+#include "ZzzOpenData.h"
 
 extern float g_fScreenRate_x;
 
@@ -60,6 +61,20 @@ extern int DisplayWinMid;
 extern int DisplayHeightExt;
 extern int DisplayWinExt;
 extern int DisplayWinReal;
+
+static void GetLegacyCurrentSkillSlotRect(float& x, float& y, float& width, float& height)
+{
+	float fixX = 0.0f;
+	if (gProtect.m_MainInfo.IsVersion == 1)
+	{
+		fixX = 75.0f;
+	}
+
+	x = 385.f - fixX + DisplayWinExt;
+	y = 431.f + DisplayHeightExt;
+	width = 32.f;
+	height = 38.f;
+}
 
 static void GetLegacySkillPickerCellRect(int order, float& x, float& y, float& width, float& height)
 {
@@ -103,6 +118,63 @@ static void GetLegacySkillPickerCellRect(int order, float& x, float& y, float& w
 	}
 }
 
+static bool IsRenderableSkillSlotIndex(int skillIndex)
+{
+	if (Hero == NULL || CharacterAttribute == NULL)
+	{
+		return false;
+	}
+
+	if (skillIndex >= AT_PET_COMMAND_DEFAULT && skillIndex < AT_PET_COMMAND_END)
+	{
+		return Hero->m_pPet != NULL;
+	}
+
+	if (skillIndex < 0 || skillIndex >= MAX_MAGIC)
+	{
+		return false;
+	}
+
+	const WORD skillType = CharacterAttribute->Skill[skillIndex];
+	if (skillType == 0)
+	{
+		return false;
+	}
+
+	if (skillType >= AT_SKILL_STUN && skillType <= AT_SKILL_REMOVAL_BUFF)
+	{
+		return false;
+	}
+
+	return true;
+}
+
+static int GetPrimarySkillSlotIndex()
+{
+	if (g_pMainFrame == NULL)
+	{
+		return -1;
+	}
+
+	return g_pMainFrame->GetSkillHotKey(0);
+}
+
+static bool ShouldDrawCurrentSkillIcon()
+{
+	const int primarySkillIndex = GetPrimarySkillSlotIndex();
+	return IsRenderableSkillSlotIndex(primarySkillIndex);
+}
+
+static bool ShouldHighlightCurrentSkillSlot()
+{
+	if (ShouldDrawCurrentSkillIcon())
+	{
+		return true;
+	}
+
+	return false;
+}
+
 static WORD GetCurrentSkillTypeForPrior()
 {
 	if (Hero == NULL || CharacterAttribute == NULL)
@@ -121,6 +193,24 @@ static WORD GetCurrentSkillTypeForPrior()
 	}
 
 	return 0;
+}
+
+static void ApplySelectedSkillIndex(int skillIndex)
+{
+	if (Hero == NULL || g_pSkillList == NULL)
+	{
+		return;
+	}
+
+	if (!IsRenderableSkillSlotIndex(skillIndex))
+	{
+		return;
+	}
+
+	g_pSkillList->SetHeroPriorSkill(GetCurrentSkillTypeForPrior());
+	Hero->CurrentSkill = static_cast<BYTE>(skillIndex);
+	g_pMainFrame->SetSkillHotKey(0, skillIndex);
+	SaveOptions();
 }
 
 #if defined(__ANDROID__) || defined(MU_IOS)
@@ -2241,9 +2331,17 @@ bool SEASON3B::CNewUISkillList::UpdateMouseEvent()
 	{
 		FixX = 0;
 	}
-	x = 385.f - FixX + DisplayWinExt;
-	y = 431.f + DisplayHeightExt;
-	width = 32.f; height = 38.f;
+	GetLegacyCurrentSkillSlotRect(x, y, width, height);
+
+#if defined(__ANDROID__) || defined(MU_IOS)
+	if (MouseLButtonPush && SEASON3B::CheckMouseIn(x, y, width, height) == true)
+	{
+		SetSkillPickerOpen(!m_bSkillList);
+		PlayBuffer(SOUND_CLICK01);
+		m_EventState = EVENT_NONE;
+		return false;
+	}
+#else
 	if (m_EventState == EVENT_NONE && MouseLButtonPush == false
 		&& SEASON3B::CheckMouseIn(x, y, width, height) == true)
 	{
@@ -2292,6 +2390,7 @@ bool SEASON3B::CNewUISkillList::UpdateMouseEvent()
 	{
 		return false;
 	}
+#endif
 	if (gProtect.m_MainInfo.IsVersion != 1) //ss2
 	{
 		x = 222.f - FixX + DisplayWinExt; y = 431.f + DisplayHeightExt; width = 32.f * 5.f; height = 38.f;
@@ -2338,8 +2437,7 @@ bool SEASON3B::CNewUISkillList::UpdateMouseEvent()
 				if (m_iAndroidTouchAssignSkillIndex >= 0)
 				{
 					SetHotKey(iIndex, m_iAndroidTouchAssignSkillIndex);
-					m_wHeroPriorSkill = GetCurrentSkillTypeForPrior();
-					Hero->CurrentSkill = static_cast<BYTE>(m_iAndroidTouchAssignSkillIndex);
+					SaveOptions();
 					SetSkillPickerOpen(false);
 					m_iAndroidTouchAssignSkillIndex = -1;
 					m_EventState = EVENT_NONE;
@@ -2459,6 +2557,17 @@ bool SEASON3B::CNewUISkillList::UpdateMouseEvent()
 		if (SEASON3B::CheckMouseIn(x, y, width, height) == true)
 		{
 			bMouseOnSkillList = true;
+#if defined(__ANDROID__) || defined(MU_IOS)
+			if (MouseLButtonPush)
+			{
+				m_EventState = EVENT_NONE;
+				ApplySelectedSkillIndex(i);
+				m_iAndroidTouchAssignSkillIndex = i;
+				SetSkillPickerOpen(false);
+				PlayBuffer(SOUND_CLICK01);
+				return false;
+			}
+#endif
 			if (m_EventState == EVENT_NONE && MouseLButtonPush == false)
 			{
 				m_EventState = EVENT_BTN_HOVER_SKILLLIST;
@@ -2486,16 +2595,11 @@ bool SEASON3B::CNewUISkillList::UpdateMouseEvent()
 			&& m_iRenderSkillInfoType == i && SEASON3B::CheckMouseIn(x, y, width, height) == true)
 		{
 			m_EventState = EVENT_NONE;
+			ApplySelectedSkillIndex(i);
 #if defined(__ANDROID__) || defined(MU_IOS)
-			m_wHeroPriorSkill = GetCurrentSkillTypeForPrior();
-			Hero->CurrentSkill = i;
 			m_iAndroidTouchAssignSkillIndex = i;
-			SetSkillPickerOpen(false);
-#else
-			m_wHeroPriorSkill = GetCurrentSkillTypeForPrior();
-			Hero->CurrentSkill = i;
-			SetSkillPickerOpen(false);
 #endif
+			SetSkillPickerOpen(false);
 			PlayBuffer(SOUND_CLICK01);
 			return false;
 		}
@@ -2519,6 +2623,17 @@ bool SEASON3B::CNewUISkillList::UpdateMouseEvent()
 			{
 				bMouseOnSkillList = true;
 
+#if defined(__ANDROID__) || defined(MU_IOS)
+				if (MouseLButtonPush)
+				{
+					m_EventState = EVENT_NONE;
+					ApplySelectedSkillIndex(i);
+					m_iAndroidTouchAssignSkillIndex = i;
+					SetSkillPickerOpen(false);
+					PlayBuffer(SOUND_CLICK01);
+					return false;
+				}
+#endif
 				if (m_EventState == EVENT_NONE && MouseLButtonPush == false)
 				{
 					m_EventState = EVENT_BTN_HOVER_SKILLLIST;
@@ -2541,16 +2656,11 @@ bool SEASON3B::CNewUISkillList::UpdateMouseEvent()
 					&& m_iRenderSkillInfoType == i)
 				{
 					m_EventState = EVENT_NONE;
+					ApplySelectedSkillIndex(i);
 #if defined(__ANDROID__) || defined(MU_IOS)
-					m_wHeroPriorSkill = GetCurrentSkillTypeForPrior();
-					Hero->CurrentSkill = i;
 					m_iAndroidTouchAssignSkillIndex = i;
-					SetSkillPickerOpen(false);
-#else
-					m_wHeroPriorSkill = GetCurrentSkillTypeForPrior();
-					Hero->CurrentSkill = i;
-					SetSkillPickerOpen(false);
 #endif
+					SetSkillPickerOpen(false);
 					PlayBuffer(SOUND_CLICK01);
 					return false;
 				}
@@ -2592,8 +2702,7 @@ bool SEASON3B::CNewUISkillList::UpdateKeyEvent()
 			if (SEASON3B::IsPress('1' + i))
 			{
 				SetHotKey(i + 1, m_iAndroidTouchAssignSkillIndex);
-				m_wHeroPriorSkill = GetCurrentSkillTypeForPrior();
-				Hero->CurrentSkill = static_cast<BYTE>(m_iAndroidTouchAssignSkillIndex);
+				ApplySelectedSkillIndex(m_iAndroidTouchAssignSkillIndex);
 				SetSkillPickerOpen(false);
 				m_iAndroidTouchAssignSkillIndex = -1;
 				PlayBuffer(SOUND_CLICK01);
@@ -2604,8 +2713,7 @@ bool SEASON3B::CNewUISkillList::UpdateKeyEvent()
 		if (SEASON3B::IsPress('0'))
 		{
 			SetHotKey(0, m_iAndroidTouchAssignSkillIndex);
-			m_wHeroPriorSkill = GetCurrentSkillTypeForPrior();
-			Hero->CurrentSkill = static_cast<BYTE>(m_iAndroidTouchAssignSkillIndex);
+			ApplySelectedSkillIndex(m_iAndroidTouchAssignSkillIndex);
 			SetSkillPickerOpen(false);
 			m_iAndroidTouchAssignSkillIndex = -1;
 			PlayBuffer(SOUND_CLICK01);
@@ -2636,7 +2744,7 @@ bool SEASON3B::CNewUISkillList::UpdateKeyEvent()
 				if (SEASON3B::IsPress('1' + i))
 				{
 					SetHotKey(i + 1, m_iRenderSkillInfoType);
-
+					SaveOptions();
 					return false;
 				}
 			}
@@ -2644,7 +2752,7 @@ bool SEASON3B::CNewUISkillList::UpdateKeyEvent()
 			if (SEASON3B::IsPress('0'))
 			{
 				SetHotKey(0, m_iRenderSkillInfoType);
-
+				ApplySelectedSkillIndex(m_iRenderSkillInfoType);
 				return false;
 			}
 		}
@@ -2710,6 +2818,11 @@ void SEASON3B::CNewUISkillList::SetHotKey(int iHotKey, int iSkillType)
 	}
 
 	m_iHotKeySkillType[iHotKey] = iSkillType;
+
+	if (iHotKey == 0 && iSkillType >= 0 && Hero != NULL)
+	{
+		Hero->CurrentSkill = static_cast<BYTE>(iSkillType);
+	}
 }
 
 int SEASON3B::CNewUISkillList::GetHotKey(int iHotKey)
@@ -2794,6 +2907,33 @@ int SEASON3B::CNewUISkillList::GetAndroidTouchAssignSkillIndex() const
 void SEASON3B::CNewUISkillList::SetAndroidTouchAssignSkillIndex(int skillIndex)
 {
 	m_iAndroidTouchAssignSkillIndex = skillIndex;
+}
+
+bool SEASON3B::CNewUISkillList::TryToggleSkillPickerAtTouch(float uiX, float uiY)
+{
+#if !defined(__ANDROID__) && !defined(MU_IOS)
+	return false;
+#else
+	if (CharacterAttribute == NULL || CharacterAttribute->SkillNumber <= 0)
+	{
+		return false;
+	}
+
+	float x = 0.f;
+	float y = 0.f;
+	float width = 0.f;
+	float height = 0.f;
+	GetLegacyCurrentSkillSlotRect(x, y, width, height);
+
+	if (uiX < x || uiX >(x + width) || uiY < y || uiY >(y + height))
+	{
+		return false;
+	}
+
+	SetSkillPickerOpen(!m_bSkillList);
+	PlayBuffer(SOUND_CLICK01);
+	return true;
+#endif
 }
 
 int SEASON3B::CNewUISkillList::HitTestAndroidTouchSkillPicker(float uiX, float uiY) const
@@ -2985,12 +3125,23 @@ void SEASON3B::CNewUISkillList::RenderCurrentSkillAndHotSkillList()
 				}
 				RenderSkillIcon(m_iHotKeySkillType[iIndex], x + 6, y + 6, 20, 28);
 			}
-			x = 392 + DisplayWinExt; y = 437 + DisplayHeightExt; width = 20; height = 28;
 		}
 
-
-
-		RenderSkillIcon(Hero->CurrentSkill, x, y, width, height);
+		GetLegacyCurrentSkillSlotRect(x, y, width, height);
+		const bool highlightCurrentSkill = ShouldHighlightCurrentSkillSlot()
+			|| m_EventState == EVENT_BTN_DOWN_CURRENTSKILL
+			|| m_EventState == EVENT_BTN_HOVER_CURRENTSKILL;
+		SEASON3B::RenderImage(
+			highlightCurrentSkill ? IMAGE_SKILLBOX_USE : IMAGE_SKILLBOX,
+			x,
+			y,
+			width,
+			height);
+		if (ShouldDrawCurrentSkillIcon())
+		{
+			const int drawSkillIndex = GetPrimarySkillSlotIndex();
+			RenderSkillIcon(drawSkillIndex, x + 6.f, y + 6.f, 20.f, 28.f);
+		}
 	}
 }
 //=== Type = 1
@@ -3263,6 +3414,10 @@ void SEASON3B::CNewUISkillList::RenderPetSkill()
 
 void SEASON3B::CNewUISkillList::RenderSkillIcon(int iIndex, float x, float y, float width, float height, int TypeMuHelper)
 {
+	if (TypeMuHelper != 1 && !IsRenderableSkillSlotIndex(iIndex))
+	{
+		return;
+	}
 
 	WORD bySkillType = CharacterAttribute->Skill[iIndex];
 	if (TypeMuHelper == 1)

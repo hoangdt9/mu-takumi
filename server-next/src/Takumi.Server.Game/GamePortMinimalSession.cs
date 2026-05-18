@@ -437,6 +437,13 @@ public static class GamePortMinimalSession
                                 ct,
                                 TrackVitalsOutbound)
                             .ConfigureAwait(false);
+                        await GamePortOutboundWire.WriteAsync(
+                                connection,
+                                protect,
+                                OptionDataWire602.BuildApply(picked.KeyConfiguration),
+                                ct,
+                                TrackVitalsOutbound)
+                            .ConfigureAwait(false);
                         if (RosterVitalsLifecycle.SyncGameEntryFromJoin(picked, joinPkt))
                         {
                             Volatile.Write(ref rosterDirty, 1);
@@ -1047,31 +1054,32 @@ public static class GamePortMinimalSession
                 continue;
             }
 
-            list.Add(
-                CharacterRosterRowMapping.ToRow(
-                    name,
-                    e.ServerClass,
-                    e.Level,
-                    e.MapId,
-                    e.PosX,
-                    e.PosY,
-                    e.Angle,
-                    e.CurrentHp,
-                    e.MaxHp,
-                    e.CurrentMp,
-                    e.MaxMp,
-                    e.Zen,
-                    e.CurrentShield,
-                    e.MaxShield,
-                    e.Strength,
-                    e.Dexterity,
-                    e.Vitality,
-                    e.Energy,
-                    e.Leadership,
-                    e.LevelUpPoint,
-                    e.CurrentBp,
-                    e.MaxBp,
-                    e.Experience));
+            var row = CharacterRosterRowMapping.ToRow(
+                name,
+                e.ServerClass,
+                e.Level,
+                e.MapId,
+                e.PosX,
+                e.PosY,
+                e.Angle,
+                e.CurrentHp,
+                e.MaxHp,
+                e.CurrentMp,
+                e.MaxMp,
+                e.Zen,
+                e.CurrentShield,
+                e.MaxShield,
+                e.Strength,
+                e.Dexterity,
+                e.Vitality,
+                e.Energy,
+                e.Leadership,
+                e.LevelUpPoint,
+                e.CurrentBp,
+                e.MaxBp,
+                e.Experience);
+            row.KeyConfiguration = e.KeyConfiguration;
+            list.Add(row);
         }
 
         return list.ToArray();

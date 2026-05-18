@@ -4,6 +4,7 @@
 #include "stdafx.h"
 #include <setjmp.h>
 #include "ZzzTexture.h"
+#include "ZzzOpenglUtil.h"
 #include "./Utilities/Log/ErrorReport.h"
 #include "WSclient.h"
 #include "DSPlaySound.h"
@@ -343,6 +344,7 @@ bool LoadBitmap(const char* szFileName, GLuint uiTextureIndex, GLuint uiFilter, 
 void DeleteBitmap(GLuint uiTextureIndex, bool bForce)
 {
 	Bitmaps.UnloadImage(uiTextureIndex, bForce);
+	ResetTextureBindCache();
 }
 void PopUpErrorCheckMsgBox(const char* szErrorMsg, bool bForceDestroy)
 {

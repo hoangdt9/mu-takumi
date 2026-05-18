@@ -118,7 +118,7 @@ public sealed class PostgresCharacterRosterRepository : IAsyncDisposable
                    current_hp, max_hp, current_mp, max_mp, zen,
                    current_shield, max_shield,
                    strength, dexterity, vitality, energy, leadership, level_up_point,
-                   current_bp, max_bp
+                   current_bp, max_bp, key_configuration
             FROM character_roster
             WHERE account_login = $1
             ORDER BY character_name
@@ -154,6 +154,7 @@ public sealed class PostgresCharacterRosterRepository : IAsyncDisposable
                     LevelUpPoint = reader.GetInt32(20),
                     CurrentBp = reader.GetInt32(21),
                     MaxBp = reader.GetInt32(22),
+                    KeyConfiguration = reader.IsDBNull(23) ? null : reader.GetFieldValue<byte[]>(23),
                 });
         }
 
@@ -178,8 +179,9 @@ public sealed class PostgresCharacterRosterRepository : IAsyncDisposable
                 INSERT INTO character_roster (
                     account_login, character_name, server_class, level, experience, map_id, pos_x, pos_y, angle,
                     current_hp, max_hp, current_mp, max_mp, zen, current_shield, max_shield,
-                    strength, dexterity, vitality, energy, leadership, level_up_point, current_bp, max_bp)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24)
+                    strength, dexterity, vitality, energy, leadership, level_up_point, current_bp, max_bp,
+                    key_configuration)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25)
                 """,
                 conn,
                 tx);
@@ -207,10 +209,32 @@ public sealed class PostgresCharacterRosterRepository : IAsyncDisposable
             ins.Parameters.AddWithValue(row.LevelUpPoint);
             ins.Parameters.AddWithValue(row.CurrentBp);
             ins.Parameters.AddWithValue(row.MaxBp);
+            ins.Parameters.AddWithValue(
+                row.KeyConfiguration is { Length: > 0 } ? row.KeyConfiguration : (object)DBNull.Value);
             await ins.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
         }
 
         await tx.CommitAsync(ct).ConfigureAwait(false);
+    }
+
+    public async Task UpdateKeyConfigurationAsync(
+        string accountLogin,
+        string characterName,
+        byte[] keyConfiguration,
+        CancellationToken ct = default)
+    {
+        await using var conn = await this._dataSource.OpenConnectionAsync(ct).ConfigureAwait(false);
+        await using var cmd = new NpgsqlCommand(
+            """
+            UPDATE character_roster
+            SET key_configuration = $3, updated_at = now()
+            WHERE account_login = $1 AND character_name = $2
+            """,
+            conn);
+        cmd.Parameters.AddWithValue(accountLogin);
+        cmd.Parameters.AddWithValue(CharacterRosterMerge.NormaliseName(characterName));
+        cmd.Parameters.AddWithValue(keyConfiguration);
+        await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
     }
 
     public async Task UpdateZenAsync(

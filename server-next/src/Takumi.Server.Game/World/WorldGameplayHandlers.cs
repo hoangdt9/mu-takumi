@@ -34,6 +34,11 @@ public static class WorldGameplayHandlers
             return true;
         }
 
+        if (CharacterOptionHandler.TryHandle(player, packet, onRosterDirty, onRosterSave))
+        {
+            return true;
+        }
+
         if (await PersonalShopGameplayHandler.TryHandlePacketAsync(
                 presenceSessionId,
                 packet,

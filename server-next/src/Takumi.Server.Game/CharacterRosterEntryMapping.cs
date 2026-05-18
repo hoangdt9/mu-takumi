@@ -1,5 +1,6 @@
 using System.Text;
 using Takumi.Server.Persistence;
+using Takumi.Server.Protocol;
 
 namespace Takumi.Server.Game;
 
@@ -36,6 +37,9 @@ public static class CharacterRosterEntryMapping
             LevelUpPoint = (ushort)Math.Clamp(row.LevelUpPoint, 0, ushort.MaxValue),
             CurrentBp = row.CurrentBp,
             MaxBp = row.MaxBp,
+            KeyConfiguration = row.KeyConfiguration is { Length: > 0 }
+                ? CharacterKeyConfiguration.Normalize(row.KeyConfiguration)
+                : CharacterKeyConfiguration.CreateDefault(),
         };
         GameRosterDisk.ApplyLegacySpawnIfUnset(entry);
         return entry;
@@ -65,5 +69,9 @@ public static class CharacterRosterEntryMapping
         e.LevelUpPoint = (ushort)Math.Clamp(d.LevelUpPoint, 0, ushort.MaxValue);
         e.CurrentBp = d.CurrentBp;
         e.MaxBp = d.MaxBp;
+        if (d.KeyConfiguration is { Length: > 0 })
+        {
+            e.KeyConfiguration = CharacterKeyConfiguration.Normalize(d.KeyConfiguration);
+        }
     }
 }

@@ -9,6 +9,7 @@ extern bool LockInputStatus;
 
 #if defined(__ANDROID__)
 bool TakumiIsAndroidWorldLoadPending();
+bool TakumiIsAndroidTerrainReady();
 #endif
 
 extern bool g_bAutoGetItem;

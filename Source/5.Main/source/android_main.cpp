@@ -624,27 +624,28 @@ constexpr float kInventoryWindowHeight = 429.0f;
 constexpr float kVirtualAutoAcquireMaxDistance = 10.0f;
 constexpr float kVirtualJoystickDefaultCenterX = 88.0f;
 constexpr float kVirtualJoystickDefaultCenterY = 368.0f;
-constexpr float kVirtualJoystickHudClearanceUi = 8.0f;
 constexpr float kVirtualJoystickRadius = 48.0f;
 constexpr float kVirtualJoystickDeadZone = 8.0f;
 constexpr float kVirtualJoystickKnobRadius = 18.0f;
 constexpr float kVirtualJoystickMouseMinRadius = 32.0f;
 constexpr float kVirtualJoystickMouseMaxRadius = 120.0f;
-// Invisible touch zone (bottom-left) — wider than the drawn pad for easier grabs.
-constexpr float kVirtualJoystickDynamicAreaMinY = 248.0f;
-constexpr float kVirtualJoystickDynamicAreaMaxX = 248.0f;
 constexpr float kVirtualJoystickOuterRenderW = 88.0f;
 constexpr float kVirtualJoystickOuterRenderH = 88.0f;
-// Soft glow + ring PNG scale vs outerW/H (touch/hitbox unchanged). Larger = bigger faint circle.
+// Soft glow + ring PNG scale vs outerW/H. Larger = bigger faint circle (draw only).
 constexpr float kJoystickRingDrawDiameterScale = 1.52f;
 // Outer soft circle radius = layoutDiameter/2 * this; ring texture diameter ~= 2 * that (nearly full glow).
 constexpr float kJoystickRingSoftOuterRadiusMul = 1.08f;
-constexpr float kVirtualJoystickVisualExtentUi =
-    kVirtualJoystickOuterRenderW * 0.5f * kJoystickRingDrawDiameterScale * kJoystickRingSoftOuterRadiusMul * 1.06f;
+constexpr float kVirtualJoystickIdleVisualScale = 0.68f;
+// Touch-to-open: same R_softOuter as DrawVirtualJoystickHud when idle (~49px) + thin margin.
+constexpr float kVirtualJoystickOpenHitMarginUi = 8.0f;
+constexpr float kVirtualJoystickIdleLayoutDiameterUi =
+    kVirtualJoystickOuterRenderW * kVirtualJoystickIdleVisualScale * kJoystickRingDrawDiameterScale;
+constexpr float kVirtualJoystickOpenGrabRadius =
+    (kVirtualJoystickIdleLayoutDiameterUi * 0.5f) * kJoystickRingSoftOuterRadiusMul
+    + kVirtualJoystickOpenHitMarginUi;
 constexpr float kJoystickKnobDrawDiameterScale = 1.18f;
 constexpr float kVirtualJoystickKnobRenderW = 40.0f;
 constexpr float kVirtualJoystickKnobRenderH = 40.0f;
-constexpr float kVirtualJoystickIdleVisualScale = 0.68f;
 constexpr float kVirtualJoystickIdleRingAlpha = 0.30f;
 constexpr float kVirtualJoystickIdleKnobAlpha = 0.24f;
 constexpr float kVirtualJoystickActiveRingAlpha = 0.70f;
@@ -1859,46 +1860,8 @@ bool HandleVirtualPickerFingerUp(const SDL_TouchFingerEvent& touch)
     return true;
 }
 
-bool IsInsideVirtualJoystickDynamicArea(float uiX, float uiY)
-{
-    if (!IsVirtualPadAvailable())
-    {
-        return false;
-    }
-
-    if (uiY >= kVirtualPadInputMaxY)
-    {
-        return false;
-    }
-
-    if (uiY < kVirtualJoystickDynamicAreaMinY)
-    {
-        return false;
-    }
-
-    if (uiX < 0.0f || uiX > kVirtualJoystickDynamicAreaMaxX)
-    {
-        return false;
-    }
-
-    if (IsTouchOverInventoryWindow(uiX, uiY))
-    {
-        return false;
-    }
-
-    return true;
-}
-
-float ClampVirtualJoystickCenterX(float uiX)
-{
-    const float minX = kVirtualJoystickRadius + 8.0f;
-    const float maxX = std::max(minX, kVirtualJoystickDynamicAreaMaxX - kVirtualJoystickRadius - 8.0f);
-    return std::clamp(uiX, minX, maxX);
-}
-
 float GetVirtualUiScaleY();
 float GetVirtualUiBottomSafeInsetUi();
-float GetVirtualJoystickMaxCenterY();
 
 float GetVirtualUiBottomSafeInsetUi()
 {
@@ -1906,35 +1869,14 @@ float GetVirtualUiBottomSafeInsetUi()
     return static_cast<float>(insetPx) / std::max(GetVirtualUiScaleY(), 0.001f);
 }
 
-float GetVirtualJoystickMaxCenterY()
-{
-    const float bottomInsetUi = GetVirtualUiBottomSafeInsetUi();
-    const float maxRadius = kVirtualJoystickVisualExtentUi;
-    const float aboveNav = 480.0f - bottomInsetUi - maxRadius - 8.0f;
-    const float aboveHud = kLegacyMainFrameBarTopY - kVirtualJoystickHudClearanceUi - maxRadius;
-    return std::floor(std::min(aboveHud, aboveNav));
-}
-
-float ClampVirtualJoystickCenterY(float uiY)
-{
-    const float minY = kVirtualJoystickDynamicAreaMinY + kVirtualJoystickRadius + 8.0f;
-    const float maxYByTouch = kVirtualPadInputMaxY - kVirtualJoystickRadius - 8.0f;
-    const float maxY = std::min(maxYByTouch, GetVirtualJoystickMaxCenterY());
-    return std::clamp(uiY, minY, std::max(minY, maxY));
-}
-
 float GetVirtualJoystickRenderCenterX()
 {
-    return std::round((g_virtualJoystick.fingerId != static_cast<SDL_FingerID>(-1))
-        ? g_virtualJoystick.centerX
-        : kVirtualJoystickDefaultCenterX);
+    return std::round(kVirtualJoystickDefaultCenterX);
 }
 
 float GetVirtualJoystickRenderCenterY()
 {
-    return std::round((g_virtualJoystick.fingerId != static_cast<SDL_FingerID>(-1))
-        ? g_virtualJoystick.centerY
-        : kVirtualJoystickDefaultCenterY);
+    return std::round(kVirtualJoystickDefaultCenterY);
 }
 
 void InterruptVirtualCombatForMovement()
@@ -1976,7 +1918,20 @@ void ClearVirtualJoystick()
 
 bool HitTestVirtualJoystick(float uiX, float uiY)
 {
-    return IsInsideVirtualJoystickDynamicArea(uiX, uiY);
+    if (!IsVirtualPadAvailable())
+    {
+        return false;
+    }
+
+    if (IsTouchOverInventoryWindow(uiX, uiY))
+    {
+        return false;
+    }
+
+    const float dx = uiX - kVirtualJoystickDefaultCenterX;
+    const float dy = uiY - kVirtualJoystickDefaultCenterY;
+    const float openRadiusSq = kVirtualJoystickOpenGrabRadius * kVirtualJoystickOpenGrabRadius;
+    return (dx * dx) + (dy * dy) <= openRadiusSq;
 }
 
 void UpdateVirtualJoystickByUi(float uiX, float uiY)
@@ -2020,8 +1975,8 @@ void StartVirtualJoystick(SDL_FingerID fingerId, float uiX, float uiY)
 {
     g_virtualJoystick = ActiveVirtualJoystick{};
     g_virtualJoystick.fingerId = fingerId;
-    g_virtualJoystick.centerX = ClampVirtualJoystickCenterX(uiX);
-    g_virtualJoystick.centerY = ClampVirtualJoystickCenterY(uiY);
+    g_virtualJoystick.centerX = kVirtualJoystickDefaultCenterX;
+    g_virtualJoystick.centerY = kVirtualJoystickDefaultCenterY;
     UpdateVirtualJoystickByUi(uiX, uiY);
 }
 

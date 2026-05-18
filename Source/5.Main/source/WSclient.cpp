@@ -9052,6 +9052,9 @@ extern int ErrorMessage;
 
 void ReceiveGuild( BYTE *ReceiveBuffer )
 {
+	if (ReceiveBuffer[0] == 0xC1 && ReceiveBuffer[1] < (int)sizeof(PHEADER_DEFAULT_KEY))
+		return;
+
 	LPPHEADER_DEFAULT_KEY Data = (LPPHEADER_DEFAULT_KEY)ReceiveBuffer;
 	GuildPlayerKey = ((int)(Data->KeyH )<<8) + Data->KeyL;
 	
@@ -9218,6 +9221,9 @@ bool SoccerObserver = false;
 
 void ReceiveDeclareWar( BYTE *ReceiveBuffer )
 {
+	if (ReceiveBuffer[0] == 0xC1 && ReceiveBuffer[1] < (int)sizeof(PRECEIVE_WAR))
+		return;
+
 	LPPRECEIVE_WAR Data = (LPPRECEIVE_WAR)ReceiveBuffer;
 	memset(GuildWarName,0,8);
 	memcpy(GuildWarName,Data->Name,8);
@@ -9254,6 +9260,9 @@ void ReceiveDeclareWarResult( BYTE *ReceiveBuffer )
 
 void ReceiveGuildBeginWar( BYTE *ReceiveBuffer )
 {
+	if (ReceiveBuffer[0] == 0xC1 && ReceiveBuffer[1] < (int)sizeof(PRECEIVE_WAR))
+		return;
+
 	LPPRECEIVE_WAR Data = (LPPRECEIVE_WAR)ReceiveBuffer;
 	EnableGuildWar = true;
 	

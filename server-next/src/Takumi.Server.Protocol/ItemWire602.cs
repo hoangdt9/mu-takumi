@@ -5,6 +5,12 @@ public static class ItemWire602
 {
     public const int WireBytes = 12;
 
+    /// <summary>Unused socket slot (parity OpenMU / legacy <c>0xFF</c>).</summary>
+    public const byte NoSocket = 0xFF;
+
+    /// <summary>Empty socket slot (seeded, no option yet).</summary>
+    public const byte EmptySocket = 0xFE;
+
     public const byte FirstWearSlot = 0;
 
     public const byte LastWearSlot = 11;
@@ -75,6 +81,110 @@ public static class ItemWire602
         int option,
         int excellent)
     {
+        WriteSeason6Core(dest, itemGroup, itemIndex, level, durability, skill, luck, option, excellent);
+        dest[6] = 0;
+        dest.Slice(7, 5).Fill(NoSocket);
+    }
+
+    /// <summary>
+    /// Shop / NPC stock encoding (parity <c>CShop::InsertItemNew</c> + <c>ItemByteConvert</c>).
+    /// Socket columns apply only when <paramref name="isSocketItem"/> is true.
+    /// </summary>
+    public static void WriteShopItem(
+        Span<byte> dest,
+        int itemGroup,
+        int itemIndex,
+        int level,
+        int durability,
+        bool skill,
+        bool luck,
+        int option,
+        int excellent,
+        int ancient,
+        int jewelOfHarmony,
+        int itemOptionEx,
+        bool isSocketItem,
+        int maxSocket,
+        int socket1,
+        int socket2,
+        int socket3,
+        int socket4,
+        int socket5,
+        byte socketBonus = NoSocket)
+    {
+        WriteSeason6Core(dest, itemGroup, itemIndex, level, durability, skill, luck, option, excellent);
+        var index = (itemGroup * 512) + itemIndex;
+        dest[4] = (byte)Math.Clamp(ancient, 0, 255);
+        dest[5] = 0;
+        dest[5] |= (byte)(((index & 0x1E00) >> 5) & 0xFF);
+        dest[5] |= (byte)(((itemOptionEx & 128) >> 4) & 0xFF);
+
+        if (isSocketItem && maxSocket > 0)
+        {
+            dest[6] = socketBonus;
+            WriteSocketColumns(dest.Slice(7, 5), maxSocket, socket1, socket2, socket3, socket4, socket5);
+            return;
+        }
+
+        dest[6] = (byte)Math.Clamp(jewelOfHarmony, 0, 255);
+        dest.Slice(7, 5).Fill(NoSocket);
+    }
+
+    public static void WriteShopItem(Span<byte> dest, ShopItemWireSource source)
+    {
+        WriteShopItem(
+            dest,
+            source.ItemGroup,
+            source.ItemIndex,
+            source.Level,
+            source.Durability,
+            source.Skill,
+            source.Luck,
+            source.Option,
+            source.Excellent,
+            source.Ancient,
+            source.JewelOfHarmony,
+            source.ItemOptionEx,
+            source.IsSocketItem,
+            source.MaxSocket,
+            source.Socket1,
+            source.Socket2,
+            source.Socket3,
+            source.Socket4,
+            source.Socket5);
+    }
+
+    public readonly record struct ShopItemWireSource(
+        int ItemGroup,
+        int ItemIndex,
+        int Level,
+        int Durability,
+        bool Skill,
+        bool Luck,
+        int Option,
+        int Excellent,
+        int Ancient,
+        int JewelOfHarmony,
+        int ItemOptionEx,
+        bool IsSocketItem,
+        int MaxSocket,
+        int Socket1,
+        int Socket2,
+        int Socket3,
+        int Socket4,
+        int Socket5);
+
+    static void WriteSeason6Core(
+        Span<byte> dest,
+        int itemGroup,
+        int itemIndex,
+        int level,
+        int durability,
+        bool skill,
+        bool luck,
+        int option,
+        int excellent)
+    {
         if (dest.Length < WireBytes)
         {
             throw new ArgumentException("Destination must be at least 12 bytes.", nameof(dest));
@@ -107,12 +217,30 @@ public static class ItemWire602
         dest[4] = 0;
         dest[5] = 0;
         dest[5] |= (byte)((index & 0x1E00) >> 5);
-        dest[6] = 0;
-        dest[7] = 0;
-        dest[8] = 0;
-        dest[9] = 0;
-        dest[10] = 0;
-        dest[11] = 0;
+    }
+
+    /// <summary>Parity <c>CShop::InsertItemNew</c> socket column gating by max socket count.</summary>
+    public static void WriteSocketColumns(
+        Span<byte> dest,
+        int maxSocket,
+        int socket1,
+        int socket2,
+        int socket3,
+        int socket4,
+        int socket5)
+    {
+        ReadOnlySpan<int> sockets = [socket1, socket2, socket3, socket4, socket5];
+        for (var i = 0; i < sockets.Length; i++)
+        {
+            if (i >= maxSocket)
+            {
+                dest[i] = NoSocket;
+                continue;
+            }
+
+            var v = sockets[i];
+            dest[i] = (byte)Math.Clamp(v, 0, 255);
+        }
     }
 
     public static void SetDurability(Span<byte> item12, byte durability)

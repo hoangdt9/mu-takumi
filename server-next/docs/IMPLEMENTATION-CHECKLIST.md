@@ -4,7 +4,8 @@ Last updated: 2026-05-18 (M8 move-map + CustomNpcMove; M9 PvP/party EXP/quest st
 
 **Phân vùng dev (tránh conflict):** **`docs/WORKSTREAM-OWNERSHIP.md`**.  
 **M4 + M7 (nhân vật + item, port từ `Source/`):** **`docs/M4-M7-CHARACTER-ITEM-MIGRATION.md`** — owner đề xuất **`mac-m1`**.  
-**Nhật ký giao hàng gần đây (git):** **`../../docs/DEVELOPMENT-LOG-2026-05-17.md`** (mới nhất), **`../../docs/DEVELOPMENT-LOG-2026-05-16.md`**.
+**M8 / M9 chi tiết (dev-only):** **`docs/M8-MOVE-MAP-PARITY-CHECKLIST.md`** · **`docs/M9-MONSTER-AI-PORT-CHECKLIST.md`** · **`docs/M9-NPC-MONSTER-CHECKLIST.md`** · **`docs/M9-M8-NPC-GAMEPLAY-OWNERSHIP.md`** (QA APK → **`../../docs/QA-MILESTONE.md`**).  
+**Nhật ký giao hàng gần đây (git):** **`../../docs/DEVELOPMENT-LOG-2026-05-17.md`**, **`../../docs/DEVELOPMENT-LOG-2026-05-16.md`**.
 
 ## Recent deliverables (git `main`, 2026-05-05 → 2026-05-17)
 
@@ -139,7 +140,7 @@ Use this to avoid unnecessary rebuilds.
 - [x] Runtime **`account`** table (`sql/init/010_account.sql`) + **`PostgresAccountRepository`** — login + **`C1 D3 05`** in-game register when **`TAKUMI_ACCOUNT_DB=1`** (**`docs/M14-ACCOUNT-PERSISTENCE-CHECKLIST.md`**); dev seed từ **`TAKUMI_ACCOUNTS`**.
 - [ ] **`MEMB_INFO`** staging → `account` ETL; wire reset-password (`security_code` + `phone`).
 - [x] Runtime **`inventory_slot`** table (`sql/init/002_inventory_slot.sql`) + **`PostgresInventorySlotRepository`** / **`JoinInventoryPacket602`** (12-byte `item` wire blobs; apply SQL on existing volumes via **`./scripts/apply-sql.sh`**).
-- [ ] Staging **`inventory_staging`** + startup importer (flat `ItemIndex` → 12-byte encoding / parity `ItemByteConvert`).
+   - [~] Staging **`inventory_staging`** + startup importer (flat `ItemIndex` → 12-byte encoding / parity `ItemByteConvert`); shop path dùng `WriteShopItem`, inventory DB round-trip vẫn raw blob.
 - [x] After `F3 03` (and move-map restub), send Season 6 **`F3 10`** from **`inventory_slot`** when **`TAKUMI_ROSTER_DB_SYNC`** is on; otherwise empty list.
 - [~] Extend staging→runtime mapping to skills, warehouse, guild/social domains — **M11:** `warehouse_slot` + moves; trade/guild/skill list stubs (**`docs/M11-SOCIAL-WAREHOUSE-SKILLS.md`**); full skill DB + guild domain still open.
 
@@ -179,6 +180,7 @@ Use this to avoid unnecessary rebuilds.
    - [x] Đồng bộ disconnect / move-map stub / **walk** + **instant move** → flush JSON + DB mirror.  
    - [x] **M4b:** `CharacterRosterMirrorHealth` + **`TAKUMI_ROSTER_HEALTH_LOG`**. Tile-only: **`docs/M4-TILE-AND-COORDINATES.md`**, **`docs/M4-ROSTER-SSOT.md`**.  
    - [x] **`inventory_slot` write** sau shop buy/sell/repair — `InventorySlotMirrorWriter` (đọc `F3 10` đã có từ trước).
+   - [x] **Shop item 12-byte encode:** `ShopItemWireEncoding` / `ItemWire602` — ancient/harmony/socket parity legacy + OpenMU `NoSocket=0xFF`.
    - [x] **M4b SSOT Postgres-only (minimal hosts)** — **`TAKUMI_ROSTER_DB_PRIMARY`**, **`character_domain`** mirror (`TAKUMI_CHARACTER_DOMAIN_SYNC`); item `0x22`–`0x24` + potion **`0x26`** — **`ItemWorldHandler`**.
 
 5. **M14 — Account credentials (`MEMB_INFO` / OpenMU `Account`)** — **`docs/M14-ACCOUNT-PERSISTENCE-CHECKLIST.md`**  
@@ -220,7 +222,8 @@ Use this to avoid unnecessary rebuilds.
    - [x] Kill EXP: top-damage grant (`MonsterKillExperienceGrant`, `TAKUMI_COMBAT_TOP_DAMAGE_GRANT_EXP`); party proportional share (`TAKUMI_COMBAT_PARTY_EXP_SHARE=1`).  
    - [x] Gate / NPC shop / buy-sell-repair stub (`MapGateService`, `WorldGameplayHandlers`, `ShopCommerceHandler`).
    - [x] **M9b AI (dev baseline):** wander/chase/`0xD4`/`0x18`, monster→player dmg, periodic viewport, regen broadcast, ATT/path — **`docs/M9-MONSTER-AI-PORT-CHECKLIST.md`** (P0–P3.6 + P4.1–P4.4).  
-   - [x] **M9c shop:** `ItemValue.txt` + **`C2 F3 E9`** + **`F3 ED`** + Android tooltip buy/sell Zen (2026-05-17).  
+   - [x] **M9c shop:** `ItemValue.txt` + **`C2 F3 E9`** + **`F3 ED`** + Android tooltip buy/sell Zen (2026-05-17).
+   - [x] **Item wire / socket (2026-05-18):** `ItemWire602.WriteShopItem` + `SocketItemTypeCatalog` — socket columns chỉ khi `SocketItemType.txt` match (parity `CShop::InsertItemNew`); non-socket → `Joh` @ byte6, bytes 7–11 `0xFF`.  
    - [x] **PvP stub (P3.6):** `PlayerCombatRules` (range, safe zone), `RollDamagePlayerToPlayer`, `TAKUMI_COMBAT_PVP_ENABLED`.  
    - [x] **Quest NPC dialog stub (P4.4):** `NpcQuestCatalog` + `C1 A0` mask / `C1 A1` state (`TAKUMI_QUEST_NPC_DEFAULT_STATE`).  
    - [ ] Quest accept/reward persistence, warehouse/guild NPC đầy đủ — **M11+**. Pathfinding A* đầy đủ (hiện greedy + `MapTilePathfinder` step).

@@ -465,16 +465,7 @@ public static class WorldGameplayHandlers
         foreach (var item in items)
         {
             var blob = new byte[ItemWire602.WireBytes];
-            ItemWire602.WriteSeason6Item(
-                blob,
-                item.ItemGroup,
-                item.ItemIndex,
-                item.ItemLevel,
-                item.Durability,
-                item.Skill != 0,
-                item.Luck != 0,
-                item.Option,
-                item.ExcOpt);
+            ShopItemWireEncoding.WriteShopEntry(blob, item);
             wireItems.Add(new NpcShopWire602.ShopItemWire((byte)item.Slot, blob));
         }
 

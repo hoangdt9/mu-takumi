@@ -189,16 +189,7 @@ public static class ShopCommerceHandler
         }
 
         var blob = new byte[ItemWire602.WireBytes];
-        ItemWire602.WriteSeason6Item(
-            blob,
-            shopItem.ItemGroup,
-            shopItem.ItemIndex,
-            shopItem.ItemLevel,
-            shopItem.Durability,
-            shopItem.Skill != 0,
-            shopItem.Luck != 0,
-            shopItem.Option,
-            shopItem.ExcOpt);
+        ShopItemWireEncoding.WriteShopEntry(blob, shopItem);
 
         // NPC shop: always a new bag anchor (no durability merge — repeat buys stack visually as one item).
         if (!PlayerShopSession.TryFindEmptyBagSlot(presenceSessionId, blob, out var bagSlot))

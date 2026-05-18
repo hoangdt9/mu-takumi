@@ -49,6 +49,7 @@ MapGateCatalog.EnsureInitialized();
 MapManagerCatalog.EnsureInitialized();
 MoveMapCatalog.EnsureInitialized();
 CustomNpcMoveCatalog.EnsureInitialized();
+SocketItemTypeCatalog.EnsureInitialized();
 CustomArenaCatalog.EnsureInitialized();
 NpcShopCatalog.EnsureInitialized();
 

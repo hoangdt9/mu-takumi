@@ -16,16 +16,7 @@ public static class ShopItemValueSender
         foreach (var item in shopItems)
         {
             var blob = new byte[ItemWire602.WireBytes];
-            ItemWire602.WriteSeason6Item(
-                blob,
-                item.ItemGroup,
-                item.ItemIndex,
-                item.ItemLevel,
-                item.Durability,
-                item.Skill != 0,
-                item.Luck != 0,
-                item.Option,
-                item.ExcOpt);
+            ShopItemWireEncoding.WriteShopEntry(blob, item);
             entries.Add(ShopItemValueResolver.ToWireEntry(item, taxRatePercent, blob));
         }
 

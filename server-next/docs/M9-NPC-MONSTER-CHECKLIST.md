@@ -24,8 +24,9 @@ Last updated: 2026-05-18
 - [x] Gate `0x1C` + skill teleport `gate==0` (`MapGateService`, `SkillTeleportService`)
 - [x] Shop commerce `0x32`–`0x34`
 - [x] M8 ETL spawn Postgres; file fallback khi DB trống
-- [ ] **Full combat** AoE/PvP polish — M10c / P3 trong AI port
-- [ ] **Full quest NPC** — M11+
+- [x] **Combat PvP stub** — `PlayerCombatRules`, `TAKUMI_COMBAT_PVP_ENABLED`
+- [x] **Party EXP share** — `TAKUMI_COMBAT_PARTY_EXP_SHARE=1`
+- [ ] **Full quest NPC** (accept/reward persistence) — M11+
 
 ---
 

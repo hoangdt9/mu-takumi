@@ -124,6 +124,25 @@ public static class MonsterCombatCalculator
         return flat + Math.Max(0, playerLevel) * perLevel;
     }
 
+    /// <summary>Player→player hit (parity <c>CAttack</c> PvP branch simplified).</summary>
+    public static int RollDamagePlayerToPlayer(
+        int attackerLevel,
+        int victimLevel,
+        int damagePercent = 100,
+        int fallbackDamage = 0)
+    {
+        var baseDamage = fallbackDamage > 0
+            ? fallbackDamage
+            : Math.Max(1, attackerLevel * 6 + 8);
+        if (damagePercent != 100)
+        {
+            baseDamage = baseDamage * damagePercent / 100;
+        }
+
+        var defense = ResolveStubPlayerDefense(victimLevel);
+        return Math.Clamp(baseDamage - defense, 1, 65_000);
+    }
+
     static int ParseIntEnv(string name, int defaultValue, int min, int max)
     {
         var raw = Environment.GetEnvironmentVariable(name);

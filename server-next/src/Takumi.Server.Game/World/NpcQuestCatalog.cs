@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace Takumi.Server.Game.World;
 
 /// <summary>Quest NPC classes (parity <c>gQuest.NpcTalk</c> subset — stub dialog).</summary>
@@ -20,4 +22,34 @@ public static class NpcQuestCatalog
             570 => 2,
             _ => 0,
         };
+
+    public static byte DefaultQuestStateForClass(int monsterClass)
+    {
+        _ = monsterClass;
+        var raw = Environment.GetEnvironmentVariable("TAKUMI_QUEST_NPC_DEFAULT_STATE")?.Trim();
+        if (string.IsNullOrWhiteSpace(raw)
+            || !int.TryParse(raw, NumberStyles.Integer, CultureInfo.InvariantCulture, out var v))
+        {
+            return 0;
+        }
+
+        return (byte)Math.Clamp(v, 0, 255);
+    }
+
+    /// <summary>Build 50-byte quest slot mask for <c>C1 A0</c> (active quest = 0, inactive = 0xFF).</summary>
+    public static byte[] BuildQuestInfoMask(byte activeQuestIndex)
+    {
+        var mask = new byte[50];
+        for (var i = 0; i < mask.Length; i++)
+        {
+            mask[i] = 0xFF;
+        }
+
+        if (activeQuestIndex < mask.Length)
+        {
+            mask[activeQuestIndex] = 0;
+        }
+
+        return mask;
+    }
 }

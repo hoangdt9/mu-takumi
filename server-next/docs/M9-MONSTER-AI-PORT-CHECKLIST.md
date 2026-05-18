@@ -65,10 +65,10 @@ Last updated: 2026-05-18
 |---|------|:------:|
 | P3.1 | Monster magic `0xDB` / `0x19` | [x] |
 | P3.2 | Element / resist | [x] | `MonsterCombatCalculator` + stat cols |
-| P3.3 | Party exp / top damage | [x] | `MonsterKillExperienceGrant`; `TOP_DAMAGE_GRANT_EXP=0` off |
+| P3.3 | Party exp / top damage | [x] | `TOP_DAMAGE_GRANT_EXP=0` off; `PARTY_EXP_SHARE=1` proportional |
 | P3.4 | Invasion spawns 3/4 | [x] | default skip; `TAKUMI_MONSTER_INCLUDE_INVASION_SPAWN=1` |
 | P3.5 | Kalima regen | [x] | maps 24–29, 36 @ death tile |
-| P3.6 | PvP player damage | [~] |
+| P3.6 | PvP player damage | [x] | `PlayerCombatRules`, range/safe zone, `RollDamagePlayerToPlayer` |
 
 ---
 
@@ -79,7 +79,7 @@ Last updated: 2026-05-18
 | P4.1 | Shop `0x31` | [x] | |
 | P4.2 | Gate `0x1C` + skill `gate==0` | [x] | `MapGateService`, `SkillTeleportService` |
 | P4.3 | Buy/sell/repair | [x] | |
-| P4.4 | Quest NPC stub | [~] | |
+| P4.4 | Quest NPC stub | [x] | `C1 A0` mask + `A1` state; `TAKUMI_QUEST_NPC_DEFAULT_STATE` |
 
 ---
 
@@ -98,7 +98,7 @@ Full list: bảng env cũ trong git history hoặc `MapMonsterScopeSender` / `Mo
 
 ## Dev tiếp (ưu tiên)
 
-1. **P3.6** — PvP damage đầy đủ.
-2. Party EXP split (`TAKUMI_COMBAT_PARTY_EXP_SHARE`) — chưa.
+1. **M11+** — quest logic đầy đủ (accept/reward), warehouse/guild NPC.
+2. PvP: equipment-based defense, duel map rules.
 
-**Baseline P0–P3.5 + P4.1–P4.3: xong.**
+**Baseline P0–P3.6 + P4.1–P4.4: xong (dev stub).**

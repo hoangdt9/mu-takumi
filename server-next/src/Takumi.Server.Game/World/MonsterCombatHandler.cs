@@ -135,7 +135,17 @@ public static class MonsterCombatHandler
             var tk = tid & 0x7FFF;
             if (MonsterViewerRegistry.TryGetByPlayerKey(tk, out _))
             {
-                await TryHandlePvPAsync(tk, mapId, playerLevel, skillPct, presenceSessionId, remote, ct).ConfigureAwait(false);
+                await TryHandlePvPAsync(
+                        tk,
+                        mapId,
+                        playerX,
+                        playerY,
+                        playerLevel,
+                        skillPct,
+                        presenceSessionId,
+                        remote,
+                        ct)
+                    .ConfigureAwait(false);
                 processed.Add(tk);
                 continue;
             }
@@ -208,13 +218,15 @@ public static class MonsterCombatHandler
     static async Task<bool> TryHandlePvPAsync(
         int targetPlayerKey,
         byte mapId,
-        int playerLevel,
+        byte attackerX,
+        byte attackerY,
+        int attackerLevel,
         int skillPct,
         Guid? presenceSessionId,
         string remote,
         CancellationToken ct)
     {
-        if (string.Equals(Environment.GetEnvironmentVariable("TAKUMI_COMBAT_PVP_ENABLED")?.Trim(), "0", StringComparison.OrdinalIgnoreCase))
+        if (!PlayerCombatRules.IsPvPEnabled())
         {
             return false;
         }
@@ -229,9 +241,33 @@ public static class MonsterCombatHandler
             return false;
         }
 
-        var dmg = Math.Max(1, playerLevel * skillPct / 100);
-        await MonsterViewerRegistry.ApplyPvPHitAsync(0, targetPlayerKey, mapId, dmg, ct).ConfigureAwait(false);
-        Console.WriteLine("[{0}] [m10c] pvp skillPct={1} dmg={2} target={3}", remote, skillPct, dmg, targetPlayerKey);
+        if (!PlayerCombatRules.CanAttackPlayer(mapId, attackerX, attackerY, victim.X, victim.Y))
+        {
+            return false;
+        }
+
+        var fallback = ParseIntEnv("TAKUMI_COMBAT_STUB_DAMAGE", 50, 1, 65_000);
+        var victimLevel = Math.Max(1, (int)victim.PlayerLevel);
+        var dmg = MonsterCombatCalculator.RollDamagePlayerToPlayer(
+            attackerLevel,
+            victimLevel,
+            skillPct,
+            fallback);
+
+        var attackerPlayerKey = 0;
+        if (presenceSessionId is { } psid && GameMapPresenceRegistry.TryGetObjectKey(psid, out var pk))
+        {
+            attackerPlayerKey = pk;
+        }
+
+        await MonsterViewerRegistry.ApplyPvPHitAsync(attackerPlayerKey, targetPlayerKey, mapId, dmg, ct).ConfigureAwait(false);
+        Console.WriteLine(
+            "[{0}] [m10c] pvp skillPct={1} dmg={2} target={3} atk={4}",
+            remote,
+            skillPct,
+            dmg,
+            targetPlayerKey,
+            attackerPlayerKey);
         return true;
     }
 
@@ -280,7 +316,16 @@ public static class MonsterCombatHandler
         }
 
         var targetKey = targetId & 0x7FFF;
-        if (await TryHandlePvPAsync(targetKey, mapId, playerLevel, skillPct: isSkill ? ParseIntEnv("TAKUMI_COMBAT_SKILL_DAMAGE_PCT", 150, 50, 500) : 100, presenceSessionId, remote, ct).ConfigureAwait(false))
+        if (await TryHandlePvPAsync(
+                targetKey,
+                mapId,
+                playerX,
+                playerY,
+                playerLevel,
+                skillPct: isSkill ? ParseIntEnv("TAKUMI_COMBAT_SKILL_DAMAGE_PCT", 150, 50, 500) : 100,
+                presenceSessionId,
+                remote,
+                ct).ConfigureAwait(false))
         {
             return;
         }

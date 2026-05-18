@@ -84,6 +84,29 @@ public sealed class MapMonsterInstance
 
     public void ClearDamageLedger() => _damageByPlayerKey.Clear();
 
+    public int TotalRecordedDamage()
+    {
+        var sum = 0;
+        foreach (var dmg in _damageByPlayerKey.Values)
+        {
+            sum += dmg;
+        }
+
+        return sum;
+    }
+
+    public void CopyDamageContributors(List<(int PlayerKey, int Damage)> into)
+    {
+        into.Clear();
+        foreach (var (key, dmg) in _damageByPlayerKey)
+        {
+            if (dmg > 0)
+            {
+                into.Add((key, dmg));
+            }
+        }
+    }
+
     /// <returns><see langword="true"/> if the monster died from this hit.</returns>
     public bool ApplyDamage(int amount)
     {

@@ -4,13 +4,21 @@ using Takumi.Server.Game.Networking;
 
 namespace Takumi.Server.Game.World;
 
-/// <summary>Resolves kill EXP recipient (top damage vs last hitter).</summary>
+/// <summary>Kill EXP: party proportional split, top damage, or last hitter.</summary>
 public static class MonsterKillExperienceGrant
 {
+    static readonly List<(int PlayerKey, int Damage)> ContributorScratch = new(8);
+
     public static bool TopDamageGrantEnabled() =>
         !string.Equals(
             Environment.GetEnvironmentVariable("TAKUMI_COMBAT_TOP_DAMAGE_GRANT_EXP")?.Trim(),
             "0",
+            StringComparison.OrdinalIgnoreCase);
+
+    public static bool PartyExpShareEnabled() =>
+        string.Equals(
+            Environment.GetEnvironmentVariable("TAKUMI_COMBAT_PARTY_EXP_SHARE")?.Trim(),
+            "1",
             StringComparison.OrdinalIgnoreCase);
 
     public static void Grant(
@@ -26,6 +34,72 @@ public static class MonsterKillExperienceGrant
             return;
         }
 
+        if (PartyExpShareEnabled() && TryGrantPartyShare(monster, expGain))
+        {
+            return;
+        }
+
+        GrantSingleRecipient(
+            monster,
+            expGain,
+            attackerPlayer,
+            attackerAccountId,
+            presenceSessionId,
+            onAttackerRosterDirty);
+    }
+
+    static bool TryGrantPartyShare(MapMonsterInstance monster, ushort expGain)
+    {
+        monster.CopyDamageContributors(ContributorScratch);
+        if (ContributorScratch.Count == 0)
+        {
+            return false;
+        }
+
+        var totalDamage = monster.TotalRecordedDamage();
+        if (totalDamage <= 0)
+        {
+            return false;
+        }
+
+        var granted = 0;
+        foreach (var (playerKey, damage) in ContributorScratch)
+        {
+            var share = (int)((long)expGain * damage / totalDamage);
+            if (share <= 0)
+            {
+                continue;
+            }
+
+            if (!TryResolveOnlineRecipient(playerKey, out var entry, out var accountId, out var roster, out var sessionId))
+            {
+                continue;
+            }
+
+            RosterExperienceCombat.GrantKillExperience(
+                entry,
+                share,
+                accountId,
+                () => GameRosterDisk.SaveEntries(accountId, roster));
+            MonsterViewerRegistry.TryUpdateProgress(
+                sessionId,
+                entry.Experience,
+                entry.Level,
+                (uint)Math.Clamp(entry.Zen, 0, uint.MaxValue));
+            granted++;
+        }
+
+        return granted > 0;
+    }
+
+    static void GrantSingleRecipient(
+        MapMonsterInstance monster,
+        ushort expGain,
+        GameRosterEntry attackerPlayer,
+        string? attackerAccountId,
+        Guid? presenceSessionId,
+        Action? onAttackerRosterDirty)
+    {
         var recipient = attackerPlayer;
         var accountId = attackerAccountId;
         var dirty = onAttackerRosterDirty;
@@ -38,12 +112,11 @@ public static class MonsterKillExperienceGrant
             && presenceSessionId is { } sid
             && GameMapPresenceRegistry.TryGetObjectKey(sid, out var atkKey)
             && topKey != atkKey
-            && MonsterViewerRegistry.TryGetByPlayerKey(topKey, out var topViewer)
-            && TryLoadRosterCharacter(topViewer, out var topEntry, out var topAccount, out topRoster))
+            && TryResolveOnlineRecipient(topKey, out var topEntry, out var topAccount, out topRoster, out var topSessionId))
         {
             recipient = topEntry;
             accountId = topAccount;
-            progressSessionId = topViewer.SessionId;
+            progressSessionId = topSessionId;
             dirty = () => GameRosterDisk.SaveEntries(topAccount, topRoster!);
         }
 
@@ -56,6 +129,32 @@ public static class MonsterKillExperienceGrant
                 recipient.Level,
                 (uint)Math.Clamp(recipient.Zen, 0, uint.MaxValue));
         }
+    }
+
+    static bool TryResolveOnlineRecipient(
+        int playerObjectKey,
+        out GameRosterEntry entry,
+        out string accountId,
+        out List<GameRosterEntry> roster,
+        out Guid sessionId)
+    {
+        entry = null!;
+        roster = new List<GameRosterEntry>();
+        accountId = string.Empty;
+        sessionId = Guid.Empty;
+
+        if (!MonsterViewerRegistry.TryGetByPlayerKey(playerObjectKey, out var viewer))
+        {
+            return false;
+        }
+
+        sessionId = viewer.SessionId;
+        if (!TryLoadRosterCharacter(viewer, out entry, out accountId, out roster))
+        {
+            return false;
+        }
+
+        return true;
     }
 
     static bool TryLoadRosterCharacter(

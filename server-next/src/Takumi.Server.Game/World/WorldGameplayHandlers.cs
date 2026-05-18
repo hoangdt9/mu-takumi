@@ -503,10 +503,16 @@ public static class WorldGameplayHandlers
         CancellationToken ct)
     {
         var questIndex = NpcQuestCatalog.DefaultQuestIndexForClass(monsterClass);
-        await writeAsync(QuestWire602.BuildQuestInfo(), ct).ConfigureAwait(false);
-        await writeAsync(QuestWire602.BuildQuestState(questIndex, 0), ct).ConfigureAwait(false);
+        var questState = NpcQuestCatalog.DefaultQuestStateForClass(monsterClass);
+        await writeAsync(QuestWire602.BuildQuestInfo(NpcQuestCatalog.BuildQuestInfoMask(questIndex)), ct).ConfigureAwait(false);
+        await writeAsync(QuestWire602.BuildQuestState(questIndex, questState), ct).ConfigureAwait(false);
         await writeAsync(NpcTalkWire602.Build(1), ct).ConfigureAwait(false);
-        Console.WriteLine("[m9] quest npc talk class={0} quest={1} {2}", monsterClass, questIndex, remote);
+        Console.WriteLine(
+            "[m9] quest npc talk class={0} quest={1} state={2} {3}",
+            monsterClass,
+            questIndex,
+            questState,
+            remote);
         return true;
     }
 

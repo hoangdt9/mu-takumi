@@ -1,3 +1,5 @@
+using System.Text;
+using Takumi.Server.Persistence;
 using Takumi.Server.Protocol;
 
 namespace Takumi.Server.Game.World;
@@ -7,6 +9,8 @@ public static class CharacterOptionHandler
 {
     public static bool TryHandle(
         GameRosterEntry player,
+        string? accountId,
+        byte[]? characterName10,
         ReadOnlySpan<byte> packet,
         Action? onRosterDirty,
         Action? onRosterSave)
@@ -19,6 +23,19 @@ public static class CharacterOptionHandler
         player.KeyConfiguration = CharacterKeyConfiguration.Normalize(configuration);
         onRosterDirty?.Invoke();
         onRosterSave?.Invoke();
+
+        if (!string.IsNullOrEmpty(accountId) && characterName10 is { Length: > 0 })
+        {
+            var name = Encoding.ASCII.GetString(characterName10).TrimEnd('\0');
+            if (!string.IsNullOrWhiteSpace(name))
+            {
+                CharacterRosterMirrorWriter.ScheduleKeyConfigurationUpsert(
+                    accountId,
+                    name,
+                    player.KeyConfiguration);
+            }
+        }
+
         return true;
     }
 }

@@ -38,10 +38,12 @@ public static class ClientHitPackets602
     public static bool TryFindTargetedSkill(
         ReadOnlySpan<byte> packet,
         out int frameOffset,
-        out ushort targetId)
+        out ushort targetId,
+        out ushort skillId)
     {
         frameOffset = -1;
         targetId = 0;
+        skillId = 0;
         for (var i = 0; i <= packet.Length - 6; i++)
         {
             var kind = packet[i];
@@ -58,6 +60,11 @@ public static class ClientHitPackets602
 
             var targetOff = i + len - 2;
             frameOffset = i;
+            if (i + 5 <= packet.Length)
+            {
+                skillId = ReadUInt16Be(packet, i + 3);
+            }
+
             targetId = ReadUInt16Be(packet, targetOff);
             return true;
         }

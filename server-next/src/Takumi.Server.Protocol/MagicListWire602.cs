@@ -34,30 +34,50 @@ public static class MagicListWire602
         return buf;
     }
 
-    /// <summary>MG / Duel Master QA kit: all combat skills with MG column in GameServer <c>Skill.txt</c>.</summary>
-    public static byte[] BuildMagicGladiatorFull(byte maxLevel = 20)
+    public static byte[] BuildFromRows(IReadOnlyList<CharacterSkillRowLike> rows, byte listType = ListTypeNormal)
     {
-        ReadOnlySpan<ushort> skillIds =
-        [
-            1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 17,
-            18, 19, 20, 21, 22, 23,
-            41, 47,
-            55, 56, 57, 73,
-            236, 237,
-        ];
-
-        var entries = new Entry[skillIds.Length];
-        for (var i = 0; i < skillIds.Length; i++)
+        if (rows.Count == 0)
         {
-            var id = skillIds[i];
-            entries[i] = new Entry((byte)id, id, maxLevel);
+            return BuildEmpty(listType);
         }
 
-        return Build(ListTypeNormal, entries);
+        var entries = new Entry[rows.Count];
+        for (var i = 0; i < rows.Count; i++)
+        {
+            var row = rows[i];
+            entries[i] = new Entry(row.Slot, row.Type, row.Level);
+        }
+
+        return Build(listType, entries);
     }
 
-    public static byte[] BuildForServerClass(byte serverClass, byte maxLevel = 20) =>
-        CharacterSheetCalculator.ClassIndex(serverClass) == 3
-            ? BuildMagicGladiatorFull(maxLevel)
-            : BuildEmpty();
+    public interface CharacterSkillRowLike
+    {
+        byte Slot { get; }
+
+        ushort Type { get; }
+
+        byte Level { get; }
+    }
+
+    /// <summary>MG / Duel Master QA kit: all combat skills with MG column in GameServer <c>Skill.txt</c>.</summary>
+    public static byte[] BuildMagicGladiatorFull(byte maxLevel = 20) =>
+        BuildForServerClass(0x60, maxLevel);
+
+    public static byte[] BuildForServerClass(byte serverClass, byte maxLevel = 20)
+    {
+        var defaults = CharacterSkillCatalog.GetDefaultEntries(serverClass, maxLevel);
+        if (defaults.Count == 0)
+        {
+            return BuildEmpty();
+        }
+
+        Span<Entry> scratch = stackalloc Entry[defaults.Count];
+        for (var i = 0; i < defaults.Count; i++)
+        {
+            scratch[i] = defaults[i];
+        }
+
+        return Build(ListTypeNormal, scratch);
+    }
 }

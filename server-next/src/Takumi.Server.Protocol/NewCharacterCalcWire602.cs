@@ -12,7 +12,7 @@ public static class NewCharacterCalcWire602
     public static byte[] Build(
         CharacterRosterWire roster,
         CharacterComputedVitals vitals,
-        CharacterCombatPreview602.Preview combat)
+        CharacterCombatCalculator602.CalcResult calc)
     {
         var p = new byte[PacketLength];
         p[0] = 0xC1;
@@ -21,6 +21,7 @@ public static class NewCharacterCalcWire602
         p[3] = SubCode;
 
         var off = 4;
+        var combat = calc.Combat;
         WriteU32(p, ref off, vitals.Life);
         WriteU32(p, ref off, vitals.LifeMax);
         WriteU32(p, ref off, vitals.Mana);
@@ -29,25 +30,25 @@ public static class NewCharacterCalcWire602
         WriteU32(p, ref off, vitals.SkillManaMax);
         WriteU32(p, ref off, vitals.Shield);
         WriteU32(p, ref off, vitals.ShieldMax);
-        WriteU32(p, ref off, 0); // ViewAddStrength
-        WriteU32(p, ref off, 0); // ViewAddDexterity
-        WriteU32(p, ref off, 0); // ViewAddVitality
-        WriteU32(p, ref off, 0); // ViewAddEnergy
-        WriteU32(p, ref off, 0); // ViewAddLeadership
+        WriteU32(p, ref off, calc.AddStrength);
+        WriteU32(p, ref off, calc.AddDexterity);
+        WriteU32(p, ref off, calc.AddVitality);
+        WriteU32(p, ref off, calc.AddEnergy);
+        WriteU32(p, ref off, calc.AddLeadership);
         WriteU32(p, ref off, combat.PhysiDamageMin);
         WriteU32(p, ref off, combat.PhysiDamageMax);
         WriteU32(p, ref off, combat.MagicDamageMin);
         WriteU32(p, ref off, combat.MagicDamageMax);
-        WriteU32(p, ref off, 0); // ViewCurseDamageMin
-        WriteU32(p, ref off, 0); // ViewCurseDamageMax
-        WriteU32(p, ref off, 0); // ViewMulPhysiDamage
-        WriteU32(p, ref off, 0); // ViewDivPhysiDamage
-        WriteU32(p, ref off, 0); // ViewMulMagicDamage
-        WriteU32(p, ref off, 0); // ViewDivMagicDamage
-        WriteU32(p, ref off, 0); // ViewMulCurseDamage
-        WriteU32(p, ref off, 0); // ViewDivCurseDamage
-        WriteU32(p, ref off, 0); // ViewMagicDamageRate
-        WriteU32(p, ref off, 0); // ViewCurseDamageRate
+        WriteU32(p, ref off, calc.CurseDamageMin);
+        WriteU32(p, ref off, calc.CurseDamageMax);
+        WriteU32(p, ref off, calc.MulPhysiDamage);
+        WriteU32(p, ref off, calc.DivPhysiDamage);
+        WriteU32(p, ref off, calc.MulMagicDamage);
+        WriteU32(p, ref off, calc.DivMagicDamage);
+        WriteU32(p, ref off, calc.MulCurseDamage);
+        WriteU32(p, ref off, calc.DivCurseDamage);
+        WriteU32(p, ref off, calc.MagicDamageRate);
+        WriteU32(p, ref off, calc.CurseDamageRate);
         WriteU32(p, ref off, combat.PhysiSpeed);
         WriteU32(p, ref off, combat.MagicSpeed);
         WriteU32(p, ref off, combat.AttackSuccessRate);
@@ -68,7 +69,7 @@ public static class NewCharacterCalcWire602
         return p;
     }
 
-    public static byte[] Build(CharacterRosterWire roster)
+    public static byte[] Build(CharacterRosterWire roster, IReadOnlyDictionary<byte, byte[]>? wearSlots = null)
     {
         var lv = Math.Max((ushort)1, roster.Level);
         var sheet = CharacterSheetCalculator.ResolveSheet(roster.ServerClass, lv, roster.Sheet);
@@ -80,8 +81,8 @@ public static class NewCharacterCalcWire602
             Mana = merged.ClampU16(merged.CurrentMp > 0 ? merged.CurrentMp : merged.MaxMp),
             Shield = merged.ClampU16(merged.CurrentShield),
         };
-        var combat = CharacterCombatPreview602.FromSheet(roster.ServerClass, lv, sheet);
-        return Build(roster, vitals, combat);
+        var calc = CharacterCombatCalculator602.Compute(roster.ServerClass, lv, sheet, wearSlots);
+        return Build(roster, vitals, calc);
     }
 
     static void WriteU32(byte[] p, ref int off, uint value)

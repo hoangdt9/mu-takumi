@@ -131,6 +131,31 @@ fi
 echo "== docker compose ${up_args[*]} =="
 docker compose "${up_args[@]}"
 
+PG_PORT="${TAKUMI_POSTGRES_PUBLISH_PORT:-54444}"
+PG_URI="postgresql://takumi:takumi@127.0.0.1:${PG_PORT}/takumi_runtime"
+if [[ -x "$SCRIPT_DIR/apply-sql.sh" ]]; then
+  echo "== apply SQL schema patches (character_skill table) =="
+  for _ in 1 2 3 4 5 6 7 8 9 10; do
+    if docker compose exec -T postgres pg_isready -U takumi -d takumi_runtime >/dev/null 2>&1; then
+      break
+    fi
+    sleep 1
+  done
+  "$SCRIPT_DIR/apply-sql.sh" "$PG_URI" sql/patches/016_character_skill.sql || true
+  # Dev QA seed (013) RESETS test/mg001 stats + inventory — only when explicitly requested.
+  if [[ "${TAKUMI_APPLY_DEV_SEEDS:-0}" == "1" || "${TAKUMI_APPLY_DEV_SEEDS:-}" == "true" ]]; then
+    echo "== TAKUMI_APPLY_DEV_SEEDS=1 — applying mg001 QA seed (overwrites test/mg001 in DB) =="
+    if [[ -x "$SCRIPT_DIR/apply-dev-character-seeds.sh" ]]; then
+      "$SCRIPT_DIR/apply-dev-character-seeds.sh" "$PG_URI" || true
+    else
+      "$SCRIPT_DIR/apply-sql.sh" "$PG_URI" sql/patches/017_seed_mg001_character_skill.sql || true
+    fi
+  else
+    echo "== skip dev QA seeds (set TAKUMI_APPLY_DEV_SEEDS=1 to reset test/mg001 to sql/patches/013) =="
+  fi
+  echo ""
+fi
+
 # Container cũ giữ PID — không chạy lại entrypoint (dotnet build) → C# mới (vd. F4 06 on-accept) không áp dụng.
 # game-host cũng vậy: nếu chỉ recreate legacy-login, takumi-game-host có thể vẫn process cũ (hàng giờ) dù source đã đổi.
 if [[ "$RECREATE" -eq 0 ]]; then

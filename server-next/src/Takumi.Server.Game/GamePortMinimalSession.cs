@@ -73,6 +73,7 @@ public static class GamePortMinimalSession
                 "[{0}] m6_minimal_session_begin hasClientProtectKeys={1} rxBuild=M6-2026-05-15c",
                 remote,
                 options.ClientProtectOutboundKeys.HasValue);
+            CharacterRosterSsoT.LogStartupOnce();
             tcp.NoDelay = true;
             ConnectTcpKeepAlive.TryApply(tcp.Client);
             var socketConnection = SocketConnection.Create(tcp.Client);
@@ -317,6 +318,21 @@ public static class GamePortMinimalSession
                             return;
                         }
 
+                        var createReject = CharacterRosterOps.ValidateCreate(roster, nameCopy, packedClass);
+                        if (createReject != CharacterRosterOps.CreateRejectReason.None)
+                        {
+                            var failCode = CharacterRosterOps.MapCreateRejectToWire(createReject);
+                            var failPkt = CharacterCreateWire602.BuildCreateFailure(failCode, nameCopy);
+                            await GamePortOutboundWire.WriteAsync(connection, protect, failPkt, ct).ConfigureAwait(false);
+                            Console.WriteLine(
+                                "[{0}] create character rejected reason={1} wire=0x{2:X2} name='{3}'",
+                                remote,
+                                createReject,
+                                failCode,
+                                Encoding.ASCII.GetString(nameCopy).TrimEnd('\0'));
+                            return;
+                        }
+
                         var serverClass = CharacterCreateWire602.MapPackedClassToServerProtocol(packedClass);
                         GameRosterMutations.UpsertNewCharacter(roster, nameCopy, serverClass, level: 1);
                         var slotByte = (byte)(roster.Count - 1);
@@ -351,15 +367,22 @@ public static class GamePortMinimalSession
                             deleteOff,
                             packet.Length);
 
-                        var pickedDel = FindRosterEntry(roster, deleteName10);
-                        if (pickedDel is null)
+                        var deleteReject = CharacterRosterOps.ValidateDelete(roster, deleteName10, deleteResident20);
+                        if (deleteReject != CharacterRosterOps.DeleteRejectReason.None)
                         {
+                            var failCode = CharacterRosterOps.MapDeleteRejectToWire(deleteReject);
+                            await GamePortOutboundWire.WriteAsync(
+                                    connection,
+                                    protect,
+                                    CharacterCreateWire602.BuildDeleteResponse(failCode),
+                                    ct)
+                                .ConfigureAwait(false);
                             Console.WriteLine(
-                                "[{0}] delete character — not in roster name='{1}' frame@{2}",
+                                "[{0}] delete character rejected reason={1} wire=0x{2:X2} name='{3}'",
                                 remote,
-                                Encoding.ASCII.GetString(deleteName10).TrimEnd('\0'),
-                                deleteOff);
-                            await GamePortOutboundWire.WriteAsync(connection, protect, CharacterCreateWire602.BuildDeleteResponse(2), ct).ConfigureAwait(false);
+                                deleteReject,
+                                failCode,
+                                Encoding.ASCII.GetString(deleteName10).TrimEnd('\0'));
                             return;
                         }
 
@@ -430,10 +453,17 @@ public static class GamePortMinimalSession
                             .ConfigureAwait(false);
                         await GamePortOutboundWire.WriteAsync(connection, protect, joinPkt, ct, TrackVitalsOutbound).ConfigureAwait(false);
                         await GamePortOutboundWire.WriteAsync(connection, protect, invPkt, ct, TrackVitalsOutbound).ConfigureAwait(false);
+                        var skillPkt = await JoinSkillLifecycle.BuildJoinPacketAsync(
+                                TakumiPostgresMirror.CharacterSkills,
+                                loggedAccountId,
+                                joinName10,
+                                picked.ServerClass,
+                                ct)
+                            .ConfigureAwait(false);
                         await GamePortOutboundWire.WriteAsync(
                                 connection,
                                 protect,
-                                MagicListWire602.BuildForServerClass(picked.ServerClass),
+                                skillPkt,
                                 ct,
                                 TrackVitalsOutbound)
                             .ConfigureAwait(false);
@@ -471,7 +501,10 @@ public static class GamePortMinimalSession
                         await GamePortOutboundWire.WriteAsync(
                                 connection,
                                 protect,
-                                NewCharacterCalcWire602.Build(picked.ToWireWithSheet()),
+                                CharacterCalcBroadcast602.BuildCalcPacket(
+                                    picked,
+                                    presenceSessionId,
+                                    CharacterCalcBroadcast602.ResolveWearSlots(presenceSessionId)),
                                 ct,
                                 TrackVitalsOutbound)
                             .ConfigureAwait(false);
@@ -986,58 +1019,9 @@ public static class GamePortMinimalSession
 
     static void SaveRoster(string accountId, IReadOnlyList<GameRosterEntry> roster)
     {
-        var root = new RosterSaveRoot();
-        foreach (var e in roster)
-        {
-            var name = Encoding.ASCII.GetString(e.Name10).TrimEnd('\0', ' ');
-            if (string.IsNullOrEmpty(name))
-            {
-                continue;
-            }
-
-            root.Characters.Add(
-                new RosterSaveChar
-                {
-                    Name = name,
-                    ServerClass = e.ServerClass,
-                    Level = e.Level,
-                    Experience = e.Experience,
-                    MapId = e.MapId,
-                    PosX = e.PosX,
-                    PosY = e.PosY,
-                    Angle = e.Angle,
-                    CurrentHp = e.CurrentHp,
-                    MaxHp = e.MaxHp,
-                    CurrentMp = e.CurrentMp,
-                    MaxMp = e.MaxMp,
-                    Zen = e.Zen,
-                    CurrentShield = e.CurrentShield,
-                    MaxShield = e.MaxShield,
-                    Strength = e.Strength,
-                    Dexterity = e.Dexterity,
-                    Vitality = e.Vitality,
-                    Energy = e.Energy,
-                    Leadership = e.Leadership,
-                    LevelUpPoint = e.LevelUpPoint,
-                    CurrentBp = e.CurrentBp,
-                    MaxBp = e.MaxBp,
-                });
-        }
-
         if (!CharacterRosterBootstrap.ShouldSkipJsonExportOnSave())
         {
-            var path = GameRosterDisk.GetRosterFilePath(accountId);
-            var dir = Path.GetDirectoryName(path);
-            if (!string.IsNullOrEmpty(dir))
-            {
-                Directory.CreateDirectory(dir);
-            }
-
-            var json = JsonSerializer.Serialize(root, GameRosterDisk.JsonOptions);
-            lock (GameRosterDisk.JsonFileLock)
-            {
-                File.WriteAllText(path, json);
-            }
+            GameRosterDisk.SaveEntries(accountId, roster);
         }
 
         CharacterRosterMirrorWriter.ScheduleReplaceAccountRoster(accountId, BuildCharacterRosterRows(roster));

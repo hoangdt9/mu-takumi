@@ -210,7 +210,6 @@ static void ApplySelectedSkillIndex(int skillIndex)
 	g_pSkillList->SetHeroPriorSkill(GetCurrentSkillTypeForPrior());
 	Hero->CurrentSkill = static_cast<BYTE>(skillIndex);
 	g_pMainFrame->SetSkillHotKey(0, skillIndex);
-	SaveOptions();
 }
 
 #if defined(__ANDROID__) || defined(MU_IOS)
@@ -2436,8 +2435,14 @@ bool SEASON3B::CNewUISkillList::UpdateMouseEvent()
 #if defined(__ANDROID__) || defined(MU_IOS)
 				if (m_iAndroidTouchAssignSkillIndex >= 0)
 				{
-					SetHotKey(iIndex, m_iAndroidTouchAssignSkillIndex);
-					SaveOptions();
+					if (iIndex == 0)
+					{
+						ApplySelectedSkillIndex(m_iAndroidTouchAssignSkillIndex);
+					}
+					else
+					{
+						SetHotKey(iIndex, m_iAndroidTouchAssignSkillIndex);
+					}
 					SetSkillPickerOpen(false);
 					m_iAndroidTouchAssignSkillIndex = -1;
 					m_EventState = EVENT_NONE;
@@ -2744,7 +2749,6 @@ bool SEASON3B::CNewUISkillList::UpdateKeyEvent()
 				if (SEASON3B::IsPress('1' + i))
 				{
 					SetHotKey(i + 1, m_iRenderSkillInfoType);
-					SaveOptions();
 					return false;
 				}
 			}
@@ -2817,11 +2821,20 @@ void SEASON3B::CNewUISkillList::SetHotKey(int iHotKey, int iSkillType)
 		}
 	}
 
+	const int previousHotKey = m_iHotKeySkillType[iHotKey];
 	m_iHotKeySkillType[iHotKey] = iSkillType;
 
 	if (iHotKey == 0 && iSkillType >= 0 && Hero != NULL)
 	{
 		Hero->CurrentSkill = static_cast<BYTE>(iSkillType);
+	}
+
+	if (previousHotKey != iSkillType
+		&& !TakumiIsApplyingServerSkillOptions()
+		&& Hero != NULL
+		&& CharacterAttribute != NULL)
+	{
+		SaveOptions();
 	}
 }
 

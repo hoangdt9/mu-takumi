@@ -258,6 +258,7 @@ public static class LegacyLoginHostRunner
                 advertisedGamePort,
                 System.Reflection.Assembly.GetExecutingAssembly().Location,
                 reuseSocketAddr);
+            CharacterRosterSsoT.LogStartupOnce();
         }
         catch (SocketException ex) when (ex.SocketErrorCode == SocketError.AddressAlreadyInUse)
         {
@@ -702,6 +703,23 @@ public static class LegacyLoginHostRunner
                         return;
                     }
 
+                    var gameRoster = roster.Select(ToGameRosterEntry).ToList();
+                    var createReject = CharacterRosterOps.ValidateCreate(gameRoster, nameCopy, packedClass);
+                    if (createReject != CharacterRosterOps.CreateRejectReason.None)
+                    {
+                        var failCode = CharacterRosterOps.MapCreateRejectToWire(createReject);
+                        var failPkt = CharacterCreateWire602.BuildCreateFailure(failCode, nameCopy);
+                        await connection.Output.WriteAsync(failPkt, ct).ConfigureAwait(false);
+                        await connection.Output.FlushAsync(ct).ConfigureAwait(false);
+                        Console.WriteLine(
+                            "[{0}] create character rejected reason={1} wire=0x{2:X2} name='{3}'",
+                            remote,
+                            createReject,
+                            failCode,
+                            Encoding.ASCII.GetString(nameCopy).TrimEnd('\0'));
+                        return;
+                    }
+
                     var serverClass = CharacterCreateWire602.MapPackedClassToServerProtocol(packedClass);
                     UpsertRoster(roster, nameCopy, serverClass, level: 1);
                     var slotByte = (byte)(roster.Count - 1);
@@ -758,7 +776,14 @@ public static class LegacyLoginHostRunner
                         .ConfigureAwait(false);
                     await WriteOutboundAsync(joinPkt);
                     await WriteOutboundAsync(invPkt);
-                    await WriteOutboundAsync(MagicListWire602.BuildForServerClass(picked.ServerClass));
+                    var skillPkt = await JoinSkillLifecycle.BuildJoinPacketAsync(
+                            TakumiPostgresMirror.CharacterSkills,
+                            loggedAccountId,
+                            joinName10,
+                            picked.ServerClass,
+                            ct)
+                        .ConfigureAwait(false);
+                    await WriteOutboundAsync(skillPkt);
                     await WriteOutboundAsync(OptionDataWire602.BuildApply(picked.KeyConfiguration));
                     if (SyncLegacyEntryFromJoin(picked, joinPkt))
                     {
@@ -789,7 +814,10 @@ public static class LegacyLoginHostRunner
                         bpCur,
                         bpMax,
                         computedVitals).ConfigureAwait(false);
-                    var calcPkt = NewCharacterCalcWire602.Build(ToWireWithSheet(picked));
+                    var calcPkt = CharacterCalcBroadcast602.BuildCalcPacket(
+                        gameEntry,
+                        presenceSessionId,
+                        CharacterCalcBroadcast602.ResolveWearSlots(presenceSessionId));
                     TrackVitalsOutbound(calcPkt);
                     await connection.Output.WriteAsync(calcPkt, ct).ConfigureAwait(false);
                     await connection.Output.FlushAsync(ct).ConfigureAwait(false);
@@ -905,7 +933,7 @@ public static class LegacyLoginHostRunner
 
                 // Delete character F3 02: C1 22 F3 02 + name[10] + resident[20] (Takumi `SendRequestDeleteCharacter` in wsclientinline.h).
                 // Without this handler the client stays on MESSAGE_WAIT forever after OK on the captcha dialog.
-                if (TryFindDeleteCharacterRequest(packet, out var deleteOff, out var deleteName10, out _))
+                if (TryFindDeleteCharacterRequest(packet, out var deleteOff, out var deleteName10, out var deleteResident20))
                 {
                     if (!loginLatch.IsLoggedIn)
                     {
@@ -913,16 +941,19 @@ public static class LegacyLoginHostRunner
                         return;
                     }
 
-                    var pickedDel = FindRosterEntry(roster, deleteName10);
-                    if (pickedDel is null)
+                    var gameRosterDel = roster.Select(ToGameRosterEntry).ToList();
+                    var deleteReject = CharacterRosterOps.ValidateDelete(gameRosterDel, deleteName10, deleteResident20);
+                    if (deleteReject != CharacterRosterOps.DeleteRejectReason.None)
                     {
-                        Console.WriteLine(
-                            "[{0}] delete character — not in roster name='{1}' (respond Value=2 resident wrong) frame@{2}",
-                            remote,
-                            Encoding.ASCII.GetString(deleteName10).TrimEnd('\0'),
-                            deleteOff);
-                        await connection.Output.WriteAsync(CharacterCreateWire602.BuildDeleteResponse(2), ct).ConfigureAwait(false);
+                        var failCode = CharacterRosterOps.MapDeleteRejectToWire(deleteReject);
+                        await connection.Output.WriteAsync(CharacterCreateWire602.BuildDeleteResponse(failCode), ct).ConfigureAwait(false);
                         await connection.Output.FlushAsync(ct).ConfigureAwait(false);
+                        Console.WriteLine(
+                            "[{0}] delete character rejected reason={1} wire=0x{2:X2} name='{3}'",
+                            remote,
+                            deleteReject,
+                            failCode,
+                            Encoding.ASCII.GetString(deleteName10).TrimEnd('\0'));
                         return;
                     }
 

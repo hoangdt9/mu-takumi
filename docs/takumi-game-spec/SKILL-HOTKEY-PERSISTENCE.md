@@ -18,6 +18,8 @@ Layout 30 byte (client `SaveOptions`):
 
 Client map skill **index** (0..`MAX_MAGIC-1`) ↔ server lưu **skill type** (WORD). `ReceiveOption` tra cứu `CharacterAttribute->Skill[j] == iHotKey` rồi `SetSkillHotKey(i, j)`.
 
+**Thứ tự join bắt buộc:** server gửi **`F3 11`** (danh sách skill đã học) **trước** **`F3 30`** (hotkey blob). Nếu `F3 11` trống, hotkey đã lưu trong DB sẽ không khớp skill nào sau relog. Xem **M7j** — bảng `character_skill` + `JoinSkillLifecycle` trong `server-next`.
+
 ## Server backends
 
 ### Takumi GameServer + DataServer (C++)
@@ -46,13 +48,34 @@ Client map skill **index** (0..`MAX_MAGIC-1`) ↔ server lưu **skill type** (WO
 
 **Android touch:** `TryToggleSkillPickerAtTouch` (finger down) mở/đóng picker; chọn skill trong list → `ApplySelectedSkillIndex` + đóng picker.
 
+## DB (server-next)
+
+**Bảng:** `public.character_roster` — cột **`key_configuration`** (`bytea`, 30 byte).  
+**Không** lưu trong `character_domain` (bảng đó là mirror stats/EXP/vị trí).
+
+Chạy patch trước khi test (Docker Postgres mặc định cổng **54444**):
+
+```bash
+cd server-next
+./scripts/apply-sql.sh "postgresql://takumi:takumi@127.0.0.1:54444/takumi_runtime" sql/patches/015_character_key_configuration.sql
+```
+
+Kiểm tra:
+
+```sql
+SELECT character_name, length(key_configuration) AS bytes
+FROM character_roster WHERE account_login = 'test';
+```
+
+Khi client gửi `C1 F3 30`, `CharacterOptionHandler` cập nhật `character_roster.key_configuration` **ngay** (không đợi disconnect).
+
 ## QA checklist
 
 - [ ] Nhân vật mới: ô skill chính trống; mở picker không có khung “đang chọn” (skillbox_use) nếu chưa gán skill.
-- [ ] Chọn skill → icon hiện đúng; thoát game / vào lại → cùng skill (server gửi `F3 30`).
+- [ ] Chọn skill Độc → gán ô **0** (picker hoặc chạm ô 0 trên bar) → thoát game / vào lại → vẫn ở ô 0.
 - [ ] Gán thêm hotkey 1–9 (Ctrl+phím trên PC hoặc phím sau khi pick trên Android) → relog vẫn giữ.
-- [ ] OpenMU: kiểm tra cột `KeyConfiguration` trên bảng character sau `SaveOptions`.
-- [ ] Takumi C++: kiểm tra bảng option trên DataServer (theo `GDOptionDataSaveSend`).
+- [ ] Postgres: `SELECT key_configuration FROM character_roster WHERE character_name = '...';` sau khi gán skill.
+- [ ] Takumi C++ GS: kiểm tra bảng option trên DataServer (theo `GDOptionDataSaveSend`).
 
 ## Tham chiếu PC
 

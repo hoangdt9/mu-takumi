@@ -3,7 +3,8 @@ using Takumi.Server.Protocol;
 
 namespace Takumi.Server.Game.World;
 
-/// <summary><c>CGLevelUpPointRecv</c> — <c>C1 F3 06</c> stat allocation (legacy 5-byte or bulk 7-byte with count).</summary>
+/// <summary><c>CGLevelUpPointRecv</c> — <c>C1 F3 06</c> stat allocation (legacy 5-byte or bulk 7-byte with count).
+/// Success replies with <c>F3 06</c> then <c>F3 E1</c> so the HUD refreshes combat preview fields.</summary>
 public static class CharacterStatPointHandler
 {
     public const int LegacyRequestLength = 5;
@@ -51,6 +52,7 @@ public static class CharacterStatPointHandler
 
     public static async Task<bool> TryHandleAsync(
         GameRosterEntry player,
+        Guid? presenceSessionId,
         string? accountId,
         byte[] packet,
         Func<ReadOnlyMemory<byte>, CancellationToken, Task> writeAsync,
@@ -120,13 +122,25 @@ public static class CharacterStatPointHandler
         var maxLifeOrMana = CharacterSheetCalculator.MaxAfterStatAdd(player.ServerClass, player.Level, sheet, lastStatType);
         var pkt = LevelUpPointWire602.BuildSuccess(lastStatType, sheet, vitals, maxLifeOrMana);
         await writeAsync(pkt, ct).ConfigureAwait(false);
+
+        await CharacterCalcBroadcast602.SendAsync(player, presenceSessionId, writeAsync, ct).ConfigureAwait(false);
+
+        var combat = CharacterCombatCalculator602.Compute(
+            player.ServerClass,
+            player.Level,
+            sheet,
+            wearSlots: null).Combat;
         Console.WriteLine(
-            "[m7] stat point bulk type={0} str={1} vit={2} ene={3} pointsLeft={4}",
+            "[m7] stat point bulk type={0} str={1} dex={2} vit={3} ene={4} pointsLeft={5} phys={6}-{7} def={8} (sent F3 06 + F3 E1)",
             lastStatType,
             sheet.Strength,
+            sheet.Dexterity,
             sheet.Vitality,
             sheet.Energy,
-            sheet.LevelUpPoint);
+            sheet.LevelUpPoint,
+            combat.PhysiDamageMin,
+            combat.PhysiDamageMax,
+            combat.Defense);
         return true;
     }
 }

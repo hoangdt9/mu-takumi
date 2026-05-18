@@ -24,6 +24,20 @@ public static class CharacterCreateWire602
         return p;
     }
 
+    public static ReadOnlyMemory<byte> BuildCreateFailure(byte resultCode, ReadOnlySpan<byte> name10)
+    {
+        var p = new byte[19];
+        p[0] = 0xC1;
+        p[1] = 19;
+        p[2] = 0xF3;
+        p[3] = 0x01;
+        p[4] = resultCode;
+        p.AsSpan(5, 10).Clear();
+        var n = Math.Min(10, name10.Length);
+        name10[..n].CopyTo(p.AsSpan(5));
+        return p;
+    }
+
     /// <summary>PRECEIVE delete character: Value 1=success, 2=resident wrong, …</summary>
     public static byte[] BuildDeleteResponse(byte value) => new byte[] { 0xC1, 0x05, 0xF3, 0x02, value };
 

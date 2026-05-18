@@ -78,6 +78,8 @@ extern BYTE g_TakumiServerNextTicketPending[TAKUMI_SERVERNEXT_SESSION_TICKET_BYT
 extern bool g_TakumiServerNextTicketPendingValid;
 void Takumi_ClearServerNextSessionTicketPending();
 void ReceiveServerNextSessionTicket( BYTE* ReceiveBuffer, int Size );
+/// True while <c>ReceiveOption</c> is hydrating hotkeys from server (suppress <c>SaveOptions</c> echo).
+bool TakumiIsApplyingServerSkillOptions();
 
 /// Send one bulk <c>C1 F3 06</c> (stat type + count) — server applies all points and mirrors DB once.
 void TakumiSendLevelUpPointsBulk(BYTE statType, int count);
@@ -95,6 +97,8 @@ void TakumiSyncHeroMaxVitals(DWORD maxHp, DWORD maxSd);
 bool TakumiIsAndroidWorldLoadPending();
 /// Terrain textures match WorldActive and primary maptile is loaded (avoids white tiles).
 bool TakumiIsAndroidTerrainReady();
+/// Called at end of <c>CMapManager::LoadWorld</c> (character select + in-game) to track loaded terrain.
+void TakumiNotifyAndroidTerrainLoaded(int map);
 /// Run deferred map load on the main loop (after F3 03) to avoid blocking inside packet dispatch.
 void TakumiProcessAndroidPendingLoadWorld();
 /// Reset adaptive perf penalties for a few seconds after terrain/world load.

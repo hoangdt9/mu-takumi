@@ -9,6 +9,8 @@ public static class TakumiPostgresMirror
 
     public static PostgresInventorySlotRepository? InventorySlots { get; private set; }
 
+    public static PostgresCharacterSkillRepository? CharacterSkills { get; private set; }
+
     public static PostgresWarehouseSlotRepository? WarehouseSlots { get; private set; }
 
     /// <summary>Optional <c>session_ticket</c> rows for login→game handoff when <c>TAKUMI_SESSION_HANDOFF_DB</c> is on.</summary>
@@ -35,6 +37,7 @@ public static class TakumiPostgresMirror
         CharacterRoster = null;
         CharacterDomain = null;
         InventorySlots = null;
+        CharacterSkills = null;
         WarehouseSlots = null;
         AccountWallet = null;
         var sync = string.Equals(Environment.GetEnvironmentVariable("TAKUMI_ROSTER_DB_SYNC"), "1", StringComparison.OrdinalIgnoreCase)
@@ -61,10 +64,11 @@ public static class TakumiPostgresMirror
             }
 
             InventorySlots = new PostgresInventorySlotRepository(cs);
+            CharacterSkills = new PostgresCharacterSkillRepository(cs);
             WarehouseSlots = new PostgresWarehouseSlotRepository(cs);
             AccountWallet = new PostgresAccountWalletRepository(cs);
             Console.Error.WriteLine(
-                "[postgres-mirror] roster + inventory_slot + warehouse_slot + account_wallet enabled; character_domain={0}",
+                "[postgres-mirror] roster + inventory_slot + character_skill + warehouse_slot + account_wallet enabled; character_domain={0}",
                 CharacterDomain is not null);
         }
         catch (Exception ex)
@@ -73,6 +77,7 @@ public static class TakumiPostgresMirror
             CharacterRoster = null;
             CharacterDomain = null;
             InventorySlots = null;
+            CharacterSkills = null;
             WarehouseSlots = null;
             AccountWallet = null;
         }

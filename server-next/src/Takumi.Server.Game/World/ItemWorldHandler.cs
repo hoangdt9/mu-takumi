@@ -183,6 +183,12 @@ public static class ItemWorldHandler
                     dstSlot,
                     remote);
             }
+
+            if (ItemWire602.IsWearSlot(srcSlot) || ItemWire602.IsWearSlot(dstSlot))
+            {
+                await CharacterCalcBroadcast602.SendAsync(player, presenceSessionId, writeAsync, ct)
+                    .ConfigureAwait(false);
+            }
         }
         else if (srcFlag == ItemStorageFlags602.Inventory && dstFlag == ItemStorageFlags602.Warehouse)
         {

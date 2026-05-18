@@ -9,22 +9,36 @@ public static class ShopItemPricing
 
     public static long SellPrice(ReadOnlySpan<byte> item12) => ShopItemValueResolver.ResolveSell(item12);
 
-    public static long RepairCost(ReadOnlySpan<byte> item12)
+    public static long RepairCost(ReadOnlySpan<byte> item12, bool selfRepair = false)
     {
         if (ItemWire602.IsEmpty(item12))
         {
             return 0;
         }
 
-        var maxDur = 255;
-        var cur = item12[2];
+        ItemValueCatalog.EnsureInitialized();
+        ItemSizeCatalog.EnsureInitialized();
+        var maxDur = ItemSizeCatalog.GetMaxDurability(item12);
+        var cur = ItemWire602.DecodeDurability(item12);
         if (cur >= maxDur)
         {
             return 0;
         }
 
-        var perPoint = ParseLongEnv("TAKUMI_SHOP_REPAIR_PER_POINT", 2);
-        return (maxDur - cur) * perPoint;
+        var index = ItemWire602.DecodeItemIndex(item12);
+        var level = ItemWire602.DecodeLevel(item12);
+        var exc = ItemWire602.DecodeExcellentOptions(item12);
+        long baseGold = 100;
+        if (ItemValueCatalog.TryGetBuySellExact(index, level, exc, out var buy, out _))
+        {
+            baseGold = buy;
+        }
+        else if (ItemValueCatalog.TryGetBuySell(index, level, 0, out buy, out _))
+        {
+            baseGold = buy;
+        }
+
+        return ShopRepairPricing.Compute((int)Math.Min(baseGold, int.MaxValue), cur, maxDur, index, selfRepair);
     }
 
     static int ParseIntEnv(string name, int defaultValue, int min, int max)

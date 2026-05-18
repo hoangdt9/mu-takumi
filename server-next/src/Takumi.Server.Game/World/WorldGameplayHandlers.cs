@@ -25,6 +25,7 @@ public static class WorldGameplayHandlers
     {
         if (await CharacterStatPointHandler.TryHandleAsync(
                 player,
+                presenceSessionId,
                 accountId,
                 packet,
                 writeAsync,
@@ -34,7 +35,13 @@ public static class WorldGameplayHandlers
             return true;
         }
 
-        if (CharacterOptionHandler.TryHandle(player, packet, onRosterDirty, onRosterSave))
+        if (CharacterOptionHandler.TryHandle(
+                player,
+                accountId,
+                characterName10,
+                packet,
+                onRosterDirty,
+                onRosterSave))
         {
             return true;
         }

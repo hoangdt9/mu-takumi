@@ -6,7 +6,7 @@ namespace Takumi.Server.Game.World;
 /// <summary>Item footprint (columns × rows) — client <c>Item_*.bmd</c> first, then <c>Item/Item.txt</c> fallback.</summary>
 public static class ItemSizeCatalog
 {
-    sealed record SizeRow(int Width, int Height);
+    sealed record SizeRow(int Width, int Height, int MaxDurability);
 
     static readonly object Gate = new();
     static Dictionary<int, SizeRow> _byIndex = new();
@@ -58,6 +58,18 @@ public static class ItemSizeCatalog
         }
     }
 
+    public static byte GetMaxDurability(ReadOnlySpan<byte> item12)
+    {
+        EnsureInitialized();
+        var index = ItemWire602.DecodeItemIndex(item12);
+        if (index >= 0 && _byIndex.TryGetValue(index, out var row))
+        {
+            return (byte)Math.Clamp(row.MaxDurability, 1, 255);
+        }
+
+        return 255;
+    }
+
     static (Dictionary<int, SizeRow>? Map, string? Label) LoadBestSource()
     {
         var bmdPath = ClientItemFootprintCatalog.ResolveBmdPath();
@@ -67,11 +79,12 @@ public static class ItemSizeCatalog
             bmd = ClientItemFootprintCatalog.TryLoadFromBmd(bmdPath);
             if (bmd is { Count: > 0 })
             {
+                Dictionary<int, SizeRow>? txtDur = null;
                 var txtPath = ResolveItemTxtPath();
                 if (txtPath is not null)
                 {
-                    var txt = LoadFromItemTxt(txtPath);
-                    var mismatches = CountMismatches(bmd, txt);
+                    txtDur = LoadFromItemTxt(txtPath);
+                    var mismatches = CountMismatches(bmd, txtDur);
                     if (mismatches > 0)
                     {
                         Console.WriteLine(
@@ -81,7 +94,7 @@ public static class ItemSizeCatalog
                     }
                 }
 
-                return (ToSizeRows(bmd), $"client-bmd:{Path.GetFileName(bmdPath)}");
+                return (ToSizeRows(bmd, txtDur), $"client-bmd:{Path.GetFileName(bmdPath)}");
             }
 
             Console.WriteLine("[m8] ItemSizeCatalog: failed to read client BMD at {0}", bmdPath);
@@ -100,12 +113,20 @@ public static class ItemSizeCatalog
         return (null, "default-1x1");
     }
 
-    static Dictionary<int, SizeRow> ToSizeRows(Dictionary<int, (int Width, int Height)> src)
+    static Dictionary<int, SizeRow> ToSizeRows(
+        Dictionary<int, (int Width, int Height)> src,
+        Dictionary<int, SizeRow>? txtDurability = null)
     {
         var map = new Dictionary<int, SizeRow>(src.Count);
         foreach (var kv in src)
         {
-            map[kv.Key] = new SizeRow(kv.Value.Width, kv.Value.Height);
+            var maxDur = 255;
+            if (txtDurability is not null && txtDurability.TryGetValue(kv.Key, out var txtRow))
+            {
+                maxDur = txtRow.MaxDurability;
+            }
+
+            map[kv.Key] = new SizeRow(kv.Value.Width, kv.Value.Height, maxDur);
         }
 
         return map;
@@ -181,8 +202,16 @@ public static class ItemSizeCatalog
                 continue;
             }
 
+            var maxDur = 255;
+            if (parts.Length >= 14
+                && int.TryParse(parts[13], NumberStyles.Integer, CultureInfo.InvariantCulture, out var dur)
+                && dur > 0)
+            {
+                maxDur = Math.Clamp(dur, 1, 255);
+            }
+
             var fullIndex = (group * 512) + indexInGroup;
-            map[fullIndex] = new SizeRow(Math.Max(1, w), Math.Max(1, h));
+            map[fullIndex] = new SizeRow(Math.Max(1, w), Math.Max(1, h), maxDur);
         }
 
         return map;

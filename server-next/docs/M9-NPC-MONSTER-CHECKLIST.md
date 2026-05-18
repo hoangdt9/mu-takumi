@@ -1,68 +1,60 @@
-# M9 — NPC & monster runtime (scope A)
+# M9 — NPC & monster runtime (scope A) — **dev only**
 
-Last updated: 2026-05-17
+Last updated: 2026-05-18
 
-## Scope A (this iteration)
+**QA APK:** [`../../docs/qa/M9-monster-combat.md`](../../docs/qa/M9-monster-combat.md) · shop/gate: [`../../docs/qa/M9-npc-shop.md`](../../docs/qa/M9-npc-shop.md)
 
-- [x] Load **`MonsterSetBase.txt`** (parity `CMonsterSetBase::Load` / `GetPosition`).
-- [x] Load **`Monster.txt`** for minimal **Life/Level** (`MonsterStatCatalog`).
-- [x] Spawn static rows per **map**; filter by **view range** around player join tile.
-- [x] Send **`C2 0x13`** (`MonsterViewportWire602`) after **`F3 03` + `F3 10`** on login/game TCP.
-- [x] **Incremental viewport on walk / instant move** (`MonsterViewportTracker`, `TrySendOnMoveAsync`).
-- [x] **Regen timer** from `Monster.txt` `RegenTime` (`MapMonsterInstance.TryRegen` on viewport scan).
-- [x] **Combat stub** — `C1 0x11` hit / `0x19` skill → damage, `MarkDead`, `C1 0x16` die, `C1 0x14` destroy.
-- [x] **Destroy on leave view** — `SyncView` + `C1 0x14` when walk out of range (parity `DestroyViewportMonster1`).
-- [x] **Damage vs Defense** — `MonsterCombatCalculator` + `Monster.txt` `Defense` column.
-- [x] **M10a (mac-m4):** map presence `C1 0x15` / `0x18`, miss, skill % (`GameMapPresenceRegistry`).
-- [ ] **Full combat** (AoE, PvP) — **M10c** (xem **`WORKSTREAM-OWNERSHIP.md`**).
-- [~] **AI (M9b):** wander, chase, `0xD4`/`0x18`, monster→player dmg from `Monster.txt` (+ **`CharacterCombatPreview602`** player defense khi có sheet), periodic viewport, regen broadcast — see **`docs/M9-MONSTER-AI-PORT-CHECKLIST.md`**. **2026-05-16:** throttle `C1 0x26` chỉ gộp regen/trùng HP; **mất máu luôn gửi ngay** (`TrySendThrottledLifeAsync`, default 200ms). Client Android: `CreatePoint` tái dùng slot khi pool đầy (số damage không biến mất).
-- [x] **NPC shop wire** — `0x30` talk → `C2 0x31` (`WorldGameplayHandlers`, `NpcShopCatalog`).
-- [x] **Gate / shop commerce stub** — `0x1C` gate, `0x32`–`0x34` buy/sell/repair (`MapGateService`, `ShopCommerceHandler`); see **`docs/M9-M8-NPC-GAMEPLAY-OWNERSHIP.md`**.
-- [x] **M8 ETL** spawn Postgres — **`main`** (`b33d890`); `MapMonsterWorld` fallback file khi DB trống.
+**Chi tiết AI:** `M9-MONSTER-AI-PORT-CHECKLIST.md` · **Ownership:** `M9-M8-NPC-GAMEPLAY-OWNERSHIP.md`
 
-## Legacy reference (`Source/4.GameServer`)
+---
 
-| Area | File |
-|------|------|
+## Scope A — dev status
+
+- [x] `MonsterSetBase.txt` + `Monster.txt` loaders
+- [x] Spawn per map, view range filter
+- [x] `C2 0x13` sau `F3 03` + `F3 10`
+- [x] Viewport on walk / instant move
+- [x] Regen từ `RegenTime`
+- [x] Combat stub `0x11` / `0x19` → die / destroy
+- [x] Destroy on leave view
+- [x] `MonsterCombatCalculator` + Defense column
+- [x] M10a presence `0x15` / `0x18`
+- [x] **M9b AI:** wander, chase, `0xD4`/`0x18`, mob→player dmg, periodic viewport, regen broadcast
+- [x] NPC shop `0x30` → `0x31`
+- [x] Gate `0x1C` + skill teleport `gate==0` (`MapGateService`, `SkillTeleportService`)
+- [x] Shop commerce `0x32`–`0x34`
+- [x] M8 ETL spawn Postgres; file fallback khi DB trống
+- [ ] **Full combat** AoE/PvP polish — M10c / P3 trong AI port
+- [ ] **Full quest NPC** — M11+
+
+---
+
+## Legacy / code
+
+| Area | `Source/4.GameServer` |
+|------|------------------------|
 | Set base | `MonsterSetBase.cpp` |
-| Stats | `MonsterManager.cpp` → `Monster.txt` |
-| Viewport TX | `Viewport.cpp` → `GCViewportMonsterSend` (head `0x13`) |
-| Client RX | `WSclient.cpp` → `ReceiveCreateMonsterViewport` |
+| Viewport | `Viewport.cpp` `0x13` |
+| Client | `WSclient.cpp` |
 
-## `server-next` code
+| Component | `server-next` |
+|-----------|---------------|
+| World | `Takumi.Server.Game/World/*` |
+| Wire | `MonsterViewportWire602.cs` |
+| Hook | `GamePortMinimalSession.cs` |
 
-| Component | Path |
-|-----------|------|
-| Loaders / world | `Takumi.Server.Game/World/*` |
-| Wire | `Takumi.Server.Protocol/MonsterViewportWire602.cs` |
-| Hook (game port) | `GamePortMinimalSession.cs` |
-| Hook (legacy login) | `LegacyLoginHost.Runner/LegacyLoginHostRunner.cs` |
+---
 
-**QA:** combat/EXP **`../../docs/DEVELOPMENT-LOG-2026-05-16.md`**; shop + level-up VFX **`../../docs/DEVELOPMENT-LOG-2026-05-17.md`**.
-
-## Env
+## Env (dev)
 
 | Variable | Default |
 |----------|---------|
-| `TAKUMI_MONSTER_SET_BASE_PATH` | search `Monster/MonsterSetBase.txt` under cwd / `MuServer/4.GameServer/Data` |
-| `TAKUMI_MONSTER_INFO_PATH` | `Monster/Monster.txt` |
-| `TAKUMI_MONSTER_VIEW_RANGE` | `15` (Manhattan tiles) |
-| `TAKUMI_MONSTER_VIEWPORT_MAX` | `64` monsters per packet |
-| `TAKUMI_MONSTER_VIEWPORT_MOVE_TILES` | `4` Manhattan tiles before rescan on walk |
-| `TAKUMI_COMBAT_STUB_DAMAGE` | `50` damage per hit |
-| `TAKUMI_COMBAT_MELEE_RANGE` | `3` tiles (Manhattan) |
-| `TAKUMI_MAP_PRESENCE_ENABLED` | `1` (set `0` to disable M10 broadcast) |
-| `TAKUMI_COMBAT_MISS_RATE_PCT` | `0` |
-| `TAKUMI_COMBAT_SKILL_DAMAGE_PCT` | `150` |
+| `TAKUMI_MONSTER_SET_BASE_PATH` | auto `MonsterSetBase.txt` |
+| `TAKUMI_MONSTER_VIEW_RANGE` | 15 |
+| `TAKUMI_MONSTER_VIEWPORT_MOVE_TILES` | 4 |
+| `TAKUMI_COMBAT_STUB_DAMAGE` | 50 |
+| `TAKUMI_MAP_PRESENCE_ENABLED` | 1 |
 
-If set-base file is missing, a small **Lorencia fallback** spawn set is used for QA.
+Thiếu set-base → Lorencia fallback spawn (dev only, không phải QA checklist).
 
-## QA
-
-1. Point env to real `MuServer/4.GameServer/Data/Monster/MonsterSetBase.txt`.
-2. Login → select character → enter world.
-3. Host log: `[m9] sent C2 0x13 monster viewport count=…`
-4. Client logcat: `0x13 [ReceiveCreateMonsterViewport`
-5. Tap attack near a mob (≤3 tiles): host `[m9] combat hit … died=True` then `C1 0x14 destroy + C1 0x16 die`.
-6. Client: damage numbers, mob disappears; after regen delay, walk back into range → new `0x13` spawn.
-7. Walk away from mob → host `[m9] sent C1 0x14 destroy viewport`; walk back → new `0x13`.
+**Verify dev:** mount data · log `[m9] sent C2 0x13` · `./scripts/smoke-m8.sh` (gate/move nếu test M8 cùng lúc)

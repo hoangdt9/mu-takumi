@@ -48,6 +48,7 @@ TakumiPostgresMirror.InitWorldStaticDataIfEnabled();
 MapGateCatalog.EnsureInitialized();
 MapManagerCatalog.EnsureInitialized();
 MoveMapCatalog.EnsureInitialized();
+CustomNpcMoveCatalog.EnsureInitialized();
 CustomArenaCatalog.EnsureInitialized();
 NpcShopCatalog.EnsureInitialized();
 

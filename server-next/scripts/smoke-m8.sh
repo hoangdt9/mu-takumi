@@ -96,6 +96,7 @@ MOVE_N="$(echo "$logs" | sed -n 's/.*\[m8\] MoveMapCatalog: \([0-9]*\) moves.*/\
 
 require_log '\[m8\] CustomArenaCatalog:' 'CustomArenaCatalog'
 require_log '\[m8\] MapManagerCatalog:' 'MapManagerCatalog'
+require_log '\[m8\] CustomNpcMoveCatalog:' 'CustomNpcMoveCatalog'
 
 DATA_MOUNT="${TAKUMI_GAMESERVER_DATA_PATH:-/muserver-data}"
 echo "== smoke-m8: data mount inside container ($DATA_MOUNT) =="
@@ -115,7 +116,7 @@ if [[ "$SKIP_TESTS" -eq 0 ]]; then
   echo "== smoke-m8: dotnet test (M8 unit) =="
   dotnet test "$ROOT/src/Takumi.Server.Tests/Takumi.Server.Tests.csproj" \
     -c Release \
-    --filter "FullyQualifiedName~MoveMap|FullyQualifiedName~CustomArena|FullyQualifiedName~PlayerUi|FullyQualifiedName~PersonalShop" \
+    --filter "FullyQualifiedName~MoveMap|FullyQualifiedName~MapGate|FullyQualifiedName~SkillTeleport|FullyQualifiedName~CustomNpcMove|FullyQualifiedName~CustomArena|FullyQualifiedName~PlayerUi|FullyQualifiedName~PersonalShop|FullyQualifiedName~MapMonsterKalima|FullyQualifiedName~MapMonsterWorldSpawn" \
     -nologo -v minimal
 fi
 

@@ -33,7 +33,7 @@ Chỉ mở phase client khi server đạt mốc tương ứng.
 | **S4** | M9 combat + M11 social partial ổn | Combat, inventory UI, shop |
 | **S5** | SSOT Postgres-only roster; protocol frozen 1 sprint | Mobile head (Android), tối ưu hiệu năng |
 
-**Trạng thái hiện tại (2026-05):** ~**S1 đạt**, **S2 đang QA** (Android C++ + Docker). Skeleton: **`../client-mono/`** (`Takumi.Client.Protocol` → `server-next`). QA checklist: **`S2-GATE-QA.md`**. Phase 1 MonoGame blocked until S2 sign-off.
+**Trạng thái hiện tại (2026-05):** ~**S1 đạt**, **S2** dev xong — sign-off APK: **`../../docs/qa/S2-gate-login-join.md`**. Skeleton: **`../client-mono/`**. Phase 1 MonoGame sau S2 QA milestone.
 
 ---
 

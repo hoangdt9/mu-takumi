@@ -23,7 +23,61 @@ public sealed class MapGateServiceTests
             playerX: 123,
             playerY: 233,
             playerLevel: 50,
+            playerReset: 0,
+            playerAccountLevel: 0,
             previousMap: 0,
+            out var dest);
+
+        Assert.True(ok);
+        Assert.Equal(1, dest.MapId);
+    }
+
+    [Fact]
+    public void TryResolveGateTeleport_denies_when_outside_legacy_proximity_box()
+    {
+        MapGateCatalog.EnsureInitialized();
+        if (!MapGateCatalog.TryGetGate(1, out var gate) || gate is null)
+        {
+            return;
+        }
+
+        Environment.SetEnvironmentVariable("TAKUMI_GATE_SKIP_PROXIMITY", null);
+
+        // Gate 1: TX=123 TY=233 — x=117 is outside [118..128] (TX±5).
+        var ok = MapGateService.TryResolveGateTeleport(
+            1,
+            playerMap: gate.MapId,
+            playerX: 117,
+            playerY: (byte)gate.RangeTy,
+            playerLevel: 50,
+            playerReset: 0,
+            playerAccountLevel: 0,
+            previousMap: gate.MapId,
+            out _);
+
+        Assert.False(ok);
+    }
+
+    [Fact]
+    public void TryResolveGateTeleport_allows_on_gate_tx_ty()
+    {
+        MapGateCatalog.EnsureInitialized();
+        if (!MapGateCatalog.TryGetGate(1, out var gate) || gate is null)
+        {
+            return;
+        }
+
+        Environment.SetEnvironmentVariable("TAKUMI_GATE_SKIP_PROXIMITY", null);
+
+        var ok = MapGateService.TryResolveGateTeleport(
+            1,
+            playerMap: gate.MapId,
+            playerX: (byte)gate.RangeTx,
+            playerY: (byte)gate.RangeTy,
+            playerLevel: 50,
+            playerReset: 0,
+            playerAccountLevel: 0,
+            previousMap: gate.MapId,
             out var dest);
 
         Assert.True(ok);

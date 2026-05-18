@@ -148,11 +148,16 @@ public static class WorldGameplayHandlers
         {
             return await TryHandleNpcTalkAsync(
                     player,
+                    tracker,
+                    connection,
+                    clientProtectOutbound,
                     presenceSessionId,
                     accountId,
                     characterName10,
                     talkKey,
                     writeAsync,
+                    onRosterDirty,
+                    onRosterSave,
                     remote,
                     ct)
                 .ConfigureAwait(false);
@@ -197,26 +202,37 @@ public static class WorldGameplayHandlers
         string remote,
         CancellationToken ct)
     {
+        if (gate == 0)
+        {
+            return await TryHandleSkillTeleportAsync(
+                    player,
+                    tracker,
+                    connection,
+                    clientProtectOutbound,
+                    presenceSessionId,
+                    tx,
+                    ty,
+                    writeAsync,
+                    onRosterDirty,
+                    remote,
+                    ct)
+                .ConfigureAwait(false);
+        }
+
         MoveMapSessionState.SetTeleportInProgress(presenceSessionId, true);
         try
         {
             var prevMap = player.MapId;
-            MapGateService.TeleportDestination dest;
-            if (gate == 0)
-            {
-                if (!MapGateService.TryResolveSkillTeleport(player.MapId, tx, ty, player.Angle, prevMap, out dest))
-                {
-                    return false;
-                }
-            }
-            else if (!MapGateService.TryResolveGateTeleport(
-                         gate,
-                         player.MapId,
-                         player.PosX,
-                         player.PosY,
-                         player.Level,
-                         prevMap,
-                         out dest))
+            if (!MapGateService.TryResolveGateTeleport(
+                    gate,
+                    player.MapId,
+                    player.PosX,
+                    player.PosY,
+                    player.Level,
+                    player.Reset,
+                    player.AccountLevel,
+                    prevMap,
+                    out var dest))
             {
                 var fail = TeleportWire602.Build(0, player.MapId, player.PosX, player.PosY, player.Angle);
                 await writeAsync(fail, ct).ConfigureAwait(false);
@@ -260,14 +276,13 @@ public static class WorldGameplayHandlers
                     ct)
                 .ConfigureAwait(false);
 
-            var flag = (ushort)(dest.MapChanged ? 1 : 0);
             Console.WriteLine(
                 "[m8] teleport gate={0} -> map={1} xy=({2},{3}) flag={4} {5}",
                 gate,
                 dest.MapId,
                 dest.X,
                 dest.Y,
-                flag,
+                dest.MapChanged ? 1 : 0,
                 remote);
             return true;
         }
@@ -277,13 +292,93 @@ public static class WorldGameplayHandlers
         }
     }
 
+    static async Task<bool> TryHandleSkillTeleportAsync(
+        GameRosterEntry player,
+        MonsterViewportTracker tracker,
+        Connection? connection,
+        (byte K1, byte K2)? clientProtectOutbound,
+        Guid presenceSessionId,
+        byte tx,
+        byte ty,
+        Func<ReadOnlyMemory<byte>, CancellationToken, Task> writeAsync,
+        Action? onRosterDirty,
+        string remote,
+        CancellationToken ct)
+    {
+        if (!SkillTeleportService.PlayerHasTeleportSkill(player.ServerClass))
+        {
+            return false;
+        }
+
+        if (!MapGateService.TryResolveSkillTeleport(
+                player.MapId,
+                player.PosX,
+                player.PosY,
+                tx,
+                ty,
+                player.Angle,
+                out var dest))
+        {
+            var snap = TeleportWire602.Build(0, player.MapId, player.PosX, player.PosY, player.Angle);
+            await WriteGameplayAsync(connection, clientProtectOutbound, writeAsync, snap, ct).ConfigureAwait(false);
+            Console.WriteLine("[m8] skill teleport denied area {0} map={1} ({2},{3})->({4},{5})", remote, player.MapId, player.PosX, player.PosY, tx, ty);
+            return true;
+        }
+
+        if (!SkillTeleportService.TryConsumeResources(player, out var manaSpent))
+        {
+            return false;
+        }
+
+        player.PosX = dest.X;
+        player.PosY = dest.Y;
+        onRosterDirty?.Invoke();
+
+        var ok = TeleportWire602.Build(0, dest.MapId, dest.X, dest.Y, dest.Angle);
+        await WriteGameplayAsync(connection, clientProtectOutbound, writeAsync, ok, ct).ConfigureAwait(false);
+
+        var mp = Math.Clamp(player.CurrentMp, 0, ushort.MaxValue);
+        var bp = Math.Clamp(player.CurrentBp, 0, ushort.MaxValue);
+        var manaPkt = LifeManaWire602.BuildMana(LifeManaWire602.TypeCurrent, (ushort)mp, (ushort)bp);
+        await WriteGameplayAsync(connection, clientProtectOutbound, writeAsync, manaPkt, ct).ConfigureAwait(false);
+
+        MonsterViewerRegistry.UpdatePosition(presenceSessionId, dest.MapId, dest.X, dest.Y);
+        if (connection is not null)
+        {
+            await MapMonsterScopeSender.TrySendOnMoveAsync(
+                    tracker,
+                    connection,
+                    clientProtectOutbound,
+                    dest.MapId,
+                    dest.X,
+                    dest.Y,
+                    remote,
+                    ct)
+                .ConfigureAwait(false);
+        }
+
+        Console.WriteLine(
+            "[m8] skill teleport map={0} ({1},{2}) mana={3} {4}",
+            dest.MapId,
+            dest.X,
+            dest.Y,
+            manaSpent,
+            remote);
+        return true;
+    }
+
     static async Task<bool> TryHandleNpcTalkAsync(
         GameRosterEntry player,
+        MonsterViewportTracker tracker,
+        Connection? connection,
+        (byte K1, byte K2)? clientProtectOutbound,
         Guid presenceSessionId,
         string? accountId,
         byte[] characterName10,
         int objectKey,
         Func<ReadOnlyMemory<byte>, CancellationToken, Task> writeAsync,
+        Action? onRosterDirty,
+        Action? onRosterSave,
         string remote,
         CancellationToken ct)
     {
@@ -297,6 +392,28 @@ public static class WorldGameplayHandlers
         if (!mob.IsNpc)
         {
             return false;
+        }
+
+        if (await CustomNpcMoveHandler.TryHandleNpcTalkWarpAsync(
+                player,
+                tracker,
+                connection,
+                clientProtectOutbound,
+                accountId,
+                characterName10,
+                presenceSessionId,
+                mob.MonsterClass,
+                mob.Map,
+                mob.X,
+                mob.Y,
+                writeAsync,
+                onRosterDirty,
+                onRosterSave,
+                remote,
+                ct)
+            .ConfigureAwait(false))
+        {
+            return true;
         }
 
         if (NpcTalkService.TryGetTalkResult(mob.MonsterClass, out var talkResult))

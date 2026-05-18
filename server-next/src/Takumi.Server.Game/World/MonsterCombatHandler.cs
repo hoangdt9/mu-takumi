@@ -379,15 +379,13 @@ public static class MonsterCombatHandler
         var expStub = ComputeKillExperience(monster);
         if (player is not null)
         {
-            RosterExperienceCombat.GrantKillExperience(player, expStub, accountId, onRosterDirty);
-            if (presenceSessionId is { } progressSid)
-            {
-                MonsterViewerRegistry.TryUpdateProgress(
-                    progressSid,
-                    player.Experience,
-                    player.Level,
-                    (uint)Math.Clamp(player.Zen, 0, uint.MaxValue));
-            }
+            MonsterKillExperienceGrant.Grant(
+                monster,
+                expStub,
+                player,
+                accountId,
+                presenceSessionId,
+                onRosterDirty);
         }
 
         var diePkt = MonsterDieWire602.Build(monster.ObjectKey, expStub, damage, dieSuccess: true);

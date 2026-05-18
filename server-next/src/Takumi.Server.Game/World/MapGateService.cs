@@ -11,6 +11,8 @@ public static class MapGateService
         byte playerX,
         byte playerY,
         int playerLevel,
+        int playerReset,
+        int playerAccountLevel,
         byte previousMap,
         out TeleportDestination dest)
     {
@@ -25,7 +27,7 @@ public static class MapGateService
             return false;
         }
 
-        if (!PassesLevel(source, playerLevel))
+        if (!PassesGateRequirements(source, playerLevel, playerReset, playerAccountLevel))
         {
             return false;
         }
@@ -55,13 +57,20 @@ public static class MapGateService
 
     public static bool TryResolveSkillTeleport(
         byte mapId,
-        byte x,
-        byte y,
+        byte playerX,
+        byte playerY,
+        byte destX,
+        byte destY,
         byte angle,
-        byte previousMap,
         out TeleportDestination dest)
     {
-        dest = new TeleportDestination(mapId, x, y, angle, mapId != previousMap);
+        dest = default;
+        if (!SkillTeleportService.TryValidateArea(mapId, playerX, playerY, destX, destY))
+        {
+            return false;
+        }
+
+        dest = new TeleportDestination(mapId, destX, destY, angle, false);
         return true;
     }
 
@@ -111,12 +120,12 @@ public static class MapGateService
             return false;
         }
 
-        var dx = Math.Abs(x - gate.RangeTx);
-        var dy = Math.Abs(y - gate.RangeTy);
-        return dx <= 8 && dy <= 8;
+        // Parity CGate::IsInGate — ±5 around TX/TY (Gate.txt columns TX/TY).
+        return x >= gate.RangeTx - 5 && x <= gate.RangeTx + 5
+            && y >= gate.RangeTy - 5 && y <= gate.RangeTy + 5;
     }
 
-    static bool PassesLevel(MapGateEntry gate, int level)
+    static bool PassesGateRequirements(MapGateEntry gate, int level, int reset, int accountLevel)
     {
         if (gate.MinLevel >= 0 && level < gate.MinLevel)
         {
@@ -128,8 +137,26 @@ public static class MapGateService
             return false;
         }
 
+        if (gate.MinReset >= 0 && reset < gate.MinReset)
+        {
+            return false;
+        }
+
+        if (gate.MaxReset >= 0 && reset > gate.MaxReset)
+        {
+            return false;
+        }
+
+        if (accountLevel < gate.AccountLevel)
+        {
+            return false;
+        }
+
         return true;
     }
+
+    static bool PassesLevel(MapGateEntry gate, int level) =>
+        PassesGateRequirements(gate, level, reset: 0, accountLevel: int.MaxValue);
 
     static bool TryPickTile(MapGateEntry gate, out byte x, out byte y)
     {

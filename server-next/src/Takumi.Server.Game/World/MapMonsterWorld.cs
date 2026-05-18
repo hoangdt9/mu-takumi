@@ -315,7 +315,7 @@ public static class MapMonsterWorld
         foreach (var e in _setBase)
         {
             // Parity CMonsterManager::SetMonsterData — invasion/event rows are not static map spawns.
-            if (e.SpawnType is 3 or 4)
+            if (!IncludeInvasionSpawns() && e.SpawnType is 3 or 4)
             {
                 continue;
             }
@@ -455,6 +455,15 @@ public static class MapMonsterWorld
             Ty = ty,
             Dir = 255,
         };
+
+    public static bool ShouldIncludeSpawnEntry(MonsterSetBaseEntry e) =>
+        IncludeInvasionSpawns() || e.SpawnType is not (3 or 4);
+
+    static bool IncludeInvasionSpawns() =>
+        string.Equals(
+            Environment.GetEnvironmentVariable("TAKUMI_MONSTER_INCLUDE_INVASION_SPAWN")?.Trim(),
+            "1",
+            StringComparison.OrdinalIgnoreCase);
 
     static int ParseIntEnv(string key, int defaultValue, int min, int max)
     {

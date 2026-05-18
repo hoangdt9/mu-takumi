@@ -22,17 +22,17 @@ Tóm tắt theo commit; diff đầy đủ: `git log --oneline 2672bfd..HEAD` tro
 | **Move map (M)** | `8E 02` → `Move.txt` index → gate → `8E 03` + `0x1C` + join-map reload | (earlier) |
 | **Death/revive** | Town `F3 04`, HeroKey vitals | `e428749`, `7d65d8d` |
 
-**Android device QA:** 2026-05-16 combat/EXP — **`../../docs/DEVELOPMENT-LOG-2026-05-16.md`** § QA. 2026-05-17 shop/inventory/level-up VFX — **`../../docs/DEVELOPMENT-LOG-2026-05-17.md`** § QA.
+**QA APK / in-game:** milestone riêng — **`../../docs/QA-MILESTONE.md`** (không chặn dev PR). Nhật ký cũ: DEVELOPMENT-LOG § QA.
 
 ## Repository vs checklist (read first)
 
 - **Roster / tọa độ nhân vật (`mapId`, `posX`, `posY`, `angle`) — tại sao lại thấy trong JSON (`takumi-roster/*.json`, ví dụ `test.json`)?** Đây **không phải** “lưu vào code”; đó là **file persistence tối thiểu của M4a** do `LegacyLoginHost` / `GamePortMinimalSession` ghi khi chạy (`TAKUMI_ROSTER_DIR` hoặc mặc định `./takumi-roster/<accountId>.json`). Mục đích: dev/QA nhanh, tái join đúng tile sau walk, **cùng layout** với mirror Postgres `character_roster` khi bật `TAKUMI_ROSTER_DB_SYNC`. **Nguồn sự thật cuối (SSOT) chỉ Postgres** vẫn là hạng mục **mở** — xem **`## Next (High Priority)`** mục **M4b–M5b Postgres-first roster SSOT** và **`docs/M4-WORLD-POSITION-CHECKLIST.md`** §M4b (dòng *SSOT thực tế vẫn là JSON file*) / §Importer. Khi SSOT xong, host sẽ đọc/ghi world position chủ yếu qua DB + domain `character`, JSON (nếu còn) chỉ còn tuỳ chọn import/export hoặc bị loại bỏ.
 - **`server-next/README.md`** describes what is actually in tree: **`server-next/docker-compose.yml`** starts **PostgreSQL** and **LegacyLoginHost** in Docker (Connect **44605**, login **44606**; Postgres **54444** by default). When connect env vars are unset, **LegacyLoginHost** sends a **multi-ID F4 06** default so `ServerList.bmd` usually shows sub-servers (group = connectId/20); override with **`TAKUMI_CS_CONNECT_IDS`** or **BASE+COUNT**. The .NET host can still be run on the host with `dotnet watch` when you prefer hot reload — **do not** bind the same ports while Docker publishes them.
-- The **`## Done`** section below is the **intended / previously implemented** feature set. Treat unchecked **Exit criteria** and **`## In Progress`** as the current engineering truth for QA; do not assume every `[x]` is verifiable without a compilable solution in git.
+- The **`## Done`** section below is the **intended / previously implemented** feature set. Treat unchecked **Exit criteria** and **`## In Progress`** as dev truth; verify with smoke/unit, not APK QA (see **`../../docs/QA-MILESTONE.md`**).
 - **Native client (C++) session notes**
   - Character select (touch → `StartGame`, ray pick, IME sau login): **`../../docs/DEVELOPMENT-LOG-2026-05-12.md`**
   - IME toàn cục / modal / xóa nhân vật (captcha 6 số phía client), JNI **Done** → Return, `UpdateMouseFromTouch` trước handler: **`../../docs/DEVELOPMENT-LOG-2026-05-14.md`**
-  - In-world combat, stat points, FPS, Docker LAN QA: **`../../docs/DEVELOPMENT-LOG-2026-05-16.md`**
+  - In-world combat, stat points, FPS: **`../../docs/DEVELOPMENT-LOG-2026-05-16.md`**
   - Shop, inventory sync, level-up VFX: **`../../docs/DEVELOPMENT-LOG-2026-05-17.md`**
 
 ## Client APK, `data.zip`, and Docker (what to redo when)
@@ -49,9 +49,9 @@ Use this to avoid unnecessary rebuilds.
 
 **`data.zip` / Preload:** the Android preload step usually **skips download** when `Android/data/.../files/Data` is already valid and the ready marker exists—no need to re-fetch for pure server-side iteration unless you wipe app storage or change the bundle URL/content.
 
-**Parallel stacks:** if both `takumi-openmu` and `server-next` run, keep **host ports and client target** unambiguous (e.g. OpenMU `44505` vs Takumi `44605`) so QA logs match the stack under test.
+**Parallel stacks:** if both `takumi-openmu` and `server-next` run, keep **host ports** unambiguous (OpenMU `44505` vs Takumi `44605`).
 
-**Minimal Docker on Mac (Android QA):** for APK pointed at `server-next`, run **`cd server-next && docker compose up -d`** (or **`./scripts/docker-stack.sh --detach`** — mặc định kèm profile **datazip**) — **Postgres** (default **54444**) and **LegacyLoginHost** (**44605** / **44606**) with **`TAKUMI_LAN_IP`** in `.env` = Mac LAN IP. **LAN `data.zip`:** `docker compose --profile datazip up -d` or **`./scripts/docker-stack.sh --detach`** (nginx on host **18080**, same `takumi/docker/data-zip/host/data.zip`); do **not** also run `takumi/docker` `datazip` on the same publish port. **Stop** the `takumi-openmu` compose group (and `docker` Wine/SQL profiles) while testing `server-next` to avoid port confusion and extra emulation load. See **`../../docs/ANDROID-DEV-MAC.md`** § *Takumi Server Next* and **`../README.md`**.
+**Docker dev:** `cd server-next && ./scripts/docker-stack.sh --detach` — xem **`docs/DOCKER-BUILD-RUN.md`**. APK/LAN QA → **`../../docs/QA-MILESTONE.md`** + **`../../docs/ANDROID-DEV-MAC.md`**.
 
 ## Done
 
@@ -209,7 +209,7 @@ Use this to avoid unnecessary rebuilds.
    - [x] Runtime: **`TAKUMI_MONSTER_SPAWN_DB=1`** → **`MapMonsterWorld`** đọc Postgres (fallback file).  
    - [x] Gates / shops / Custom: **`006_map_gate_npc_shop_custom.sql`**, ETL + **`MapGateCatalog`** / **`NpcShopCatalog`**; env **`TAKUMI_WORLD_STATIC_DB=1`** (hoặc từng flag `TAKUMI_MAP_GATE_DB`, `TAKUMI_NPC_SHOP_DB`, `TAKUMI_CUSTOM_WORLD_DB`).  
    - [x] Wire handlers: gate teleport `0x1C`, NPC talk → shop `0x31` (`WorldGameplayHandlers`, `MapGateService`, `NpcShopWire602`).
-   - [x] **M8 move-map parity (2026-05-17):** `0x8E` checksum/key/warp, `MoveMapService` rules (zen/level/reset/PK/equip/gens/custom arena), walk ATT + `0xD4` echo, `PlayerUiSession` / pshop block, `smoke-m8.sh` — **`docs/M8-MOVE-MAP-PARITY-CHECKLIST.md`** (P0–P4 server done; P5 client QA: **`docs/M8-MOVE-MAP-P5-CLIENT-QA-CHECKLIST.md`**).
+   - [x] **M8 move-map dev (2026-05-17–18):** `0x8E`, `MoveMapService`, gate proximity, skill teleport P6.2, `smoke-m8.sh` — **`docs/M8-MOVE-MAP-PARITY-CHECKLIST.md`**. QA APK: **`../../docs/QA-MILESTONE.md`**.
 
 10. **M9 — NPC & monster runtime** *(**`docs/M9-NPC-MONSTER-CHECKLIST.md`**, **`docs/M9-MONSTER-AI-PORT-CHECKLIST.md`**, **`docs/M9-M8-NPC-GAMEPLAY-OWNERSHIP.md`**, **`server-next/test/M9-monster-combat-qa.md`**, **`docs/WORKSTREAM-OWNERSHIP.md`**)*  
    - [x] Spawn theo map từ **MonsterSetBase.txt** + **Monster.txt** (file + **Postgres** khi `TAKUMI_MONSTER_SPAWN_DB=1`).  

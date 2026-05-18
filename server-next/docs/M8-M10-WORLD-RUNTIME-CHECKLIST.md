@@ -1,6 +1,6 @@
 # M8–M10 — World data, NPC runtime, movement visibility
 
-Last updated: 2026-05-17
+Last updated: 2026-05-18
 
 **Quy ước:** giống các checklist khác — `[x]` chỉ khi đã merge thật. File này gom **M8 / M9 / M10** vì chúng cùng chuỗi “thế giới sau login”.
 
@@ -23,7 +23,8 @@ Last updated: 2026-05-17
 - [x] **Shop wire (2026-05-17):** `F3 E9` item values (`ShopItemValueResolver`), optional **`F3 ED`** buy confirm; client `ShopItemValueCache`.
 - [x] **Inventory placement:** `InventoryBagGrid` + BMD footprints; `0x24` + `F3 10` resync (`6330de9`).
 - [x] **Move map (M):** `C1 0A 8E 02` → `MoveMapCatalog` + `MoveMapHandler` (zen/level gate, `8E 03` + `0x1C` + join reload).
-- [~] **Move map parity:** chi tiết từng rule → **`docs/M8-MOVE-MAP-PARITY-CHECKLIST.md`** (`8E 01` checksum + key validate mới thêm).
+- [x] **Move map dev:** **`docs/M8-MOVE-MAP-PARITY-CHECKLIST.md`** (P0–P4, P6.1–P6.2, `smoke-m8.sh`).
+- [x] **M8 P6.3:** `CustomNpcMove` (`CustomNpcMoveHandler`, `TAKUMI_CUSTOM_NPC_MOVE_PATH`).
 
 ---
 
@@ -33,7 +34,7 @@ Chi tiết: **`docs/M9-NPC-MONSTER-CHECKLIST.md`**, **`docs/M9-MONSTER-AI-PORT-C
 
 - [x] Spawn theo `map_id` + tọa độ; `Monster.txt` stats; Postgres khi `TAKUMI_MONSTER_SPAWN_DB=1`.
 - [x] Scope `C2 0x13` / destroy `0x14`; AI wander/chase; combat stub; gate/shop/commerce stub.
-- [ ] Port còn lại từ `Source/4.GameServer`: encrypted ATT, skill/element, invasion spawns, quest NPC — xem P2.5–P4 trong AI port checklist.
+- [ ] Port còn lại: element/resist, invasion spawns, quest NPC — **`M9-MONSTER-AI-PORT-CHECKLIST.md`** P3.
 
 ---
 

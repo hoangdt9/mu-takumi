@@ -2,8 +2,8 @@
 
 Last updated: 2026-05-18
 
-**Quy ước:** chỉ tick `[x]` khi đã có trong git và có thể chứng minh (test hoặc QA ghi rõ). Cập nhật file này khi merge.  
-**Nhật ký:** **`../../docs/DEVELOPMENT-LOG-2026-05-18.md`** (F3 00 preview / mg001 QA wear), **`../../docs/DEVELOPMENT-LOG-2026-05-17.md`** (shop/inventory/VFX), **`../../docs/DEVELOPMENT-LOG-2026-05-16.md`** (combat/EXP/FPS).
+**Quy ước:** chỉ tick `[x]` khi đã merge + smoke/unit (nếu có). QA APK: **`../../docs/QA-MILESTONE.md`**.  
+**Nhật ký:** DEVELOPMENT-LOG 2026-05-16 → 18.
 
 **Phụ thuộc:** **`docs/M4-TILE-AND-COORDINATES.md`**, **`docs/M4-ROSTER-SSOT.md`**, **`docs/M6-GAME-TCP-CHECKLIST.md`**.  
 **Port từ `Source/` (character + item):** **`docs/M4-M7-CHARACTER-ITEM-MIGRATION.md`**. **Không chặn M5** (join/ticket).
@@ -83,11 +83,10 @@ Last updated: 2026-05-18
 
 ---
 
-## M7h — QA wear seed (`mg001`)
+## M7h — wear seed dev (`mg001`)
 
-- [x] **`sql/patches/013_test_account_mg001_seed.sql`:** account `test`, char `mg001` lv400, STR/DEX đủ +15 380, wear slot 0 = 0,58 kiếm MG, slot 7 = **12,39 Cánh Lôi Vũ** (`27FFFF7F…`).
-- [x] **`takumi-inventory/test.json`** mirror hex wear cho tooling.
-- [ ] Device: thoát game trước `apply-sql.sh`; logcat `type=6183` wing + `meshs>0` weapon — **`../../docs/DEVELOPMENT-LOG-2026-05-18.md`**.
+- [x] **`sql/patches/013_test_account_mg001_seed.sql`** + **`takumi-inventory/test.json`** mirror.
+- [ ] Xác nhận wear trên APK → QA milestone (không chặn dev).
 
 ---
 

@@ -47,13 +47,7 @@ In-game register wire: `CB_DangKyInGame` → `C1 D3 05` (59 bytes) — account 1
 
 ---
 
-## QA (manual)
-
-1. Bật stack Docker + `TAKUMI_ACCOUNT_DB=1`, apply `010_account.sql`.
-2. Đăng ký in-game `test1` / pass / 7 số bảo mật / SĐT → log `result=1`.
-3. DBeaver: `SELECT account_login, security_code, phone, created_at FROM account WHERE account_login = 'test1';`
-4. **Restart** container → login `test1` vẫn OK (không còn mất như dict in-memory).
-5. Login `test` / `admin` vẫn OK (seed từ env).
+**QA APK (sau):** [`../../docs/QA-MILESTONE.md`](../../docs/QA-MILESTONE.md) — đăng ký/login thiết bị.
 
 ---
 

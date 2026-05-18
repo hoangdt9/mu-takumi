@@ -234,6 +234,62 @@ public static class GameRosterDisk
         return list;
     }
 
+    public static void SaveEntries(string accountId, IReadOnlyList<GameRosterEntry> roster)
+    {
+        var root = new RosterPersistRoot();
+        foreach (var e in roster)
+        {
+            var name = Encoding.ASCII.GetString(e.Name10).TrimEnd('\0', ' ');
+            if (string.IsNullOrEmpty(name))
+            {
+                continue;
+            }
+
+            root.Characters.Add(
+                new RosterPersistChar
+                {
+                    Name = name,
+                    ServerClass = e.ServerClass,
+                    Level = e.Level,
+                    Experience = e.Experience,
+                    MapId = e.MapId,
+                    PosX = e.PosX,
+                    PosY = e.PosY,
+                    Angle = e.Angle,
+                    CurrentHp = e.CurrentHp,
+                    MaxHp = e.MaxHp,
+                    CurrentMp = e.CurrentMp,
+                    MaxMp = e.MaxMp,
+                    Zen = e.Zen,
+                    CurrentShield = e.CurrentShield,
+                    MaxShield = e.MaxShield,
+                    Strength = e.Strength,
+                    Dexterity = e.Dexterity,
+                    Vitality = e.Vitality,
+                    Energy = e.Energy,
+                    Leadership = e.Leadership,
+                    LevelUpPoint = e.LevelUpPoint,
+                    CurrentBp = e.CurrentBp,
+                    MaxBp = e.MaxBp,
+                    Reset = e.Reset,
+                    AccountLevel = e.AccountLevel,
+                });
+        }
+
+        var path = GetRosterFilePath(accountId);
+        var dir = Path.GetDirectoryName(path);
+        if (!string.IsNullOrEmpty(dir))
+        {
+            Directory.CreateDirectory(dir);
+        }
+
+        var json = JsonSerializer.Serialize(root, JsonOptions);
+        lock (JsonFileLock)
+        {
+            File.WriteAllText(path, json);
+        }
+    }
+
     sealed class RosterPersistRoot
     {
         public List<RosterPersistChar> Characters { get; set; } = new();

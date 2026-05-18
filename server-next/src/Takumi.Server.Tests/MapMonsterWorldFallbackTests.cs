@@ -19,6 +19,21 @@ public sealed class MapMonsterWorldSpawnFilterTests
         Assert.Contains(instances, i => i is { MonsterClass: 479, X: 130, Y: 133, IsNpc: true });
     }
 
+    [Fact]
+    public void ShouldIncludeSpawnEntry_includes_invasion_when_env_set()
+    {
+        var invasion = new MonsterSetBaseEntry { SpawnType = 3, MonsterClass = 99, Map = 0 };
+        try
+        {
+            Environment.SetEnvironmentVariable("TAKUMI_MONSTER_INCLUDE_INVASION_SPAWN", "1");
+            Assert.True(MapMonsterWorld.ShouldIncludeSpawnEntry(invasion));
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("TAKUMI_MONSTER_INCLUDE_INVASION_SPAWN", null);
+        }
+    }
+
     static List<MapMonsterInstance> BuildInstances(IReadOnlyList<MonsterSetBaseEntry> setBase)
     {
         var stats = new MonsterStatCatalog();
@@ -26,7 +41,7 @@ public sealed class MapMonsterWorldSpawnFilterTests
         var key = 12_000;
         foreach (var e in setBase)
         {
-            if (e.SpawnType is 3 or 4)
+            if (!MapMonsterWorld.ShouldIncludeSpawnEntry(e))
             {
                 continue;
             }

@@ -37,6 +37,8 @@ public sealed class MapMonsterInstance
     public int CurrentLife { get; private set; }
     public bool IsAlive { get; private set; } = true;
     DateTimeOffset? _diedAtUtc;
+    byte? _deathX;
+    byte? _deathY;
 
     public void InitializeAtSpawn(byte x, byte y, byte dir)
     {
@@ -110,6 +112,8 @@ public sealed class MapMonsterInstance
         IsAlive = false;
         CurrentLife = 0;
         _diedAtUtc = DateTimeOffset.UtcNow;
+        _deathX = X;
+        _deathY = Y;
     }
 
     /// <summary>Respawn at spawn tile when regen delay elapsed (parity <c>gObjMonsterRegen</c>).</summary>
@@ -122,7 +126,7 @@ public sealed class MapMonsterInstance
 
         if (_diedAtUtc is null)
         {
-            ResetToSpawn();
+            RegenAtResolvedTile();
             return true;
         }
 
@@ -132,7 +136,7 @@ public sealed class MapMonsterInstance
             return false;
         }
 
-        ResetToSpawn();
+        RegenAtResolvedTile();
         return true;
     }
 
@@ -141,8 +145,37 @@ public sealed class MapMonsterInstance
         IsAlive = true;
         CurrentLife = MaxLife;
         _diedAtUtc = null;
+        _deathX = null;
+        _deathY = null;
         X = SpawnX;
         Y = SpawnY;
+        AggroTargetKey = null;
+        ClearDamageLedger();
+    }
+
+    void RegenAtResolvedTile()
+    {
+        if (KalimaMapRegen.IsKalimaMap(Map)
+            && _deathX is byte dx
+            && _deathY is byte dy
+            && MapAttWalkability.CanWalk(Map, dx, dy))
+        {
+            RegenAt(dx, dy);
+            return;
+        }
+
+        ResetToSpawn();
+    }
+
+    void RegenAt(byte x, byte y)
+    {
+        IsAlive = true;
+        CurrentLife = MaxLife;
+        _diedAtUtc = null;
+        _deathX = null;
+        _deathY = null;
+        X = x;
+        Y = y;
         AggroTargetKey = null;
         ClearDamageLedger();
     }

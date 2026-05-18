@@ -1,130 +1,104 @@
-# M9b — Monster AI & viewport port (legacy `4.GameServer`)
+# M9b — Monster AI & viewport port — **dev only**
 
-Last updated: 2026-05-16
+Last updated: 2026-05-18
 
-**Legacy refs:** `Monster.cpp` (`gObjMonsterProcess`, `gObjMonsterRegen`), `MonsterAIUtil.cpp` (`SendMonsterMoveMsg`), `Viewport.cpp` (`GCViewportMonsterSend`, `DestroyViewportMonster1`), `User.cpp` (`gObjViewportListProtocolCreate` ~1s), `Map.cpp` (`PathFinding2/4`).
+**QA APK:** [`../../docs/qa/M9-monster-combat.md`](../../docs/qa/M9-monster-combat.md) · **Scope A:** `M9-NPC-MONSTER-CHECKLIST.md`
 
-**Code:** `Takumi.Server.Game/World/*`, `Takumi.Server.Game/Networking/MonsterViewerRegistry.cs`, `Takumi.Server.Protocol/*Wire602.cs`.
+**Legacy:** `Monster.cpp`, `Viewport.cpp`, `Map.cpp` · **Code:** `Takumi.Server.Game/World/*`
 
----
-
-## Status legend
+**Verify dev:** log `[m9-ai]`, `[m9-vp]`, `[m9] sent C2 0x13`
 
 | Symbol | Meaning |
 |--------|---------|
-| [x] | Done in `server-next` |
-| [~] | Partial / stub |
+| [x] | Done |
+| [~] | Partial |
 | [ ] | Not started |
 
 ---
 
-## P0 — Viewport & lifecycle (player-visible)
+## P0 — Viewport & lifecycle
 
-| # | Item | Legacy | Status | `server-next` / env |
-|---|------|--------|--------|---------------------|
-| P0.1 | Spawn `C2 0x13` after join + on walk threshold | `GCViewportMonsterSend` | [x] | `MapMonsterScopeSender`, `TAKUMI_MONSTER_VIEWPORT_MOVE_TILES` |
-| P0.2 | NPC-first viewport + distance sort | viewport create | [x] | `GetViewportEntities`, `MAX_NPC` / `MAX_MOB` |
-| P0.3 | Destroy `C1 0x14` when leaving view | `DestroyViewportMonster1` | [x] | `MonsterViewportTracker.SyncView` |
-| P0.4 | **Periodic viewport rescan ~1s** | `gObjViewportListProtocolCreate` | [x] | `MonsterViewportPeriodicLoop`, `TAKUMI_MONSTER_VIEWPORT_PERIODIC_MS` (default 1000) |
-| P0.5 | **Regen: destroy + respawn for all viewers** | `gObjClearViewport` + `gObjViewportListCreate` | [x] | `MonsterViewportBroadcast.RegenMonsterAsync` on `TryRegen` |
-| P0.6 | Regen at spawn tile / set-base position | `gObjMonsterRegen` | [x] | `MapMonsterInstance.ResetToSpawn` |
-| P0.7 | Skip spawn types 3/4 at init | `CMonsterManager::SetMonsterData` | [x] | `MapMonsterWorld.RebuildInstances` |
-
----
-
-## P1 — Monster AI (movement & combat)
-
-| # | Item | Legacy | Status | Notes |
-|---|------|--------|--------|-------|
-| P1.1 | AI tick loop (~100–500ms) | `ObjectManager` monster timer | [x] | `MonsterAiLoop`, `TAKUMI_MONSTER_AI_INTERVAL_MS` |
-| P1.2 | Random wander in `MoveRange` / `Dis` | `MonsterMoveCheck` | [x] | `TryRollWander` |
-| P1.3 | Walk broadcast `C1 0xD4` | `PMSG_MOVE_SEND` | [x] | `MonsterWalkWire602` |
-| P1.4 | Attack anim `C1 0x18` action 120 | `GCActionSend` | [x] | `PlayerActionWire602` |
-| P1.5 | **Aggro + chase toward player** | `TargetNumber`, move to target | [x] | `TryChaseStep`, `AggroTargetKey`, `TAKUMI_MONSTER_AI_CHASE_RANGE` |
-| P1.6 | **Monster → player damage** | `gAttack.Attack` | [x] | `Monster.txt` `DamageMin`/`DamageMax` roll + stub defense by level (`TAKUMI_MONSTER_TO_PLAYER_DEF_PER_LEVEL`, `TAKUMI_COMBAT_PLAYER_DEFENSE_FLAT`); fallback `TAKUMI_MONSTER_TO_PLAYER_DAMAGE`; `TAKUMI_MONSTER_IGNORE_TXT_DAMAGE=1` restores old flat stub |
-| P1.7 | Player → monster damage + die | `GCDamageSend` / die | [x] | `MonsterCombatHandler` |
-| P1.8 | Miss / defense from `Monster.txt` | calc | [x] | `MonsterCombatCalculator` |
-| P1.9 | Broadcast monster death to viewers | viewport destroy | [x] | `MonsterViewportBroadcast.BroadcastDestroyAsync` |
-| P1.10 | Hit aggro on player attack | `LastAttackerID` | [x] | `MonsterCombatHandler` → `SetAggro` |
+| # | Item | Status | Notes |
+|---|------|:------:|-------|
+| P0.1 | Spawn `0x13` join + walk | [x] | `MapMonsterScopeSender` |
+| P0.2 | NPC-first sort | [x] | |
+| P0.3 | Destroy `0x14` leave view | [x] | |
+| P0.4 | Periodic rescan ~1s | [x] | `TAKUMI_MONSTER_VIEWPORT_PERIODIC_MS` |
+| P0.5 | Regen broadcast | [x] | |
+| P0.6 | Regen at spawn tile | [x] | Kalima: death tile (P3.5) |
+| P0.7 | Skip spawn types 3/4 | [x] | `TAKUMI_MONSTER_INCLUDE_INVASION_SPAWN=1` |
 
 ---
 
-## P2 — Pathfinding & terrain (ATT)
+## P1 — Monster AI
 
-| # | Item | Legacy | Status | Notes |
-|---|------|--------|--------|-------|
-| P2.1 | Load `Terrain.att` per map | `MapManager` / `*.att` | [x] | `MapAttWalkability`, Docker `TAKUMI_ATT_DATA_ROOT=/att-data` |
-| P2.2 | Block `NoMove` / `NoGround` tiles | `TWFlags` | [x] | `CanWalk(map,x,y)` used in wander/chase |
-| P2.3 | PathFinding2/4 multi-step path | `gMap[].PathFinding*` | [x] | `MapTilePathfinder` greedy first step + fallback (`TAKUMI_MONSTER_PATHFIND_MAX_STEPS`) |
-| P2.4 | Safe zone: no mob aggro | attribute | [x] | `IsSafeZone` — no chase/attack in safe tiles |
-| P2.5 | Encrypted `EncTerrain*.att` | client maps | [x] | `ModulusCryptor` + `TakumiFileCryptor`; prefers `EncTerrain{N}.att` |
-
----
-
-## P3 — Advanced AI & skills
-
-| # | Item | Legacy | Status |
-|---|------|--------|--------|
-| P3.1 | `MonsterSkillManager` / magic attack | `gObjMonsterMagicAttack` | [x] | `0xDB` AoE + `0x19` skill (`ClientHitPackets602`, `MonsterCombatHandler`) |
-| P3.2 | Element / resist | `Monster.txt` cols | [ ] |
-| P3.3 | Party exp / top damage user | `gObjMonsterGetTopHitDamageUser` | [ ] |
-| P3.4 | Invasion / event spawns (type 3/4) | `SetMonsterData` | [ ] |
-| P3.5 | Kalima / special regen | `gObjMonsterRegen` branches | [ ] |
-| P3.6 | PvP player damage | `gAttack` PvP | [~] | `TAKUMI_COMBAT_PVP_ENABLED`, `ApplyPvPHitAsync` |
+| # | Item | Status |
+|---|------|:------:|
+| P1.1 | AI tick loop | [x] |
+| P1.2 | Wander | [x] |
+| P1.3 | Walk `0xD4` | [x] |
+| P1.4 | Attack `0x18` | [x] |
+| P1.5 | Chase | [x] |
+| P1.6 | Monster → player dmg | [x] |
+| P1.7 | Player → monster + die | [x] |
+| P1.8 | Miss / defense | [x] |
+| P1.9 | Death broadcast | [x] |
+| P1.10 | Hit aggro | [x] |
 
 ---
 
-## P4 — NPC & shops (M9c)
+## P2 — ATT / path
 
-| # | Item | Legacy | Status |
-|---|------|--------|--------|
-| P4.1 | NPC shop list `0x31` | `NpcTalk` | [x] | `0x30` talk → `NpcShopWire602` (`NpcShopCatalog`) |
-| P4.2 | Gate teleport `0x1C` | `MoveGate` | [x] | `WorldGameplayHandlers` + `MapGateService` (`TAKUMI_GATE_SKIP_PROXIMITY`) |
-| P4.3 | Shop buy/sell/repair `0x32`–`0x34` | `CGItemBuy/Sell/Repair` | [x] | `ShopCommerceHandler` + persist `inventory_slot`/`zen` when `TAKUMI_ROSTER_DB_SYNC` |
-| P4.4 | Bot buffer / quest NPC scripts | various | [~] | `NpcQuestCatalog` + `QuestWire602` / `NpcTalkWire602` stub |
-
----
-
-## Environment (quick reference)
-
-| Variable | Default | Feature |
-|----------|---------|---------|
-| `TAKUMI_MONSTER_AI_ENABLED` | on | Wander + attack loop |
-| `TAKUMI_MONSTER_AI_INTERVAL_MS` | 500 | AI tick |
-| `TAKUMI_MONSTER_VIEWPORT_PERIODIC_MS` | 1000 | Legacy 1s viewport; `0` = off |
-| `TAKUMI_MONSTER_VIEW_RANGE` | 15 | Manhattan |
-| `TAKUMI_MONSTER_VIEWPORT_MAX_NPC` | 32 | |
-| `TAKUMI_MONSTER_VIEWPORT_MAX_MOB` | 48 | |
-| `TAKUMI_MONSTER_AI_WANDER_PCT` | 28 | |
-| `TAKUMI_MONSTER_AI_ATTACK_PCT` | 12 | |
-| `TAKUMI_MONSTER_AI_CHASE_RANGE` | 12 | Aggro leash |
-| `TAKUMI_MONSTER_AI_ATTACK_RANGE` | 3 | Melee |
-| `TAKUMI_MONSTER_TO_PLAYER_DAMAGE` | 15 | Fallback dmg when `Monster.txt` damage is `0/0`; also flat stub when `TAKUMI_MONSTER_IGNORE_TXT_DAMAGE=1` |
-| `TAKUMI_MONSTER_IGNORE_TXT_DAMAGE` | `0` | `1` = ignore `Monster.txt` damage columns (QA / legacy stub behavior) |
-| `TAKUMI_MONSTER_TO_PLAYER_DEF_PER_LEVEL` | 3 | Stub player physical defense: `level * this + TAKUMI_COMBAT_PLAYER_DEFENSE_FLAT` |
-| `TAKUMI_COMBAT_PLAYER_DEFENSE_FLAT` | 0 | Flat defense added to stub |
-| `TAKUMI_ATT_DATA_ROOT` | (search) | `Data/<World>/Terrain.att` |
-| `TAKUMI_MAP_PRESENCE_ENABLED` | 1 | Player object key for damage |
+| # | Item | Status |
+|---|------|:------:|
+| P2.1 | `Terrain.att` | [x] |
+| P2.2 | NoMove / NoGround | [x] |
+| P2.3 | Pathfinder step | [x] |
+| P2.4 | Safe zone no aggro | [x] |
+| P2.5 | Encrypted `EncTerrain*.att` | [x] |
 
 ---
 
-## Suggested implementation order
+## P3 — Advanced (còn lại)
 
-1. **P0.4 + P0.5** — periodic viewport + regen broadcast (fix “few mobs / no respawn visible”).
-2. **P1.5 + P1.6** — chase + player HP drop (game feel).
-3. **P1.9 + P1.10** — death broadcast + aggro on hit.
-4. **P2.1–P2.3** — ATT walk + better paths.
-5. **P3+ / P4** — skills, events, shops.
+| # | Item | Status |
+|---|------|:------:|
+| P3.1 | Monster magic `0xDB` / `0x19` | [x] |
+| P3.2 | Element / resist | [x] | `MonsterCombatCalculator` + stat cols |
+| P3.3 | Party exp / top damage | [x] | `MonsterKillExperienceGrant`; `TOP_DAMAGE_GRANT_EXP=0` off |
+| P3.4 | Invasion spawns 3/4 | [x] | default skip; `TAKUMI_MONSTER_INCLUDE_INVASION_SPAWN=1` |
+| P3.5 | Kalima regen | [x] | maps 24–29, 36 @ death tile |
+| P3.6 | PvP player damage | [~] |
 
 ---
 
-## QA
+## P4 — NPC / gate / shop (shared M8)
 
-1. `docker compose` recreate `legacy-login`; log `[m9-ai]` + `[m9-vp]`.
-2. Join Lorencia town → many NPCs (`0x13` count ≥ 10).
-3. Walk to field → mobs spawn; mobs walk (`0xD4`) and swing (`0x18`).
-4. Stand near mob → HP drops (`0x11` on self + `0x26`).
-5. Kill mob → `0x14` + `0x16`; wait regen → all clients see destroy + respawn.
-6. Idle 5s without moving → periodic rescan still updates viewport (`[m9-vp] periodic`).
+| # | Item | Status | Notes |
+|---|------|:------:|-------|
+| P4.1 | Shop `0x31` | [x] | |
+| P4.2 | Gate `0x1C` + skill `gate==0` | [x] | `MapGateService`, `SkillTeleportService` |
+| P4.3 | Buy/sell/repair | [x] | |
+| P4.4 | Quest NPC stub | [~] | |
 
-See also **`docs/M9-NPC-MONSTER-CHECKLIST.md`** (scope A baseline).
+---
+
+## Env (tham khảo)
+
+| Variable | Default |
+|----------|---------|
+| `TAKUMI_MONSTER_AI_INTERVAL_MS` | 500 |
+| `TAKUMI_MONSTER_VIEWPORT_PERIODIC_MS` | 1000 |
+| `TAKUMI_MONSTER_VIEW_RANGE` | 15 |
+| `TAKUMI_ATT_DATA_ROOT` | `/att-data` in Docker |
+
+Full list: bảng env cũ trong git history hoặc `MapMonsterScopeSender` / `MonsterAiLoop` source.
+
+---
+
+## Dev tiếp (ưu tiên)
+
+1. **P3.6** — PvP damage đầy đủ.
+2. Party EXP split (`TAKUMI_COMBAT_PARTY_EXP_SHARE`) — chưa.
+
+**Baseline P0–P3.5 + P4.1–P4.3: xong.**

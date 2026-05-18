@@ -38,7 +38,7 @@ Last updated: 2026-05-18
 | P0.2 | `TAKUMI_MONSTER_SET_BASE_PATH` / `MONSTER_INFO_PATH` | [x] | |
 | P0.3 | Chạy `./scripts/import-monster-spawn.sh` (hoặc `import-world-static-data.sh`) | [ ] | Bật `TAKUMI_MONSTER_SPAWN_DB=1` nếu dùng DB |
 | P0.4 | Log startup: không còn “Lorencia fallback only” trên Docker prod | [ ] | Chỉ fallback khi thiếu file |
-| P0.5 | `./scripts/report-monster-spawn-coverage.sh` pass | [ ] | Unit + in ra map counts |
+| P0.5 | `./scripts/report-monster-spawn-coverage.sh` pass | [x] | Unit + in ra map counts |
 
 ---
 
@@ -47,10 +47,10 @@ Last updated: 2026-05-18
 | # | Task | | Ghi chú |
 |---|------|:-:|---------|
 | P1.1 | Mỗi `Move.txt` row → `Gate` → `map_id` có `field > 0` | [~] | WARN trong log nếu thiếu |
-| P1.2 | Noria (3), Devias (2), Lorencia (0) smoke | [ ] | QA: warp + thấy mob ngoài safe zone |
+| P1.2 | Noria (3), Devias (2), Lorencia (0) smoke | [~] | Devias section 1 từ OpenMU075; QA: [`M8-MOVE-WARP-MONSTER-QA.md`](./M8-MOVE-WARP-MONSTER-QA.md) |
 | P1.3 | Dungeon / Atlans / LT / Tarkan theo level gate | [ ] | Map 8+ đã có hàng trong set-base |
-| P1.4 | LorenMarket (48) / event maps | [ ] | Gate 333 → map 79? verify Gate.txt |
-| P1.5 | Đồng bộ drift vs **OpenMU** spawn XML (tùy season) | [ ] | Không bắt buộc P0 |
+| P1.4 | LorenMarket gate 333 → map 79 | [x] | NPC 545–547 (OpenMU: no field mobs) |
+| P1.5 | Drift vs **OpenMU** SeasonSix | [~] | `./scripts/compare-spawn-openmu.sh` |
 
 **Lưu ý Noria:** `MonsterSetBase` map 3 ~18 dòng (7 NPC + 8 spot section 1); viewport chỉ gửi ~4–8 entity trong range — bình thường nếu đứng trong town.
 

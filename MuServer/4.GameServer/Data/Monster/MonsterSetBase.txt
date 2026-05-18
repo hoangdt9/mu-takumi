@@ -269,6 +269,14 @@ end
 
 0
 //Monster      MapNumber      Range      PositionX      PositionY      Direction      Comment
+545            79             00         113            116            03             //Christine (Loren Market)
+546            79             00         131            109            03             //Jeweler Raul
+547            79             00         123            140            03             //Julia (Loren Market)
+
+end
+
+0
+//Monster      MapNumber      Range      PositionX      PositionY      Direction      Comment
 237            03             00         171            105            03             //Charon
 242            03             00         173            125            01             //Elf Lala
 243            03             00         195            124            02             //Eo the Craftsman
@@ -414,6 +422,22 @@ end
 31             3              05         135            116            135          116          -1             5            //Agon
 32             3              05         218            134            218          134          -1             5            //Stone Golem
 30             3              05         204            147            204          147          -1             5            //Forest Monster
+end
+
+1
+//=================================
+//SPOT - DEVIAS (OpenMU Version075 field areas; section 3 invasion rows stay off by default)
+//=================================
+//Monster      MapNumber      Range      BeginPosX      BeginPosY      EndPosX      EndPosY      Direction      Quantity      Comment
+ 20             02             30         165            165            194          194          -1             10           //Elite Yeti
+ 20             02             30          25             25             36           36          -1             10           //Elite Yeti
+ 20             02             30         210            220            210          242          -1             15           //Elite Yeti
+ 20             02             30           0            245            128          251          -1             200          //Elite Yeti
+ 25             02             30           0            128            128          245          -1             75           //Ice Queen
+ 23             02             30           0              0            128          128          -1             75           //Hommerd
+ 22             02             30           0              0            128          128          -1             75           //Ice Monster
+ 24             02             30           0            128            128          251          -1             65           //Worm
+ 21             02             30           0            128            128          251          -1             35           //Assassin
 end
 
 1

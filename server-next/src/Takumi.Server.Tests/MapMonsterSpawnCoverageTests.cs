@@ -33,7 +33,7 @@ public sealed class MapMonsterSpawnCoverageTests
             Assert.True(summary.Total > 0, $"map {mapId} has no spawns in {path}");
         }
 
-        foreach (var mapId in new byte[] { 0, 3 })
+        foreach (var mapId in new byte[] { 0, 2, 3 })
         {
             var summary = byMap[mapId];
             Assert.True(

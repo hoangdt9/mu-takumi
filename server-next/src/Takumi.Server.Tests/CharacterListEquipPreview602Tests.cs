@@ -136,6 +136,24 @@ public sealed class CharacterListEquipPreview602Tests
     }
 
     [Fact]
+    public void BuildFromWearItems_MgSeedHex_LeftWeaponPreviewDecodesEmpty()
+    {
+        var wear = new byte[]?[12];
+        wear[0] = Convert.FromHexString("3AFFFF7F0000000000000000");
+        wear[7] = Convert.FromHexString("27FFFF7F00C0000000000000");
+        wear[3] = Convert.FromHexString("8EFFFF7F0080000000000000");
+        wear[4] = Convert.FromHexString("8EFFFF7F0090000000000000");
+        wear[5] = Convert.FromHexString("8EFFFF7F00A0000000000000");
+        wear[6] = Convert.FromHexString("8EFFFF7F00B0000000000000");
+
+        var preview = CharacterListEquipPreview602.BuildFromWearItems(wear);
+
+        Assert.Equal(0, preview[1]);
+        var extLeft = (preview[12] & 0xF0) << 4 | preview[1];
+        Assert.Equal(0, extLeft);
+    }
+
+    [Fact]
     public void DecodeItemIndex_MgSeedHex_UsesSaintMgNotHadesSm()
     {
         var mgSaintArmor = Convert.FromHexString("8EFFFF7F0080000000000000");

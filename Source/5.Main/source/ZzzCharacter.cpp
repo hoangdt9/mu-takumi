@@ -850,7 +850,11 @@ void SetPlayerStop(CHARACTER *c)
                     //  Ä® ÀåÂø.
 					if(c->Weapon[0].Type>=MODEL_SWORD && c->Weapon[0].Type<MODEL_MACE+MAX_ITEM_INDEX)
 					{
-						if(!ItemAttribute[c->Weapon[0].Type-MODEL_ITEM].TwoHand)
+						const bool rosterSingleWeaponPreview =
+							(SceneFlag == CHARACTER_SCENE)
+							&& (c->Weapon[0].Type != -1)
+							&& (c->Weapon[1].Type == -1);
+						if (rosterSingleWeaponPreview || !ItemAttribute[c->Weapon[0].Type-MODEL_ITEM].TwoHand)
 						{
 							SetAction(&c->Object,PLAYER_STOP_SWORD);
 						}
@@ -14328,33 +14332,67 @@ static void TakumiEnsurePreviewWeaponModelLoaded(int modelType, CHARACTER* c)
 	}
 	else if (group == 0)
 	{
-		const int swordNums[] = { index, index + 1, index - 1, -1 };
-		for (int swordNum : swordNums)
+		// Item.txt model column for 0,58 Kiếm Thánh Thần (MG) is 56 — try before index+1 (59).
+		if (TakumiIsMgSwordSubIndex(index))
 		{
-			if (swordNum < 1)
+			const int mgModelNums[] = { 56, index, index + 1, index - 1, -1 };
+			for (int swordNum : mgModelNums)
 			{
-				continue;
+				if (swordNum < 1)
+				{
+					continue;
+				}
+
+				gLoadData.AccessModel(modelType, "Data\\Item\\", "Sword", swordNum);
+				if (b->NumMeshs > 0)
+				{
+					TakumiOpenWeaponTextures(modelType);
+#if defined(__ANDROID__)
+					g_ErrorReport.Write(
+						"[TakumiWear] MG sword load Sword%d itemSub=%d meshs=%d\r\n",
+						swordNum,
+						index,
+						b->NumMeshs);
+#endif
+					return;
+				}
 			}
 
-			gLoadData.AccessModel(modelType, "Data\\Item\\", "Sword", swordNum);
-			if (b->NumMeshs > 0)
+			static const char* mgSaintSwordModels[] = {
+				"HolyAngelSword",
+				"bloodangel_sword01",
+				"mastery_sword",
+				nullptr
+			};
+
+			if (TakumiTryLoadNamedItemModels(modelType, b, mgSaintSwordModels))
 			{
-				TakumiOpenWeaponTextures(modelType);
+#if defined(__ANDROID__)
+				g_ErrorReport.Write(
+					"[TakumiWear] MG sword load named BMD itemSub=%d meshs=%d\r\n",
+					index,
+					b->NumMeshs);
+#endif
 				return;
 			}
 		}
-
-		static const char* saintSwordModels[] = {
-			"absolute02_sword",
-			"mastery_sword",
-			"bloodangel_sword01",
-			"HolyAngelSword",
-			nullptr
-		};
-
-		if (TakumiTryLoadNamedItemModels(modelType, b, saintSwordModels))
+		else
 		{
-			return;
+			const int swordNums[] = { index, index + 1, index - 1, -1 };
+			for (int swordNum : swordNums)
+			{
+				if (swordNum < 1)
+				{
+					continue;
+				}
+
+				gLoadData.AccessModel(modelType, "Data\\Item\\", "Sword", swordNum);
+				if (b->NumMeshs > 0)
+				{
+					TakumiOpenWeaponTextures(modelType);
+					return;
+				}
+			}
 		}
 
 		TakumiOpenWeaponTextures(modelType);
@@ -14406,6 +14444,15 @@ static void TakumiEnsureCharacterWearModelsLoaded(CHARACTER* c)
 			c->Weapon[0].Type - MODEL_ITEM,
 			c->Weapon[0].Type,
 			Models[c->Weapon[0].Type].NumMeshs);
+	}
+
+	if (c->Weapon[1].Type >= MODEL_ITEM)
+	{
+		g_ErrorReport.Write(
+			"[TakumiWear] weapon1 type=%d model=%d meshs=%d\r\n",
+			c->Weapon[1].Type - MODEL_ITEM,
+			c->Weapon[1].Type,
+			Models[c->Weapon[1].Type].NumMeshs);
 	}
 
 	if (c->Wing.Type >= MODEL_WING)
@@ -14479,7 +14526,8 @@ void ChangeCharacterExt(int Key,BYTE *Equipment, CHARACTER * pCharacter, OBJECT 
 
 	auto AssignWeaponFromPreview = [](CHARACTER* character, int weaponIndex, int extType)
 	{
-		if (extType == 0x0FFF)
+		// Empty left/right preview slot encodes as 0 (not 0xFFF); 0xFFF is only for null Equipment[].
+		if (extType == 0x0FFF || extType <= 0)
 		{
 			character->Weapon[weaponIndex].Type = -1;
 			character->Weapon[weaponIndex].Option1 = 0;
@@ -15126,6 +15174,12 @@ void ChangeCharacterExt(int Key,BYTE *Equipment, CHARACTER * pCharacter, OBJECT 
     c->ExtendState = Equipment[10]&0x01;
 
     ChangeChaosCastleUnit (c);
+
+	if (SceneFlag == CHARACTER_SCENE && c->Weapon[0].Type != -1 && c->Weapon[1].Type == -1)
+	{
+		SetPlayerStop(c);
+	}
+
 	SetCharacterScale(c);
 
 	TakumiEnsureCharacterWearModelsLoaded(c);

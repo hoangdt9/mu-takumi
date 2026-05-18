@@ -8228,10 +8228,22 @@ void RenderPartObjectBody(BMD *b,OBJECT *o,int Type,float Alpha,int RenderType)
 		Vector(1.f,1.f,1.f,b->BodyLight);
 		b->RenderBody(RENDER_TEXTURE,o->Alpha,o->BlendMesh,o->BlendMeshLight,o->BlendMeshTexCoordU,o->BlendMeshTexCoordV,o->HiddenMesh);
     }	
-	//=== Render Custom CEffect
-	else if (gCloak.isCEffect(Type-MODEL_ITEM))
+	//=== Render Custom CEffect (absolute02_sword uses EffectIndex 70 + absolute02_swordrender.jpg — not MG 0,58)
+	else if (gCloak.isCEffect(Type - MODEL_ITEM))
 	{
-		gCloak.RenderCEffect(Type - MODEL_ITEM,o,b);
+		const int itemIndex = Type - MODEL_ITEM;
+		const int subIndex = itemIndex % MAX_ITEM_INDEX;
+		const int itemGroup = itemIndex / MAX_ITEM_INDEX;
+		const bool mgSaintSword = itemGroup == 0 && (subIndex == 44 || subIndex == 55 || subIndex == 58 || subIndex == 63);
+
+		if (mgSaintSword)
+		{
+			b->RenderBody(RENDER_TEXTURE, o->Alpha, o->BlendMesh, o->BlendMeshLight, o->BlendMeshTexCoordU, o->BlendMeshTexCoordV, o->HiddenMesh);
+		}
+		else
+		{
+			gCloak.RenderCEffect(itemIndex, o, b);
+		}
 	}
 	else if(Type == MODEL_WING+36 )
 	{

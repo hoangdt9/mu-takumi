@@ -1352,6 +1352,8 @@ static constexpr int kTakumiPlayerViewportEntryBytesZeroBuff = 38;
 
 #if defined(__ANDROID__)
 static int s_androidDeferredLoadWorldMap = -1;
+/// Map whose terrain assets were last loaded (may differ from WorldActive during 0x1C→F3 03 warp).
+static int s_androidTerrainLoadedMap = -1;
 static bool s_androidDeferMonsterViewportPackets = false;
 static bool s_androidSkipMonsterViewportPathfinding = false;
 static uint32_t s_androidMonsterViewportGraceUntil = 0;
@@ -1483,7 +1485,13 @@ BOOL ReceiveJoinMapServer(BYTE *ReceiveBuffer, BOOL bEncrypted)
 	CharacterMachine->Gold            = Data->Gold;
 	//CharacterAttribute->SkillMana     = CharacterAttribute->Energy*10+CharacterAttribute->ManaMax*10/6;
 
+#if defined(__ANDROID__)
+	const int previousMap = (s_androidTerrainLoadedMap >= 0)
+		? s_androidTerrainLoadedMap
+		: gMapManager.WorldActive;
+#else
 	const int previousMap = gMapManager.WorldActive;
+#endif
 	const int joinMap = Data->Map;
 	gMapManager.WorldActive = joinMap;
 
@@ -1496,8 +1504,9 @@ BOOL ReceiveJoinMapServer(BYTE *ReceiveBuffer, BOOL bEncrypted)
 		s_androidDeferMonsterViewportPackets = true;
 		deferredWorldLoad = true;
 		g_ErrorReport.Write(
-			"[AndroidLogin] ReceiveJoinMapServer defer LoadWorld map=%d (after join packet batch)\r\n",
-			joinMap);
+			"[AndroidLogin] ReceiveJoinMapServer defer LoadWorld map=%d (terrain was %d)\r\n",
+			joinMap,
+			previousMap);
 #else
 		gMapManager.LoadWorld(joinMap);
 #endif
@@ -1824,6 +1833,7 @@ void TakumiProcessAndroidPendingLoadWorld()
 	s_androidDeferredLoadWorldMap = -1;
 	g_ErrorReport.Write("[AndroidLogin] deferred LoadWorld map=%d begin\r\n", map);
 	gMapManager.LoadWorld(map);
+	s_androidTerrainLoadedMap = map;
 	g_ErrorReport.Write("[AndroidLogin] deferred LoadWorld map=%d done\r\n", map);
 	if (LoadingWorld > 30)
 	{
@@ -2900,23 +2910,24 @@ BOOL ReceiveTeleport(BYTE *ReceiveBuffer, BOOL bEncrypted)
 		RemoveAllShopTitleExceptHero();
 		if(gMapManager.WorldActive != teleMap)
 		{
-            int OldWorld = gMapManager.WorldActive;
-			
-			gMapManager.WorldActive = teleMap;
+            const int OldWorld = gMapManager.WorldActive;
+			const int destMap = teleMap;
 #if defined(__ANDROID__)
-			// server-next always follows 0x1C flag=1 with F3 03 join-map; defer LoadWorld there.
+			// server-next follows 0x1C flag=1 with F3 03; defer LoadWorld there. Do not set
+			// WorldActive yet — ReceiveJoinMapServer uses terrain-loaded map vs join map.
 			g_ErrorReport.Write(
 				"[AndroidLogin] ReceiveTeleport cross-map %d→%d — skip LoadWorld (wait F3 03)\r\n",
 				OldWorld,
 				teleMap);
 #else
+			gMapManager.WorldActive = destMap;
 			gMapManager.LoadWorld(gMapManager.WorldActive);
 #endif
 			
-			if(gMapManager.WorldActive == WD_34CRYWOLF_1ST)
+			if(destMap == WD_34CRYWOLF_1ST)
 				SendRequestCrywolfInfo();
 			
-            if ( ( gMapManager.InChaosCastle(OldWorld) == true && OldWorld!=gMapManager.WorldActive ) || gMapManager.InChaosCastle()==true )
+            if ( ( gMapManager.InChaosCastle(OldWorld) == true && OldWorld != destMap ) || gMapManager.InChaosCastle(destMap) )
             {
                 PlayBuffer( SOUND_CHAOS_ENVIR, NULL, true );
 				
@@ -2925,7 +2936,7 @@ BOOL ReceiveTeleport(BYTE *ReceiveBuffer, BOOL bEncrypted)
                 SetCharacterClass ( Hero );
 				DeleteBug(&Hero->Object);
             }
-            if ( gMapManager.InChaosCastle()==false )
+            if ( gMapManager.InChaosCastle(destMap) == false )
             {
                 StopBuffer ( SOUND_CHAOSCASTLE, true );
                 StopBuffer ( SOUND_CHAOS_ENVIR, true );
@@ -2942,7 +2953,7 @@ BOOL ReceiveTeleport(BYTE *ReceiveBuffer, BOOL bEncrypted)
 				StopBuffer(SOUND_EMPIREGUARDIAN_INDOOR_SOUND, true);
 			}
 
-            matchEvent::CreateEventMatch ( gMapManager.WorldActive );
+            matchEvent::CreateEventMatch ( destMap );
 			
             if ( gMapManager.WorldActive==-1 || Hero->Helper.Type!=MODEL_HELPER+3 || Hero->SafeZone )
             {
@@ -2956,10 +2967,10 @@ BOOL ReceiveTeleport(BYTE *ReceiveBuffer, BOOL bEncrypted)
                     o->Position[2] = RequestTerrainHeight(o->Position[0],o->Position[1])+30.f;
             }
 			
-			if (gMapManager.WorldActive >= WD_65DOPPLEGANGER1 && gMapManager.WorldActive <= WD_68DOPPLEGANGER4);
+			if (destMap >= WD_65DOPPLEGANGER1 && destMap <= WD_68DOPPLEGANGER4);
 			else
 			{
-				const char* mapName = gMapManager.GetMapName(gMapManager.WorldActive);
+				const char* mapName = gMapManager.GetMapName(destMap);
 				if (mapName != nullptr && mapName[0] != '\0' && g_pChatListBox != nullptr)
 				{
 					char Text[256];

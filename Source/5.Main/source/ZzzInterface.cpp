@@ -8211,7 +8211,12 @@ void MoveHero()
 						&& gMapManager.InChaosCastle()==false ) 
 						&& ( Attacking==1 && SelectedCharacter!=-1 ))
 					{
-						Success = true;
+#if defined(__ANDROID__) || defined(MU_IOS)
+						if (!MU_AndroidShouldSuppressCombatTargeting())
+#endif
+						{
+							Success = true;
+						}
 					}
 					
 					if( Success && !g_isCharacterBuff(o, eDeBuff_Stun) && !g_isCharacterBuff(o, eDeBuff_Sleep) )
@@ -8756,16 +8761,26 @@ void SelectObjects()
 
 			if(SelectedItem == -1)
 			{
-				SelectedNpc = SelectCharacter(KIND_NPC);
-				if(SelectedNpc == -1)
+#if defined(__ANDROID__) || defined(MU_IOS)
+				if (MU_AndroidShouldSuppressCombatTargeting())
 				{
-					SelectedCharacter = SelectCharacter(KIND_MONSTER|KIND_EDIT);
-					if(SelectedCharacter == -1)
+					SelectedCharacter = -1;
+					Attacking = -1;
+				}
+				else
+#endif
+				{
+					SelectedNpc = SelectCharacter(KIND_NPC);
+					if(SelectedNpc == -1)
 					{
-						SelectedCharacter = SelectCharacter(KIND_PLAYER);
+						SelectedCharacter = SelectCharacter(KIND_MONSTER|KIND_EDIT);
 						if(SelectedCharacter == -1)
 						{
-							SelectedOperate = SelectOperate();
+							SelectedCharacter = SelectCharacter(KIND_PLAYER);
+							if(SelectedCharacter == -1)
+							{
+								SelectedOperate = SelectOperate();
+							}
 						}
 					}
 				}
@@ -8777,6 +8792,15 @@ void SelectObjects()
 		}
 		else
 		{
+#if defined(__ANDROID__) || defined(MU_IOS)
+			if (MU_AndroidShouldSuppressCombatTargeting())
+			{
+				SelectedCharacter = -1;
+				Attacking = -1;
+			}
+			else
+#endif
+			{
             CKind_1 = KIND_MONSTER | KIND_EDIT;
             CKind_2 = KIND_PLAYER;
 			
@@ -8837,6 +8861,7 @@ void SelectObjects()
 				{
 					g_pPartyManager->SearchPartyMember( );
 				}
+			}
 			}
 			
 		}

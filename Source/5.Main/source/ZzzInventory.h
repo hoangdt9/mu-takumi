@@ -53,7 +53,7 @@ const enum SKILL_TOOLTIP_RENDER_POINT
 	STRP_BOOTOMRIGHT
 };
 
-// ¼¼À²Á¤º¸
+// ì„¸ìœ¨ì •ë³´
 
 extern int		g_nTaxRate;
 extern int		g_nChaosTaxRate;
@@ -77,7 +77,7 @@ extern int			GuildTotalScore;
 extern int AllRepairGold;
 
 //////////////////////////////////////////////////////////////////////////
-// text °ü·Ã
+// text ê´€ë ¨
 //////////////////////////////////////////////////////////////////////////
 extern char TextList[60][512];
 extern int TextListColor[60];
@@ -197,6 +197,16 @@ bool IsSellingBan(ITEM* pItem);
 bool IsRepairBan(ITEM* pItem);
 bool IsWingItem(ITEM* pItem);
 
+WORD TakumiGetEffectiveStrength();
+WORD TakumiGetEffectiveDexterity();
+WORD TakumiGetEffectiveVitality();
+WORD TakumiGetEffectiveEnergy();
+WORD TakumiGetEffectiveCharisma();
+void TakumiGetItemRequirementReduction(ITEM* item, int itemLevel, int& needStrengthDown, int& needDexterityDown);
+bool TakumiMeetsItemClassRequirement(const ITEM_ATTRIBUTE* pItemAttr, BYTE heroClass);
+bool TakumiMeetsItemStatRequirements(const ITEM* pItem);
+bool TakumiMeetsItemRequirements(ITEM* pItem);
+void TakumiAppendUnmetSs6RequirementLines(ITEM* ip, int& textNum);
 void ComputeItemInfo(int iHelpItem);
 void RenderHelpCategory(int iColumnType, int Pos_x, int Pos_y);
 void RenderHelpLine(int iColumnType, const char * pPrintStyle, int & TabSpace, const char * pGapText = NULL, int Pos_y = 0, int iType=0);

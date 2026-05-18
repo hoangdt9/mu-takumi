@@ -882,6 +882,392 @@ void RenderHelpCategory(int iColumnType, int Pos_x, int Pos_y)
 	TextNum = 0;
 }
 
+static WORD TakumiEffectiveStat(DWORD viewBase, DWORD viewAdd, DWORD base, DWORD add)
+{
+	const DWORD fromView = viewBase + viewAdd;
+	const DWORD fromBase = base + add;
+	const DWORD value = (fromView > fromBase) ? fromView : fromBase;
+	return (WORD)(value > 65535u ? 65535u : value);
+}
+
+WORD TakumiGetEffectiveStrength()
+{
+	if (CharacterAttribute == nullptr)
+	{
+		return 0;
+	}
+
+	return TakumiEffectiveStat(
+		(DWORD)CharacterAttribute->PrintPlayer.ViewStrength,
+		(DWORD)CharacterAttribute->PrintPlayer.ViewAddStrength,
+		(DWORD)CharacterAttribute->Strength,
+		(DWORD)CharacterAttribute->AddStrength);
+}
+
+WORD TakumiGetEffectiveDexterity()
+{
+	if (CharacterAttribute == nullptr)
+	{
+		return 0;
+	}
+
+	return TakumiEffectiveStat(
+		(DWORD)CharacterAttribute->PrintPlayer.ViewDexterity,
+		(DWORD)CharacterAttribute->PrintPlayer.ViewAddDexterity,
+		(DWORD)CharacterAttribute->Dexterity,
+		(DWORD)CharacterAttribute->AddDexterity);
+}
+
+WORD TakumiGetEffectiveVitality()
+{
+	if (CharacterAttribute == nullptr)
+	{
+		return 0;
+	}
+
+	return TakumiEffectiveStat(
+		(DWORD)CharacterAttribute->PrintPlayer.ViewVitality,
+		(DWORD)CharacterAttribute->PrintPlayer.ViewAddVitality,
+		(DWORD)CharacterAttribute->Vitality,
+		(DWORD)CharacterAttribute->AddVitality);
+}
+
+WORD TakumiGetEffectiveEnergy()
+{
+	if (CharacterAttribute == nullptr)
+	{
+		return 0;
+	}
+
+	return TakumiEffectiveStat(
+		(DWORD)CharacterAttribute->PrintPlayer.ViewEnergy,
+		(DWORD)CharacterAttribute->PrintPlayer.ViewAddEnergy,
+		(DWORD)CharacterAttribute->Energy,
+		(DWORD)CharacterAttribute->AddEnergy);
+}
+
+WORD TakumiGetEffectiveCharisma()
+{
+	if (CharacterAttribute == nullptr)
+	{
+		return 0;
+	}
+
+	return TakumiEffectiveStat(
+		(DWORD)CharacterAttribute->PrintPlayer.ViewLeadership,
+		(DWORD)CharacterAttribute->PrintPlayer.ViewAddLeadership,
+		(DWORD)CharacterAttribute->Charisma,
+		(DWORD)CharacterAttribute->AddCharisma);
+}
+
+static void TakumiApplyItemRequirementLineColor(int* color, bool met, bool reducedRequirement)
+{
+	if (color == nullptr)
+	{
+		return;
+	}
+
+	if (!met)
+	{
+		*color = TEXT_COLOR_RED;
+	}
+	else if (reducedRequirement)
+	{
+		*color = TEXT_COLOR_YELLOW;
+	}
+	else
+	{
+		*color = TEXT_COLOR_WHITE;
+	}
+}
+
+void TakumiGetItemRequirementReduction(ITEM* item, int itemLevel, int& needStrengthDown, int& needDexterityDown)
+{
+	needStrengthDown = 0;
+	needDexterityDown = 0;
+
+	if (item == nullptr)
+	{
+		return;
+	}
+
+	extern JewelHarmonyInfo* g_pUIJewelHarmonyinfo;
+	if (g_pUIJewelHarmonyinfo != nullptr && itemLevel >= item->Jewel_Of_Harmony_OptionLevel)
+	{
+		StrengthenCapability SC;
+		g_pUIJewelHarmonyinfo->GetStrengthenCapability(&SC, item, 0);
+
+		if (SC.SI_isNB)
+		{
+			needStrengthDown = SC.SI_NB.SI_force;
+			needDexterityDown = SC.SI_NB.SI_activity;
+		}
+	}
+
+	const int socketCount = item->SocketCount;
+	if (socketCount <= 0)
+	{
+		return;
+	}
+
+	const int safeSocketCount = socketCount > MAX_SOCKETS ? MAX_SOCKETS : socketCount;
+	for (int i = 0; i < safeSocketCount; ++i)
+	{
+		if (item->SocketSeedID[i] == 38)
+		{
+			needStrengthDown += g_SocketItemMgr.GetSocketOptionValue(item, i);
+		}
+		else if (item->SocketSeedID[i] == 39)
+		{
+			needDexterityDown += g_SocketItemMgr.GetSocketOptionValue(item, i);
+		}
+	}
+}
+
+bool TakumiMeetsItemClassRequirement(const ITEM_ATTRIBUTE* pItemAttr, BYTE heroClass)
+{
+	if (pItemAttr == nullptr)
+	{
+		return false;
+	}
+
+	const BYTE byFirstClass = gCharacterManager.GetBaseClass(heroClass);
+	const BYTE byStepClass = gCharacterManager.GetStepClass(heroClass);
+	const BYTE requiredStep = pItemAttr->RequireClass[byFirstClass];
+
+	if (requiredStep != 0 && requiredStep <= byStepClass)
+	{
+		return true;
+	}
+
+	if (byFirstClass == CLASS_DARK
+		&& pItemAttr->RequireClass[CLASS_WIZARD] != 0
+		&& pItemAttr->RequireClass[CLASS_KNIGHT] != 0
+		&& pItemAttr->RequireClass[CLASS_WIZARD] <= byStepClass
+		&& pItemAttr->RequireClass[CLASS_KNIGHT] <= byStepClass)
+	{
+		return true;
+	}
+
+	return false;
+}
+
+bool TakumiMeetsItemStatRequirements(const ITEM* pItem)
+{
+	if (pItem == nullptr || CharacterAttribute == nullptr)
+	{
+		return false;
+	}
+
+	const WORD wStrength = TakumiGetEffectiveStrength();
+	const WORD wDexterity = TakumiGetEffectiveDexterity();
+	const WORD wEnergy = TakumiGetEffectiveEnergy();
+	const WORD wVitality = TakumiGetEffectiveVitality();
+	const WORD wCharisma = TakumiGetEffectiveCharisma();
+	const WORD wLevel = CharacterAttribute->Level;
+
+	const int iItemLevel = (pItem->Level >> 3) & 15;
+	int iDecNeedStrength = 0;
+	int iDecNeedDex = 0;
+	TakumiGetItemRequirementReduction(const_cast<ITEM*>(pItem), iItemLevel, iDecNeedStrength, iDecNeedDex);
+
+	if (pItem->RequireStrength > 0
+		&& wStrength < (WORD)(pItem->RequireStrength - iDecNeedStrength))
+	{
+		return false;
+	}
+
+	if (pItem->RequireDexterity > 0
+		&& wDexterity < (WORD)(pItem->RequireDexterity - iDecNeedDex))
+	{
+		return false;
+	}
+
+	if (pItem->RequireEnergy > 0 && wEnergy < pItem->RequireEnergy)
+	{
+		return false;
+	}
+
+	if (pItem->RequireVitality > 0 && wVitality < pItem->RequireVitality)
+	{
+		return false;
+	}
+
+	if (pItem->RequireCharisma > 0 && wCharisma < pItem->RequireCharisma)
+	{
+		return false;
+	}
+
+	if (pItem->RequireLevel > 0 && wLevel < pItem->RequireLevel)
+	{
+		return false;
+	}
+
+	if (pItem->Type == ITEM_HELPER + 5)
+	{
+		const PET_INFO* pPetInfo = GetPetInfo(const_cast<ITEM*>(pItem));
+		if (pPetInfo != nullptr)
+		{
+			const WORD wRequireCharisma = (WORD)(185 + (pPetInfo->m_wLevel * 15));
+			if (wCharisma < wRequireCharisma)
+			{
+				return false;
+			}
+		}
+	}
+
+	return true;
+}
+
+bool TakumiMeetsItemRequirements(ITEM* pItem)
+{
+	if (pItem == nullptr || pItem->Type < 0 || pItem->Type >= MAX_ITEM)
+	{
+		return false;
+	}
+
+	const ITEM_ATTRIBUTE* pItemAttr = &ItemAttribute[pItem->Type];
+	if (!TakumiMeetsItemClassRequirement(pItemAttr, Hero != nullptr ? Hero->Class : 0))
+	{
+		return false;
+	}
+
+	return TakumiMeetsItemStatRequirements(pItem);
+}
+
+void TakumiAppendUnmetSs6RequirementLines(ITEM* ip, int& textNum)
+{
+	if (ip == nullptr || CharacterAttribute == nullptr)
+	{
+		return;
+	}
+
+#ifdef LEM_ADD_LUCKYITEM
+	if (Check_LuckyItem(ip->Type))
+	{
+		return;
+	}
+#endif
+
+	const int itemLevel = (ip->Level >> 3) & 15;
+	int decStr = 0;
+	int decDex = 0;
+	TakumiGetItemRequirementReduction(ip, itemLevel, decStr, decDex);
+
+	auto appendShortfall = [&](int shortfall)
+	{
+		if (shortfall <= 0)
+		{
+			return;
+		}
+
+		sprintf(TextList[textNum], GlobalText[74], shortfall);
+		TextListColor[textNum] = TEXT_COLOR_RED;
+		TextBold[textNum] = false;
+		textNum++;
+	};
+
+	if (ip->RequireLevel > 0 && ip->Type != ITEM_HELPER + 14)
+	{
+		const WORD playerLevel = CharacterAttribute->Level;
+		if (playerLevel < ip->RequireLevel)
+		{
+			sprintf(TextList[textNum], GlobalText[76], ip->RequireLevel);
+			TextListColor[textNum] = TEXT_COLOR_RED;
+			TextBold[textNum] = false;
+			textNum++;
+			appendShortfall(ip->RequireLevel - playerLevel);
+		}
+	}
+
+	if (ip->RequireStrength > 0)
+	{
+		const int reqStrength = ip->RequireStrength - decStr;
+		const int safeReqStrength = reqStrength < 0 ? 0 : reqStrength;
+		const WORD strength = TakumiGetEffectiveStrength();
+		if (strength < (WORD)safeReqStrength)
+		{
+			sprintf(TextList[textNum], GlobalText[73], safeReqStrength);
+			TextListColor[textNum] = TEXT_COLOR_RED;
+			TextBold[textNum] = false;
+			textNum++;
+			appendShortfall(safeReqStrength - strength);
+		}
+	}
+
+	if (ip->RequireDexterity > 0)
+	{
+		const int reqDexterity = ip->RequireDexterity - decDex;
+		const int safeReqDexterity = reqDexterity < 0 ? 0 : reqDexterity;
+		const WORD dexterity = TakumiGetEffectiveDexterity();
+		if (dexterity < (WORD)safeReqDexterity)
+		{
+			sprintf(TextList[textNum], GlobalText[75], safeReqDexterity);
+			TextListColor[textNum] = TEXT_COLOR_RED;
+			TextBold[textNum] = false;
+			textNum++;
+			appendShortfall(safeReqDexterity - dexterity);
+		}
+	}
+
+	if (ip->RequireVitality > 0)
+	{
+		const WORD vitality = TakumiGetEffectiveVitality();
+		if (vitality < ip->RequireVitality)
+		{
+			sprintf(TextList[textNum], GlobalText[1930], ip->RequireVitality);
+			TextListColor[textNum] = TEXT_COLOR_RED;
+			TextBold[textNum] = false;
+			textNum++;
+			appendShortfall(ip->RequireVitality - vitality);
+		}
+	}
+
+	if (ip->RequireEnergy > 0)
+	{
+		const WORD energy = TakumiGetEffectiveEnergy();
+		if (energy < ip->RequireEnergy)
+		{
+			sprintf(TextList[textNum], GlobalText[77], ip->RequireEnergy);
+			TextListColor[textNum] = TEXT_COLOR_RED;
+			TextBold[textNum] = false;
+			textNum++;
+			appendShortfall(ip->RequireEnergy - energy);
+		}
+	}
+
+	if (ip->RequireCharisma > 0)
+	{
+		const WORD charisma = TakumiGetEffectiveCharisma();
+		if (charisma < ip->RequireCharisma)
+		{
+			sprintf(TextList[textNum], GlobalText[698], ip->RequireCharisma);
+			TextListColor[textNum] = TEXT_COLOR_RED;
+			TextBold[textNum] = false;
+			textNum++;
+			appendShortfall(ip->RequireCharisma - charisma);
+		}
+	}
+
+	if (ip->Type == ITEM_HELPER + 5)
+	{
+		const PET_INFO* pPetInfo = GetPetInfo(ip);
+		if (pPetInfo != nullptr)
+		{
+			const WORD reqCharisma = (WORD)(185 + (pPetInfo->m_wLevel * 15));
+			const WORD charisma = TakumiGetEffectiveCharisma();
+			if (charisma < reqCharisma)
+			{
+				sprintf(TextList[textNum], GlobalText[698], reqCharisma);
+				TextListColor[textNum] = TEXT_COLOR_RED;
+				TextBold[textNum] = false;
+				textNum++;
+				appendShortfall(reqCharisma - charisma);
+			}
+		}
+	}
+}
+
 void ComputeItemInfo(int iHelpItem)
 {
 	if (g_iCurrentItem == iHelpItem) 
@@ -1076,11 +1462,11 @@ void ComputeItemInfo(int iHelpItem)
 
 		WORD Strength, Dexterity, Energy, Vitality, Charisma;
 
-		Strength = CharacterAttribute->Strength + CharacterAttribute->AddStrength;
-		Dexterity= CharacterAttribute->Dexterity+ CharacterAttribute->AddDexterity;
-		Energy	 = CharacterAttribute->Energy   + CharacterAttribute->AddEnergy;
-		Vitality	 = CharacterAttribute->Vitality   + CharacterAttribute->AddVitality;
-		Charisma	 = CharacterAttribute->Charisma   + CharacterAttribute->AddCharisma;
+		Strength = TakumiGetEffectiveStrength();
+		Dexterity = TakumiGetEffectiveDexterity();
+		Energy = TakumiGetEffectiveEnergy();
+		Vitality = TakumiGetEffectiveVitality();
+		Charisma = TakumiGetEffectiveCharisma();
 
 		if(RequireStrength  <=Strength
 			&&	RequireDexterity<=Dexterity
@@ -2340,39 +2726,23 @@ bool bRequireStat = true;
 
 void GetStrDex(ITEM* item, int level)
 {
+	si_iNeedStrength = 0;
+	si_iNeedDex = 0;
+	bRequireStat = true;
+
+	if (item == nullptr)
+	{
+		return;
+	}
 
 #ifdef LEM_ADD_LUCKYITEM
-	if (Check_LuckyItem(item->Type)) bRequireStat = false;
+	if (Check_LuckyItem(item->Type))
+	{
+		bRequireStat = false;
+	}
 #endif // LEM_ADD_LUCKYITEM
 
-	if (level >= item->Jewel_Of_Harmony_OptionLevel)
-	{
-		StrengthenCapability SC;
-		g_pUIJewelHarmonyinfo->GetStrengthenCapability(&SC, item, 0);
-
-		if (SC.SI_isNB)
-		{
-			si_iNeedStrength = SC.SI_NB.SI_force;
-			si_iNeedDex = SC.SI_NB.SI_activity;
-		}
-	}
-
-	if (item->SocketCount > 0)
-	{
-		for (int i = 0; i < item->SocketCount; ++i)
-		{
-			if (item->SocketSeedID[i] == 38)
-			{
-				int iReqStrengthDown = g_SocketItemMgr.GetSocketOptionValue(item, i);
-				si_iNeedStrength += iReqStrengthDown;
-			}
-			else if (item->SocketSeedID[i] == 39)
-			{
-				int iReqDexterityDown = g_SocketItemMgr.GetSocketOptionValue(item, i);
-				si_iNeedDex += iReqDexterityDown;
-			}
-		}
-	}
+	TakumiGetItemRequirementReduction(item, level, si_iNeedStrength, si_iNeedDex);
 }
 int FixLucChongDoWing(int OptionType ,ITEM* ip)
 {
@@ -2486,28 +2856,53 @@ bool pSetTooltipValueText(std::string* new_text, std::string Format, int* line, 
 	case 5:
 		{
 			wsprintf(Buffer, Format.c_str(), item->RequireLevel);
+			const WORD playerLevel = CharacterAttribute != nullptr ? CharacterAttribute->Level : 0;
+			TakumiApplyItemRequirementLineColor(color, playerLevel >= item->RequireLevel, false);
 		}
 		break;
 
 	case 6:
 		{
-			wsprintf(Buffer, Format.c_str(), item->RequireStrength - si_iNeedStrength);
-
+			const int reqStrength = item->RequireStrength - si_iNeedStrength;
+			const int safeReqStrength = reqStrength < 0 ? 0 : reqStrength;
+			wsprintf(Buffer, Format.c_str(), safeReqStrength);
+			TakumiApplyItemRequirementLineColor(
+				color,
+				TakumiGetEffectiveStrength() >= (WORD)safeReqStrength,
+				si_iNeedStrength != 0);
 		}
 		break;
 	case 7:
 		{
-		wsprintf(Buffer, Format.c_str(), item->RequireDexterity - si_iNeedDex);
+			const int reqDexterity = item->RequireDexterity - si_iNeedDex;
+			const int safeReqDexterity = reqDexterity < 0 ? 0 : reqDexterity;
+			wsprintf(Buffer, Format.c_str(), safeReqDexterity);
+			TakumiApplyItemRequirementLineColor(
+				color,
+				TakumiGetEffectiveDexterity() >= (WORD)safeReqDexterity,
+				si_iNeedDex != 0);
 		}
 		break;
 	case 8:
 		wsprintf(Buffer, Format.c_str(), item->RequireVitality);
+		TakumiApplyItemRequirementLineColor(
+			color,
+			TakumiGetEffectiveVitality() >= item->RequireVitality,
+			false);
 		break;
 	case 9:
 		wsprintf(Buffer, Format.c_str(), item->RequireEnergy);
+		TakumiApplyItemRequirementLineColor(
+			color,
+			TakumiGetEffectiveEnergy() >= item->RequireEnergy,
+			false);
 		break;
 	case 10:
 		wsprintf(Buffer, Format.c_str(), item->RequireCharisma);
+		TakumiApplyItemRequirementLineColor(
+			color,
+			TakumiGetEffectiveCharisma() >= item->RequireCharisma,
+			false);
 		break;
 	case 11:
 		//sprintf(Buffer, Format, item->MagicPower);
@@ -2555,9 +2950,14 @@ bool pSetTooltipValueText(std::string* new_text, std::string Format, int* line, 
 		break;
 	case 201:
 	{
+		if (CharacterAttribute == nullptr)
+		{
+			return 0;
+		}
+
 		if (CharacterAttribute->Level < item->RequireLevel)
 		{
-			*color = 2;
+			*color = TEXT_COLOR_RED;
 			wsprintf(Buffer, Format.c_str(), item->RequireLevel - CharacterAttribute->Level);
 		}
 		else
@@ -2569,12 +2969,13 @@ bool pSetTooltipValueText(std::string* new_text, std::string Format, int* line, 
 	break;
 	case 202:
 	{
-		WORD Strength;
-		Strength = CharacterAttribute->Strength + CharacterAttribute->AddStrength;
-		if (Strength < item->RequireStrength - si_iNeedStrength)
+		const WORD strength = TakumiGetEffectiveStrength();
+		const int reqStrength = item->RequireStrength - si_iNeedStrength;
+		const int safeReqStrength = reqStrength < 0 ? 0 : reqStrength;
+		if (strength < (WORD)safeReqStrength)
 		{
-			*color = 2;
-			wsprintf(Buffer, Format.c_str(), (item->RequireStrength - Strength) - si_iNeedStrength);
+			*color = TEXT_COLOR_RED;
+			wsprintf(Buffer, Format.c_str(), safeReqStrength - strength);
 		}
 		else
 		{
@@ -2585,12 +2986,13 @@ bool pSetTooltipValueText(std::string* new_text, std::string Format, int* line, 
 	break;
 	case 203:
 	{
-		WORD Dexterity;
-		Dexterity = CharacterAttribute->Dexterity + CharacterAttribute->AddDexterity;
-		if (Dexterity < (item->RequireDexterity - si_iNeedDex))
+		const WORD dexterity = TakumiGetEffectiveDexterity();
+		const int reqDexterity = item->RequireDexterity - si_iNeedDex;
+		const int safeReqDexterity = reqDexterity < 0 ? 0 : reqDexterity;
+		if (dexterity < (WORD)safeReqDexterity)
 		{
-			*color = 2;
-			wsprintf(Buffer, Format.c_str(), (item->RequireDexterity - Dexterity) - si_iNeedDex);
+			*color = TEXT_COLOR_RED;
+			wsprintf(Buffer, Format.c_str(), safeReqDexterity - dexterity);
 		}
 		else
 		{
@@ -2601,12 +3003,11 @@ bool pSetTooltipValueText(std::string* new_text, std::string Format, int* line, 
 	break;
 	case 204:
 	{
-		WORD Vitality;
-		Vitality = CharacterAttribute->Vitality + CharacterAttribute->AddVitality;
-		if (Vitality < item->RequireVitality)
+		const WORD vitality = TakumiGetEffectiveVitality();
+		if (vitality < item->RequireVitality)
 		{
-			*color = 2;
-			wsprintf(Buffer, Format.c_str(), item->RequireVitality - Vitality);
+			*color = TEXT_COLOR_RED;
+			wsprintf(Buffer, Format.c_str(), item->RequireVitality - vitality);
 		}
 		else
 		{
@@ -2617,12 +3018,11 @@ bool pSetTooltipValueText(std::string* new_text, std::string Format, int* line, 
 	break;
 	case 205:
 	{
-		WORD Energy;
-		Energy = CharacterAttribute->Energy + CharacterAttribute->AddEnergy;
-		if (Energy < item->RequireEnergy)
+		const WORD energy = TakumiGetEffectiveEnergy();
+		if (energy < item->RequireEnergy)
 		{
-			*color = 2;
-			wsprintf(Buffer, Format.c_str(), item->RequireEnergy - Energy);
+			*color = TEXT_COLOR_RED;
+			wsprintf(Buffer, Format.c_str(), item->RequireEnergy - energy);
 		}
 		else
 		{
@@ -2633,12 +3033,11 @@ bool pSetTooltipValueText(std::string* new_text, std::string Format, int* line, 
 	break;
 	case 206:
 	{
-		WORD Charisma;
-		Charisma = CharacterAttribute->Charisma + CharacterAttribute->AddCharisma;
-		if (Charisma < item->RequireCharisma)
+		const WORD charisma = TakumiGetEffectiveCharisma();
+		if (charisma < item->RequireCharisma)
 		{
-			*color = 2;
-			wsprintf(Buffer, Format.c_str(), item->RequireCharisma - Charisma);
+			*color = TEXT_COLOR_RED;
+			wsprintf(Buffer, Format.c_str(), item->RequireCharisma - charisma);
 		}
 		else
 		{
@@ -3092,6 +3491,8 @@ void RenderItemInfo(int sx, int sy, ITEM* ip, bool Sell, int Inventype, bool bIt
 	}
 	else
 	{
+		GetStrDex(ip, item_level);
+
 		if ((ip->Type >= ITEM_WING + 60 && ip->Type <= ITEM_WING + 65) || (ip->Type >= ITEM_WING + 70 && ip->Type <= ITEM_WING + 74) || (ip->Type >= ITEM_WING + 100 && ip->Type <= ITEM_WING + 129))
 		{
 			TextNum = g_SocketItemMgr.AttachToolTipForSeedSphereItem(ip, TextNum);
@@ -3193,6 +3594,7 @@ void RenderItemInfo(int sx, int sy, ITEM* ip, bool Sell, int Inventype, bool bIt
 			}
 		}
 	}
+
 	//== Check class
 	if (IsRequireClassRenderItem(ip->Type))
 	{
@@ -3412,6 +3814,9 @@ void RenderItemInfo(int sx, int sy, ITEM* ip, bool Sell, int Inventype, bool bIt
 		TextNum = g_csItemOption.RenderSetOptionListInItem(ip, TextNum, bThisisEquippedItem);
 
 		TextNum = g_SocketItemMgr.AttachToolTipForSocketItem(ip, TextNum);
+
+		// SS6 templates often omit energy/vitality — append after all tooltip rows so nothing truncates them.
+		TakumiAppendUnmetSs6RequirementLines(ip, TextNum);
 
 		SIZE TextSize = { 0, 0 };
 		float fRateY = g_fScreenRate_y;
@@ -6301,8 +6706,7 @@ void RenderItemInfo(int sx,int sy,ITEM *ip,bool Sell, int Inventype, bool bItemT
 	{
 		sprintf(TextList[TextNum],GlobalText[73],ip->RequireStrength - si_iNeedStrength);
 
-		WORD Strength;
-		Strength = CharacterAttribute->Strength + CharacterAttribute->AddStrength;
+		const WORD Strength = TakumiGetEffectiveStrength();
      	if( Strength < ip->RequireStrength - si_iNeedStrength )
 		{
     		TextListColor[TextNum] = TEXT_COLOR_RED;
@@ -6331,8 +6735,7 @@ void RenderItemInfo(int sx,int sy,ITEM *ip,bool Sell, int Inventype, bool bItemT
 	if(ip->RequireDexterity && bRequireStat )
 	{
 		sprintf(TextList[TextNum],GlobalText[75],ip->RequireDexterity - si_iNeedDex );
-		WORD Dexterity;
-		Dexterity = CharacterAttribute->Dexterity + CharacterAttribute->AddDexterity;
+		const WORD Dexterity = TakumiGetEffectiveDexterity();
 		if( Dexterity < ( ip->RequireDexterity - si_iNeedDex) )
 		{
     		TextListColor[TextNum] = TEXT_COLOR_RED;

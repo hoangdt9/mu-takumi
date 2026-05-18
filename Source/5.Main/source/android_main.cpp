@@ -611,19 +611,25 @@ constexpr float kVirtualPadInputMaxY = 426.0f;
 constexpr float kInventoryWindowWidth = 190.0f;
 constexpr float kInventoryWindowHeight = 429.0f;
 constexpr float kVirtualAutoAcquireMaxDistance = 10.0f;
-constexpr float kVirtualJoystickDefaultCenterX = 94.0f;
-constexpr float kVirtualJoystickDefaultCenterY = 356.0f;
-constexpr float kVirtualJoystickRadius = 58.0f;
-constexpr float kVirtualJoystickDeadZone = 10.0f;
-constexpr float kVirtualJoystickKnobRadius = 22.0f;
-constexpr float kVirtualJoystickMouseMinRadius = 36.0f;
-constexpr float kVirtualJoystickMouseMaxRadius = 132.0f;
-constexpr float kVirtualJoystickDynamicAreaMinY = 210.0f;
-constexpr float kVirtualJoystickDynamicAreaMaxX = 212.0f;
-constexpr float kVirtualJoystickOuterRenderW = 120.0f;
-constexpr float kVirtualJoystickOuterRenderH = 119.0f;
-constexpr float kVirtualJoystickKnobRenderW = 58.0f;
-constexpr float kVirtualJoystickKnobRenderH = 59.0f;
+constexpr float kVirtualJoystickDefaultCenterX = 88.0f;
+constexpr float kVirtualJoystickDefaultCenterY = 368.0f;
+constexpr float kVirtualJoystickRadius = 48.0f;
+constexpr float kVirtualJoystickDeadZone = 8.0f;
+constexpr float kVirtualJoystickKnobRadius = 18.0f;
+constexpr float kVirtualJoystickMouseMinRadius = 32.0f;
+constexpr float kVirtualJoystickMouseMaxRadius = 120.0f;
+// Invisible touch zone (bottom-left) — wider than the drawn pad for easier grabs.
+constexpr float kVirtualJoystickDynamicAreaMinY = 248.0f;
+constexpr float kVirtualJoystickDynamicAreaMaxX = 248.0f;
+constexpr float kVirtualJoystickOuterRenderW = 88.0f;
+constexpr float kVirtualJoystickOuterRenderH = 88.0f;
+constexpr float kVirtualJoystickKnobRenderW = 40.0f;
+constexpr float kVirtualJoystickKnobRenderH = 40.0f;
+constexpr float kVirtualJoystickIdleVisualScale = 0.68f;
+constexpr float kVirtualJoystickIdleRingAlpha = 0.30f;
+constexpr float kVirtualJoystickIdleKnobAlpha = 0.24f;
+constexpr float kVirtualJoystickActiveRingAlpha = 0.70f;
+constexpr float kVirtualJoystickActiveKnobAlpha = 0.86f;
 constexpr SDL_FingerID kPcMouseJoystickFingerId = static_cast<SDL_FingerID>(-2);
 constexpr bool kShowVirtualAttackButton = !kUseLegacyMainHud;
 constexpr bool kShowVirtualSkillButtons = !kUseLegacyMainHud;
@@ -1886,6 +1892,23 @@ float GetVirtualJoystickRenderCenterY()
         : kVirtualJoystickDefaultCenterY);
 }
 
+void InterruptVirtualCombatForMovement()
+{
+    Attacking = -1;
+
+    if (Hero != nullptr)
+    {
+        if (Hero->MovementType == MOVEMENT_ATTACK)
+        {
+            Hero->MovementType = MOVEMENT_MOVE;
+        }
+
+        Hero->AttackTime = 0;
+    }
+
+    SelectedCharacter = -1;
+}
+
 void ReleaseVirtualJoystickMouseDrive()
 {
     if (!g_virtualJoystickDrivingMouse)
@@ -2022,6 +2045,8 @@ void ApplyVirtualJoystickMovement()
         ReleaseVirtualJoystickMouseDrive();
         return;
     }
+
+    InterruptVirtualCombatForMovement();
 
     const float driveRadius = kVirtualJoystickMouseMinRadius
         + (kVirtualJoystickMouseMaxRadius - kVirtualJoystickMouseMinRadius) * g_virtualJoystick.moveStrength;
@@ -2833,6 +2858,40 @@ void EnsureOffensiveSkillTarget()
     EnsureCombatTarget();
 }
 
+void RefreshSelectedCharacterAtMouse()
+{
+    if (!IsVirtualPadAvailable()
+        || Hero == nullptr
+        || CharactersClient == nullptr
+        || MouseOnWindow
+        || g_pNewUISystem == nullptr
+        || g_pNewUISystem->CheckMouseUse())
+    {
+        SelectedCharacter = -1;
+        return;
+    }
+
+    const int heroIdx = GetHeroCharacterIndex();
+    if (heroIdx >= 0 && SelectedCharacter == heroIdx)
+    {
+        SelectedCharacter = -1;
+    }
+
+    int candidate = SelectCharacter(KIND_MONSTER | KIND_EDIT);
+    if (candidate == -1)
+    {
+        candidate = SelectCharacter(KIND_PLAYER);
+    }
+
+    if (candidate < 0 || !IsTargetAttackable(candidate))
+    {
+        SelectedCharacter = -1;
+        return;
+    }
+
+    SelectedCharacter = candidate;
+}
+
 void EnsureNormalAttackTarget()
 {
     if (!IsVirtualPadAvailable())
@@ -2840,8 +2899,6 @@ void EnsureNormalAttackTarget()
         return;
     }
 
-    // Sanitize: never allow hero index as attack target.
-    // SelectedCharacter is a global that external code can set to heroIndex.
     const int heroIdx = GetHeroCharacterIndex();
     if (heroIdx >= 0 && SelectedCharacter == heroIdx)
     {
@@ -2854,41 +2911,7 @@ void EnsureNormalAttackTarget()
         return;
     }
 
-    const uint32_t nowMs = MU_MobileGetTicks();
-    static uint32_t s_lastAutoTargetLogMs = 0;
-
-    const int nearestAttackable = FindNearestAttackableMonsterTarget(true);
-    if (nearestAttackable >= 0)
-    {
-        if (SelectedCharacter != nearestAttackable && (nowMs - s_lastAutoTargetLogMs) > 240)
-        {
-            s_lastAutoTargetLogMs = nowMs;
-            LOGI("VirtualPad: normal target -> monster-attackable=%d", nearestAttackable);
-        }
-        SelectedCharacter = nearestAttackable;
-        return;
-    }
-
-    // Fallback: keep melee behavior alive by locking nearest monster even if attack check is transient.
-    const int nearestMonster = FindNearestMonsterTarget(true);
-    if (nearestMonster >= 0)
-    {
-        if (SelectedCharacter != nearestMonster && (nowMs - s_lastAutoTargetLogMs) > 240)
-        {
-            s_lastAutoTargetLogMs = nowMs;
-            LOGI("VirtualPad: normal target -> fallback-monster=%d", nearestMonster);
-        }
-        SelectedCharacter = nearestMonster;
-    }
-    else
-    {
-        if ((nowMs - s_lastAutoTargetLogMs) > 800)
-        {
-            s_lastAutoTargetLogMs = nowMs;
-            LOGI("VirtualPad: normal target -> none");
-        }
-        SelectedCharacter = -1;
-    }
+    RefreshSelectedCharacterAtMouse();
 }
 
 bool IsSupportOrSelfSkill(ActionSkillType skillType)
@@ -3526,6 +3549,12 @@ void UpdateVirtualProximityCombat()
         return;
     }
 
+    // PC-style: do not auto-lock nearest monster while moving — only attack under cursor / attack button.
+    if (MU_AndroidShouldSuppressCombatTargeting())
+    {
+        return;
+    }
+
     static uint32_t s_lastProximityAttackMs = 0;
     const uint32_t nowMs = MU_MobileGetTicks();
     if (s_lastProximityAttackMs != 0 && (nowMs - s_lastProximityAttackMs) < kVirtualProximityAttackMs)
@@ -3533,7 +3562,7 @@ void UpdateVirtualProximityCombat()
         return;
     }
 
-    EnsureNormalAttackTarget();
+    RefreshSelectedCharacterAtMouse();
     const int target = SelectedCharacter;
     if (target < 0 || !IsWithinVirtualAutoAcquireRange(target))
     {
@@ -3560,6 +3589,11 @@ float UiToScreenY(float uiY)
 
 void DrawVirtualCircle(float uiX, float uiY, float uiRadius, float red, float green, float blue, float alpha, bool filled)
 {
+    if (alpha <= 0.001f || uiRadius <= 0.5f)
+    {
+        return;
+    }
+
     const float centerX = UiToScreenX(uiX);
     const float centerY = static_cast<float>(WindowHeight) - UiToScreenY(uiY);
     const float radiusX = UiToScreenX(uiRadius);
@@ -3567,6 +3601,9 @@ void DrawVirtualCircle(float uiX, float uiY, float uiRadius, float red, float gr
     constexpr int kSegments = 36;
     constexpr float kPi = 3.14159265358979323846f;
 
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glDisable(GL_TEXTURE_2D);
     glColor4f(red, green, blue, alpha);
     glBegin(filled ? GL_TRIANGLE_FAN : GL_LINE_LOOP);
     if (filled)
@@ -3792,6 +3829,80 @@ static void DrawIconButtonUv(float uiX, float uiY, float uiW, float uiH,
     glDisable(GL_TEXTURE_2D);
 
     glBlendFunc(GL_ONE, GL_ONE);
+}
+
+void DrawVirtualJoystickHud()
+{
+    const bool joystickActive = g_virtualJoystick.fingerId != static_cast<SDL_FingerID>(-1);
+    const float visualScale = joystickActive ? 1.0f : kVirtualJoystickIdleVisualScale;
+    const float ringAlpha = joystickActive ? kVirtualJoystickActiveRingAlpha : kVirtualJoystickIdleRingAlpha;
+    const float knobAlpha = joystickActive ? kVirtualJoystickActiveKnobAlpha : kVirtualJoystickIdleKnobAlpha;
+
+    const float centerX = GetVirtualJoystickRenderCenterX();
+    const float centerY = GetVirtualJoystickRenderCenterY();
+    const float thumbX = joystickActive
+        ? std::round(centerX + g_virtualJoystick.thumbOffsetX)
+        : centerX;
+    const float thumbY = joystickActive
+        ? std::round(centerY + g_virtualJoystick.thumbOffsetY)
+        : centerY;
+
+    const float outerW = kVirtualJoystickOuterRenderW * visualScale;
+    const float outerH = kVirtualJoystickOuterRenderH * visualScale;
+    const float knobW = kVirtualJoystickKnobRenderW * visualScale;
+    const float knobH = kVirtualJoystickKnobRenderH * visualScale;
+    const float ringRadiusUi = outerW * 0.46f;
+
+    // Soft base (Genshin / ML style) — keeps world visible under the pad.
+    DrawVirtualCircle(centerX, centerY, ringRadiusUi * 1.08f, 0.05f, 0.08f, 0.12f, ringAlpha * 0.55f, true);
+    DrawVirtualCircle(centerX, centerY, ringRadiusUi, 0.82f, 0.86f, 0.92f, ringAlpha * 0.18f, true);
+    DrawVirtualCircle(centerX, centerY, ringRadiusUi * 0.96f, 0.92f, 0.94f, 0.98f, ringAlpha * 0.42f, false);
+
+    if (joystickActive && g_virtualJoystick.moveStrength > 0.05f)
+    {
+        const float pulseAlpha = ringAlpha * (0.18f + 0.22f * g_virtualJoystick.moveStrength);
+        DrawVirtualCircle(
+            centerX,
+            centerY,
+            ringRadiusUi * (1.02f + 0.08f * g_virtualJoystick.moveStrength),
+            0.35f,
+            0.72f,
+            1.0f,
+            pulseAlpha,
+            false);
+    }
+
+    EnsureUITextures();
+    if (g_uiTex_joystick2.id != 0)
+    {
+        DrawIconButtonUv(
+            centerX - outerW * 0.5f,
+            centerY - outerH * 0.5f,
+            outerW,
+            outerH,
+            g_uiTex_joystick2,
+            kJoystickRingU,
+            kJoystickRingV,
+            kJoystickRingUW,
+            kJoystickRingVH,
+            ringAlpha);
+    }
+
+    DrawVirtualCircle(thumbX, thumbY, knobW * 0.42f, 1.0f, 1.0f, 1.0f, knobAlpha * 0.35f, true);
+    if (g_uiTex_joystick1.id != 0)
+    {
+        DrawIconButtonUv(
+            thumbX - knobW * 0.5f,
+            thumbY - knobH * 0.5f,
+            knobW,
+            knobH,
+            g_uiTex_joystick1,
+            kJoystickKnobU,
+            kJoystickKnobV,
+            kJoystickKnobUW,
+            kJoystickKnobVH,
+            knobAlpha);
+    }
 }
 
 // â”€â”€ Map button (top-right companion to minimap) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -4137,35 +4248,7 @@ void RenderVirtualPad()
     BeginBitmap();
     EnableAlphaBlend();
     DisableTexture();
-    const bool joystickActive = g_virtualJoystick.fingerId != static_cast<SDL_FingerID>(-1);
-    EnsureUITextures();
-
-    const float joystickCenterX = GetVirtualJoystickRenderCenterX();
-    const float joystickCenterY = GetVirtualJoystickRenderCenterY();
-    const float joystickThumbX = std::round(joystickCenterX + g_virtualJoystick.thumbOffsetX);
-    const float joystickThumbY = std::round(joystickCenterY + g_virtualJoystick.thumbOffsetY);
-    DrawIconButtonUv(
-        joystickCenterX - kVirtualJoystickOuterRenderW * 0.5f,
-        joystickCenterY - kVirtualJoystickOuterRenderH * 0.5f,
-        kVirtualJoystickOuterRenderW,
-        kVirtualJoystickOuterRenderH,
-        g_uiTex_joystick2,
-        kJoystickRingU,
-        kJoystickRingV,
-        kJoystickRingUW,
-        kJoystickRingVH,
-        joystickActive ? 1.0f : 0.84f);
-    DrawIconButtonUv(
-        joystickThumbX - kVirtualJoystickKnobRenderW * 0.5f,
-        joystickThumbY - kVirtualJoystickKnobRenderH * 0.5f,
-        kVirtualJoystickKnobRenderW,
-        kVirtualJoystickKnobRenderH,
-        g_uiTex_joystick1,
-        kJoystickKnobU,
-        kJoystickKnobV,
-        kJoystickKnobUW,
-        kJoystickKnobVH,
-        joystickActive ? 1.0f : 0.90f);
+    DrawVirtualJoystickHud();
     EndBitmap();
 
     DrawVirtualZoomButtons();
@@ -4714,6 +4797,12 @@ void RenderVirtualPad()
 bool MU_AndroidIsVirtualJoystickDrivingMouse()
 {
     return g_virtualJoystickDrivingMouse;
+}
+
+bool MU_AndroidShouldSuppressCombatTargeting()
+{
+    return g_virtualJoystick.fingerId != static_cast<SDL_FingerID>(-1)
+        && g_virtualJoystick.moveStrength > 0.001f;
 }
 
 bool AndroidTriggerNormalAttackButton()

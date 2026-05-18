@@ -279,29 +279,19 @@ void CNewUIMyInventory::UnequipAllItems()
 
 bool CNewUIMyInventory::IsEquipable(int iIndex, ITEM* pItem)
 {
-	if (pItem == nullptr)
+	if (pItem == nullptr || Hero == nullptr || CharacterAttribute == nullptr)
+		return false;
+
+	if (pItem->Type < 0 || pItem->Type >= MAX_ITEM)
 		return false;
 
 	const ITEM_ATTRIBUTE * pItemAttr = &ItemAttribute[pItem->Type];
-	bool bEquipable = false;
-	if (pItemAttr->RequireClass[gCharacterManager.GetBaseClass(Hero->Class)])
-		bEquipable = true;
-
-	else if (gCharacterManager.GetBaseClass(Hero->Class) == CLASS_DARK && pItemAttr->RequireClass[CLASS_WIZARD]
-		&& pItemAttr->RequireClass[CLASS_KNIGHT])
-		bEquipable = true;
-
-	const BYTE byFirstClass = gCharacterManager.GetBaseClass(Hero->Class);
-	const BYTE byStepClass = gCharacterManager.GetStepClass(Hero->Class);
-	if (pItemAttr->RequireClass[byFirstClass] > byStepClass)
+	if (!TakumiMeetsItemClassRequirement(pItemAttr, Hero->Class))
 	{
 		return false;
 	}
 
-	if (bEquipable == false)
-		return false;
-
-	bEquipable = false;
+	bool bEquipable = false;
 	if (pItemAttr->m_byItemSlot == iIndex)
 		bEquipable = true;
 
@@ -352,65 +342,9 @@ bool CNewUIMyInventory::IsEquipable(int iIndex, ITEM* pItem)
 	if (bEquipable == false)
 		return false;
 
-	const WORD wStrength = CharacterAttribute->Strength + CharacterAttribute->AddStrength;
-	const WORD wDexterity = CharacterAttribute->Dexterity + CharacterAttribute->AddDexterity;
-	const WORD wEnergy = CharacterAttribute->Energy + CharacterAttribute->AddEnergy;
-	const WORD wVitality = CharacterAttribute->Vitality + CharacterAttribute->AddVitality;
-	const WORD wCharisma = CharacterAttribute->Charisma + CharacterAttribute->AddCharisma;
-	const WORD wLevel = CharacterAttribute->Level;
-
-	const int iItemLevel = (pItem->Level >> 3) & 15;
-
-	int iDecNeedStrength = 0, iDecNeedDex = 0;
-
-	extern JewelHarmonyInfo * g_pUIJewelHarmonyinfo;
-	if (iItemLevel >= pItem->Jewel_Of_Harmony_OptionLevel)
+	if (!TakumiMeetsItemStatRequirements(pItem))
 	{
-		StrengthenCapability SC;
-		g_pUIJewelHarmonyinfo->GetStrengthenCapability(&SC, pItem, 0);
-
-		if (SC.SI_isNB)
-		{
-			iDecNeedStrength = SC.SI_NB.SI_force;
-			iDecNeedDex = SC.SI_NB.SI_activity;
-		}
-	}
-	if (pItem->SocketCount > 0)
-	{
-		for (int i = 0; i < pItem->SocketCount; ++i)
-		{
-			if (pItem->SocketSeedID[i] == 38)
-			{
-				const int iReqStrengthDown = g_SocketItemMgr.GetSocketOptionValue(pItem, i);
-				iDecNeedStrength += iReqStrengthDown;
-			}
-			else if (pItem->SocketSeedID[i] == 39)
-			{
-				const int iReqDexterityDown = g_SocketItemMgr.GetSocketOptionValue(pItem, i);
-				iDecNeedDex += iReqDexterityDown;
-			}
-		}
-	}
-
-	if (pItem->RequireStrength - iDecNeedStrength > wStrength)
 		return false;
-	if (pItem->RequireDexterity - iDecNeedDex > wDexterity)
-		return false;
-	if (pItem->RequireEnergy > wEnergy)
-		return false;
-	if (pItem->RequireVitality > wVitality)
-		return false;
-	if (pItem->RequireCharisma > wCharisma)
-		return false;
-	if (pItem->RequireLevel > wLevel)
-		return false;
-
-	if (pItem->Type == ITEM_HELPER + 5)
-	{
-		const PET_INFO* pPetInfo = GetPetInfo(pItem);
-		const WORD wRequireCharisma = (185 + (pPetInfo->m_wLevel * 15));
-		if (wRequireCharisma > wCharisma)
-			return false;
 	}
 
 	if (gMapManager.WorldActive == WD_7ATLANSE && (pItem->Type >= ITEM_HELPER + 2 && pItem->Type <= ITEM_HELPER + 3))
@@ -1494,7 +1428,7 @@ void CNewUIMyInventory::RenderEquippedItem()
 				glColor4f(1.f, 0.5f, 0.f, 0.25f);
 			else if (pEquipmentItemSlot->Durability <= (iMaxDurability * 0.5f))
 				glColor4f(1.f, 1.f, 0.f, 0.25f);
-			else if (IsEquipable(i, pEquipmentItemSlot) == false)
+			else if (TakumiMeetsItemRequirements(pEquipmentItemSlot) == false)
 				glColor4f(1.f, 0.f, 0.f, 0.25f);
 			else
 			{
@@ -1558,7 +1492,7 @@ void CNewUIMyInventory::RenderEquippedItem()
 				glColor4f(1.f, 0.5f, 0.f, 0.25f);
 			else if (pEquipmentItemSlot->Durability <= (iMaxDurability * 0.5f))
 				glColor4f(1.f, 1.f, 0.f, 0.25f);
-			else if (IsEquipable(i, pEquipmentItemSlot) == false)
+			else if (TakumiMeetsItemRequirements(pEquipmentItemSlot) == false)
 				glColor4f(1.f, 0.f, 0.f, 0.25f);
 			else
 			{

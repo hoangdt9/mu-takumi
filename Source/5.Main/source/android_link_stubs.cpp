@@ -156,6 +156,44 @@ void ApplyAndroidMasterVolume()
     Mix_VolumeMusic(sdlVolume);
 }
 
+bool AndroidSocketVerboseLogEnabled()
+{
+    static bool initialized = false;
+    static bool verbose = false;
+    if (!initialized)
+    {
+        initialized = true;
+        const char* env = std::getenv("TAKUMI_VERBOSE_SOCKET");
+        verbose = env != nullptr && env[0] == '1';
+    }
+
+    return verbose;
+}
+
+bool ShouldLogAndroidGamePacket(BYTE head, BYTE sub)
+{
+    if (AndroidSocketVerboseLogEnabled())
+    {
+        return true;
+    }
+
+    switch (head)
+    {
+    case 0xF1:
+    case 0xF3:
+    case 0xF4:
+        return true;
+    case 0xD4: // movement / position sync (very high frequency)
+    case 0x71: // ping
+    case 0x18: // client keepalive / viewport tick
+        return false;
+    case 0x0E:
+        return sub != 0x00;
+    default:
+        return false;
+    }
+}
+
 bool ShouldSuppressAndroidRuntimeLog(const char* format)
 {
     if (format == nullptr)
@@ -163,8 +201,6 @@ bool ShouldSuppressAndroidRuntimeLog(const char* format)
         return true;
     }
 
-    // Do not suppress "[Android Socket] send packet" / "parsed packet": those are required for
-    // diagnosing login and MU TCP flows (they were hidden here and looked like "no send/recv").
     static const char* kOpenMonsterPrefix = "OpenMonsterModel(";
 
     return std::strncmp(format, kOpenMonsterPrefix, std::strlen(kOpenMonsterPrefix)) == 0;
@@ -606,13 +642,16 @@ void CWsctlc::AndroidOnPacket(int32_t handle, int32_t size, uint8_t* data)
                 sub = (packetSize > 4) ? pkt[4] : 0;
             }
 
-            g_ErrorReport.Write(
-                "[Android Socket] parsed packet handle=%d type=0x%02X size=%d head=0x%02X sub=0x%02X\r\n",
-                handle,
-                pkt[0],
-                packetSize,
-                head,
-                sub);
+            if (ShouldLogAndroidGamePacket(head, sub))
+            {
+                g_ErrorReport.Write(
+                    "[Android Socket] parsed packet handle=%d type=0x%02X size=%d head=0x%02X sub=0x%02X\r\n",
+                    handle,
+                    pkt[0],
+                    packetSize,
+                    head,
+                    sub);
+            }
 
             if ((pkt[0] == 0xC2 || pkt[0] == 0xC4) && head == 0xF4 && sub == 0x06)
             {
@@ -836,13 +875,18 @@ int CWsctlc::sSend(SOCKET socket, char* buf, int len)
     }
 
     const int c1WireLen = (len > 1 && buf[0] == 0xC1) ? static_cast<unsigned char>(buf[1]) : len;
-    g_ErrorReport.Write(
-        "[Android Socket] send packet handle=%d type=0x%02X wireLen=%d head=0x%02X sub=0x%02X (stat bulk expect wireLen=7)\r\n",
-        static_cast<int>(socket),
-        static_cast<unsigned char>(buf[0]),
-        c1WireLen,
-        (len > 2) ? static_cast<unsigned char>(buf[2]) : 0,
-        (len > 3) ? static_cast<unsigned char>(buf[3]) : 0);
+    const BYTE head = (len > 2) ? static_cast<BYTE>(buf[2]) : 0;
+    const BYTE sub = (len > 3) ? static_cast<BYTE>(buf[3]) : 0;
+    if (ShouldLogAndroidGamePacket(head, sub))
+    {
+        g_ErrorReport.Write(
+            "[Android Socket] send packet handle=%d type=0x%02X wireLen=%d head=0x%02X sub=0x%02X\r\n",
+            static_cast<int>(socket),
+            static_cast<unsigned char>(buf[0]),
+            c1WireLen,
+            head,
+            sub);
+    }
 
     std::vector<uint8_t> sendBuffer(reinterpret_cast<uint8_t*>(buf), reinterpret_cast<uint8_t*>(buf) + len);
 

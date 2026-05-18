@@ -2353,6 +2353,7 @@ BOOL ReceiveInventory(BYTE *ReceiveBuffer, BOOL bEncrypted)
 		SetCharacterClass(Hero);
 		CreatePetDarkSpirit_Now(Hero);
 #if defined(__ANDROID__)
+		if (g_pMyInventory != nullptr && CharacterAttribute != nullptr)
 		for (int eq = 0; eq < MAX_EQUIPMENT_INDEX; ++eq)
 		{
 			ITEM* it = &CharacterMachine->Equipment[eq];
@@ -2362,11 +2363,21 @@ BOOL ReceiveInventory(BYTE *ReceiveBuffer, BOOL bEncrypted)
 			}
 
 			const bool canEquip = g_pMyInventory->IsEquipable(eq, it);
+			const bool meetsReq = TakumiMeetsItemRequirements(it);
 			g_ErrorReport.Write(
-				"[ReceiveInventory] slot=%d type=%d canEquip=%d\r\n",
+				"[ReceiveInventory] slot=%d type=%d canEquip=%d meetsReq=%d str=%u/%u dex=%u/%u ene=%u/%u lvl=%u/%u\r\n",
 				eq,
 				it->Type,
-				canEquip ? 1 : 0);
+				canEquip ? 1 : 0,
+				meetsReq ? 1 : 0,
+				(unsigned)TakumiGetEffectiveStrength(),
+				(unsigned)it->RequireStrength,
+				(unsigned)TakumiGetEffectiveDexterity(),
+				(unsigned)it->RequireDexterity,
+				(unsigned)TakumiGetEffectiveEnergy(),
+				(unsigned)it->RequireEnergy,
+				(unsigned)CharacterAttribute->Level,
+				(unsigned)it->RequireLevel);
 		}
 #endif
 	}

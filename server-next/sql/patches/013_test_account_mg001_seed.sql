@@ -24,7 +24,7 @@ VALUES (
     0, 130, 125, 6,
     0, 0, 0, 0, 0,
     0, 0,
-    800, 600, 300, 250, 0, 0,
+    800, 600, 300, 250, 0, 50000,
     0, 0, now()
 )
 ON CONFLICT (account_login, character_name) DO UPDATE SET
@@ -65,7 +65,7 @@ VALUES (
     0, 130, 125, 6,
     0, 0, 0, 0, 0,
     0, 0,
-    800, 600, 300, 250, 0, 0,
+    800, 600, 300, 250, 0, 50000,
     0, 0, now()
 )
 ON CONFLICT (account_login, character_name) DO UPDATE SET

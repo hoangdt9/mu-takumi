@@ -17,4 +17,12 @@ fi
 export TEST_PG_CONNECTION_STRING="${TEST_PG_CONNECTION_STRING:-$TAKUMI_PG_CONNECTION_STRING}"
 dotnet test ./src/Takumi.Server.Tests/Takumi.Server.Tests.csproj -c Debug \
   --filter "FullyQualifiedName~WorldStaticDataPostgresEtlTests.Import_all_from_gameserver_data"
-echo "[import-world-static-data] done."
+
+if [[ -n "${TAKUMI_MONSTER_SET_BASE_PATH:-}" ]]; then
+  ./scripts/import-monster-spawn.sh
+else
+  export TAKUMI_MONSTER_SET_BASE_PATH="${TAKUMI_GAMESERVER_DATA_PATH:?}/Monster/MonsterSetBase.txt"
+  ./scripts/import-monster-spawn.sh
+fi
+
+echo "[import-world-static-data] done (gates, shops, custom, monster_spawn)."

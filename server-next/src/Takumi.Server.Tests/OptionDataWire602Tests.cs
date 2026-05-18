@@ -1,4 +1,5 @@
 using Takumi.Server.Protocol;
+using Xunit;
 
 namespace Takumi.Server.Tests;
 

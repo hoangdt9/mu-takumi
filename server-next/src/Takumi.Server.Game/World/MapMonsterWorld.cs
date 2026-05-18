@@ -27,6 +27,38 @@ public static class MapMonsterWorld
         return _byMap.TryGetValue(mapId, out var list) ? list : Array.Empty<MapMonsterInstance>();
     }
 
+    public static IReadOnlyDictionary<byte, int> GetInstanceCountByMap()
+    {
+        EnsureInitialized();
+        var result = new Dictionary<byte, int>(_byMap.Count);
+        foreach (var (mapId, list) in _byMap)
+        {
+            result[mapId] = list.Count;
+        }
+
+        return result;
+    }
+
+    public static int GetNpcCountOnMap(byte mapId)
+    {
+        EnsureInitialized();
+        if (!_byMap.TryGetValue(mapId, out var list))
+        {
+            return 0;
+        }
+
+        var count = 0;
+        foreach (var m in list)
+        {
+            if (m.IsNpc)
+            {
+                count++;
+            }
+        }
+
+        return count;
+    }
+
     public static MonsterStat GetMonsterStat(int monsterClass)
     {
         EnsureInitialized();
@@ -95,6 +127,7 @@ public static class MapMonsterWorld
                 mapCount,
                 sw.ElapsedMilliseconds);
             MapAttWalkability.PreloadMaps(_byMap.Keys);
+            MapMonsterSpawnCoverage.LogStartupReport();
             _initialized = true;
         }
     }

@@ -73,6 +73,20 @@ public static class MoveMapCatalog
         return false;
     }
 
+    /// <summary>All move rows (coverage / diagnostics).</summary>
+    public static bool TryGetAllForCoverage(out IReadOnlyList<MoveMapEntry> moves)
+    {
+        EnsureInitialized();
+        if (_byIndex.Count == 0)
+        {
+            moves = Array.Empty<MoveMapEntry>();
+            return false;
+        }
+
+        moves = _byIndex.Values.ToList();
+        return true;
+    }
+
     /// <summary>Replaces catalog contents (unit tests only).</summary>
     public static void LoadForTests(IReadOnlyList<MoveMapEntry> rows)
     {

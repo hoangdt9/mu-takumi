@@ -134,7 +134,7 @@ docker compose "${up_args[@]}"
 PG_PORT="${TAKUMI_POSTGRES_PUBLISH_PORT:-54444}"
 PG_URI="postgresql://takumi:takumi@127.0.0.1:${PG_PORT}/takumi_runtime"
 if [[ -x "$SCRIPT_DIR/apply-sql.sh" ]]; then
-  echo "== apply SQL patches (character_skill + dev QA seeds) =="
+  echo "== apply SQL schema patches (character_skill table) =="
   for _ in 1 2 3 4 5 6 7 8 9 10; do
     if docker compose exec -T postgres pg_isready -U takumi -d takumi_runtime >/dev/null 2>&1; then
       break
@@ -142,10 +142,16 @@ if [[ -x "$SCRIPT_DIR/apply-sql.sh" ]]; then
     sleep 1
   done
   "$SCRIPT_DIR/apply-sql.sh" "$PG_URI" sql/patches/016_character_skill.sql || true
-  if [[ -x "$SCRIPT_DIR/apply-dev-character-seeds.sh" ]]; then
-    "$SCRIPT_DIR/apply-dev-character-seeds.sh" "$PG_URI" || true
+  # Dev QA seed (013) RESETS test/mg001 stats + inventory — only when explicitly requested.
+  if [[ "${TAKUMI_APPLY_DEV_SEEDS:-0}" == "1" || "${TAKUMI_APPLY_DEV_SEEDS:-}" == "true" ]]; then
+    echo "== TAKUMI_APPLY_DEV_SEEDS=1 — applying mg001 QA seed (overwrites test/mg001 in DB) =="
+    if [[ -x "$SCRIPT_DIR/apply-dev-character-seeds.sh" ]]; then
+      "$SCRIPT_DIR/apply-dev-character-seeds.sh" "$PG_URI" || true
+    else
+      "$SCRIPT_DIR/apply-sql.sh" "$PG_URI" sql/patches/017_seed_mg001_character_skill.sql || true
+    fi
   else
-    "$SCRIPT_DIR/apply-sql.sh" "$PG_URI" sql/patches/017_seed_mg001_character_skill.sql || true
+    echo "== skip dev QA seeds (set TAKUMI_APPLY_DEV_SEEDS=1 to reset test/mg001 to sql/patches/013) =="
   fi
   echo ""
 fi

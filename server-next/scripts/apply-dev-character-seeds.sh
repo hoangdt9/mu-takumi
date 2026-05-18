@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 # Apply dev SQL seeds for test account (mg001 wear + skills). QA APK optional.
+# WARNING: 013_test_account_mg001_seed.sql overwrites test/mg001 stats, zen, and inventory_slot.
+# docker-stack.sh runs this only when TAKUMI_APPLY_DEV_SEEDS=1 (not on every stack up).
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 URI="${1:-${TAKUMI_PG_URI:-postgresql://takumi:takumi@127.0.0.1:54444/takumi_runtime}}"

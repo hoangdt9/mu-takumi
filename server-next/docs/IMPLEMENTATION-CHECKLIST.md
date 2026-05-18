@@ -1,6 +1,6 @@
 # Takumi Server Next - Implementation Checklist
 
-Last updated: 2026-05-18 (M8 move-map + CustomNpcMove; M9 PvP/party EXP/quest stub; M8 dev parity xong)
+Last updated: 2026-05-18 (M8 repair + pet equip slot 8; M8 move-map + CustomNpcMove; M9 PvP/party EXP/quest stub)
 
 **Phân vùng dev (tránh conflict):** **`docs/WORKSTREAM-OWNERSHIP.md`**.  
 **M4 + M7 (nhân vật + item, port từ `Source/`):** **`docs/M4-M7-CHARACTER-ITEM-MIGRATION.md`** — owner đề xuất **`mac-m1`**.  
@@ -19,6 +19,7 @@ Tóm tắt theo commit; diff đầy đủ: `git log --oneline 2672bfd..HEAD` tro
 | **M9 combat** | `0x11` hit/die, AI dmg, viewport `0x13`; PvP stub + party EXP share; Kalima regen; top-damage EXP | `53fc5b9`+, `5a5e341`, `c1ca8e0` |
 | **M8 move-map** | `0x8E`, gate ±5, skill teleport, **CustomNpcMove**; `smoke-m8.sh` | `5a5e341` |
 | **Shop (M9c)** | `F3 E9` / **`F3 ED`**; `ShopItemValueResolver` + potion `EstimatePotionBuy`; client tooltip **buy/sell parity**, two-tap buy, confirm debounce | `1d77d94`–`65e0e36`, `3c36cf0`, *(pending)* |
+| **Repair + pet** | `0x34` self/NPC repair + `F3 10` sync; `ShopRepairPricing`; helper slot **8** for item groups **13/14** (Imp / custom pet) | *(local 2026-05-18)* |
 | **Inventory** | `0x24` + `F3 10` sync, BMD footprints, plain `C4` on Android, post-buy resync | `6330de9` |
 | **Android client** | Melee `0x11`, stat pump, login wait `F1 00`, **FLARE level-up VFX**, register UI | `4e84ff3`–`5e729d4`, `fd6ddf8` |
 | **Move map (M8)** | *(merged vào row M8 move-map ở trên)* | |

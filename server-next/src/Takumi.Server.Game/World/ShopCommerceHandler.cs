@@ -69,7 +69,7 @@ public static class ShopCommerceHandler
                 .ConfigureAwait(false);
         }
 
-        if (ClientGameplayPackets602.TryFindRepairRequest(packet, out _, out var repairSlot, out _))
+        if (ClientGameplayPackets602.TryFindRepairRequest(packet, out _, out var repairSlot, out var repairType))
         {
             return await HandleRepairAsync(
                     player,
@@ -77,6 +77,7 @@ public static class ShopCommerceHandler
                     accountId,
                     characterName10,
                     repairSlot,
+                    repairType,
                     writeAsync,
                     onRosterDirty,
                     remote,
@@ -306,12 +307,15 @@ public static class ShopCommerceHandler
         string? accountId,
         byte[] characterName10,
         byte slot,
+        byte repairType,
         Func<ReadOnlyMemory<byte>, CancellationToken, Task> writeAsync,
         Action? onRosterDirty,
         string remote,
         CancellationToken ct)
     {
-        if (!PlayerShopSession.TryGetShopIndex(presenceSessionId, out _))
+        var inNpcShop = PlayerShopSession.TryGetShopIndex(presenceSessionId, out _);
+        // C1 0x34 byte2: 0 = NPC shop hammer, 1 = self-repair (level 6+). Outside shop only type 1 is valid.
+        if (!inNpcShop && repairType == 0)
         {
             await writeAsync(ShopCommerceWire602.BuildRepair((uint)Math.Max(0, player.Zen)), ct).ConfigureAwait(false);
             return true;
@@ -320,41 +324,24 @@ public static class ShopCommerceHandler
         await PlayerShopSession.EnsureInventoryLoadedAsync(presenceSessionId, accountId, characterName10, ct)
             .ConfigureAwait(false);
 
+        var selfRepair = repairType != 0;
         long totalCost = 0;
+        var repairedAny = false;
         if (slot == 0xFF)
         {
             for (byte s = 0; s <= ItemWire602.LastBagSlot; s++)
             {
-                if (!PlayerShopSession.TryGetSlot(presenceSessionId, s, out var blob) || ItemWire602.IsEmpty(blob))
+                if (!TryRepairSlot(presenceSessionId, player, s, selfRepair, ref totalCost))
                 {
                     continue;
                 }
 
-                var cost = ShopItemPricing.RepairCost(blob);
-                if (cost <= 0 || player.Zen < cost)
-                {
-                    continue;
-                }
-
-                player.Zen -= cost;
-                totalCost += cost;
-                ItemWire602.SetDurability(blob, 255);
-                PlayerShopSession.SetSlot(presenceSessionId, s, blob);
+                repairedAny = true;
             }
         }
-        else if (PlayerShopSession.TryGetSlot(presenceSessionId, slot, out var one) && !ItemWire602.IsEmpty(one))
+        else if (TryRepairSlot(presenceSessionId, player, slot, selfRepair, ref totalCost))
         {
-            totalCost = ShopItemPricing.RepairCost(one);
-            if (totalCost > 0 && player.Zen >= totalCost)
-            {
-                player.Zen -= totalCost;
-                ItemWire602.SetDurability(one, 255);
-                PlayerShopSession.SetSlot(presenceSessionId, slot, one);
-            }
-            else
-            {
-                totalCost = 0;
-            }
+            repairedAny = true;
         }
 
         if (totalCost > 0)
@@ -364,13 +351,53 @@ public static class ShopCommerceHandler
 
         await writeAsync(ShopCommerceWire602.BuildRepair((uint)Math.Clamp(player.Zen, 0, uint.MaxValue)), ct)
             .ConfigureAwait(false);
-        if (totalCost > 0)
+        if (repairedAny)
         {
+            var invSync = PlayerShopSession.BuildInventoryListPacket(presenceSessionId);
+            if (invSync.Length > 0)
+            {
+                await writeAsync(invSync, ct).ConfigureAwait(false);
+            }
+
             await PlayerShopSession.PersistAsync(presenceSessionId, accountId, characterName10, player.Zen, ct)
                 .ConfigureAwait(false);
         }
 
-        Console.WriteLine("[m8] shop repair slot={0} cost={1} zen={2} {3}", slot, totalCost, player.Zen, remote);
+        Console.WriteLine(
+            "[m8] repair slot={0} type={1} shop={2} cost={3} zen={4} synced={5} {6}",
+            slot,
+            repairType,
+            inNpcShop,
+            totalCost,
+            player.Zen,
+            repairedAny,
+            remote);
+        return true;
+    }
+
+    static bool TryRepairSlot(
+        Guid presenceSessionId,
+        GameRosterEntry player,
+        byte slot,
+        bool selfRepair,
+        ref long totalCost)
+    {
+        if (!PlayerShopSession.TryGetSlot(presenceSessionId, slot, out var blob) || ItemWire602.IsEmpty(blob))
+        {
+            return false;
+        }
+
+        var cost = ShopItemPricing.RepairCost(blob, selfRepair);
+        if (cost <= 0 || player.Zen < cost)
+        {
+            return false;
+        }
+
+        player.Zen -= cost;
+        totalCost += cost;
+        var maxDur = ItemSizeCatalog.GetMaxDurability(blob);
+        ItemWire602.SetDurability(blob, maxDur);
+        PlayerShopSession.SetSlot(presenceSessionId, slot, blob);
         return true;
     }
 }

@@ -89,9 +89,10 @@ public static class InventoryEquipRules
             return wearSlot is 7 or 8;
         }
 
-        if (group == 13)
+        // Helper / pet / muun (ITEM_HELPER group 14, custom pets group 13) → slot 8; rings/amulet → 9–11.
+        if (group is 13 or 14)
         {
-            return wearSlot is 9 or 10 or 11;
+            return wearSlot is 8 or 9 or 10 or 11;
         }
 
         return false;

@@ -1396,6 +1396,24 @@ void BeginBitmap()
     glLoadIdentity();
 
     glViewport(0,0,WindowWidth,WindowHeight);
+    // Full-window 2D pass (virtual pad, overlays): reset clip/test state. Leftover
+    // GL_SCISSOR_TEST clips with a flat edge; depth-test / mask desync (wrapper flags
+    // vs real GL) can drop translucent 2D against the scene depth buffer.
+    glDisable(GL_SCISSOR_TEST);
+    glScissor(0, 0, static_cast<GLsizei>(WindowWidth), static_cast<GLsizei>(WindowHeight));
+    glDisable(GL_STENCIL_TEST);
+    glStencilMask(0xFF);
+    glDisable(GL_DEPTH_TEST);
+    DepthTestEnable = false;
+    glDepthMask(GL_FALSE);
+    DepthMaskEnable = false;
+    glDisable(GL_CULL_FACE);
+    CullFaceEnable = false;
+    if (AlphaTestEnable)
+    {
+        AlphaTestEnable = false;
+        glDisable(GL_ALPHA_TEST);
+    }
     gluPerspective(CameraFOV,(WindowWidth)/((float)WindowHeight),CameraViewNear,CameraViewFar);
     
 	glLoadIdentity();
@@ -1407,6 +1425,11 @@ void BeginBitmap()
     glLoadIdentity();
 	DisableDepthTest();
     DisableAlphaBlend();
+    // DisableAlphaBlend() may call EnableDepthMask(); keep 2D overlay from touching depth.
+    glDisable(GL_DEPTH_TEST);
+    DepthTestEnable = false;
+    glDepthMask(GL_FALSE);
+    DepthMaskEnable = false;
     if(!TextureEnable) 
 	{
 		TextureEnable = true;

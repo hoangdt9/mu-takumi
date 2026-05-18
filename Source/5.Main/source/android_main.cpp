@@ -635,8 +635,13 @@ constexpr float kVirtualJoystickDynamicAreaMinY = 248.0f;
 constexpr float kVirtualJoystickDynamicAreaMaxX = 248.0f;
 constexpr float kVirtualJoystickOuterRenderW = 88.0f;
 constexpr float kVirtualJoystickOuterRenderH = 88.0f;
+// Soft glow + ring PNG scale vs outerW/H (touch/hitbox unchanged). Larger = bigger faint circle.
+constexpr float kJoystickRingDrawDiameterScale = 1.52f;
+// Outer soft circle radius = layoutDiameter/2 * this; ring texture diameter ~= 2 * that (nearly full glow).
+constexpr float kJoystickRingSoftOuterRadiusMul = 1.08f;
 constexpr float kVirtualJoystickVisualExtentUi =
-    kVirtualJoystickOuterRenderW * 0.5f * 1.08f;
+    kVirtualJoystickOuterRenderW * 0.5f * kJoystickRingDrawDiameterScale * kJoystickRingSoftOuterRadiusMul * 1.06f;
+constexpr float kJoystickKnobDrawDiameterScale = 1.18f;
 constexpr float kVirtualJoystickKnobRenderW = 40.0f;
 constexpr float kVirtualJoystickKnobRenderH = 40.0f;
 constexpr float kVirtualJoystickIdleVisualScale = 0.68f;
@@ -721,7 +726,17 @@ constexpr float kVirtualChatQuickButtonCy = 413.0f;
 constexpr float kVirtualChatQuickButtonRadius = 18.0f;
 
 // â”€â”€ UI icon texture cache (loaded once from assets/ui/*.png) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-struct UITexture { GLuint id = 0; int w = 0; int h = 0; };
+struct UITexture
+{
+    GLuint id = 0;
+    int w = 0;
+    int h = 0;
+    // Alpha-weighted center in GL texcoords (0..1); used so art center lands on draw anchor.
+    float contentCenterU = 0.5f;
+    float contentCenterV = 0.5f;
+    // Max visible span vs quad width on aspect-correct draw (bbox/w); <1 => upscale to hit target diameter.
+    float contentVisibleFrac = 1.0f;
+};
 static UITexture g_uiTex_map;
 static UITexture g_uiTex_minimap;
 static UITexture g_uiTex_attack;
@@ -738,14 +753,9 @@ constexpr float kSkillLineU = 157.0f / 677.0f;
 constexpr float kSkillLineV = 3.0f / 369.0f;
 constexpr float kSkillLineUW = 363.0f / 677.0f;
 constexpr float kSkillLineVH = 363.0f / 369.0f;
-constexpr float kJoystickKnobU = 203.0f / 677.0f;
-constexpr float kJoystickKnobV = 41.0f / 369.0f;
-constexpr float kJoystickKnobUW = 286.0f / 677.0f;
-constexpr float kJoystickKnobVH = 290.0f / 369.0f;
-constexpr float kJoystickRingU = 181.0f / 677.0f;
-constexpr float kJoystickRingV = 15.0f / 369.0f;
-constexpr float kJoystickRingUW = 356.0f / 677.0f;
-constexpr float kJoystickRingVH = 353.0f / 369.0f;
+// joystick1.png / joystick2.png are standalone full textures (see LoadUITextureAsset).
+// Draw with a pixel quad matching tex w:h so full UV (0,0)-(1,1) is not squashed (avoids
+// oval distortion and avoids center-UV crops that can clip one side if art is not centered).
 
 struct AndroidUiRect
 {
@@ -3808,6 +3818,67 @@ void DrawVirtualBarH(float uiLeft, float uiTop, float uiW, float uiH, float rati
 // files dir before native code runs. fopen("ui/map.png") therefore finds the
 // file on the real filesystem (cwd = /sdcard/.../files).
 // stbi_load_from_memory is used for decoding (STBI_NO_STDIO is set elsewhere).
+static void ComputeTextureContentMetrics(
+    int w,
+    int h,
+    const stbi_uc* pixels,
+    float& outCenterU,
+    float& outCenterV,
+    float& outVisibleFrac)
+{
+    outCenterU = 0.5f;
+    outCenterV = 0.5f;
+    outVisibleFrac = 1.0f;
+    if (w <= 0 || h <= 0 || pixels == nullptr)
+    {
+        return;
+    }
+
+    int minX = w;
+    int minY = h;
+    int maxX = 0;
+    int maxY = 0;
+    long long sumX = 0;
+    long long sumY = 0;
+    int count = 0;
+    for (int y = 0; y < h; ++y)
+    {
+        for (int x = 0; x < w; ++x)
+        {
+            const int alpha = pixels[(y * w + x) * 4 + 3];
+            if (alpha <= 16)
+            {
+                continue;
+            }
+
+            minX = std::min(minX, x);
+            minY = std::min(minY, y);
+            maxX = std::max(maxX, x);
+            maxY = std::max(maxY, y);
+            sumX += x;
+            sumY += y;
+            count++;
+        }
+    }
+
+    if (count <= 0)
+    {
+        return;
+    }
+
+    const float centroidX = static_cast<float>(sumX) / static_cast<float>(count);
+    const float centroidY = static_cast<float>(sumY) / static_cast<float>(count);
+    outCenterU = centroidX / static_cast<float>(w);
+    outCenterV = centroidY / static_cast<float>(h);
+
+    const float bboxW = static_cast<float>(maxX - minX + 1);
+    const float bboxH = static_cast<float>(maxY - minY + 1);
+    const float ar = static_cast<float>(w) / static_cast<float>(h);
+    const float spanW = bboxW / static_cast<float>(w);
+    const float spanH = (bboxH / static_cast<float>(h)) / std::max(ar, 0.001f);
+    outVisibleFrac = std::max(spanW, spanH);
+}
+
 static UITexture LoadUITextureAsset(const char* assetPath)
 {
     UITexture tex;
@@ -3851,10 +3922,25 @@ static UITexture LoadUITextureAsset(const char* assetPath)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+    ComputeTextureContentMetrics(
+        w,
+        h,
+        pixels,
+        tex.contentCenterU,
+        tex.contentCenterV,
+        tex.contentVisibleFrac);
     stbi_image_free(pixels);
 
     tex.w = w; tex.h = h;
-    LOGI("LoadUITextureAsset: OK '%s' (%dx%d texId=%u)", assetPath, w, h, tex.id);
+    LOGI(
+        "LoadUITextureAsset: OK '%s' (%dx%d texId=%u anchor=%.3f,%.3f visibleFrac=%.3f)",
+        assetPath,
+        w,
+        h,
+        tex.id,
+        tex.contentCenterU,
+        tex.contentCenterV,
+        tex.contentVisibleFrac);
     return tex;
 }
 
@@ -3944,25 +4030,32 @@ static void DrawIconButtonUvSquare(
     float centerUiY,
     float uiDiameter,
     const UITexture& tex,
-    float u0,
-    float v0,
-    float uW,
-    float vH,
-    float alpha = 1.0f)
+    float alpha)
 {
     if (tex.id == 0 || uiDiameter <= 0.5f)
     {
         return;
     }
 
-    const float half = UiToScreenUniform(uiDiameter * 0.5f);
-    const float centerSx = UiToScreenX(centerUiX);
-    const float centerSy = static_cast<float>(WindowHeight) - UiToScreenY(centerUiY);
+    const float ar = (tex.w > 0 && tex.h > 0)
+        ? (static_cast<float>(tex.w) / static_cast<float>(tex.h))
+        : 1.0f;
+    const float visibleFrac = std::max(tex.contentVisibleFrac, 0.01f);
+    const float drawDiameterUi = uiDiameter / visibleFrac;
+    const float halfW = UiToScreenUniform(drawDiameterUi * 0.5f);
+    const float halfH = halfW / std::max(ar, 0.001f);
+    const float sw = halfW * 2.0f;
+    const float sh = halfH * 2.0f;
 
-    const float sx = centerSx - half;
-    const float syB = centerSy - half;
-    const float syT = centerSy + half;
-    const float sw = half * 2.0f;
+    const float du = tex.contentCenterU - 0.5f;
+    const float dv = tex.contentCenterV - 0.5f;
+    const float centerSx = UiToScreenX(centerUiX) - (du * sw);
+    const float centerSy =
+        static_cast<float>(WindowHeight) - UiToScreenY(centerUiY) - (dv * sh);
+
+    const float sx = centerSx - halfW;
+    const float syB = centerSy - halfH;
+    const float syT = centerSy + halfH;
 
     glDisable(GL_TEXTURE_2D);
     glEnable(GL_BLEND);
@@ -3972,10 +4065,10 @@ static void DrawIconButtonUvSquare(
     glBindTexture(GL_TEXTURE_2D, tex.id);
     glColor4f(1.0f, 1.0f, 1.0f, alpha);
     glBegin(GL_TRIANGLE_FAN);
-    glTexCoord2f(u0,      v0);      glVertex2f(sx,      syB);
-    glTexCoord2f(u0 + uW, v0);      glVertex2f(sx + sw, syB);
-    glTexCoord2f(u0 + uW, v0 + vH); glVertex2f(sx + sw, syT);
-    glTexCoord2f(u0,      v0 + vH); glVertex2f(sx,      syT);
+    glTexCoord2f(0.0f, 0.0f); glVertex2f(sx,      syB);
+    glTexCoord2f(1.0f, 0.0f); glVertex2f(sx + sw, syB);
+    glTexCoord2f(1.0f, 1.0f); glVertex2f(sx + sw, syT);
+    glTexCoord2f(0.0f, 1.0f); glVertex2f(sx,      syT);
     glEnd();
     glDisable(GL_TEXTURE_2D);
 
@@ -3991,31 +4084,29 @@ void DrawVirtualJoystickHud()
 
     const float centerX = GetVirtualJoystickRenderCenterX();
     const float centerY = GetVirtualJoystickRenderCenterY();
-    const float thumbX = joystickActive
-        ? std::round(centerX + g_virtualJoystick.thumbOffsetX)
-        : centerX;
-    const float thumbY = joystickActive
-        ? std::round(centerY + g_virtualJoystick.thumbOffsetY)
-        : centerY;
+    const float ringCx = std::round(centerX);
+    const float ringCy = std::round(centerY);
 
     const float outerW = kVirtualJoystickOuterRenderW * visualScale;
     const float outerH = kVirtualJoystickOuterRenderH * visualScale;
     const float knobW = kVirtualJoystickKnobRenderW * visualScale;
     const float knobH = kVirtualJoystickKnobRenderH * visualScale;
-    const float ringRadiusUi = outerW * 0.46f;
 
-    // Soft base (Genshin / ML style) — keeps world visible under the pad.
-    DrawVirtualCircle(centerX, centerY, ringRadiusUi * 1.08f, 0.05f, 0.08f, 0.12f, ringAlpha * 0.55f, true);
-    DrawVirtualCircle(centerX, centerY, ringRadiusUi, 0.82f, 0.86f, 0.92f, ringAlpha * 0.18f, true);
-    DrawVirtualCircle(centerX, centerY, ringRadiusUi * 0.96f, 0.92f, 0.94f, 0.98f, ringAlpha * 0.42f, false);
+    const float layoutDiameterUi = std::max(outerW, outerH) * kJoystickRingDrawDiameterScale;
+    const float R_softOuter = (layoutDiameterUi * 0.5f) * kJoystickRingSoftOuterRadiusMul;
+
+    // Soft base — same center; outer radius R_softOuter defines the faint boundary; ring PNG fills it.
+    DrawVirtualCircle(ringCx, ringCy, R_softOuter, 0.05f, 0.08f, 0.12f, ringAlpha * 0.55f, true);
+    DrawVirtualCircle(ringCx, ringCy, R_softOuter * 0.93f, 0.82f, 0.86f, 0.92f, ringAlpha * 0.18f, true);
+    DrawVirtualCircle(ringCx, ringCy, R_softOuter * 0.86f, 0.92f, 0.94f, 0.98f, ringAlpha * 0.42f, false);
 
     if (joystickActive && g_virtualJoystick.moveStrength > 0.05f)
     {
         const float pulseAlpha = ringAlpha * (0.18f + 0.22f * g_virtualJoystick.moveStrength);
         DrawVirtualCircle(
-            centerX,
-            centerY,
-            ringRadiusUi * (1.02f + 0.08f * g_virtualJoystick.moveStrength),
+            ringCx,
+            ringCy,
+            R_softOuter * (1.0f + 0.08f * g_virtualJoystick.moveStrength),
             0.35f,
             0.72f,
             1.0f,
@@ -4026,30 +4117,33 @@ void DrawVirtualJoystickHud()
     EnsureUITextures();
     if (g_uiTex_joystick2.id != 0)
     {
+        const float ringTexDiameterUi = R_softOuter * 2.0f;
         DrawIconButtonUvSquare(
-            centerX,
-            centerY,
-            std::max(outerW, outerH),
+            ringCx,
+            ringCy,
+            ringTexDiameterUi,
             g_uiTex_joystick2,
-            kJoystickRingU,
-            kJoystickRingV,
-            kJoystickRingUW,
-            kJoystickRingVH,
             ringAlpha);
     }
 
-    DrawVirtualCircle(thumbX, thumbY, knobW * 0.42f, 1.0f, 1.0f, 1.0f, knobAlpha * 0.35f, true);
+    const float thumbDrawX = joystickActive
+        ? std::round(ringCx + g_virtualJoystick.thumbOffsetX)
+        : ringCx;
+    const float thumbDrawY = joystickActive
+        ? std::round(ringCy + g_virtualJoystick.thumbOffsetY)
+        : ringCy;
+    const float knobDrawCx = thumbDrawX;
+    const float knobDrawCy = thumbDrawY;
+
+    const float knobDiameterUi = std::max(knobW, knobH) * kJoystickKnobDrawDiameterScale;
+    DrawVirtualCircle(knobDrawCx, knobDrawCy, knobDiameterUi * 0.42f, 1.0f, 1.0f, 1.0f, knobAlpha * 0.35f, true);
     if (g_uiTex_joystick1.id != 0)
     {
         DrawIconButtonUvSquare(
-            thumbX,
-            thumbY,
-            std::max(knobW, knobH),
+            knobDrawCx,
+            knobDrawCy,
+            knobDiameterUi,
             g_uiTex_joystick1,
-            kJoystickKnobU,
-            kJoystickKnobV,
-            kJoystickKnobUW,
-            kJoystickKnobVH,
             knobAlpha);
     }
 }
@@ -4393,6 +4487,12 @@ void RenderVirtualPad()
         }
         return;
     }
+
+    // Scene() leaves a 3D depth buffer; if depth test/mask are out of sync with the
+    // wrapper flags, BeginBitmap's DisableDepthTest() may not actually disable GL
+    // depth testing and the virtual joystick (same z) can be partially rejected.
+    glViewport(0, 0, static_cast<GLsizei>(WindowWidth), static_cast<GLsizei>(WindowHeight));
+    glClear(GL_DEPTH_BUFFER_BIT);
 
     BeginBitmap();
     EnableAlphaBlend();

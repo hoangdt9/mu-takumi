@@ -40,6 +40,14 @@ public sealed class MapMonsterSpawnCoverageTests
                 summary.FieldCount > 0,
                 $"map {mapId} has no field monsters in {path} (total={summary.Total} npc={summary.NpcCount})");
         }
+
+        foreach (var mapId in new byte[] { 1, 4, 7, 8 })
+        {
+            Assert.True(byMap.TryGetValue(mapId, out var summary), $"map {mapId} missing in {path}");
+            Assert.True(
+                summary.FieldCount > 0,
+                $"map {mapId} (Move/warp dungeon chain) has no field monsters in {path}");
+        }
     }
 
     static string? ResolveMonsterSetBase()

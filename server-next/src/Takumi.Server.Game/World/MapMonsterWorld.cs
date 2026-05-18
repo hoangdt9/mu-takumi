@@ -126,9 +126,11 @@ public static class MapMonsterWorld
                 instCount,
                 mapCount,
                 sw.ElapsedMilliseconds);
+            // Mark ready before coverage/ATT preload — LogStartupReport → BuildSummaryByMap
+            // re-enters EnsureInitialized; C# lock is reentrant and would reload spawns forever.
+            _initialized = true;
             MapAttWalkability.PreloadMaps(_byMap.Keys);
             MapMonsterSpawnCoverage.LogStartupReport();
-            _initialized = true;
         }
     }
 

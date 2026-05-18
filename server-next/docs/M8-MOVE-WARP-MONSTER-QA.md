@@ -1,6 +1,6 @@
 # M8 — QA warp Move map + monster viewport
 
-Last updated: 2026-05-18
+Last updated: 2026-05-19
 
 **Mục tiêu:** Mỗi đích **Move map (`0x8E`)** có NPC/quái hợp lệ; log `[m9]` / `[m8-m9]` khớp kỳ vọng.
 
@@ -27,10 +27,12 @@ Kỳ vọng startup:
 | Lorencia | 0 | Quái ngoài town (Bull Fighter, …) | `C2 0x13` join `map=0` count>0 |
 | Devias | 2 | Yeti / Ice Queen ngoài safe zone | `map=2` field>0; không chỉ NPC town |
 | Noria | 3 | Goblin / Forest Monster spots | `map=3` (đã verify) |
-| Dungeon | 1 | Quái trong dungeon (gate 20/30/40) | `map=1` — nếu thiếu: bổ sung set-base |
-| Atlans | 7 | Field mobs | `map=7` |
-| Lost Tower | 4 | Field mobs | `map=4` |
-| Tarkan | 8 | Field mobs | `map=8` |
+| Dungeon | 1 | Quái trong dungeon (gate 20/30/40) | `map=1` section 1 enabled (~75 mobs) |
+| Atlans | 7 | Bahamut / Vepar / Hydra… | `map=7` ~170 |
+| Lost Tower | 4 | Death Knight / Gorgon… | `map=4` ~295 |
+| Tarkan | 8 | Bloody wolf / Zaikan… | `map=8` ~133 |
+| Icarus | 10 | Drakan / Alquamos (gate/wing) | `map=10` ~103 |
+| Aida | 33 | Forest Orc (warp tùy season) | `map=33` ~135 |
 | Loren Market | 79 | **Chỉ NPC** (OpenMU: no monsters) | `C2 0x13` NPC join; có thể `no new monsters` khi đi xa NPC |
 
 **Cách test:** Mở Move map → warp từng dòng đủ level → đi ra khỏi spawn gate ~15–30 ô → xác nhận mob/NPC + đánh thử 1 con (Noria/Devias).

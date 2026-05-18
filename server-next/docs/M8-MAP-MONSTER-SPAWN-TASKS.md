@@ -1,6 +1,6 @@
 # M8 × M9 — Đưa quái / NPC vào từng map (spawn parity)
 
-Last updated: 2026-05-18
+Last updated: 2026-05-19
 
 **Mục tiêu:** Mọi map đích từ **Move map (`0x8E`)** / **gate (`0x1C`)** phải có spawn từ `MonsterSetBase.txt` (hoặc Postgres `monster_spawn`), client thấy **`C2 0x13`** sau `F3 03` / warp.
 
@@ -46,9 +46,9 @@ Last updated: 2026-05-18
 
 | # | Task | | Ghi chú |
 |---|------|:-:|---------|
-| P1.1 | Mỗi `Move.txt` row → `Gate` → `map_id` có `field > 0` | [~] | WARN trong log nếu thiếu |
+| P1.1 | Mỗi `Move.txt` row → `Gate` → `map_id` có `field > 0` | [x] | Map 0–3, **1, 4, 7, 8**; gate map 79 NPC-only |
 | P1.2 | Noria (3), Devias (2), Lorencia (0) smoke | [~] | Devias section 1 từ OpenMU075; QA: [`M8-MOVE-WARP-MONSTER-QA.md`](./M8-MOVE-WARP-MONSTER-QA.md) |
-| P1.3 | Dungeon / Atlans / LT / Tarkan theo level gate | [ ] | Map 8+ đã có hàng trong set-base |
+| P1.3 | Dungeon / Atlans / LT / Tarkan / Icarus / Aida | [x] | Bật section 1 trong `MonsterSetBase.txt` (`./scripts/enable-move-map-field-spawns.sh`) — maps **1, 4, 7, 8, 10, 33** |
 | P1.4 | LorenMarket gate 333 → map 79 | [x] | NPC 545–547 (OpenMU: no field mobs) |
 | P1.5 | Drift vs **OpenMU** SeasonSix | [~] | `./scripts/compare-spawn-openmu.sh` |
 
@@ -99,6 +99,21 @@ Kỳ vọng log:
 ```
 
 Warp Noria → `[m9] sent C2 0x13 monster viewport (join) count=… map=3`
+
+### Data patch (2026-05-19)
+
+Đã **uncomment** ~189 dòng section 1 có sẵn trong `MuServer/.../MonsterSetBase.txt`:
+
+| Map | Tên | Section 1 qty (approx) |
+|-----|-----|------------------------|
+| 1 | Dungeon | 75 |
+| 4 | Lost Tower | 295 |
+| 7 | Atlans | 170 |
+| 8 | Tarkan | 133 |
+| 10 | Icarus | 103 |
+| 33 | Aida | 135 |
+
+Script tái áp dụng: `./scripts/enable-move-map-field-spawns.sh` → rebuild `game-host`.
 
 ---
 

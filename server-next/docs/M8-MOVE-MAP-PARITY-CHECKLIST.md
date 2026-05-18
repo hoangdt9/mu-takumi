@@ -90,7 +90,7 @@
 |---|:-:|---|
 | P4.1 | `0x1C` | [x] |
 | P4.2 | `F3 03` + `F3 10` | [x] |
-| P4.3 | Monster scope | [x] | `MapMonsterScopeSender` + coverage log `[m8-m9]` — task list: `M8-MAP-MONSTER-SPAWN-TASKS.md` |
+| P4.3 | Monster scope | [x] | `MapMonsterScopeSender` + `[m8-m9]`; field spawns maps **1,4,7,8,10,33** (`enable-move-map-field-spawns.sh`) — `M8-MAP-MONSTER-SPAWN-TASKS.md` |
 | P4.4 | Presence | [x] |
 | P4.5 | `SaveRoster` | [x] |
 

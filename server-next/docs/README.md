@@ -8,6 +8,7 @@ Parity, wire, Docker. **QA APK:** [`../../docs/QA-MILESTONE.md`](../../docs/QA-M
 | [M8-MOVE-MAP-PARITY-CHECKLIST.md](./M8-MOVE-MAP-PARITY-CHECKLIST.md) | Move map `0x8E` + gate/skill TP |
 | [M8-MAP-MONSTER-SPAWN-TASKS.md](./M8-MAP-MONSTER-SPAWN-TASKS.md) | Spawn quái/NPC theo map + Move đích |
 | [M8-MOVE-WARP-MONSTER-QA.md](./M8-MOVE-WARP-MONSTER-QA.md) | QA warp Move + viewport `[m9]` |
+| `scripts/enable-move-map-field-spawns.sh` | Bật section 1 quái map 1/4/7/8/10/33 trong MonsterSetBase |
 | [M9-NPC-MONSTER-CHECKLIST.md](./M9-NPC-MONSTER-CHECKLIST.md) | Monster scope A |
 | [M9-MONSTER-AI-PORT-CHECKLIST.md](./M9-MONSTER-AI-PORT-CHECKLIST.md) | AI / viewport port |
 | [M9-M8-NPC-GAMEPLAY-OWNERSHIP.md](./M9-M8-NPC-GAMEPLAY-OWNERSHIP.md) | File ownership (đừng duplicate) |

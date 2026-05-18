@@ -268,12 +268,19 @@ namespace
 constexpr Sint32 kSdlUserEventLoginIntroMovieFinished = 9001;
 }
 
+static int g_AndroidSafeInsetBottomPx = 56;
+
 static void UpdateAndroidScreenMetrics(int screenW, int screenH)
 {
     WindowWidth = static_cast<unsigned int>(screenW);
     WindowHeight = static_cast<unsigned int>(screenH);
     g_fScreenRate_x = static_cast<float>(WindowWidth) / 640.0f;
     g_fScreenRate_y = static_cast<float>(WindowHeight) / 480.0f;
+    // Reserve nav bar + gesture area (devices often report 63–130px bottom inset).
+    g_AndroidSafeInsetBottomPx = std::clamp(
+        static_cast<int>(static_cast<float>(screenH) * 0.058f),
+        48,
+        140);
 
     DisplayWin = 640;
     DisplayHeight = 480;
@@ -600,19 +607,24 @@ constexpr int kVirtualUtilityButtonChat = 3;
 constexpr int kVirtualZoomButtonMinus = 0;
 constexpr int kVirtualZoomButtonPlus = 1;
 constexpr uint32_t kVirtualMiniMapButtonCooldownMs = 220;
-constexpr uint32_t kVirtualAttackRepeatMs = 320;
-constexpr uint32_t kVirtualProximityAttackMs = 380;
+constexpr uint32_t kVirtualAttackRepeatMs = 280;
+constexpr uint32_t kVirtualProximityAttackMs = 150;
+constexpr uint32_t kVirtualMeleeAttackSendMs = 160;
+constexpr float kVirtualJoystickCombatMoveStrength = 0.12f;
 constexpr uint32_t kVirtualUtilityButtonCooldownMs = 200;
 constexpr uint32_t kVirtualSkillAssignLongPressMs = 480;
 constexpr uint32_t kVirtualAssignModeTimeoutMs = 9000;
 constexpr uint32_t kVirtualAssignTapDebounceMs = 160;
 constexpr const char* kVirtualSkillSlotsPath = "Data/Local/android_touch_skill_slots.cfg";
-constexpr float kVirtualPadInputMaxY = 426.0f;
+// Bottom of virtual-pad touch/draw zone (extends below legacy action bar so the
+// joystick ring is not clipped at the lower corners).
+constexpr float kVirtualPadInputMaxY = 468.0f;
 constexpr float kInventoryWindowWidth = 190.0f;
 constexpr float kInventoryWindowHeight = 429.0f;
 constexpr float kVirtualAutoAcquireMaxDistance = 10.0f;
 constexpr float kVirtualJoystickDefaultCenterX = 88.0f;
 constexpr float kVirtualJoystickDefaultCenterY = 368.0f;
+constexpr float kVirtualJoystickHudClearanceUi = 8.0f;
 constexpr float kVirtualJoystickRadius = 48.0f;
 constexpr float kVirtualJoystickDeadZone = 8.0f;
 constexpr float kVirtualJoystickKnobRadius = 18.0f;
@@ -623,6 +635,8 @@ constexpr float kVirtualJoystickDynamicAreaMinY = 248.0f;
 constexpr float kVirtualJoystickDynamicAreaMaxX = 248.0f;
 constexpr float kVirtualJoystickOuterRenderW = 88.0f;
 constexpr float kVirtualJoystickOuterRenderH = 88.0f;
+constexpr float kVirtualJoystickVisualExtentUi =
+    kVirtualJoystickOuterRenderW * 0.5f * 1.08f;
 constexpr float kVirtualJoystickKnobRenderW = 40.0f;
 constexpr float kVirtualJoystickKnobRenderH = 40.0f;
 constexpr float kVirtualJoystickIdleVisualScale = 0.68f;
@@ -837,6 +851,7 @@ bool GetAndroidMoveMapWindowPositionInternal(int panelWidth, int panelHeight, in
 // Bars occupy the left 1/3 of the screen (â‰ˆ213 virtual units), stacked at bottom.
 // Numbers are drawn centered directly on each bar. No blending â€” solid opaque.
 constexpr float kHudStripY      = 432.0f;   // top of the HUD strip (virtual y)
+constexpr float kLegacyMainFrameBarTopY = 480.0f - 51.0f; // CNewUIMainFrameWindow::RenderFrame
 constexpr float kHudBarH        =  11.0f;   // height of one bar (tall enough for numbers)
 constexpr float kHudBarGap      =   2.0f;   // vertical gap between bars
 constexpr float kHudBarLeft     =   4.0f;   // bar left edge (virtual x)
@@ -1871,11 +1886,31 @@ float ClampVirtualJoystickCenterX(float uiX)
     return std::clamp(uiX, minX, maxX);
 }
 
+float GetVirtualUiScaleY();
+float GetVirtualUiBottomSafeInsetUi();
+float GetVirtualJoystickMaxCenterY();
+
+float GetVirtualUiBottomSafeInsetUi()
+{
+    const int insetPx = std::max(g_AndroidSafeInsetBottomPx, 0);
+    return static_cast<float>(insetPx) / std::max(GetVirtualUiScaleY(), 0.001f);
+}
+
+float GetVirtualJoystickMaxCenterY()
+{
+    const float bottomInsetUi = GetVirtualUiBottomSafeInsetUi();
+    const float maxRadius = kVirtualJoystickVisualExtentUi;
+    const float aboveNav = 480.0f - bottomInsetUi - maxRadius - 8.0f;
+    const float aboveHud = kLegacyMainFrameBarTopY - kVirtualJoystickHudClearanceUi - maxRadius;
+    return std::floor(std::min(aboveHud, aboveNav));
+}
+
 float ClampVirtualJoystickCenterY(float uiY)
 {
     const float minY = kVirtualJoystickDynamicAreaMinY + kVirtualJoystickRadius + 8.0f;
-    const float maxY = std::max(minY, kVirtualPadInputMaxY - kVirtualJoystickRadius - 8.0f);
-    return std::clamp(uiY, minY, maxY);
+    const float maxYByTouch = kVirtualPadInputMaxY - kVirtualJoystickRadius - 8.0f;
+    const float maxY = std::min(maxYByTouch, GetVirtualJoystickMaxCenterY());
+    return std::clamp(uiY, minY, std::max(minY, maxY));
 }
 
 float GetVirtualJoystickRenderCenterX()
@@ -2026,6 +2061,41 @@ bool HandleVirtualJoystickFingerUp(const SDL_TouchFingerEvent& touch)
     return true;
 }
 
+void ApplyVirtualJoystickAim()
+{
+    if (g_virtualJoystick.fingerId == static_cast<SDL_FingerID>(-1))
+    {
+        return;
+    }
+
+    float dirX = g_virtualJoystick.moveDirX;
+    float dirY = g_virtualJoystick.moveDirY;
+    if (g_virtualJoystick.moveStrength <= 0.001f)
+    {
+        const float thumbX = g_virtualJoystick.thumbOffsetX;
+        const float thumbY = -g_virtualJoystick.thumbOffsetY;
+        const float thumbLen = std::sqrt((thumbX * thumbX) + (thumbY * thumbY));
+        if (thumbLen <= 2.0f)
+        {
+            return;
+        }
+
+        dirX = thumbX / thumbLen;
+        dirY = thumbY / thumbLen;
+    }
+
+    const float aimRadius = kVirtualJoystickMouseMinRadius + 12.0f;
+    MouseX = std::clamp(
+        static_cast<int>(320.0f + dirX * aimRadius),
+        0,
+        640);
+    MouseY = std::clamp(
+        static_cast<int>(180.0f - dirY * aimRadius),
+        0,
+        480);
+    g_iNoMouseTime = 0;
+}
+
 void ApplyVirtualJoystickMovement()
 {
     if (g_virtualJoystick.fingerId == static_cast<SDL_FingerID>(-1))
@@ -2043,6 +2113,14 @@ void ApplyVirtualJoystickMovement()
     if (g_virtualJoystick.moveStrength <= 0.001f)
     {
         ReleaseVirtualJoystickMouseDrive();
+        ApplyVirtualJoystickAim();
+        return;
+    }
+
+    if (g_virtualJoystick.moveStrength <= kVirtualJoystickCombatMoveStrength)
+    {
+        ReleaseVirtualJoystickMouseDrive();
+        ApplyVirtualJoystickAim();
         return;
     }
 
@@ -2860,6 +2938,8 @@ void EnsureOffensiveSkillTarget()
 
 void RefreshSelectedCharacterAtMouse()
 {
+    const int previousTarget = SelectedCharacter;
+
     if (!IsVirtualPadAvailable()
         || Hero == nullptr
         || CharactersClient == nullptr
@@ -2885,7 +2965,15 @@ void RefreshSelectedCharacterAtMouse()
 
     if (candidate < 0 || !IsTargetAttackable(candidate))
     {
-        SelectedCharacter = -1;
+        if (IsTargetAttackable(previousTarget)
+            && IsWithinVirtualAutoAcquireRange(previousTarget))
+        {
+            SelectedCharacter = previousTarget;
+        }
+        else
+        {
+            SelectedCharacter = -1;
+        }
         return;
     }
 
@@ -2965,8 +3053,9 @@ static bool TrySendHeroMeleeAttackPacket(int targetIndex)
     const int dir = static_cast<int>(((BYTE)((Hero->Object.Angle[2] + 22.5f) / 360.f * 8.f + 1.f)) % 8);
     static uint32_t s_lastMeleeAttackSendMs = 0;
     const uint32_t nowMs = MU_MobileGetTicks();
-    if (s_lastMeleeAttackSendMs != 0 && (nowMs - s_lastMeleeAttackSendMs) < 280u)
+    if (s_lastMeleeAttackSendMs != 0 && (nowMs - s_lastMeleeAttackSendMs) < kVirtualMeleeAttackSendMs)
     {
+        // In range but on send cooldown — do not fall through to walk.
         return true;
     }
 
@@ -3577,14 +3666,34 @@ void UpdateVirtualProximityCombat()
     s_lastProximityAttackMs = nowMs;
 }
 
+float GetVirtualUiScaleX()
+{
+    return static_cast<float>(WindowWidth) / 640.0f;
+}
+
+float GetVirtualUiScaleY()
+{
+    return static_cast<float>(WindowHeight) / 480.0f;
+}
+
+float GetVirtualUiUniformScale()
+{
+    return std::min(GetVirtualUiScaleX(), GetVirtualUiScaleY());
+}
+
 float UiToScreenX(float uiX)
 {
-    return uiX * (static_cast<float>(WindowWidth) / 640.0f);
+    return uiX * GetVirtualUiScaleX();
 }
 
 float UiToScreenY(float uiY)
 {
-    return uiY * (static_cast<float>(WindowHeight) / 480.0f);
+    return uiY * GetVirtualUiScaleY();
+}
+
+float UiToScreenUniform(float uiLen)
+{
+    return uiLen * GetVirtualUiUniformScale();
 }
 
 void DrawVirtualCircle(float uiX, float uiY, float uiRadius, float red, float green, float blue, float alpha, bool filled)
@@ -3596,8 +3705,7 @@ void DrawVirtualCircle(float uiX, float uiY, float uiRadius, float red, float gr
 
     const float centerX = UiToScreenX(uiX);
     const float centerY = static_cast<float>(WindowHeight) - UiToScreenY(uiY);
-    const float radiusX = UiToScreenX(uiRadius);
-    const float radiusY = UiToScreenY(uiRadius);
+    const float radiusScreen = UiToScreenUniform(uiRadius);
     constexpr int kSegments = 36;
     constexpr float kPi = 3.14159265358979323846f;
 
@@ -3615,8 +3723,8 @@ void DrawVirtualCircle(float uiX, float uiY, float uiRadius, float red, float gr
     {
         const float angle = (static_cast<float>(i) / static_cast<float>(kSegments))
             * 2.0f * kPi;
-        const float px = centerX + std::cos(angle) * radiusX;
-        const float py = centerY + std::sin(angle) * radiusY;
+        const float px = centerX + std::cos(angle) * radiusScreen;
+        const float py = centerY + std::sin(angle) * radiusScreen;
         glVertex2f(px, py);
     }
     glEnd();
@@ -3831,6 +3939,49 @@ static void DrawIconButtonUv(float uiX, float uiY, float uiW, float uiH,
     glBlendFunc(GL_ONE, GL_ONE);
 }
 
+static void DrawIconButtonUvSquare(
+    float centerUiX,
+    float centerUiY,
+    float uiDiameter,
+    const UITexture& tex,
+    float u0,
+    float v0,
+    float uW,
+    float vH,
+    float alpha = 1.0f)
+{
+    if (tex.id == 0 || uiDiameter <= 0.5f)
+    {
+        return;
+    }
+
+    const float half = UiToScreenUniform(uiDiameter * 0.5f);
+    const float centerSx = UiToScreenX(centerUiX);
+    const float centerSy = static_cast<float>(WindowHeight) - UiToScreenY(centerUiY);
+
+    const float sx = centerSx - half;
+    const float syB = centerSy - half;
+    const float syT = centerSy + half;
+    const float sw = half * 2.0f;
+
+    glDisable(GL_TEXTURE_2D);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, tex.id);
+    glColor4f(1.0f, 1.0f, 1.0f, alpha);
+    glBegin(GL_TRIANGLE_FAN);
+    glTexCoord2f(u0,      v0);      glVertex2f(sx,      syB);
+    glTexCoord2f(u0 + uW, v0);      glVertex2f(sx + sw, syB);
+    glTexCoord2f(u0 + uW, v0 + vH); glVertex2f(sx + sw, syT);
+    glTexCoord2f(u0,      v0 + vH); glVertex2f(sx,      syT);
+    glEnd();
+    glDisable(GL_TEXTURE_2D);
+
+    glBlendFunc(GL_ONE, GL_ONE);
+}
+
 void DrawVirtualJoystickHud()
 {
     const bool joystickActive = g_virtualJoystick.fingerId != static_cast<SDL_FingerID>(-1);
@@ -3875,11 +4026,10 @@ void DrawVirtualJoystickHud()
     EnsureUITextures();
     if (g_uiTex_joystick2.id != 0)
     {
-        DrawIconButtonUv(
-            centerX - outerW * 0.5f,
-            centerY - outerH * 0.5f,
-            outerW,
-            outerH,
+        DrawIconButtonUvSquare(
+            centerX,
+            centerY,
+            std::max(outerW, outerH),
             g_uiTex_joystick2,
             kJoystickRingU,
             kJoystickRingV,
@@ -3891,11 +4041,10 @@ void DrawVirtualJoystickHud()
     DrawVirtualCircle(thumbX, thumbY, knobW * 0.42f, 1.0f, 1.0f, 1.0f, knobAlpha * 0.35f, true);
     if (g_uiTex_joystick1.id != 0)
     {
-        DrawIconButtonUv(
-            thumbX - knobW * 0.5f,
-            thumbY - knobH * 0.5f,
-            knobW,
-            knobH,
+        DrawIconButtonUvSquare(
+            thumbX,
+            thumbY,
+            std::max(knobW, knobH),
             g_uiTex_joystick1,
             kJoystickKnobU,
             kJoystickKnobV,
@@ -4802,7 +4951,7 @@ bool MU_AndroidIsVirtualJoystickDrivingMouse()
 bool MU_AndroidShouldSuppressCombatTargeting()
 {
     return g_virtualJoystick.fingerId != static_cast<SDL_FingerID>(-1)
-        && g_virtualJoystick.moveStrength > 0.001f;
+        && g_virtualJoystick.moveStrength > kVirtualJoystickCombatMoveStrength;
 }
 
 bool AndroidTriggerNormalAttackButton()

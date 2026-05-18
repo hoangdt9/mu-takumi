@@ -1,4 +1,5 @@
 using Takumi.Server.Game.World;
+using Takumi.Server.Protocol;
 using Xunit;
 
 namespace Takumi.Server.Tests;
@@ -120,5 +121,31 @@ public sealed class ShopItemValueResolverTests
         {
             Assert.True(price > wildcardBuy, $"resolve={price} wildcard={wildcardBuy}");
         }
+    }
+
+    [Fact]
+    public void ToWireEntry_sellValue_matches_ResolveSell_on_same_shop_blob()
+    {
+        ItemValueCatalog.EnsureInitialized();
+        var item = new NpcShopItemEntry
+        {
+            ShopIndex = 10,
+            Slot = 6,
+            ItemGroup = 4,
+            ItemIndex = 20,
+            ItemLevel = 9,
+            Durability = 0,
+            Skill = 1,
+            Luck = 1,
+            Option = 7,
+            ExcOpt = 63,
+        };
+
+        var blob = new byte[ItemWire602.WireBytes];
+        ShopItemWireEncoding.WriteShopEntry(blob, item);
+        var expectedSell = (int)ShopItemValueResolver.ResolveSell(blob);
+        var entry = ShopItemValueResolver.ToWireEntry(item, 0, blob);
+        Assert.Equal((int)ShopItemValueResolver.ResolveChargedBuy(item, 0), entry.Value);
+        Assert.Equal(expectedSell, entry.SellValue);
     }
 }

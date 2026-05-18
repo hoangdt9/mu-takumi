@@ -1135,139 +1135,6 @@ bool TakumiMeetsItemRequirements(ITEM* pItem)
 	return TakumiMeetsItemStatRequirements(pItem);
 }
 
-void TakumiAppendUnmetSs6RequirementLines(ITEM* ip, int& textNum)
-{
-	if (ip == nullptr || CharacterAttribute == nullptr)
-	{
-		return;
-	}
-
-#ifdef LEM_ADD_LUCKYITEM
-	if (Check_LuckyItem(ip->Type))
-	{
-		return;
-	}
-#endif
-
-	const int itemLevel = (ip->Level >> 3) & 15;
-	int decStr = 0;
-	int decDex = 0;
-	TakumiGetItemRequirementReduction(ip, itemLevel, decStr, decDex);
-
-	auto appendShortfall = [&](int shortfall)
-	{
-		if (shortfall <= 0)
-		{
-			return;
-		}
-
-		sprintf(TextList[textNum], GlobalText[74], shortfall);
-		TextListColor[textNum] = TEXT_COLOR_RED;
-		TextBold[textNum] = false;
-		textNum++;
-	};
-
-	if (ip->RequireLevel > 0 && ip->Type != ITEM_HELPER + 14)
-	{
-		const WORD playerLevel = CharacterAttribute->Level;
-		if (playerLevel < ip->RequireLevel)
-		{
-			sprintf(TextList[textNum], GlobalText[76], ip->RequireLevel);
-			TextListColor[textNum] = TEXT_COLOR_RED;
-			TextBold[textNum] = false;
-			textNum++;
-			appendShortfall(ip->RequireLevel - playerLevel);
-		}
-	}
-
-	if (ip->RequireStrength > 0)
-	{
-		const int reqStrength = ip->RequireStrength - decStr;
-		const int safeReqStrength = reqStrength < 0 ? 0 : reqStrength;
-		const WORD strength = TakumiGetEffectiveStrength();
-		if (strength < (WORD)safeReqStrength)
-		{
-			sprintf(TextList[textNum], GlobalText[73], safeReqStrength);
-			TextListColor[textNum] = TEXT_COLOR_RED;
-			TextBold[textNum] = false;
-			textNum++;
-			appendShortfall(safeReqStrength - strength);
-		}
-	}
-
-	if (ip->RequireDexterity > 0)
-	{
-		const int reqDexterity = ip->RequireDexterity - decDex;
-		const int safeReqDexterity = reqDexterity < 0 ? 0 : reqDexterity;
-		const WORD dexterity = TakumiGetEffectiveDexterity();
-		if (dexterity < (WORD)safeReqDexterity)
-		{
-			sprintf(TextList[textNum], GlobalText[75], safeReqDexterity);
-			TextListColor[textNum] = TEXT_COLOR_RED;
-			TextBold[textNum] = false;
-			textNum++;
-			appendShortfall(safeReqDexterity - dexterity);
-		}
-	}
-
-	if (ip->RequireVitality > 0)
-	{
-		const WORD vitality = TakumiGetEffectiveVitality();
-		if (vitality < ip->RequireVitality)
-		{
-			sprintf(TextList[textNum], GlobalText[1930], ip->RequireVitality);
-			TextListColor[textNum] = TEXT_COLOR_RED;
-			TextBold[textNum] = false;
-			textNum++;
-			appendShortfall(ip->RequireVitality - vitality);
-		}
-	}
-
-	if (ip->RequireEnergy > 0)
-	{
-		const WORD energy = TakumiGetEffectiveEnergy();
-		if (energy < ip->RequireEnergy)
-		{
-			sprintf(TextList[textNum], GlobalText[77], ip->RequireEnergy);
-			TextListColor[textNum] = TEXT_COLOR_RED;
-			TextBold[textNum] = false;
-			textNum++;
-			appendShortfall(ip->RequireEnergy - energy);
-		}
-	}
-
-	if (ip->RequireCharisma > 0)
-	{
-		const WORD charisma = TakumiGetEffectiveCharisma();
-		if (charisma < ip->RequireCharisma)
-		{
-			sprintf(TextList[textNum], GlobalText[698], ip->RequireCharisma);
-			TextListColor[textNum] = TEXT_COLOR_RED;
-			TextBold[textNum] = false;
-			textNum++;
-			appendShortfall(ip->RequireCharisma - charisma);
-		}
-	}
-
-	if (ip->Type == ITEM_HELPER + 5)
-	{
-		const PET_INFO* pPetInfo = GetPetInfo(ip);
-		if (pPetInfo != nullptr)
-		{
-			const WORD reqCharisma = (WORD)(185 + (pPetInfo->m_wLevel * 15));
-			const WORD charisma = TakumiGetEffectiveCharisma();
-			if (charisma < reqCharisma)
-			{
-				sprintf(TextList[textNum], GlobalText[698], reqCharisma);
-				TextListColor[textNum] = TEXT_COLOR_RED;
-				TextBold[textNum] = false;
-				textNum++;
-				appendShortfall(reqCharisma - charisma);
-			}
-		}
-	}
-}
-
 void ComputeItemInfo(int iHelpItem)
 {
 	if (g_iCurrentItem == iHelpItem) 
@@ -1551,52 +1418,10 @@ void ConvertGold64(__int64 Gold,unicode::t_char* Text)
 		unicode::_sprintf(Text,"%d",Gold1);
 }
 
-static bool InventoryItemHasExcellentOptions(const ITEM* ip)
-{
-	if (ip == nullptr)
-	{
-		return false;
-	}
-
-	if ((ip->Option1 & 0x3F) != 0 || (ip->ExtOption & 0x3F) != 0)
-	{
-		return true;
-	}
-
-	for (int i = 0; i < ip->SpecialNum; ++i)
-	{
-		switch (ip->Special[i])
-		{
-		case AT_IMPROVE_LIFE:
-		case AT_IMPROVE_MANA:
-		case AT_DECREASE_DAMAGE:
-		case AT_REFLECTION_DAMAGE:
-		case AT_IMPROVE_BLOCKING_PERCENT:
-		case AT_IMPROVE_GAIN_GOLD:
-		case AT_EXCELLENT_DAMAGE:
-		case AT_IMPROVE_DAMAGE_LEVEL:
-		case AT_IMPROVE_DAMAGE_PERCENT:
-		case AT_IMPROVE_MAGIC_LEVEL:
-		case AT_IMPROVE_MAGIC_PERCENT:
-		case AT_IMPROVE_ATTACK_SPEED:
-		case AT_IMPROVE_GAIN_LIFE:
-		case AT_IMPROVE_GAIN_MANA:
-			return true;
-		}
-	}
-
-	return false;
-}
-
-// NPC shop sell zen: excellent gear uses ItemValue(ip,0) (parity server ResolveSell);
-// plain stock may use exact F3 E9 row only (no exc=0 undercut).
+// NPC shop sell zen: prefer F3 E9 sell column (matches server ResolveSell); never use ItemValue(...,0)
+// here — that path is buy-scale and made inventory tooltips show purchase zen as "sell".
 static int ResolveNpcShopSellZen(const ITEM* ip)
 {
-	if (InventoryItemHasExcellentOptions(ip))
-	{
-		return ItemValue(const_cast<ITEM*>(ip), 0);
-	}
-
 	int sellZen = 0;
 	if (ShopItemValueCache_TryGetSell(ip, &sellZen) && sellZen > 0)
 	{
@@ -1609,7 +1434,8 @@ static int ResolveNpcShopSellZen(const ITEM* ip)
 		return buyZen / 3;
 	}
 
-	return ItemValue(const_cast<ITEM*>(ip), 0);
+	// Client-only fallback: ItemValue(...,1) applies sell /3; ItemValue(...,0) is buy-scale.
+	return ItemValue(const_cast<ITEM*>(ip), 1);
 }
 
 void ConvertTaxGold(DWORD Gold,char *Text)
@@ -3277,8 +3103,8 @@ void RenderItemInfo(int sx, int sy, ITEM* ip, bool Sell, int Inventype, bool bIt
 			{
 				const DWORD dwValue = (DWORD)ResolveNpcShopSellZen(ip);
 				ConvertGold(dwValue, Text);
-				// Server pays dwValue (no sell tax); show same amount for both 1620 slots.
-				sprintf(TextList[TextNum], GlobalText[1620], Text, Text);
+				// GlobalText[63] = sell-back (Giá bán); [1620] = buy — indices match VI pack, not MuMain Sell flag.
+				sprintf(TextList[TextNum], GlobalText[63], Text);
 			}
 			else
 			{
@@ -3295,14 +3121,14 @@ void RenderItemInfo(int sx, int sy, ITEM* ip, bool Sell, int Inventype, bool bIt
 					}
 					else
 					{
-						sprintf(TextList[TextNum], GlobalText[63], Text);
+						sprintf(TextList[TextNum], GlobalText[1620], Text, Text);
 					}
 				}
 				else
 				{
-					buyPrice = ItemValue(ip, 1);
+					buyPrice = ItemValue(ip, 0);
 					ConvertGold(buyPrice, Text);
-					sprintf(TextList[TextNum], GlobalText[63], Text);
+					sprintf(TextList[TextNum], GlobalText[1620], Text, Text);
 				}
 			}
 
@@ -3815,8 +3641,8 @@ void RenderItemInfo(int sx, int sy, ITEM* ip, bool Sell, int Inventype, bool bIt
 
 		TextNum = g_SocketItemMgr.AttachToolTipForSocketItem(ip, TextNum);
 
-		// SS6 templates often omit energy/vitality — append after all tooltip rows so nothing truncates them.
-		TakumiAppendUnmetSs6RequirementLines(ip, TextNum);
+		// SS6 template rows already include stat requirements / shortfalls; do not append a second block
+		// at the tail (was duplicating red "yêu cầu / còn thiếu" lines after sockets).
 
 		SIZE TextSize = { 0, 0 };
 		float fRateY = g_fScreenRate_y;
@@ -4015,7 +3841,7 @@ void RenderItemInfo(int sx,int sy,ITEM *ip,bool Sell, int Inventype, bool bItemT
 			{
 				const DWORD dwValue = (DWORD)ResolveNpcShopSellZen(ip);
 				ConvertGold(dwValue, Text);
-				sprintf(TextList[TextNum], GlobalText[1620], Text, Text);
+				sprintf(TextList[TextNum], GlobalText[63], Text);
 			}
 			else
 			{
@@ -4032,14 +3858,14 @@ void RenderItemInfo(int sx,int sy,ITEM *ip,bool Sell, int Inventype, bool bItemT
 					}
 					else
 					{
-						sprintf(TextList[TextNum], GlobalText[63], Text);
+						sprintf(TextList[TextNum], GlobalText[1620], Text, Text);
 					}
 				}
 				else
 				{
-					buyPrice = ItemValue(ip, 1);
+					buyPrice = ItemValue(ip, 0);
 					ConvertGold(buyPrice, Text);
-					sprintf(TextList[TextNum], GlobalText[63], Text);
+					sprintf(TextList[TextNum], GlobalText[1620], Text, Text);
 				}
 			}
 

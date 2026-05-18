@@ -206,7 +206,6 @@ void TakumiGetItemRequirementReduction(ITEM* item, int itemLevel, int& needStren
 bool TakumiMeetsItemClassRequirement(const ITEM_ATTRIBUTE* pItemAttr, BYTE heroClass);
 bool TakumiMeetsItemStatRequirements(const ITEM* pItem);
 bool TakumiMeetsItemRequirements(ITEM* pItem);
-void TakumiAppendUnmetSs6RequirementLines(ITEM* ip, int& textNum);
 void ComputeItemInfo(int iHelpItem);
 void RenderHelpCategory(int iColumnType, int Pos_x, int Pos_y);
 void RenderHelpLine(int iColumnType, const char * pPrintStyle, int & TabSpace, const char * pGapText = NULL, int Pos_y = 0, int iType=0);

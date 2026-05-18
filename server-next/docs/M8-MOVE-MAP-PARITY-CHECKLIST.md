@@ -105,6 +105,12 @@
 | P6.3 | `CustomNpcMove` | [x] | `CustomNpcMoveHandler` + `CustomNpcMove.txt` |
 | P6.4 | Multi-GS | [-] | |
 
+### Cross — M7d death respawn (`C1 F3 04`)
+
+| # | Hạng mục | | Ghi chú |
+|---|----------|:-:|---|
+| X.1 | Town tile theo `mapId` | [x] | `MapRespawnCatalog` → `PlayerVitalsLoop` / `CharacterRegenWire602`; không copy Lorencia `(135,122)` sang map khác (Noria phải là khu NPC, ví dụ `173,125`). Map chưa khai báo vẫn fallback `LorenciaDefault` chỉ đổi `Map`. |
+
 **M8 dev (scope file này): xong** (gồm P6.3). Chia sẻ handler với M9: `docs/M9-M8-NPC-GAMEPLAY-OWNERSHIP.md`.
 
 ---

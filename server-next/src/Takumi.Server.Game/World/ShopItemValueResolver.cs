@@ -91,7 +91,18 @@ public static class ShopItemValueResolver
         }
 
         var chargedBuy = (int)Math.Clamp(ResolveChargedBuy(item, taxRatePercent), 0, int.MaxValue);
-        sell = (int)Math.Clamp(Math.Max(1, chargedBuy / 3), 0, int.MaxValue);
-        return new(index, item.ItemLevel, item.ExcOpt, 0, chargedBuy, 0, sell);
+        // Tooltip sell must match 0x32 sell credit (ResolveSell on the same wire as inserted into bag).
+        long sellZen;
+        if (itemWire12.Length >= ItemWire602.WireBytes)
+        {
+            sellZen = ResolveSell(itemWire12);
+        }
+        else
+        {
+            sellZen = Math.Max(1, chargedBuy / 3);
+        }
+
+        var sellValue = (int)Math.Clamp(sellZen, 0, int.MaxValue);
+        return new(index, item.ItemLevel, item.ExcOpt, 0, chargedBuy, 0, sellValue);
     }
 }

@@ -1,6 +1,6 @@
 # Takumi Server Next - Implementation Checklist
 
-Last updated: 2026-05-17 (shop tooltip buy/sell parity, F3 E9/ED, inventory 0x24, level-up FLARE VFX)
+Last updated: 2026-05-18 (M8 move-map + CustomNpcMove; M9 PvP/party EXP/quest stub; M8 dev parity xong)
 
 **Phân vùng dev (tránh conflict):** **`docs/WORKSTREAM-OWNERSHIP.md`**.  
 **M4 + M7 (nhân vật + item, port từ `Source/`):** **`docs/M4-M7-CHARACTER-ITEM-MIGRATION.md`** — owner đề xuất **`mac-m1`**.  
@@ -15,11 +15,12 @@ Tóm tắt theo commit; diff đầy đủ: `git log --oneline 2672bfd..HEAD` tro
 | **Docker LAN** | `docker-stack.sh`, profiles `datazip` + `gamehost`, force-recreate, `--host-build` | `67c888b`, `bfe8017` |
 | **M6 split game TCP** | F4 03 → **55901**, `GamePortMinimalSession`, gProtect, handoff/ticket (optional) | `67c888b`, `3de80bb` |
 | **M7 EXP/stats** | EXP on kill + DB mirror; `F3 06` batch; **`C1 F3 E1`** combat HUD | `2672bfd`, `4e84ff3`, `5e729d4` |
-| **M9 combat** | `0x11` hit/die, AI dmg, viewport `0x13`; throttle life `0x26` under burst | `53fc5b9`+, `13cc5f0` |
+| **M9 combat** | `0x11` hit/die, AI dmg, viewport `0x13`; PvP stub + party EXP share; Kalima regen; top-damage EXP | `53fc5b9`+, `5a5e341`, `c1ca8e0` |
+| **M8 move-map** | `0x8E`, gate ±5, skill teleport, **CustomNpcMove**; `smoke-m8.sh` | `5a5e341` |
 | **Shop (M9c)** | `F3 E9` / **`F3 ED`**; `ShopItemValueResolver` + potion `EstimatePotionBuy`; client tooltip **buy/sell parity**, two-tap buy, confirm debounce | `1d77d94`–`65e0e36`, `3c36cf0`, *(pending)* |
 | **Inventory** | `0x24` + `F3 10` sync, BMD footprints, plain `C4` on Android, post-buy resync | `6330de9` |
 | **Android client** | Melee `0x11`, stat pump, login wait `F1 00`, **FLARE level-up VFX**, register UI | `4e84ff3`–`5e729d4`, `fd6ddf8` |
-| **Move map (M)** | `8E 02` → `Move.txt` index → gate → `8E 03` + `0x1C` + join-map reload | (earlier) |
+| **Move map (M8)** | *(merged vào row M8 move-map ở trên)* | |
 | **Death/revive** | Town `F3 04`, HeroKey vitals | `e428749`, `7d65d8d` |
 
 **QA APK / in-game:** milestone riêng — **`../../docs/QA-MILESTONE.md`** (không chặn dev PR). Nhật ký cũ: DEVELOPMENT-LOG § QA.
@@ -118,7 +119,7 @@ Use this to avoid unnecessary rebuilds.
 - [x] **M4b observability:** `CharacterRosterMirrorHealth` — merge/upsert success+fail counts; upsert errors log `[roster-health] …` snapshot; **`TAKUMI_ROSTER_HEALTH_LOG`** logs snapshot after **`TryDrainPendingUpserts`** (`docs/M4-WORLD-POSITION-CHECKLIST.md`).
 - [x] **M4b SSOT (minimal hosts):** `TAKUMI_ROSTER_DB_PRIMARY`, `character_domain` mirror, `character_staging` importer — **`docs/M4-WORLD-POSITION-CHECKLIST.md`**, **`docs/M4-ROSTER-SSOT.md`**. **M11 (partial):** warehouse/trade/guild/skill stubs trên minimal hosts — **`docs/M11-SOCIAL-WAREHOUSE-SKILLS.md`**; EF full `Takumi.Server.Host` vẫn backlog.
 - [x] **M14 account Postgres (minimal hosts):** `public.account` (`sql/init/010_account.sql`), BCrypt `password_hash`, `security_code` + `phone`; **`TAKUMI_ACCOUNT_DB=1`**; login `F1 01` + in-game register **`C1 D3 05`** qua **`AccountCredentialGate`** / **`PostgresAccountRepository`** — **`docs/M14-ACCOUNT-PERSISTENCE-CHECKLIST.md`**. Trước đây chỉ dict `TAKUMI_ACCOUNTS` (mất sau restart).
-- [ ] **M6+ / M7–M10:** Full **`Takumi.Server.Game`** protocol after join (map/scope/combat) when client uses **only** game TCP — **`docs/M7-CHARACTER-PERSISTENCE-CHECKLIST.md`**, **`docs/M8-M10-WORLD-RUNTIME-CHECKLIST.md`**.
+- [~] **M6+ / M7–M10:** Game TCP after join — move-map, monsters, shop, combat, presence **stub xong** trên minimal hosts; còn golden pcap + quest/M11 social — **`docs/M7-CHARACTER-PERSISTENCE-CHECKLIST.md`**, **`docs/M8-M10-WORLD-RUNTIME-CHECKLIST.md`**, **`docs/M8-MOVE-MAP-PARITY-CHECKLIST.md`**, **`docs/M9-MONSTER-AI-PORT-CHECKLIST.md`**.
 - [x] **Split-stack login handoff (Postgres):** `sql/init/003_session_ticket.sql` + **`PostgresSessionHandoffRepository`**; **`TAKUMI_SESSION_HANDOFF_DB=1`** → `LegacyLoginHost` persists pending row after F1 01; optional **`TAKUMI_GAME_REQUIRE_LOGIN_HANDOFF=1`** on **GameHost** consumes one row before F1 01 success (**IP match** default on, override with **`TAKUMI_GAME_HANDOFF_MATCH_IP=0`**). Optional **signed wire path:** **`TAKUMI_SESSION_TICKET_HMAC_KEY`** + **`TAKUMI_GAME_TICKET_WIRE=1`** — Legacy pushes **`F1 A5`**, client **`F1 A6`** before game **`F1 01`**, consume on attach (see **`docs/M6-GAME-TCP-CHECKLIST.md`**). Plain IP handoff does not send ticket bytes on wire.
 - [x] **M5 split processes:** `Takumi.Server.LoginHost` + `Takumi.Server.ConnectHost` (shared `LegacyLoginHost.Runner` / `ConnectServerHostRunner`); Docker profile **`splitstack`**; scripts `run-login-host.sh` / `run-connect-host.sh`. Combined `LegacyLoginHost` unchanged for default Docker.
 - [x] **Protocol tests (partial):** `C1DeclaredLength602` guards + **`SessionHandoffPostgresTests`** when **`TEST_PG_CONNECTION_STRING`**. **TCP hardening (partial):** max decrypted frame + optional **`DecryptedPacketRateGate`** (`DecryptedPacketSafety602Tests`). Still open: golden pcap loop, transport-level framing audit vs OpenMU `Connection`, richer rate policy.
@@ -199,7 +200,7 @@ Use this to avoid unnecessary rebuilds.
    - [x] SQL prep: **`004_character_roster_vitals.sql`**.  
    - [x] **M7b–c:** vitals trên roster + join **`F3 03`**; tests **`JoinMapVitals602Tests`**.  
    - [x] **M7d:** `JoinMapVitalsSeed`, `LifeManaWire602`, `RosterVitalsOutboundTracker`, **`TAKUMI_SEND_LIFE_MANA_AFTER_JOIN`**, **EXP/level persist** (`011_character_experience.sql`, `RosterExperienceCombat`).  
-   - [x] **M7d (minimal hosts):** combat hit/die/revive, HP regen, vitals DB upsert, potion use (`ItemWorldHandler`). **M11 (partial):** warehouse (`warehouse_slot`, NPC 240), trade window (`0x36`–`0x3D`), guild stub ack, empty **`F3 11`** after join — **`docs/M11-SOCIAL-WAREHOUSE-SKILLS.md`**; PvP full parity still open.  
+   - [x] **M7d (minimal hosts):** combat hit/die/revive, HP regen, vitals DB upsert, potion use (`ItemWorldHandler`). **M11 (partial):** warehouse (`warehouse_slot`, NPC 240), trade window (`0x36`–`0x3D`), guild stub ack, empty **`F3 11`** after join — **`docs/M11-SOCIAL-WAREHOUSE-SKILLS.md`**. **M9 PvP stub:** `PlayerCombatRules`, `RollDamagePlayerToPlayer` (`TAKUMI_COMBAT_PVP_*`); equipment/duel parity → M11+.  
    - [x] **M7d town respawn:** chết trên field → **`C1 F3 04`** (`CharacterRegenWire602` + `MapRespawnCatalog`) tới tile thành Lorencia **(135,122)**; **không** dùng `C1 0x1C flag=0` (client `PRECEIVE_TELEPORT` thiếu `SubCode` → lệch XY kiểu **(122,1)**). Gate vẫn dùng `0x1C flag=1` (`WorldGameplayHandlers`). 
    - [x] **M7 + M4:** `inventory_slot` upsert sau buy/sell/repair — `InventorySlotMirrorWriter`.  
    - [ ] Migration EF bổ sung (nếu dùng song song với `sql/init`).
@@ -209,17 +210,20 @@ Use this to avoid unnecessary rebuilds.
    - [x] Runtime: **`TAKUMI_MONSTER_SPAWN_DB=1`** → **`MapMonsterWorld`** đọc Postgres (fallback file).  
    - [x] Gates / shops / Custom: **`006_map_gate_npc_shop_custom.sql`**, ETL + **`MapGateCatalog`** / **`NpcShopCatalog`**; env **`TAKUMI_WORLD_STATIC_DB=1`** (hoặc từng flag `TAKUMI_MAP_GATE_DB`, `TAKUMI_NPC_SHOP_DB`, `TAKUMI_CUSTOM_WORLD_DB`).  
    - [x] Wire handlers: gate teleport `0x1C`, NPC talk → shop `0x31` (`WorldGameplayHandlers`, `MapGateService`, `NpcShopWire602`).
-   - [x] **M8 move-map dev (2026-05-17–18):** `0x8E`, `MoveMapService`, gate proximity, skill teleport P6.2, `smoke-m8.sh` — **`docs/M8-MOVE-MAP-PARITY-CHECKLIST.md`**. QA APK: **`../../docs/QA-MILESTONE.md`**.
+   - [x] **M8 move-map dev (2026-05-17–18):** `0x8E`, `MoveMapService`, gate proximity P6.1, skill teleport P6.2, **CustomNpcMove** P6.3 (`CustomNpcMoveHandler`, `MoveWarpExecutor`), `smoke-m8.sh` — **`docs/M8-MOVE-MAP-PARITY-CHECKLIST.md`** (**dev scope xong**). QA APK: **`../../docs/qa/M8-move-map.md`**, index **`../../docs/QA-MILESTONE.md`**.
 
-10. **M9 — NPC & monster runtime** *(**`docs/M9-NPC-MONSTER-CHECKLIST.md`**, **`docs/M9-MONSTER-AI-PORT-CHECKLIST.md`**, **`docs/M9-M8-NPC-GAMEPLAY-OWNERSHIP.md`**, **`server-next/test/M9-monster-combat-qa.md`**, **`docs/WORKSTREAM-OWNERSHIP.md`**)*  
-   - [x] Spawn theo map từ **MonsterSetBase.txt** + **Monster.txt** (file + **Postgres** khi `TAKUMI_MONSTER_SPAWN_DB=1`).  
+10. **M9 — NPC & monster runtime** *(**`docs/M9-NPC-MONSTER-CHECKLIST.md`**, **`docs/M9-MONSTER-AI-PORT-CHECKLIST.md`**, **`docs/M9-M8-NPC-GAMEPLAY-OWNERSHIP.md`**, **`../../docs/qa/M9-monster-combat.md`**, **`docs/WORKSTREAM-OWNERSHIP.md`**)*  
+   - [x] Spawn theo map từ **MonsterSetBase.txt** + **Monster.txt** (file + **Postgres** khi `TAKUMI_MONSTER_SPAWN_DB=1`; invasion type 3/4: `TAKUMI_MONSTER_INCLUDE_INVASION_SPAWN=1`).  
    - [x] Gói **`C2 0x13`** scope spawn sau join + incremental on walk (`MonsterViewportWire602`, `MonsterViewportTracker`); **`C1 0x14`** destroy khi rời view.  
-   - [x] Regen delay từ `Monster.txt` (`MapMonsterInstance.TryRegen`).  
-   - [x] Combat stub: `C1 0x11` hit / `0x19` skill → damage, `C1 0x14` destroy, `C1 0x16` die (`MonsterCombatHandler`); damage trừ Defense từ `Monster.txt`.  
+   - [x] Regen delay từ `Monster.txt` (`MapMonsterInstance.TryRegen`); **Kalima** maps 24–29/36 regen tại tile chết (P3.5).  
+   - [x] Combat stub: `C1 0x11` hit / `0x19` / `0xDB` magic AoE → damage, `C1 0x14` destroy, `C1 0x16` die (`MonsterCombatHandler`); element/resist từ `Monster.txt` (`MonsterCombatCalculator` P3.2).  
+   - [x] Kill EXP: top-damage grant (`MonsterKillExperienceGrant`, `TAKUMI_COMBAT_TOP_DAMAGE_GRANT_EXP`); party proportional share (`TAKUMI_COMBAT_PARTY_EXP_SHARE=1`).  
    - [x] Gate / NPC shop / buy-sell-repair stub (`MapGateService`, `WorldGameplayHandlers`, `ShopCommerceHandler`).
-   - [~] **M9b AI:** wander/chase/`0xD4`/`0x18`, monster→player dmg từ `Monster.txt` (+ defense stub theo level), periodic viewport 1s, regen broadcast — **`docs/M9-MONSTER-AI-PORT-CHECKLIST.md`**.  
-   - [x] **M9c (partial):** `ItemValue.txt` + **`C2 F3 E9`** + client **`ShopItemValueCache`**; buy confirm **`F3 ED`** when `TAKUMI_SHOP_BUY_CONFIRM=1`; **tooltip buy/sell Zen** khớp charge/receive trên Android (2026-05-17 chiều). AoE `0xDB`, PvP stub, quest NPC dialog stub (P4.4) still open.  
-   - [ ] Element/exp/invasion (P3.2–P4), pathfinding BFS đầy đủ — **M9b P2.3+**.
+   - [x] **M9b AI (dev baseline):** wander/chase/`0xD4`/`0x18`, monster→player dmg, periodic viewport, regen broadcast, ATT/path — **`docs/M9-MONSTER-AI-PORT-CHECKLIST.md`** (P0–P3.6 + P4.1–P4.4).  
+   - [x] **M9c shop:** `ItemValue.txt` + **`C2 F3 E9`** + **`F3 ED`** + Android tooltip buy/sell Zen (2026-05-17).  
+   - [x] **PvP stub (P3.6):** `PlayerCombatRules` (range, safe zone), `RollDamagePlayerToPlayer`, `TAKUMI_COMBAT_PVP_ENABLED`.  
+   - [x] **Quest NPC dialog stub (P4.4):** `NpcQuestCatalog` + `C1 A0` mask / `C1 A1` state (`TAKUMI_QUEST_NPC_DEFAULT_STATE`).  
+   - [ ] Quest accept/reward persistence, warehouse/guild NPC đầy đủ — **M11+**. Pathfinding A* đầy đủ (hiện greedy + `MapTilePathfinder` step).
 
 11. **M10 — Movement & visibility** — **`docs/M8-M10-WORLD-RUNTIME-CHECKLIST.md`** §M10; owner: **`docs/WORKSTREAM-OWNERSHIP.md`**  
     - [x] Walk / instant move → roster tile (`LegacyLoginHost`, `GamePortMinimalSession`).  
@@ -281,10 +285,12 @@ Use this to avoid unnecessary rebuilds.
 
 Order is suggested dependency / risk reduction:
 
-1. **Gate S2 QA:** **`docs/S2-GATE-QA.md`** — Docker recreate + Android logcat + `login ok` on game-host; unblocks MonoGame Phase 1.
-2. **Device QA (unblocks “MVP done” perception):** real Android against Docker `server-next` — confirm **recv join** → **Translate F1** → select → **no black screen** after `LoadWorld`; capture `adb logcat` + host logs. Tie to **Exit criteria** above.
-2. **SimpleModulus CS key from `keys/Dec2.dat`:** **`Season6ClientToServerDecryptSession`** + **`Dec2ServerDecryptKeysLoader`** (`TAKUMI_DEC2_PATH`, **`TAKUMI_SIMPLEMODULUS_CS_DEC_KEY_PATH`**); post-decrypt size/rate limits env — **done** in host paths; verify with same `Dec2.dat` as APK `Data/`.
-3. **Golden / pcap parity:** scripted or captured client RX/TX vs host (**In Progress**); extend tests for transport framing vs OpenMU `Connection` (**Next High** — partial: **`C1DeclaredLength602`**, max decrypted bytes + **`TAKUMI_MAX_PACKETS_PER_SECOND`** close).
-4. **Post-select game TCP:** split **`Takumi.Server.GameHost`** documented in **`docs/M6-GAME-TCP-CHECKLIST.md`** + `ANDROID-DEV-MAC.md`.
-5. **Session ticket / split handoff:** Postgres **`session_ticket`** + optional **`TAKUMI_GAME_REQUIRE_LOGIN_HANDOFF`** + signed wire **`TAKUMI_GAME_TICKET_WIRE`** / **`TAKUMI_SESSION_TICKET_HMAC_KEY`** (**done**); still open: dedicated `TakumiLoginServer` exe.
-6. **Medium:** error codes for rejected character ops, rate limits, structured logging, client version flags.
+1. **Gate S2 QA:** **`docs/S2-GATE-QA.md`** (redirect → **`../../docs/qa/S2-gate-login-join.md`**) — Docker recreate + Android logcat + `login ok` on game-host; unblocks MonoGame Phase 1.
+2. **M8/M9 dev smoke:** `./scripts/smoke-m8.sh --no-recreate` (catalog + unit); M9 combat logs `[m9]` / `[m10c]` on device.
+3. **Device QA (unblocks “MVP done” perception):** real Android — **`../../docs/QA-MILESTONE.md`** (`M8-move-map`, `M9-monster-combat`, `M9-npc-shop`); confirm join → world → move-map / combat / shop.
+4. **SimpleModulus CS key from `keys/Dec2.dat`:** **`Season6ClientToServerDecryptSession`** + **`Dec2ServerDecryptKeysLoader`** (`TAKUMI_DEC2_PATH`, **`TAKUMI_SIMPLEMODULUS_CS_DEC_KEY_PATH`**); post-decrypt size/rate limits env — **done** in host paths; verify with same `Dec2.dat` as APK `Data/`.
+5. **Golden / pcap parity:** scripted or captured client RX/TX vs host (**In Progress**); extend tests for transport framing vs OpenMU `Connection` (**Next High** — partial: **`C1DeclaredLength602`**, max decrypted bytes + **`TAKUMI_MAX_PACKETS_PER_SECOND`** close).
+6. **Post-select game TCP:** split **`Takumi.Server.GameHost`** documented in **`docs/M6-GAME-TCP-CHECKLIST.md`** + `ANDROID-DEV-MAC.md`.
+7. **Session ticket / split handoff:** Postgres **`session_ticket`** + optional **`TAKUMI_GAME_REQUIRE_LOGIN_HANDOFF`** + signed wire **`TAKUMI_GAME_TICKET_WIRE`** / **`TAKUMI_SESSION_TICKET_HMAC_KEY`** (**done**); still open: dedicated `TakumiLoginServer` exe.
+8. **Medium:** error codes for rejected character ops, rate limits, structured logging, client version flags.
+9. **M11+:** quest accept/reward, PvP equipment defense, full warehouse/guild NPC.

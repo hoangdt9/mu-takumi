@@ -1399,6 +1399,11 @@ bool TakumiIsAndroidTerrainReady()
 	return primaryTile != nullptr && primaryTile->TextureNumber != 0;
 }
 
+void TakumiNotifyAndroidTerrainLoaded(int map)
+{
+	s_androidTerrainLoadedMap = map;
+}
+
 void ReceiveCreateMonsterViewport(BYTE* ReceiveBuffer);
 
 static void TakumiQueueMonsterViewportPacket(const BYTE* receiveBuffer)
@@ -1530,24 +1535,45 @@ BOOL ReceiveJoinMapServer(BYTE *ReceiveBuffer, BOOL bEncrypted)
 	}
 	else if (SceneFlag == MAIN_SCENE)
 	{
-		// In-game same-map F3 03 (move-map / gate): reposition only. Never call
-		// DeleteObjects() — it releases BITMAP_MAPTILE without reload (white terrain).
-		liteSameMapWarp = true;
+		// In-game same-map F3 03 (move-map / gate): reposition only when terrain already
+		// matches. After character select, LoadWorld(74) leaves stale tiles unless tracked.
 #if defined(__ANDROID__)
-		g_ErrorReport.Write(
-			"[AndroidLogin] ReceiveJoinMapServer same-map warp map=%d xy=(%d,%d) hero=%p live=%d\r\n",
-			joinMap,
-			Data->PositionX,
-			Data->PositionY,
-			Hero,
-			(Hero != NULL) ? (int)Hero->Object.Live : -1);
+		if (s_androidTerrainLoadedMap == joinMap && TakumiIsAndroidTerrainReady())
+		{
+			liteSameMapWarp = true;
+		}
+		else
+		{
+			s_androidDeferredLoadWorldMap = joinMap;
+			s_androidDeferMonsterViewportPackets = true;
+			deferredWorldLoad = true;
+			g_ErrorReport.Write(
+				"[AndroidLogin] ReceiveJoinMapServer same map=%d but terrain stale (loaded=%d) — defer LoadWorld\r\n",
+				joinMap,
+				s_androidTerrainLoadedMap);
+		}
+#else
+		liteSameMapWarp = true;
 #endif
-		ClearItems();
-		ClearCharacters(HeroKey);
-		DeleteMonsters();
-		DeleteNpcs();
-		RemoveAllShopTitleExceptHero();
-		SendRequestFinishLoading();
+
+		if (liteSameMapWarp)
+		{
+#if defined(__ANDROID__)
+			g_ErrorReport.Write(
+				"[AndroidLogin] ReceiveJoinMapServer same-map warp map=%d xy=(%d,%d) hero=%p live=%d\r\n",
+				joinMap,
+				Data->PositionX,
+				Data->PositionY,
+				Hero,
+				(Hero != NULL) ? (int)Hero->Object.Live : -1);
+#endif
+			ClearItems();
+			ClearCharacters(HeroKey);
+			DeleteMonsters();
+			DeleteNpcs();
+			RemoveAllShopTitleExceptHero();
+			SendRequestFinishLoading();
+		}
 	}
 	else
 	{
@@ -11829,10 +11855,18 @@ void ReceiveChatRoomNoticeText(DWORD dwWindowUIID, BYTE* ReceiveBuffer)
 	g_pChatListBox->AddText("", (char *)Data->Msg, SEASON3B::TYPE_SYSTEM_MESSAGE);
 }
 
+static bool s_bApplyingServerSkillOptions = false;
+
+bool TakumiIsApplyingServerSkillOptions()
+{
+	return s_bApplyingServerSkillOptions;
+}
+
 void ReceiveOption(BYTE* ReceiveBuffer)
 {
     LPPRECEIVE_OPTION Data = (LPPRECEIVE_OPTION)ReceiveBuffer;
-	
+
+	s_bApplyingServerSkillOptions = true;
 	g_pMainFrame->ResetSkillHotKey();
 
 	int iHotKey;
@@ -11906,6 +11940,8 @@ void ReceiveOption(BYTE* ReceiveBuffer)
 			Hero->CurrentSkill = static_cast<BYTE>(primarySkillIndex);
 		}
 	}
+
+	s_bApplyingServerSkillOptions = false;
 }
 
 void ReceiveEventChipInfomation( BYTE* ReceiveBuffer )

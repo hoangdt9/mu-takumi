@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Threading;
+using Takumi.Server.Protocol;
 
 namespace Takumi.Server.Persistence;
 
@@ -248,6 +249,45 @@ public static class CharacterRosterMirrorWriter
         {
             Interlocked.Decrement(ref _pendingUpserts);
         }
+    }
+
+    public static void ScheduleKeyConfigurationUpsert(
+        string accountId,
+        string characterName,
+        byte[] keyConfiguration)
+    {
+        var repo = TakumiPostgresMirror.CharacterRoster;
+        if (repo is null || string.IsNullOrEmpty(accountId) || string.IsNullOrWhiteSpace(characterName))
+        {
+            return;
+        }
+
+        var name = CharacterRosterMerge.NormaliseName(characterName);
+        var config = CharacterKeyConfiguration.Normalize(keyConfiguration);
+        Interlocked.Increment(ref _pendingUpserts);
+        _ = Task.Run(
+            async () =>
+            {
+                try
+                {
+                    await repo.UpdateKeyConfigurationAsync(accountId, name, config, CancellationToken.None)
+                        .ConfigureAwait(false);
+                    CharacterRosterMirrorHealth.RecordUpsertSuccess();
+                }
+                catch (Exception ex)
+                {
+                    CharacterRosterMirrorHealth.RecordUpsertFail();
+                    Console.WriteLine(
+                        "[roster-db] key_configuration upsert failed for {0}/{1}: {2}",
+                        accountId,
+                        name,
+                        ex.Message);
+                }
+                finally
+                {
+                    Interlocked.Decrement(ref _pendingUpserts);
+                }
+            });
     }
 
     public static void ScheduleVitalsUpsert(

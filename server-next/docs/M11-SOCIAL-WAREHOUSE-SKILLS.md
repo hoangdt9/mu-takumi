@@ -12,7 +12,7 @@ Parity stubs for GameServer features still missing from `LegacyLoginHost` / `Gam
 | Coin shop | `F3 E9` priceType 1–3 | **Partial** — `account.wcoin_*` / `goblin_point` debit on buy; seed balances manually for QA |
 | Trade | `0x36`–`0x3D` | **Partial** — request/accept between map-presence players, trade window moves |
 | Guild | `0x50`–`0x67`, … | **Stub** — empty ack (no guild domain yet) |
-| Skill list | `F3 11` | **Partial** — empty list after join (no skill DB yet) |
+| Skill list | `F3 11` | **Partial** — `character_skill` DB + class defaults on first join (`JoinSkillLifecycle`); learn/add skill wire **OPEN** |
 | EF `takumi_runtime.character` | — | **Bridge** — `CharacterRuntimeStore` reads `character_roster` until full Host exists |
 
 ## Warehouse

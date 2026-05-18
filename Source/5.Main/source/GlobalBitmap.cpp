@@ -419,9 +419,9 @@ bool CGlobalBitmap::LoadImage(GLuint uiBitmapIndex, const std::string& filename,
 	std::string ext;
 	SplitExt(filename, ext, false);
 	
-	if(0 == _stricmp(ext.c_str(), "jpg"))
+	if(0 == _stricmp(ext.c_str(), "jpg") || 0 == _stricmp(ext.c_str(), "ozj"))
 		return OpenJpeg(uiBitmapIndex, filename, uiFilter, uiWrapMode);
-	else if(0 == _stricmp(ext.c_str(), "tga"))
+	else if(0 == _stricmp(ext.c_str(), "tga") || 0 == _stricmp(ext.c_str(), "ozt"))
 		return OpenTga(uiBitmapIndex, filename, uiFilter, uiWrapMode);
 	
 	return false;

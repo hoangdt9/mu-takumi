@@ -26,9 +26,10 @@ public sealed class MagicListWire602Tests
     }
 
     [Fact]
-    public void BuildForServerClass_DwRosterClass_Empty()
+    public void BuildForServerClass_DwRosterClass_SendsStarterSkills()
     {
         var pkt = MagicListWire602.BuildForServerClass(0);
-        Assert.Equal(MagicListWire602.BuildEmpty(), pkt);
+        Assert.True(pkt.Length > 7);
+        Assert.Contains(pkt, b => b == 4);
     }
 }

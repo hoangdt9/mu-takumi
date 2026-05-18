@@ -1,8 +1,19 @@
 # M4 — Roster source of truth (SSOT) — decision record
 
-Last updated: 2026-05-16
+Last updated: 2026-05-18
 
 ## Decision (frozen for current `server-next` iteration)
+
+### Runtime default (Docker / `env.defaults`)
+
+With **`TAKUMI_ROSTER_DB_SYNC=1`** + **`TAKUMI_ROSTER_DB_PRIMARY=1`** (compose default):
+
+1. **Load:** `character_roster` → `character_domain` (if empty) → JSON fallback.
+2. **Save:** upsert `character_roster` (+ mirror `character_domain` when `TAKUMI_CHARACTER_DOMAIN_SYNC=1`).
+3. **JSON:** skipped on save unless **`TAKUMI_ROSTER_JSON_EXPORT=1`**.
+4. **Boot log:** `[roster-ssot] mode=postgres-primary …` once per process (`CharacterRosterSsoT`).
+
+### Legacy / dev without DB primary
 
 1. **Authoritative roster for accounts we fully control:** **`takumi-roster/<account>.json`** on disk (or `TAKUMI_ROSTER_DIR`). The hosts read/write this file on login, character ops, walk/move, and disconnect flush.
 

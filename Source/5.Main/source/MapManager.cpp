@@ -1617,18 +1617,20 @@ void CMapManager::LoadWorld(int Map)
 	    sprintf (FileName,"%s\\TileGrass03.tga",WorldName);
 	    LoadBitmap(FileName,BITMAP_MAPGRASS+2,GL_NEAREST,GL_REPEAT,false);
 
-        sprintf(FileName,"%s\\leaf01.tga" ,WorldName);
-	    if (!LoadBitmap(FileName,BITMAP_LEAF1          ,GL_NEAREST,GL_CLAMP_TO_EDGE,false))
-	    {
-		    sprintf(FileName,"%s\\leaf01.jpg" ,WorldName);
-		    LoadBitmap(FileName,BITMAP_LEAF1          ,GL_NEAREST,GL_CLAMP_TO_EDGE,false);
-	    }
-	    sprintf(FileName,"%s\\leaf02.tga" ,WorldName);
-	    if (!LoadBitmap(FileName,BITMAP_LEAF2          ,GL_NEAREST,GL_CLAMP_TO_EDGE,false))
-	    {
-		    sprintf(FileName,"%s\\leaf02.jpg" ,WorldName);
-		    LoadBitmap(FileName,BITMAP_LEAF2          ,GL_NEAREST,GL_CLAMP_TO_EDGE,false);
-	    }
+		auto loadWorldLeaf = [&](int leafIndex, GLuint bitmapIndex) -> void
+		{
+			const char* const exts[] = { "ozt", "ozj", "tga", "jpg" };
+			for (const char* ext : exts)
+			{
+				sprintf(FileName, "%s\\leaf%02d.%s", WorldName, leafIndex, ext);
+				if (LoadBitmap(FileName, bitmapIndex, GL_NEAREST, GL_CLAMP_TO_EDGE, false))
+				{
+					return;
+				}
+			}
+		};
+		loadWorldLeaf(1, BITMAP_LEAF1);
+		loadWorldLeaf(2, BITMAP_LEAF2);
 
 		if(M34CryWolf1st::IsCyrWolf1st()==true)
 		{
@@ -1657,6 +1659,10 @@ void CMapManager::LoadWorld(int Map)
 		g_pNewUIMiniMap->UnloadImages();
 		g_pNewUIMiniMap->LoadImages(WorldName);
 	}
+
+#if defined(__ANDROID__)
+	TakumiNotifyAndroidTerrainLoaded(this->WorldActive);
+#endif
 }
 
 void CMapManager::DeleteObjects()

@@ -16,6 +16,7 @@ Last updated: 2026-05-18
 
 - [x] `sql/init/004_character_roster_vitals.sql` — thêm `current_hp`, `max_hp`, `current_mp`, `max_mp`, `zen` trên `public.character_roster` (`ALTER … IF NOT EXISTS`).
 - [x] `sql/init/011_character_experience.sql` — `experience BIGINT` trên `character_roster` + `character_domain`.
+- [x] `sql/patches/015_character_key_configuration.sql` — `key_configuration BYTEA` trên **`character_roster`** (10 skill hotkey + QWER + flags, 30 byte — parity client `SaveOptions` / `C1 F3 30`).
 - [x] Ghi chú trong `README.md` / `apply-sql.sh` header nếu thứ tự file thay đổi (hiện `001` → `004` theo tên).
 - [x] (Tuỳ chọn) Cột `shield` / `skill_mana` nếu join wire cần parity đầy đủ hơn — đối chiếu `JoinMapServerWire602` offsets. **Đã có:** `current_shield` / `max_shield` trên `character_roster` + `character_domain` (`008_character_roster_shield.sql`), join `F3 03` + vitals upsert + JSON roster; `skill_mana` join vẫn mirror mana khi chưa có cột riêng.
 
@@ -86,7 +87,88 @@ Last updated: 2026-05-18
 ## M7h — wear seed dev (`mg001`)
 
 - [x] **`sql/patches/013_test_account_mg001_seed.sql`** + **`takumi-inventory/test.json`** mirror.
+- [x] Script **`scripts/apply-dev-character-seeds.sh`** — apply `015` + `013` + `016`/`017` + optional inventory JSON migrate.
 - [ ] Xác nhận wear trên APK → QA milestone (không chặn dev).
+
+---
+
+## M7i — Skill hotkey / option blob (`C1 F3 30`)
+
+**Không lưu trong `character_domain`.** Bảng đó mirror stats/EXP/vitals; **skill bar + Q/W/E/R** nằm ở **`public.character_roster.key_configuration`** (cột `bytea`, 30 byte).
+
+| Bước | Thành phần |
+|------|------------|
+| Client gửi | `SaveOptions()` → `SendRequestHotKey` → **`C1 F3 30`** + 30 byte (`Source/5.Main/source/ZzzOpenData.cpp`) |
+| Server nhận | `CharacterOptionHandler` (`WorldGameplayHandlers`) trên **game-host** (55901) |
+| Ghi DB ngay | `CharacterRosterMirrorWriter.ScheduleKeyConfigurationUpsert` → `UPDATE character_roster SET key_configuration = …` |
+| Ghi JSON (dev) | `GameRosterDisk.SaveEntries` → `KeyConfigurationBase64` trong `takumi-roster/<account>.json` |
+| Vào game lại | Sau join: server gửi **`C1 F3 30`** (`OptionDataWire602.BuildApply`) → client `ReceiveOption` |
+
+**Apply SQL (volume đã chạy):**
+
+```bash
+cd server-next
+./scripts/apply-sql.sh "postgresql://takumi:takumi@127.0.0.1:54444/takumi_runtime" sql/patches/015_character_key_configuration.sql
+```
+
+**DBeaver / psql kiểm tra:**
+
+```sql
+SELECT character_name, account_login,
+       length(key_configuration) AS bytes,
+       encode(key_configuration, 'hex') AS cfg_hex
+FROM character_roster
+WHERE account_login = 'test'   -- đổi account đang chơi
+ORDER BY character_name;
+```
+
+- `bytes` **NULL** = chưa từng lưu (hoặc nhân vật tạo trước khi có cột).
+- Sau khi gán skill (vd. Độc → ô **0**) và thoát map: `bytes` = **30**, hex bắt đầu bằng skill hotkey (mỗi slot 2 byte skill type, `ffff` = trống).
+
+**Client (Android legacy HUD):**
+
+- Ô skill chính = hotkey slot **`0`** (ô có số **0** trên bar 6–9–0).
+- Gán skill → `SetHotKey` → `SaveOptions()` (trừ lúc `ReceiveOption` đang hydrate).
+- Chi tiết wire + QA: **`../../docs/takumi-game-spec/SKILL-HOTKEY-PERSISTENCE.md`**.
+
+- [x] Schema `015` + repo `UpdateKeyConfigurationAsync` + load/join `BuildApply`.
+- [x] Handler `CharacterOptionHandler` + upsert ngay khi nhận `F3 30` từ client.
+- [x] Client: `SetHotKey` auto-`SaveOptions`, Android gán ô 0 qua `ApplySelectedSkillIndex`.
+- [ ] **QA APK:** login → gán Độc vào ô **0** → relog → vẫn ô **0** + `key_configuration` có dữ liệu trong DB.
+
+---
+
+## M7k — Character create/delete error codes
+
+- [x] `CharacterRosterErrorCodes` + `CharacterRosterOps` — `F3 01`/`F3 02` reject with client-visible result bytes.
+- [x] Doc: **`docs/CHARACTER-ROSTER-ERROR-CODES.md`**.
+
+---
+
+## M7j — Learned skill list (`C1 F3 11`)
+
+**Phụ thuộc M7i:** hotkey blob lưu **skill type**; client `ReceiveOption` chỉ khớp khi `F3 11` đã nạp `CharacterAttribute->Skill[]`.
+
+| Bước | Thành phần |
+|------|------------|
+| Schema | `sql/patches/016_character_skill.sql` — `character_skill(skill_slot, skill_type, skill_level)` |
+| Join | `JoinSkillLifecycle` — load DB → nếu trống seed `CharacterSkillCatalog` theo class → ghi DB → `MagicListWire602` |
+| QA seed | `sql/patches/017_seed_mg001_character_skill.sql` |
+| Hosts | `GamePortMinimalSession`, `LegacyLoginHostRunner` (sau `F3 10`, trước `F3 30`) |
+
+**Apply SQL:**
+
+```bash
+cd server-next
+./scripts/apply-sql.sh "postgresql://takumi:takumi@127.0.0.1:54444/takumi_runtime" sql/patches/016_character_skill.sql
+./scripts/apply-sql.sh "postgresql://takumi:takumi@127.0.0.1:54444/takumi_runtime" sql/patches/017_seed_mg001_character_skill.sql
+```
+
+- [x] Table `character_skill` + `PostgresCharacterSkillRepository`.
+- [x] Class default kits (Elf có skill **1** = Độc) + join seed khi DB trống.
+- [x] Wire join qua `JoinSkillLifecycle` (cần `TAKUMI_ROSTER_DB_SYNC=1`).
+- [ ] **QA APK:** Elf gán Độc ô **0** → relog → skill còn + hotkey còn (`key_configuration` + `character_skill`).
+- [ ] Skill learn / master tree / `F3 11` delta updates — **OPEN** (M11).
 
 ---
 
@@ -99,3 +181,4 @@ Last updated: 2026-05-18
 | M8 — ETL + shop commerce stub | **`docs/M8-M10-WORLD-RUNTIME-CHECKLIST.md`** §M8 |
 | M9 — NPC / monster | cùng file §M9 |
 | M10 — Movement + broadcast | cùng file §M10 |
+| Skill hotkey / `F3 30` | **`../../docs/takumi-game-spec/SKILL-HOTKEY-PERSISTENCE.md`** |

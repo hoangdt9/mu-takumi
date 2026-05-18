@@ -97,7 +97,7 @@ Use this to avoid unnecessary rebuilds.
   - [x] select flow: `F3 15` + **131-byte** `F3 03` join map + **`F3 10`** inventory (empty or DB-backed; same flush batch)
   - [x] reject when not authenticated (`F3 00`)
   - [x] reject unknown character select (`F3 03`)
-- [x] **M6 (scaffold + split-port minimal-login):** `Takumi.Server.Game` — `GameListenHost` (**minimal-login** …); **`Takumi.Server.GameHost`** + **`TakumiPostgresMirror`**; **`docs/M6-GAME-TCP-CHECKLIST.md`**. **Đã có:** `[event=decrypted_rx]`, mirror **`character_roster`**, `F3 10` từ DB, optional **`session_ticket`** + **`TAKUMI_GAME_REQUIRE_LOGIN_HANDOFF`**, **signed ticket on wire** (`F1 A5` / `F1 A6`, **`TAKUMI_GAME_TICKET_WIRE`**, **`TAKUMI_SESSION_TICKET_HMAC_KEY`**). **Còn thiếu:** SSOT Postgres-only cho roster (tách khỏi JSON).
+- [x] **M6 (scaffold + split-port minimal-login):** `Takumi.Server.Game` — `GameListenHost` (**minimal-login** …); **`Takumi.Server.GameHost`** + **`TakumiPostgresMirror`**; **`docs/M6-GAME-TCP-CHECKLIST.md`**. **Đã có:** `[event=decrypted_rx]`, mirror **`character_roster`**, `F3 10` từ DB, optional **`session_ticket`** + **`TAKUMI_GAME_REQUIRE_LOGIN_HANDOFF`**, **signed ticket on wire** (`F1 A5` / `F1 A6`, **`TAKUMI_GAME_TICKET_WIRE`**, **`TAKUMI_SESSION_TICKET_HMAC_KEY`**). **SSOT:** `TAKUMI_ROSTER_DB_PRIMARY=1` (docker default) — **`CharacterRosterSsoT`**, **`docs/M4-ROSTER-SSOT.md`**.
 - [x] **Android in-world (2026-05-16+, partial MVP):** split port login → game **55901**; melee `C1 0x11`; HUD **`F3 E1`**; kill EXP + multi-level batch effects; stat `F3 06` pump; FPS packet budget — **`../../docs/DEVELOPMENT-LOG-2026-05-16.md`**.
 - [x] **Shop + inventory (2026-05-17):** server **`F3 E9`** / **`F3 ED`** + client `ShopItemValueCache`; inv move **`0x24`** + **`F3 10`** + plain **`C4`** on Android — **`../../docs/DEVELOPMENT-LOG-2026-05-17.md`**, **`docs/M9-M8-NPC-GAMEPLAY-OWNERSHIP.md`**.
 - [x] **Shop tooltip Zen parity (2026-05-17, Android):** kho NPC hiển thị **Giá mua** (F3 E9); túi khi bán hiển thị **Giá bán** (`ItemValue` cho exc, cache exact-only); potion stack server `/3`; không ảnh hưởng luồng mua sau fix `Sell` flag — **`../../docs/DEVELOPMENT-LOG-2026-05-17.md`** § Shop chiều.
@@ -127,7 +127,7 @@ Use this to avoid unnecessary rebuilds.
 
 ## Next (Medium Priority)
 
-- [ ] Add explicit error/reason codes for rejected character requests.
+- [x] Add explicit error/reason codes for rejected character requests (`CharacterRosterErrorCodes`, `CharacterRosterOps`, `F3 01`/`F3 02` on minimal hosts).
 - [x] **Request-rate / frame size (partial):** **`TAKUMI_MAX_DECRYPTED_PACKET_BYTES`** + **`TAKUMI_MAX_PACKETS_PER_SECOND`** (TCP close on `LegacyLoginHost` / `GamePortMinimalSession`); full protocol violation matrix + metrics still open.
 - [ ] Improve observability: structured logs with packet code/subcode fields; metrics for auth and packet types.
 - [ ] Separate compatibility mode flags by client build/version.
@@ -142,7 +142,8 @@ Use this to avoid unnecessary rebuilds.
 - [x] Runtime **`inventory_slot`** table (`sql/init/002_inventory_slot.sql`) + **`PostgresInventorySlotRepository`** / **`JoinInventoryPacket602`** (12-byte `item` wire blobs; apply SQL on existing volumes via **`./scripts/apply-sql.sh`**).
    - [~] Staging **`inventory_staging`** + startup importer (flat `ItemIndex` → 12-byte encoding / parity `ItemByteConvert`); shop path dùng `WriteShopItem`, inventory DB round-trip vẫn raw blob.
 - [x] After `F3 03` (and move-map restub), send Season 6 **`F3 10`** from **`inventory_slot`** when **`TAKUMI_ROSTER_DB_SYNC`** is on; otherwise empty list.
-- [~] Extend staging→runtime mapping to skills, warehouse, guild/social domains — **M11:** `warehouse_slot` + moves; trade/guild/skill list stubs (**`docs/M11-SOCIAL-WAREHOUSE-SKILLS.md`**); full skill DB + guild domain still open.
+- [x] **Skill hotkey persist (M7i):** `character_roster.key_configuration` (30 byte) — client `SaveOptions` / **`C1 F3 30`**; `CharacterOptionHandler` + `ScheduleKeyConfigurationUpsert`; join gửi lại `F3 30`. **Không** dùng `character_domain`. Patch: `sql/patches/015_character_key_configuration.sql`; doc: **`../../docs/takumi-game-spec/SKILL-HOTKEY-PERSISTENCE.md`**, checklist §M7i trong **`docs/M7-CHARACTER-PERSISTENCE-CHECKLIST.md`**.
+- [~] Extend staging→runtime mapping to skills, warehouse, guild/social domains — **M11:** `warehouse_slot` + moves; trade/guild stubs; **skill list** `character_skill` + join defaults (**M7j**, `016`/`017` SQL); skill **learn** wire still open (hotkey **assignment** M7i).
 
 ## Lộ trình chuẩn — `server-next` chạy tương đương `Source/` (đánh số module)
 
@@ -276,6 +277,7 @@ Use this to avoid unnecessary rebuilds.
   - [x] **F3 00 equip preview (17 byte):** `CharacterListEquipPreview602` + `CharacterListPacket602` — wear slot 0–8 → CharSet preview; tests `CharacterListEquipPreview602Tests`. **Nhật ký:** `../../docs/DEVELOPMENT-LOG-2026-05-18.md`.
   - [x] **QA seed `mg001`:** `sql/patches/013_test_account_mg001_seed.sql` — Kiếm Thánh Thần (MG) 0,58, **Cánh Lôi Vũ 12,39** (không Cuồng Phong DK / Thiên Sứ DW), set 142 +15, STR/DEX đủ equip.
   - [x] **Client wear parity:** `ZzzCharacter.cpp` tier-3 wing mesh theo item; lazy-load kiếm 380; `ReceiveInventory` → `SetCharacterClass`; `[TakumiWear]` logcat Android.
+  - [ ] **Skill hotkey persist (M7i + M7j):** gán skill (ô **0**) → relog → cùng skill; DB: `character_roster.key_configuration` (30 byte) **và** `character_skill` có row type=1 (Elf Độc); xem **`docs/M7-CHARACTER-PERSISTENCE-CHECKLIST.md`** §M7i–M7j.
 
 ---
 

@@ -53,8 +53,17 @@ public static class MonsterCombatHandler
             return true;
         }
 
-        if (ClientHitPackets602.TryFindTargetedSkill(packet, out _, out var skillTargetId))
+        if (ClientHitPackets602.TryFindTargetedSkill(packet, out _, out var skillTargetId, out var targetedSkillId))
         {
+            await TryRefreshCalcAfterBuffSkillAsync(
+                    connection,
+                    clientProtectOutbound,
+                    player,
+                    presenceSessionId,
+                    targetedSkillId,
+                    ct)
+                .ConfigureAwait(false);
+
             await HandleHitAsync(
                     tracker,
                     connection,
@@ -77,8 +86,17 @@ public static class MonsterCombatHandler
             return true;
         }
 
-        if (ClientHitPackets602.TryFindMagicAttack(packet, out _, out _, out var skillX, out var skillY, out var magicTargets))
+        if (ClientHitPackets602.TryFindMagicAttack(packet, out _, out var magicSkillId, out var skillX, out var skillY, out var magicTargets))
         {
+            await TryRefreshCalcAfterBuffSkillAsync(
+                    connection,
+                    clientProtectOutbound,
+                    player,
+                    presenceSessionId,
+                    magicSkillId,
+                    ct)
+                .ConfigureAwait(false);
+
             await HandleMagicAttackAsync(
                     tracker,
                     connection,
@@ -475,4 +493,42 @@ public static class MonsterCombatHandler
 
         return Math.Clamp(v, min, max);
     }
+
+    static async Task TryRefreshCalcAfterBuffSkillAsync(
+        Connection connection,
+        (byte K1, byte K2)? clientProtectOutbound,
+        GameRosterEntry? player,
+        Guid? presenceSessionId,
+        ushort skillId,
+        CancellationToken ct)
+    {
+        if (player is null || presenceSessionId is null || !IsPreviewBuffSkill(skillId))
+        {
+            return;
+        }
+
+        var roster = player.ToWireWithSheet();
+        var lv = Math.Max((ushort)1, roster.Level);
+        var sheet = CharacterSheetCalculator.ResolveSheet(roster.ServerClass, lv, roster.Sheet);
+        var acc = new CharacterCombatAccumulator();
+        if (!PlayerCombatEffectSession.TryRegisterSelfBuff(presenceSessionId, skillId, roster.ServerClass, sheet, acc))
+        {
+            return;
+        }
+
+        var pkt = CharacterCalcBroadcast602.BuildCalcPacket(
+            player,
+            presenceSessionId,
+            CharacterCalcBroadcast602.ResolveWearSlots(presenceSessionId));
+        await GamePortOutboundWire.WriteAsync(connection, clientProtectOutbound, pkt, ct).ConfigureAwait(false);
+    }
+
+    static bool IsPreviewBuffSkill(ushort skillId) =>
+        skillId is SkillBuffPreview602.SkillGreaterDefense
+            or SkillBuffPreview602.SkillGreaterDamage
+            or SkillBuffPreview602.SkillGreaterLife
+            or SkillBuffPreview602.SkillGreaterMana
+            or SkillBuffPreview602.SkillGreaterCriticalDamage
+            or SkillBuffPreview602.SkillSwordPower
+            or SkillBuffPreview602.SkillMagicCircle;
 }

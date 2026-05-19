@@ -67,6 +67,13 @@ public static class MonsterViewerRegistry
 {
     static readonly ConcurrentDictionary<Guid, MonsterViewerSession> Sessions = new();
 
+    /// <summary>When false (default), skip high-frequency combat tracing to stderr (Android QA + Docker I/O).</summary>
+    internal static bool IsM9CombatLogEnabled =>
+        string.Equals(
+            Environment.GetEnvironmentVariable("TAKUMI_M9_COMBAT_LOG")?.Trim(),
+            "1",
+            StringComparison.OrdinalIgnoreCase);
+
     public static bool IsAiEnabled =>
         !string.Equals(
             Environment.GetEnvironmentVariable("TAKUMI_MONSTER_AI_ENABLED")?.Trim(),
@@ -335,7 +342,7 @@ public static class MonsterViewerRegistry
             victim.ClientHeroWireKey,
             remaining,
             victim.CurrentHp,
-            hitSuccess: true,
+            stuckFlag: true,
             viewCurSd: victim.CurrentShield,
             shieldDamage: sdTaken);
         await GamePortOutboundWire.WriteAsync(victim.Connection, victim.Protect, dmgPkt, ct).ConfigureAwait(false);
@@ -346,7 +353,7 @@ public static class MonsterViewerRegistry
                 victim.PlayerObjectKey,
                 remaining,
                 victim.CurrentHp,
-                hitSuccess: true,
+                stuckFlag: true,
                 viewCurSd: victim.CurrentShield,
                 shieldDamage: sdTaken);
             await GameMapPresenceRegistry.BroadcastPlayerDamageAsync(
@@ -359,13 +366,16 @@ public static class MonsterViewerRegistry
 
         await TrySendThrottledLifeAsync(victim, ct).ConfigureAwait(false);
 
-        Console.WriteLine(
-            "[m10c] pvp hit victim={0} dmg={1} hp={2}/{3} from={4}",
-            victim.PlayerObjectKey,
-            dmg,
-            victim.CurrentHp,
-            maxHp,
-            attackerPlayerKey);
+        if (IsM9CombatLogEnabled)
+        {
+            Console.WriteLine(
+                "[m10c] pvp hit victim={0} dmg={1} hp={2}/{3} from={4}",
+                victim.PlayerObjectKey,
+                dmg,
+                victim.CurrentHp,
+                maxHp,
+                attackerPlayerKey);
+        }
     }
 
     public static IReadOnlyCollection<MonsterViewerSession> GetAllSessions() => Sessions.Values.ToArray();
@@ -490,6 +500,17 @@ public static class MonsterViewerRegistry
             return;
         }
 
+        if (MoveMapSessionState.IsTeleportInProgress(targetSessionId))
+        {
+            return;
+        }
+
+        if (PlayerCombatRules.IsSafeZoneBlocked(mapId, session.X, session.Y)
+            || PlayerCombatRules.IsSafeZoneBlocked(mapId, monsterX, monsterY))
+        {
+            return;
+        }
+
         var fallbackStub = ParseIntEnv("TAKUMI_MONSTER_TO_PLAYER_DAMAGE", 15, 1, 2000);
         var useTxt = !string.Equals(
             Environment.GetEnvironmentVariable("TAKUMI_MONSTER_IGNORE_TXT_DAMAGE")?.Trim(),
@@ -538,7 +559,7 @@ public static class MonsterViewerRegistry
             session.ClientHeroWireKey,
             remaining,
             session.CurrentHp,
-            hitSuccess: true,
+            stuckFlag: true,
             viewCurSd: session.CurrentShield,
             shieldDamage: sdTaken);
         await GamePortOutboundWire.WriteAsync(session.Connection, session.Protect, dmgPkt, ct).ConfigureAwait(false);
@@ -554,21 +575,24 @@ public static class MonsterViewerRegistry
             }
         }
 
-        Console.WriteLine(
-            "[m9-ai] monster hit player key={0} dmg={1} hpDmg={2} sdDmg={3} hp={4}/{5} sd={6}/{7} died={8} mobKey={9} mobClass={10} txt={11} def={12}",
-            session.PlayerObjectKey,
-            dmg,
-            remaining,
-            sdTaken,
-            session.CurrentHp,
-            maxHp,
-            session.CurrentShield,
-            maxSd,
-            session.CurrentHp <= 0,
-            monsterObjectKey,
-            monsterClass,
-            useTxt,
-            playerDef);
+        if (IsM9CombatLogEnabled)
+        {
+            Console.WriteLine(
+                "[m9-ai] monster hit player key={0} dmg={1} hpDmg={2} sdDmg={3} hp={4}/{5} sd={6}/{7} died={8} mobKey={9} mobClass={10} txt={11} def={12}",
+                session.PlayerObjectKey,
+                dmg,
+                remaining,
+                sdTaken,
+                session.CurrentHp,
+                maxHp,
+                session.CurrentShield,
+                maxSd,
+                session.CurrentHp <= 0,
+                monsterObjectKey,
+                monsterClass,
+                useTxt,
+                playerDef);
+        }
     }
 
     static async Task TrySendThrottledLifeAsync(MonsterViewerSession session, CancellationToken ct)

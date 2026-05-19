@@ -19,6 +19,8 @@ public sealed class MapMonsterSpawnCoverageTests
         var stats = File.Exists(monsterTxt)
             ? MonsterStatCatalog.LoadFromFile(monsterTxt)
             : new MonsterStatCatalog();
+        var mapIds = entries.Select(static e => e.Map).Distinct();
+        MapAttWalkability.PreloadMaps(mapIds);
         var instances = BuildInstances(entries, stats);
         var byMap = instances
             .GroupBy(i => i.Map)
@@ -49,7 +51,7 @@ public sealed class MapMonsterSpawnCoverageTests
                 $"map {mapId} (Move/warp dungeon chain) has no field monsters in {path}");
         }
 
-        foreach (var mapId in new byte[] { 34, 37, 42, 51, 56, 63, 80 })
+        foreach (var mapId in new byte[] { 34, 37, 42, 51, 56, 57, 63, 80, 81 })
         {
             Assert.True(byMap.TryGetValue(mapId, out var summary), $"map {mapId} missing in {path}");
             Assert.True(
@@ -107,13 +109,12 @@ public sealed class MapMonsterSpawnCoverageTests
                 continue;
             }
 
-            if (!MonsterSpawnResolver.TryResolvePosition(e, out var x, out var y))
+            var stat = stats.GetOrDefault(e.MonsterClass);
+            var isNpc = MonsterNpcClassifier.IsNpc(e.MonsterClass) || stat.Level == 0;
+            if (!MapMonsterWorld.TryResolveSpawnTileForTests(e, isNpc, out var x, out var y))
             {
                 continue;
             }
-
-            var stat = stats.GetOrDefault(e.MonsterClass);
-            var isNpc = MonsterNpcClassifier.IsNpc(e.MonsterClass) || stat.Level == 0;
             var inst = new MapMonsterInstance
             {
                 ObjectKey = key++,

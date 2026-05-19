@@ -68,3 +68,4 @@ docker/data-zip/host/Data/*
 
 # server-next: runtime roster persistence (M4a); mirror via Postgres when TAKUMI_ROSTER_DB_SYNC=1
 server-next/takumi-roster/*.json
+__pycache__/

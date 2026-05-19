@@ -10,7 +10,7 @@ public sealed class MonsterCombatCalculatorTests
     {
         var stat = new MonsterStat(3, 5, 100, 10, 20, 15, 3, 0, 1, 5, 10);
         var dmg = MonsterCombatCalculator.RollDamageToMonster(playerLevel: 10, stat, fallbackDamage: 50);
-        Assert.Equal(35, dmg);
+        Assert.Equal(75, dmg);
     }
 
     [Fact]
@@ -18,7 +18,7 @@ public sealed class MonsterCombatCalculatorTests
     {
         var stat = new MonsterStat(3, 5, 100, 10, 20, 15, 3, 0, 1, 5, 10);
         var dmg = MonsterCombatCalculator.RollDamageToMonster(playerLevel: 10, stat, fallbackDamage: 50, damagePercent: 150);
-        Assert.Equal(52, dmg);
+        Assert.Equal(112, dmg);
     }
 
     [Fact]
@@ -27,6 +27,14 @@ public sealed class MonsterCombatCalculatorTests
         var stat = new MonsterStat(3, 1, 10, 0, 0, 999, 3, 0, 1, 5, 10);
         var dmg = MonsterCombatCalculator.RollDamageToMonster(playerLevel: 1, stat, fallbackDamage: 5);
         Assert.Equal(1, dmg);
+    }
+
+    [Fact]
+    public void RollDamage_uses_level_not_stub_floor_on_high_defense_mobs()
+    {
+        var stat = new MonsterStat(352, 82, 18000, 335, 365, 335, 3, 0, 2, 5, 10);
+        var dmg = MonsterCombatCalculator.RollDamageToMonster(playerLevel: 400, stat, fallbackDamage: 50);
+        Assert.Equal(2875, dmg);
     }
 
     [Fact]
@@ -43,5 +51,19 @@ public sealed class MonsterCombatCalculatorTests
         var stat = new MonsterStat(1, 1, 10, 0, 0, 0, 3, 0, 1, 5, 10, ElementalAttribute: 2, ElementalDefense: 20);
         var dmg = MonsterCombatCalculator.ApplyElemental(100, attackElement: 2, stat);
         Assert.Equal(80, dmg);
+    }
+
+    [Fact]
+    public void ApplyClientDamageTypeMultiplier_excellent_and_double()
+    {
+        var dmg = MonsterCombatCalculator.ApplyClientDamageTypeMultiplier(1000, damageType: 0x42);
+        Assert.Equal(2400, dmg);
+    }
+
+    [Fact]
+    public void ApplyClientDamageTypeMultiplier_critical()
+    {
+        var dmg = MonsterCombatCalculator.ApplyClientDamageTypeMultiplier(1000, damageType: 0x03);
+        Assert.Equal(1300, dmg);
     }
 }

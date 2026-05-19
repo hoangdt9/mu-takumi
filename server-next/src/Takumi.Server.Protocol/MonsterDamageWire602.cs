@@ -6,11 +6,16 @@ public static class MonsterDamageWire602
     public const byte HeadCode = 0x11;
 
     /// <summary>Builds <c>PRECEIVE_ATTACK</c> with QWORD view damage (Takumi <c>FixDmgQWORD</c>).</summary>
+    /// <param name="stuckFlag">
+    /// Legacy <c>GCDamageSend</c> flag → client <c>ReceiveAttackDamage</c> Key bit 15 (<c>Success</c>).
+    /// Set <b>true</b> when the <em>player</em> takes HP/SD damage (red float text on hero).
+    /// Set <b>false</b> when the player hits monsters/NPCs (colored excellent/critical/double text).
+    /// </param>
     public static byte[] Build(
         int targetObjectKey,
         int damage,
         int viewCurHp,
-        bool hitSuccess,
+        bool stuckFlag,
         byte damageType = 0,
         int viewCurSd = 0,
         int shieldDamage = 0)
@@ -22,7 +27,7 @@ public static class MonsterDamageWire602
         buf[2] = HeadCode;
 
         var key = targetObjectKey & 0x7FFF;
-        if (hitSuccess)
+        if (stuckFlag)
         {
             key |= 0x8000;
         }

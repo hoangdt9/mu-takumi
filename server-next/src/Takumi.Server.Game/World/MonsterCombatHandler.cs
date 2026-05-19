@@ -349,24 +349,73 @@ public static class MonsterCombatHandler
         }
 
         MapMonsterWorld.EnsureInitialized();
-        if (!MapMonsterWorld.TryGetMonster(targetId, out var monster) || monster is null || !monster.IsAlive)
+        var meleeRange = ParseIntEnv("TAKUMI_COMBAT_MELEE_RANGE", 3, 1, 15);
+        if (!MapMonsterWorld.TryResolveCombatTarget(
+                mapId,
+                playerX,
+                playerY,
+                targetId,
+                meleeRange,
+                out var monster)
+            || monster is null
+            || !monster.IsAlive)
         {
+            Console.WriteLine(
+                "[{0}] [m9] combat skip — unknown/dead monster key={1} wireTarget=0x{2:X4} map={3} xy=({4},{5})",
+                remote,
+                targetKey,
+                targetId,
+                mapId,
+                playerX,
+                playerY);
             return;
+        }
+
+        if (monster.ObjectKey != targetKey)
+        {
+            Console.WriteLine(
+                "[{0}] [m9] combat remap wireTarget=0x{1:X4} clientKey={2} -> serverKey={3} map={4} xy=({5},{6}) mob=({7},{8})",
+                remote,
+                targetId,
+                targetKey,
+                monster.ObjectKey,
+                mapId,
+                playerX,
+                playerY,
+                monster.X,
+                monster.Y);
         }
 
         if (monster.IsNpc)
         {
+            Console.WriteLine("[{0}] [m9] combat skip — target key={1} is NPC", remote, targetKey);
             return;
         }
 
         if (monster.Map != mapId)
         {
+            Console.WriteLine(
+                "[{0}] [m9] combat skip — key={1} on map {2}, player map {3}",
+                remote,
+                targetKey,
+                monster.Map,
+                mapId);
             return;
         }
 
-        var meleeRange = ParseIntEnv("TAKUMI_COMBAT_MELEE_RANGE", 3, 1, 15);
-        if (Math.Abs(monster.X - playerX) + Math.Abs(monster.Y - playerY) > meleeRange)
+        var dist = Math.Abs(monster.X - playerX) + Math.Abs(monster.Y - playerY);
+        if (dist > meleeRange)
         {
+            Console.WriteLine(
+                "[{0}] [m9] combat skip — key={1} out of melee range dist={2} max={3} player=({4},{5}) mob=({6},{7})",
+                remote,
+                targetKey,
+                dist,
+                meleeRange,
+                playerX,
+                playerY,
+                monster.X,
+                monster.Y);
             return;
         }
 
@@ -392,7 +441,7 @@ public static class MonsterCombatHandler
                 monster.ObjectKey,
                 damage: 0,
                 monster.CurrentLife,
-                hitSuccess: false);
+                stuckFlag: false);
             await GamePortOutboundWire.WriteAsync(connection, clientProtectOutbound, missPkt, ct).ConfigureAwait(false);
             Console.WriteLine(
                 "[{0}] [m9] combat miss key={1}",
@@ -411,6 +460,9 @@ public static class MonsterCombatHandler
             fallback,
             skillPct,
             attackElement);
+        var damageType = MonsterCombatCalculator.RollClientDamageType(Random.Shared, isSkill);
+        damage = MonsterCombatCalculator.ApplyClientDamageTypeMultiplier(damage, damageType);
+
         if (presenceSessionId is { } aggroSid && GameMapPresenceRegistry.TryGetObjectKey(aggroSid, out var playerKey))
         {
             monster.SetAggro(playerKey);
@@ -422,17 +474,19 @@ public static class MonsterCombatHandler
             monster.ObjectKey,
             damage,
             monster.CurrentLife,
-            hitSuccess: true);
+            stuckFlag: false,
+            damageType: damageType);
         await GamePortOutboundWire.WriteAsync(connection, clientProtectOutbound, dmgPkt, ct).ConfigureAwait(false);
         Console.WriteLine(
-            "[{0}] [m9] combat {6} key={1} dmg={2} hp={3} died={4} skillPct={5}",
+            "[{0}] [m9] combat {6} key={1} dmg={2} hp={3} died={4} skillPct={5} dmgType=0x{7:X2}",
             remote,
             monster.ObjectKey,
             damage,
             monster.CurrentLife,
             died,
             skillPct,
-            isSkill ? "skill" : "hit");
+            isSkill ? "skill" : "hit",
+            damageType);
 
         if (!died)
         {

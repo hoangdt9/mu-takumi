@@ -18,12 +18,27 @@ public sealed class MonsterCombatWire602Tests
     [Fact]
     public void Damage_wire_C1_11_layout()
     {
-        var pkt = MonsterDamageWire602.Build(12001, 50, 50, hitSuccess: true);
+        var pkt = MonsterDamageWire602.Build(12001, 50, 50, stuckFlag: false);
         Assert.Equal(0xC1, pkt[0]);
         Assert.Equal(0x11, pkt[2]);
-        Assert.Equal(0xAE, pkt[3]);
+        Assert.Equal(0x2E, pkt[3]);
         Assert.Equal(0xE1, pkt[4]);
         Assert.Equal(50, pkt[6]);
+    }
+
+    [Fact]
+    public void Damage_wire_C1_11_stuck_flag_sets_key_high_bit()
+    {
+        var pkt = MonsterDamageWire602.Build(12001, 50, 50, stuckFlag: true);
+        Assert.Equal(0xAE, pkt[3]);
+        Assert.Equal(0xE1, pkt[4]);
+    }
+
+    [Fact]
+    public void Damage_wire_C1_11_carries_excellent_type_nibble()
+    {
+        var pkt = MonsterDamageWire602.Build(12001, 50, 50, stuckFlag: false, damageType: 0x42);
+        Assert.Equal(0x42, pkt[7]);
     }
 
     [Fact]
@@ -33,7 +48,7 @@ public sealed class MonsterCombatWire602Tests
             12001,
             0,
             70,
-            hitSuccess: true,
+            stuckFlag: true,
             viewCurSd: 42,
             shieldDamage: 3);
         Assert.Equal(42u, BitConverter.ToUInt32(pkt, 14));

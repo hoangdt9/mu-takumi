@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Linq;
 using Takumi.Server.Game.Networking;
 using Takumi.Server.Persistence;
 
@@ -15,10 +16,71 @@ public static class MapMonsterWorld
     static Dictionary<int, MapMonsterInstance> _byObjectKey = new();
     static int _nextObjectKey = 12_000;
 
+    /// <summary>Server-side object keys for <c>C2 0x13</c> field mobs start here (client must attack the same wire key).</summary>
+    public const int MinFieldObjectKey = 12_000;
+
     public static bool TryGetMonster(int objectKey, out MapMonsterInstance? monster)
     {
         EnsureInitialized();
         return _byObjectKey.TryGetValue(objectKey, out monster);
+    }
+
+    /// <summary>
+    /// Resolve melee target when the client wire key does not match registry (stale viewport / pre-0x13 mobs).
+    /// Picks the nearest alive field monster in range of the attacker.
+    /// </summary>
+    public static bool TryResolveCombatTarget(
+        byte mapId,
+        byte playerX,
+        byte playerY,
+        ushort wireTargetId,
+        int meleeRange,
+        out MapMonsterInstance? monster)
+    {
+        EnsureInitialized();
+        var targetKey = wireTargetId & 0x7FFF;
+        if (TryGetMonster(targetKey, out monster) && monster is not null && monster.IsAlive && !monster.IsNpc)
+        {
+            return true;
+        }
+
+        monster = null;
+        if (!_byMap.TryGetValue(mapId, out var onMap) || onMap.Count == 0)
+        {
+            return false;
+        }
+
+        var bestDist = int.MaxValue;
+        MapMonsterInstance? best = null;
+        foreach (var m in onMap)
+        {
+            if (!m.IsAlive || m.IsNpc)
+            {
+                continue;
+            }
+
+            if (MapAttWalkability.IsSafeZone(mapId, m.X, m.Y))
+            {
+                continue;
+            }
+
+            var dist = Math.Abs(m.X - playerX) + Math.Abs(m.Y - playerY);
+            if (dist > meleeRange || dist >= bestDist)
+            {
+                continue;
+            }
+
+            bestDist = dist;
+            best = m;
+        }
+
+        if (best is null)
+        {
+            return false;
+        }
+
+        monster = best;
+        return true;
     }
 
     public static IReadOnlyList<MapMonsterInstance> GetMonstersOnMap(byte mapId)
@@ -116,6 +178,10 @@ public static class MapMonsterWorld
                 }
             }
 
+            var mapIdsForAtt = _setBase.Select(static e => e.Map).Distinct().ToList();
+            MapAttWalkability.PreloadMaps(mapIdsForAtt);
+            LogMissingAttForTownMaps(mapIdsForAtt);
+
             var sw = System.Diagnostics.Stopwatch.StartNew();
             RebuildInstances();
             sw.Stop();
@@ -129,7 +195,6 @@ public static class MapMonsterWorld
             // Mark ready before coverage/ATT preload — LogStartupReport → BuildSummaryByMap
             // re-enters EnsureInitialized; C# lock is reentrant and would reload spawns forever.
             _initialized = true;
-            MapAttWalkability.PreloadMaps(_byMap.Keys);
             MapMonsterSpawnCoverage.LogStartupReport();
         }
     }
@@ -175,7 +240,7 @@ public static class MapMonsterWorld
             {
                 npcs.Add((dist, m));
             }
-            else
+            else if (!MapAttWalkability.IsSafeZone(mapId, m.X, m.Y))
             {
                 mobs.Add((dist, m));
             }
@@ -347,6 +412,7 @@ public static class MapMonsterWorld
         _byMap = new Dictionary<byte, List<MapMonsterInstance>>();
         _byObjectKey = new Dictionary<int, MapMonsterInstance>();
         var key = _nextObjectKey;
+        var fieldSpreadKey = 0;
         foreach (var e in _setBase)
         {
             // Parity CMonsterManager::SetMonsterData — invasion/event rows are not static map spawns.
@@ -355,13 +421,13 @@ public static class MapMonsterWorld
                 continue;
             }
 
-            if (!MonsterSpawnResolver.TryResolvePosition(e, out var x, out var y))
+            var stat = _stats.GetOrDefault(e.MonsterClass);
+            var isNpc = MonsterNpcClassifier.IsNpc(e.MonsterClass) || stat.Level == 0;
+            var spreadKey = isNpc ? 0 : fieldSpreadKey++;
+            if (!TryResolveSpawnTile(e, isNpc, spreadKey, out var x, out var y))
             {
                 continue;
             }
-
-            var stat = _stats.GetOrDefault(e.MonsterClass);
-            var isNpc = MonsterNpcClassifier.IsNpc(e.MonsterClass) || stat.Level == 0;
             var maxLife = isNpc ? Math.Max(1, stat.Life) : stat.Life;
             var regenMs = isNpc ? int.MaxValue / 2 : Math.Max(1, stat.RegenTimeSeconds) * 1000;
             var leash = (byte)Math.Clamp(e.Dis > 0 ? e.Dis : stat.MoveRange > 0 ? stat.MoveRange : 3, 1, 30);
@@ -400,7 +466,29 @@ public static class MapMonsterWorld
         var env = Environment.GetEnvironmentVariable(envKey)?.Trim();
         if (!string.IsNullOrEmpty(env))
         {
-            return Path.GetFullPath(env);
+            var full = Path.GetFullPath(env);
+            if (File.Exists(full))
+            {
+                return full;
+            }
+
+            // Host paths (e.g. /Users/.../MonsterSetBase.txt) leak into Docker via compose env substitution.
+            var dataRoot = Environment.GetEnvironmentVariable("TAKUMI_GAMESERVER_DATA_PATH")?.Trim();
+            if (!string.IsNullOrEmpty(dataRoot))
+            {
+                var mounted = Path.GetFullPath(Path.Combine(dataRoot, relativeDefault));
+                if (File.Exists(mounted))
+                {
+                    Console.WriteLine(
+                        "[m9] {0} not found at {1} — using mounted data {2}",
+                        envKey,
+                        full,
+                        mounted);
+                    return mounted;
+                }
+            }
+
+            return full;
         }
 
         var candidates = new[]
@@ -409,6 +497,12 @@ public static class MapMonsterWorld
             Path.Combine(Environment.CurrentDirectory, "..", "MuServer", "4.GameServer", "Data", relativeDefault),
             Path.Combine(Environment.CurrentDirectory, "..", "..", "MuServer", "4.GameServer", "Data", relativeDefault),
         };
+
+        var dataPath = Environment.GetEnvironmentVariable("TAKUMI_GAMESERVER_DATA_PATH")?.Trim();
+        if (!string.IsNullOrEmpty(dataPath))
+        {
+            candidates = new[] { Path.Combine(dataPath, relativeDefault) }.Concat(candidates).ToArray();
+        }
 
         foreach (var c in candidates)
         {
@@ -491,8 +585,46 @@ public static class MapMonsterWorld
             Dir = 255,
         };
 
-    public static bool ShouldIncludeSpawnEntry(MonsterSetBaseEntry e) =>
-        IncludeInvasionSpawns() || e.SpawnType is not (3 or 4);
+    static bool TryResolveSpawnTile(MonsterSetBaseEntry e, bool isNpc, int spreadKey, out byte x, out byte y) =>
+        isNpc
+            ? MonsterSpawnResolver.TryResolvePosition(e, out x, out y)
+            : MonsterSpawnResolver.TryResolveFieldPosition(e, spreadKey, out x, out y);
+
+    /// <summary>Test helper — same spawn tile rules as <see cref="RebuildInstances"/>.</summary>
+    public static bool TryResolveSpawnTileForTests(MonsterSetBaseEntry e, bool isNpc, out byte x, out byte y) =>
+        TryResolveSpawnTile(e, isNpc, spreadKey: 0, out x, out y);
+
+    static void LogMissingAttForTownMaps(IEnumerable<byte> mapIds)
+    {
+        foreach (var mapId in mapIds)
+        {
+            if (mapId is not (0 or 2 or 3))
+            {
+                continue;
+            }
+
+            if (MapAttWalkability.IsAttLoaded(mapId))
+            {
+                continue;
+            }
+
+            Console.WriteLine(
+                "[m9-att] WARN map {0}: no terrain ATT — field mobs may spawn in town; mount TAKUMI_ATT_DATA_ROOT (World{1}/EncTerrain{1}.att)",
+                mapId,
+                mapId + 1);
+        }
+    }
+
+    public static bool ShouldIncludeSpawnEntry(MonsterSetBaseEntry e)
+    {
+        // Noria (3): no Spider field spawns — Pegasus supplement box overlapped town (139–247 x 63–164).
+        if (e.Map == 3 && e.MonsterClass == 3 && e.SpawnType == 1)
+        {
+            return false;
+        }
+
+        return IncludeInvasionSpawns() || e.SpawnType is not (3 or 4);
+    }
 
     static bool IncludeInvasionSpawns() =>
         string.Equals(

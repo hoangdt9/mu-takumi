@@ -12,9 +12,12 @@ public static class MonsterCombatCalculator
         int damagePercent = 100,
         int attackElement = 0)
     {
+        // Level-based attack must not lose to TAKUMI_COMBAT_STUB_DAMAGE (default 50): that value was
+        // clamping every hit on high-defense mobs (e.g. Kanturu Iron Rider) to 1 damage.
+        var levelBased = Math.Max(1, (playerLevel * 8) + 10);
         var baseDamage = fallbackDamage > 0
-            ? fallbackDamage
-            : Math.Max(1, (playerLevel * 8) + 10);
+            ? Math.Max(fallbackDamage, levelBased)
+            : levelBased;
         var mitigated = baseDamage - Math.Max(0, target.Defense);
         mitigated = ApplyResistance(mitigated, attackElement, target);
         mitigated = ApplyElemental(mitigated, attackElement, target);
@@ -83,6 +86,85 @@ public static class MonsterCombatCalculator
         }
 
         return Random.Shared.Next(100) < Math.Clamp(missRatePercent, 0, 100);
+    }
+
+    /// <summary>
+    /// Client <c>ReceiveAttackDamage</c> damage-type nibble (0 normal, 1 perfect, 2 excellent, 3 critical)
+    /// plus optional double (bit 6) and combo (bit 7).
+    /// </summary>
+    public static byte RollClientDamageType(Random rng, bool isSkill)
+    {
+        var excellentPct = ParseIntEnv("TAKUMI_COMBAT_EXCELLENT_PCT", isSkill ? 12 : 18, 0, 80);
+        var criticalPct = ParseIntEnv("TAKUMI_COMBAT_CRITICAL_PCT", isSkill ? 8 : 12, 0, 80);
+        var perfectPct = ParseIntEnv("TAKUMI_COMBAT_PERFECT_PCT", 4, 0, 50);
+        var doublePct = ParseIntEnv("TAKUMI_COMBAT_DOUBLE_PCT", isSkill ? 6 : 10, 0, 50);
+        var comboPct = ParseIntEnv("TAKUMI_COMBAT_COMBO_PCT", 3, 0, 30);
+
+        var roll = rng.Next(100);
+        byte typeNibble = 0;
+        if (roll < criticalPct)
+        {
+            typeNibble = 3;
+        }
+        else if (roll < criticalPct + excellentPct)
+        {
+            typeNibble = 2;
+        }
+        else if (roll < criticalPct + excellentPct + perfectPct)
+        {
+            typeNibble = 1;
+        }
+
+        var damageType = typeNibble;
+        if (rng.Next(100) < doublePct)
+        {
+            damageType |= 0x40;
+        }
+
+        if (rng.Next(100) < comboPct)
+        {
+            damageType |= 0x80;
+        }
+
+        return damageType;
+    }
+
+    /// <summary>
+    /// Apply legacy-style bonuses for the rolled client damage type (excellent 120%, critical max-ish, double/combo bits).
+    /// Call after base mitigation; <paramref name="damageType"/> is the wire byte (nibble + 0x40/0x80).
+    /// </summary>
+    public static int ApplyClientDamageTypeMultiplier(int damage, byte damageType)
+    {
+        if (damage <= 0)
+        {
+            return damage;
+        }
+
+        var result = damage;
+        switch (damageType & 0x0F)
+        {
+            case 1: // perfect
+                result = result * 110 / 100;
+                break;
+            case 2: // excellent — legacy ~120% of max roll
+                result = result * 120 / 100;
+                break;
+            case 3: // critical — legacy uses max + bonus; approximate with +30%
+                result = result * 130 / 100;
+                break;
+        }
+
+        if ((damageType & 0x40) != 0)
+        {
+            result *= 2;
+        }
+
+        if ((damageType & 0x80) != 0)
+        {
+            result += result / 2;
+        }
+
+        return Math.Clamp(result, 1, 65_000);
     }
 
     /// <summary>Physical hit from monster toward player (minimal parity with legacy <c>gAttack</c> damage roll).</summary>

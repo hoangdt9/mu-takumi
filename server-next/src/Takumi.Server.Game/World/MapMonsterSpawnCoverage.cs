@@ -3,6 +3,8 @@ namespace Takumi.Server.Game.World;
 /// <summary>M8×M9: spawn coverage vs <c>Move.txt</c> destinations (ops + dev smoke).</summary>
 public static class MapMonsterSpawnCoverage
 {
+    /// <summary>Move targets with no field mobs by design (siege / market).</summary>
+    static readonly HashSet<byte> MoveMapsWithoutFieldMobs = new() { 30, 79 };
     public readonly struct MapSpawnSummary
     {
         public MapSpawnSummary(int total, int npcCount, int fieldCount)
@@ -89,6 +91,16 @@ public static class MapMonsterSpawnCoverage
             var mapId = gate.MapId;
             if (!byMap.TryGetValue(mapId, out var summary))
             {
+                if (MoveMapsWithoutFieldMobs.Contains(mapId))
+                {
+                    Console.WriteLine(
+                        "[m8-m9] move index {0} (gate {1}) -> map {2}: no spawns by design (siege/market map)",
+                        move.Index,
+                        move.Gate,
+                        mapId);
+                    continue;
+                }
+
                 Console.WriteLine(
                     "[m8-m9] WARN move index {0} (gate {1}) -> map {2}: no spawns in MonsterSetBase",
                     move.Index,
@@ -100,6 +112,17 @@ public static class MapMonsterSpawnCoverage
 
             if (summary.FieldCount == 0)
             {
+                if (MoveMapsWithoutFieldMobs.Contains(mapId))
+                {
+                    Console.WriteLine(
+                        "[m8-m9] move index {0} (gate {1}) -> map {2}: NPC only by design ({3} rows)",
+                        move.Index,
+                        move.Gate,
+                        mapId,
+                        summary.Total);
+                    continue;
+                }
+
                 Console.WriteLine(
                     "[m8-m9] WARN move index {0} (gate {1}) -> map {2}: NPC only ({3} rows, 0 field mobs)",
                     move.Index,

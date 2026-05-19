@@ -23,6 +23,10 @@ headers = (
     'SPOT - TARKAN',
     '//ICARUS',
     'SPOT - AIDA',
+    'SPOT - ELBELAND',
+    'kANTURU',
+    'SPOT - VULCANUS',
+    'kArutan',
 )
 
 def is_spawn_data_comment(line: str) -> bool:

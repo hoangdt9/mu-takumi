@@ -41,12 +41,20 @@ public sealed class MapMonsterSpawnCoverageTests
                 $"map {mapId} has no field monsters in {path} (total={summary.Total} npc={summary.NpcCount})");
         }
 
-        foreach (var mapId in new byte[] { 1, 4, 7, 8 })
+        foreach (var mapId in new byte[] { 1, 4, 7, 8, 10, 33 })
         {
             Assert.True(byMap.TryGetValue(mapId, out var summary), $"map {mapId} missing in {path}");
             Assert.True(
                 summary.FieldCount > 0,
                 $"map {mapId} (Move/warp dungeon chain) has no field monsters in {path}");
+        }
+
+        foreach (var mapId in new byte[] { 34, 37, 42, 51, 56, 63, 80 })
+        {
+            Assert.True(byMap.TryGetValue(mapId, out var summary), $"map {mapId} missing in {path}");
+            Assert.True(
+                summary.FieldCount > 0,
+                $"map {mapId} (extended Move/warp) has no field monsters in {path}");
         }
     }
 

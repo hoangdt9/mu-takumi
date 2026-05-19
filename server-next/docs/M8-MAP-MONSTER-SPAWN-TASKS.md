@@ -48,7 +48,8 @@ Last updated: 2026-05-19
 |---|------|:-:|---------|
 | P1.1 | Mỗi `Move.txt` row → `Gate` → `map_id` có `field > 0` | [x] | Map 0–3, **1, 4, 7, 8**; gate map 79 NPC-only |
 | P1.2 | Noria (3), Devias (2), Lorencia (0) smoke | [~] | Devias section 1 từ OpenMU075; QA: [`M8-MOVE-WARP-MONSTER-QA.md`](./M8-MOVE-WARP-MONSTER-QA.md) |
-| P1.3 | Dungeon / Atlans / LT / Tarkan / Icarus / Aida | [x] | Bật section 1 trong `MonsterSetBase.txt` (`./scripts/enable-move-map-field-spawns.sh`) — maps **1, 4, 7, 8, 10, 33** |
+| P1.3 | Dungeon / Atlans / LT / Tarkan / Icarus / Aida | [x] | `enable-move-map-field-spawns.sh` — maps **1, 4, 7, 8, 10, 33** |
+| P1.3b | Elbeland / Kanturu / Vulcanus / Karutan / Crywolf / Swamp / Refuge | [x] | `enable-move-map-field-spawns.sh` + `append-move-map-spawns-from-openmu.py` — maps **34, 37, 42, 51, 56, 63, 80, 81**; gate **335/344** trong `Gate.txt` |
 | P1.4 | LorenMarket gate 333 → map 79 | [x] | NPC 545–547 (OpenMU: no field mobs) |
 | P1.5 | Drift vs **OpenMU** SeasonSix | [~] | `./scripts/compare-spawn-openmu.sh` |
 
@@ -102,18 +103,37 @@ Warp Noria → `[m9] sent C2 0x13 monster viewport (join) count=… map=3`
 
 ### Data patch (2026-05-19)
 
-Đã **uncomment** ~189 dòng section 1 có sẵn trong `MuServer/.../MonsterSetBase.txt`:
+**Bước 1** — uncomment section 1 có sẵn:
 
-| Map | Tên | Section 1 qty (approx) |
-|-----|-----|------------------------|
-| 1 | Dungeon | 75 |
-| 4 | Lost Tower | 295 |
-| 7 | Atlans | 170 |
-| 8 | Tarkan | 133 |
-| 10 | Icarus | 103 |
-| 33 | Aida | 135 |
+```bash
+./scripts/enable-move-map-field-spawns.sh
+```
 
-Script tái áp dụng: `./scripts/enable-move-map-field-spawns.sh` → rebuild `game-host`.
+**Bước 2** — thêm spot từ OpenMU SeasonSix (map chưa có section 1):
+
+```bash
+python3 ./scripts/append-move-map-spawns-from-openmu.py
+```
+
+| Map | Tên | Field qty (approx) |
+|-----|-----|---------------------|
+| 1 | Dungeon | 75+ |
+| 4 | Lost Tower | 295+ |
+| 7 | Atlans | 170+ |
+| 8 | Tarkan | 133+ |
+| 10 | Icarus | 103+ |
+| 33 | Aida | 135+ |
+| 34 | Crywolf | 865 (OpenMU) |
+| 37 | Kanturu ruins | 307 |
+| 42 | Balgass Refuge | 45 |
+| 51 | Elbeland | 38 |
+| 56 | Swamp of Calmness | 1410 (OpenMU) |
+| 63 | Vulcanus | 192 |
+| 80–81 | Karutan | 60 each |
+
+**NPC-only by design:** map **30** (Valley of Loren siege), **79** (Loren Market) — không WARN trong `[m8-m9]` log.
+
+Sau đổi data: `docker compose restart game-host` (hoặc `import-monster-spawn.sh` nếu `TAKUMI_MONSTER_SPAWN_DB=1`).
 
 ---
 

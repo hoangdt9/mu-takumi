@@ -20,6 +20,7 @@
 #include "DSPlaySound.h"
 #include "./Utilities/Log/DebugAngel.h"
 #include "./Utilities/Log/ErrorReport.h"
+#include "./Utilities/Log/TakumiAndroidDiag.h"
 #include "./Utilities/Memory/MemoryLock.h"
 #include "MatchEvent.h"
 #include "GOBoid.h"
@@ -363,7 +364,9 @@ void ReceiveServerNextSessionTicket( BYTE* ReceiveBuffer, int Size )
 		return;
 	memcpy( g_TakumiServerNextTicketPending, ReceiveBuffer + 4, TAKUMI_SERVERNEXT_SESSION_TICKET_BYTES );
 	g_TakumiServerNextTicketPendingValid = true;
+#if defined(__ANDROID__) && TAKUMI_ANDROID_DEBUG_PROTOCOL
 	g_ErrorReport.Write( "[AndroidLogin] Received F1 A5 session-ticket push (Server Next wire)\r\n" );
+#endif
 }
 
 void Takumi_SendSessionTicketAttachIfPending()
@@ -375,7 +378,9 @@ void Takumi_SendSessionTicketAttachIfPending()
 	spe << (BYTE)0xA6;
 	spe.AddData( g_TakumiServerNextTicketPending, TAKUMI_SERVERNEXT_SESSION_TICKET_BYTES );
 	spe.Send( TRUE );
+#if defined(__ANDROID__) && TAKUMI_ANDROID_DEBUG_PROTOCOL
 	g_ErrorReport.Write( "[AndroidLogin] Sent F1 A6 session-ticket attach before login\r\n" );
+#endif
 }
 
 
@@ -679,7 +684,9 @@ void ReceiveJoinServer( BYTE *ReceiveBuffer )
 {
 	LPPRECEIVE_JOIN_SERVER Data2 = (LPPRECEIVE_JOIN_SERVER)ReceiveBuffer;
 	int heroKey = ((int)(Data2->NumberH)<<8) + Data2->NumberL;
+#if defined(__ANDROID__) && TAKUMI_ANDROID_DEBUG_PROTOCOL
 	g_ErrorReport.Write("[AndroidLogin] ReceiveJoinServer result=0x%02X heroKey=%d\r\n", Data2->Result, heroKey);
+#endif
 	
     if ( LogIn!=0 )
     {
@@ -1053,7 +1060,7 @@ void ReceiveCreateCharacter( BYTE *ReceiveBuffer )
 void ReceiveDeleteCharacter( BYTE *ReceiveBuffer )
 {
 	LPPHEADER_DEFAULT_SUBCODE Data = (LPPHEADER_DEFAULT_SUBCODE)ReceiveBuffer;
-#if defined(__ANDROID__) || defined(MU_IOS)
+#if (defined(__ANDROID__) || defined(MU_IOS)) && TAKUMI_ANDROID_DEBUG_PROTOCOL
 	g_ErrorReport.Write(
 		"[AndroidLogin] ReceiveDeleteCharacter value=0x%02X heroSlot=%d\r\n",
 		Data->Value,
@@ -1421,6 +1428,9 @@ static void TakumiQueueMonsterViewportPacket(const BYTE* receiveBuffer)
 static void TakumiFlushQueuedMonsterViewportPackets()
 {
 	s_androidSkipMonsterViewportPathfinding = true;
+	// LoadWorld already cleared mobs; drop any stale client-only keys before applying server C2 0x13.
+	DeleteMonsters();
+	DeleteNpcs();
 	for (const auto& pkt : s_androidQueuedMonsterViewportPackets)
 	{
 		ReceiveCreateMonsterViewport(const_cast<BYTE*>(pkt.data()));
@@ -1431,8 +1441,30 @@ static void TakumiFlushQueuedMonsterViewportPackets()
 
 static void TakumiSendFinishLoadingLogged()
 {
+#if TAKUMI_ANDROID_DEBUG_PROTOCOL
 	g_ErrorReport.Write("[AndroidLogin] SendRequestFinishLoading C1 F3 12 (viewport resync)\r\n");
+#endif
 	SendRequestFinishLoading();
+}
+
+static void TakumiClearCombatStateForMapWarp()
+{
+	Attacking = -1;
+	SelectedCharacter = -1;
+	SelectedNpc = -1;
+	SelectedOperate = -1;
+
+	if (Hero != nullptr)
+	{
+		if (Hero->MovementType == MOVEMENT_ATTACK)
+		{
+			Hero->MovementType = MOVEMENT_MOVE;
+		}
+
+		Hero->AttackTime = 0;
+		Hero->Movement = false;
+		SetPlayerStop(Hero);
+	}
 }
 #endif
 
@@ -1522,13 +1554,18 @@ BOOL ReceiveJoinMapServer(BYTE *ReceiveBuffer, BOOL bEncrypted)
 	if (previousMap != joinMap)
 	{
 #if defined(__ANDROID__)
+		TakumiClearCombatStateForMapWarp();
+		DeleteMonsters();
+		DeleteNpcs();
 		s_androidDeferredLoadWorldMap = joinMap;
 		s_androidDeferMonsterViewportPackets = true;
 		deferredWorldLoad = true;
+#if TAKUMI_ANDROID_DEBUG_PROTOCOL
 		g_ErrorReport.Write(
 			"[AndroidLogin] ReceiveJoinMapServer defer LoadWorld map=%d (terrain was %d)\r\n",
 			joinMap,
 			previousMap);
+#endif
 #else
 		gMapManager.LoadWorld(joinMap);
 #endif
@@ -1547,10 +1584,12 @@ BOOL ReceiveJoinMapServer(BYTE *ReceiveBuffer, BOOL bEncrypted)
 			s_androidDeferredLoadWorldMap = joinMap;
 			s_androidDeferMonsterViewportPackets = true;
 			deferredWorldLoad = true;
+#if TAKUMI_ANDROID_DEBUG_PROTOCOL
 			g_ErrorReport.Write(
 				"[AndroidLogin] ReceiveJoinMapServer same map=%d but terrain stale (loaded=%d) — defer LoadWorld\r\n",
 				joinMap,
 				s_androidTerrainLoadedMap);
+#endif
 		}
 #else
 		liteSameMapWarp = true;
@@ -1558,7 +1597,7 @@ BOOL ReceiveJoinMapServer(BYTE *ReceiveBuffer, BOOL bEncrypted)
 
 		if (liteSameMapWarp)
 		{
-#if defined(__ANDROID__)
+#if defined(__ANDROID__) && TAKUMI_ANDROID_DEBUG_PROTOCOL
 			g_ErrorReport.Write(
 				"[AndroidLogin] ReceiveJoinMapServer same-map warp map=%d xy=(%d,%d) hero=%p live=%d\r\n",
 				joinMap,
@@ -1582,10 +1621,12 @@ BOOL ReceiveJoinMapServer(BYTE *ReceiveBuffer, BOOL bEncrypted)
 		s_androidDeferredLoadWorldMap = joinMap;
 		s_androidDeferMonsterViewportPackets = true;
 		deferredWorldLoad = true;
+#if TAKUMI_ANDROID_DEBUG_PROTOCOL
 		g_ErrorReport.Write(
 			"[AndroidLogin] ReceiveJoinMapServer same map=%d scene=%d — defer LoadWorld\r\n",
 			joinMap,
 			SceneFlag);
+#endif
 #else
 		gMapManager.LoadWorld(joinMap);
 #endif
@@ -1654,18 +1695,25 @@ BOOL ReceiveJoinMapServer(BYTE *ReceiveBuffer, BOOL bEncrypted)
 
 	if (Hero != NULL && Hero->Object.Live)
 	{
+#if defined(__ANDROID__) && TAKUMI_ANDROID_DEBUG_PROTOCOL
 		g_ErrorReport.Write("[AndroidLogin] ReceiveJoinMapServer clearing stale hero oldKey=%d newKey=%d newMap=%d\r\n",
 			Hero->Key,
 			HeroKey,
 			Data->Map);
+#endif
 	}
 
 	ClearCharacters();
 	ClearInventory();
 
+	M34CryWolf1st::CryWolfMVPInit();
 	if(gMapManager.WorldActive == WD_34CRYWOLF_1ST)
 	{
 		SendRequestCrywolfInfo();
+	}
+	else if (g_pNewUISystem != nullptr && g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_CRYWOLF))
+	{
+		g_pNewUISystem->Hide(SEASON3B::INTERFACE_CRYWOLF);
 	}
 	
     matchEvent::CreateEventMatch ( gMapManager.WorldActive );
@@ -1718,7 +1766,44 @@ BOOL ReceiveJoinMapServer(BYTE *ReceiveBuffer, BOOL bEncrypted)
 	CharacterMachine->Gold            = Data->Gold;
 	CharacterMachine->StorageGold     = 0;
 
-	CharacterAttribute->PrintPlayer.Clear();
+	// F3 03 clears combat preview (PrintPlayer) — server must send F3 E1 after warp
+	// (MoveWarpJoinReload) to refill attack/defense. Keep combat fields during in-game
+	// warp until F3 E1 arrives (same TCP batch usually follows immediately).
+	{
+		PRINT_PLAYER_S6 savedCombat = CharacterAttribute->PrintPlayer;
+		const bool keepCombatPreview = (SceneFlag == MAIN_SCENE);
+		CharacterAttribute->PrintPlayer.Clear();
+		if (keepCombatPreview)
+		{
+			CharacterAttribute->PrintPlayer.ViewPhysiDamageMin = savedCombat.ViewPhysiDamageMin;
+			CharacterAttribute->PrintPlayer.ViewPhysiDamageMax = savedCombat.ViewPhysiDamageMax;
+			CharacterAttribute->PrintPlayer.ViewMagicDamageMin = savedCombat.ViewMagicDamageMin;
+			CharacterAttribute->PrintPlayer.ViewMagicDamageMax = savedCombat.ViewMagicDamageMax;
+			CharacterAttribute->PrintPlayer.ViewCurseDamageMin = savedCombat.ViewCurseDamageMin;
+			CharacterAttribute->PrintPlayer.ViewCurseDamageMax = savedCombat.ViewCurseDamageMax;
+			CharacterAttribute->PrintPlayer.ViewMulPhysiDamage = savedCombat.ViewMulPhysiDamage;
+			CharacterAttribute->PrintPlayer.ViewDivPhysiDamage = savedCombat.ViewDivPhysiDamage;
+			CharacterAttribute->PrintPlayer.ViewMulMagicDamage = savedCombat.ViewMulMagicDamage;
+			CharacterAttribute->PrintPlayer.ViewDivMagicDamage = savedCombat.ViewDivMagicDamage;
+			CharacterAttribute->PrintPlayer.ViewMulCurseDamage = savedCombat.ViewMulCurseDamage;
+			CharacterAttribute->PrintPlayer.ViewDivCurseDamage = savedCombat.ViewDivCurseDamage;
+			CharacterAttribute->PrintPlayer.ViewMagicDamageRate = savedCombat.ViewMagicDamageRate;
+			CharacterAttribute->PrintPlayer.ViewCurseDamageRate = savedCombat.ViewCurseDamageRate;
+			CharacterAttribute->PrintPlayer.ViewPhysiSpeed = savedCombat.ViewPhysiSpeed;
+			CharacterAttribute->PrintPlayer.ViewMagicSpeed = savedCombat.ViewMagicSpeed;
+			CharacterAttribute->PrintPlayer.ViewAttackSuccessRate = savedCombat.ViewAttackSuccessRate;
+			CharacterAttribute->PrintPlayer.ViewAttackSuccessRatePvP = savedCombat.ViewAttackSuccessRatePvP;
+			CharacterAttribute->PrintPlayer.ViewDefense = savedCombat.ViewDefense;
+			CharacterAttribute->PrintPlayer.ViewDefenseSuccessRate = savedCombat.ViewDefenseSuccessRate;
+			CharacterAttribute->PrintPlayer.ViewDefenseSuccessRatePvP = savedCombat.ViewDefenseSuccessRatePvP;
+			CharacterAttribute->PrintPlayer.ViewDamageMultiplier = savedCombat.ViewDamageMultiplier;
+			CharacterAttribute->PrintPlayer.ViewAddStrength = savedCombat.ViewAddStrength;
+			CharacterAttribute->PrintPlayer.ViewAddDexterity = savedCombat.ViewAddDexterity;
+			CharacterAttribute->PrintPlayer.ViewAddVitality = savedCombat.ViewAddVitality;
+			CharacterAttribute->PrintPlayer.ViewAddEnergy = savedCombat.ViewAddEnergy;
+			CharacterAttribute->PrintPlayer.ViewAddLeadership = savedCombat.ViewAddLeadership;
+		}
+	}
 	CharacterAttribute->PrintPlayer.ViewReset = Data->ViewReset;
 	CharacterAttribute->PrintPlayer.ViewMasterReset = Data->ViewMasterReset;
 	CharacterAttribute->PrintPlayer.ViewPoint = Data->ViewPoint;
@@ -1874,11 +1959,15 @@ void TakumiProcessAndroidPendingLoadWorld()
 
 	const int map = s_androidDeferredLoadWorldMap;
 	s_androidDeferredLoadWorldMap = -1;
+#if TAKUMI_ANDROID_DEBUG_PROTOCOL
 	g_ErrorReport.Write("[AndroidLogin] deferred LoadWorld map=%d begin\r\n", map);
+#endif
 	gMapManager.LoadWorld(map);
 	ResetTextureBindCache();
 	s_androidTerrainLoadedMap = map;
+#if TAKUMI_ANDROID_DEBUG_PROTOCOL
 	g_ErrorReport.Write("[AndroidLogin] deferred LoadWorld map=%d done\r\n", map);
+#endif
 	if (LoadingWorld > 30)
 	{
 		LoadingWorld = 30;
@@ -1895,10 +1984,12 @@ void TakumiProcessAndroidPendingLoadWorld()
 	}
 	s_androidDeferMonsterViewportPackets = false;
 	s_androidSkipMonsterViewportPathfinding = true;
-	s_androidMonsterViewportGraceUntil = GetTickCount() + 3000u;
+	s_androidMonsterViewportGraceUntil = GetTickCount() + 5000u;
+#if TAKUMI_ANDROID_DEBUG_PROTOCOL
 	g_ErrorReport.Write(
 		"[AndroidLogin] deferred LoadWorld map=%d complete (viewport flushed + F3 12)\r\n",
 		map);
+#endif
 }
 #endif
 
@@ -2283,13 +2374,17 @@ BOOL ReceiveInventory(BYTE *ReceiveBuffer, BOOL bEncrypted)
 {
 	if (g_pMyInventory == nullptr || g_pMyInventoryExt == nullptr || g_pMyShopInventory == nullptr)
 	{
+#if defined(__ANDROID__) && TAKUMI_ANDROID_DEBUG_WEAR_INVENTORY
 		g_ErrorReport.Write("[ReceiveInventory] skip — inventory UI not ready\r\n");
+#endif
 		return TRUE;
 	}
 
 	if (ReceiveBuffer == nullptr || CharacterMachine == nullptr)
 	{
+#if defined(__ANDROID__) && TAKUMI_ANDROID_DEBUG_WEAR_INVENTORY
 		g_ErrorReport.Write("[ReceiveInventory] skip — null buffer or CharacterMachine\r\n");
+#endif
 		return TRUE;
 	}
 
@@ -2334,7 +2429,7 @@ BOOL ReceiveInventory(BYTE *ReceiveBuffer, BOOL bEncrypted)
 	const int maxItemsByWire = (wireSize > headerLen) ? ((wireSize - headerLen) / entryLen) : 0;
 	if (itemCount > maxItemsByWire)
 	{
-#if defined(__ANDROID__)
+#if defined(__ANDROID__) && TAKUMI_ANDROID_DEBUG_WEAR_INVENTORY
 		g_ErrorReport.Write(
 			"[ReceiveInventory] clamp count %d -> %d (wireSize=%d)\r\n",
 			itemCount,
@@ -2356,7 +2451,7 @@ BOOL ReceiveInventory(BYTE *ReceiveBuffer, BOOL bEncrypted)
 		LPPRECEIVE_INVENTORY Data2 = (LPPRECEIVE_INVENTORY)(ReceiveBuffer + Offset);
 		if (!TakumiIsValidItemWire(Data2->Item))
 		{
-#if defined(__ANDROID__)
+#if defined(__ANDROID__) && TAKUMI_ANDROID_DEBUG_WEAR_INVENTORY
 			g_ErrorReport.Write(
 				"[ReceiveInventory] skip invalid item slot=%u wire=%02X%02X%02X\r\n",
 				(unsigned)Data2->Index,
@@ -2396,7 +2491,7 @@ BOOL ReceiveInventory(BYTE *ReceiveBuffer, BOOL bEncrypted)
 	{
 		SetCharacterClass(Hero);
 		CreatePetDarkSpirit_Now(Hero);
-#if defined(__ANDROID__)
+#if defined(__ANDROID__) && TAKUMI_ANDROID_DEBUG_WEAR_INVENTORY
 		if (g_pMyInventory != nullptr && CharacterAttribute != nullptr)
 		for (int eq = 0; eq < MAX_EQUIPMENT_INDEX; ++eq)
 		{
@@ -2427,7 +2522,9 @@ BOOL ReceiveInventory(BYTE *ReceiveBuffer, BOOL bEncrypted)
 	}
 	
 	g_ConsoleDebug->Write(MCD_RECEIVE, "0x10 [ReceiveInventory] count=%d applied=%d", Data->Value, applied);
+#if !defined(__ANDROID__) || TAKUMI_ANDROID_DEBUG_WEAR_INVENTORY
 	g_ErrorReport.Write("[ReceiveInventory] count=%d applied=%d\r\n", Data->Value, applied);
+#endif
 	
 	return ( TRUE);
 }
@@ -2903,7 +3000,7 @@ BOOL ReceiveTeleport(BYTE *ReceiveBuffer, BOOL bEncrypted)
 	BYTE teleAngle = 0;
 	TakumiParseTeleportWire(ReceiveBuffer, &teleFlag, &teleMap, &teleX, &teleY, &teleAngle);
 
-#if defined(__ANDROID__)
+#if defined(__ANDROID__) && TAKUMI_ANDROID_DEBUG_PROTOCOL
 	g_ErrorReport.Write(
 		"[AndroidLogin] ReceiveTeleport flag=%u map=%u xy=(%u,%u) len=%u worldBefore=%d\r\n",
 		(unsigned)teleFlag,
@@ -2970,10 +3067,12 @@ BOOL ReceiveTeleport(BYTE *ReceiveBuffer, BOOL bEncrypted)
 #if defined(__ANDROID__)
 			// server-next follows 0x1C flag=1 with F3 03; defer LoadWorld there. Do not set
 			// WorldActive yet — ReceiveJoinMapServer uses terrain-loaded map vs join map.
+#if TAKUMI_ANDROID_DEBUG_PROTOCOL
 			g_ErrorReport.Write(
 				"[AndroidLogin] ReceiveTeleport cross-map %d→%d — skip LoadWorld (wait F3 03)\r\n",
 				OldWorld,
 				teleMap);
+#endif
 #else
 			gMapManager.WorldActive = destMap;
 			gMapManager.LoadWorld(gMapManager.WorldActive);
@@ -3034,7 +3133,16 @@ BOOL ReceiveTeleport(BYTE *ReceiveBuffer, BOOL bEncrypted)
 				}
 			}
 		}
+#if defined(__ANDROID__)
+		// Cross-map: F3 03 defers LoadWorld; TakumiProcessAndroidPendingLoadWorld sends F3 12 once.
+		// Early F3 12 here caused duplicate C2 0x13 bursts and hitch while still in combat.
+		if (teleFlag == 0 || teleMap == gMapManager.WorldActive)
+		{
+			SendRequestFinishLoading();
+		}
+#else
 		SendRequestFinishLoading();
+#endif
 
 		LoadingWorld = 30;
 
@@ -3936,6 +4044,19 @@ void ReceiveCreateMonsterViewport( BYTE *ReceiveBuffer )
 		}
 
 		CHARACTER *c = CreateMonster(Type,Data2->PositionX,Data2->PositionY,Key);
+
+#if defined(__ANDROID__)
+		if (i == 0)
+		{
+			g_ErrorReport.Write(
+				"[ReceiveCreateMonsterViewport] batch=%d first type=%d key=%d xy=(%d,%d)\r\n",
+				mobCount,
+				Type,
+				Key,
+				Data2->PositionX,
+				Data2->PositionY);
+		}
+#endif
 		
 		g_ConsoleDebug->Write(MCD_RECEIVE, "0x13 [ReceiveCreateMonsterViewport(Type : %d | Key : %d)]", Type, Key);
 		
@@ -8589,6 +8710,13 @@ void TakumiSendMeleeAttack(WORD targetKey, BYTE dir)
 		return;
 	}
 
+#if defined(__ANDROID__) && TAKUMI_ANDROID_DEBUG_PROTOCOL
+	g_ErrorReport.Write(
+		"[AndroidCombat] TakumiSendMeleeAttack targetKey=%u dir=%u\r\n",
+		static_cast<unsigned int>(targetKey),
+		static_cast<unsigned int>(dir));
+#endif
+
 	CStreamPacketEngine spe;
 	spe.Init(0xC1, 0x11);
 	spe << static_cast<BYTE>(targetKey >> 8)
@@ -12741,6 +12869,7 @@ void ReceiveChangeMapServerInfo ( BYTE* ReceiveBuffer )
 void ReceiveChangeMapServerResult ( BYTE* ReceiveBuffer )
 {
     LPPHEADER_DEFAULT Data = (LPPHEADER_DEFAULT)ReceiveBuffer;
+#if defined(__ANDROID__) && TAKUMI_ANDROID_DEBUG_PROTOCOL
     g_ErrorReport.Write("[AndroidLogin] ReceiveChangeMapServerResult result=0x%02X logIn=%d reconnectStatus=%u reconnectProgress=%u\r\n",
         Data->Value,
         LogIn,
@@ -12752,6 +12881,7 @@ void ReceiveChangeMapServerResult ( BYTE* ReceiveBuffer )
         0
 #endif
     );
+#endif
 
 #if(UseReconnect)
     bool reconnectJoinPending =
@@ -15523,12 +15653,14 @@ BOOL TranslateProtocol( int HeadCode, BYTE *ReceiveBuffer, int Size, BOOL bEncry
 	case 0xF1:     			
 		{
 			LPPHEADER_DEFAULT_SUBCODE Data = (LPPHEADER_DEFAULT_SUBCODE)ReceiveBuffer;
+#if defined(__ANDROID__) && TAKUMI_ANDROID_DEBUG_PROTOCOL
 			g_ErrorReport.Write(
 				"[AndroidLogin] Translate F1 sub=0x%02X value=0x%02X size=%d enc=%d\r\n",
 				Data->SubCode,
 				Data->Value,
 				Size,
 				bEncrypted);
+#endif
 			switch( Data->SubCode )
 			{
 			case 0xA5:

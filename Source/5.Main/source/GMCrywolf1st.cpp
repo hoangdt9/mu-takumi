@@ -74,7 +74,7 @@ void M34CryWolf1st::CryWolfMVPInit()
 	m_dwSyncTime = -1;
 	Add_Num = 10;
 	TargetNpc = -1;
-	Delay = 1;
+	Delay = 0;
 	Dark_Elf_Check = false;
 
 	iNextNotice = -1;
@@ -87,6 +87,28 @@ void M34CryWolf1st::CryWolfMVPInit()
 	m_CrywolfState = 0;
 	m_StatueHP = 0;
 	SelectedNpc = -1;
+
+	Suc_Or_Fail = -1;
+	View_Suc_Or_Fail = -1;
+	View_End_Result = false;
+	Delay_Add_inter = 0;
+	Rank = 0;
+	Exp = 0;
+	for (int i = 0; i < 5; ++i)
+	{
+		HeroScore[i] = -1;
+	}
+}
+
+void M34CryWolf1st::DismissCrywolfMvpOverlay()
+{
+	Suc_Or_Fail = -1;
+	View_Suc_Or_Fail = -1;
+	View_End_Result = false;
+	Delay = 0;
+	Delay_Add_inter = 0;
+	Button_Down = 0;
+	Message_Box = 0;
 }
 
 int M34CryWolf1st::IsCryWolf1stMVPStart()
@@ -2501,6 +2523,12 @@ bool M34CryWolf1st::Render_Mvp_Interface()
 		
 		if((Delay*15) > 479)
 		{
+			if (Suc_Or_Fail == 0)
+			{
+				Delay = 0;
+				Suc_Or_Fail = -1;
+				Delay_Add_inter = 0;
+			}
 			g_pCryWolfInterface->Render(150, 50, 329, 94, 0.f, 0.f,328.f/512.f, 93.f/128.f,Add_Num,false,false,A_Value);
 		}
 		else if(Suc_Or_Fail == 0)
@@ -2512,10 +2540,7 @@ bool M34CryWolf1st::Render_Mvp_Interface()
 			{
 				Delay = 0;
 				Suc_Or_Fail = -1;
-				
-				Delay_Add_inter = 390;
-				View_End_Result = true;
-				
+				Delay_Add_inter = 0;
 			}
 		}
 		else

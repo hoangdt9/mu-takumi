@@ -13,7 +13,82 @@
 #include "SocketSystem.h"
 #include "MapManager.h"
 #include "MixMgr.h"
+#include "Utilities/Log/TakumiAndroidUiPerf.h"
 using namespace SEASON3B;
+
+#if TAKUMI_ANDROID_UI_ITEM_PLACEHOLDER_2D
+namespace
+{
+	void TakumiRenderInventoryItemPlaceholder2D(
+		float x,
+		float y,
+		float width,
+		float height,
+		const ITEM* item)
+	{
+		if (item == nullptr || width <= 0.0f || height <= 0.0f)
+		{
+			return;
+		}
+
+		float r = 0.35f;
+		float g = 0.55f;
+		float b = 0.75f;
+		float a = 0.55f;
+
+		switch (item->byColorState)
+		{
+		case ITEM_COLOR_DURABILITY_50:
+			r = 1.0f; g = 1.0f; b = 0.0f; a = 0.45f;
+			break;
+		case ITEM_COLOR_DURABILITY_70:
+			r = 1.0f; g = 0.66f; b = 0.0f; a = 0.45f;
+			break;
+		case ITEM_COLOR_DURABILITY_80:
+			r = 1.0f; g = 0.33f; b = 0.0f; a = 0.45f;
+			break;
+		case ITEM_COLOR_DURABILITY_100:
+			r = 1.0f; g = 0.0f; b = 0.0f; a = 0.45f;
+			break;
+		case ITEM_COLOR_TRADE_WARNING:
+			r = 1.0f; g = 0.2f; b = 0.1f; a = 0.45f;
+			break;
+		default:
+			break;
+		}
+
+		EnableAlphaTest();
+		glColor4f(r, g, b, a);
+		RenderColor(x + 1.0f, y + 1.0f, width - 2.0f, height - 2.0f);
+		EndRenderColor();
+		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+	}
+}
+#endif
+
+#if TAKUMI_ANDROID_UI_LIGHT_INVENTORY_ITEM_3D
+namespace
+{
+	bool TakumiInventoryItemNeeds3D(
+		SEASON3B::CNewUIInventoryCtrl* inventory,
+		const ITEM* item)
+	{
+		if (item == nullptr || inventory == nullptr)
+		{
+			return false;
+		}
+
+		const SEASON3B::CNewUIPickedItem* picked = SEASON3B::CNewUIInventoryCtrl::GetPickedItem();
+		if (picked != nullptr && picked->GetItem() == item)
+		{
+			return true;
+		}
+
+		const ITEM* pointedItem = inventory->FindItemPointedSquareIndex();
+		return pointedItem == item;
+	}
+}
+#endif
 
 SEASON3B::CNewUIPickedItem::CNewUIPickedItem()
 {
@@ -945,11 +1020,28 @@ void SEASON3B::CNewUIInventoryCtrl::UpdateProcess()
 void SEASON3B::CNewUIInventoryCtrl::Render()
 {
 	int x, y;
+
+#if TAKUMI_ANDROID_UI_SPARSE_INVENTORY_GRID
+	const int gridPixelW = m_nColumn * INVENTORY_SQUARE_WIDTH;
+	const int gridPixelH = m_nRow * INVENTORY_SQUARE_HEIGHT;
+	EnableAlphaTest();
+	RenderImage(IMAGE_ITEM_SQUARE, m_Pos.x, m_Pos.y, gridPixelW, gridPixelH);
+#endif
+
 	for (y = 0; y < m_nRow; y++)
 	{
 		for (x = 0; x < m_nColumn; x++)
 		{
 			const int iCurSquareIndex = y * m_nColumn + x;
+
+#if TAKUMI_ANDROID_UI_SPARSE_INVENTORY_GRID
+			const bool cellOccupied = m_pdwItemCheckBox[iCurSquareIndex] > 1;
+			const bool cellPointed = (m_iPointedSquareIndex == iCurSquareIndex + m_nIndexOffset);
+			if (!cellOccupied && !cellPointed)
+			{
+				continue;
+			}
+#endif
 
 			if (m_pdwItemCheckBox[iCurSquareIndex] > 1)
 			{
@@ -999,7 +1091,9 @@ void SEASON3B::CNewUIInventoryCtrl::Render()
 			}
 
 			EnableAlphaTest();
+#if !TAKUMI_ANDROID_UI_SPARSE_INVENTORY_GRID
 			RenderImage(IMAGE_ITEM_SQUARE, m_Pos.x + (x * INVENTORY_SQUARE_WIDTH), m_Pos.y + (y * INVENTORY_SQUARE_HEIGHT), 21, 21);
+#endif
 		}
 	}
 
@@ -1627,6 +1721,16 @@ void SEASON3B::CNewUIInventoryCtrl::Render3D()
 		const float y = m_Pos.y + (pItem->y * INVENTORY_SQUARE_HEIGHT);
 		const float width = pItemAttr->Width * INVENTORY_SQUARE_WIDTH;
 		const float height = pItemAttr->Height * INVENTORY_SQUARE_HEIGHT;
+
+#if TAKUMI_ANDROID_UI_LIGHT_INVENTORY_ITEM_3D
+		if (!TakumiInventoryItemNeeds3D(this, pItem))
+		{
+#if TAKUMI_ANDROID_UI_ITEM_PLACEHOLDER_2D
+			TakumiRenderInventoryItemPlaceholder2D(x, y, width, height, pItem);
+#endif
+			continue;
+		}
+#endif
 		glColor4f(1.f, 1.f, 1.f, 1.f);
 
 		RenderItem3D(x, y, width, height, pItem->Type, pItem->Level, pItem->Option1, pItem->ExtOption, false);

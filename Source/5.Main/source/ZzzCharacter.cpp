@@ -69,6 +69,7 @@
 #endif //PBG_ADD_NEWCHAR_MONK
 #ifdef __ANDROID__
 #include "./Utilities/Log/ErrorReport.h"
+#include "./Utilities/Log/TakumiAndroidDiag.h"
 #endif
 #include <algorithm>
 extern float CameraDistanceTarget;
@@ -14347,7 +14348,7 @@ static void TakumiEnsurePreviewWeaponModelLoaded(int modelType, CHARACTER* c)
 				if (b->NumMeshs > 0)
 				{
 					TakumiOpenWeaponTextures(modelType);
-#if defined(__ANDROID__)
+#if defined(__ANDROID__) && TAKUMI_ANDROID_DEBUG_WEAR_INVENTORY
 					g_ErrorReport.Write(
 						"[TakumiWear] MG sword load Sword%d itemSub=%d meshs=%d\r\n",
 						swordNum,
@@ -14367,7 +14368,7 @@ static void TakumiEnsurePreviewWeaponModelLoaded(int modelType, CHARACTER* c)
 
 			if (TakumiTryLoadNamedItemModels(modelType, b, mgSaintSwordModels))
 			{
-#if defined(__ANDROID__)
+#if defined(__ANDROID__) && TAKUMI_ANDROID_DEBUG_WEAR_INVENTORY
 				g_ErrorReport.Write(
 					"[TakumiWear] MG sword load named BMD itemSub=%d meshs=%d\r\n",
 					index,
@@ -14422,7 +14423,7 @@ static void TakumiEnsureCharacterWearModelsLoaded(CHARACTER* c)
 		TakumiEnsurePreviewWeaponModelLoaded(c->Weapon[1].Type, c);
 	}
 
-#ifdef __ANDROID__
+#if defined(__ANDROID__) && TAKUMI_ANDROID_DEBUG_WEAR_INVENTORY
 	const int armorModel = c->BodyPart[BODYPART_ARMOR].Type;
 	if (armorModel >= MODEL_ARMOR)
 	{
@@ -14681,7 +14682,7 @@ void ChangeCharacterExt(int Key,BYTE *Equipment, CHARACTER * pCharacter, OBJECT 
 	}
 
 	TakumiApplyPreviewTier3Wing(c, Equipment);
-#ifdef __ANDROID__
+#if defined(__ANDROID__) && TAKUMI_ANDROID_DEBUG_WEAR_INVENTORY
 	if (c->Wing.Type >= MODEL_WING)
 	{
 		g_ErrorReport.Write(

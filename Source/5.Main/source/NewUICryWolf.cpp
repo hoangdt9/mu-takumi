@@ -125,10 +125,28 @@ void SEASON3B::CNewUICryWolf::SetPos(int x, int y)
 
 bool SEASON3B::CNewUICryWolf::UpdateMouseEvent()
 {
+	if (Suc_Or_Fail >= 0 || View_End_Result)
+	{
+		if (SEASON3B::IsPress(VK_LBUTTON) || SEASON3B::IsPress(VK_RBUTTON))
+		{
+			M34CryWolf1st::DismissCrywolfMvpOverlay();
+			PlayBuffer(SOUND_CLICK01);
+			return false;
+		}
+	}
 	return true;
 }
 bool SEASON3B::CNewUICryWolf::UpdateKeyEvent()
 {
+	if (Suc_Or_Fail >= 0 || View_End_Result)
+	{
+		if (SEASON3B::IsPress(VK_ESCAPE))
+		{
+			M34CryWolf1st::DismissCrywolfMvpOverlay();
+			PlayBuffer(SOUND_CLICK01);
+			return false;
+		}
+	}
 	return true;
 }
 
@@ -179,6 +197,12 @@ bool SEASON3B::CNewUICryWolf::Render()
 		
 		if((Delay*15) > 479)
 		{
+			if (Suc_Or_Fail == 0)
+			{
+				Delay = 0;
+				Suc_Or_Fail = -1;
+				Delay_Add_inter = 0;
+			}
 			g_pCryWolfInterface->Render(150, 50, 329, 94, 0.f,0.f,328.f/512.f, 93.f/128.f,Add_Num,false,false,A_Value);
 		}
 		else if(Suc_Or_Fail == 0)
@@ -190,10 +214,7 @@ bool SEASON3B::CNewUICryWolf::Render()
 			{
 				Delay = 0;
 				Suc_Or_Fail = -1;
-				
-				Delay_Add_inter = 390;
-				View_End_Result = true;
-				SEASON3B::CreateMessageBox(MSGBOX_LAYOUT_CLASS(SEASON3B::CCry_Wolf_Result_Set_Temple));
+				Delay_Add_inter = 0;
 			}
 		}
 		else

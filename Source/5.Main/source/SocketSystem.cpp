@@ -33,14 +33,6 @@ CSocketItemMgr::~CSocketItemMgr()
 
 BOOL CSocketItemMgr::IsSocketItem(const ITEM * pItem)
 {
-	for (int i = 0; i < MAX_SOCKETS; ++i)
-	{
-		if (pItem->SocketSeedID[i] == 0xFF)
-		{
-			return 1;
-		}
-	}
-
 	return IsSocketItem(pItem->Type);
 }
 

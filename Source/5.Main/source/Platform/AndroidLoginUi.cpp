@@ -14,6 +14,15 @@
 #include "WSclient.h"
 #include "wsclientinline.h"
 #include "Utilities/Log/ErrorReport.h"
+#include "Utilities/Log/TakumiAndroidDiag.h"
+
+#if TAKUMI_ANDROID_DEBUG_PROTOCOL
+#define TAKUMI_JOINUI_LOG(...) g_ErrorReport.Write(__VA_ARGS__)
+#define TAKUMI_JOINUI_ALOG(...) __android_log_print(__VA_ARGS__)
+#else
+#define TAKUMI_JOINUI_LOG(...) ((void)0)
+#define TAKUMI_JOINUI_ALOG(...) ((void)0)
+#endif
 
 extern "C" void SendServerListRequest(int32_t handle);
 
@@ -103,7 +112,7 @@ void AndroidFinishDirectGameLoginUi(unsigned short gamePort, const char* hostLab
 		}
 	}
 
-	g_ErrorReport.Write(
+	TAKUMI_JOINUI_LOG(
 		"[TakumiLoginBg] opened LoginWin via direct %s:%u (F4 03 bypass; wait F1 00)\r\n",
 		hostLabel != nullptr ? hostLabel : "?",
 		static_cast<unsigned>(gamePort));
@@ -139,7 +148,7 @@ bool AndroidTryReconnectLoopbackConnect()
 		SendServerListRequest(static_cast<int32_t>(fd));
 	}
 
-	g_ErrorReport.Write(
+	TAKUMI_JOINUI_LOG(
 		"[TakumiLoginBg] LAN had no C2 F4 06 — retry connect via 127.0.0.1:%u (Docker Desktop / adb reverse)\r\n",
 		static_cast<unsigned>(g_ServerPort));
 	return true;
@@ -211,7 +220,7 @@ void MU_AndroidBeginJoinServerWait(const char* gameHost, int gamePort)
 		s_joinGameHost[0] = '\0';
 	}
 
-	g_ErrorReport.Write(
+	TAKUMI_JOINUI_LOG(
 		"[AndroidLogin] join-server wait begin host=%s port=%d (expect C1 F1 00 from game-host)\r\n",
 		s_joinGameHost,
 		s_joinGamePort);
@@ -255,7 +264,7 @@ void MU_AndroidTickJoinServerWait()
 
 	if (CurrentProtocolState == RECEIVE_JOIN_SERVER_SUCCESS)
 	{
-		g_ErrorReport.Write(
+		TAKUMI_JOINUI_LOG(
 			"[AndroidLogin] join-server ready after %u ms (F1 00)\r\n",
 			elapsedMs);
 		MU_AndroidDismissLoginWaitMsgIfShown();
@@ -269,7 +278,7 @@ void MU_AndroidTickJoinServerWait()
 		&& s_joinGamePort > 0)
 	{
 		s_joinServerRetriedConnect = true;
-		g_ErrorReport.Write(
+		TAKUMI_JOINUI_LOG(
 			"[AndroidLogin] no F1 00 after %u ms — retry game TCP %s:%d (Docker game-host may have just finished building)\r\n",
 			elapsedMs,
 			s_joinGameHost,
@@ -286,7 +295,7 @@ void MU_AndroidTickJoinServerWait()
 				ProtocolCompiler();
 				if (CurrentProtocolState == RECEIVE_JOIN_SERVER_SUCCESS)
 				{
-					g_ErrorReport.Write(
+					TAKUMI_JOINUI_LOG(
 						"[AndroidLogin] join-server ready after game TCP retry (%u ms)\r\n",
 						MU_MobileGetTicks() - s_joinServerWaitStartMs);
 					MU_AndroidDismissLoginWaitMsgIfShown();
@@ -334,7 +343,7 @@ void MU_AndroidSetPreferLoopbackTcp(const bool prefer)
 void MU_AndroidNotifyWireServerListReceived()
 {
 	s_gotWireServerList = true;
-	g_ErrorReport.Write("[TakumiLoginBg] received wire C2 F4 06 server list\r\n");
+	TAKUMI_JOINUI_LOG("[TakumiLoginBg] received wire C2 F4 06 server list\r\n");
 }
 
 void MU_AndroidResetLoginSceneConnectFallback()
@@ -362,7 +371,7 @@ void MU_AndroidRevealLoginServerUi()
 		rUIMng.m_ServerSelWin.UpdateDisplay();
 	}
 
-	__android_log_print(
+	TAKUMI_JOINUI_ALOG(
 		ANDROID_LOG_INFO,
 		"TakumiErrorReport",
 		"[TakumiLoginBg] reveal server/login UI (cinematic stays as background)\r\n");
@@ -388,7 +397,7 @@ static void AndroidApplyDefaultConnectServerListIfEmpty()
 		g_ServerListManager->InsertServerGroup(connectId, 0);
 	}
 
-	__android_log_print(
+	TAKUMI_JOINUI_ALOG(
 		ANDROID_LOG_INFO,
 		"TakumiErrorReport",
 		"[TakumiLoginBg] applied default F4 06 server groups (fallback)\r\n");
@@ -448,7 +457,7 @@ void MU_AndroidTickLoginSceneConnectFallback()
 	MU_AndroidRevealLoginServerUi();
 	s_connectFallbackDone = true;
 
-	g_ErrorReport.Write(
+	TAKUMI_JOINUI_LOG(
 		"[TakumiLoginBg] connect fallback: revealed login/server UI after %u ms (no C2 F4 06 yet)\r\n",
 		elapsedMs);
 }
@@ -479,13 +488,13 @@ void MU_AndroidNotifyServerSubPickStarted()
 
 	if (MuLanDefaults::kTakumiSplitGameHostStack)
 	{
-		g_ErrorReport.Write(
+		TAKUMI_JOINUI_LOG(
 			"[TakumiLoginBg] sub-server picked — M6 split stack: wait F4 03 → game TCP :%u (no 44606 bypass)\r\n",
 			static_cast<unsigned>(MuLanDefaults::kTakumiGameTcpPort));
 	}
 	else
 	{
-		g_ErrorReport.Write("[TakumiLoginBg] sub-server picked — waiting for F4 03 on connect socket\r\n");
+		TAKUMI_JOINUI_LOG("[TakumiLoginBg] sub-server picked — waiting for F4 03 on connect socket\r\n");
 	}
 }
 
@@ -514,7 +523,7 @@ void MU_AndroidTickLoginAfterServerPickFallback()
 
 		if (rUIMng.m_LoginWin.IsShow())
 		{
-			g_ErrorReport.Write(
+			TAKUMI_JOINUI_LOG(
 				"[TakumiLoginBg] LoginWin via ReceiveServerConnect after %u ms\r\n",
 				elapsedMs);
 			s_serverPickStartMs = 0;
@@ -529,7 +538,7 @@ void MU_AndroidTickLoginAfterServerPickFallback()
 		if (connectIndex >= 0 && fd != INVALID_SOCKET && static_cast<int>(fd) > 0)
 		{
 			SendRequestServerAddress(connectIndex);
-			g_ErrorReport.Write(
+			TAKUMI_JOINUI_LOG(
 				"[TakumiLoginBg] retry C1 F4 03 connectIndex=%d fd=%d elapsed=%u ms\r\n",
 				connectIndex,
 				static_cast<int>(fd),

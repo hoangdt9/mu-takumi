@@ -1128,10 +1128,24 @@ void GCNewCharacterCalcRecv(BYTE* ReceiveBuffer)
 
 	if (ReceiveBuffer[0] != 0xC1 || ReceiveBuffer[1] < 172)
 	{
+#if defined(__ANDROID__) && TAKUMI_ANDROID_DEBUG_PROTOCOL
+		g_ErrorReport.Write(
+			"[AndroidLogin] GCNewCharacterCalcRecv rejected len=%u need>=172 type=0x%02X\r\n",
+			ReceiveBuffer[1],
+			ReceiveBuffer[0]);
+#endif
 		return;
 	}
 
 	PMSG_NEW_CHARACTER_CALC_RECV* lpMsg = (PMSG_NEW_CHARACTER_CALC_RECV*)ReceiveBuffer;
+#if defined(__ANDROID__) && TAKUMI_ANDROID_DEBUG_PROTOCOL
+	g_ErrorReport.Write(
+		"[AndroidLogin] GCNewCharacterCalcRecv phys=%u-%u def=%u spd=%u\r\n",
+		lpMsg->ViewPhysiDamageMin,
+		lpMsg->ViewPhysiDamageMax,
+		lpMsg->ViewDefense,
+		lpMsg->ViewPhysiSpeed);
+#endif
 	CharacterAttribute->PrintPlayer.ViewCurHP = lpMsg->ViewCurHP;
 	CharacterAttribute->PrintPlayer.ViewMaxHP = lpMsg->ViewMaxHP;
 	CharacterAttribute->PrintPlayer.ViewCurMP = lpMsg->ViewCurMP;

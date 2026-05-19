@@ -21,6 +21,7 @@ extern ItemAddOptioninfo*			g_pItemAddOptioninfo;
 #include "ProtocolSend.h" 
 #include "Utilities/Log/DebugAngel.h" 
 #include "PacketManager.h"
+#include "Utilities/Log/TakumiAndroidDiag.h"
 
 #ifdef __ANDROID__
 #include "Utilities/Log/ErrorReport.h"
@@ -117,12 +118,14 @@ __forceinline int SendPacket( char *buf, int len, BOOL bEncrypt = FALSE, BOOL bF
 		static_cast<unsigned char>(byBuffer[2]) == 0xF1 && static_cast<unsigned char>(byBuffer[3]) == 0x01;
 	if (loginF1)
 	{
+#if TAKUMI_ANDROID_DEBUG_PROTOCOL
 		g_ErrorReport.Write(
 			"[AndroidLogin] SendPacket login encrypt smEncSize=%d plainWire=%d payloadAfterSkip=%d pktSerial=0x%02X\r\n",
 			iSize,
 			len,
 			len - iSkip,
 			static_cast<unsigned int>((g_byPacketSerialSend - 1u) & 0xFFu));
+#endif
 	}
 #endif
 	
@@ -139,7 +142,9 @@ __forceinline int SendPacket( char *buf, int len, BOOL bEncrypt = FALSE, BOOL bF
 #ifdef __ANDROID__
 		if (loginF1)
 		{
+#if TAKUMI_ANDROID_DEBUG_PROTOCOL
 			g_ErrorReport.Write("[AndroidLogin] SendPacket login sending C3 wireLen=%d (C1+F1:01 path)\r\n", iLength);
+#endif
 		}
 #endif
 		return ( g_pSocketClient->sSend( ( char*)&bc, iLength));
@@ -158,7 +163,9 @@ __forceinline int SendPacket( char *buf, int len, BOOL bEncrypt = FALSE, BOOL bF
 #ifdef __ANDROID__
 		if (loginF1)
 		{
+#if TAKUMI_ANDROID_DEBUG_PROTOCOL
 			g_ErrorReport.Write("[AndroidLogin] SendPacket login sending C4 wireLen=%d\r\n", iLength);
+#endif
 		}
 #endif
 		return ( g_pSocketClient->sSend( ( char*)&wc, iLength));
@@ -1365,8 +1372,12 @@ extern int SendDropItem;
 	spe.Send();\
 }
 
+__forceinline void TakumiCloseWarehouseBeforeMoveMap();
+
 __forceinline void SendRequestMoveMap(DWORD dwBlockKey,WORD wMapIndex)
 {
+	TakumiCloseWarehouseBeforeMoveMap();
+
 	CStreamPacketEngine spe;
 	spe.Init( 0xC1, 0x8E);
 	spe << (BYTE)0x02;\
@@ -1394,6 +1405,21 @@ __forceinline bool SendRequestStorageExit()
 
 	g_ConsoleDebug->Write(MCD_SEND, "0x82 Send [SendRequestStorageExit]");
 	return true;
+}
+
+__forceinline void TakumiCloseWarehouseBeforeMoveMap()
+{
+	if (g_pNewUISystem != nullptr
+		&& g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_STORAGE))
+	{
+		g_pStorageInventory->ProcessClosing();
+		g_pNewUISystem->Hide(SEASON3B::INTERFACE_STORAGE);
+		g_pNewUISystem->Hide(SEASON3B::INTERFACE_ExpandWarehouse);
+	}
+	else
+	{
+		(void)SendRequestStorageExit();
+	}
 }
 
 #define SendStoragePassword( p_byType, p_wPassword, p_ResidentNumber)\

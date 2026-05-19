@@ -29,11 +29,15 @@ namespace SEASON3B
 	{
 		INPUTBOX_WIDTH = 50,
 		INPUTBOX_HEIGHT = 12,
+		/// <summary>Wider field so 10-digit zen amounts fit on mobile.</summary>
+		INPUTBOX_ZEN_WIDTH = 110,
 
 		INPUTBOX_TEXTLIMIT = 8,
 		/// <summary>Vault/trade zen entry — up to 2,000,000,000 (10 digits).</summary>
 		INPUTBOX_ZEN_TEXTLIMIT = 10,
 	};
+
+	constexpr long long WAREHOUSE_ZEN_CAP = 2000000000LL;
 
 	class CNewUITextInputMsgBox : public CNewUIMessageBoxBase
 	{

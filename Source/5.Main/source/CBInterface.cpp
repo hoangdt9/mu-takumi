@@ -14,6 +14,9 @@
 #include "CBChoTroi.h"
 #include "CB_AutoNapGame.h"
 #include "CB_DanhHieu.h"
+#if defined(__ANDROID__)
+#include "Utilities/Log/TakumiAndroidUiPerf.h"
+#endif
 #if(JEWELBANKVER2)
 #include "CB_NewJewelBank.h"
 #else
@@ -505,7 +508,7 @@ bool Interface::ActionSendItemGS(ITEM* ItemSell, int Slot)
 }
 void Interface::Init()
 {
-#ifdef __ANDROID__
+#if defined(__ANDROID__) && TAKUMI_ANDROID_UI_DEBUG_TRACE
 #define ANDROID_IF_STAGE(msg) do { OutputDebugStringA("UI_IFACE: " msg); g_ErrorReport.Write("[UI_IFACE] " msg "\r\n"); } while(0)
 #else
 #define ANDROID_IF_STAGE(msg) ((void)0)

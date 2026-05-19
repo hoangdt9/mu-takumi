@@ -69,13 +69,19 @@ public class PreloadActivity extends Activity {
                 urls.add(trimmedFb);
             }
         }
-        urls.add("http://update.daybreak.id.vn/update/data.zip");
+        // Public fallback often lacks LAN patch set (World74/75 leaf). Prefer LAN only unless explicitly configured.
+        if (fallback != null && !fallback.trim().isEmpty()) {
+            // already added above
+        } else if (lan == null || lan.trim().isEmpty()) {
+            urls.add("http://update.daybreak.id.vn/update/data.zip");
+        }
         return urls.toArray(new String[0]);
     }
     private static final String BASIC_AUTH_USERNAME = "admin";
     private static final String BASIC_AUTH_PASSWORD = "openmu";
     private static final String DATA_FOLDER_NAME = "Data";
-    private static final String DATA_READY_MARKER_FILE = ".mu_data_ready_v1";
+    // v2: require World74/75 leaf textures (see assets/data-patches).
+    private static final String DATA_READY_MARKER_FILE = ".mu_data_ready_v2";
     private static final String[] DATA_DIR_HINTS = {
         "Local",
         "Item",
@@ -110,7 +116,10 @@ public class PreloadActivity extends Activity {
         "Item/sd_soulsummonerstickA02_render.ozj",
         "Item/sd_soulsummonerstickA02.ozj",
         "Gate.bmd",
-        "Macro.txt"
+        "Macro.txt",
+        "World74/leaf01.ozt",
+        "World75/leaf01.ozt",
+        "World38/leaf01.ozt"
     };
     private static final String[] TAKUMI_REQUIRED_DIRS = {
         "Custom",
@@ -343,10 +352,12 @@ public class PreloadActivity extends Activity {
 
     private void runPreloadFlow() {
         final long totalStartMs = SystemClock.elapsedRealtime();
-        Log.i(TAG, "runPreloadFlow: DATA_ZIP_URL_LAN=" + BuildConfig.DATA_ZIP_URL_LAN
-            + " DATA_ZIP_URL_FALLBACK=" + BuildConfig.DATA_ZIP_URL_FALLBACK
-            + " DEV_SKIP_DATA_ZIP=" + BuildConfig.DEV_SKIP_DATA_ZIP
-            + " candidates=" + java.util.Arrays.toString(DATA_ZIP_URL_CANDIDATES));
+        if (BuildConfig.DEBUG) {
+            Log.d(TAG, "runPreloadFlow: DATA_ZIP_URL_LAN=" + BuildConfig.DATA_ZIP_URL_LAN
+                + " DATA_ZIP_URL_FALLBACK=" + BuildConfig.DATA_ZIP_URL_FALLBACK
+                + " DEV_SKIP_DATA_ZIP=" + BuildConfig.DEV_SKIP_DATA_ZIP
+                + " candidates=" + java.util.Arrays.toString(DATA_ZIP_URL_CANDIDATES));
+        }
         List<File> dataRoots = collectDataRoots();
         File installRoot = null;
         File fallbackUsableRoot = null;
@@ -375,10 +386,12 @@ public class PreloadActivity extends Activity {
                 }
 
                 File existingDataDir = findChildDirectoryIgnoreCase(root, DATA_FOLDER_NAME);
-                Log.i(TAG, "Check data root: " + root.getAbsolutePath()
-                    + " existingDataDir=" + (existingDataDir != null ? existingDataDir.getAbsolutePath() : "null")
-                    + " usable=" + isDataFolderUsable(existingDataDir)
-                    + " marker=" + new File(root, DATA_READY_MARKER_FILE).exists());
+                if (BuildConfig.DEBUG) {
+                    Log.d(TAG, "Check data root: " + root.getAbsolutePath()
+                        + " existingDataDir=" + (existingDataDir != null ? existingDataDir.getAbsolutePath() : "null")
+                        + " usable=" + isDataFolderUsable(existingDataDir)
+                        + " marker=" + new File(root, DATA_READY_MARKER_FILE).exists());
+                }
                 if (shouldSkipDownload(existingDataDir, root)) {
                     String dataPath = existingDataDir != null ? existingDataDir.getAbsolutePath() : "(unknown)";
                     postUi(() -> {
@@ -949,15 +962,16 @@ public class PreloadActivity extends Activity {
         // Debug builds: avoid re-downloading ~500MB data.zip on every reinstall when Data/ or marker
         // already exists (strict Takumi file list often forces download after partial/cached trees).
         if (BuildConfig.DEV_SKIP_DATA_ZIP) {
-            if (marker.exists()) {
-                Log.i(TAG, "DEV_SKIP_DATA_ZIP: marker exists → skip HTTP data.zip (set -PmuDevSkipDataZip=false to force sync)");
+            if (marker.exists() && isDataFolderUsable(existingDataDir)) {
+                Log.i(TAG, "DEV_SKIP_DATA_ZIP: marker + complete Data/ → skip HTTP data.zip "
+                    + "(set -PmuDevSkipDataZip=false to force sync)");
                 return true;
             }
-            if (isRelaxedDevDataPresent(existingDataDir)) {
-                writeDataReadyMarker(externalRoot, existingDataDir);
-                Log.i(TAG, "DEV_SKIP_DATA_ZIP: relaxed Data/ checks OK → skip HTTP data.zip at "
-                    + existingDataDir.getAbsolutePath());
-                return true;
+            if (marker.exists()) {
+                Log.i(TAG, "DEV_SKIP_DATA_ZIP: stale marker (missing leaf/patch files) → re-download data.zip");
+            }
+            if (isRelaxedDevDataPresent(existingDataDir) && !isDataFolderUsable(existingDataDir)) {
+                Log.i(TAG, "DEV_SKIP_DATA_ZIP: relaxed Data/ only — still need full Takumi patch set");
             }
         }
 

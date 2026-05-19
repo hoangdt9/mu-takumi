@@ -4,6 +4,7 @@
 #include "_struct.h"
 #include "ZzzInfomation.h"
 #include "Utilities/Log/ErrorReport.h"
+#include "Utilities/Log/TakumiAndroidDiag.h"
 
 #include <cstdarg>
 #include <cstdio>
@@ -14,6 +15,7 @@
 
 void ShopPriceTraceLog(const char* fmt, ...)
 {
+#if TAKUMI_ANDROID_DEBUG_WEAR_INVENTORY
 	char buf[768];
 	va_list ap;
 	va_start(ap, fmt);
@@ -23,6 +25,9 @@ void ShopPriceTraceLog(const char* fmt, ...)
 	g_ErrorReport.Write("[ShopPrice] %s\r\n", buf);
 #if defined(__ANDROID__)
 	__android_log_print(ANDROID_LOG_INFO, "TakumiErrorReport", "[ShopPrice] %s", buf);
+#endif
+#else
+	(void)fmt;
 #endif
 }
 

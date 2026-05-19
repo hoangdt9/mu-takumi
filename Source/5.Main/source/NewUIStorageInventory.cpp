@@ -306,9 +306,6 @@ void CNewUIStorageInventory::ChangeLockBtnImage()
 
 bool CNewUIStorageInventory::ProcessClosing()
 {
-	if (EquipmentItem)
-		return false;
-
 	SEASON3B::CNewUIInventoryCtrl::BackupPickedItem();
 	DeleteAllItems();
 	SendRequestStorageExit();

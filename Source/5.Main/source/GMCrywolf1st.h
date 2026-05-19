@@ -29,6 +29,7 @@ namespace M34CryWolf1st {		//. 크라이울프 점령지
 	void ChangeBackGroundMusic(int World);
 	void RenderNoticesCryWolf();
 	void CryWolfMVPInit();
+	void DismissCrywolfMvpOverlay();
 	int IsCryWolf1stMVPStart();
 	bool IsCryWolf1stMVPStatePeace();
 	void CheckCryWolf1stMVPAltarfInfo(int StatueHP, BYTE AltarState1, BYTE AltarState2, BYTE AltarState3, BYTE AltarState4, BYTE AltarState5);

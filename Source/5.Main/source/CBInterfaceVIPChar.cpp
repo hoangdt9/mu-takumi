@@ -11,12 +11,14 @@
 #include "ZzzInterface.h"
 #include "ZzzTexture.h"
 #include "MemScript.h"
-
+#if defined(__ANDROID__)
+#include "Utilities/Log/TakumiAndroidUiPerf.h"
+#endif
 
 #if(CB_VIP_CHAR)
 CBInterfaceVIPChar* gBInterfaceVIPChar = nullptr;
 
-#ifdef __ANDROID__
+#if defined(__ANDROID__) && TAKUMI_ANDROID_UI_DEBUG_TRACE
 #define ANDROID_VIP_STAGE(msg) do { OutputDebugStringA("UI_VIP: " msg); g_ErrorReport.Write("[UI_VIP] " msg "\r\n"); } while(0)
 #else
 #define ANDROID_VIP_STAGE(msg) ((void)0)

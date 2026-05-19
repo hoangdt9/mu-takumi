@@ -6,6 +6,7 @@
 #include "GameConfig/MuLanDefaults.h"
 #include "SimpleModulusCrypt.h"
 #include "Utilities/Log/ErrorReport.h"
+#include "Utilities/Log/TakumiAndroidDiag.h"
 #include "WSclient.h"
 #include "TcpKeepAlive.h"
 
@@ -107,8 +108,8 @@ struct AndroidConnState
     uint64_t lastRecvBytes;
     float uploadKBps;
     float downloadKBps;
-    /// Raw recv snippets for TakumiErrorReport — per socket so connect-server traffic cannot exhaust game-port logs.
-    std::atomic<int> takumiRecvDiagRemaining { 256 };
+    /// Raw recv snippets for TakumiErrorReport — per socket (0 when TAKUMI_ANDROID_DEBUG_PROTOCOL=0).
+    std::atomic<int> takumiRecvDiagRemaining { TAKUMI_ANDROID_DEBUG_PROTOCOL ? 256 : 0 };
 
     explicit AndroidConnState(bool isEncrypted)
         : running(std::make_shared<std::atomic<bool>>(true))
@@ -420,6 +421,7 @@ void RecvLoop(
 
         if (connState && connState->takumiRecvDiagRemaining.fetch_sub(1) > 0)
         {
+#if TAKUMI_ANDROID_DEBUG_PROTOCOL
             __android_log_print(
                 ANDROID_LOG_INFO,
                 "TakumiErrorReport",
@@ -450,6 +452,7 @@ void RecvLoop(
                 count > 5 ? readBuffer[5] : 0,
                 count > 6 ? readBuffer[6] : 0,
                 count > 7 ? readBuffer[7] : 0);
+#endif
         }
         else if (!connState && count > 0)
         {
@@ -752,6 +755,7 @@ MU_EXPORT int32_t ConnectionManager_Connect(
         int queuedBytes = 0;
         if (ioctl(fd, FIONREAD, &queuedBytes) == 0)
         {
+#if TAKUMI_ANDROID_DEBUG_PROTOCOL
             __android_log_print(
                 ANDROID_LOG_INFO,
                 "TakumiErrorReport",
@@ -762,6 +766,7 @@ MU_EXPORT int32_t ConnectionManager_Connect(
                 "[AndroidLogin] after onSocketReady FIONREAD=%d fd=%d\r\n",
                 queuedBytes,
                 fd);
+#endif
         }
     }
 
@@ -779,6 +784,7 @@ MU_EXPORT int32_t ConnectionManager_Connect(
     }
 
     g_recvLogBudget.store(2000);
+#if TAKUMI_ANDROID_DEBUG_PROTOCOL
     g_ErrorReport.Write(
         "[AndroidLogin] TCP session start fd=%d port=%d host=%s recvDiag=256 per-socket\r\n",
         fd,
@@ -792,6 +798,7 @@ MU_EXPORT int32_t ConnectionManager_Connect(
         fd,
         static_cast<int>(port),
         hostAscii);
+#endif
 
     NET_LOGI("connect success %s:%d fd=%d", hostAscii, port, fd);
     ClearConnectFailure();
@@ -943,6 +950,7 @@ MU_EXPORT void SendServerListRequest(int32_t handle)
 {
     const uint8_t packet[] = { 0xC1, 0x04, 0xF4, 0x06 };
     RawSend(handle, packet, sizeof(packet));
+#if TAKUMI_ANDROID_DEBUG_PROTOCOL
     __android_log_print(
         ANDROID_LOG_INFO,
         "TakumiErrorReport",
@@ -951,6 +959,7 @@ MU_EXPORT void SendServerListRequest(int32_t handle)
     g_ErrorReport.Write(
         "[AndroidLogin] sent C1 F4 06 server list request fd=%d (expect recv tcp C2… then Success Receive Server List)\r\n",
         handle);
+#endif
 }
 
 MU_EXPORT void SendConnectionInfoRequest075(int32_t handle, BYTE serverId)

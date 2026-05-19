@@ -4569,7 +4569,7 @@ bool SEASON3B::CTradeZenMsgBoxLayout::SetLayout()
 	if(0 == pMsgBox)
 		return false;
 
-	if(false == pMsgBox->Create(MSGBOX_COMMON_TYPE_OKCANCEL, INPUTBOX_TYPE_NUMBER, INPUTBOX_WIDTH, INPUTBOX_HEIGHT, INPUTBOX_ZEN_TEXTLIMIT))
+	if(false == pMsgBox->Create(MSGBOX_COMMON_TYPE_OKCANCEL, INPUTBOX_TYPE_NUMBER, INPUTBOX_ZEN_WIDTH, INPUTBOX_HEIGHT, INPUTBOX_ZEN_TEXTLIMIT))
 		return false;
 
 	pMsgBox->SetInputBoxOption(UIOPTION_NUMBERONLY|UIOPTION_PAINTBACK);
@@ -4625,7 +4625,7 @@ bool SEASON3B::CZenReceiptMsgBoxLayout::SetLayout()
 	if(0 == pMsgBox)
 		return false;
 
-	if(false == pMsgBox->Create(MSGBOX_COMMON_TYPE_OKCANCEL, INPUTBOX_TYPE_NUMBER, INPUTBOX_WIDTH, INPUTBOX_HEIGHT, INPUTBOX_ZEN_TEXTLIMIT))
+	if(false == pMsgBox->Create(MSGBOX_COMMON_TYPE_OKCANCEL, INPUTBOX_TYPE_NUMBER, INPUTBOX_ZEN_WIDTH, INPUTBOX_HEIGHT, INPUTBOX_ZEN_TEXTLIMIT))
 		return false;
 
 	pMsgBox->SetInputBoxOption(UIOPTION_NUMBERONLY|UIOPTION_PAINTBACK);
@@ -4657,15 +4657,17 @@ CALLBACK_RESULT SEASON3B::CZenReceiptMsgBoxLayout::ProcessOk(class CNewUIMessage
 		return CALLBACK_CONTINUE;
 	}
 	
-	int iInputZen = atoi(strText);
-	if(iInputZen == 0)
+	const __int64 inputZen = _atoi64(strText);
+	if(inputZen <= 0)
 	{
 		return CALLBACK_CONTINUE;	
 	}
-	
-	if(iInputZen <= (int)CharacterMachine->Gold)
+
+	const __int64 maxDeposit = WAREHOUSE_ZEN_CAP - static_cast<__int64>(CharacterMachine->StorageGold);
+	if(inputZen <= static_cast<__int64>(CharacterMachine->Gold)
+		&& inputZen <= maxDeposit)
 	{
-		SendRequestStorageGold(0, iInputZen);
+		SendRequestStorageGold(0, static_cast<int>(inputZen));
 	}
 	else
 	{
@@ -4692,7 +4694,7 @@ bool SEASON3B::CZenPaymentMsgBoxLayout::SetLayout()
 	if(0 == pMsgBox)
 		return false;
 
-	if(false == pMsgBox->Create(MSGBOX_COMMON_TYPE_OKCANCEL, INPUTBOX_TYPE_NUMBER, INPUTBOX_WIDTH, INPUTBOX_HEIGHT, INPUTBOX_ZEN_TEXTLIMIT))
+	if(false == pMsgBox->Create(MSGBOX_COMMON_TYPE_OKCANCEL, INPUTBOX_TYPE_NUMBER, INPUTBOX_ZEN_WIDTH, INPUTBOX_HEIGHT, INPUTBOX_ZEN_TEXTLIMIT))
 		return false;
 
 	pMsgBox->SetInputBoxOption(UIOPTION_NUMBERONLY|UIOPTION_PAINTBACK);
@@ -4730,8 +4732,7 @@ CALLBACK_RESULT SEASON3B::CZenPaymentMsgBoxLayout::ProcessOk(class CNewUIMessage
 		return CALLBACK_CONTINUE;	
 	}
 
-	const __int64 maxCarryZen = 2000000000LL;
-	const __int64 maxWithdraw = maxCarryZen - static_cast<__int64>(CharacterMachine->Gold);
+	const __int64 maxWithdraw = WAREHOUSE_ZEN_CAP - static_cast<__int64>(CharacterMachine->Gold);
 	if(inputZen <= static_cast<__int64>(CharacterMachine->StorageGold)
 		&& inputZen <= maxWithdraw)
 	{

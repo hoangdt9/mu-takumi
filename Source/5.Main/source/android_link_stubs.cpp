@@ -16,6 +16,7 @@
 #include "TrayMode.h"
 #include "android/SimpleModulusCrypt.h"
 #include "GameConfigConstants.h"
+#include "Utilities/Log/TakumiAndroidDiag.h"
 
 #include <SDL_mixer.h>
 #include <android/log.h>
@@ -172,6 +173,11 @@ bool AndroidSocketVerboseLogEnabled()
 
 bool ShouldLogAndroidGamePacket(BYTE head, BYTE sub)
 {
+#if !TAKUMI_ANDROID_DEBUG_PROTOCOL
+    (void)head;
+    (void)sub;
+    return AndroidSocketVerboseLogEnabled();
+#else
     if (AndroidSocketVerboseLogEnabled())
     {
         return true;
@@ -192,6 +198,7 @@ bool ShouldLogAndroidGamePacket(BYTE head, BYTE sub)
     default:
         return false;
     }
+#endif
 }
 
 bool ShouldSuppressAndroidRuntimeLog(const char* format)
@@ -521,10 +528,12 @@ void CWsctlc::AndroidSyncPollRecvPending()
         return;
     }
 
+#if TAKUMI_ANDROID_DEBUG_PROTOCOL
     g_ErrorReport.Write(
         "[AndroidLogin] sync poll drained fd=%d nbytes=%d (on-accept / queued before recv thread)\r\n",
         handle,
         received);
+#endif
 
     AndroidOnPacket(handle, received, buffer.data());
 }
@@ -655,9 +664,11 @@ void CWsctlc::AndroidOnPacket(int32_t handle, int32_t size, uint8_t* data)
 
             if ((pkt[0] == 0xC2 || pkt[0] == 0xC4) && head == 0xF4 && sub == 0x06)
             {
+#if TAKUMI_ANDROID_DEBUG_PROTOCOL
                 g_ErrorReport.Write(
                     "[Android Socket] queued C2 F4 06 server list wire=%d bytes (expect ReceiveServerList / Success line)\r\n",
                     packetSize);
+#endif
             }
 
             client->m_pPacketQueue->PushPacket(client->m_RecvBuf + offset, packetSize);
@@ -850,18 +861,22 @@ BOOL CWsctlc::Connect(char* ipAddr, unsigned short port, DWORD)
     // Match WSclient.cpp CreateConnectSocket: OpenMU SM counter is per-TCP; split M6 opens a new socket to GameHost.
     g_byPacketSerialSend = 0;
     g_byPacketSerialRecv = 0;
+#if TAKUMI_ANDROID_DEBUG_PROTOCOL
     g_ErrorReport.Write(
         "[Android Socket] connected ip=%s port=%d handle=%d [AndroidLogin] native CM ok (SM serial reset)\r\n",
         ipAddr,
         port,
         handle);
+#endif
 
     AndroidSyncPollRecvPending();
 
     if (IsConnectServerPort(port))
     {
         SendServerListRequest(handle);
+#if TAKUMI_ANDROID_DEBUG_PROTOCOL
         g_ErrorReport.Write("[Android Socket] server list requested handle=%d\r\n", handle);
+#endif
     }
 
     return TRUE;
@@ -1156,12 +1171,16 @@ BOOL CSimpleModulus::LoadKey(char* lpszFileName, unsigned short sID, BOOL bMod, 
         if (bEnc)
         {
             CopyPacketKey(key, kTakumiEncryptKey);
+#if TAKUMI_ANDROID_DEBUG_PROTOCOL
             g_ErrorReport.Write("[AndroidLogin] SimpleModulus encrypt key fallback active path=%s\r\n", lpszFileName ? lpszFileName : "(null)");
+#endif
         }
         else if (bDec)
         {
             CopyPacketKey(key, kTakumiDecryptKey);
+#if TAKUMI_ANDROID_DEBUG_PROTOCOL
             g_ErrorReport.Write("[AndroidLogin] SimpleModulus decrypt key fallback active path=%s\r\n", lpszFileName ? lpszFileName : "(null)");
+#endif
         }
         else
         {
@@ -1170,7 +1189,9 @@ BOOL CSimpleModulus::LoadKey(char* lpszFileName, unsigned short sID, BOOL bMod, 
     }
     else
     {
+#if TAKUMI_ANDROID_DEBUG_PROTOCOL
         g_ErrorReport.Write("[AndroidLogin] SimpleModulus key loaded path=%s\r\n", lpszFileName ? lpszFileName : "(null)");
+#endif
     }
 
     if (bMod)

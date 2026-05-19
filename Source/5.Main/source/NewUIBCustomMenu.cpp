@@ -50,10 +50,6 @@ namespace
 
 CNewUIBCustomMenuInfo::CNewUIBCustomMenuInfo()
 {
-#ifdef __ANDROID__
-	OutputDebugStringA("UI_BCUSTOM_CTOR: begin");
-	g_ErrorReport.Write("[UI_BCUSTOM_CTOR] begin\r\n");
-#endif
 	m_pNewUIMng = NULL;
 	m_Pos.x = m_Pos.y = 0;
 	BLockButtonMoveWindow = false;
@@ -61,10 +57,6 @@ CNewUIBCustomMenuInfo::CNewUIBCustomMenuInfo()
 	BLockMessageBox = false;
 	AutoCtrlPK = false;
 	AutoHP = false;
-#ifdef __ANDROID__
-	OutputDebugStringA("UI_BCUSTOM_CTOR: end");
-	g_ErrorReport.Write("[UI_BCUSTOM_CTOR] end\r\n");
-#endif
 }
 
 CNewUIBCustomMenuInfo::~CNewUIBCustomMenuInfo()
@@ -922,39 +914,15 @@ bool CNewUIBCustomMenuInfo::Create(CNewUIManager* pNewUIMng, int x, int y)
 	if( NULL == pNewUIMng )
 		return false;
 	
-#ifdef __ANDROID__
-	OutputDebugStringA("UI_BCUSTOM: create begin");
-	g_ErrorReport.Write("[UI_BCUSTOM] create begin\r\n");
-#endif
 	m_pNewUIMng = pNewUIMng;
 	m_pNewUIMng->AddUIObj( SEASON3B::INTERFACE_BCUSTOMMENU, this );
-#ifdef __ANDROID__
-	OutputDebugStringA("UI_BCUSTOM: add ui obj ok");
-	g_ErrorReport.Write("[UI_BCUSTOM] add ui obj ok\r\n");
-#endif
 
 	SetPos(x, y);
-#ifdef __ANDROID__
-	OutputDebugStringA("UI_BCUSTOM: set pos ok");
-	g_ErrorReport.Write("[UI_BCUSTOM] set pos ok\r\n");
-#endif
 	LoadImages();
-#ifdef __ANDROID__
-	OutputDebugStringA("UI_BCUSTOM: load images ok");
-	g_ErrorReport.Write("[UI_BCUSTOM] load images ok\r\n");
-#endif
 	Show( true );
-#ifdef __ANDROID__
-	OutputDebugStringA("UI_BCUSTOM: show ok");
-	g_ErrorReport.Write("[UI_BCUSTOM] show ok\r\n");
-#endif
 
 	//this->WindowMenuCustom = new GUIObj(-1, 50, 220, 295, true);
 	gInterface.Init();
-#ifdef __ANDROID__
-	OutputDebugStringA("UI_BCUSTOM: gInterface.Init ok");
-	g_ErrorReport.Write("[UI_BCUSTOM] gInterface.Init ok\r\n");
-#endif
 	return true;
 }
 

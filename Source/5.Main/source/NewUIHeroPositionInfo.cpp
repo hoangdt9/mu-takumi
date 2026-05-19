@@ -10,6 +10,9 @@
 #include "Protocol.h"
 #include "ZzzAI.h"
 #include "wsclientinline.h"
+#if defined(__ANDROID__)
+#include "Utilities/Log/TakumiAndroidUiPerf.h"
+#endif
 
 using namespace SEASON3B;
 char *ButtonText[6] = {"Menu",      "Show Name",   "Show HP Bar",
@@ -30,7 +33,7 @@ extern CHARACTER_ATTRIBUTE *CharacterAttribute;
 extern CHARACTER_MACHINE *CharacterMachine;
 extern Interface gInterface;
 
-#ifdef __ANDROID__
+#if defined(__ANDROID__) && TAKUMI_ANDROID_UI_DEBUG_TRACE
 #define ANDROID_HERO_STAGE(msg) do { OutputDebugStringA("UI_HERO: " msg); g_ErrorReport.Write("[UI_HERO] " msg "\r\n"); } while(0)
 #else
 #define ANDROID_HERO_STAGE(msg) ((void)0)

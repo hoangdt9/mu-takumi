@@ -7,7 +7,11 @@
 
 #pragma once
 
+#include "Utilities/Log/TakumiAndroidUiPerf.h"
 #include "NewUIBase.h"
+#if TAKUMI_ANDROID_UI_SKILL_PICKER_CACHE
+#include <vector>
+#endif
 #include "ZzzTexture.h"
 #include "NewUI3DRenderMng.h"
 #include "NewUIButton.h"
@@ -162,6 +166,18 @@ namespace SEASON3B
 
 		void ResetMouseLButton();
 
+#if TAKUMI_ANDROID_UI_SKILL_PICKER_CACHE
+		struct SkillPickerLayoutEntry
+		{
+			int slotIndex;
+			float x;
+			float y;
+		};
+
+		void InvalidateSkillPickerLayout();
+		void RebuildSkillPickerLayout();
+#endif
+
 	private:
 		CNewUIManager* m_pNewUIMng;
 		CNewUI3DRenderMng* m_pNewUI3DRenderMng;
@@ -179,6 +195,11 @@ namespace SEASON3B
 
 		EVENT_STATE m_EventState;
 		WORD m_wHeroPriorSkill;
+
+#if TAKUMI_ANDROID_UI_SKILL_PICKER_CACHE
+		std::vector<SkillPickerLayoutEntry> m_skillPickerLayout;
+		bool m_skillPickerLayoutDirty;
+#endif
 	};
 
 	class CNewUIMainFrameWindow : public CNewUIObj, public INewUI3DRenderObj

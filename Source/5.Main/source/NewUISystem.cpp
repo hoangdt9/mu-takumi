@@ -9,6 +9,9 @@
 #include "w_CursedTemple.h"
 #include "MapManager.h"
 #include "./Utilities/Log/muConsoleDebug.h"
+#if defined(__ANDROID__)
+#include "Utilities/Log/TakumiAndroidUiPerf.h"
+#endif
 
 using namespace SEASON3B;
 extern int DisplayWinCDepthBox;
@@ -159,7 +162,7 @@ void SEASON3B::CNewUISystem::Release()
 
 bool SEASON3B::CNewUISystem::LoadMainSceneInterface()
 {
-#ifdef __ANDROID__
+#if defined(__ANDROID__) && TAKUMI_ANDROID_UI_DEBUG_TRACE
 #define ANDROID_UI_STAGE(msg) do { OutputDebugStringA("UI_LOAD: " msg); g_ErrorReport.Write("[UI_LOAD] " msg "\r\n"); } while(0)
 #else
 #define ANDROID_UI_STAGE(msg) ((void)0)

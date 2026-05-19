@@ -16,6 +16,7 @@
 #include "wsclientinline.h"
 #include "DSPlaySound.h"
 #include "./Utilities/Log/muConsoleDebug.h"
+#include "./Utilities/Log/TakumiAndroidDiag.h"
 #include "ProtocolSend.h"
 #include "ServerListManager.h"
 #include "Reconnect.h"
@@ -346,7 +347,9 @@ void CLoginWin::RequestLogin()
 {
 	if (CurrentProtocolState == REQUEST_JOIN_SERVER)
 	{
+#if defined(__ANDROID__) && TAKUMI_ANDROID_DEBUG_PROTOCOL
 		g_ErrorReport.Write("[AndroidLogin] request ignored while waiting join server response\r\n");
+#endif
 		CUIMng::Instance().PopUpMsgWin(MESSAGE_WAIT);
 		return;
 	}
@@ -355,7 +358,9 @@ void CLoginWin::RequestLogin()
 	char szPass[MAX_PASSWORD_SIZE+1] = {0, };
 	m_pIDInputBox->GetText(szID, MAX_ID_SIZE+1);
 	m_pPassInputBox->GetText(szPass, MAX_PASSWORD_SIZE+1);
+#if defined(__ANDROID__) && TAKUMI_ANDROID_DEBUG_PROTOCOL
 	g_ErrorReport.Write("[AndroidLogin] RequestLogin state=%d id=%s passLen=%d\r\n", CurrentProtocolState, szID, (int)strlen(szPass));
+#endif
 	
 	if (unicode::_strlen(szID) <= 0)
 		CUIMng::Instance().PopUpMsgWin(MESSAGE_INPUT_ID);
@@ -363,7 +368,9 @@ void CLoginWin::RequestLogin()
 		CUIMng::Instance().PopUpMsgWin(MESSAGE_INPUT_PASSWORD);
 	else if (CurrentProtocolState != RECEIVE_JOIN_SERVER_SUCCESS)
 	{
+#if defined(__ANDROID__) && TAKUMI_ANDROID_DEBUG_PROTOCOL
 		g_ErrorReport.Write("[AndroidLogin] request blocked because protocol state is not ready\r\n");
+#endif
 		CUIMng::Instance().PopUpMsgWin(MESSAGE_WAIT);
 	}
 	else

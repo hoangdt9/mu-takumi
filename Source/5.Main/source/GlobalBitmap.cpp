@@ -410,7 +410,6 @@ bool CGlobalBitmap::LoadImage(GLuint uiBitmapIndex, const std::string& filename,
 			}
 			else
 			{
-				g_ErrorReport.Write("File not found %s (%d)->%s\r\n",pBitmap->FileName, uiBitmapIndex, filename.c_str());
 				UnloadImage(uiBitmapIndex, true);
 			}
 		}

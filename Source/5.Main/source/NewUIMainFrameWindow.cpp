@@ -5,6 +5,8 @@
 #include "stdafx.h"
 
 #include "NewUIMainFrameWindow.h"	// self
+#include "Utilities/Log/TakumiAndroidUiPerf.h"
+#include "Platform/TakumiAndroidHud.h"
 #include "NewUIOptionWindow.h"
 #include "NewUISystem.h"
 #include "UIBaseDef.h"
@@ -737,6 +739,12 @@ void SEASON3B::CNewUIMainFrameWindow::RenderExperienceSS2()
 
 void SEASON3B::CNewUIMainFrameWindow::RenderButtonsSS2()
 {
+#if defined(__ANDROID__)
+	if (TakumiAndroid_ShouldHideLegacyMenuChrome())
+	{
+		return;
+	}
+#endif
 
 	char strTipText[256];
 	double x, y, width, height;
@@ -863,6 +871,9 @@ bool SEASON3B::CNewUIMainFrameWindow::Render()
 
 void SEASON3B::CNewUIMainFrameWindow::Render3D()
 {
+#if defined(__ANDROID__) && TAKUMI_ANDROID_UI_SKIP_HOTKEY_ITEM_3D
+	return;
+#endif
 	m_ItemHotKey.RenderItems();
 }
 
@@ -1350,6 +1361,12 @@ void SEASON3B::CNewUIMainFrameWindow::RenderHotKeyItemCount()
 
 void SEASON3B::CNewUIMainFrameWindow::RenderButtons()
 {
+#if defined(__ANDROID__)
+	if (TakumiAndroid_ShouldHideLegacyMenuChrome())
+	{
+		return;
+	}
+#endif
 
 #ifdef PBG_ADD_INGAMESHOP_UI_MAINFRAME
 	m_BtnCShop.Render();
@@ -2250,6 +2267,10 @@ void SEASON3B::CNewUISkillList::Reset()
 {
 	m_bSkillList = false;
 	m_bHotKeySkillListUp = false;
+#if TAKUMI_ANDROID_UI_SKILL_PICKER_CACHE
+	m_skillPickerLayoutDirty = true;
+	m_skillPickerLayout.clear();
+#endif
 
 	m_bRenderSkillInfo = false;
 	m_iRenderSkillInfoType = 0;
@@ -2900,7 +2921,93 @@ void SEASON3B::CNewUISkillList::SetSkillPickerOpen(bool open)
 	{
 		m_iAndroidTouchAssignSkillIndex = -1;
 	}
+#if TAKUMI_ANDROID_UI_SKILL_PICKER_CACHE
+	InvalidateSkillPickerLayout();
+#endif
 }
+
+#if TAKUMI_ANDROID_UI_SKILL_PICKER_CACHE
+void SEASON3B::CNewUISkillList::InvalidateSkillPickerLayout()
+{
+	m_skillPickerLayoutDirty = true;
+}
+
+void SEASON3B::CNewUISkillList::RebuildSkillPickerLayout()
+{
+	m_skillPickerLayout.clear();
+
+	if (CharacterAttribute == NULL || CharacterAttribute->SkillNumber <= 0)
+	{
+		m_skillPickerLayoutDirty = false;
+		return;
+	}
+
+	float FixX = (gProtect.m_MainInfo.IsVersion == 1) ? 75.f : 0.f;
+	const float fOrigX = 385.f - FixX + DisplayWinExt;
+	const float yBase = 390.f + DisplayHeightExt;
+	const float width = 32.f;
+	const float height = 38.f;
+	int iSkillCount = 0;
+
+	for (int i = 0; i < MAX_MAGIC; ++i)
+	{
+		const int iSkillType = CharacterAttribute->Skill[i];
+		if (iSkillType >= AT_PET_COMMAND_DEFAULT && iSkillType < AT_PET_COMMAND_END)
+		{
+			continue;
+		}
+		if (iSkillType == 0 || (iSkillType >= AT_SKILL_STUN && iSkillType <= AT_SKILL_REMOVAL_BUFF))
+		{
+			continue;
+		}
+
+		const BYTE bySkillUseType = SkillAttribute[iSkillType].SkillUseType;
+		if (bySkillUseType == SKILL_USE_TYPE_MASTER || bySkillUseType == SKILL_USE_TYPE_MASTERLEVEL)
+		{
+			continue;
+		}
+
+		float x = fOrigX;
+		float y = yBase;
+		if (iSkillCount == 18)
+		{
+			y -= height;
+		}
+
+		if (iSkillCount < 14)
+		{
+			const int iRemainder = iSkillCount % 2;
+			const int iQuotient = iSkillCount / 2;
+
+			if (iRemainder == 0)
+			{
+				x = fOrigX + iQuotient * width;
+			}
+			else
+			{
+				x = fOrigX - (iQuotient + 1) * width;
+			}
+		}
+		else if (iSkillCount >= 14 && iSkillCount < 18)
+		{
+			x = fOrigX - (8 * width) - ((iSkillCount - 14) * width);
+		}
+		else
+		{
+			x = fOrigX - (12 * width) + ((iSkillCount - 17) * width);
+		}
+
+		SkillPickerLayoutEntry entry;
+		entry.slotIndex = i;
+		entry.x = x;
+		entry.y = y;
+		m_skillPickerLayout.push_back(entry);
+		++iSkillCount;
+	}
+
+	m_skillPickerLayoutDirty = false;
+}
+#endif
 
 void SEASON3B::CNewUISkillList::ToggleSkillPicker()
 {
@@ -3295,6 +3402,33 @@ bool SEASON3B::CNewUISkillList::Render()
 	{
 		if (m_bSkillList == true)
 		{
+			width = 32; height = 38;
+
+#if TAKUMI_ANDROID_UI_SKILL_PICKER_CACHE
+			if (m_skillPickerLayoutDirty)
+			{
+				RebuildSkillPickerLayout();
+			}
+
+			for (size_t layoutIdx = 0; layoutIdx < m_skillPickerLayout.size(); ++layoutIdx)
+			{
+				const SkillPickerLayoutEntry& entry = m_skillPickerLayout[layoutIdx];
+				x = entry.x;
+				y = entry.y;
+				const int i = entry.slotIndex;
+
+				if (i == Hero->CurrentSkill)
+				{
+					SEASON3B::RenderImage(IMAGE_SKILLBOX_USE, x, y, width, height);
+				}
+				else
+				{
+					SEASON3B::RenderImage(IMAGE_SKILLBOX, x, y, width, height);
+				}
+
+				RenderSkillIcon(i, x + 6, y + 6, 20, 28);
+			}
+#else
 			x = 385 - FixX + DisplayWinExt; y = 390 + DisplayHeightExt; width = 32; height = 38;
 			float fOrigX = 385.f - FixX + DisplayWinExt;
 			int iSkillType = 0;
@@ -3358,6 +3492,7 @@ bool SEASON3B::CNewUISkillList::Render()
 					RenderSkillIcon(i, x + 6, y + 6, 20, 28);
 				}
 			}
+#endif
 			RenderPetSkill();
 		}
 	}

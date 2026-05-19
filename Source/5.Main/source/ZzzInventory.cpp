@@ -7756,10 +7756,6 @@ bool GetAttackDamage ( int* iMinDamage, int* iMaxDamage )
 		AttackDamageMax += 15;
 	}
 	
-	//===Fix Info View
-	AttackDamageMin = CharacterAttribute->PrintPlayer.ViewAttackSuccessRatePvP;
-	AttackDamageMax = CharacterAttribute->PrintPlayer.ViewAttackSuccessRatePvP;
-
 	*iMinDamage = AttackDamageMin;
 	*iMaxDamage = AttackDamageMax;
 

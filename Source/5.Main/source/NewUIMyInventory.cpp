@@ -27,6 +27,7 @@
 #include "SocketSystem.h"
 #include "w_CursedTemple.h"
 #include "PortalMgr.h"
+#include "Utilities/Log/TakumiAndroidUiPerf.h"
 #ifdef CSK_FIX_BLUELUCKYBAG_MOVECOMMAND
 #include "Event.h"
 #endif // CSK_FIX_BLUELUCKYBAG_MOVECOMMAND
@@ -784,6 +785,12 @@ void CNewUIMyInventory::Render3D()
 {
 	for (int i = 0; i < MAX_EQUIPMENT_INDEX; i++)
 	{
+#if TAKUMI_ANDROID_UI_LIGHT_INVENTORY_ITEM_3D
+		if (m_iPointedSlotMuun == 1 || m_iPointedSlot < 0 || m_iPointedSlot != i)
+		{
+			continue;
+		}
+#endif
 		const ITEM* pEquippedItem = &CharacterMachine->Equipment[i];
 		if (pEquippedItem->Type >= 0)
 		{
@@ -813,6 +820,12 @@ void CNewUIMyInventory::Render3D()
 #if(HAISLOTRING)
 	for (int ii = 0; ii < 16; ii++)
 	{
+#if TAKUMI_ANDROID_UI_LIGHT_INVENTORY_ITEM_3D
+		if (m_iPointedSlotMuun != 1 || m_iPointedSlot != ii)
+		{
+			continue;
+		}
+#endif
 		const ITEM* pEquippedItemMuun = &CharacterMachine->EquipmentMuun[ii];
 		if (pEquippedItemMuun->Type >= 0)
 		{

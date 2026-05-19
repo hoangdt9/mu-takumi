@@ -17,6 +17,7 @@
 #include "stdafx.h"
 #include "MobilePlatform.h"
 #include "GameConfigConstants.h"
+#include "Platform/TakumiAndroidHud.h"
 #ifdef min
 #undef min
 #endif
@@ -2372,6 +2373,21 @@ bool HandleVirtualTopControlTap(float uiX, float uiY)
         return true;
     }
 
+    if (TakumiAndroid_UsePngHudOverlay())
+    {
+        const int utilityButton = HitTestVirtualUtilityButton(uiX, uiY);
+        if (utilityButton >= 0 && utilityButton != kVirtualUtilityButtonChat)
+        {
+            if ((nowMs - g_virtualLastUtilityTapMs) >= kVirtualUtilityButtonCooldownMs)
+            {
+                g_virtualLastUtilityTapMs = nowMs;
+                ToggleVirtualUtilityButton(utilityButton);
+            }
+
+            return true;
+        }
+    }
+
     if (kUseLegacyMainHud)
     {
         return false;
@@ -4466,6 +4482,45 @@ void RenderVirtualPad()
 
     DrawVirtualZoomButtons();
 
+    if (kUseLegacyMainHud && TakumiAndroid_UsePngHudOverlay())
+    {
+        BeginBitmap();
+        EnsureUITextures();
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+        const UITexture* utilIcons[kVirtualUtilityButtonCount] = {
+            &g_uiTex_balo,
+            &g_uiTex_character,
+            &g_uiTex_setting,
+            &g_uiTex_map,
+        };
+        for (int i = 0; i < kVirtualUtilityButtonCount; ++i)
+        {
+            if (i == kVirtualUtilityButtonChat)
+            {
+                continue;
+            }
+
+            const AndroidUiRect rect = GetVirtualUtilityButtonRect(i);
+            const float alpha = IsVirtualUtilityButtonActive(i) ? 1.0f : 0.88f;
+            DrawIconButton(rect.x, rect.y, rect.w, rect.h, *utilIcons[i], alpha);
+        }
+
+        if (IsMiniMapToggleAvailable())
+        {
+            const AndroidUiRect rect = GetMiniMapButtonRect();
+            DrawIconButton(rect.x, rect.y, rect.w, rect.h, g_uiTex_minimap, 1.0f);
+        }
+
+        const AndroidUiRect mapRect = GetMapButtonRect();
+        DrawIconButton(mapRect.x, mapRect.y, mapRect.w, mapRect.h, g_uiTex_map, 1.0f);
+
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        EndBitmap();
+        return;
+    }
+
     if (kUseLegacyMainHud)
     {
         return;
@@ -5453,18 +5508,18 @@ namespace
         int defaultMessageBudget = 120;
         int minMessageBudget = 90;
         double targetFps = -1.0;        // -1 = uncapped, run at full GPU speed
-        double lowFpsThreshold = 56.0;
-        double highFpsThreshold = 62.0;
-        double minEffectScale = 0.55;
+        double lowFpsThreshold = 45.0;
+        double highFpsThreshold = 52.0;
+        double minEffectScale = 0.45;
         double effectScaleStep = 0.10;
         double effectScaleHysteresis = 0.08;
         uint32_t fxAdjustCooldownMs = 1200;
         uint32_t lastFxAdjustTick = 0;
-        int minAdaptiveRenderLevel = 2;
+        int minAdaptiveRenderLevel = 1;
         int maxAdaptiveRenderLevel = 4;
         int renderDownStreak = 0;
         int renderUpStreak = 0;
-        uint32_t renderAdjustCooldownMs = 3000;
+        uint32_t renderAdjustCooldownMs = 2000;
         uint32_t lastRenderAdjustTick = 0;
     };
 
@@ -5786,7 +5841,7 @@ namespace
             if (g_adaptivePerf.lastRenderAdjustTick == 0 ||
                 (nowTick - g_adaptivePerf.lastRenderAdjustTick) >= g_adaptivePerf.renderAdjustCooldownMs)
             {
-                if (g_adaptivePerf.renderDownStreak >= 3 &&
+                if (g_adaptivePerf.renderDownStreak >= 2 &&
                     currentRenderLevel > g_adaptivePerf.minAdaptiveRenderLevel)
                 {
                     const int newRenderLevel = currentRenderLevel - 1;

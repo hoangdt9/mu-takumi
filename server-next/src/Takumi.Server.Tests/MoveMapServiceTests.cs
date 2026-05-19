@@ -74,6 +74,20 @@ public sealed class MoveMapServiceTests
     }
 
     [Fact]
+    public void TryResolve_denies_when_teleport_already_in_progress()
+    {
+        MoveMapCatalog.LoadForTests(
+        [
+            new MoveMapEntry { Index = 2, Money = 0, MinLevel = 1, MaxLevel = 400, Gate = 17 },
+        ]);
+
+        var ok = MoveMapService.TryResolve(2, Ctx(teleport: true), previousMap: 0, out _, out var deny, out _);
+        Assert.False(ok);
+        Assert.Equal(MoveMapService.DenyReason.TeleportInProgress, deny);
+        Assert.Equal(MoveMapWire602.ResultFailedTeleport, MoveMapService.ToWireResult(deny));
+    }
+
+    [Fact]
     public void TryResolve_denies_min_reset()
     {
         MoveMapCatalog.LoadForTests(

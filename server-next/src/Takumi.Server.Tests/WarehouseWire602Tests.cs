@@ -13,4 +13,12 @@ public sealed class WarehouseWire602Tests
         Assert.Equal((byte)1, flag);
         Assert.Equal(10_000u, gold);
     }
+
+    [Fact]
+    public void Storage_exit_request_parses_c1_82()
+    {
+        var pkt = new byte[] { 0xC1, 0x03, 0x82 };
+        Assert.True(WarehouseWire602.TryFindStorageExitRequest(pkt, out var off));
+        Assert.Equal(0, off);
+    }
 }

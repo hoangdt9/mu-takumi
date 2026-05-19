@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Globalization;
 using Takumi.Server.Game.Networking;
 
@@ -64,6 +65,8 @@ public static class MonsterAiLoop
                 }
 
                 var events = MapMonsterWorld.ProcessAiTick(rng);
+                var maxHitsPerTick = ParseIntEnv("TAKUMI_MONSTER_MAX_HIT_EVENTS_PER_TICK", 16, 1, 256);
+                var hitBudget = new Dictionary<Guid, int>();
                 foreach (var ev in events)
                 {
                     switch (ev.Kind)
@@ -79,6 +82,17 @@ public static class MonsterAiLoop
                             break;
                         case MonsterAiEventKind.Attack:
                         case MonsterAiEventKind.SkillAttack:
+                            if (ev.TargetSessionId != Guid.Empty)
+                            {
+                                hitBudget.TryGetValue(ev.TargetSessionId, out var used);
+                                if (used >= maxHitsPerTick)
+                                {
+                                    break;
+                                }
+
+                                hitBudget[ev.TargetSessionId] = used + 1;
+                            }
+
                             await MonsterViewerRegistry.BroadcastMonsterActionAsync(
                                     ev.ObjectKey,
                                     ev.MapId,

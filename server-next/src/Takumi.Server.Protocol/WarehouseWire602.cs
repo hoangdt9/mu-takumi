@@ -6,6 +6,8 @@ namespace Takumi.Server.Protocol;
 public static class WarehouseWire602
 {
     public const byte MoneyHead = 0x81;
+    /// <summary>Client <c>SendRequestStorageExit</c>: <c>C1 03 82</c>.</summary>
+    public const byte ExitHead = 0x82;
     public const byte StateHead = 0x83;
 
     /// <summary><c>PMSG_WAREHOUSE_MONEY_SEND</c> — inventory + warehouse zen after open.</summary>
@@ -48,6 +50,22 @@ public static class WarehouseWire602
             flag = packet[i + 3];
             gold = BinaryPrimitives.ReadUInt32LittleEndian(packet.Slice(i + 4, 4));
             return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>Client closes vault UI (<c>C1 len 0x82</c>).</summary>
+    public static bool TryFindStorageExitRequest(ReadOnlySpan<byte> packet, out int frameOffset)
+    {
+        frameOffset = -1;
+        for (var i = 0; i <= packet.Length - 3; i++)
+        {
+            if (packet[i] == 0xC1 && packet[i + 1] == 0x03 && packet[i + 2] == ExitHead)
+            {
+                frameOffset = i;
+                return true;
+            }
         }
 
         return false;

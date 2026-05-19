@@ -8,6 +8,12 @@ namespace Takumi.Server.Game.World;
 public static class MapMonsterScopeSender
 {
     static readonly ConcurrentDictionary<string, long> s_lastMoveSyncTickMs = new(StringComparer.Ordinal);
+
+    static bool IsM9ViewportLogEnabled =>
+        string.Equals(
+            Environment.GetEnvironmentVariable("TAKUMI_M9_VIEWPORT_LOG")?.Trim(),
+            "1",
+            StringComparison.OrdinalIgnoreCase);
     public static byte[]? BuildViewportPacket(byte mapId, byte playerX, byte playerY)
     {
         return BuildViewportPacket(mapId, playerX, playerY, onlyNew: null);
@@ -148,10 +154,13 @@ public static class MapMonsterScopeSender
 
         var pkt = MonsterViewportDestroyWire602.Build(objectKeys);
         await GamePortOutboundWire.WriteAsync(connection, clientProtectOutbound, pkt, ct).ConfigureAwait(false);
-        Console.WriteLine(
-            "[{0}] [m9] sent C1 0x14 destroy viewport count={1}",
-            remote,
-            objectKeys.Count);
+        if (IsM9ViewportLogEnabled)
+        {
+            Console.WriteLine(
+                "[{0}] [m9] sent C1 0x14 destroy viewport count={1}",
+                remote,
+                objectKeys.Count);
+        }
     }
 
     static async Task SendPacketAsync(
@@ -168,25 +177,42 @@ public static class MapMonsterScopeSender
         var pkt = BuildViewportPacket(mapId, playerX, playerY, monsters);
         if (pkt is null || pkt.Length == 0)
         {
-            Console.WriteLine(
-                "[{0}] [m9] no new monsters in view ({1}) map={2} xy=({3},{4})",
-                remote,
-                reason,
-                mapId,
-                playerX,
-                playerY);
+            if (IsM9ViewportLogEnabled)
+            {
+                Console.WriteLine(
+                    "[{0}] [m9] no new monsters in view ({1}) map={2} xy=({3},{4})",
+                    remote,
+                    reason,
+                    mapId,
+                    playerX,
+                    playerY);
+            }
+
             return;
         }
 
         await GamePortOutboundWire.WriteAsync(connection, clientProtectOutbound, pkt, ct).ConfigureAwait(false);
         var count = pkt[4];
-        Console.WriteLine(
-            "[{0}] [m9] sent C2 0x13 monster viewport ({1}) count={2} map={3} wireLen={4}",
-            remote,
-            reason,
-            count,
-            mapId,
-            pkt.Length);
+        if (IsM9ViewportLogEnabled || string.Equals(reason, "join", StringComparison.OrdinalIgnoreCase))
+        {
+            var sampleKeys = new List<int>(Math.Min((int)count, 4));
+            var o = 5;
+            for (var i = 0; i < count && o + 1 < pkt.Length; i++)
+            {
+                var wireKey = ((pkt[o] << 8) | pkt[o + 1]) & 0x7FFF;
+                sampleKeys.Add(wireKey);
+                o += MonsterViewportWire602.EntrySizeZeroBuffs;
+            }
+
+            Console.WriteLine(
+                "[{0}] [m9] sent C2 0x13 monster viewport ({1}) count={2} map={3} wireLen={4} sampleKeys=[{5}]",
+                remote,
+                reason,
+                count,
+                mapId,
+                pkt.Length,
+                string.Join(',', sampleKeys));
+        }
     }
 
     internal static IReadOnlyList<int> FilterViewportDestroyKeysForPeriodic(IReadOnlyList<int> objectKeys) =>

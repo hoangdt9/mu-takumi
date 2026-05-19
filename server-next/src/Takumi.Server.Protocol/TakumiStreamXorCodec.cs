@@ -1,4 +1,4 @@
-namespace Takumi.Server.Game;
+namespace Takumi.Server.Protocol;
 
 /// <summary>
 /// Inverse of Takumi stream <c>XorData</c> (same XOR chain as <c>SimpleModulusCrypt.h</c>).

@@ -34,6 +34,12 @@ public static class MapAttWalkability
         return (flags & blocked) == 0;
     }
 
+    public static bool IsAttLoaded(byte mapId)
+    {
+        EnsureMapLoaded(mapId);
+        return WalkableByMap.TryGetValue(mapId, out var walls) && walls.Length > 0;
+    }
+
     public static bool IsSafeZone(byte mapId, byte x, byte y)
     {
         if (!TryGetFlags(mapId, x, y, out var flags))
@@ -42,6 +48,49 @@ public static class MapAttWalkability
         }
 
         return (flags & 0x0001) != 0; // TWFlags.SafeZone
+    }
+
+    /// <summary>Walkable tile outside safe zone (spawn heal / field mob placement).</summary>
+    public static bool TryFindNearestNonSafeWalkable(byte mapId, byte x, byte y, out byte walkX, out byte walkY, int maxRadius = 24)
+    {
+        walkX = x;
+        walkY = y;
+        if (CanWalk(mapId, x, y) && !IsSafeZone(mapId, x, y))
+        {
+            return true;
+        }
+
+        for (var r = 1; r <= maxRadius; r++)
+        {
+            for (var dy = -r; dy <= r; dy++)
+            {
+                for (var dx = -r; dx <= r; dx++)
+                {
+                    if (Math.Abs(dx) != r && Math.Abs(dy) != r)
+                    {
+                        continue;
+                    }
+
+                    var px = x + dx;
+                    var py = y + dy;
+                    if (px is < 0 or > 255 || py is < 0 or > 255)
+                    {
+                        continue;
+                    }
+
+                    var bx = (byte)px;
+                    var by = (byte)py;
+                    if (CanWalk(mapId, bx, by) && !IsSafeZone(mapId, bx, by))
+                    {
+                        walkX = bx;
+                        walkY = by;
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
     }
 
     /// <summary>When <paramref name="x"/>/<paramref name="y"/> are blocked, search outward for a walkable tile (spawn / warp heal).</summary>
@@ -138,6 +187,11 @@ public static class MapAttWalkability
         var root = Environment.GetEnvironmentVariable("TAKUMI_ATT_DATA_ROOT")?.Trim();
         if (string.IsNullOrEmpty(root))
         {
+            root = Environment.GetEnvironmentVariable("TAKUMI_CLIENT_DATA_ROOT")?.Trim();
+        }
+
+        if (string.IsNullOrEmpty(root))
+        {
             root = ResolveDefaultDataRoot();
         }
 
@@ -153,10 +207,14 @@ public static class MapAttWalkability
 
         foreach (var dir in ResolveWorldDirectories(root, mapId, world))
         {
-            var enc = Path.Combine(dir, $"EncTerrain{mapId}.att");
-            if (File.Exists(enc))
+            // Client parity: EncTerrain{WorldActive+1}.att (e.g. Noria map 3 → World4/EncTerrain4.att).
+            foreach (var terrainIndex in new[] { (int)mapId + 1, mapId })
             {
-                return enc;
+                var enc = Path.Combine(dir, $"EncTerrain{terrainIndex}.att");
+                if (File.Exists(enc))
+                {
+                    return enc;
+                }
             }
 
             var plain = Path.Combine(dir, "Terrain.att");

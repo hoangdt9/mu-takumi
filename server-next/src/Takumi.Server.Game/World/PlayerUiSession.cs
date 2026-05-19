@@ -49,6 +49,21 @@ public static class PlayerUiSession
                || s.GenericInterfaceRefs > 0;
     }
 
+    /// <summary>Warehouse is the only UI flag blocking move-map (client closed UI without <c>0x82</c>).</summary>
+    public static bool IsWarehouseOnlyMoveBlock(Guid sessionId)
+    {
+        if (!Sessions.TryGetValue(sessionId, out var s))
+        {
+            return false;
+        }
+
+        return s.WarehouseOpen
+               && !s.NpcShopOpen
+               && !s.TradeOpen
+               && !s.PersonalShopOpen
+               && s.GenericInterfaceRefs <= 0;
+    }
+
     public static bool IsPersonalShopOpen(Guid sessionId) =>
         Sessions.TryGetValue(sessionId, out var s) && s.PersonalShopOpen;
 

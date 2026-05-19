@@ -756,15 +756,18 @@ public static class GamePortMinimalSession
                         return;
                     }
 
+                    // F1 01 account login only before auth. When already logged in, do not treat every
+                    // short C1 frame as a failed login attempt — that dropped combat (0x11) and walk packets.
+                    if (!loginLatch.IsLoggedIn)
+                    {
                     // F1 01 account login: C3 envelope + stream XOR (Android) or C1 peel — shared with LegacyLoginHost via GamePacketFinders.
                     var loginFrame = packet;
-                    if (!loginLatch.IsLoggedIn
-                        && GamePacketFinders.TryUnpackAccountLoginFrame(packet, out var unpackedLogin)
+                    if (GamePacketFinders.TryUnpackAccountLoginFrame(packet, out var unpackedLogin)
                         && unpackedLogin.Length >= 59)
                     {
                         loginFrame = unpackedLogin;
                     }
-                    else if (!loginLatch.IsLoggedIn && packet.Length >= 59 && packet[0] == 0xC1 && packet[2] == 0xF1)
+                    else if (packet.Length >= 59 && packet[0] == 0xC1 && packet[2] == 0xF1)
                     {
                         loginFrame = (byte[])packet.Clone();
                         var span = loginFrame.AsSpan();
@@ -797,16 +800,7 @@ public static class GamePortMinimalSession
 
                     if (head != 0xF1 || sub != 0x01 || loginFrame.Length < 59)
                     {
-                        if (loginLatch.IsLoggedIn && loginFrame.Length <= 48 && verbose)
-                        {
-                            Console.WriteLine(
-                                "[{0}] not login pkt — hex={1} head=0x{2:X2} sub=0x{3:X2}",
-                                remote,
-                                Convert.ToHexString(loginFrame),
-                                head,
-                                sub);
-                        }
-                        else if (!loginLatch.IsLoggedIn && loginFrame.Length >= 40 && loginFrame[0] == 0xC1 && loginFrame[2] == 0xF1)
+                        if (loginFrame.Length >= 40 && loginFrame[0] == 0xC1 && loginFrame[2] == 0xF1)
                         {
                             var previewLen = Math.Min(40, loginFrame.Length);
                             Console.WriteLine(
@@ -940,6 +934,7 @@ public static class GamePortMinimalSession
                             : CharacterListWire602.BuildEmpty();
                         LogCharacterListWire(remote, list, "after login (auto)");
                         await GamePortOutboundWire.WriteAsync(connection, protect, list, ct).ConfigureAwait(false);
+                    }
                     }
                 }
                 finally

@@ -30,6 +30,8 @@ public static class JoinInventoryLifecycle
             slots[row.Slot] = row.Item12.ToArray();
         }
 
+        ItemWireSanitizer.NormalizeSocketEncoding(slots);
+
         var keysBefore = rows.Select(static r => r.Slot).OrderBy(static x => x).ToArray();
         InventoryBagGrid.CompactBagSlots(slots);
         var keysAfter = slots.Keys.OrderBy(static x => x).ToArray();

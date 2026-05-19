@@ -29,7 +29,7 @@ public static class OptionDataWire602
         configuration = ReadOnlySpan<byte>.Empty;
         for (var i = 0; i + 4 + ConfigurationLength <= packet.Length; i++)
         {
-            if (packet[i] != 0xC1 || packet[i + 2] != Head || packet[i + 3] != SubCode)
+            if (packet[i] != 0xC1 || packet[i + 2] != Head)
             {
                 continue;
             }
@@ -40,7 +40,30 @@ public static class OptionDataWire602
                 continue;
             }
 
-            configuration = packet.Slice(i + 4, ConfigurationLength);
+            if (packet[i + 3] == SubCode)
+            {
+                configuration = packet.Slice(i + 4, ConfigurationLength);
+                return true;
+            }
+
+            // Client StreamPacketEngine XORs from index 3 before send — logical F3 30 often appears as F3 0x3D at +3.
+            if (frameLen != 4 + ConfigurationLength)
+            {
+                continue;
+            }
+
+            Span<byte> scratch = stackalloc byte[4 + ConfigurationLength];
+            packet.Slice(i, frameLen).CopyTo(scratch);
+            TakumiStreamXorCodec.DecodeTakumiStreamXor(scratch, firstXorIndex: 3);
+            if (scratch[2] != Head || scratch[3] != SubCode)
+            {
+                continue;
+            }
+
+            // Cannot return a span into `scratch` from this method (ref safety); copy decoded blob.
+            var decoded = new byte[ConfigurationLength];
+            scratch.Slice(4, ConfigurationLength).CopyTo(decoded);
+            configuration = decoded;
             return true;
         }
 

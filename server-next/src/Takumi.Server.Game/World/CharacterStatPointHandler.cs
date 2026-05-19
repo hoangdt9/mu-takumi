@@ -34,6 +34,11 @@ public static class CharacterStatPointHandler
                 continue;
             }
 
+            if (packetSize != LegacyRequestLength && packetSize != BulkRequestLength)
+            {
+                continue;
+            }
+
             packet.Slice(i, packetSize).CopyTo(scratch[..packetSize]);
             if (scratch[3] != 0x06)
             {

@@ -326,6 +326,11 @@ public sealed class MapMonsterInstance
                 continue;
             }
 
+            if (MapAttWalkability.IsSafeZone(mapId, (byte)nx, (byte)ny))
+            {
+                continue;
+            }
+
             nextX = (byte)nx;
             nextY = (byte)ny;
             nextDir = DirectionFromDelta(dx, dy);

@@ -28,6 +28,21 @@ public static class MoveMapHandler
             return false;
         }
 
+        if (MoveMapSessionState.IsTeleportInProgress(presenceSessionId))
+        {
+            await WriteAsync(connection, clientProtectOutbound, writeAsync, MoveMapWire602.BuildAnswer(MoveMapWire602.ResultFailedTeleport), ct)
+                .ConfigureAwait(false);
+            Console.WriteLine(
+                "[m8] move map denied index={0} concurrent teleport {1} frame@{2}",
+                mapIdx,
+                remote,
+                moveOff);
+            return true;
+        }
+
+        MoveMapSessionState.SetTeleportInProgress(presenceSessionId, true);
+        try
+        {
         if (!MoveMapKeyGenerator.TryValidateBlockKey(presenceSessionId, blockKey, out var usedLegacySeedZero))
         {
             await WriteAsync(connection, clientProtectOutbound, writeAsync, MoveMapWire602.BuildAnswer(MoveMapWire602.ResultFailed), ct)
@@ -56,8 +71,13 @@ public static class MoveMapHandler
                 .ConfigureAwait(false);
         }
 
+        if (PlayerUiSession.IsWarehouseOnlyMoveBlock(presenceSessionId))
+        {
+            WarehouseGameplayHandler.CloseVaultIfOpen(presenceSessionId, accountId, "move-map-stale", remote);
+        }
+
         var prevMap = player.MapId;
-        var moveCtx = MoveMapSessionRules.BuildContext(player, presenceSessionId);
+        var moveCtx = MoveMapSessionRules.BuildContext(player, presenceSessionId, teleportLockHeldByCaller: true);
         byte result;
         int zenCost = 0;
         MapGateService.TeleportDestination dest = default;
@@ -167,6 +187,11 @@ public static class MoveMapHandler
             remote,
             moveOff);
         return true;
+        }
+        finally
+        {
+            MoveMapSessionState.SetTeleportInProgress(presenceSessionId, false);
+        }
     }
 
     static Task WriteAsync(

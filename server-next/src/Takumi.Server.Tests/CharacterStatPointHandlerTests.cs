@@ -42,6 +42,23 @@ public sealed class CharacterStatPointHandlerTests
     }
 
     [Fact]
+    public void TryFindNextAddPointRequest_ignores_f3_30_hotkey_save_even_when_stream_xor()
+    {
+        // Android move-map flow: SaveOptions() → C1 F3 30 (34 bytes) before C1 8E 02 move.
+        var packet = new byte[]
+        {
+            0xC1, 0x22, 0xF3, 0x30, 0x00, 0x01, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x0A, 0x00,
+            0x00, 0x00, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        };
+        EncodeTakumiStreamXor(packet.AsSpan(), firstXorIndex: 3);
+        var from = 0;
+
+        Assert.False(CharacterStatPointHandler.TryFindNextAddPointRequest(packet, ref from, out _, out _));
+        Assert.Equal(packet.Length, from);
+    }
+
+    [Fact]
     public void TryFindNextAddPointRequest_multiple_legacy_packets_aggregate_in_buffer()
     {
         var packet = new byte[]

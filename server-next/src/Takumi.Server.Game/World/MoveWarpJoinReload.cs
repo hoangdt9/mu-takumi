@@ -28,19 +28,30 @@ internal static class MoveWarpJoinReload
             .BuildAsync(TakumiPostgresMirror.InventorySlots, accountId, characterName10, ct)
             .ConfigureAwait(false);
 
+        var calcPkt = CharacterCalcBroadcast602.BuildCalcPacket(
+            player,
+            presenceSessionId,
+            CharacterCalcBroadcast602.ResolveWearSlots(presenceSessionId));
+
         if (connection is not null)
         {
             await GamePortOutboundWire.WriteAsync(connection, clientProtectOutbound, joinPkt, ct).ConfigureAwait(false);
             await GamePortOutboundWire.WriteAsync(connection, clientProtectOutbound, invPkt, ct).ConfigureAwait(false);
+            await GamePortOutboundWire.WriteAsync(connection, clientProtectOutbound, calcPkt, ct).ConfigureAwait(false);
         }
         else
         {
             await writeAsync(joinPkt, ct).ConfigureAwait(false);
             await writeAsync(invPkt, ct).ConfigureAwait(false);
+            await writeAsync(calcPkt, ct).ConfigureAwait(false);
         }
 
         MonsterViewerRegistry.UpdatePosition(presenceSessionId, dest.MapId, dest.X, dest.Y);
-        if (connection is not null)
+        var skipJoinViewport = string.Equals(
+            Environment.GetEnvironmentVariable("TAKUMI_MOVE_MAP_SKIP_JOIN_VIEWPORT")?.Trim(),
+            "1",
+            StringComparison.OrdinalIgnoreCase);
+        if (connection is not null && !skipJoinViewport)
         {
             await MapMonsterScopeSender.TrySendAfterJoinAsync(
                     tracker,

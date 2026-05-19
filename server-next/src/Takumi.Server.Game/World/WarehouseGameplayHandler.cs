@@ -1,11 +1,57 @@
+using Takumi.Server.Persistence;
 using Takumi.Server.Protocol;
 
 namespace Takumi.Server.Game.World;
 
-/// <summary>Warehouse zen deposit/withdraw (<c>C1 0x81</c>) while vault UI is open.</summary>
+/// <summary>Warehouse zen (<c>C1 0x81</c>) and close (<c>C1 0x82</c>).</summary>
 public static class WarehouseGameplayHandler
 {
-    public static async Task<bool> TryHandlePacketAsync(
+    /// <summary>Close vault server-side (persist + clear UI flag). Used for <c>0x82</c> and stale warehouse before move-map.</summary>
+    public static void CloseVaultIfOpen(Guid presenceSessionId, string? accountId, string reason, string remote)
+    {
+        if (!PlayerWarehouseSession.IsOpen(presenceSessionId))
+        {
+            return;
+        }
+
+        var snapshot = PlayerWarehouseSession.BuildSnapshot(presenceSessionId);
+        if (snapshot.Count > 0 && !string.IsNullOrEmpty(accountId))
+        {
+            WarehouseSlotMirrorWriter.ScheduleReplaceAccount(accountId, snapshot);
+        }
+
+        PlayerWarehouseSession.Close(presenceSessionId);
+        Console.WriteLine("[warehouse] vault closed reason={0} {1}", reason, remote);
+    }
+
+    public static Task<bool> TryHandlePacketAsync(
+        GameRosterEntry player,
+        Guid presenceSessionId,
+        string? accountId,
+        byte[] packet,
+        string remote,
+        Func<ReadOnlyMemory<byte>, CancellationToken, Task> writeAsync,
+        Action? onRosterDirty,
+        CancellationToken ct)
+    {
+        if (WarehouseWire602.TryFindStorageExitRequest(packet, out _))
+        {
+            CloseVaultIfOpen(presenceSessionId, accountId, "0x82", remote);
+            return Task.FromResult(true);
+        }
+
+        return TryHandleStorageGoldAsync(
+            player,
+            presenceSessionId,
+            accountId,
+            packet,
+            remote,
+            writeAsync,
+            onRosterDirty,
+            ct);
+    }
+
+    static async Task<bool> TryHandleStorageGoldAsync(
         GameRosterEntry player,
         Guid presenceSessionId,
         string? accountId,

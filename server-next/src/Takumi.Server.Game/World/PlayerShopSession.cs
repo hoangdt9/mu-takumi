@@ -421,6 +421,7 @@ public static class PlayerShopSession
         }
 
         JoinInventoryLifecycle.PruneInvalidSlots(copy);
+        ItemWireSanitizer.NormalizeSocketEncoding(copy);
         return JoinInventoryLifecycle.BuildPacketFromSlots(copy);
     }
 

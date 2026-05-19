@@ -11,13 +11,19 @@ public static class MoveMapSessionRules
             "1",
             StringComparison.OrdinalIgnoreCase);
 
-    public static MoveMapPlayerContext BuildContext(GameRosterEntry player, Guid presenceSessionId)
+    public static MoveMapPlayerContext BuildContext(
+        GameRosterEntry player,
+        Guid presenceSessionId,
+        bool teleportLockHeldByCaller = false)
     {
         var pk = (byte)0;
         if (GameMapPresenceRegistry.TryGetSession(presenceSessionId, out var presence) && presence is not null)
         {
             pk = presence.Appearance.PkLevel;
         }
+
+        var teleportInProgress = MoveMapSessionState.IsTeleportInProgress(presenceSessionId)
+            && !teleportLockHeldByCaller;
 
         return new MoveMapPlayerContext(
             player.Level,
@@ -31,6 +37,6 @@ public static class MoveMapSessionRules
             presenceSessionId,
             PlayerUiSession.IsMoveBlocked(presenceSessionId),
             PlayerVitalsState.IsDead(presenceSessionId),
-            MoveMapSessionState.IsTeleportInProgress(presenceSessionId));
+            teleportInProgress);
     }
 }

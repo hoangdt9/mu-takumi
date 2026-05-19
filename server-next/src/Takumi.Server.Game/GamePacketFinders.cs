@@ -1,4 +1,5 @@
 using System.Buffers.Binary;
+using Takumi.Server.Protocol;
 
 namespace Takumi.Server.Game;
 
@@ -273,6 +274,24 @@ public static class GamePacketFinders
                 frameOffset = i;
                 value = packet[i + 4];
                 return true;
+            }
+
+            // Takumi C1: StreamPacketEngine XOR from index 3 (wsclientinline.h SendRequestLogOut) — wire is not plain F1 02.
+            if (lead == 0xC1 && size == 5 && packet[i + 2] == 0xF1)
+            {
+                var work = xorScratch[..size];
+                packet.Slice(i, size).CopyTo(work);
+                for (var pass = 0; pass < 8 && (work[2] != 0xF1 || work[3] != 0x02); pass++)
+                {
+                    TakumiStreamXorCodec.DecodeTakumiStreamXor(work, 3);
+                }
+
+                if (work[2] == 0xF1 && work[3] == 0x02)
+                {
+                    frameOffset = i;
+                    value = work[4];
+                    return true;
+                }
             }
 
             if (lead == 0xC3 && size is >= 5 and <= 64 && i + size <= packet.Length)

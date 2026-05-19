@@ -1,3 +1,5 @@
+using System.Collections.Concurrent;
+using System.Globalization;
 using MUnique.OpenMU.Network;
 using Takumi.Server.Game.Networking;
 using Takumi.Server.Persistence;
@@ -8,6 +10,8 @@ namespace Takumi.Server.Game.World;
 /// <summary>M8/M9 gameplay stubs: gate teleport (<c>0x1C</c>), NPC shop (<c>0x30</c> → <c>0x31</c>).</summary>
 public static class WorldGameplayHandlers
 {
+    static readonly ConcurrentDictionary<Guid, long> s_lastFinishLoadingViewportUtc = new();
+
     public static async Task<bool> TryHandlePacketAsync(
         GameRosterEntry player,
         MonsterViewportTracker tracker,
@@ -23,6 +27,17 @@ public static class WorldGameplayHandlers
         Action? onRosterSave,
         CancellationToken ct)
     {
+        if (CharacterOptionHandler.TryHandle(
+                player,
+                accountId,
+                characterName10,
+                packet,
+                onRosterDirty,
+                onRosterSave))
+        {
+            return true;
+        }
+
         if (await CharacterStatPointHandler.TryHandleAsync(
                 player,
                 presenceSessionId,
@@ -35,23 +50,17 @@ public static class WorldGameplayHandlers
             return true;
         }
 
-        if (CharacterOptionHandler.TryHandle(
-                player,
-                accountId,
-                characterName10,
-                packet,
-                onRosterDirty,
-                onRosterSave))
-        {
-            return true;
-        }
-
         if (await PersonalShopGameplayHandler.TryHandlePacketAsync(
                 presenceSessionId,
                 packet,
                 remote,
                 writeAsync,
                 ct).ConfigureAwait(false))
+        {
+            return true;
+        }
+
+        if (await CrywolfGameplayHandler.TryHandlePacketAsync(packet, remote, writeAsync, ct).ConfigureAwait(false))
         {
             return true;
         }
@@ -534,8 +543,26 @@ public static class WorldGameplayHandlers
             return;
         }
 
+        var debounceMs = ParseIntEnv("TAKUMI_FINISH_LOADING_VIEWPORT_DEBOUNCE_MS", 800, 0, 5000);
+        if (debounceMs > 0)
+        {
+            var now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            if (s_lastFinishLoadingViewportUtc.TryGetValue(presenceSessionId, out var last)
+                && (now - last) < debounceMs)
+            {
+                return;
+            }
+
+            s_lastFinishLoadingViewportUtc[presenceSessionId] = now;
+        }
+
         tracker.ResetForMap(player.MapId, player.PosX, player.PosY);
         MonsterViewerRegistry.UpdatePosition(presenceSessionId, player.MapId, player.PosX, player.PosY);
+        var calcPkt = CharacterCalcBroadcast602.BuildCalcPacket(
+            player,
+            presenceSessionId,
+            CharacterCalcBroadcast602.ResolveWearSlots(presenceSessionId));
+        await GamePortOutboundWire.WriteAsync(connection, clientProtectOutbound, calcPkt, ct).ConfigureAwait(false);
         await MapMonsterScopeSender.TrySendAfterJoinAsync(
                 tracker,
                 connection,
@@ -562,5 +589,17 @@ public static class WorldGameplayHandlers
         }
 
         await writeAsync(pkt, ct).ConfigureAwait(false);
+    }
+
+    static int ParseIntEnv(string key, int defaultValue, int min, int max)
+    {
+        var raw = Environment.GetEnvironmentVariable(key);
+        if (string.IsNullOrWhiteSpace(raw)
+            || !int.TryParse(raw, NumberStyles.Integer, CultureInfo.InvariantCulture, out var v))
+        {
+            return defaultValue;
+        }
+
+        return Math.Clamp(v, min, max);
     }
 }

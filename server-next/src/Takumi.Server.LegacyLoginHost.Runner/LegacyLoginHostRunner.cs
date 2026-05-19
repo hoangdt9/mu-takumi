@@ -1211,15 +1211,16 @@ public static class LegacyLoginHostRunner
                     Console.WriteLine("[{0}] post-login unmatched hex={1}", remote, Convert.ToHexString(packet));
                 }
 
+                if (!loginLatch.IsLoggedIn)
+                {
                 // F1 01 account login: C3 + stream XOR peel (GamePacketFinders) — same path as GamePortMinimalSession.
                 var loginFrame = packet;
-                if (!loginLatch.IsLoggedIn
-                    && GamePacketFinders.TryUnpackAccountLoginFrame(packet, out var unpackedLogin)
+                if (GamePacketFinders.TryUnpackAccountLoginFrame(packet, out var unpackedLogin)
                     && unpackedLogin.Length >= 59)
                 {
                     loginFrame = unpackedLogin;
                 }
-                else if (!loginLatch.IsLoggedIn && packet.Length >= 59 && packet[0] == 0xC1 && packet[2] == 0xF1)
+                else if (packet.Length >= 59 && packet[0] == 0xC1 && packet[2] == 0xF1)
                 {
                     loginFrame = (byte[])packet.Clone();
                     var span = loginFrame.AsSpan();
@@ -1254,18 +1255,7 @@ public static class LegacyLoginHostRunner
                 // Android plain layout: ... account[10] password[20] tick[4] version[5] serial[16] (59 bytes after C3 header).
                 if (head != 0xF1 || sub != 0x01 || loginFrame.Length < 59)
                 {
-                    if (loginLatch.IsLoggedIn
-                        && loginFrame.Length <= 48
-                        && string.Equals(Environment.GetEnvironmentVariable("TAKUMI_VERBOSE"), "1", StringComparison.OrdinalIgnoreCase))
-                    {
-                        Console.WriteLine(
-                            "[{0}] not login pkt — hex={1} head@2=0x{2:X2} sub@3=0x{3:X2}",
-                            remote,
-                            Convert.ToHexString(loginFrame),
-                            head,
-                            sub);
-                    }
-                    else if (!loginLatch.IsLoggedIn && loginFrame.Length >= 40 && loginFrame[0] == 0xC1 && loginFrame[2] == 0xF1)
+                    if (loginFrame.Length >= 40 && loginFrame[0] == 0xC1 && loginFrame[2] == 0xF1)
                     {
                         var previewLen = Math.Min(40, loginFrame.Length);
                         Console.WriteLine(
@@ -1388,6 +1378,7 @@ public static class LegacyLoginHostRunner
                     {
                         Console.WriteLine("[{0}] sent empty character list F3 00 after login totalLen={1}", remote, list.Length);
                     }
+                }
                 }
                 }
                 finally
@@ -2072,6 +2063,23 @@ public static class LegacyLoginHostRunner
                 frameOffset = i;
                 value = packet[i + 4];
                 return true;
+            }
+
+            if (lead == 0xC1 && size == 5 && packet[i + 2] == 0xF1)
+            {
+                var work = xorScratch[..size];
+                packet.Slice(i, size).CopyTo(work);
+                for (var pass = 0; pass < 8 && (work[2] != 0xF1 || work[3] != 0x02); pass++)
+                {
+                    DecodeTakumiStreamXor(work, 3);
+                }
+
+                if (work[2] == 0xF1 && work[3] == 0x02)
+                {
+                    frameOffset = i;
+                    value = work[4];
+                    return true;
+                }
             }
 
             // Still obfuscated after PipelinedDecryptor (same pattern as F3 join / create).

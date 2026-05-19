@@ -53,6 +53,13 @@ for world_dir in "${PATCHES}"/World*; do
   echo "  ${world}: $(ls -1 "${world_dir}" | tr '\n' ' ')"
 done
 
+monster_patch="${PATCHES}/Monster"
+if [[ -d "$monster_patch" ]]; then
+  mkdir -p "${DATA}/Monster"
+  cp -f "${monster_patch}/"* "${DATA}/Monster/" 2>/dev/null || true
+  echo "  Monster: $(ls -1 "${monster_patch}" | tr '\n' ' ')"
+fi
+
 if [[ "$REPACK_ZIP" -eq 1 ]]; then
   ZIP="${CB}/data.zip"
   echo "[apply-data-patches] repack ${ZIP}"

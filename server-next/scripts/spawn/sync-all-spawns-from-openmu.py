@@ -5,8 +5,8 @@ Replaces per-map section-1 rows for maps below OpenMU quantity threshold, then w
 // [TAKUMI-OPENMU-S6-BEGIN] … END with OpenMU-derived spot blocks.
 
 Usage:
-  python3 ./scripts/sync-all-spawns-from-openmu.py [--dry-run] [--min-ratio 0.5]
-  python3 ./scripts/sync-all-spawns-from-openmu.py --min-ratio 0   # fill only empty maps
+  python3 "$SCRIPTS_ROOT/spawn/sync-all-spawns-from-openmu.py" [--dry-run] [--min-ratio 0.5]
+  python3 "$SCRIPTS_ROOT/spawn/sync-all-spawns-from-openmu.py" --min-ratio 0   # fill only empty maps
 """
 from __future__ import annotations
 
@@ -18,7 +18,14 @@ from pathlib import Path
 BEGIN = "// [TAKUMI-OPENMU-S6-BEGIN] OpenMU SeasonSix field spawns"
 END = "// [TAKUMI-OPENMU-S6-END]"
 SPAWN_RE = re.compile(
-    r"CreateMonsterSpawn\(\s*\d+\s*,\s*this\.NpcDictionary\[(\d+)\]\s*,\s*(\d+)\s*,\s*(\d+)",
+    r"CreateMonsterSpawn\(\s*\d+\s*,\s*(?:"
+    r"this\.NpcDictionary\[(\d+)\]|"
+    r"this\.GameConfiguration\.Monsters\.First\(m => m\.Number == (\d+)\)|"
+    r"(\w+)"
+    r")\s*,\s*(\d+)\s*,\s*(\d+)",
+)
+VAR_MONSTER_RE = re.compile(
+    r"var\s+(\w+)\s*=\s*this\.GameConfiguration\.Monsters\.First\(m => m\.Number == (\d+)\)",
 )
 MAP_NUM_RE = re.compile(r"internal const byte Number = (\d+);")
 CLASS_RE = re.compile(r"internal class (\w+)")
@@ -59,7 +66,21 @@ def parse_method_spawns(text: str, method: str) -> list[tuple[int, int, int]]:
     body = block.group(1)
     if "no monsters" in body.lower():
         return []
-    return [(int(a), int(b), int(c)) for a, b, c in SPAWN_RE.findall(body)]
+    vars_map = {name: int(num) for name, num in VAR_MONSTER_RE.findall(body)}
+    rows: list[tuple[int, int, int]] = []
+    for m in SPAWN_RE.finditer(body):
+        g = m.groups()
+        if g[0]:
+            monster = int(g[0])
+        elif g[1]:
+            monster = int(g[1])
+        else:
+            var_name = g[2]
+            if var_name not in vars_map:
+                continue
+            monster = vars_map[var_name]
+        rows.append((monster, int(g[3]), int(g[4])))
+    return rows
 
 
 def resolve_field_spawns(class_name: str, files: dict[str, Path], seen: set[str]) -> list[tuple[int, int, int]]:
@@ -152,20 +173,55 @@ def format_block(map_id: int, title: str, rows: list[tuple[int, int, int]]) -> s
     return "\n".join(lines)
 
 
-def merge_block(set_base: Path, insert: str) -> None:
+def extract_openmu_map_blocks(body: str) -> dict[int, str]:
+    """Parse map_id -> section-1 spot block inside the OpenMU marker region."""
+    blocks: dict[int, str] = {}
+    for part in re.split(r"(?=^1\r?\n//=+)", body, flags=re.M):
+        part = part.strip()
+        if not part.startswith("1"):
+            continue
+        map_id = None
+        for line in part.splitlines():
+            s = line.split("//")[0].strip()
+            if not s or s in ("1", "end") or s.startswith("//"):
+                continue
+            p = s.split()
+            if len(p) >= 9:
+                map_id = int(p[1])
+                break
+        if map_id is not None:
+            blocks[map_id] = part + "\n"
+    return blocks
+
+
+def merge_block(set_base: Path, insert: str, replace_maps: set[int]) -> None:
     text = set_base.read_text(encoding="utf-8", errors="ignore")
+    preserved: dict[int, str] = {}
+    post = ""
     if BEGIN in text:
         pre, rest = text.split(BEGIN, 1)
-        _, post = rest.split(END, 1)
-        text = pre.rstrip() + "\n\n" + insert + post.lstrip("\n")
+        body, post = rest.split(END, 1)
+        preserved = extract_openmu_map_blocks(body)
+        for mid in replace_maps:
+            preserved.pop(mid, None)
     else:
+        pre = text
         anchor = "// MONSTERS"
-        idx = text.find(anchor)
-        text = (
-            (text[:idx].rstrip() + "\n\n" + insert + "\n" + text[idx:])
-            if idx >= 0
-            else text.rstrip() + "\n\n" + insert
-        )
+        idx = pre.find(anchor)
+        if idx >= 0:
+            post = pre[idx:]
+            pre = pre[:idx]
+
+    new_blocks = extract_openmu_map_blocks(insert.split(BEGIN, 1)[1].split(END, 1)[0])
+    merged = {**preserved, **new_blocks}
+    chunks = [BEGIN, ""]
+    for mid in sorted(merged):
+        chunks.append(merged[mid].rstrip())
+        chunks.append("")
+    chunks.append(END)
+    chunks.append("")
+    merged_insert = "\n".join(chunks)
+    text = pre.rstrip() + "\n\n" + merged_insert + post.lstrip("\n")
     set_base.write_text(text, encoding="utf-8")
 
 
@@ -231,7 +287,7 @@ def main() -> int:
         replace_maps,
     )
     set_base.write_text("".join(lines), encoding="utf-8")
-    merge_block(set_base, insert)
+    merge_block(set_base, insert, replace_maps)
     print(f"[sync-openmu] updated {set_base} ({len(replace_maps)} maps)")
     return 0
 

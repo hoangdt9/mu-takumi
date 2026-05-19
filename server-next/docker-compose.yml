@@ -83,8 +83,9 @@ services:
       # M8 move map: set to 1 to skip block-key check entirely (parity C++ GS). Default off — server accepts legacy seed 0 fallback.
       TAKUMI_MOVE_MAP_SKIP_KEY_CHECK: "${TAKUMI_MOVE_MAP_SKIP_KEY_CHECK:-}"
       TAKUMI_CUSTOM_ARENA_SKIP_SCHEDULE: "${TAKUMI_CUSTOM_ARENA_SKIP_SCHEDULE:-}"
-      TAKUMI_MONSTER_SET_BASE_PATH: "${TAKUMI_MONSTER_SET_BASE_PATH:-/muserver-data/Monster/MonsterSetBase.txt}"
-      TAKUMI_MONSTER_INFO_PATH: "${TAKUMI_MONSTER_INFO_PATH:-/muserver-data/Monster/Monster.txt}"
+      # Always mounted volume paths — do not pass host TAKUMI_MONSTER_* from shell/.env (breaks spawn load).
+      TAKUMI_MONSTER_SET_BASE_PATH: /muserver-data/Monster/MonsterSetBase.txt
+      TAKUMI_MONSTER_INFO_PATH: /muserver-data/Monster/Monster.txt
       TAKUMI_ATT_DATA_ROOT: "${TAKUMI_ATT_DATA_ROOT:-/att-data}"
       TAKUMI_CLIENT_DATA_ROOT: "${TAKUMI_CLIENT_DATA_ROOT:-/att-data}"
       TAKUMI_ITEM_BMD_LOCALE: "${TAKUMI_ITEM_BMD_LOCALE:-Eng}"
@@ -220,13 +221,14 @@ services:
       TAKUMI_SHOP_PRICE_TRACE: "${TAKUMI_SHOP_PRICE_TRACE:-1}"
       TAKUMI_GAMESERVER_DATA_PATH: "${TAKUMI_GAMESERVER_DATA_PATH:-/muserver-data}"
       TAKUMI_CLIENT_DATA_ROOT: "${TAKUMI_CLIENT_DATA_ROOT:-/att-data}"
+      TAKUMI_ATT_DATA_ROOT: "${TAKUMI_ATT_DATA_ROOT:-/att-data}"
       TAKUMI_ITEM_BMD_LOCALE: "${TAKUMI_ITEM_BMD_LOCALE:-Eng}"
       TAKUMI_ITEM_BMD_PATH: "${TAKUMI_ITEM_BMD_PATH:-}"
       # M8 move map: set to 1 to skip block-key check entirely (parity C++ GS). Default off — server accepts legacy seed 0 fallback.
       TAKUMI_MOVE_MAP_SKIP_KEY_CHECK: "${TAKUMI_MOVE_MAP_SKIP_KEY_CHECK:-}"
       TAKUMI_CUSTOM_ARENA_SKIP_SCHEDULE: "${TAKUMI_CUSTOM_ARENA_SKIP_SCHEDULE:-}"
-      TAKUMI_MONSTER_SET_BASE_PATH: "${TAKUMI_MONSTER_SET_BASE_PATH:-/muserver-data/Monster/MonsterSetBase.txt}"
-      TAKUMI_MONSTER_INFO_PATH: "${TAKUMI_MONSTER_INFO_PATH:-/muserver-data/Monster/Monster.txt}"
+      TAKUMI_MONSTER_SET_BASE_PATH: /muserver-data/Monster/MonsterSetBase.txt
+      TAKUMI_MONSTER_INFO_PATH: /muserver-data/Monster/Monster.txt
       TAKUMI_PG_CONNECTION_STRING: "${TAKUMI_PG_CONNECTION_STRING:-Host=postgres;Port=5432;Username=takumi;Password=takumi;Database=takumi_runtime}"
       TAKUMI_ROSTER_DB_SYNC: "${TAKUMI_ROSTER_DB_SYNC:-1}"
       TAKUMI_ROSTER_DB_PRIMARY: "${TAKUMI_ROSTER_DB_PRIMARY:-1}"
@@ -239,7 +241,7 @@ services:
     # Bind-mount + host obj → NETSDK1064; script uses TAKUMI_DOCKER_GAMEHOST + Directory.Build.props for /tmp outputs (no shared rm).
     command:
       - /bin/sh
-      - /app/scripts/docker-game-host-boot.sh
+      - /app/scripts/docker/docker-game-host-boot.sh
 
   # Static HTTP for Android Preload `data.zip` (nginx). Host port **defaults to 18080** — not 44605/44606.
   datazip:

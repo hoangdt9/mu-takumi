@@ -10,14 +10,29 @@ Last updated: 2026-05-19
 
 ## Nguồn tham chiếu
 
-| Repo / path | Dùng cho |
-|-------------|----------|
-| **`mu-takumi/MuServer/4.GameServer/Data`** | `Monster/MonsterSetBase.txt`, `Monster/Monster.txt`, `Move/Move.txt`, `Move/Gate.txt` |
-| **`mu-takumi/server-next`** | `MapMonsterWorld`, `MonsterSetBaseLoader`, `MapMonsterScopeSender`, `MoveWarpJoinReload` |
-| **OpenMU** (`OpenMU/src`) | `MonsterSpawnArea`, map definitions (XML/DB); admin map editor |
-| **MuMain-5.2** | `WSclient.cpp` — `Receive*` viewport `0x13` / destroy `0x14` |
-| **muonline-xulek** | So sánh `MonsterSetBase` / GS data nếu drift season |
-| **Legacy** `Source/4.GameServer` | `MonsterSetBase.cpp`, `MonsterManager.cpp`, `Viewport.cpp` |
+| Repo / path | Spawn data? | Dùng cho |
+|-------------|:-------------:|----------|
+| **`takumi/MuServer/4.GameServer/Data`** | ✅ | SSOT file: `MonsterSetBase.txt`, `Monster.txt`, `Move/*.txt` |
+| **`Github/OpenMU`** | ✅ (C#) | **Baseline S6:** `sync-all-spawns-from-openmu.py` — `VersionSeasonSix/Maps/*.cs` (+ 095d/075) |
+| **`Source Pegasus 5.2/MuServer/Data`** | ✅ | **Denser field boxes:** Lorencia/Devias/Noria/Elbeland — `merge-spawns-from-references.py` |
+| **`SRC ThangCuoi/Mu Server/4.Sub-1/Data`** | ✅ | Bổ sung map custom (Vulcanus, Kanturu, …) khi qty > Takumi |
+| **`server-next/scripts/spawn/`** | [`scripts/README.md`](../scripts/README.md) | `sync-monster-spawn-stack.sh` = enable + OpenMU + merge + report + Postgres ETL |
+| **MuMain-5.2** | ❌ client | `WSclient.cpp` — viewport `C2 0x13` / destroy `0x14` (wire QA only) |
+| **muonline-xulek / muonline-bernat-main** | ❌ client | MonoGame client — không có `MonsterSetBase` |
+| **muonline-bmd-viewer** | ❌ tools | BMD/terrain viewer — không spawn GS |
+
+**Lệnh gộp (trên Mac, cần OpenMU + Pegasus + ThangCuoi checkout):**
+
+```bash
+cd server-next
+./scripts/sync-monster-spawn-stack.sh   # hoặc từng bước:
+# ./scripts/sync-all-spawns-from-openmu.py
+# ./scripts/merge-spawns-from-references.py
+# ./scripts/report-spawn-sources.py
+docker compose --profile gamehost restart game-host
+```
+
+**Docker:** không set `TAKUMI_MONSTER_SET_BASE_PATH` host path trong `.env` — compose dùng `/muserver-data/Monster/*.txt`.
 
 ---
 

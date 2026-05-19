@@ -226,6 +226,7 @@ Use this to avoid unnecessary rebuilds.
    - [x] **M9b AI (dev baseline):** wander/chase/`0xD4`/`0x18`, monster→player dmg, periodic viewport, regen broadcast, ATT/path — **`docs/M9-MONSTER-AI-PORT-CHECKLIST.md`** (P0–P3.6 + P4.1–P4.4).  
    - [x] **M9c shop:** `ItemValue.txt` + **`C2 F3 E9`** + **`F3 ED`** + Android tooltip buy/sell Zen (2026-05-17).
    - [x] **Item wire / socket (2026-05-18):** `ItemWire602.WriteShopItem` + `SocketItemTypeCatalog` — socket columns chỉ khi `SocketItemType.txt` match (parity `CShop::InsertItemNew`); non-socket → `Joh` @ byte6, bytes 7–11 `0xFF`.  
+   - [x] **M12 item sanitize + tooltip (2026-05-19):** `ItemWireSanitizer` on join/`F3 10`; client `IsSocketItem(ITEM*)` type-only — **`docs/M12-ITEM-SYSTEM-CHECKLIST.md`**.  
    - [x] **PvP stub (P3.6):** `PlayerCombatRules` (range, safe zone), `RollDamagePlayerToPlayer`, `TAKUMI_COMBAT_PVP_ENABLED`.  
    - [x] **Quest NPC dialog stub (P4.4):** `NpcQuestCatalog` + `C1 A0` mask / `C1 A1` state (`TAKUMI_QUEST_NPC_DEFAULT_STATE`).  
    - [ ] Quest accept/reward persistence, warehouse/guild NPC đầy đủ — **M11+**. Pathfinding A* đầy đủ (hiện greedy + `MapTilePathfinder` step).

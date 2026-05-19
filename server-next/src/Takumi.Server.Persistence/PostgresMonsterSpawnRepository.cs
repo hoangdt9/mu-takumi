@@ -61,34 +61,37 @@ public sealed class PostgresMonsterSpawnRepository : IAsyncDisposable
             return;
         }
 
-        await using var copy = await conn.BeginBinaryImportAsync(
-            "COPY monster_spawn (spawn_type, monster_class, map_id, dis, pos_x, pos_y, range_tx, range_ty, dir, spawn_value, source_file) FROM STDIN (FORMAT BINARY)",
-            ct).ConfigureAwait(false);
-
-        foreach (var r in rows)
+        await using (var copy = await conn.BeginBinaryImportAsync(
+                         "COPY monster_spawn (spawn_type, monster_class, map_id, dis, pos_x, pos_y, range_tx, range_ty, dir, spawn_value, source_file) FROM STDIN (FORMAT BINARY)",
+                         ct)
+                     .ConfigureAwait(false))
         {
-            await copy.StartRowAsync(ct).ConfigureAwait(false);
-            await copy.WriteAsync(r.SpawnType, NpgsqlDbType.Smallint, ct).ConfigureAwait(false);
-            await copy.WriteAsync(r.MonsterClass, NpgsqlDbType.Integer, ct).ConfigureAwait(false);
-            await copy.WriteAsync((short)r.MapId, NpgsqlDbType.Smallint, ct).ConfigureAwait(false);
-            await copy.WriteAsync(r.Dis, NpgsqlDbType.Integer, ct).ConfigureAwait(false);
-            await copy.WriteAsync(r.PosX, NpgsqlDbType.Smallint, ct).ConfigureAwait(false);
-            await copy.WriteAsync(r.PosY, NpgsqlDbType.Smallint, ct).ConfigureAwait(false);
-            await copy.WriteAsync(r.RangeTx, NpgsqlDbType.Smallint, ct).ConfigureAwait(false);
-            await copy.WriteAsync(r.RangeTy, NpgsqlDbType.Smallint, ct).ConfigureAwait(false);
-            await copy.WriteAsync(r.Dir, NpgsqlDbType.Smallint, ct).ConfigureAwait(false);
-            await copy.WriteAsync(r.SpawnValue, NpgsqlDbType.Integer, ct).ConfigureAwait(false);
-            if (sourceFile is null)
+            foreach (var r in rows)
             {
-                await copy.WriteNullAsync(ct).ConfigureAwait(false);
+                await copy.StartRowAsync(ct).ConfigureAwait(false);
+                await copy.WriteAsync(r.SpawnType, NpgsqlDbType.Smallint, ct).ConfigureAwait(false);
+                await copy.WriteAsync(r.MonsterClass, NpgsqlDbType.Integer, ct).ConfigureAwait(false);
+                await copy.WriteAsync((short)r.MapId, NpgsqlDbType.Smallint, ct).ConfigureAwait(false);
+                await copy.WriteAsync(r.Dis, NpgsqlDbType.Integer, ct).ConfigureAwait(false);
+                await copy.WriteAsync(r.PosX, NpgsqlDbType.Smallint, ct).ConfigureAwait(false);
+                await copy.WriteAsync(r.PosY, NpgsqlDbType.Smallint, ct).ConfigureAwait(false);
+                await copy.WriteAsync(r.RangeTx, NpgsqlDbType.Smallint, ct).ConfigureAwait(false);
+                await copy.WriteAsync(r.RangeTy, NpgsqlDbType.Smallint, ct).ConfigureAwait(false);
+                await copy.WriteAsync(r.Dir, NpgsqlDbType.Smallint, ct).ConfigureAwait(false);
+                await copy.WriteAsync(r.SpawnValue, NpgsqlDbType.Integer, ct).ConfigureAwait(false);
+                if (sourceFile is null)
+                {
+                    await copy.WriteNullAsync(ct).ConfigureAwait(false);
+                }
+                else
+                {
+                    await copy.WriteAsync(sourceFile, NpgsqlDbType.Text, ct).ConfigureAwait(false);
+                }
             }
-            else
-            {
-                await copy.WriteAsync(sourceFile, NpgsqlDbType.Text, ct).ConfigureAwait(false);
-            }
+
+            await copy.CompleteAsync(ct).ConfigureAwait(false);
         }
 
-        await copy.CompleteAsync(ct).ConfigureAwait(false);
         await tx.CommitAsync(ct).ConfigureAwait(false);
     }
 

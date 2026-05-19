@@ -72,7 +72,9 @@ public sealed class MonsterSpawnPostgresEtlTests
         var count = await MonsterSpawnDbImporter.ImportFileAsync(path);
         Assert.True(count > 0);
 
-        await using var repo = new PostgresMonsterSpawnRepository(cs);
+        var verifyCs = PostgresCharacterRosterRepository.BuildConnectionStringFromEnv()
+                       ?? throw new InvalidOperationException("TAKUMI_PG_CONNECTION_STRING not set after import.");
+        await using var repo = new PostgresMonsterSpawnRepository(verifyCs);
         var loaded = await repo.LoadAllAsync();
         Assert.Equal(count, loaded.Count);
     }

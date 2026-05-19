@@ -36,7 +36,7 @@ Last updated: 2026-05-19
 |---|------|:-:|---------|
 | P0.1 | Mount `TAKUMI_GAMESERVER_DATA_HOST` → `/muserver-data` | [x] | `docker-compose.yml` |
 | P0.2 | `TAKUMI_MONSTER_SET_BASE_PATH` / `MONSTER_INFO_PATH` | [x] | |
-| P0.3 | Chạy `./scripts/import-monster-spawn.sh` (hoặc `import-world-static-data.sh`) | [ ] | Bật `TAKUMI_MONSTER_SPAWN_DB=1` nếu dùng DB |
+| P0.3 | Chạy `./scripts/import-monster-spawn.sh` (hoặc `import-world-static-data.sh`) | [x] | `./scripts/sync-monster-spawn-stack.sh`; bật `TAKUMI_MONSTER_SPAWN_DB=1` nếu dùng DB |
 | P0.4 | Log startup: không còn “Lorencia fallback only” trên Docker prod | [ ] | Chỉ fallback khi thiếu file |
 | P0.5 | `./scripts/report-monster-spawn-coverage.sh` pass | [x] | Unit + in ra map counts |
 
@@ -134,6 +134,16 @@ python3 ./scripts/append-move-map-spawns-from-openmu.py
 **NPC-only by design:** map **30** (Valley of Loren siege), **79** (Loren Market) — không WARN trong `[m8-m9]` log.
 
 Sau đổi data: `docker compose restart game-host` (hoặc `import-monster-spawn.sh` nếu `TAKUMI_MONSTER_SPAWN_DB=1`).
+
+### OpenMU full sync (2026-05-19)
+
+```bash
+./scripts/sync-monster-spawn-stack.sh   # enable + sync-all-spawns-from-openmu + import Postgres
+```
+
+- `sync-all-spawns-from-openmu.py --min-ratio 1.0` — thay section-1 các map còn thiếu so với OpenMU (Kanturu, Raklion, Chaos Castle, …).
+- Map town **0,2,3,8** vẫn từ `MonsterSetBase` gốc + Devias patch (chuỗi kế thừa OpenMU 075 chưa export tự động).
+- Chuyển Mac: [`DEV-MAC-SERVER-MIGRATION.md`](./DEV-MAC-SERVER-MIGRATION.md).
 
 ---
 

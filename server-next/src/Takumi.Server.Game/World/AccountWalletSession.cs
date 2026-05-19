@@ -6,7 +6,8 @@ namespace Takumi.Server.Game.World;
 /// <summary>Per-account warehouse zen + coin balances (memory + optional Postgres mirror).</summary>
 public static class AccountWalletSession
 {
-    const long MaxCarryZen = 2_000_000_000;
+    public const long MaxCarryZen = 2_000_000_000;
+    public const long MaxWarehouseZen = 2_000_000_000;
 
     static readonly ConcurrentDictionary<string, AccountWalletRow> Cache = new(StringComparer.OrdinalIgnoreCase);
 
@@ -141,7 +142,7 @@ public static class AccountWalletSession
 
         if (flag == 0)
         {
-            if (inv < amount)
+            if (inv < amount || wh + amount > MaxWarehouseZen)
             {
                 return false;
             }

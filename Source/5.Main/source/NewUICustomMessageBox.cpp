@@ -4569,7 +4569,7 @@ bool SEASON3B::CTradeZenMsgBoxLayout::SetLayout()
 	if(0 == pMsgBox)
 		return false;
 
-	if(false == pMsgBox->Create(MSGBOX_COMMON_TYPE_OKCANCEL, INPUTBOX_TYPE_NUMBER, INPUTBOX_WIDTH, INPUTBOX_HEIGHT, INPUTBOX_TEXTLIMIT))
+	if(false == pMsgBox->Create(MSGBOX_COMMON_TYPE_OKCANCEL, INPUTBOX_TYPE_NUMBER, INPUTBOX_WIDTH, INPUTBOX_HEIGHT, INPUTBOX_ZEN_TEXTLIMIT))
 		return false;
 
 	pMsgBox->SetInputBoxOption(UIOPTION_NUMBERONLY|UIOPTION_PAINTBACK);
@@ -4625,7 +4625,7 @@ bool SEASON3B::CZenReceiptMsgBoxLayout::SetLayout()
 	if(0 == pMsgBox)
 		return false;
 
-	if(false == pMsgBox->Create(MSGBOX_COMMON_TYPE_OKCANCEL, INPUTBOX_TYPE_NUMBER, INPUTBOX_WIDTH, INPUTBOX_HEIGHT, INPUTBOX_TEXTLIMIT))
+	if(false == pMsgBox->Create(MSGBOX_COMMON_TYPE_OKCANCEL, INPUTBOX_TYPE_NUMBER, INPUTBOX_WIDTH, INPUTBOX_HEIGHT, INPUTBOX_ZEN_TEXTLIMIT))
 		return false;
 
 	pMsgBox->SetInputBoxOption(UIOPTION_NUMBERONLY|UIOPTION_PAINTBACK);
@@ -4692,7 +4692,7 @@ bool SEASON3B::CZenPaymentMsgBoxLayout::SetLayout()
 	if(0 == pMsgBox)
 		return false;
 
-	if(false == pMsgBox->Create(MSGBOX_COMMON_TYPE_OKCANCEL, INPUTBOX_TYPE_NUMBER, INPUTBOX_WIDTH, INPUTBOX_HEIGHT, INPUTBOX_TEXTLIMIT))
+	if(false == pMsgBox->Create(MSGBOX_COMMON_TYPE_OKCANCEL, INPUTBOX_TYPE_NUMBER, INPUTBOX_WIDTH, INPUTBOX_HEIGHT, INPUTBOX_ZEN_TEXTLIMIT))
 		return false;
 
 	pMsgBox->SetInputBoxOption(UIOPTION_NUMBERONLY|UIOPTION_PAINTBACK);
@@ -4724,29 +4724,32 @@ CALLBACK_RESULT SEASON3B::CZenPaymentMsgBoxLayout::ProcessOk(class CNewUIMessage
 		return CALLBACK_CONTINUE;
 	}
 	
-	int iInputZen = atoi(strText);
-	if(iInputZen == 0)
+	const __int64 inputZen = _atoi64(strText);
+	if(inputZen <= 0)
 	{
 		return CALLBACK_CONTINUE;	
 	}
-	
-	if(iInputZen <= CharacterMachine->StorageGold && CharacterMachine->Gold + iInputZen <= 2000000000
-		)
+
+	const __int64 maxCarryZen = 2000000000LL;
+	const __int64 maxWithdraw = maxCarryZen - static_cast<__int64>(CharacterMachine->Gold);
+	if(inputZen <= static_cast<__int64>(CharacterMachine->StorageGold)
+		&& inputZen <= maxWithdraw)
 	{
+		const int wireZen = static_cast<int>(inputZen);
 		if (!g_pStorageInventory->IsStorageLocked()
 			|| g_pStorageInventory->IsCorrectPassword())
-			{
-				SendRequestStorageGold(1, iInputZen);
-			}
-			else
-			{
-				g_pStorageInventory->SetBackupTakeZen(iInputZen);
-				SEASON3B::CreateMessageBox(MSGBOX_LAYOUT_CLASS(SEASON3B::CPasswordKeyPadMsgBoxLayout));
-			}
+		{
+			SendRequestStorageGold(1, wireZen);
+		}
+		else
+		{
+			g_pStorageInventory->SetBackupTakeZen(wireZen);
+			SEASON3B::CreateMessageBox(MSGBOX_LAYOUT_CLASS(SEASON3B::CPasswordKeyPadMsgBoxLayout));
+		}
 	}
-	else if(CharacterMachine->Gold + iInputZen > 2000000000) 
+	else if(inputZen > maxWithdraw)
 	{
-
+		SEASON3B::CreateOkMessageBox(GlobalText[423]);
 	}
 	else
 	{

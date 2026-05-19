@@ -502,20 +502,20 @@ public static class ItemWorldHandler
         string? accountId,
         byte[] characterName10,
         byte sourceSlotWire,
-        byte targetSlot,
+        byte targetSlotWire,
         Func<ReadOnlyMemory<byte>, CancellationToken, Task> writeAsync,
         Action? onRosterDirty,
         string remote,
         CancellationToken ct)
     {
-        _ = targetSlot;
         if (!CanUseItems(player, presenceSessionId))
         {
             return true;
         }
 
         var sourceSlot = ClientGameplayPackets602.NormalizeItemUseSlot(sourceSlotWire);
-        if (sourceSlot == targetSlot || !ItemWire602.IsBagSlot(sourceSlot))
+        var targetSlot = ClientGameplayPackets602.NormalizeItemUseSlot(targetSlotWire);
+        if (!ItemWire602.IsBagSlot(sourceSlot))
         {
             return true;
         }
@@ -529,6 +529,37 @@ public static class ItemWorldHandler
         }
 
         var itemIndex = ItemWire602.DecodeItemIndex(blob);
+        if (targetSlotWire != sourceSlotWire
+            && sourceSlot != targetSlot
+            && ItemWire602.IsBagSlot(targetSlot)
+            && PlayerShopSession.TryGetSlot(presenceSessionId, targetSlot, out var targetBlob)
+            && !ItemWire602.IsEmpty(targetBlob)
+            && InventoryJewelUseRules.CanRepairFenrirWithBless(itemIndex, targetBlob))
+        {
+            var empty = new byte[ItemWire602.WireBytes];
+            PlayerShopSession.SetSlot(presenceSessionId, sourceSlot, empty);
+            PlayerShopSession.PersistSlotToMirror(accountId, characterName10, sourceSlot, empty);
+            await writeAsync(ItemWorldWire602.BuildItemDelete(sourceSlot), ct).ConfigureAwait(false);
+
+            ItemWire602.SetDurability(targetBlob, 255);
+            PlayerShopSession.SetSlot(presenceSessionId, targetSlot, targetBlob);
+            PlayerShopSession.PersistSlotToMirror(accountId, characterName10, targetSlot, targetBlob);
+            await writeAsync(ItemWorldWire602.BuildItemDur(targetSlot, 255, 1), ct).ConfigureAwait(false);
+
+            Console.WriteLine(
+                "[m7] fenrir repair bless slot={0} → fenrir={1} {2}",
+                sourceSlot,
+                targetSlot,
+                remote);
+            return true;
+        }
+
+        // Self-use potions send target wire 0; do not compare normalized target (0 → bag slot 12).
+        if (targetSlotWire != 0 && sourceSlot == targetSlot)
+        {
+            return true;
+        }
+
         var maxHp = Math.Max(1, player.MaxHp);
         var maxMp = Math.Max(1, player.MaxMp);
         player.MaxShield = InventoryConsumableRules.EnsureMaxShield(maxHp, player.MaxShield);

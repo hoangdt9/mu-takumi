@@ -31,6 +31,8 @@ namespace SEASON3B
 		INPUTBOX_HEIGHT = 12,
 
 		INPUTBOX_TEXTLIMIT = 8,
+		/// <summary>Vault/trade zen entry — up to 2,000,000,000 (10 digits).</summary>
+		INPUTBOX_ZEN_TEXTLIMIT = 10,
 	};
 
 	class CNewUITextInputMsgBox : public CNewUIMessageBoxBase

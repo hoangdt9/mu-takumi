@@ -208,6 +208,27 @@ public sealed class ItemWorldHandlerTests
     }
 
     [Fact]
+    public void CanRepairFenrirWithBless_requires_bless_on_broken_fenrir()
+    {
+        var bless = new byte[ItemWire602.WireBytes];
+        ItemWire602.WriteSeason6Item(bless, 14, 13, 0, 1, false, false, 0, 0);
+        var fenrirBroken = new byte[ItemWire602.WireBytes];
+        ItemWire602.WriteSeason6Item(fenrirBroken, 13, 37, 0, 0, false, false, 0, 0);
+        var fenrirOk = new byte[ItemWire602.WireBytes];
+        ItemWire602.WriteSeason6Item(fenrirOk, 13, 37, 0, 255, false, false, 0, 0);
+
+        Assert.True(InventoryJewelUseRules.CanRepairFenrirWithBless(
+            InventoryJewelUseRules.ItemJewelOfBless,
+            fenrirBroken));
+        Assert.False(InventoryJewelUseRules.CanRepairFenrirWithBless(
+            InventoryJewelUseRules.ItemJewelOfBless,
+            fenrirOk));
+        Assert.False(InventoryJewelUseRules.CanRepairFenrirWithBless(
+            (14 * 512) + 0,
+            fenrirBroken));
+    }
+
+    [Fact]
     public void InventoryBagGrid_places_2x2_items_without_anchor_overlap()
     {
         var sid = Guid.NewGuid();

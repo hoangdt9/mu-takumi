@@ -1,4 +1,5 @@
 using System.Buffers.Binary;
+using Takumi.Server.Game;
 using Takumi.Server.Protocol;
 
 namespace Takumi.Server.Game.World;
@@ -18,9 +19,11 @@ public static class CharacterStatPointHandler
     {
         statType = 0;
         count = 0;
+        Span<byte> scratch = stackalloc byte[BulkRequestLength];
+
         for (var i = searchFrom; i + LegacyRequestLength <= packet.Length; i++)
         {
-            if (packet[i] != 0xC1 || packet[i + 2] != 0xF3 || packet[i + 3] != 0x06)
+            if (packet[i] != 0xC1 || packet[i + 2] != 0xF3)
             {
                 continue;
             }
@@ -31,11 +34,22 @@ public static class CharacterStatPointHandler
                 continue;
             }
 
-            statType = packet[i + 4];
+            packet.Slice(i, packetSize).CopyTo(scratch[..packetSize]);
+            if (scratch[3] != 0x06)
+            {
+                TakumiStreamXorCodec.DecodeTakumiStreamXor(scratch[..packetSize], firstXorIndex: 3);
+            }
+
+            if (scratch[3] != 0x06)
+            {
+                continue;
+            }
+
+            statType = scratch[4];
             count = 1;
             if (packetSize >= BulkRequestLength)
             {
-                count = BinaryPrimitives.ReadUInt16LittleEndian(packet.Slice(i + 5, 2));
+                count = BinaryPrimitives.ReadUInt16LittleEndian(scratch.Slice(5, 2));
                 if (count <= 0)
                 {
                     count = 1;

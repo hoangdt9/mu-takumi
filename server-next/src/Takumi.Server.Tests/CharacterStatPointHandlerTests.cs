@@ -30,6 +30,18 @@ public sealed class CharacterStatPointHandlerTests
     }
 
     [Fact]
+    public void TryFindNextAddPointRequest_bulk_packet_decodes_stream_xor()
+    {
+        var packet = new byte[] { 0xC1, 0x07, 0xF3, 0x06, 0x00, 0x30, 0x75 };
+        EncodeTakumiStreamXor(packet.AsSpan(), firstXorIndex: 3);
+        var from = 0;
+
+        Assert.True(CharacterStatPointHandler.TryFindNextAddPointRequest(packet, ref from, out var statType, out var count));
+        Assert.Equal(0x00, statType);
+        Assert.Equal(30000, count);
+    }
+
+    [Fact]
     public void TryFindNextAddPointRequest_multiple_legacy_packets_aggregate_in_buffer()
     {
         var packet = new byte[]
@@ -58,5 +70,20 @@ public sealed class CharacterStatPointHandlerTests
         Assert.Equal(30000, applied);
         Assert.Equal(30100, sheet.Strength);
         Assert.Equal(20000, sheet.LevelUpPoint);
+    }
+
+    static void EncodeTakumiStreamXor(Span<byte> buffer, int firstXorIndex)
+    {
+        ReadOnlySpan<byte> filter =
+        [
+            0xAB, 0x11, 0xCD, 0xFE, 0x18, 0x23, 0xC5, 0xA3,
+            0xCA, 0x33, 0xC1, 0xCC, 0x66, 0x67, 0x21, 0xF3,
+            0x32, 0x12, 0x15, 0x35, 0x29, 0xFF, 0xFE, 0x1D,
+            0x44, 0xEF, 0xCD, 0x41, 0x26, 0x3C, 0x4E, 0x4D,
+        ];
+        for (var i = firstXorIndex; i < buffer.Length; i++)
+        {
+            buffer[i] ^= (byte)(buffer[i - 1] ^ filter[i % 32]);
+        }
     }
 }

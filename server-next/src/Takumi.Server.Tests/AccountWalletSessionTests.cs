@@ -24,6 +24,24 @@ public sealed class AccountWalletSessionTests
     }
 
     [Fact]
+    public void Warehouse_withdraw_respects_two_billion_carry_cap()
+    {
+        var player = new GameRosterEntry { Zen = 2_000_000_000 };
+        const string account = "test_wallet_2b";
+
+        Assert.True(AccountWalletSession.TryTransferWarehouseZen(account, player, flag: 0, 2_000_000_000, out _, out var wh));
+        Assert.Equal(0, player.Zen);
+        Assert.Equal(2_000_000_000u, wh);
+
+        Assert.True(AccountWalletSession.TryTransferWarehouseZen(account, player, flag: 1, 2_000_000_000, out var inv, out wh));
+        Assert.Equal(2_000_000_000, player.Zen);
+        Assert.Equal(2_000_000_000u, inv);
+        Assert.Equal(0u, wh);
+
+        Assert.False(AccountWalletSession.TryTransferWarehouseZen(account, player, flag: 1, 1, out _, out _));
+    }
+
+    [Fact]
     public void Coin_debit_fails_when_balance_insufficient()
     {
         const string account = "test_coin";

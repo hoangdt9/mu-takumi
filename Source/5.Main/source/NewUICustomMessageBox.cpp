@@ -22,6 +22,8 @@
 #if defined(__ANDROID__) || defined(MU_IOS)
 #include "Input.h"
 #include "MobilePlatform.h"
+#include "Platform/MobileHud.h"
+#include "Platform/MobileChatHud.h"
 #endif
 
 extern int DisplayWinCDepthBox;
@@ -2279,7 +2281,11 @@ bool SEASON3B::CSystemMenuMsgBox::Create(float fPriority)
 	//x = x + DisplayWinCDepthBox;
 	y = 100;
 	width = MSGBOX_WIDTH;
+#if defined(__ANDROID__) || defined(MU_IOS)
+	height = MSGBOX_TOP_HEIGHT + (6 * MSGBOX_MIDDLE_HEIGHT) + MSGBOX_BOTTOM_HEIGHT;
+#else
 	height = MSGBOX_TOP_HEIGHT + (5 * MSGBOX_MIDDLE_HEIGHT) + MSGBOX_BOTTOM_HEIGHT;
+#endif
 
 	CNewUIMessageBoxBase::Create(x, y, width, height, fPriority);
 
@@ -2300,6 +2306,9 @@ bool SEASON3B::CSystemMenuMsgBox::Update()
 	m_BtnChooseServer.Update();
 	m_BtnChooseCharacter.Update();
 	m_BtnOption.Update();
+#if defined(__ANDROID__) || defined(MU_IOS)
+	m_BtnHudMode.Update();
+#endif
 	m_BtnCancel.Update();
 	return true;
 }
@@ -2325,7 +2334,12 @@ void SEASON3B::CSystemMenuMsgBox::RenderFrame()
 	RenderImage(CNewUIMessageBoxMng::IMAGE_MSGBOX_TOP, x, y, width, height);
 
 	x = GetPos().x; y += MSGBOX_TOP_HEIGHT; width = MSGBOX_WIDTH; height = MSGBOX_MIDDLE_HEIGHT;
-	for(int i=0; i<5; ++i)
+#if defined(__ANDROID__) || defined(MU_IOS)
+	const int middleSections = 6;
+#else
+	const int middleSections = 5;
+#endif
+	for (int i = 0; i < middleSections; ++i)
 	{
 		RenderImage(CNewUIMessageBoxMng::IMAGE_MSGBOX_MIDDLE, x, y, width, height);
 		y += height;
@@ -2341,6 +2355,9 @@ void SEASON3B::CSystemMenuMsgBox::RenderButtons()
 	m_BtnChooseServer.Render();
 	m_BtnChooseCharacter.Render();
 	m_BtnOption.Render();
+#if defined(__ANDROID__) || defined(MU_IOS)
+	m_BtnHudMode.Render();
+#endif
 	m_BtnCancel.Render();
 }
 
@@ -2383,6 +2400,12 @@ void SEASON3B::CSystemMenuMsgBox::SetButtonInfo()
 	m_BtnOption.SetInfo(CNewUIMessageBoxMng::IMAGE_MSGBOX_BTN_EMPTY, x, y, width, height, CNewUIMessageBoxButton::MSGBOX_BTN_SIZE_EMPTY);
 	m_BtnOption.SetText(GlobalText[385]);
 
+#if defined(__ANDROID__) || defined(MU_IOS)
+	y += 30.f;
+	m_BtnHudMode.SetInfo(CNewUIMessageBoxMng::IMAGE_MSGBOX_BTN_EMPTY, x, y, width, height, CNewUIMessageBoxButton::MSGBOX_BTN_SIZE_EMPTY);
+	m_BtnHudMode.SetText(MU_MobileIsModernMobileHudEnabled() ? "Switch: Classic UI" : "Switch: Mobile UI");
+#endif
+
 	y += 30.f;
 	m_BtnCancel.SetInfo(CNewUIMessageBoxMng::IMAGE_MSGBOX_BTN_EMPTY, x, y, width, height, CNewUIMessageBoxButton::MSGBOX_BTN_SIZE_EMPTY);
 	m_BtnCancel.SetText(GlobalText[384]);
@@ -2413,10 +2436,21 @@ CALLBACK_RESULT SEASON3B::CSystemMenuMsgBox::LButtonDown(class CNewUIMessageBoxB
 	{
 		pMsgBox->m_SystemMenuPressedBtn = 3;
 	}
+#if defined(__ANDROID__) || defined(MU_IOS)
+	else if (pMsgBox->m_BtnHudMode.IsMouseIn() == true)
+	{
+		pMsgBox->m_SystemMenuPressedBtn = 4;
+	}
+	else if (pMsgBox->m_BtnCancel.IsMouseIn() == true)
+	{
+		pMsgBox->m_SystemMenuPressedBtn = 5;
+	}
+#else
 	else if (pMsgBox->m_BtnCancel.IsMouseIn() == true)
 	{
 		pMsgBox->m_SystemMenuPressedBtn = 4;
 	}
+#endif
 
 	return CALLBACK_CONTINUE;
 }
@@ -2449,10 +2483,21 @@ CALLBACK_RESULT SEASON3B::CSystemMenuMsgBox::LButtonUp(class CNewUIMessageBoxBas
 		{
 			lane = 3;
 		}
+#if defined(__ANDROID__) || defined(MU_IOS)
+		else if (pMsgBox->m_BtnHudMode.IsMouseIn() == true)
+		{
+			lane = 4;
+		}
+		else if (pMsgBox->m_BtnCancel.IsMouseIn() == true)
+		{
+			lane = 5;
+		}
+#else
 		else if (pMsgBox->m_BtnCancel.IsMouseIn() == true)
 		{
 			lane = 4;
 		}
+#endif
 	}
 
 	if (lane == 0)
@@ -2502,11 +2547,26 @@ CALLBACK_RESULT SEASON3B::CSystemMenuMsgBox::LButtonUp(class CNewUIMessageBoxBas
 		g_MessageBox->SendEvent(pOwner, MSGBOX_EVENT_USER_CUSTOM_SYSTEMMENU_OPTION);
 		return CALLBACK_BREAK;
 	}
+#if defined(__ANDROID__) || defined(MU_IOS)
+	if (lane == 4)
+	{
+		MU_MobileSwitchMainHudModeWithUiSync();
+		PlayBuffer(SOUND_CLICK01);
+		g_MessageBox->SendEvent(pOwner, MSGBOX_EVENT_USER_COMMON_CANCEL);
+		return CALLBACK_BREAK;
+	}
+	if (lane == 5)
+	{
+		g_MessageBox->SendEvent(pOwner, MSGBOX_EVENT_USER_COMMON_CANCEL);
+		return CALLBACK_BREAK;
+	}
+#else
 	if (lane == 4)
 	{
 		g_MessageBox->SendEvent(pOwner, MSGBOX_EVENT_USER_COMMON_CANCEL);
 		return CALLBACK_BREAK;
 	}
+#endif
 
 	return CALLBACK_CONTINUE;
 }

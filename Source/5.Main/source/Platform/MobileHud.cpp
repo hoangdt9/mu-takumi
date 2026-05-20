@@ -2,7 +2,12 @@
 
 #include "MobileHud.h"
 
+#include "MobileChatHud.h"
 #include "MobilePlatform.h"
+
+#if defined(__ANDROID__)
+extern bool MU_Android_UtilityToolbarExpandedQuery();
+#endif
 
 #include <cstdio>
 #include <cstring>
@@ -92,11 +97,46 @@ bool MU_MobileIsModernMobileHudEnabled()
     return !MU_MobileIsLegacyMainHudEnabled();
 }
 
+bool MU_MobileIsUtilityToolbarExpanded()
+{
+#if defined(__ANDROID__)
+    return MU_Android_UtilityToolbarExpandedQuery();
+#else
+    return true;
+#endif
+}
+
 void MU_MobileToggleMainHudMode()
 {
     MU_MobileLoadMainHudMode();
     g_mobileLegacyMainHud = !g_mobileLegacyMainHud;
     MU_MobileSaveMainHudMode();
+}
+
+void MU_MobileSwitchMainHudModeWithUiSync()
+{
+    MU_MobileToggleMainHudMode();
+    if (MU_MobileIsLegacyMainHudEnabled())
+    {
+        MU_MobileChatHudRestoreLegacyLayout();
+    }
+    else
+    {
+        MU_MobileChatHudSyncLayout();
+    }
+}
+
+void MU_MobileEnterClassicMainHudWithUiSync()
+{
+    MU_MobileLoadMainHudMode();
+    if (g_mobileLegacyMainHud)
+    {
+        return;
+    }
+
+    g_mobileLegacyMainHud = true;
+    MU_MobileSaveMainHudMode();
+    MU_MobileChatHudRestoreLegacyLayout();
 }
 
 #endif

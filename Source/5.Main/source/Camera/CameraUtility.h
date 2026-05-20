@@ -31,3 +31,9 @@ extern CameraState g_CameraState;
 // Main camera controller
 // Returns true if camera is locked
 bool MoveMainCamera();
+
+#if defined(__ANDROID__) || defined(MU_IOS)
+extern float g_androidZoomOverride;
+void MU_MobileAdjustCameraZoom(float delta);
+float MU_MobileGetCameraZoom();
+#endif

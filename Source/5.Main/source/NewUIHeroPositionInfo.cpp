@@ -17,6 +17,9 @@
 #include "Utilities/Log/TakumiAndroidUiPerf.h"
 #endif
 
+#include <algorithm>
+#include <cmath>
+
 using namespace SEASON3B;
 char *ButtonText[6] = {"Menu",      "Show Name",   "Show HP Bar",
                        "Camera 3D", "Config Auto", "Active Auto"};
@@ -249,7 +252,8 @@ void CNewUIHeroPositionInfo::MiniMapLoad() // OK
   }
 }
 
-void CNewUIHeroPositionInfo::DataViewPortMapLoad(float x, float y) {
+void CNewUIHeroPositionInfo::DataViewPortMapLoad(float x, float y, float mapCenterAbsX,
+                                                 float mapCenterAbsY, float mapRadiusPx) {
   if (Hero == NULL)
     return;
 
@@ -303,6 +307,8 @@ void CNewUIHeroPositionInfo::DataViewPortMapLoad(float x, float y) {
     } else if (o->Kind == KIND_MONSTER) {
       glColor3f(209 / 255.f, 144 / 255.f, 4 / 255.f); // Monter
       // RenderColor((float)(XNPC), (float)(YNPC), 3.f, 3.f);
+    } else {
+      glColor3f(200 / 255.f, 200 / 255.f, 200 / 255.f);
     }
     if (c->GuildMarkIndex == Hero->GuildMarkIndex &&
         Hero->GuildMarkIndex >= 0) {
@@ -312,19 +318,32 @@ void CNewUIHeroPositionInfo::DataViewPortMapLoad(float x, float y) {
 
 #if defined(__ANDROID__) || defined(MU_IOS)
     if (MU_MobileIsModernMobileHudEnabled()) {
-      const float iconSize = 8.0f;
-      if (o->Kind == KIND_PLAYER) {
-        RenderBitmapRotate(BITMAP_INTERFACE_CUSTOM + 4, X, Y, iconSize, iconSize, 0.0f,
-                           0.0f, 0.0f, 0.1030000001f, 0.05200000107f);
-      } else if (o->Kind == KIND_MONSTER) {
-        RenderBitmapRotate(BITMAP_INTERFACE_CUSTOM + 4, X, Y, iconSize, iconSize, 0.0f,
-                           0.1349999905f, 0.0f, 0.1030000001f, 0.05200000107f);
-      } else if (o->Kind == KIND_NPC) {
-        RenderBitmapRotate(BITMAP_INTERFACE_CUSTOM + 4, X, Y, iconSize, iconSize, 0.0f,
-                           0.009999999776f, 0.1319999844f, 0.1030000001f, 0.05200000107f);
-      } else {
-        RenderColor((float)(X), (float)(Y), 3.f, 3.f);
+      // Nhỏ hơn classic 3×3; giữ trong vòng minimap (clip theo bán kính cố định).
+      constexpr float kDot = 2.0f;
+      const float half = kDot * 0.5f;
+      float px = X;
+      float py = Y;
+      if (mapRadiusPx > 4.0f) {
+        float mcx = px + half;
+        float mcy = py + half;
+        float dx = mcx - mapCenterAbsX;
+        float dy = mcy - mapCenterAbsY;
+        // (std::max) — extra parens: PlatformDefs.h defines `max` macro and breaks std::max.
+        const float maxR = (std::max)(1.0f, mapRadiusPx - 1.5f);
+        const float distSq = dx * dx + dy * dy;
+        const float maxRSq = maxR * maxR;
+        if (distSq > maxRSq) {
+          const float dist = std::sqrt(distSq);
+          if (dist > 1.0e-4f) {
+            const float s = maxR / dist;
+            mcx = mapCenterAbsX + dx * s;
+            mcy = mapCenterAbsY + dy * s;
+            px = mcx - half;
+            py = mcy - half;
+          }
+        }
       }
+      RenderColor(px, py, kDot, kDot);
       continue;
     }
 #endif
@@ -708,17 +727,24 @@ void CNewUIHeroPositionInfo::DrawMiniMap() {
   // m_CurHeroPosition.y); g_pRenderText->RenderText(x + 20.0, y + 1.0, Cord,
   // 131, 13 - 4, RT3_SORT_CENTER); g_pRenderText->SetShadowText(0);
   if (ShowMiniMapColtrol) {
-    //=== Vong Tron Map
+    //=== Vong Tron Map — kích thước cố định 84px (không đổi theo zoom). Zoom +/- chỉ đổi
+    // ScaleMap trong GetDrawCircle + DataViewPortMapLoad (phạm vi / vị trí quái).
     float ViTriXMap = x;
-    GetDrawCircle(BITMAP_INTERFACE_CUSTOM + 5, ViTriXMap + 9.0, y + 20.0, 84.0,
+    constexpr float kCircleD = 84.0f;
+    constexpr float kCircleR = kCircleD * 0.5f;
+    const float mapCenterAbsX = ViTriXMap + 9.0f + kCircleR;
+    const float mapCenterAbsY = y + 20.0f + kCircleR;
+    const float mapClipR = (std::max)(4.0f, kCircleR - 3.0f);
+
+    GetDrawCircle(BITMAP_INTERFACE_CUSTOM + 5, ViTriXMap + 9.0, y + 20.0, kCircleD,
                   0.5, 0.5, 0.5, 1, 1, 0.0);
     usercurrentx = (double)(Hero->PositionX) / 256.0;
     usercurrenty = (double)(256 - Hero->PositionY) / 256.0;
-    GetDrawCircle(IndexIMGMap, ViTriXMap + 9.0, y + 20.0, 84.0, usercurrentx,
+    GetDrawCircle(IndexIMGMap, ViTriXMap + 9.0, y + 20.0, kCircleD, usercurrentx,
                   usercurrenty, ScaleMap, 1, 1, 0.0); // Map
 
     //===Show NPC monter
-    DataViewPortMapLoad(x + 3, y + 19.0);
+    DataViewPortMapLoad(x + 3, y + 19.0f, mapCenterAbsX, mapCenterAbsY, mapClipR);
     //===
     v87 = static_cast<uint8_t>((static_cast<int>(((Hero->Object.Angle[2]) + 22.5f) / 360.0f * 8.0f + 1.0f)) % 8);
     v67 = (float)(180 + (Hero->Object.Angle[2]));
@@ -1000,15 +1026,24 @@ bool CNewUIHeroPositionInfo::Render() {
                             13 - 4, RT3_SORT_CENTER);
 
   //==MenuCustom
+#if defined(__ANDROID__) || defined(MU_IOS)
+  const int kMobileHeroMenuShiftX =
+      (MU_MobileIsModernMobileHudEnabled() && !MU_MobileIsUtilityToolbarExpanded()) ? 176 : 0;
+#else
+  const int kMobileHeroMenuShiftX = 0;
+#endif
+  const int menuClusterX =
+      m_Pos.x + HERO_POSITION_INFO_BASEA_WINDOW_WIDTH + WidenX + 57 - kMobileHeroMenuShiftX;
+
   if (g_pBCustomMenuInfo != NULL && gInterface.Data[eMenu].ModelID > 0 &&
       gInterface.Data[eMenu].Width > 0 &&
       gInterface.Data[eMenu].Height > 0) {
     g_pBCustomMenuInfo->DrawGUI(
-        eMenuBG, m_Pos.x + HERO_POSITION_INFO_BASEA_WINDOW_WIDTH + WidenX + 57,
+        eMenuBG, menuClusterX,
         0);
     if (g_pBCustomMenuInfo->DrawButtonGUI(
             gInterface.Data[eMenu].ModelID,
-            m_Pos.x + HERO_POSITION_INFO_BASEA_WINDOW_WIDTH + WidenX + 57 + 1,
+            menuClusterX + 1,
             2, gInterface.Data[eMenu].Width, gInterface.Data[eMenu].Height)) {
       gInterface.Data[eMenu_MAIN].OnShow ^= 1;
     }
@@ -1016,10 +1051,9 @@ bool CNewUIHeroPositionInfo::Render() {
 
   if (gInterface.Data[eMenu].Width > 0 && gInterface.Data[eMenu].Height > 0 &&
       SEASON3B::CheckMouseIn(
-          m_Pos.x + HERO_POSITION_INFO_BASEA_WINDOW_WIDTH + WidenX + 57 + 1, 2,
+          menuClusterX + 1, 2,
           gInterface.Data[eMenu].Width, gInterface.Data[eMenu].Height) == 1) {
-    RenderTipText(m_Pos.x + HERO_POSITION_INFO_BASEA_WINDOW_WIDTH + WidenX +
-                      57 + 1 - 5,
+    RenderTipText(static_cast<float>(menuClusterX + 1 - 5),
                   2 + 27, "Menu");
   }
   DisableAlphaBlend();

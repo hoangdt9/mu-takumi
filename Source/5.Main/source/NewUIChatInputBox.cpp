@@ -347,6 +347,10 @@ bool SEASON3B::CNewUIChatInputBox::UpdateMouseEvent()
 		}
 	}
 
+#if defined(__ANDROID__) || defined(MU_IOS)
+	if (!MU_MobileIsModernMobileHudEnabled())
+#endif
+	{
 	if (CheckMouseIn(m_WndPos.x + FRAME_ON_START_X, m_WndPos.y, BUTTON_WIDTH, BUTTON_HEIGHT))
 	{
 		m_iTooltipType = INPUT_TOOLTIP_FRAME;
@@ -375,29 +379,13 @@ bool SEASON3B::CNewUIChatInputBox::UpdateMouseEvent()
 	{
 		m_iTooltipType = INPUT_TOOLTIP_TRANSPARENCY;
 	}
+	}
 
 	if (m_pNewUIChatLogWnd->IsShowFrame())
 	{
 #if defined(__ANDROID__) || defined(MU_IOS)
 		if (MU_MobileIsModernMobileHudEnabled())
 		{
-			if (CheckMouseIn(m_WndPos.x + FRAME_RESIZE_START_X, m_WndPos.y, BUTTON_WIDTH, BUTTON_HEIGHT)
-				&& SEASON3B::IsPress(VK_LBUTTON))
-			{
-				m_pNewUIChatLogWnd->SetSizeAuto();
-				m_pNewUIChatLogWnd->UpdateWndSize();
-				m_pNewUIChatLogWnd->UpdateScrollPos();
-				PlayBuffer(SOUND_CLICK01);
-				return false;
-			}
-
-			if (CheckMouseIn(m_WndPos.x + TRANSPARENCY_START_X, m_WndPos.y, BUTTON_WIDTH, BUTTON_HEIGHT)
-				&& SEASON3B::IsPress(VK_LBUTTON))
-			{
-				m_pNewUIChatLogWnd->SetBackAlphaAuto();
-				PlayBuffer(SOUND_CLICK01);
-				return false;
-			}
 		}
 		else
 #endif
@@ -793,6 +781,13 @@ void SEASON3B::CNewUIChatInputBox::RenderButtons()
 			RenderImage(IMAGE_INPUTBOX_SYSTEM_ON, windowX + SYSTEM_ON_START_X, windowY, BUTTON_WIDTH, BUTTON_HEIGHT);
 		}
 	}
+
+#if defined(__ANDROID__) || defined(MU_IOS)
+	if (MU_MobileIsModernMobileHudEnabled())
+	{
+		return;
+	}
+#endif
 
 	if (m_pNewUIChatLogWnd->IsShowFrame())
 	{

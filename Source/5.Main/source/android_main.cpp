@@ -18,6 +18,10 @@
 #include "MobilePlatform.h"
 #include "Platform/MobileHud.h"
 #include "Platform/MobileChatHud.h"
+#include "NewUIChatInputBox.h"
+#include "NewUIMainFrameWindow.h"
+#include "NewUISystem.h"
+#include "GlobalBitmap.h"
 #include "GameConfigConstants.h"
 #include "Platform/TakumiAndroidHud.h"
 #include "Platform/TakumiAndroidInput.h"
@@ -170,6 +174,7 @@ static void android_set_data_dir_early()
 #include <thread>
 #include <chrono>
 #include <unordered_map>
+#include <deque>
 #include <vector>
 
 // Game systems
@@ -219,6 +224,7 @@ bool ShouldThrottleAdaptiveEffectSpawn(int kind, int type, vec3_t Position, int 
 
 // stb_image â€” implementation is in android_turbojpeg_stubs.cpp; only declare here.
 #include "stb_image.h"
+#include "android_ui_svg.h"
 
 #define LOG_TAG "MuMain"
 #if defined(MU_ANDROID_DISABLE_LOG)
@@ -496,6 +502,7 @@ static bool IsLikelyAndroidEmulator()
 extern float CameraDistance;
 extern float CameraDistanceTarget;
 extern float g_androidZoomOverride;   // defined in CameraUtility.cpp
+#include "Camera/CameraUtility.h"
 extern float CameraAngle[3];
 
 // =============================================================================
@@ -598,6 +605,18 @@ extern int Attacking;
 bool CheckTile(CHARACTER* c, OBJECT* o, float Range);
 void SetPlayerAttack(CHARACTER* c);
 
+// Toolbar expand state is owned by virtual-HUD code in the anonymous namespace below, but
+// MobileHud.cpp links against a translation-unit symbol that must not be trapped in an
+// anonymous namespace (internal linkage).
+static bool g_virtualUtilityToolbarExpanded = false;
+
+#if defined(__ANDROID__)
+bool MU_Android_UtilityToolbarExpandedQuery()
+{
+    return g_virtualUtilityToolbarExpanded;
+}
+#endif
+
 namespace
 {
 bool AndroidTriggerHotKeySkillTapInternal(int hotKeySkillIndex);
@@ -612,8 +631,9 @@ constexpr int kVirtualSkillButtonBase = 1;
 constexpr int kVirtualAttackSkillSlot = 0;
 constexpr int kVirtualVisibleSkillButtonCount = 4;
 constexpr int kVirtualSkillSlotCount = 1 + kVirtualVisibleSkillButtonCount;
-constexpr int kVirtualUtilityButtonCount = 4;
-constexpr int kVirtualUtilityButtonChat = 3;
+constexpr int kVirtualUtilityButtonCount = 5;
+constexpr int kVirtualUtilityButtonHudMode = 3;
+constexpr int kVirtualUtilityButtonChat = 4;
 constexpr int kVirtualZoomButtonMinus = 0;
 constexpr int kVirtualZoomButtonPlus = 1;
 constexpr uint32_t kVirtualMiniMapButtonCooldownMs = 220;
@@ -731,16 +751,22 @@ struct VirtualConsumableSlot {
 };
 std::array<VirtualConsumableSlot, kVirtualConsumableSlotCount> g_virtualConsumableSlots{};
 
-constexpr float kTopRightButtonY = 12.0f;
+constexpr float kTopRightButtonY = 26.0f;
 constexpr float kTopRightButtonSize = 37.0f; // +3 px for all top-right icon buttons
 constexpr float kTopRightButtonGap = 6.0f;
 constexpr float kTopRightButtonMarginRight = 8.0f;
 constexpr float kTopRightPanelGap = 8.0f;
+constexpr float kTopToolbarMarginLeft = 8.0f;
 constexpr float kCompactMiniMapPanelWidth = 86.0f;
 constexpr float kCompactMiniMapPanelHeight = 86.0f;
 constexpr float kMinimapToolbarButtonGap = 4.0f;
-constexpr int kUtilityToolbarExpandedItemCount = 4;
-static bool g_virtualUtilityToolbarExpanded = false;
+constexpr int kToolbarIconsPerRow = 5;
+constexpr int kToolbarSlotMap = 0;
+constexpr int kToolbarSlotMiniMap = 1;
+constexpr int kToolbarSlotCollapse = 4;
+/** Collapsed toolbar: hamburger sits here (slot 0=map, 1=minimap) so it stays next to the map cluster. */
+constexpr int kToolbarSlotMenuWhenCollapsed = 2;
+constexpr int kUtilityToolbarExpandedItemCount = 5;
 constexpr float kVirtualChatQuickButtonCx = 305.0f;
 constexpr float kVirtualChatQuickButtonCy = 413.0f;
 constexpr float kVirtualChatQuickButtonRadius = 18.0f;
@@ -767,6 +793,8 @@ static UITexture g_uiTex_joystick2;
 static UITexture g_uiTex_balo;
 static UITexture g_uiTex_character;
 static UITexture g_uiTex_setting;
+static UITexture g_uiTex_chat;
+static UITexture g_uiTex_hudSwitch;
 static bool g_uiTexturesLoaded = false;
 
 constexpr float kSkillLineU = 157.0f / 677.0f;
@@ -795,18 +823,58 @@ AndroidUiRect GetTopRightStackButtonRect(int stackIndex)
     };
 }
 
-AndroidUiRect GetUtilityToolbarToggleRect()
+bool IsMiniMapPanelVisible();
+
+int GetUtilityToolbarSlotForItem(int itemIndex)
 {
-    const float panelRight = 640.0f - kTopRightButtonMarginRight;
-    const float panelX = panelRight - kCompactMiniMapPanelWidth;
-    const float x = panelX + kCompactMiniMapPanelWidth - kTopRightButtonSize;
+    switch (itemIndex)
+    {
+    case 0: return 2;
+    case 1: return 3;
+    case 2: return 5;
+    case 3: return 6;
+    case 4: return 7;
+    default: return -1;
+    }
+}
+
+int GetUtilityToolbarRowCount()
+{
+    if (!g_virtualUtilityToolbarExpanded)
+    {
+        return 1;
+    }
+
+    return 2;
+}
+
+AndroidUiRect GetToolbarSlotRect(int slotIndex)
+{
+    if (slotIndex < 0)
+    {
+        return {};
+    }
+
+    const float stride = kTopRightButtonSize + kMinimapToolbarButtonGap;
+    const int row = slotIndex / kToolbarIconsPerRow;
+    const int col = slotIndex % kToolbarIconsPerRow;
 
     return {
-        x,
-        kTopRightButtonY,
+        kTopToolbarMarginLeft + static_cast<float>(col) * stride,
+        kTopRightButtonY + static_cast<float>(row) * stride,
         kTopRightButtonSize,
         kTopRightButtonSize
     };
+}
+
+AndroidUiRect GetMapButtonRect()
+{
+    return GetToolbarSlotRect(kToolbarSlotMap);
+}
+
+AndroidUiRect GetMiniMapButtonRect()
+{
+    return GetToolbarSlotRect(kToolbarSlotMiniMap);
 }
 
 AndroidUiRect GetUtilityToolbarItemRect(int itemIndex)
@@ -818,50 +886,23 @@ AndroidUiRect GetUtilityToolbarItemRect(int itemIndex)
         return {};
     }
 
-    const AndroidUiRect toggle = GetUtilityToolbarToggleRect();
-    const float itemStride = kTopRightButtonSize + kMinimapToolbarButtonGap;
-    const float x = toggle.x
-        - static_cast<float>(kUtilityToolbarExpandedItemCount - itemIndex) * itemStride;
+    return GetToolbarSlotRect(GetUtilityToolbarSlotForItem(itemIndex));
+}
 
-    return {
-        x,
-        toggle.y,
-        kTopRightButtonSize,
-        kTopRightButtonSize
-    };
+AndroidUiRect GetUtilityToolbarToggleRect()
+{
+    if (!g_virtualUtilityToolbarExpanded)
+    {
+        return GetToolbarSlotRect(kToolbarSlotMenuWhenCollapsed);
+    }
+
+    return GetToolbarSlotRect(kToolbarSlotCollapse);
 }
 
 bool IsMiniMapPanelVisible()
 {
     return g_pNewUISystem != nullptr
         && g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_MINI_MAP);
-}
-
-AndroidUiRect GetMiniMapButtonRect()
-{
-    const AndroidUiRect toggle = GetUtilityToolbarToggleRect();
-    float leftAnchorX = toggle.x;
-    if (g_virtualUtilityToolbarExpanded)
-    {
-        const AndroidUiRect firstItem = GetUtilityToolbarItemRect(0);
-        if (firstItem.w > 0.0f)
-        {
-            leftAnchorX = firstItem.x;
-        }
-    }
-
-    const float x = leftAnchorX - kTopRightButtonSize - kMinimapToolbarButtonGap;
-    return {
-        x,
-        kTopRightButtonY,
-        kTopRightButtonSize,
-        kTopRightButtonSize
-    };
-}
-
-AndroidUiRect GetMapButtonRect()
-{
-    return GetUtilityToolbarItemRect(0);
 }
 
 AndroidUiRect GetMobileHudToggleButtonRect()
@@ -874,12 +915,14 @@ void DrawMobileHudModeToggleButton();
 
 AndroidUiRect GetCompactMiniMapRect()
 {
-    const float panelRight = 640.0f - kTopRightButtonMarginRight;
-    const float x = panelRight - kCompactMiniMapPanelWidth;
-    const float y = kTopRightButtonY + kTopRightButtonSize + kMinimapToolbarButtonGap;
+    const float x = kTopToolbarMarginLeft;
+    const float stride = kTopRightButtonSize + kMinimapToolbarButtonGap;
+    const float y = kTopRightButtonY
+        + static_cast<float>(GetUtilityToolbarRowCount()) * stride
+        + kMinimapToolbarButtonGap;
 
     return {
-        std::clamp(x, 6.0f, 640.0f - kCompactMiniMapPanelWidth - 6.0f),
+        x,
         std::clamp(y, 6.0f, 480.0f - kCompactMiniMapPanelHeight - 6.0f),
         kCompactMiniMapPanelWidth,
         kCompactMiniMapPanelHeight
@@ -893,7 +936,7 @@ AndroidUiRect GetVirtualUtilityButtonRect(int button)
         return {};
     }
 
-    if (button == kVirtualUtilityButtonChat)
+    if (button == kVirtualUtilityButtonChat && !MU_MobileIsModernMobileHudEnabled())
     {
         return {
             kVirtualChatQuickButtonCx - kVirtualChatQuickButtonRadius,
@@ -906,11 +949,15 @@ AndroidUiRect GetVirtualUtilityButtonRect(int button)
     switch (button)
     {
     case 0:
-        return GetUtilityToolbarItemRect(1);
+        return GetUtilityToolbarItemRect(0);
     case 1:
-        return GetUtilityToolbarItemRect(2);
+        return GetUtilityToolbarItemRect(1);
     case 2:
+        return GetUtilityToolbarItemRect(2);
+    case kVirtualUtilityButtonHudMode:
         return GetUtilityToolbarItemRect(3);
+    case kVirtualUtilityButtonChat:
+        return GetUtilityToolbarItemRect(4);
     default:
         return {};
     }
@@ -1375,16 +1422,7 @@ void ToggleVirtualChatInputBox()
         return;
     }
 
-    if (g_pChatInputBox->HaveFocus())
-    {
-        g_pNewUISystem->Hide(SEASON3B::INTERFACE_CHATINPUTBOX);
-        return;
-    }
-
-    if (g_pChatInputBox->m_pChatInputBox != nullptr)
-    {
-        g_pChatInputBox->m_pChatInputBox->GiveFocus(FALSE);
-    }
+    g_pNewUISystem->Hide(SEASON3B::INTERFACE_CHATINPUTBOX);
 }
 
 bool IsValidSkillIndex(int skillIndex)
@@ -2460,7 +2498,7 @@ bool IsVirtualUtilityButtonsAvailable();
 
 bool HitTestVirtualChatUtilityButton(float uiX, float uiY)
 {
-    if (!IsVirtualUtilityButtonsAvailable())
+    if (!IsVirtualUtilityButtonsAvailable() || MU_MobileIsModernMobileHudEnabled())
     {
         return false;
     }
@@ -2516,7 +2554,15 @@ bool IsVirtualUtilityButtonActive(int button)
     case 0: return g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_INVENTORY);
     case 1: return g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_CHARACTER);
     case 2: return g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_OPTION);
-    case 3: return g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_CHATINPUTBOX);
+    case kVirtualUtilityButtonHudMode:
+        // PC-switch icon: not tied to chat visibility; keep neutral tint.
+        return false;
+    case kVirtualUtilityButtonChat:
+        if (MU_MobileIsModernMobileHudEnabled())
+        {
+            return MU_MobileIsChatChannelVisible();
+        }
+        return g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_CHATINPUTBOX);
     default: return false;
     }
 }
@@ -2542,9 +2588,33 @@ void ToggleVirtualUtilityButton(int button)
         g_pNewUISystem->Toggle(SEASON3B::INTERFACE_OPTION);
         LOGI("VirtualPad: utility toggle -> option");
         break;
-    case 3:
-        ToggleVirtualChatInputBox();
-        LOGI("VirtualPad: utility toggle -> chat");
+    case kVirtualUtilityButtonHudMode:
+        if (MU_MobileIsModernMobileHudEnabled())
+        {
+            MU_MobileEnterClassicMainHudWithUiSync();
+            LOGI("VirtualPad: utility toggle -> classic HUD (PC switch icon)");
+        }
+        else
+        {
+            MU_MobileSwitchMainHudModeWithUiSync();
+            LOGI(
+                "VirtualPad: utility toggle -> HUD mode %s",
+                IsLegacyMainHud() ? "classic" : "mobile");
+        }
+        break;
+    case kVirtualUtilityButtonChat:
+        if (MU_MobileIsModernMobileHudEnabled())
+        {
+            MU_MobileToggleChatChannelVisible();
+            LOGI(
+                "VirtualPad: utility toggle -> chat channel %s",
+                MU_MobileIsChatChannelVisible() ? "visible" : "hidden");
+        }
+        else
+        {
+            ToggleVirtualChatInputBox();
+            LOGI("VirtualPad: utility toggle -> chat");
+        }
         break;
     default:
         break;
@@ -2608,28 +2678,16 @@ bool HandleVirtualZoomButtonTap(int button)
         return true;
     }
 
-    float currentZoom = g_androidZoomOverride > 0.0f
-        ? g_androidZoomOverride
-        : CameraDistanceTarget;
-    if (currentZoom <= 0.0f)
-    {
-        currentZoom = 1200.0f;
-    }
-
-    currentZoom = std::clamp(currentZoom, kZoomMin, kZoomMax);
+    const float currentZoom = MU_MobileGetCameraZoom();
     const float delta = (button == kVirtualZoomButtonMinus) ? kZoomStep : -kZoomStep;
-    const float nextZoom = std::clamp(currentZoom + delta, kZoomMin, kZoomMax);
+    MU_MobileAdjustCameraZoom(delta);
 
     g_virtualLastZoomTapMs = nowMs;
-    g_androidZoomOverride = nextZoom;
-    CameraDistance = nextZoom;
-    CameraDistanceTarget = nextZoom;
-
     LOGI(
         "VirtualPad: zoom tap button=%s current=%.1f next=%.1f",
         button == kVirtualZoomButtonMinus ? "minus" : "plus",
         currentZoom,
-        nextZoom);
+        MU_MobileGetCameraZoom());
     return true;
 }
 
@@ -2642,15 +2700,7 @@ bool HandleVirtualTopControlTap(float uiX, float uiY)
 
     if (HitTestMobileHudToggleButton(uiX, uiY))
     {
-        MU_MobileToggleMainHudMode();
-        if (IsLegacyMainHud())
-        {
-            MU_MobileChatHudRestoreLegacyLayout();
-        }
-        else
-        {
-            MU_MobileChatHudSyncLayout();
-        }
+        MU_MobileSwitchMainHudModeWithUiSync();
         LOGI(
             "VirtualPad: HUD mode -> %s",
             IsLegacyMainHud() ? "classic" : "mobile");
@@ -2690,7 +2740,7 @@ bool HandleVirtualTopControlTap(float uiX, float uiY)
         return true;
     }
 
-    if (HitTestVirtualChatUtilityButton(uiX, uiY))
+    if (!MU_MobileIsModernMobileHudEnabled() && HitTestVirtualChatUtilityButton(uiX, uiY))
     {
         if ((nowMs - g_virtualLastUtilityTapMs) >= kVirtualUtilityButtonCooldownMs)
         {
@@ -2704,7 +2754,7 @@ bool HandleVirtualTopControlTap(float uiX, float uiY)
     if (TakumiAndroid_UsePngHudOverlay())
     {
         const int utilityButton = HitTestVirtualUtilityButton(uiX, uiY);
-        if (utilityButton >= 0 && utilityButton != kVirtualUtilityButtonChat)
+        if (utilityButton >= 0)
         {
             if ((nowMs - g_virtualLastUtilityTapMs) >= kVirtualUtilityButtonCooldownMs)
             {
@@ -3877,10 +3927,13 @@ bool HandleVirtualFingerDown(const SDL_TouchFingerEvent& touch)
         return false;
     }
 
-    const int zoomButton = HitTestVirtualZoomButton(uiX, uiY);
-    if (zoomButton >= 0)
+    if (!MU_MobileIsModernMobileHudEnabled())
     {
-        return HandleVirtualZoomButtonTap(zoomButton);
+        const int zoomButton = HitTestVirtualZoomButton(uiX, uiY);
+        if (zoomButton >= 0)
+        {
+            return HandleVirtualZoomButtonTap(zoomButton);
+        }
     }
 
     if (HandleVirtualTopControlTap(uiX, uiY))
@@ -3905,7 +3958,7 @@ bool HandleVirtualFingerDown(const SDL_TouchFingerEvent& touch)
     }
 
     const int utilityButton = HitTestVirtualUtilityButton(uiX, uiY);
-    if (utilityButton >= 0 && utilityButton != kVirtualUtilityButtonChat)
+    if (utilityButton >= 0)
     {
         const uint32_t nowMs = MU_MobileGetTicks();
         if ((nowMs - g_virtualLastUtilityTapMs) >= kVirtualUtilityButtonCooldownMs)
@@ -4343,7 +4396,137 @@ static void ComputeTextureContentMetrics(
     outVisibleFrac = std::max(spanW, spanH);
 }
 
-static UITexture LoadUITextureAsset(const char* assetPath)
+// Remove “matte” white/light borders from UI PNG/SVG rasters: flood from image edges
+// through pixels that are nearly white and opaque, and clear their alpha. Interior
+// regions not connected to the border (e.g. speech-bubble fill) are preserved.
+static void KeyBorderConnectedNearWhiteTransparent(stbi_uc* pixels, int w, int h, int minRgb)
+{
+    if (pixels == nullptr || w <= 0 || h <= 0 || minRgb <= 0)
+    {
+        return;
+    }
+
+    const auto isNearWhite = [minRgb](const stbi_uc* p) -> bool
+    {
+        return p[3] > 8 && p[0] >= minRgb && p[1] >= minRgb && p[2] >= minRgb;
+    };
+
+    std::vector<unsigned char> visited(static_cast<size_t>(w) * static_cast<size_t>(h), 0);
+    std::deque<std::pair<int, int>> q;
+
+    auto tryPush = [&](int x, int y)
+    {
+        if (x < 0 || y < 0 || x >= w || y >= h)
+        {
+            return;
+        }
+        const int idx = y * w + x;
+        if (visited[static_cast<size_t>(idx)] != 0)
+        {
+            return;
+        }
+        stbi_uc* p = pixels + idx * 4;
+        if (!isNearWhite(p))
+        {
+            return;
+        }
+        visited[static_cast<size_t>(idx)] = 1;
+        q.emplace_back(x, y);
+    };
+
+    for (int x = 0; x < w; ++x)
+    {
+        tryPush(x, 0);
+        tryPush(x, h - 1);
+    }
+    for (int y = 0; y < h; ++y)
+    {
+        tryPush(0, y);
+        tryPush(w - 1, y);
+    }
+
+    const int dx[] = {1, -1, 0, 0};
+    const int dy[] = {0, 0, 1, -1};
+    while (!q.empty())
+    {
+        const auto [x, y] = q.front();
+        q.pop_front();
+        const int idx = y * w + x;
+        stbi_uc* p = pixels + idx * 4;
+        p[3] = 0;
+        for (int k = 0; k < 4; ++k)
+        {
+            const int nx = x + dx[k];
+            const int ny = y + dy[k];
+            if (nx < 0 || ny < 0 || nx >= w || ny >= h)
+            {
+                continue;
+            }
+            const int nidx = ny * w + nx;
+            if (visited[static_cast<size_t>(nidx)] != 0)
+            {
+                continue;
+            }
+            stbi_uc* np = pixels + nidx * 4;
+            if (!isNearWhite(np))
+            {
+                continue;
+            }
+            visited[static_cast<size_t>(nidx)] = 1;
+            q.emplace_back(nx, ny);
+        }
+    }
+}
+
+static UITexture LoadUITextureFromRgba8(
+    int w,
+    int h,
+    stbi_uc* pixels,
+    const char* logPath,
+    bool borderKeyNearWhite = false)
+{
+    UITexture tex;
+    if (w <= 0 || h <= 0 || pixels == nullptr)
+    {
+        return tex;
+    }
+
+    if (borderKeyNearWhite)
+    {
+        KeyBorderConnectedNearWhiteTransparent(pixels, w, h, 248);
+    }
+
+    glGenTextures(1, &tex.id);
+    glBindTexture(GL_TEXTURE_2D, tex.id);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+    ComputeTextureContentMetrics(
+        w,
+        h,
+        pixels,
+        tex.contentCenterU,
+        tex.contentCenterV,
+        tex.contentVisibleFrac);
+
+    tex.w = w;
+    tex.h = h;
+    LOGI(
+        "LoadUITextureFromRgba8: OK '%s' (%dx%d texId=%u anchor=%.3f,%.3f visibleFrac=%.3f key=%d)",
+        logPath != nullptr ? logPath : "",
+        w,
+        h,
+        tex.id,
+        tex.contentCenterU,
+        tex.contentCenterV,
+        tex.contentVisibleFrac,
+        borderKeyNearWhite ? 1 : 0);
+    return tex;
+}
+
+static UITexture LoadUITextureAsset(const char* assetPath, bool borderKeyNearWhite = false)
 {
     UITexture tex;
 
@@ -4379,33 +4562,37 @@ static UITexture LoadUITextureAsset(const char* assetPath)
         return tex;
     }
 
-    glGenTextures(1, &tex.id);
-    glBindTexture(GL_TEXTURE_2D, tex.id);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
-    ComputeTextureContentMetrics(
-        w,
-        h,
-        pixels,
-        tex.contentCenterU,
-        tex.contentCenterV,
-        tex.contentVisibleFrac);
+    tex = LoadUITextureFromRgba8(w, h, pixels, assetPath, borderKeyNearWhite);
     stbi_image_free(pixels);
-
-    tex.w = w; tex.h = h;
-    LOGI(
-        "LoadUITextureAsset: OK '%s' (%dx%d texId=%u anchor=%.3f,%.3f visibleFrac=%.3f)",
-        assetPath,
-        w,
-        h,
-        tex.id,
-        tex.contentCenterU,
-        tex.contentCenterV,
-        tex.contentVisibleFrac);
     return tex;
+}
+
+static UITexture LoadChatUiTexture()
+{
+    std::vector<unsigned char> rgba;
+    int w = 0;
+    int h = 0;
+    if (MuAndroid_LoadSvgAssetToRgbaBottomFirst("ui/chat.svg", 512, rgba, w, h))
+    {
+        return LoadUITextureFromRgba8(w, h, rgba.data(), "ui/chat.svg", true);
+    }
+
+    LOGE("LoadChatUiTexture: ui/chat.svg failed, falling back to ui/chat.png");
+    return LoadUITextureAsset("ui/chat.png", true);
+}
+
+static UITexture LoadPcSwitchUiTexture()
+{
+    std::vector<unsigned char> rgba;
+    int w = 0;
+    int h = 0;
+    if (MuAndroid_LoadSvgAssetToRgbaBottomFirst("ui/ic_pc_switch.svg", 512, rgba, w, h))
+    {
+        return LoadUITextureFromRgba8(w, h, rgba.data(), "ui/ic_pc_switch.svg", true);
+    }
+
+    LOGE("LoadPcSwitchUiTexture: ui/ic_pc_switch.svg failed, falling back to ui/hud_switch.png");
+    return LoadUITextureAsset("ui/hud_switch.png", true);
 }
 
 static void EnsureUITextures()
@@ -4422,6 +4609,8 @@ static void EnsureUITextures()
     g_uiTex_balo      = LoadUITextureAsset("ui/balo.png");
     g_uiTex_character = LoadUITextureAsset("ui/character.png");
     g_uiTex_setting   = LoadUITextureAsset("ui/setting.png");
+    g_uiTex_chat      = LoadChatUiTexture();
+    g_uiTex_hudSwitch = LoadPcSwitchUiTexture();
 }
 
 // Draw a PNG icon at the given UI rect â€” NO background, NO border.
@@ -4494,7 +4683,8 @@ static void DrawIconButtonUvSquare(
     float centerUiY,
     float uiDiameter,
     const UITexture& tex,
-    float alpha)
+    float alpha,
+    bool forceSquareOnScreen = false)
 {
     if (tex.id == 0 || uiDiameter <= 0.5f)
     {
@@ -4506,8 +4696,16 @@ static void DrawIconButtonUvSquare(
         : 1.0f;
     const float visibleFrac = std::max(tex.contentVisibleFrac, 0.01f);
     const float drawDiameterUi = uiDiameter / visibleFrac;
-    const float halfW = UiToScreenUniform(drawDiameterUi * 0.5f);
-    const float halfH = halfW / std::max(ar, 0.001f);
+    const float halfW0 = UiToScreenUniform(drawDiameterUi * 0.5f);
+    const float halfH0 = halfW0 / std::max(ar, 0.001f);
+    float halfW = halfW0;
+    float halfH = halfH0;
+    if (forceSquareOnScreen)
+    {
+        const float half = std::min(halfW0, halfH0);
+        halfW = half;
+        halfH = half;
+    }
     const float sw = halfW * 2.0f;
     const float sh = halfH * 2.0f;
 
@@ -4625,6 +4823,62 @@ void DrawVirtualMapButton()
     DrawIconButton(rect.x, rect.y, rect.w, rect.h, g_uiTex_map, 1.0f);
 }
 
+bool IsToolbarGameBitmapReady(int imageType)
+{
+    return imageType >= 0 && Bitmaps[imageType].TextureNumber != 0;
+}
+
+void DrawToolbarGameBitmapIcon(int imageType, const AndroidUiRect& rect, float alpha)
+{
+    if (!IsToolbarGameBitmapReady(imageType))
+    {
+        return;
+    }
+
+    EnableAlphaTest();
+    glColor4f(1.0f, 1.0f, 1.0f, alpha);
+    SEASON3B::RenderImage(
+        static_cast<GLuint>(imageType),
+        rect.x,
+        rect.y,
+        rect.w,
+        rect.h);
+    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+}
+
+void DrawVirtualUtilityToolbarButton(int buttonIndex)
+{
+    const AndroidUiRect rect = GetVirtualUtilityButtonRect(buttonIndex);
+    if (rect.w <= 0.0f || rect.h <= 0.0f)
+    {
+        return;
+    }
+
+    const float alpha = IsVirtualUtilityButtonActive(buttonIndex) ? 1.0f : 0.88f;
+    const float cx = rect.x + rect.w * 0.5f;
+    const float cy = rect.y + rect.h * 0.5f;
+
+    const UITexture* icon = nullptr;
+    switch (buttonIndex)
+    {
+    case 0: icon = &g_uiTex_balo; break;
+    case 1: icon = &g_uiTex_character; break;
+    case 2: icon = &g_uiTex_setting; break;
+    case kVirtualUtilityButtonHudMode: icon = &g_uiTex_hudSwitch; break;
+    case kVirtualUtilityButtonChat: icon = &g_uiTex_chat; break;
+    default: return;
+    }
+
+    if (icon == nullptr || icon->id == 0)
+    {
+        return;
+    }
+
+    // Match MAP/minimap cell; square on-screen quad (width == height) so wide PNG/SVG rasters do not look oval.
+    const float iconSize = (std::max)(12.0f, rect.w * 0.96f);
+    DrawIconButtonUvSquare(cx, cy, iconSize, *icon, alpha, true);
+}
+
 void DrawUtilityToolbarToggleButton()
 {
     if (SceneFlag != MAIN_SCENE || g_pNewUISystem == nullptr)
@@ -4637,20 +4891,19 @@ void DrawUtilityToolbarToggleButton()
     const float cx = rect.x + rect.w * 0.5f;
     const float cy = rect.y + rect.h * 0.5f;
 
-    DrawVirtualCircle(
-        cx,
-        cy,
-        rect.w * 0.46f,
-        expanded ? 0.18f : 0.08f,
-        expanded ? 0.40f : 0.10f,
-        expanded ? 0.52f : 0.16f,
-        expanded ? 0.90f : 0.78f,
-        true);
+    EnsureUITextures();
+    if (g_uiTex_skillbox.id != 0)
+    {
+        // Uniform screen scale so the ring stays circular (DrawIconButton stretches in X/Y).
+        const float ringDiameter = rect.w * 1.06f;
+        DrawIconButtonUvSquare(cx, cy, ringDiameter, g_uiTex_skillbox, expanded ? 0.96f : 0.9f);
+    }
 
+    // Classic menu toggle: icon lines only (no filled circle / white tile background).
     DisableTexture();
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glColor4f(1.0f, 1.0f, 1.0f, 0.96f);
+    glColor4f(0.92f, 0.88f, 0.72f, expanded ? 0.98f : 0.86f);
 
     auto emitUiVertex = [](float uiX, float uiY)
     {
@@ -4661,14 +4914,16 @@ void DrawUtilityToolbarToggleButton()
     {
         const float barW = rect.w * 0.36f;
         const float gap = 5.0f;
+        glLineWidth(2.4f);
         for (int i = -1; i <= 1; ++i)
         {
-            const float y = cy + static_cast<float>(i) * gap;
+            const float ly = cy + static_cast<float>(i) * gap;
             glBegin(GL_LINES);
-            emitUiVertex(cx - barW * 0.5f, y);
-            emitUiVertex(cx + barW * 0.5f, y);
+            emitUiVertex(cx - barW * 0.5f, ly);
+            emitUiVertex(cx + barW * 0.5f, ly);
             glEnd();
         }
+        glLineWidth(1.0f);
     }
     else
     {
@@ -4682,6 +4937,9 @@ void DrawUtilityToolbarToggleButton()
         glEnd();
         glLineWidth(1.0f);
     }
+
+    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+    glBlendFunc(GL_ONE, GL_ONE);
 }
 
 void DrawVirtualChatUtilityButton()
@@ -4759,6 +5017,11 @@ void DrawVirtualChatUtilityButton()
 
 void DrawVirtualZoomButtons()
 {
+    if (MU_MobileIsModernMobileHudEnabled())
+    {
+        return;
+    }
+
     BeginBitmap();
     DisableTexture();
     glEnable(GL_BLEND);
@@ -4820,13 +5083,9 @@ void DrawVirtualZoomButtons()
     EndBitmap();
 }
 
-void DrawMobileChatPanelChrome()
-{
-}
-
 bool HitTestMobileHudToggleButton(float uiX, float uiY)
 {
-    if (!IsVirtualPadAvailable())
+    if (!IsVirtualPadAvailable() || MU_MobileIsModernMobileHudEnabled())
     {
         return false;
     }
@@ -4840,7 +5099,7 @@ bool HitTestMobileHudToggleButton(float uiX, float uiY)
 
 void DrawMobileHudModeToggleButton()
 {
-    if (!IsVirtualPadAvailable())
+    if (!IsVirtualPadAvailable() || MU_MobileIsModernMobileHudEnabled())
     {
         return;
     }
@@ -5117,7 +5376,6 @@ void RenderVirtualPad()
     if (MU_MobileIsModernMobileHudEnabled())
     {
         MU_MobileChatHudSyncLayout();
-        DrawMobileChatPanelChrome();
     }
 
     if (IsLegacyMainHud() && TakumiAndroid_UsePngHudOverlay())
@@ -5127,12 +5385,6 @@ void RenderVirtualPad()
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-        const UITexture* utilIcons[kVirtualUtilityButtonCount] = {
-            &g_uiTex_balo,
-            &g_uiTex_character,
-            &g_uiTex_setting,
-            &g_uiTex_map,
-        };
         for (int i = 0; i < kVirtualUtilityButtonCount; ++i)
         {
             if (i == kVirtualUtilityButtonChat)
@@ -5140,14 +5392,7 @@ void RenderVirtualPad()
                 continue;
             }
 
-            const AndroidUiRect rect = GetVirtualUtilityButtonRect(i);
-            if (rect.w <= 0.0f || rect.h <= 0.0f)
-            {
-                continue;
-            }
-
-            const float alpha = IsVirtualUtilityButtonActive(i) ? 1.0f : 0.88f;
-            DrawIconButton(rect.x, rect.y, rect.w, rect.h, *utilIcons[i], alpha);
+            DrawVirtualUtilityToolbarButton(i);
         }
 
         if (IsMiniMapToggleAvailable())
@@ -5297,29 +5542,13 @@ void RenderVirtualPad()
         }
     }
 
-    // Top-right utility buttons (inventory / character / settings) — PNG icons.
+    // Top-left utility buttons (inventory / character / settings / HUD) — PNG icons.
     {
         BeginBitmap();
         EnsureUITextures();
-        const UITexture* kUtilIcons[kVirtualUtilityButtonCount] = {
-            &g_uiTex_balo,
-            &g_uiTex_character,
-            &g_uiTex_setting,
-            &g_uiTex_map,
-        };
         for (int i = 0; i < kVirtualUtilityButtonCount; ++i)
         {
-            if (i == kVirtualUtilityButtonChat)
-            {
-                continue;
-            }
-            const AndroidUiRect rect = GetVirtualUtilityButtonRect(i);
-            if (rect.w <= 0.0f || rect.h <= 0.0f)
-            {
-                continue;
-            }
-            const float alpha = IsVirtualUtilityButtonActive(i) ? 1.0f : 0.92f;
-            DrawIconButton(rect.x, rect.y, rect.w, rect.h, *kUtilIcons[i], alpha);
+            DrawVirtualUtilityToolbarButton(i);
         }
         EndBitmap();
     }
@@ -6887,11 +7116,14 @@ static void HandleSDLEvent(const SDL_Event& ev, int& screenW, int& screenH)
         g_iNoMouseTime = 0;
         UpdateMouseFromPixel(ev.button.x, ev.button.y, screenW, screenH);
         if (ev.button.button == SDL_BUTTON_LEFT) {
-            const int zoomButton = HitTestVirtualZoomButton(static_cast<float>(MouseX), static_cast<float>(MouseY));
-            if (zoomButton >= 0)
+            if (!MU_MobileIsModernMobileHudEnabled())
             {
-                HandleVirtualZoomButtonTap(zoomButton);
-                break;
+                const int zoomButton = HitTestVirtualZoomButton(static_cast<float>(MouseX), static_cast<float>(MouseY));
+                if (zoomButton >= 0)
+                {
+                    HandleVirtualZoomButtonTap(zoomButton);
+                    break;
+                }
             }
             if (IsVirtualPadAvailable() && HitTestVirtualJoystick(static_cast<float>(MouseX), static_cast<float>(MouseY)))
             {

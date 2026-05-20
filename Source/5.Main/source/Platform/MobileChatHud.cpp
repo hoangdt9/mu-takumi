@@ -107,11 +107,17 @@ void LoadMobileChatLayout()
     int lines = kDefaultShowingLines;
     float alpha = kDefaultAlpha;
     int collapsed = 0;
-    if (fscanf(file, "%d %f %d", &lines, &alpha, &collapsed) == 3)
+    int pinned = 1;
+    const int loaded = fscanf(file, "%d %f %d %d", &lines, &alpha, &collapsed, &pinned);
+    if (loaded >= 3)
     {
         g_mobileChatLayout.showingLines = std::clamp(lines, kMinShowingLines, kMaxShowingLines);
         g_mobileChatLayout.alpha = std::clamp(alpha, 0.2f, 0.85f);
         g_mobileChatLayout.collapsed = (collapsed != 0);
+        if (loaded == 4)
+        {
+            g_mobileChatLayout.pinnedVisible = (pinned != 0);
+        }
     }
 
     fclose(file);
@@ -127,10 +133,11 @@ void SaveMobileChatLayout()
 
     fprintf(
         file,
-        "%d %.2f %d\n",
+        "%d %.2f %d %d\n",
         g_mobileChatLayout.showingLines,
         g_mobileChatLayout.alpha,
-        g_mobileChatLayout.collapsed ? 1 : 0);
+        g_mobileChatLayout.collapsed ? 1 : 0,
+        g_mobileChatLayout.pinnedVisible ? 1 : 0);
     fclose(file);
 }
 
@@ -215,17 +222,46 @@ void MU_MobileChatHudSyncLayout()
         g_pChatListBox->SetNumberOfShowingLines(GetEffectiveShowingLines());
         g_mobileChatLinesApplied = true;
     }
-    g_pChatListBox->SetBackAlpha(g_mobileChatLayout.alpha);
-    g_pChatListBox->ShowFrame();
-    g_pChatListBox->ShowChatLog(false);
     g_pChatListBox->UpdateWndSize();
     g_pChatListBox->UpdateScrollPos();
 
-    if (g_mobileChatLayout.pinnedVisible
-        && !g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_CHATINPUTBOX))
+    if (g_mobileChatLayout.pinnedVisible)
     {
-        g_pNewUISystem->Show(SEASON3B::INTERFACE_CHATINPUTBOX);
+        g_pChatListBox->Show(true);
+        g_pChatListBox->SetBackAlpha(g_mobileChatLayout.alpha);
+        g_pChatListBox->ShowFrame();
+        g_pChatListBox->ShowChatLog(true);
+        if (!g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_CHATINPUTBOX))
+        {
+            g_pNewUISystem->Show(SEASON3B::INTERFACE_CHATINPUTBOX);
+        }
     }
+    else
+    {
+        g_pChatListBox->HideFrame();
+        g_pChatListBox->HideChatLog();
+        // Keep the chat log UI object "visible" so CNewUIManager still calls Render().
+        // Render() draws TYPE_SYSTEM_MESSAGE / TYPE_ERROR_MESSAGE on the left when the panel is pinned hidden.
+        g_pChatListBox->Show(true);
+        if (g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_CHATINPUTBOX))
+        {
+            g_pNewUISystem->Hide(SEASON3B::INTERFACE_CHATINPUTBOX);
+        }
+    }
+}
+
+bool MU_MobileIsChatChannelVisible()
+{
+    LoadMobileChatLayout();
+    return g_mobileChatLayout.pinnedVisible;
+}
+
+void MU_MobileToggleChatChannelVisible()
+{
+    LoadMobileChatLayout();
+    g_mobileChatLayout.pinnedVisible = !g_mobileChatLayout.pinnedVisible;
+    SaveMobileChatLayout();
+    MU_MobileChatHudSyncLayout();
 }
 
 MobileChatPanelRect MU_MobileGetChatPanelRect()
@@ -253,7 +289,7 @@ MobileChatPanelRect MU_MobileGetChatResizeHandleRect()
 
 bool MU_MobileHitTestChatPanel(float uiX, float uiY)
 {
-    if (!MU_MobileIsModernMobileHudEnabled())
+    if (!MU_MobileIsModernMobileHudEnabled() || !MU_MobileIsChatChannelVisible())
     {
         return false;
     }
@@ -265,7 +301,7 @@ bool MU_MobileHitTestChatPanel(float uiX, float uiY)
 
 bool MU_MobileHitTestChatInputBar(float uiX, float uiY)
 {
-    if (!MU_MobileIsModernMobileHudEnabled())
+    if (!MU_MobileIsModernMobileHudEnabled() || !MU_MobileIsChatChannelVisible())
     {
         return false;
     }
@@ -281,7 +317,7 @@ bool MU_MobileHitTestChatInputBar(float uiX, float uiY)
 
 bool MU_MobileHitTestChatLogArea(float uiX, float uiY)
 {
-    if (!MU_MobileIsModernMobileHudEnabled())
+    if (!MU_MobileIsModernMobileHudEnabled() || !MU_MobileIsChatChannelVisible())
     {
         return false;
     }
@@ -306,7 +342,7 @@ bool MU_MobileHitTestChatLogArea(float uiX, float uiY)
 
 bool MU_MobileHitTestChatResizeHandle(float uiX, float uiY)
 {
-    if (!MU_MobileIsModernMobileHudEnabled())
+    if (!MU_MobileIsModernMobileHudEnabled() || !MU_MobileIsChatChannelVisible())
     {
         return false;
     }
@@ -391,6 +427,11 @@ bool MU_MobileHandleChatUiFingerDownAt(float uiX, float uiY, SDL_FingerID finger
     }
 
     MU_MobileChatHudSyncLayout();
+
+    if (MU_MobileHitTestChatInputBar(uiX, uiY))
+    {
+        return false;
+    }
 
     if (MU_MobileHitTestChatResizeHandle(uiX, uiY))
     {

@@ -135,6 +135,8 @@ list(APPEND GAME_SOURCES "${GAME_SRC_DIR}/Platform/MobileHud.cpp")
 list(APPEND GAME_SOURCES "${GAME_SRC_DIR}/Platform/MobileChatHud.cpp")
 list(APPEND GAME_SOURCES "${GAME_SRC_DIR}/Platform/MobileChatUi.cpp")
 list(APPEND GAME_SOURCES "${GAME_SRC_DIR}/Platform/TakumiAndroidInput.cpp")
+# SVG UI raster (nanosvg). GLOB_RECURSE may skip new files until CMake reconfigure; keep explicit.
+list(APPEND GAME_SOURCES "${GAME_SRC_DIR}/android_ui_svg.cpp")
 # Protect.cpp uses CCRC32; glob only picks lowercase .cpp (not CCRC32.Cpp).
 set(_MU_CCRC32_SRC "${GAME_SRC_DIR}/Utilities/CCRC32.Cpp")
 list(APPEND GAME_SOURCES "${_MU_CCRC32_SRC}")

@@ -86,7 +86,7 @@ namespace SEASON3B
 		void DrawMiniMap();
 		LoadTypeMap DataMap;
 		void DataMapLoad();
-		void DataViewPortMapLoad(float x, float y);
+		void DataViewPortMapLoad(float x, float y, float mapCenterAbsX, float mapCenterAbsY, float mapRadiusPx);
 		int IndexIMGMap;
 	private:
 		void LoadImages();

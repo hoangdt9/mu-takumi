@@ -67,7 +67,36 @@ int mShowHPBar = 1;
 int mShowMiniMap = 1;
 int mShowDanhHieu = 1;
 float g_androidZoomOverride = 0.0f;
+extern float CameraDistanceTarget;
+extern float CameraDistance;
 HFONT g_hFontMini = NULL;
+
+namespace
+{
+constexpr float kMobileZoomMin = 800.0f;
+constexpr float kMobileZoomMax = 1600.0f;
+} // namespace
+
+float MU_MobileGetCameraZoom()
+{
+    float currentZoom = g_androidZoomOverride > 0.0f
+        ? g_androidZoomOverride
+        : CameraDistanceTarget;
+    if (currentZoom <= 0.0f)
+    {
+        currentZoom = 1200.0f;
+    }
+
+    return std::clamp(currentZoom, kMobileZoomMin, kMobileZoomMax);
+}
+
+void MU_MobileAdjustCameraZoom(float delta)
+{
+    const float nextZoom = std::clamp(MU_MobileGetCameraZoom() + delta, kMobileZoomMin, kMobileZoomMax);
+    g_androidZoomOverride = nextZoom;
+    CameraDistance = nextZoom;
+    CameraDistanceTarget = nextZoom;
+}
 
 class CChatRoomSocketList;
 CChatRoomSocketList* g_pChatRoomSocketList = nullptr;

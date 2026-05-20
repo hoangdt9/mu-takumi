@@ -75,6 +75,13 @@ void SEASON3B::CNewUIChatLogWindow::UnloadImages()
 
 bool SEASON3B::CNewUIChatLogWindow::RenderBackground()
 {
+#if defined(__ANDROID__) || defined(MU_IOS)
+	if (MU_MobileIsModernMobileHudEnabled() && !MU_MobileIsChatChannelVisible())
+	{
+		return true;
+	}
+#endif
+
 	if (m_bShowFrame)
 	{
 		float fRenderPosX = m_WndPos.x, fRenderPosY = m_WndPos.y - m_WndSize.cy;
@@ -359,6 +366,13 @@ bool SEASON3B::CNewUIChatLogWindow::RenderMessages(int Type)
 
 bool SEASON3B::CNewUIChatLogWindow::RenderFrame()
 {
+#if defined(__ANDROID__) || defined(MU_IOS)
+	if (MU_MobileIsModernMobileHudEnabled() && !MU_MobileIsChatChannelVisible())
+	{
+		return true;
+	}
+#endif
+
 	if (m_bShowFrame)
 	{
 		float const fRenderPosX = m_WndPos.x;
@@ -849,6 +863,11 @@ bool SEASON3B::CNewUIChatLogWindow::UpdateMouseEvent()
 	extern float g_fScreenRate_x;
 
 #if defined(__ANDROID__) || defined(MU_IOS)
+	if (MU_MobileIsModernMobileHudEnabled() && !MU_MobileIsChatChannelVisible())
+	{
+		// Panel frame/input are hidden; do not steal mouse/touch over the empty layout rect.
+		return true;
+	}
 	if (MU_MobileIsModernMobileHudEnabled() && MU_MobileIsChatUiCapturing())
 	{
 		return true;
@@ -1062,6 +1081,23 @@ bool SEASON3B::CNewUIChatLogWindow::Update()
 
 bool SEASON3B::CNewUIChatLogWindow::Render()
 {
+#if defined(__ANDROID__) || defined(MU_IOS)
+	if (MU_MobileIsModernMobileHudEnabled() && !MU_MobileIsChatChannelVisible())
+	{
+		if (RenderMessages(1) == false)
+		{
+			return false;
+		}
+
+		if (RenderMessages(2) == false)
+		{
+			return false;
+		}
+
+		return true;
+	}
+#endif
+
 	if (RenderBackground() == false)
 	{
 		return false;

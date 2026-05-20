@@ -42,12 +42,40 @@ public static class MapAttWalkability
 
     public static bool IsSafeZone(byte mapId, byte x, byte y)
     {
-        if (!TryGetFlags(mapId, x, y, out var flags))
+        if (TryGetFlags(mapId, x, y, out var flags))
+        {
+            return (flags & 0x0001) != 0; // TWFlags.SafeZone
+        }
+
+        // No terrain bytes (Docker / missing EncTerrain*.att): without this, IsSafeZone is always false,
+        // field mobs can resolve inside town rectangles and show up in villages like Noria.
+        return ApproxTownSafeWhenTerrainUnavailable(mapId, x, y);
+    }
+
+    /// <summary>
+    /// Conservative town bubbles when <see cref="IsAttLoaded"/> is false. Centers follow
+    /// <see cref="MapRespawnCatalog"/> / join defaults; margins are intentionally generous.
+    /// </summary>
+    internal static bool ApproxTownSafeWhenTerrainUnavailable(byte mapId, byte x, byte y)
+    {
+        if (IsAttLoaded(mapId))
         {
             return false;
         }
 
-        return (flags & 0x0001) != 0; // TWFlags.SafeZone
+        static bool Box(byte x, byte y, int minX, int maxX, int minY, int maxY) =>
+            x >= minX && x <= maxX && y >= minY && y <= maxY;
+
+        return mapId switch
+        {
+            // Lorencia (join default 135,122)
+            0 => Box(x, y, 110, 160, 100, 145),
+            // Devias (183,32)
+            2 => Box(x, y, 165, 205, 15, 52),
+            // Noria (173,125) — must cover gate (172,113) and common town paths (~172,110).
+            3 => Box(x, y, 138, 205, 88, 142),
+            _ => false,
+        };
     }
 
     /// <summary>Walkable tile outside safe zone (spawn heal / field mob placement).</summary>

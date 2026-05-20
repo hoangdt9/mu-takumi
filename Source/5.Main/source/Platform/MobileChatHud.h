@@ -36,4 +36,7 @@ bool MU_MobileIsChatUiCapturing();
 void MU_MobileToggleChatPanelCollapsed();
 void MU_MobileChatHudRestoreLegacyLayout();
 
+bool MU_MobileIsChatChannelVisible();
+void MU_MobileToggleChatChannelVisible();
+
 #endif

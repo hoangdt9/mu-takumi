@@ -416,6 +416,9 @@ namespace SEASON3B
 		CNewUIMessageBoxButton m_BtnChooseServer;
 		CNewUIMessageBoxButton m_BtnChooseCharacter;
 		CNewUIMessageBoxButton m_BtnOption;
+#if defined(__ANDROID__) || defined(MU_IOS)
+		CNewUIMessageBoxButton m_BtnHudMode;
+#endif
 		CNewUIMessageBoxButton m_BtnCancel;
 		/// <summary>Which menu row had finger on LBUTTON_DOWN (-1 none). Fixes touch where release is outside the tight empty-button rect.</summary>
 		int m_SystemMenuPressedBtn;

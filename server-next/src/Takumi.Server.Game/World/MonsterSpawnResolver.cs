@@ -106,7 +106,7 @@ public static class MonsterSpawnResolver
             return true;
         }
 
-        if (!requireOutsideSafeZone || !MapAttWalkability.IsAttLoaded(mapId))
+        if (!requireOutsideSafeZone)
         {
             return false;
         }

@@ -4,6 +4,9 @@
 #include "stdafx.h"
 
 #include "NewUIMiniMap.h"
+#if defined(__ANDROID__) || defined(MU_IOS)
+#include "Platform/MobileHud.h"
+#endif
 #include "NewUISystem.h"
 #include "NewUICommonMessageBox.h"
 #include "NewUICustomMessageBox.h"
@@ -57,7 +60,7 @@ bool SEASON3B::CNewUIMiniMap::Create(CNewUIManager* pNewUIMng, int x, int y)
 
 	m_BtnExit.ChangeButtonImgState( true, IMAGE_MINIMAP_INTERFACE + 6, false );
 	m_BtnExit.ChangeButtonInfo( m_Pos.x+610, 3, 85, 85 );		
-	m_BtnExit.ChangeToolTipText( GlobalText[1002], true );	// 1002 "¥›±‚"
+	m_BtnExit.ChangeToolTipText( GlobalText[1002], true );	// 1002 "ù?ù"
 	//==Set Map Size
 	m_MapWidth.x = 350;
 	m_MapWidth.y = 350;
@@ -69,7 +72,11 @@ bool SEASON3B::CNewUIMiniMap::Create(CNewUIManager* pNewUIMng, int x, int y)
 	ViTriChon.x = 0; //Cache Pos di chuyen
 	ViTriChon.y = 0;//Cache Pos di chuyen
 	Movement = false;
-	SetPos((m_MapPos.x+ m_MapWidth.x)-30, m_MapPos.y);
+#if defined(__ANDROID__) || defined(MU_IOS)
+	SetPos(m_MapPos.x + m_MapWidth.x, m_MapPos.y);
+#else
+	SetPos((m_MapPos.x + m_MapWidth.x) - 30, m_MapPos.y);
+#endif
 	
 	m_Lenth[0].x = 800;
 	m_Lenth[1].x = 1000;
@@ -120,7 +127,17 @@ void SEASON3B::CNewUIMiniMap::Release()
 
 void SEASON3B::CNewUIMiniMap::SetPos(int x, int y)
 {
-	m_BtnExit.ChangeButtonInfo(x, y-16, 30, 25 );
+#if defined(__ANDROID__) || defined(MU_IOS)
+	if (MU_MobileIsModernMobileHudEnabled())
+	{
+		const int btnW = 30;
+		const int btnH = 25;
+		const int rightX = x + btnW;
+		m_BtnExit.ChangeButtonInfo(rightX - btnW, y - 16, btnW, btnH);
+		return;
+	}
+#endif
+	m_BtnExit.ChangeButtonInfo(x, y - 16, 30, 25);
 }
 
 void SEASON3B::CNewUIMiniMap::SetBtnPos(int Num ,float x, float y, float nx,float ny)
@@ -159,6 +176,19 @@ bool SEASON3B::CNewUIMiniMap::Render()
 
 	x = m_MapPos.x;
 	y = m_MapPos.y;
+
+#if defined(__ANDROID__) || defined(MU_IOS)
+	if (MU_MobileIsModernMobileHudEnabled())
+	{
+		m_MapWidth.x = 350;
+		m_MapWidth.y = 350;
+		m_MapPos.x = static_cast<LONG>((640.0f - static_cast<float>(m_MapWidth.x)) * 0.5f);
+		m_MapPos.y = static_cast<LONG>((480.0f - static_cast<float>(m_MapWidth.y)) * 0.5f - 40.0f);
+		x = static_cast<float>(m_MapPos.x);
+		y = static_cast<float>(m_MapPos.y);
+		SetPos(m_MapPos.x + m_MapWidth.x, m_MapPos.y);
+	}
+#endif
 
 	float DIRPointer;
 

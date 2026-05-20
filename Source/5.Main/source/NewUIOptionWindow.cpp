@@ -9,6 +9,13 @@
 #include "DSPlaySound.h"
 #include "ZzzInterface.h"
 #include "CBInterface.h"
+#include <algorithm>
+#if defined(__ANDROID__) || defined(MU_IOS)
+#include "Platform/MobileHud.h"
+#include "Camera/CameraUtility.h"
+extern float CameraDistance;
+extern float CameraDistanceTarget;
+#endif
 
 using namespace SEASON3B;
 
@@ -160,6 +167,47 @@ bool SEASON3B::CNewUIOptionWindow::UpdateMouseEvent()
 			m_iRenderLevel = (int)fValue;
 		}
 	}
+
+#if defined(__ANDROID__) || defined(MU_IOS)
+	{
+		const float zoomRowY = m_Pos.y + 198.0f;
+		const float zoomBarX = m_Pos.x + 33.0f;
+		const float zoomBarW = 124.0f;
+		const float zoomBtnW = 28.0f;
+		const float zoomBtnH = 22.0f;
+
+		if (SEASON3B::IsPress(VK_LBUTTON) && CheckMouseIn(zoomBarX - zoomBtnW - 6.0f, zoomRowY, zoomBtnW, zoomBtnH))
+		{
+			MU_MobileAdjustCameraZoom(100.0f);
+		}
+		if (SEASON3B::IsPress(VK_LBUTTON) && CheckMouseIn(zoomBarX + zoomBarW + 6.0f, zoomRowY, zoomBtnW, zoomBtnH))
+		{
+			MU_MobileAdjustCameraZoom(-100.0f);
+		}
+		if (CheckMouseIn(zoomBarX, zoomRowY, zoomBarW, 16.0f))
+		{
+			if (MouseWheel > 0)
+			{
+				MouseWheel = 0;
+				MU_MobileAdjustCameraZoom(-100.0f);
+			}
+			else if (MouseWheel < 0)
+			{
+				MouseWheel = 0;
+				MU_MobileAdjustCameraZoom(100.0f);
+			}
+			if (SEASON3B::IsRepeat(VK_LBUTTON))
+			{
+				const int dragX = MouseX - static_cast<int>(zoomBarX);
+				const float t = std::clamp(static_cast<float>(dragX) / zoomBarW, 0.0f, 1.0f);
+				const float zoom = 800.0f + t * 800.0f;
+				g_androidZoomOverride = zoom;
+				CameraDistance = zoom;
+				CameraDistanceTarget = zoom;
+			}
+		}
+	}
+#endif
 
 	if(CheckMouseIn(m_Pos.x, m_Pos.y, 190, 249) == true)
 	{
@@ -397,6 +445,51 @@ void SEASON3B::CNewUIOptionWindow::RenderCustomFrame()
 	{
 		mShowDanhHieu ^= 1;
 	}
+
+#if defined(__ANDROID__) || defined(MU_IOS)
+	{
+		const float zoomRowY = m_Pos.y + 198.0f;
+		const float zoomBarX = m_Pos.x + 33.0f;
+		const float zoomBarW = 124.0f;
+		const float zoomBtnW = 28.0f;
+		const float zoomBtnH = 22.0f;
+		const float currentZoom = MU_MobileGetCameraZoom();
+		const float zoomT = (currentZoom - 800.0f) / 800.0f;
+
+		RenderImage(IMAGE_OPTION_POINT, m_Pos.x + 18.0f, zoomRowY, 10.0f, 10.0f);
+		g_pRenderText->RenderText(m_Pos.x + 40.0f, zoomRowY, "Camera distance");
+
+		glColor4f(0.15f, 0.15f, 0.15f, 0.95f);
+		RenderColor(zoomBarX, zoomRowY + 18.0f, zoomBarW, 8.0f);
+		EnableAlphaBlend();
+		glColor4f(0.35f, 0.72f, 1.0f, 0.95f);
+		RenderColor(zoomBarX, zoomRowY + 18.0f, zoomBarW * std::clamp(zoomT, 0.0f, 1.0f), 8.0f);
+		DisableAlphaBlend();
+
+		float zoomMinusX = zoomBarX - zoomBtnW - 6.0f;
+		float zoomMinusY = zoomRowY;
+		g_pBCustomMenuInfo->gDrawWindowCustom(
+			&zoomMinusX,
+			&zoomMinusY,
+			zoomBtnW,
+			zoomBtnH,
+			-1,
+			"-");
+		float zoomPlusX = zoomBarX + zoomBarW + 6.0f;
+		float zoomPlusY = zoomRowY;
+		g_pBCustomMenuInfo->gDrawWindowCustom(
+			&zoomPlusX,
+			&zoomPlusY,
+			zoomBtnW,
+			zoomBtnH,
+			-1,
+			"+");
+
+		char zoomLabel[32] = {};
+		sprintf(zoomLabel, "%.0f", currentZoom);
+		g_pRenderText->RenderText(zoomBarX + zoomBarW * 0.5f - 12.0f, zoomRowY + 30.0f, zoomLabel);
+	}
+#endif
 }
 void SEASON3B::CNewUIOptionWindow::RenderContents()
 {

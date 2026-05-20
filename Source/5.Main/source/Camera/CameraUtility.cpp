@@ -19,6 +19,8 @@
 #include "../w_MapHeaders.h"
 #include "../UIManager.h"
 
+#include <algorithm>
+
 // External variable declarations (definitions remain in ZzzScene.cpp)
 extern short g_shCameraLevel;
 
@@ -431,3 +433,34 @@ bool MoveMainCamera()
 
     return bLockCamera;
 }
+
+#if defined(__ANDROID__) || defined(MU_IOS)
+
+namespace
+{
+constexpr float kMobileZoomMin = 800.0f;
+constexpr float kMobileZoomMax = 1600.0f;
+} // namespace
+
+float MU_MobileGetCameraZoom()
+{
+    float currentZoom = g_androidZoomOverride > 0.0f
+        ? g_androidZoomOverride
+        : CameraDistanceTarget;
+    if (currentZoom <= 0.0f)
+    {
+        currentZoom = 1200.0f;
+    }
+
+    return std::clamp(currentZoom, kMobileZoomMin, kMobileZoomMax);
+}
+
+void MU_MobileAdjustCameraZoom(float delta)
+{
+    const float nextZoom = std::clamp(MU_MobileGetCameraZoom() + delta, kMobileZoomMin, kMobileZoomMax);
+    g_androidZoomOverride = nextZoom;
+    CameraDistance = nextZoom;
+    CameraDistanceTarget = nextZoom;
+}
+
+#endif

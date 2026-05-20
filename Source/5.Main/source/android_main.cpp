@@ -720,10 +720,13 @@ const std::array<VirtualButtonLayout, 1 + kVirtualVisibleSkillButtonCount> kVirt
 
 // â”€â”€ Consumable potion slots (restored stable layout) â”€â”€
 constexpr int kVirtualConsumableSlotCount = 3;
+constexpr float kVirtualConsumableRowCy = 302.0f;
+constexpr float kVirtualConsumableSpacingX = 34.0f;
+constexpr float kVirtualConsumableRowCx = kVirtualAttackButtonCx;
 constexpr std::array<VirtualButtonLayout, kVirtualConsumableSlotCount> kVirtualConsumableSlots = {
-    VirtualButtonLayout{ 472.0f, 334.0f, 15.0f }, // consumable slot 0
-    VirtualButtonLayout{ 472.0f, 388.0f, 15.0f }, // consumable slot 1
-    VirtualButtonLayout{ 472.0f, 442.0f, 15.0f }, // consumable slot 2
+    VirtualButtonLayout{ kVirtualConsumableRowCx - kVirtualConsumableSpacingX, kVirtualConsumableRowCy, 15.0f },
+    VirtualButtonLayout{ kVirtualConsumableRowCx, kVirtualConsumableRowCy, 15.0f },
+    VirtualButtonLayout{ kVirtualConsumableRowCx + kVirtualConsumableSpacingX, kVirtualConsumableRowCy, 15.0f },
 };
 
 struct VirtualConsumableSlot {
@@ -739,7 +742,9 @@ constexpr float kTopRightButtonMarginRight = 8.0f;
 constexpr float kTopRightPanelGap = 8.0f;
 constexpr float kCompactMiniMapPanelWidth = 86.0f;
 constexpr float kCompactMiniMapPanelHeight = 86.0f;
-constexpr float kCompactMiniMapPanelGapToIcons = 10.0f;
+constexpr float kMinimapToolbarButtonGap = 4.0f;
+constexpr int kUtilityToolbarExpandedItemCount = 4;
+static bool g_virtualUtilityToolbarExpanded = false;
 constexpr float kVirtualChatQuickButtonCx = 305.0f;
 constexpr float kVirtualChatQuickButtonCy = 413.0f;
 constexpr float kVirtualChatQuickButtonRadius = 18.0f;
@@ -794,6 +799,42 @@ AndroidUiRect GetTopRightStackButtonRect(int stackIndex)
     };
 }
 
+AndroidUiRect GetUtilityToolbarToggleRect()
+{
+    const float panelRight = 640.0f - kTopRightButtonMarginRight;
+    const float panelX = panelRight - kCompactMiniMapPanelWidth;
+    const float x = panelX + kCompactMiniMapPanelWidth - kTopRightButtonSize;
+
+    return {
+        x,
+        kTopRightButtonY,
+        kTopRightButtonSize,
+        kTopRightButtonSize
+    };
+}
+
+AndroidUiRect GetUtilityToolbarItemRect(int itemIndex)
+{
+    if (!g_virtualUtilityToolbarExpanded
+        || itemIndex < 0
+        || itemIndex >= kUtilityToolbarExpandedItemCount)
+    {
+        return {};
+    }
+
+    const AndroidUiRect toggle = GetUtilityToolbarToggleRect();
+    const float itemStride = kTopRightButtonSize + kMinimapToolbarButtonGap;
+    const float x = toggle.x
+        - static_cast<float>(kUtilityToolbarExpandedItemCount - itemIndex) * itemStride;
+
+    return {
+        x,
+        toggle.y,
+        kTopRightButtonSize,
+        kTopRightButtonSize
+    };
+}
+
 bool IsMiniMapPanelVisible()
 {
     return g_pNewUISystem != nullptr
@@ -802,12 +843,29 @@ bool IsMiniMapPanelVisible()
 
 AndroidUiRect GetMiniMapButtonRect()
 {
-    return GetTopRightStackButtonRect(0);
+    const AndroidUiRect toggle = GetUtilityToolbarToggleRect();
+    float leftAnchorX = toggle.x;
+    if (g_virtualUtilityToolbarExpanded)
+    {
+        const AndroidUiRect firstItem = GetUtilityToolbarItemRect(0);
+        if (firstItem.w > 0.0f)
+        {
+            leftAnchorX = firstItem.x;
+        }
+    }
+
+    const float x = leftAnchorX - kTopRightButtonSize - kMinimapToolbarButtonGap;
+    return {
+        x,
+        kTopRightButtonY,
+        kTopRightButtonSize,
+        kTopRightButtonSize
+    };
 }
 
 AndroidUiRect GetMapButtonRect()
 {
-    return GetTopRightStackButtonRect(1);
+    return GetUtilityToolbarItemRect(0);
 }
 
 AndroidUiRect GetMobileHudToggleButtonRect()
@@ -820,17 +878,16 @@ void DrawMobileHudModeToggleButton();
 
 AndroidUiRect GetCompactMiniMapRect()
 {
-    const AndroidUiRect mapButton = GetMapButtonRect();
-    const float x = std::clamp(
-        mapButton.x - kCompactMiniMapPanelWidth - kCompactMiniMapPanelGapToIcons,
-        6.0f,
-        640.0f - kCompactMiniMapPanelWidth - 6.0f);
-    const float y = std::clamp(
-        mapButton.y + 2.0f,
-        6.0f,
-        480.0f - kCompactMiniMapPanelHeight - 6.0f);
+    const float panelRight = 640.0f - kTopRightButtonMarginRight;
+    const float x = panelRight - kCompactMiniMapPanelWidth;
+    const float y = kTopRightButtonY + kTopRightButtonSize + kMinimapToolbarButtonGap;
 
-    return { x, y, kCompactMiniMapPanelWidth, kCompactMiniMapPanelHeight };
+    return {
+        std::clamp(x, 6.0f, 640.0f - kCompactMiniMapPanelWidth - 6.0f),
+        std::clamp(y, 6.0f, 480.0f - kCompactMiniMapPanelHeight - 6.0f),
+        kCompactMiniMapPanelWidth,
+        kCompactMiniMapPanelHeight
+    };
 }
 
 AndroidUiRect GetVirtualUtilityButtonRect(int button)
@@ -850,7 +907,17 @@ AndroidUiRect GetVirtualUtilityButtonRect(int button)
         };
     }
 
-    return GetTopRightStackButtonRect(2 + button);
+    switch (button)
+    {
+    case 0:
+        return GetUtilityToolbarItemRect(1);
+    case 1:
+        return GetUtilityToolbarItemRect(2);
+    case 2:
+        return GetUtilityToolbarItemRect(3);
+    default:
+        return {};
+    }
 }
 
 float GetAndroidCompactMiniMapTopYInternal()
@@ -2180,12 +2247,37 @@ bool IsMiniMapToggleAvailable()
 }
 
 // â”€â”€ Map button hit test â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+bool HitTestUtilityToolbarToggleButton(float uiX, float uiY)
+{
+    if (SceneFlag != MAIN_SCENE || g_pNewUISystem == nullptr || AndroidHasFocusedTextInput())
+    {
+        return false;
+    }
+
+    const AndroidUiRect rect = GetUtilityToolbarToggleRect();
+    return uiX >= rect.x && uiX <= (rect.x + rect.w)
+        && uiY >= rect.y && uiY <= (rect.y + rect.h);
+}
+
+void ToggleUtilityToolbarExpanded()
+{
+    g_virtualUtilityToolbarExpanded = !g_virtualUtilityToolbarExpanded;
+    LOGI(
+        "VirtualPad: utility toolbar -> %s",
+        g_virtualUtilityToolbarExpanded ? "expanded" : "collapsed");
+}
+
 bool HitTestMapButton(float uiX, float uiY)
 {
     if (SceneFlag != MAIN_SCENE || g_pNewUISystem == nullptr || AndroidHasFocusedTextInput())
         return false;
 
     const AndroidUiRect rect = GetMapButtonRect();
+    if (rect.w <= 0.0f || rect.h <= 0.0f)
+    {
+        return false;
+    }
+
     return uiX >= rect.x && uiX <= (rect.x + rect.w)
         && uiY >= rect.y && uiY <= (rect.y + rect.h);
 }
@@ -2245,6 +2337,11 @@ int HitTestVirtualUtilityButton(float uiX, float uiY)
     for (int i = 0; i < kVirtualUtilityButtonCount; ++i)
     {
         const AndroidUiRect rect = GetVirtualUtilityButtonRect(i);
+        if (rect.w <= 0.0f || rect.h <= 0.0f)
+        {
+            continue;
+        }
+
         if (uiX >= rect.x && uiX <= (rect.x + rect.w)
             && uiY >= rect.y && uiY <= (rect.y + rect.h))
         {
@@ -2414,6 +2511,17 @@ bool HandleVirtualTopControlTap(float uiX, float uiY)
         {
             g_virtualLastMiniMapTapMs = nowMs;
             ToggleMiniMapByVirtualButton();
+        }
+
+        return true;
+    }
+
+    if (HitTestUtilityToolbarToggleButton(uiX, uiY))
+    {
+        if ((nowMs - g_virtualLastUtilityTapMs) >= kVirtualUtilityButtonCooldownMs)
+        {
+            g_virtualLastUtilityTapMs = nowMs;
+            ToggleUtilityToolbarExpanded();
         }
 
         return true;
@@ -3516,6 +3624,13 @@ bool HandleVirtualFingerDown(const SDL_TouchFingerEvent& touch)
         return false;
     }
 
+    // Chat resize/scroll must work even when IME is open (IsVirtualPadAvailable is false).
+    if (MU_MobileIsModernMobileHudEnabled()
+        && MU_MobileHandleChatUiFingerDownAt(uiX, uiY, touch.fingerId))
+    {
+        return true;
+    }
+
     if (!IsVirtualPadAvailable())
     {
         return false;
@@ -3528,12 +3643,6 @@ bool HandleVirtualFingerDown(const SDL_TouchFingerEvent& touch)
     }
 
     if (HandleVirtualTopControlTap(uiX, uiY))
-    {
-        return true;
-    }
-
-    if (MU_MobileIsModernMobileHudEnabled()
-        && MU_MobileHandleChatUiFingerDownAt(uiX, uiY, touch.fingerId))
     {
         return true;
     }
@@ -4239,9 +4348,73 @@ void DrawVirtualJoystickHud()
 // â”€â”€ Map button (top-right companion to minimap) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 void DrawVirtualMapButton()
 {
-    EnsureUITextures();
     const AndroidUiRect rect = GetMapButtonRect();
+    if (rect.w <= 0.0f || rect.h <= 0.0f)
+    {
+        return;
+    }
+
+    EnsureUITextures();
     DrawIconButton(rect.x, rect.y, rect.w, rect.h, g_uiTex_map, 1.0f);
+}
+
+void DrawUtilityToolbarToggleButton()
+{
+    if (SceneFlag != MAIN_SCENE || g_pNewUISystem == nullptr)
+    {
+        return;
+    }
+
+    const AndroidUiRect rect = GetUtilityToolbarToggleRect();
+    const bool expanded = g_virtualUtilityToolbarExpanded;
+    const float cx = rect.x + rect.w * 0.5f;
+    const float cy = rect.y + rect.h * 0.5f;
+
+    DrawVirtualCircle(
+        cx,
+        cy,
+        rect.w * 0.46f,
+        expanded ? 0.18f : 0.08f,
+        expanded ? 0.40f : 0.10f,
+        expanded ? 0.52f : 0.16f,
+        expanded ? 0.90f : 0.78f,
+        true);
+
+    DisableTexture();
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glColor4f(1.0f, 1.0f, 1.0f, 0.96f);
+
+    auto emitUiVertex = [](float uiX, float uiY)
+    {
+        glVertex2f(UiToScreenX(uiX), static_cast<float>(WindowHeight) - UiToScreenY(uiY));
+    };
+
+    if (!expanded)
+    {
+        const float barW = rect.w * 0.36f;
+        const float gap = 5.0f;
+        for (int i = -1; i <= 1; ++i)
+        {
+            const float y = cy + static_cast<float>(i) * gap;
+            glBegin(GL_LINES);
+            emitUiVertex(cx - barW * 0.5f, y);
+            emitUiVertex(cx + barW * 0.5f, y);
+            glEnd();
+        }
+    }
+    else
+    {
+        const float arm = rect.w * 0.16f;
+        glLineWidth(2.8f);
+        glBegin(GL_LINES);
+        emitUiVertex(cx + arm, cy - arm * 1.35f);
+        emitUiVertex(cx - arm, cy);
+        emitUiVertex(cx - arm, cy);
+        emitUiVertex(cx + arm, cy + arm * 1.35f);
+        glEnd();
+        glLineWidth(1.0f);
+    }
 }
 
 void DrawVirtualChatUtilityButton()
@@ -4701,6 +4874,11 @@ void RenderVirtualPad()
             }
 
             const AndroidUiRect rect = GetVirtualUtilityButtonRect(i);
+            if (rect.w <= 0.0f || rect.h <= 0.0f)
+            {
+                continue;
+            }
+
             const float alpha = IsVirtualUtilityButtonActive(i) ? 1.0f : 0.88f;
             DrawIconButton(rect.x, rect.y, rect.w, rect.h, *utilIcons[i], alpha);
         }
@@ -4711,8 +4889,8 @@ void RenderVirtualPad()
             DrawIconButton(rect.x, rect.y, rect.w, rect.h, g_uiTex_minimap, 1.0f);
         }
 
-        const AndroidUiRect mapRect = GetMapButtonRect();
-        DrawIconButton(mapRect.x, mapRect.y, mapRect.w, mapRect.h, g_uiTex_map, 1.0f);
+        DrawVirtualMapButton();
+        DrawUtilityToolbarToggleButton();
 
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         EndBitmap();
@@ -4840,6 +5018,10 @@ void RenderVirtualPad()
                 continue;
             }
             const AndroidUiRect rect = GetVirtualUtilityButtonRect(i);
+            if (rect.w <= 0.0f || rect.h <= 0.0f)
+            {
+                continue;
+            }
             const float alpha = IsVirtualUtilityButtonActive(i) ? 1.0f : 0.92f;
             DrawIconButton(rect.x, rect.y, rect.w, rect.h, *kUtilIcons[i], alpha);
         }
@@ -4924,13 +5106,15 @@ void RenderVirtualPad()
 
     BeginBitmap();
     EnsureUITextures();
-    DrawVirtualMapButton();
 
     if (IsMiniMapToggleAvailable())
     {
         const AndroidUiRect rect = GetMiniMapButtonRect();
         DrawIconButton(rect.x, rect.y, rect.w, rect.h, g_uiTex_minimap, 1.0f);
     }
+
+    DrawVirtualMapButton();
+    DrawUtilityToolbarToggleButton();
 
     if (!MU_MobileIsModernMobileHudEnabled())
     {

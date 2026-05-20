@@ -14,6 +14,7 @@
 #define SSW_DESC_ROW_MAX	83
 #define SSW_LEFT_SERVER_G_MAX	10
 #define SSW_RIGHT_SERVER_G_MAX	10
+#define SSW_VISIBLE_SERVER_MAX	8
 
 
 class CServerGroup;
@@ -45,6 +46,7 @@ protected:
 	bool		m_bAutoEnterFirstServer;
 	
 	int				m_iSelectServerBtnIndex;
+	int				m_iServerScrollOffset;
 	CServerGroup*	m_pSelectServerGroup;
 	
 	unicode::t_char		m_szDescription[SSW_DESC_LINE_MAX][SSW_DESC_ROW_MAX];
@@ -63,6 +65,7 @@ protected:
 	bool ConnectServerButtonIndex(int iIndex);
 	void PreRelease();
 	void SetServerBtnPosition();
+	void SyncVisibleServerSlots();
 	void SetArrowSpritePosition();
 	void ShowServerGBtns();
 	void ShowDecoSprite();

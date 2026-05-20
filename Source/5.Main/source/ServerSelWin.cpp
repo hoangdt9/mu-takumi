@@ -26,6 +26,10 @@
 
 extern float g_fScreenRate_x;
 extern float g_fScreenRate_y;
+extern int MouseWheel;
+extern int MouseX;
+extern int MouseY;
+extern bool MouseLButton;
 
 using namespace SEASON3A;
 
@@ -44,6 +48,7 @@ void CServerSelWin::Create()
 	CWin::Create(0, 0, -2);
 
 	m_iSelectServerBtnIndex = -1;
+	m_iServerScrollOffset = 0;
 	m_pSelectServerGroup = NULL;
 	m_bAutoEnterFirstServer = false;
 
@@ -157,22 +162,77 @@ void CServerSelWin::SetServerBtnPosition()
 	// (center row uses index 0; its width can differ and misplaces subs off-screen).
 	const int nServerBtnPosX = m_aServerGroupBtn[1].GetXPos() + m_aServerGroupBtn[1].GetWidth() + SSW_GAP_WIDTH;
 
-	int nServerBtnHeight = m_aServerBtn[0].GetHeight();
+	const int nServerBtnHeight = m_aServerBtn[0].GetHeight();
 
-	int nLServerGBtnHeightSum = m_aServerGroupBtn[1].GetHeight() * 10;
-
-	int nServerBtnHeightSum = nServerBtnHeight * m_icntServer;
-
-	// Anchor vertical layout to the left column row; center btn (index 0) sits at the bottom — its Y stacks subs off-screen.
 	const int nYAnchorIndex = (m_iSelectServerBtnIndex == 0) ? 1 : m_iSelectServerBtnIndex;
 	const int nLServerGBtnTop = m_aServerGroupBtn[nYAnchorIndex].GetYPos();
 
-	int nServerBtnBasePosY = nLServerGBtnHeightSum > nServerBtnHeightSum ? nLServerGBtnTop : nLServerGBtnTop - (nServerBtnHeightSum - nLServerGBtnHeightSum);
-	
-	for (int i = 0; i < m_pSelectServerGroup->GetServerSize(); i++)
+	const int maxScroll = (m_icntServer > SSW_VISIBLE_SERVER_MAX) ? (m_icntServer - SSW_VISIBLE_SERVER_MAX) : 0;
+	if (m_iServerScrollOffset < 0)
 	{
-		m_aServerBtn[i].SetPosition( nServerBtnPosX, nServerBtnBasePosY + nServerBtnHeight * i);
-		m_aServerGauge[i].SetPosition(m_aServerBtn[i].GetXPos() + SSW_GB_POS_X, m_aServerBtn[i].GetYPos() + SSW_GB_POS_Y);
+		m_iServerScrollOffset = 0;
+	}
+	else if (m_iServerScrollOffset > maxScroll)
+	{
+		m_iServerScrollOffset = maxScroll;
+	}
+
+	const int visibleCount = (m_icntServer > SSW_VISIBLE_SERVER_MAX)
+		? SSW_VISIBLE_SERVER_MAX
+		: m_icntServer;
+
+	int nServerBtnBasePosY = nLServerGBtnTop;
+	if (m_icntServer <= SSW_VISIBLE_SERVER_MAX)
+	{
+		const int nLServerGBtnHeightSum = m_aServerGroupBtn[1].GetHeight() * 10;
+		const int nServerBtnHeightSum = nServerBtnHeight * m_icntServer;
+		if (nLServerGBtnHeightSum <= nServerBtnHeightSum)
+		{
+			nServerBtnBasePosY = nLServerGBtnTop - (nServerBtnHeightSum - nLServerGBtnHeightSum);
+		}
+	}
+
+	for (int i = 0; i < visibleCount; ++i)
+	{
+		m_aServerBtn[i].SetPosition(nServerBtnPosX, nServerBtnBasePosY + nServerBtnHeight * i);
+		m_aServerGauge[i].SetPosition(
+			m_aServerBtn[i].GetXPos() + SSW_GB_POS_X,
+			m_aServerBtn[i].GetYPos() + SSW_GB_POS_Y);
+	}
+
+	SyncVisibleServerSlots();
+}
+
+void CServerSelWin::SyncVisibleServerSlots()
+{
+	if (m_pSelectServerGroup == NULL || m_icntServer < 1)
+	{
+		return;
+	}
+
+	DWORD adwServerBtnClr[4][4] =
+	{
+		{ CLRDW_BR_GRAY, CLRDW_BR_GRAY, CLRDW_WHITE, 0 },
+		{ CLRDW_YELLOW, CLRDW_YELLOW, CLRDW_BR_YELLOW, 0 },
+		{ CLRDW_ORANGE, CLRDW_ORANGE, CLRDW_BR_ORANGE, 0 },
+		{ CLRDW_ORANGE, CLRDW_ORANGE, CLRDW_BR_ORANGE, 0 },
+	};
+
+	const int visibleCount = (m_icntServer > SSW_VISIBLE_SERVER_MAX)
+		? SSW_VISIBLE_SERVER_MAX
+		: m_icntServer;
+
+	for (int slot = 0; slot < visibleCount; ++slot)
+	{
+		const int serverIndex = m_iServerScrollOffset + slot;
+		CServerInfo* pServerInfo = m_pSelectServerGroup->GetServerInfo(serverIndex);
+		if (pServerInfo == NULL)
+		{
+			continue;
+		}
+
+		m_aServerBtn[slot].SetText(pServerInfo->m_bName, adwServerBtnClr[pServerInfo->m_byNonPvP]);
+		m_aServerGauge[slot].SetValue(pServerInfo->m_iPercent, 100);
 	}
 }
 
@@ -292,6 +352,7 @@ void CServerSelWin::UpdateDisplay()
 	if( m_pSelectServerGroup == NULL )
 		return;
 
+	m_iServerScrollOffset = 0;
 	m_icntServer = m_pSelectServerGroup->GetServerSize();
 
 	if( m_icntServer < 1)
@@ -502,8 +563,12 @@ void CServerSelWin::ShowServerBtns()
 		return;
 	}
 	
+	const int visibleCount = (m_icntServer > SSW_VISIBLE_SERVER_MAX)
+		? SSW_VISIBLE_SERVER_MAX
+		: m_icntServer;
+
 	int i;
-	for (i = 0 ; i < m_icntServer ; i++)
+	for (i = 0; i < visibleCount; ++i)
 	{
 		m_aServerBtn[i].Show(CWin::m_bShow);
 		m_aServerGauge[i].Show(CWin::m_bShow);
@@ -546,7 +611,8 @@ void CServerSelWin::UpdateWhileActive(double dDeltaTick)
 
 			m_aServerGroupBtn[i].SetCheck(true);
 			m_iSelectServerBtnIndex = i;
-			
+			m_iServerScrollOffset = 0;
+
 			SendRequestServerList();
 		}
 	}
@@ -554,11 +620,89 @@ void CServerSelWin::UpdateWhileActive(double dDeltaTick)
 	if( m_pSelectServerGroup == NULL )
 		return ;
 
-	for( i=0 ; i<m_icntServer ; i++ )
+	const int visibleCount = (m_icntServer > SSW_VISIBLE_SERVER_MAX)
+		? SSW_VISIBLE_SERVER_MAX
+		: m_icntServer;
+
+	if (m_icntServer > SSW_VISIBLE_SERVER_MAX && visibleCount > 0)
+	{
+		const int listLeft = m_aServerBtn[0].GetXPos();
+		const int listRight = listLeft + SERVER_BTN_WIDTH + 12;
+		const int listTop = m_aServerBtn[0].GetYPos();
+		const int listBottom = m_aServerBtn[visibleCount - 1].GetYPos() + SERVER_BTN_HEIGHT;
+		const bool pointerInList = MouseX >= listLeft && MouseX <= listRight
+			&& MouseY >= listTop && MouseY <= listBottom;
+
+		static int s_dragScrollLastY = -1;
+		if (MouseLButton && pointerInList)
+		{
+			if (s_dragScrollLastY >= 0)
+			{
+				const int deltaY = MouseY - s_dragScrollLastY;
+				if (deltaY >= 18)
+				{
+					--m_iServerScrollOffset;
+					if (m_iServerScrollOffset < 0)
+					{
+						m_iServerScrollOffset = 0;
+					}
+					SetServerBtnPosition();
+					ShowServerBtns();
+					s_dragScrollLastY = MouseY;
+				}
+				else if (deltaY <= -18)
+				{
+					++m_iServerScrollOffset;
+					const int maxScroll = m_icntServer - SSW_VISIBLE_SERVER_MAX;
+					if (m_iServerScrollOffset > maxScroll)
+					{
+						m_iServerScrollOffset = maxScroll;
+					}
+					SetServerBtnPosition();
+					ShowServerBtns();
+					s_dragScrollLastY = MouseY;
+				}
+			}
+			else
+			{
+				s_dragScrollLastY = MouseY;
+			}
+		}
+		else
+		{
+			s_dragScrollLastY = -1;
+		}
+
+		if (MouseWheel > 0)
+		{
+			--m_iServerScrollOffset;
+			if (m_iServerScrollOffset < 0)
+			{
+				m_iServerScrollOffset = 0;
+			}
+			SetServerBtnPosition();
+			ShowServerBtns();
+			MouseWheel = 0;
+		}
+		else if (MouseWheel < 0)
+		{
+			++m_iServerScrollOffset;
+			const int maxScroll = m_icntServer - SSW_VISIBLE_SERVER_MAX;
+			if (m_iServerScrollOffset > maxScroll)
+			{
+				m_iServerScrollOffset = maxScroll;
+			}
+			SetServerBtnPosition();
+			ShowServerBtns();
+			MouseWheel = 0;
+		}
+	}
+
+	for( i=0 ; i<visibleCount ; i++ )
 	{
 		if (m_aServerBtn[i].IsClick())
 		{
-			ConnectServerButtonIndex(i);
+			ConnectServerButtonIndex(m_iServerScrollOffset + i);
 			break;
 		}
 	}
@@ -576,9 +720,36 @@ void CServerSelWin::RenderControls()
 	
 	if( m_pSelectServerGroup != NULL )
 	{
-		for (i=0 ; i<m_icntServer; i++)
+		const int visibleCount = (m_icntServer > SSW_VISIBLE_SERVER_MAX)
+			? SSW_VISIBLE_SERVER_MAX
+			: m_icntServer;
+
+		for (i = 0; i < visibleCount; ++i)
 		{
 			m_aServerGauge[i].Render();
+		}
+
+		if (m_icntServer > SSW_VISIBLE_SERVER_MAX && visibleCount > 0)
+		{
+			const int trackX = m_aServerBtn[0].GetXPos() + SERVER_BTN_WIDTH + 4;
+			const int trackTop = m_aServerBtn[0].GetYPos();
+			const int trackBottom = m_aServerBtn[visibleCount - 1].GetYPos() + SERVER_BTN_HEIGHT;
+			const int trackH = trackBottom - trackTop;
+			if (trackH > 0)
+			{
+				const float scrollRate = static_cast<float>(m_iServerScrollOffset)
+					/ static_cast<float>(m_icntServer - SSW_VISIBLE_SERVER_MAX);
+				const int thumbH = (trackH * SSW_VISIBLE_SERVER_MAX) / m_icntServer;
+				const int thumbY = trackTop + static_cast<int>((trackH - thumbH) * scrollRate);
+
+				EnableAlphaTest();
+				glColor4f(1.0f, 1.0f, 1.0f, 0.35f);
+				RenderColor(static_cast<float>(trackX), static_cast<float>(trackTop), 4.0f, static_cast<float>(trackH));
+				glColor4f(1.0f, 0.85f, 0.2f, 0.9f);
+				RenderColor(static_cast<float>(trackX), static_cast<float>(thumbY), 4.0f, static_cast<float>(thumbH));
+				EndRenderColor();
+				DisableAlphaBlend();
+			}
 		}
 
 		if( m_pSelectServerGroup->m_bPvPServer == true )

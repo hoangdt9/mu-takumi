@@ -774,7 +774,7 @@ void SEASON3B::CNewUIChatLogWindow::SetNumberOfShowingLines(int nShowingLines, O
 	if (m_nShowingLines < 3)
 		m_nShowingLines = 3;
 	if (m_nShowingLines > 15)
-		m_nShowingLines = 3;
+		m_nShowingLines = 15;
 
 	if (m_nShowingLines > GetCurrentRenderEndLine())
 		Scrolling(m_nShowingLines - 1);
@@ -847,6 +847,13 @@ void SEASON3B::CNewUIChatLogWindow::AddItemPost(ITEM* Data)
 bool SEASON3B::CNewUIChatLogWindow::UpdateMouseEvent()
 {
 	extern float g_fScreenRate_x;
+
+#if defined(__ANDROID__) || defined(MU_IOS)
+	if (MU_MobileIsModernMobileHudEnabled() && MU_MobileIsChatUiCapturing())
+	{
+		return true;
+	}
+#endif
 
 	if (m_EventState == EVENT_NONE && false == MouseLButtonPush &&
 		SEASON3B::CheckMouseIn(m_WndPos.x, m_WndPos.y - m_WndSize.cy, m_WndSize.cx, m_WndSize.cy))
@@ -1322,20 +1329,35 @@ bool SEASON3B::CNewUIChatLogWindow::HitTestScrollBar(float uiX, float uiY)
 		return false;
 	}
 
+	if (GetNumberOfLines(GetCurrentMsgType()) <= GetNumberOfShowingLines())
+	{
+		return false;
+	}
+
 	UpdateScrollPos();
 
 	const int prevMouseX = MouseX;
 	const int prevMouseY = MouseY;
 	MouseX = static_cast<int>(uiX);
 	MouseY = static_cast<int>(uiY);
-	const bool hit = SEASON3B::CheckMouseIn(
+
+	const bool hitThumb = SEASON3B::CheckMouseIn(
 		static_cast<int>(m_ScrollBtnPos.x),
 		static_cast<int>(m_ScrollBtnPos.y),
 		SCROLL_BTN_WIDTH,
 		SCROLL_BTN_HEIGHT);
+
+	const float trackX = m_WndPos.x + m_WndSize.cx - SCROLL_BAR_WIDTH - WND_LEFT_RIGHT_EDGE;
+	const float trackTop = m_WndPos.y - m_WndSize.cy + WND_TOP_BOTTOM_EDGE;
+	const float trackBottom = m_WndPos.y - WND_TOP_BOTTOM_EDGE;
+	const bool hitTrack = uiX >= trackX
+		&& uiX <= (trackX + SCROLL_BAR_WIDTH)
+		&& uiY >= trackTop
+		&& uiY <= trackBottom;
+
 	MouseX = prevMouseX;
 	MouseY = prevMouseY;
-	return hit;
+	return hitThumb || hitTrack;
 }
 
 void SEASON3B::CNewUIChatLogWindow::BeginScrollDragAt(int mouseY)

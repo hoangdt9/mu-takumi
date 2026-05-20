@@ -18,6 +18,9 @@
 #include <cmath>
 
 extern int DisplayHeightExt;
+extern bool MouseLButton;
+extern bool MouseLButtonPush;
+extern bool MouseLButtonPop;
 
 namespace
 {
@@ -35,6 +38,7 @@ constexpr float kLineHeightUi = 15.0f;
 constexpr float kLogWndTopBottomEdge = 2.0f;
 constexpr float kLogScrollTopBottomPart = 3.0f;
 constexpr float kLogResizingBtnHeight = 10.0f;
+constexpr float kResizeHandleHitPadY = 10.0f;
 
 struct MobileChatLayoutState
 {
@@ -130,6 +134,11 @@ void SaveMobileChatLayout()
     fclose(file);
 }
 
+float MobileChatInputBaseY()
+{
+    return static_cast<float>(g_mobileChatLayout.inputY + DisplayHeightExt);
+}
+
 int GetEffectiveShowingLines()
 {
     if (g_mobileChatLayout.collapsed)
@@ -151,7 +160,7 @@ MobileChatPanelRect BuildPanelRect()
 {
     const int lines = GetEffectiveShowingLines();
     const float logH = ComputeLogHeightPx(lines);
-    const float inputY = static_cast<float>(g_mobileChatLayout.inputY);
+    const float inputY = MobileChatInputBaseY();
     const float totalH = logH + static_cast<float>(kChatInputHeight);
 
     return {
@@ -231,7 +240,7 @@ MobileChatPanelRect MU_MobileGetChatResizeHandleRect()
 
     const int lines = GetEffectiveShowingLines();
     const float logH = ComputeLogHeightPx(lines);
-    const float inputY = static_cast<float>(g_mobileChatLayout.inputY);
+    const float inputY = MobileChatInputBaseY();
     const float x = static_cast<float>(g_mobileChatLayout.panelX);
 
     return {
@@ -263,7 +272,7 @@ bool MU_MobileHitTestChatInputBar(float uiX, float uiY)
 
     LoadMobileChatLayout();
     const float x = static_cast<float>(g_mobileChatLayout.panelX);
-    const float y = static_cast<float>(g_mobileChatLayout.inputY);
+    const float y = MobileChatInputBaseY();
     return uiX >= x
         && uiX <= (x + static_cast<float>(kChatBarWidth))
         && uiY >= y
@@ -282,7 +291,7 @@ bool MU_MobileHitTestChatLogArea(float uiX, float uiY)
     const MobileChatPanelRect panel = MU_MobileGetChatPanelRect();
     const MobileChatPanelRect handle = MU_MobileGetChatResizeHandleRect();
     const float logTop = handle.y + handle.h;
-    const float logBottom = static_cast<float>(g_mobileChatLayout.inputY);
+    const float logBottom = MobileChatInputBaseY();
 
     if (logBottom <= logTop)
     {
@@ -305,8 +314,8 @@ bool MU_MobileHitTestChatResizeHandle(float uiX, float uiY)
     const MobileChatPanelRect handle = MU_MobileGetChatResizeHandleRect();
     return uiX >= handle.x
         && uiX <= (handle.x + handle.w)
-        && uiY >= handle.y
-        && uiY <= (handle.y + handle.h);
+        && uiY >= (handle.y - kResizeHandleHitPadY)
+        && uiY <= (handle.y + handle.h + kResizeHandleHitPadY);
 }
 
 void ApplyChatUiCaptureFlags()
@@ -335,6 +344,10 @@ void ReleaseChatUiCapture(SDL_FingerID fingerId)
 
     g_chatUiCaptureFingerId = static_cast<SDL_FingerID>(-1);
     g_chatUiGesture = ChatUiGesture::None;
+
+    MouseLButton = false;
+    MouseLButtonPush = false;
+    MouseLButtonPop = false;
 }
 
 bool MU_MobileIsChatUiCapturing()
@@ -412,6 +425,7 @@ bool MU_MobileHandleChatUiFingerDownAt(float uiX, float uiY, SDL_FingerID finger
         g_chatUiCaptureFingerId = fingerId;
         g_chatUiGesture = ChatUiGesture::Scroll;
         g_pChatListBox->BeginScrollDragAt(static_cast<int>(uiY));
+        g_pChatListBox->UpdateScrollDragAt(static_cast<int>(uiY));
         ApplyChatUiCaptureFlags();
         return true;
     }

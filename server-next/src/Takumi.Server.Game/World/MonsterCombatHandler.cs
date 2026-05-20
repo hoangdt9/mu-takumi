@@ -64,6 +64,14 @@ public static class MonsterCombatHandler
                     ct)
                 .ConfigureAwait(false);
 
+            var hitRange = SkillCombatCatalog.GetSkillHitRange(targetedSkillId, isTargetedPacket: true);
+            var useStat = TryRollPlayerSkillDamage(
+                player,
+                presenceSessionId,
+                targetedSkillId,
+                out var skillDmg,
+                out var skillDmgType);
+
             await HandleHitAsync(
                     tracker,
                     connection,
@@ -81,8 +89,19 @@ public static class MonsterCombatHandler
                     presenceSessionId,
                     player,
                     accountId,
-                    onRosterDirty)
+                    onRosterDirty,
+                    skillDamageOverride: useStat ? skillDmg : null,
+                    skillDamageTypeOverride: useStat ? skillDmgType : null,
+                    hitRangeOverride: hitRange)
                 .ConfigureAwait(false);
+
+            Console.WriteLine(
+                "[{0}] [m9] skill targeted id={1} target=0x{2:X4} range={3} statDmg={4}",
+                remote,
+                targetedSkillId,
+                skillTargetId,
+                hitRange,
+                useStat ? skillDmg : -1);
             return true;
         }
 
@@ -106,7 +125,38 @@ public static class MonsterCombatHandler
                     playerY,
                     skillX,
                     skillY,
+                    magicSkillId,
                     magicTargets,
+                    remote,
+                    ct,
+                    playerLevel,
+                    presenceSessionId,
+                    player,
+                    accountId,
+                    onRosterDirty)
+                .ConfigureAwait(false);
+            return true;
+        }
+
+        if (ClientHitPackets602.TryFindMagicContinue(
+                packet,
+                out _,
+                out var continueSkillId,
+                out var continueX,
+                out var continueY,
+                out _,
+                out _))
+        {
+            await HandleMagicContinueAsync(
+                    tracker,
+                    connection,
+                    clientProtectOutbound,
+                    mapId,
+                    playerX,
+                    playerY,
+                    continueSkillId,
+                    continueX,
+                    continueY,
                     remote,
                     ct,
                     playerLevel,
@@ -121,6 +171,106 @@ public static class MonsterCombatHandler
         return false;
     }
 
+    static async Task HandleMagicContinueAsync(
+        MonsterViewportTracker tracker,
+        Connection connection,
+        (byte K1, byte K2)? clientProtectOutbound,
+        byte mapId,
+        byte playerX,
+        byte playerY,
+        ushort skillId,
+        byte skillX,
+        byte skillY,
+        string remote,
+        CancellationToken ct,
+        int playerLevel,
+        Guid? presenceSessionId,
+        GameRosterEntry? player,
+        string? accountId = null,
+        Action? onRosterDirty = null)
+    {
+        if (IsPlayerCombatBlocked(presenceSessionId))
+        {
+            return;
+        }
+
+        if (!SkillCombatCatalog.IsAreaContinueSkill(skillId))
+        {
+            Console.WriteLine(
+                "[{0}] [m9] magic continue skip — unsupported skill={1}",
+                remote,
+                skillId);
+            return;
+        }
+
+        var centerX = skillX != 0 ? skillX : playerX;
+        var centerY = skillY != 0 ? skillY : playerY;
+        var range = SkillCombatCatalog.GetAreaContinueRange(skillId);
+        var wearSlots = CharacterCalcBroadcast602.ResolveWearSlots(presenceSessionId);
+        var effects = PlayerCombatEffectSession.GetOrEmpty(presenceSessionId);
+        var rolledSkillDamage = 0;
+        var rolledSkillDamageType = (byte)0;
+        var useStatDamage = player is not null
+            && PlayerSkillCombatDamage602.TryRollWizardryHit(
+                player.ServerClass,
+                Math.Max((ushort)1, player.Level),
+                player.ResolveSheet(),
+                wearSlots,
+                effects == CombatEffectState602.Empty ? null : effects,
+                skillId,
+                Random.Shared,
+                out rolledSkillDamage,
+                out rolledSkillDamageType);
+
+        MapMonsterWorld.EnsureInitialized();
+        var hitCount = 0;
+        foreach (var mob in MapMonsterWorld.GetMonstersOnMap(mapId))
+        {
+            if (!mob.IsAlive || mob.IsNpc)
+            {
+                continue;
+            }
+
+            if (Math.Abs(mob.X - centerX) + Math.Abs(mob.Y - centerY) > range)
+            {
+                continue;
+            }
+
+            await HandleHitAsync(
+                    tracker,
+                    connection,
+                    clientProtectOutbound,
+                    mapId,
+                    playerX,
+                    playerY,
+                    (ushort)mob.ObjectKey,
+                    remote,
+                    ct,
+                    playerLevel,
+                    isSkill: true,
+                    attackAnimation: 0,
+                    lookingDirection: 0,
+                    presenceSessionId,
+                    player,
+                    accountId,
+                    onRosterDirty,
+                    skillDamageOverride: useStatDamage ? rolledSkillDamage : null,
+                    skillDamageTypeOverride: useStatDamage ? rolledSkillDamageType : null)
+                .ConfigureAwait(false);
+            hitCount++;
+        }
+
+        Console.WriteLine(
+            "[{0}] [m9] magic continue skill={1} center=({2},{3}) range={4} hits={5} statDmg={6}",
+            remote,
+            skillId,
+            centerX,
+            centerY,
+            range,
+            hitCount,
+            useStatDamage ? rolledSkillDamage : -1);
+    }
+
     static async Task HandleMagicAttackAsync(
         MonsterViewportTracker tracker,
         Connection connection,
@@ -130,6 +280,7 @@ public static class MonsterCombatHandler
         byte playerY,
         byte skillX,
         byte skillY,
+        ushort skillId,
         List<ushort> targetIds,
         string remote,
         CancellationToken ct,
@@ -144,8 +295,16 @@ public static class MonsterCombatHandler
             return;
         }
 
-        var aoeRange = ParseIntEnv("TAKUMI_COMBAT_AOE_RANGE", 3, 1, 8);
+        var aoeRange = SkillCombatCatalog.IsMagicBurstSkill(skillId)
+            ? SkillCombatCatalog.GetSkillHitRange(skillId, isTargetedPacket: false)
+            : ParseIntEnv("TAKUMI_COMBAT_AOE_RANGE", 3, 1, 8);
         var skillPct = ParseIntEnv("TAKUMI_COMBAT_SKILL_DAMAGE_PCT", 150, 50, 500);
+        var useStat = TryRollPlayerSkillDamage(
+            player,
+            presenceSessionId,
+            skillId,
+            out var burstDmg,
+            out var burstDmgType);
         var processed = new HashSet<int>();
 
         foreach (var tid in targetIds)
@@ -185,7 +344,10 @@ public static class MonsterCombatHandler
                     presenceSessionId,
                     player,
                     accountId,
-                    onRosterDirty)
+                    onRosterDirty,
+                    skillDamageOverride: useStat ? burstDmg : null,
+                    skillDamageTypeOverride: useStat ? burstDmgType : null,
+                    hitRangeOverride: aoeRange)
                 .ConfigureAwait(false);
             processed.Add(tid & 0x7FFF);
         }
@@ -220,17 +382,51 @@ public static class MonsterCombatHandler
                     presenceSessionId,
                     player,
                     accountId,
-                    onRosterDirty)
+                    onRosterDirty,
+                    skillDamageOverride: useStat ? burstDmg : null,
+                    skillDamageTypeOverride: useStat ? burstDmgType : null,
+                    hitRangeOverride: aoeRange)
                 .ConfigureAwait(false);
         }
 
         Console.WriteLine(
-            "[{0}] [m9] magic aoe xy=({1},{2}) targets={3} map={4}",
+            "[{0}] [m9] magic aoe skill={1} xy=({2},{3}) targets={4} range={5} statDmg={6} map={7}",
             remote,
+            skillId,
             skillX,
             skillY,
             targetIds.Count,
+            aoeRange,
+            useStat ? burstDmg : -1,
             mapId);
+    }
+
+    static bool TryRollPlayerSkillDamage(
+        GameRosterEntry? player,
+        Guid? presenceSessionId,
+        ushort skillId,
+        out int damage,
+        out byte damageType)
+    {
+        damage = 0;
+        damageType = 0;
+        if (player is null || !SkillCombatCatalog.UsesMagicDamage(skillId))
+        {
+            return false;
+        }
+
+        var wearSlots = CharacterCalcBroadcast602.ResolveWearSlots(presenceSessionId);
+        var effects = PlayerCombatEffectSession.GetOrEmpty(presenceSessionId);
+        return PlayerSkillCombatDamage602.TryRollWizardryHit(
+            player.ServerClass,
+            Math.Max((ushort)1, player.Level),
+            player.ResolveSheet(),
+            wearSlots,
+            effects == CombatEffectState602.Empty ? null : effects,
+            skillId,
+            Random.Shared,
+            out damage,
+            out damageType);
     }
 
     static async Task<bool> TryHandlePvPAsync(
@@ -326,7 +522,10 @@ public static class MonsterCombatHandler
         Guid? presenceSessionId,
         GameRosterEntry? player = null,
         string? accountId = null,
-        Action? onRosterDirty = null)
+        Action? onRosterDirty = null,
+        int? skillDamageOverride = null,
+        byte? skillDamageTypeOverride = null,
+        int? hitRangeOverride = null)
     {
         if (IsPlayerCombatBlocked(presenceSessionId))
         {
@@ -403,20 +602,38 @@ public static class MonsterCombatHandler
             return;
         }
 
-        var dist = Math.Abs(monster.X - playerX) + Math.Abs(monster.Y - playerY);
-        if (dist > meleeRange)
+        if (!skillDamageOverride.HasValue)
         {
-            Console.WriteLine(
-                "[{0}] [m9] combat skip — key={1} out of melee range dist={2} max={3} player=({4},{5}) mob=({6},{7})",
-                remote,
-                targetKey,
-                dist,
-                meleeRange,
-                playerX,
-                playerY,
-                monster.X,
-                monster.Y);
-            return;
+            var dist = Math.Abs(monster.X - playerX) + Math.Abs(monster.Y - playerY);
+            var maxRange = hitRangeOverride ?? meleeRange;
+            if (dist > maxRange)
+            {
+                Console.WriteLine(
+                    "[{0}] [m9] combat skip — key={1} out of range dist={2} max={3} player=({4},{5}) mob=({6},{7})",
+                    remote,
+                    targetKey,
+                    dist,
+                    maxRange,
+                    playerX,
+                    playerY,
+                    monster.X,
+                    monster.Y);
+                return;
+            }
+        }
+        else if (hitRangeOverride is int skillRange)
+        {
+            var dist = Math.Abs(monster.X - playerX) + Math.Abs(monster.Y - playerY);
+            if (dist > skillRange)
+            {
+                Console.WriteLine(
+                    "[{0}] [m9] combat skip — key={1} out of skill range dist={2} max={3}",
+                    remote,
+                    targetKey,
+                    dist,
+                    skillRange);
+                return;
+            }
         }
 
         if (presenceSessionId is { } sid)
@@ -451,17 +668,27 @@ public static class MonsterCombatHandler
         }
 
         var stat = MapMonsterWorld.GetMonsterStat(monster.MonsterClass);
-        var fallback = ParseIntEnv("TAKUMI_COMBAT_STUB_DAMAGE", 50, 1, 65_000);
-        var skillPct = isSkill ? ParseIntEnv("TAKUMI_COMBAT_SKILL_DAMAGE_PCT", 150, 50, 500) : 100;
         var attackElement = MonsterCombatCalculator.ResolveAttackElement();
-        var damage = MonsterCombatCalculator.RollDamageToMonster(
-            playerLevel,
-            stat,
-            fallback,
-            skillPct,
-            attackElement);
-        var damageType = MonsterCombatCalculator.RollClientDamageType(Random.Shared, isSkill);
-        damage = MonsterCombatCalculator.ApplyClientDamageTypeMultiplier(damage, damageType);
+        int damage;
+        byte damageType;
+        if (skillDamageOverride is int skillDmg)
+        {
+            damage = MonsterCombatCalculator.ApplySkillDamageToMonster(skillDmg, attackElement, stat);
+            damageType = skillDamageTypeOverride ?? 0;
+        }
+        else
+        {
+            var fallback = ParseIntEnv("TAKUMI_COMBAT_STUB_DAMAGE", 50, 1, 65_000);
+            var skillPct = isSkill ? ParseIntEnv("TAKUMI_COMBAT_SKILL_DAMAGE_PCT", 150, 50, 500) : 100;
+            damage = MonsterCombatCalculator.RollDamageToMonster(
+                playerLevel,
+                stat,
+                fallback,
+                skillPct,
+                attackElement);
+            damageType = MonsterCombatCalculator.RollClientDamageType(Random.Shared, isSkill);
+            damage = MonsterCombatCalculator.ApplyClientDamageTypeMultiplier(damage, damageType);
+        }
 
         if (presenceSessionId is { } aggroSid && GameMapPresenceRegistry.TryGetObjectKey(aggroSid, out var playerKey))
         {
@@ -478,13 +705,13 @@ public static class MonsterCombatHandler
             damageType: damageType);
         await GamePortOutboundWire.WriteAsync(connection, clientProtectOutbound, dmgPkt, ct).ConfigureAwait(false);
         Console.WriteLine(
-            "[{0}] [m9] combat {6} key={1} dmg={2} hp={3} died={4} skillPct={5} dmgType=0x{7:X2}",
+            "[{0}] [m9] combat {6} key={1} dmg={2} hp={3} died={4} statOverride={5} dmgType=0x{7:X2}",
             remote,
             monster.ObjectKey,
             damage,
             monster.CurrentLife,
             died,
-            skillPct,
+            skillDamageOverride.HasValue ? 1 : 0,
             isSkill ? "skill" : "hit",
             damageType);
 

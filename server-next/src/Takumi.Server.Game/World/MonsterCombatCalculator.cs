@@ -29,6 +29,20 @@ public static class MonsterCombatCalculator
         return Math.Clamp(mitigated, 1, 65_000);
     }
 
+    /// <summary>Apply monster defense/resist to a pre-rolled wizardry hit.</summary>
+    public static int ApplySkillDamageToMonster(int rolledDamage, int attackElement, MonsterStat target)
+    {
+        if (rolledDamage <= 0)
+        {
+            return 0;
+        }
+
+        var mitigated = rolledDamage - Math.Max(0, target.Defense);
+        mitigated = ApplyResistance(mitigated, attackElement, target);
+        mitigated = ApplyElemental(mitigated, attackElement, target);
+        return Math.Clamp(mitigated, 1, 65_000);
+    }
+
     /// <summary>Resistance slot 0–3 from <c>Monster.txt</c> (physical / poison / ice / fire stub).</summary>
     public static int ApplyResistance(int damage, int attackElement, MonsterStat target)
     {

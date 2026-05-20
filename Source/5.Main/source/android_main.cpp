@@ -20,6 +20,7 @@
 #include "Platform/MobileChatHud.h"
 #include "GameConfigConstants.h"
 #include "Platform/TakumiAndroidHud.h"
+#include "Platform/TakumiAndroidInput.h"
 #ifdef min
 #undef min
 #endif
@@ -623,8 +624,10 @@ constexpr int kVirtualUtilityButtonChat = 3;
 constexpr int kVirtualZoomButtonMinus = 0;
 constexpr int kVirtualZoomButtonPlus = 1;
 constexpr uint32_t kVirtualMiniMapButtonCooldownMs = 220;
-constexpr uint32_t kVirtualAttackRepeatMs = 280;
-constexpr uint32_t kVirtualProximityAttackMs = 150;
+constexpr uint32_t kVirtualAttackRepeatMs = 320;
+// PC parity: no auto-attack without holding attack / explicit tap (proximity spam caused FPS collapse).
+constexpr bool kEnableVirtualProximityCombat = false;
+constexpr uint32_t kVirtualProximityAttackMs = 500;
 constexpr uint32_t kVirtualMeleeAttackSendMs = 160;
 constexpr float kVirtualJoystickCombatMoveStrength = 0.12f;
 constexpr uint32_t kVirtualUtilityButtonCooldownMs = 200;
@@ -1852,6 +1855,16 @@ bool IsTouchOverInventoryWindow(float uiX, float uiY)
     const float bottom = top + kInventoryWindowHeight;
     return uiX >= left && uiX <= right && uiY >= top && uiY <= bottom;
 }
+
+static bool IsInventoryUiOpenForUse()
+{
+    return g_pNewUISystem != nullptr
+        && g_pMyInventory != nullptr
+        && g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_INVENTORY)
+        && g_pMyInventory->GetRepairMode() == SEASON3B::CNewUIMyInventory::REPAIR_MODE_OFF;
+}
+
+bool HandleVirtualCombatFingerDown(float uiX, float uiY, const SDL_TouchFingerEvent& touch);
 
 bool IsVirtualJoystickCaptured(SDL_FingerID fingerId)
 {
@@ -3450,13 +3463,7 @@ bool AndroidTriggerNormalAttackButtonInternal()
         return false;
     }
 
-    LoadVirtualSkillSlots();
-    if (IsAssignableVirtualSkillIndex(g_virtualSkillSlots[kVirtualAttackSkillSlot]))
-    {
-        TriggerVirtualCombat(false, kVirtualAttackSkillSlot);
-        return true;
-    }
-
+    // PC parity: large button = left-click normal attack only (not bound skill slot).
     const int selectedBefore = SelectedCharacter;
     TriggerVirtualCombat(true, -1);
     return SelectedCharacter != -1 || selectedBefore != SelectedCharacter;
@@ -3575,11 +3582,85 @@ int HitTestVirtualSkillButton(float uiX, float uiY)
     return -1;
 }
 
+bool HandleVirtualCombatFingerDown(float uiX, float uiY, const SDL_TouchFingerEvent& touch)
+{
+    if (!kShowVirtualAttackButton && !kShowVirtualSkillButtons)
+    {
+        return false;
+    }
+
+    if (HitTestVirtualAttackButton(uiX, uiY) == kVirtualAttackButton)
+    {
+        const uint32_t nowMs = MU_MobileGetTicks();
+        const int pendingSkill = GetPendingVirtualAssignSkillIndex(nowMs);
+        if (IsAssignableVirtualSkillIndex(pendingSkill))
+        {
+            SetVirtualSkillSlot(kVirtualAttackSkillSlot, pendingSkill);
+            DeactivateVirtualAssignMode("assigned-attack-slot");
+            g_virtualAssignPickerSkillIndex = -1;
+            g_virtualAssignConsumedForPickerSkill = true;
+            g_virtualAssignConsumedForPickerSession = true;
+            return true;
+        }
+
+        const int slot = AcquireActiveVirtualTouchSlot(touch.fingerId);
+        if (slot >= 0)
+        {
+            g_activeVirtualTouches[slot].fingerId = touch.fingerId;
+            g_activeVirtualTouches[slot].button = kVirtualAttackButton;
+            g_activeVirtualTouches[slot].downMs = nowMs;
+            g_activeVirtualTouches[slot].lastRepeatMs = g_activeVirtualTouches[slot].downMs;
+        }
+
+        AndroidTriggerNormalAttackButtonInternal();
+        return true;
+    }
+
+    const int skillButton = HitTestVirtualSkillButton(uiX, uiY);
+    if (skillButton >= kVirtualSkillButtonBase)
+    {
+        const int skillSlot = skillButton - kVirtualSkillButtonBase + 1;
+        const uint32_t nowMs = MU_MobileGetTicks();
+        const int pendingSkill = GetPendingVirtualAssignSkillIndex(nowMs);
+        if (IsAssignableVirtualSkillIndex(pendingSkill))
+        {
+            SetVirtualSkillSlot(skillSlot, pendingSkill);
+            DeactivateVirtualAssignMode("assigned-slot");
+            g_virtualAssignPickerSkillIndex = -1;
+            g_virtualAssignConsumedForPickerSkill = true;
+            g_virtualAssignConsumedForPickerSession = true;
+        }
+        else
+        {
+            const int activeSlot = AcquireActiveVirtualTouchSlot(touch.fingerId);
+            if (activeSlot >= 0)
+            {
+                g_activeVirtualTouches[activeSlot].fingerId = touch.fingerId;
+                g_activeVirtualTouches[activeSlot].button = skillButton;
+                g_activeVirtualTouches[activeSlot].downMs = nowMs;
+                g_activeVirtualTouches[activeSlot].lastRepeatMs = nowMs;
+            }
+
+            TriggerVirtualCombat(false, skillSlot);
+        }
+
+        return true;
+    }
+
+    return false;
+}
+
 bool HandleVirtualFingerDown(const SDL_TouchFingerEvent& touch)
 {
     float uiX = 0.0f;
     float uiY = 0.0f;
     TouchToVirtualUi(touch, uiX, uiY);
+
+    // Let MouseLButton reach inventory for pick/move; long-press / double-tap use is handled on finger up.
+    if (IsInventoryUiOpenForUse() && IsTouchOverInventoryWindow(uiX, uiY))
+    {
+        return false;
+    }
 
     // Chat input must receive tap priority so Android IME pops up reliably.
     if (g_pNewUISystem != nullptr
@@ -3815,18 +3896,21 @@ void UpdateVirtualPadHolds()
     }
 
     const uint32_t nowMs = MU_MobileGetTicks();
-    for (ActiveVirtualTouch& active : g_activeVirtualTouches)
+    if (kShowVirtualAttackButton)
     {
-        if (active.fingerId == static_cast<SDL_FingerID>(-1)
-            || active.button != kVirtualAttackButton)
+        for (ActiveVirtualTouch& active : g_activeVirtualTouches)
         {
-            continue;
-        }
+            if (active.fingerId == static_cast<SDL_FingerID>(-1)
+                || active.button != kVirtualAttackButton)
+            {
+                continue;
+            }
 
-        if ((nowMs - active.lastRepeatMs) >= kVirtualAttackRepeatMs)
-        {
-            active.lastRepeatMs = nowMs;
-            AndroidTriggerNormalAttackButtonInternal();
+            if ((nowMs - active.lastRepeatMs) >= kVirtualAttackRepeatMs)
+            {
+                active.lastRepeatMs = nowMs;
+                AndroidTriggerNormalAttackButtonInternal();
+            }
         }
     }
 
@@ -3835,6 +3919,11 @@ void UpdateVirtualPadHolds()
 
 void UpdateVirtualProximityCombat()
 {
+    if (!kEnableVirtualProximityCombat)
+    {
+        return;
+    }
+
     if (!IsVirtualPadAvailable() || Hero == nullptr || Hero->Dead > 0)
     {
         return;
@@ -5666,12 +5755,64 @@ void SetMaxMessagePerCycle(int messages)
 
 static uint32_t g_androidWorldLoadGraceUntil = 0;
 
+void TryAutoAssignUnboundSkillsToVirtualBar()
+{
+    if (CharacterAttribute == nullptr)
+    {
+        return;
+    }
+
+    LoadVirtualSkillSlots();
+    ResolveVirtualSkillSlotsFromTypes();
+
+    for (int skillIndex = 1; skillIndex < MAX_MAGIC; ++skillIndex)
+    {
+        if (!IsAssignableVirtualSkillIndex(skillIndex))
+        {
+            continue;
+        }
+
+        const int skillType = CharacterAttribute->Skill[skillIndex];
+        if (skillType <= 0 || IsVirtualSkillTypeAssigned(skillType))
+        {
+            continue;
+        }
+
+        for (int slot = 0; slot < kVirtualSkillSlotCount; ++slot)
+        {
+            if (IsAssignableVirtualSkillIndex(g_virtualSkillSlots[slot]))
+            {
+                continue;
+            }
+
+            SetVirtualSkillSlot(slot, skillIndex);
+            LOGI(
+                "VirtualPad: auto-bound learned skill type=%d idx=%d ringSlot=%d",
+                skillType,
+                skillIndex,
+                slot);
+            break;
+        }
+    }
+}
+
+void TakumiAndroidOnSkillListChanged()
+{
+#if TAKUMI_ANDROID_UI_SKILL_PICKER_CACHE
+    if (g_pSkillList != nullptr)
+    {
+        g_pSkillList->OnMagicListUpdated();
+    }
+#endif
+    TryAutoAssignUnboundSkillsToVirtualBar();
+}
+
 void TakumiAndroidOnWorldJoinLoaded()
 {
     g_androidWorldLoadGraceUntil = MU_MobileGetTicks() + 8000u;
-    const int restoreBudget = (g_MaxMessagePerCycle > 0 && g_MaxMessagePerCycle < 90)
-        ? 90
-        : 120;
+    const int restoreBudget = (g_MaxMessagePerCycle > 0 && g_MaxMessagePerCycle < 48)
+        ? 48
+        : 64;
     if (g_MaxMessagePerCycle < restoreBudget)
     {
         SetMaxMessagePerCycle(restoreBudget);
@@ -5692,8 +5833,8 @@ namespace
         // only changes effect spawn density + packet budget under stress.
         int lowFpsStreak = 0;
         int highFpsStreak = 0;
-        int defaultMessageBudget = 120;
-        int minMessageBudget = 90;
+        int defaultMessageBudget = 64;
+        int minMessageBudget = 32;
         double targetFps = -1.0;        // -1 = uncapped, run at full GPU speed
         double lowFpsThreshold = 45.0;
         double highFpsThreshold = 52.0;
@@ -6608,6 +6749,7 @@ static void HandleSDLEvent(const SDL_Event& ev, int& screenW, int& screenH)
         // SetFocus(nullptr) — IME opens then immediately closes; users double-tap.
         g_iNoMouseTime = 0;
         UpdateMouseFromTouch(ev.tfinger, screenW, screenH);
+        TakumiAndroid_HandleInventoryTouchDown(ev.tfinger);
         if (HandleVirtualPickerFingerDown(ev.tfinger))
         {
             break;
@@ -6665,21 +6807,33 @@ static void HandleSDLEvent(const SDL_Event& ev, int& screenW, int& screenH)
         {
             break;
         }
+        TakumiAndroid_HandleInventoryTouchMove(ev.tfinger);
         UpdateMouseFromTouch(ev.tfinger, screenW, screenH);
         break;
 
     case SDL_FINGERUP:
         g_seenFingerInput = true;
+        g_iNoMouseTime = 0;
+        UpdateMouseFromTouch(ev.tfinger, screenW, screenH);
         if (HandleVirtualPickerFingerUp(ev.tfinger))
         {
+            break;
+        }
+        if (TakumiAndroid_HandleInventoryTouchUp(ev.tfinger))
+        {
+            if (ev.tfinger.fingerId == g_primaryTouchFinger)
+            {
+                MouseLButtonPush = false;
+                MouseLButton = false;
+                g_primaryTouchFinger = -1;
+            }
+            TakumiAndroid_ProcessInventoryUseFrame();
             break;
         }
         if (HandleVirtualFingerUp(ev.tfinger))
         {
             break;
         }
-        g_iNoMouseTime = 0;
-        UpdateMouseFromTouch(ev.tfinger, screenW, screenH);
 #if defined(__ANDROID__) || defined(MU_IOS)
         if (kLogInputEvents)
         {
@@ -6694,15 +6848,16 @@ static void HandleSDLEvent(const SDL_Event& ev, int& screenW, int& screenH)
 #endif
         if (ev.tfinger.fingerId == g_primaryTouchFinger) {
             MouseLButtonPush = false;
-            if (MouseLButton) {
+            if (MouseLButton)
+            {
                 MouseLButtonPop = true;
                 g_iMousePopPosition_x = MouseX;
                 g_iMousePopPosition_y = MouseY;
             }
+
             MouseLButton = false;
             g_primaryTouchFinger = -1;
 
-            // Record this finger-up so the next finger-down can detect double-tap
             s_doubleTapLastUpMs = MU_MobileGetTicks();
             s_doubleTapLastUpNX = ev.tfinger.x;
             s_doubleTapLastUpNY = ev.tfinger.y;
@@ -7817,6 +7972,9 @@ static void RunAndroidGameFrame()
     }
 
     ProcessAndroidEventQueue();
+#if defined(__ANDROID__)
+    TakumiAndroid_ProcessInventoryUseFrame();
+#endif
     if (Destroy)
     {
         if (!g_AndroidQuitRequested)

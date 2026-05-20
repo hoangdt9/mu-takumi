@@ -7,6 +7,7 @@
 #include "NewUIMainFrameWindow.h"	// self
 #include "Utilities/Log/TakumiAndroidUiPerf.h"
 #include "Platform/TakumiAndroidHud.h"
+#include "Platform/TakumiAndroidInput.h"
 #include "NewUIOptionWindow.h"
 #include "NewUISystem.h"
 #include "UIBaseDef.h"
@@ -2966,6 +2967,11 @@ void SEASON3B::CNewUISkillList::SetSkillPickerOpen(bool open)
 }
 
 #if TAKUMI_ANDROID_UI_SKILL_PICKER_CACHE
+void SEASON3B::CNewUISkillList::OnMagicListUpdated()
+{
+	InvalidateSkillPickerLayout();
+}
+
 void SEASON3B::CNewUISkillList::InvalidateSkillPickerLayout()
 {
 	m_skillPickerLayoutDirty = true;

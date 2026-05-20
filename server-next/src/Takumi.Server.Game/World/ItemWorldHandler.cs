@@ -560,6 +560,22 @@ public static class ItemWorldHandler
             return true;
         }
 
+        if (InventorySkillOrbRules.TryGetSkillOrbLearn(itemIndex, out var orbLearn))
+        {
+            return await HandleSkillOrbUseAsync(
+                    player,
+                    presenceSessionId,
+                    accountId,
+                    characterName10,
+                    sourceSlot,
+                    orbLearn,
+                    itemIndex,
+                    writeAsync,
+                    remote,
+                    ct)
+                .ConfigureAwait(false);
+        }
+
         var maxHp = Math.Max(1, player.MaxHp);
         var maxMp = Math.Max(1, player.MaxMp);
         player.MaxShield = InventoryConsumableRules.EnsureMaxShield(maxHp, player.MaxShield);
@@ -635,6 +651,96 @@ public static class ItemWorldHandler
             player.MaxHp,
             player.CurrentMp,
             player.MaxMp,
+            remote);
+        return true;
+    }
+
+    static async Task<bool> HandleSkillOrbUseAsync(
+        GameRosterEntry player,
+        Guid presenceSessionId,
+        string? accountId,
+        byte[] characterName10,
+        byte sourceSlot,
+        InventorySkillOrbRules.SkillOrbLearn orbLearn,
+        int itemIndex,
+        Func<ReadOnlyMemory<byte>, CancellationToken, Task> writeAsync,
+        string remote,
+        CancellationToken ct)
+    {
+        if (!InventorySkillOrbRules.CanCharacterLearn(player.ServerClass, orbLearn))
+        {
+            Console.WriteLine(
+                "[m7] skill orb class mismatch idx={0} skill={1} class=0x{2:X2} {3}",
+                itemIndex,
+                orbLearn.SkillType,
+                player.ServerClass,
+                remote);
+            return true;
+        }
+
+        if (player.Level < orbLearn.MinLevel)
+        {
+            Console.WriteLine(
+                "[m7] skill orb level too low idx={0} skill={1} need={2} have={3} {4}",
+                itemIndex,
+                orbLearn.SkillType,
+                orbLearn.MinLevel,
+                player.Level,
+                remote);
+            return true;
+        }
+
+        var charName = Encoding.ASCII.GetString(characterName10.AsSpan(0, 10)).TrimEnd('\0');
+        var skillRepo = TakumiPostgresMirror.CharacterSkills;
+        var rows = new List<CharacterSkillRow>();
+        if (skillRepo is not null && !string.IsNullOrEmpty(accountId))
+        {
+            var loaded = await skillRepo
+                .LoadByCharacterAsync(accountId, charName, ct)
+                .ConfigureAwait(false);
+            rows.AddRange(loaded);
+        }
+
+        if (rows.Any(r => r.Type == orbLearn.SkillType))
+        {
+            var existing = rows.First(r => r.Type == orbLearn.SkillType);
+            await writeAsync(
+                    MagicListWire602.BuildAddSkill(existing.Slot, orbLearn.SkillType, existing.Level),
+                    ct)
+                .ConfigureAwait(false);
+            Console.WriteLine(
+                "[m7] skill orb already learned skill={0} (resent F3 FE sync) {1}",
+                orbLearn.SkillType,
+                remote);
+            return true;
+        }
+
+        var skillSlot = InventorySkillOrbRules.PickSkillSlot(orbLearn.SkillType, rows);
+        rows.Add(new CharacterSkillRow
+        {
+            Slot = skillSlot,
+            Type = orbLearn.SkillType,
+            Level = 1,
+        });
+
+        if (skillRepo is not null && !string.IsNullOrEmpty(accountId))
+        {
+            await skillRepo.ReplaceAllAsync(accountId, charName, rows, ct).ConfigureAwait(false);
+        }
+
+        var empty = new byte[ItemWire602.WireBytes];
+        PlayerShopSession.SetSlot(presenceSessionId, sourceSlot, empty);
+        PlayerShopSession.PersistSlotToMirror(accountId, characterName10, sourceSlot, empty);
+        await writeAsync(ItemWorldWire602.BuildItemDelete(sourceSlot), ct).ConfigureAwait(false);
+        await writeAsync(MagicListWire602.BuildAddSkill(skillSlot, orbLearn.SkillType, 1), ct)
+            .ConfigureAwait(false);
+
+        Console.WriteLine(
+            "[m7] skill orb learned skill={0} slot={1} inv={2} idx={3} {4}",
+            orbLearn.SkillType,
+            skillSlot,
+            sourceSlot,
+            itemIndex,
             remote);
         return true;
     }

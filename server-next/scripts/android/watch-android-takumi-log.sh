@@ -20,6 +20,6 @@ if [[ "$CLEAR_FIRST" == "1" ]]; then
   adb logcat -c
 fi
 
-echo "== Takumi Android logcat (threadtime) — MuPreload / MuMain / TakumiErrorReport / AndroidRuntime:E — Ctrl+C to stop =="
+echo "== Takumi Android logcat (threadtime) — MuPreload / MuMain / TakumiErrorReport / TakumiInvUse / AndroidRuntime:E — Ctrl+C to stop =="
 exec adb logcat -v threadtime \
-  MuPreload:I MuMain:I TakumiErrorReport:I AndroidRuntime:E libc:F '*:S'
+  MuPreload:I MuMain:I TakumiErrorReport:I TakumiInvUse:I AndroidRuntime:E libc:F '*:S'

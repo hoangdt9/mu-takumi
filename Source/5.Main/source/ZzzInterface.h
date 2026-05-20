@@ -109,6 +109,7 @@ void ReloadArrow();
 int SearchArrowCount();
 
 int  SelectCharacter(BYTE Kind);
+int  SelectOperate();
 bool FindText(const char* Text,const char* Token,bool First=false);
 bool FindTextABS(const char* Text,const char* Token,bool First=false);
 bool CheckAbuseFilter(char *Text, bool bCheckSlash = true);

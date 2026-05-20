@@ -106,7 +106,7 @@ public static class CharacterStatPointHandler
                 continue;
             }
 
-            var applied = CharacterSheetCalculator.TryAddStatPoints(ref sheet, statType, count, out _);
+            var applied = CharacterSheetCalculator.TryAddStatPoints(ref sheet, statType, count, player.ServerClass, out _);
             if (applied <= 0)
             {
                 failed = true;

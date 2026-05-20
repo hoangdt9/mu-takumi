@@ -70,6 +70,8 @@ bool MU_AndroidIsVirtualJoystickDrivingMouse();
 bool MU_AndroidShouldSuppressCombatTargeting();
 /** Per-frame cap for ProtocolCompiler packet drain (see SetMaxMessagePerCycle). */
 extern int g_MaxMessagePerCycle;
+/** True when touch (virtual 640×480 UI) is on joystick / attack / hotbar — not world combat gestures. */
+bool TakumiAndroid_IsHudBlockingWorldGesture(float uiX, float uiY);
 #endif
 
 #endif // defined(__ANDROID__) || defined(MU_IOS)

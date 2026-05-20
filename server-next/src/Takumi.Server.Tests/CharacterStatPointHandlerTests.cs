@@ -82,11 +82,36 @@ public sealed class CharacterStatPointHandlerTests
     public void TryAddStatPoints_applies_bulk_and_caps_by_available_points()
     {
         var sheet = CharacterSheetStats.FromInts(100, 100, 100, 100, 0, 50000);
-        var applied = CharacterSheetCalculator.TryAddStatPoints(ref sheet, 0, 30000, out _);
+        const byte dkWire = 0x20;
+        var applied = CharacterSheetCalculator.TryAddStatPoints(ref sheet, 0, 30000, dkWire, out _);
 
         Assert.Equal(30000, applied);
         Assert.Equal(30100, sheet.Strength);
         Assert.Equal(20000, sheet.LevelUpPoint);
+    }
+
+    [Fact]
+    public void TryAddStatPoints_leadership_ignored_for_non_dark_lord()
+    {
+        var sheet = CharacterSheetStats.FromInts(26, 20, 20, 15, 25, 10);
+        const byte mgWire = 120;
+        var applied = CharacterSheetCalculator.TryAddStatPoints(ref sheet, 4, 3, mgWire, out _);
+
+        Assert.Equal(0, applied);
+        Assert.Equal(25, sheet.Leadership);
+        Assert.Equal(10, sheet.LevelUpPoint);
+    }
+
+    [Fact]
+    public void TryAddStatPoints_leadership_applies_for_dark_lord()
+    {
+        var sheet = CharacterSheetStats.FromInts(26, 20, 20, 15, 25, 10);
+        const byte dlWire = 0x90;
+        var applied = CharacterSheetCalculator.TryAddStatPoints(ref sheet, 4, 3, dlWire, out _);
+
+        Assert.Equal(3, applied);
+        Assert.Equal(28, sheet.Leadership);
+        Assert.Equal(7, sheet.LevelUpPoint);
     }
 
     static void EncodeTakumiStreamXor(Span<byte> buffer, int firstXorIndex)

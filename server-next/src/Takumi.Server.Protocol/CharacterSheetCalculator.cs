@@ -181,9 +181,15 @@ public static class CharacterSheetCalculator
     }
 
     /// <summary>Apply up to <paramref name="count"/> points in one update (capped by remaining level-up points and ushort stat max).</summary>
-    public static int TryAddStatPoints(ref CharacterSheetStats sheet, byte statType, int count, out ushort maxLifeOrMana)
+    /// <param name="serverClass">Wire class from roster; Leadership (stat 4) is only meaningful for DL (index 4).</param>
+    public static int TryAddStatPoints(ref CharacterSheetStats sheet, byte statType, int count, byte serverClass, out ushort maxLifeOrMana)
     {
         maxLifeOrMana = 0;
+        if (statType == 4 && ClassIndex(serverClass) != 4)
+        {
+            return 0;
+        }
+
         if (count <= 0 || sheet.LevelUpPoint == 0)
         {
             return 0;

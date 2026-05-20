@@ -12,7 +12,8 @@ public sealed class MagicListWire602Tests
         Assert.Equal(0xC1, pkt[0]);
         Assert.Equal(0xF3, pkt[2]);
         Assert.Equal(0x11, pkt[3]);
-        Assert.Equal(28, pkt[5]);
+        Assert.Equal(28, pkt[4]);
+        Assert.Equal(MagicListWire602.ListTypeNormal, pkt[5]);
 
         Assert.Contains(pkt, b => b == 236);
         Assert.Contains(pkt, b => b == 237);
@@ -38,7 +39,8 @@ public sealed class MagicListWire602Tests
     {
         var pkt = MagicListWire602.BuildAddSkill(55, 55, 1);
         Assert.Equal(10, pkt[1]);
-        Assert.Equal(0xFE, pkt[5]);
+        Assert.Equal(0xFE, pkt[4]);
+        Assert.Equal(MagicListWire602.ListTypeNormal, pkt[5]);
         Assert.Equal(55, pkt[6]);
         Assert.Equal(55, pkt[7]);
         Assert.Equal(0, pkt[8]);

@@ -2087,10 +2087,10 @@ int MapSkillOrbItemTypeToSkillId(const int itemType)
 	switch (itemType)
 	{
 	case ITEM_WING + 7: return 19;
-	case ITEM_WING + 8: return 8;
-	case ITEM_WING + 9: return 13;
-	case ITEM_WING + 10: return 14;
-	case ITEM_WING + 11: return 214;
+	case ITEM_WING + 8: return AT_SKILL_HEALING;
+	case ITEM_WING + 9: return AT_SKILL_DEFENSE;
+	case ITEM_WING + 10: return AT_SKILL_ATTACK;
+	case ITEM_WING + 11: return AT_SKILL_SUMMON;
 	case ITEM_WING + 12: return 41;
 	case ITEM_WING + 13: return 47;
 	case ITEM_WING + 14: return 48;
@@ -2098,6 +2098,16 @@ int MapSkillOrbItemTypeToSkillId(const int itemType)
 	case ITEM_WING + 17: return 52;
 	case ITEM_WING + 18: return 51;
 	case ITEM_WING + 19: return 43;
+	case ITEM_WING + 21: return 61;
+	case ITEM_WING + 22: return 63;
+	case ITEM_WING + 23: return 64;
+	case ITEM_WING + 24: return 65;
+	case ITEM_WING + 35: return 78;
+	case ITEM_WING + 44: return AT_SKILL_BLOW_OF_DESTRUCTION;
+	case ITEM_WING + 45: return AT_SKILL_MULTI_SHOT;
+	case ITEM_WING + 46: return AT_SKILL_RECOVER;
+	case ITEM_WING + 47: return AT_SKILL_FLAME_STRIKE;
+	case ITEM_WING + 48: return AT_SKILL_GAOTIC;
 	default: return -1;
 	}
 }
@@ -2385,10 +2395,12 @@ bool CNewUIMyInventory::TryConsumeItem(CNewUIInventoryCtrl * targetControl, ITEM
 					}
 
 					g_ErrorReport.Write("[InvUse] skill %d already learned (item type=%d)", orbSkillId, pItem->Type);
-					return true;
+					return false;
 				}
 #endif
 				SendRequestUse(iIndex, 0);
+				// Wait for server 0x28 delete / F3 FE — do not report Android use-ok early.
+				return false;
 			}
 
 			return true;
@@ -2814,16 +2826,46 @@ bool CNewUIMyInventory::AndroidTryUseItemUnderCursor() const
 	ITEM* pItem = m_pNewInventoryCtrl->FindItemAtPt(MouseX, MouseY);
 	if (pItem == nullptr)
 	{
+		pItem = m_pNewInventoryCtrl->FindItemPointedSquareIndex();
+	}
+
+	const int pointedSlot = m_pNewInventoryCtrl->GetPointedSquareIndex();
+
+	if (pItem == nullptr)
+	{
+		g_ErrorReport.Write(
+			"[InvUse] AndroidTryUse: no cell item Mouse=(%d,%d) pointedSlot=%d",
+			MouseX,
+			MouseY,
+			pointedSlot);
 		return false;
 	}
 
 	const int iIndex = m_pNewInventoryCtrl->GetIndexByItem(pItem);
 	if (iIndex < 0)
 	{
+		g_ErrorReport.Write(
+			"[InvUse] AndroidTryUse: GetIndexByItem failed type=%d slot=%d Mouse=(%d,%d)",
+			static_cast<int>(pItem->Type),
+			iIndex,
+			MouseX,
+			MouseY);
 		return false;
 	}
 
-	return TryConsumeItem(m_pNewInventoryCtrl, pItem, iIndex);
+	const bool ok = TryConsumeItem(m_pNewInventoryCtrl, pItem, iIndex);
+	if (!ok)
+	{
+		g_ErrorReport.Write(
+			"[InvUse] TryConsumeItem false bagIdx=%d type=%d dur=%u Mouse=(%d,%d) pointedSlot=%d",
+			iIndex,
+			static_cast<int>(pItem->Type),
+			static_cast<unsigned>(pItem->Durability),
+			MouseX,
+			MouseY,
+			pointedSlot);
+	}
+	return ok;
 }
 #endif
 

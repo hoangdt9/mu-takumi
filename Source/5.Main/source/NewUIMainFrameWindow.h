@@ -11,6 +11,7 @@
 #include "NewUIBase.h"
 #if TAKUMI_ANDROID_UI_SKILL_PICKER_CACHE
 #include <vector>
+#include <cstdint>
 #endif
 #include "ZzzTexture.h"
 #include "NewUI3DRenderMng.h"
@@ -146,8 +147,17 @@ namespace SEASON3B
 		int GetHoveredSkillIndex() const;
 		int GetAndroidTouchAssignSkillIndex() const;
 		void SetAndroidTouchAssignSkillIndex(int skillIndex);
-		int HitTestAndroidTouchSkillPicker(float uiX, float uiY) const;
+		int HitTestAndroidTouchSkillPicker(float uiX, float uiY);
 		bool TryToggleSkillPickerAtTouch(float uiX, float uiY);
+#if defined(__ANDROID__) || defined(MU_IOS)
+		/// Hotbar row Q–R (legacy HUD). Returns hotkey index 0–9 or -1.
+		int HitTestLegacyMobileSkillHotKey(float uiX, float uiY) const;
+		void RenderAndroidLegacySkillHotBar();
+		/// Tap a hot bar cell to open the skill picker anchored above that cell (assign flow).
+		bool TryOpenLegacyMobileSkillAssignPicker(float uiX, float uiY);
+		/// Same as touch hit-test open, but when the hotkey index is already known (e.g. long-press hold).
+		bool TryOpenLegacyMobileSkillAssignPickerForHotKey(int hotKeyUiIndex);
+#endif
 
 #if TAKUMI_ANDROID_UI_SKILL_PICKER_CACHE
 		void OnMagicListUpdated();
@@ -156,7 +166,14 @@ namespace SEASON3B
 		bool IsSkillListUp();
 
 		static void UI2DEffectCallback(LPVOID pClass, DWORD dwParamA, DWORD dwParamB);
-		void RenderSkillIcon(int iIndex, float x, float y, float width, float height, int TypeMuHelper = 0);
+		void RenderSkillIcon(
+			int iIndex,
+			float x,
+			float y,
+			float width,
+			float height,
+			int TypeMuHelper = 0,
+			int hotKeyLabelOverride = -1);
 	private:
 		void LoadImages();
 		void UnloadImages();
@@ -170,6 +187,11 @@ namespace SEASON3B
 
 		void ResetMouseLButton();
 
+#if defined(__ANDROID__) || defined(MU_IOS)
+		bool GetLegacyMobileSkillHotBarSlotRect(int hotKeyUiIndex, float& x, float& y, float& w, float& h) const;
+		void FinalizeMagicSlotSelectionFromLegacyPicker(int pickedSlotIdx);
+#endif
+
 #if TAKUMI_ANDROID_UI_SKILL_PICKER_CACHE
 		struct SkillPickerLayoutEntry
 		{
@@ -180,9 +202,9 @@ namespace SEASON3B
 
 		void InvalidateSkillPickerLayout();
 		void RebuildSkillPickerLayout();
+		uint64_t ComputeSkillPickerLayoutSig() const;
 #endif
 
-	private:
 		CNewUIManager* m_pNewUIMng;
 		CNewUI3DRenderMng* m_pNewUI3DRenderMng;
 
@@ -203,6 +225,12 @@ namespace SEASON3B
 #if TAKUMI_ANDROID_UI_SKILL_PICKER_CACHE
 		std::vector<SkillPickerLayoutEntry> m_skillPickerLayout;
 		bool m_skillPickerLayoutDirty;
+		uint64_t m_skillPickerLayoutSig;
+#endif
+
+#if defined(__ANDROID__) || defined(MU_IOS)
+		float m_legacySkillPickerOffsetX;
+		int m_legacyPickerTargetHotKey;
 #endif
 	};
 

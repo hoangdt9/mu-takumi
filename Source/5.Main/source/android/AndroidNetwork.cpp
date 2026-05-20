@@ -129,7 +129,7 @@ struct AndroidConnState
 std::queue<PacketInfo*> g_packetQueue;
 std::mutex g_packetMutex;
 
-std::map<int32_t, AndroidConnState*> g_connections;
+std::map<int32_t, std::shared_ptr<AndroidConnState>> g_connections;
 std::mutex g_connectionsMutex;
 
 std::atomic<uint8_t> g_gameEncryptCounter { 0 };
@@ -144,7 +144,7 @@ uint64_t GetMonotonicTimeMs()
         static_cast<uint64_t>(ts.tv_nsec / 1000000ull);
 }
 
-AndroidConnState* FindConnectionState(int32_t handle)
+static std::shared_ptr<AndroidConnState> LockConnectionState(int32_t handle)
 {
     std::lock_guard<std::mutex> lock(g_connectionsMutex);
     const auto it = g_connections.find(handle);
@@ -187,7 +187,7 @@ void RecordSentBytes(int32_t handle, size_t bytes)
         return;
     }
 
-    AndroidConnState* state = FindConnectionState(handle);
+    std::shared_ptr<AndroidConnState> state = LockConnectionState(handle);
     if (!state)
     {
         return;
@@ -205,7 +205,7 @@ void RecordRecvBytes(int32_t handle, size_t bytes)
         return;
     }
 
-    AndroidConnState* state = FindConnectionState(handle);
+    std::shared_ptr<AndroidConnState> state = LockConnectionState(handle);
     if (!state)
     {
         return;
@@ -734,7 +734,7 @@ MU_EXPORT int32_t ConnectionManager_Connect(
 
     TakumiNet::ApplyGameTcpKeepAlive(fd);
 
-    auto* state = new AndroidConnState(isEncrypted != 0);
+    auto state = std::make_shared<AndroidConnState>(isEncrypted != 0);
     {
         std::lock_guard<std::mutex> statsLock(state->statsMutex);
         UpdateTrafficSampleLocked(*state, GetMonotonicTimeMs());
@@ -773,10 +773,11 @@ MU_EXPORT int32_t ConnectionManager_Connect(
 
     const auto runningFlag = state->running;
     const bool encrypted = state->encrypted;
-    state->recvThread = std::thread([fd, encrypted, runningFlag, state, onPacket, onDisconnect]()
-    {
-        RecvLoop(fd, encrypted, runningFlag, state, onPacket, onDisconnect);
-    });
+    state->recvThread = std::thread(
+        [fd, encrypted, runningFlag, state, onPacket, onDisconnect]()
+        {
+            RecvLoop(fd, encrypted, runningFlag, state.get(), onPacket, onDisconnect);
+        });
 
     if (encrypted)
     {
@@ -818,13 +819,13 @@ MU_EXPORT void ConnectionManager_Disconnect(int32_t handle)
         return;
     }
 
-    AndroidConnState* state = nullptr;
+    std::shared_ptr<AndroidConnState> state;
     {
         std::lock_guard<std::mutex> lock(g_connectionsMutex);
         const auto it = g_connections.find(handle);
         if (it != g_connections.end())
         {
-            state = it->second;
+            state = std::move(it->second);
             g_connections.erase(it);
         }
     }
@@ -840,7 +841,6 @@ MU_EXPORT void ConnectionManager_Disconnect(int32_t handle)
             state->recvThread.join();
         }
 
-        delete state;
         return;
     }
 
@@ -876,7 +876,7 @@ AndroidNetworkOverlayStats AndroidQueryNetworkOverlayStats(int32_t handle)
         return stats;
     }
 
-    AndroidConnState* state = FindConnectionState(handle);
+    std::shared_ptr<AndroidConnState> state = LockConnectionState(handle);
     if (!state)
     {
         return stats;

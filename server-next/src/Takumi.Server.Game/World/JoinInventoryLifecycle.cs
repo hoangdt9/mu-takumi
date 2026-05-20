@@ -4,9 +4,17 @@ using Takumi.Server.Protocol;
 
 namespace Takumi.Server.Game.World;
 
-/// <summary>Join-time inventory: load DB → repack bag → mirror snapshot → F3 10.</summary>
+/// <summary>Join-time inventory: load DB → optional repack only when footprints conflict → mirror snapshot → F3 10.</summary>
 public static class JoinInventoryLifecycle
 {
+    /// <summary>
+    /// When <b>1/true</b>, always runs <see cref="InventoryBagGrid.CompactBagSlots"/> on join (legacy behavior: bag re-sorted by footprint).
+    /// Default <b>off</b>: repack only if <see cref="InventoryBagGrid.BagAnchorsHaveFootprintConflicts"/> detects overlaps/out-of-grid data.
+    /// </summary>
+    static bool EnvJoinInventoryAlwaysRepack() =>
+        string.Equals(Environment.GetEnvironmentVariable("TAKUMI_JOIN_INVENTORY_ALWAYS_REPACK"), "1", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(Environment.GetEnvironmentVariable("TAKUMI_JOIN_INVENTORY_ALWAYS_REPACK"), "true", StringComparison.OrdinalIgnoreCase);
+
     public static async Task<byte[]> BuildJoinPacketAsync(
         PostgresInventorySlotRepository? inventoryRepo,
         string? accountLogin,
@@ -30,12 +38,20 @@ public static class JoinInventoryLifecycle
             slots[row.Slot] = row.Item12.ToArray();
         }
 
+        PruneInvalidSlots(slots);
         ItemWireSanitizer.NormalizeSocketEncoding(slots);
 
-        var keysBefore = rows.Select(static r => r.Slot).OrderBy(static x => x).ToArray();
-        InventoryBagGrid.CompactBagSlots(slots);
+        var keysBefore = slots.Keys.OrderBy(static x => x).ToArray();
+        var conflicts = InventoryBagGrid.BagAnchorsHaveFootprintConflicts(slots);
+        var repack = EnvJoinInventoryAlwaysRepack() || conflicts;
+        if (repack)
+        {
+            InventoryBagGrid.CompactBagSlots(slots);
+        }
+
         var keysAfter = slots.Keys.OrderBy(static x => x).ToArray();
-        var layoutChanged = keysBefore.Length != keysAfter.Length || !keysBefore.AsSpan().SequenceEqual(keysAfter);
+        var layoutChanged =
+            keysBefore.Length != keysAfter.Length || !keysBefore.AsSpan().SequenceEqual(keysAfter);
 
         if (InventorySlotPersist.IsEnabled && inventoryRepo is not null && !string.IsNullOrEmpty(accountLogin))
         {
@@ -44,7 +60,9 @@ public static class JoinInventoryLifecycle
             {
                 var charName = Encoding.ASCII.GetString(characterName10.AsSpan(0, 10)).TrimEnd('\0');
                 Console.WriteLine(
-                    "[m8] inventory repack persisted char={0} slots={1} (healed bag anchors)",
+                    repack
+                        ? "[m8] inventory layout persisted char={0} slots={1} reason=repack heals overlaps or always-repack"
+                        : "[m8] inventory layout persisted char={0} slots={1} reason=prune/sanitize adjusted keys",
                     charName,
                     slots.Count);
             }

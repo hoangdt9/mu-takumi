@@ -593,8 +593,51 @@ void CWsctlc::AndroidOnPacket(int32_t handle, int32_t size, uint8_t* data)
     int offset = 0;
     int packetSize = 0;
 
+    auto resyncToNextHeader = [&](int badOffset) -> bool
+    {
+        for (int scan = badOffset + 1; scan < client->m_nRecvBufLen; ++scan)
+        {
+            const BYTE b = client->m_RecvBuf[scan];
+            if (b == 0xC1 || b == 0xC2 || b == 0xC3 || b == 0xC4)
+            {
+                const int dropped = scan;
+                if (dropped > 0)
+                {
+                    std::memmove(
+                        client->m_RecvBuf,
+                        client->m_RecvBuf + dropped,
+                        static_cast<size_t>(client->m_nRecvBufLen - dropped));
+                    client->m_nRecvBufLen -= dropped;
+                    g_ErrorReport.Write(
+                        "[Android Socket] resync dropped %d byte(s) handle=%d bufLen=%d\r\n",
+                        dropped,
+                        handle,
+                        client->m_nRecvBufLen);
+                }
+                offset = 0;
+                return true;
+            }
+        }
+
+        return false;
+    };
+
     while (1)
     {
+        if (client->m_nRecvBufLen - offset < 3)
+        {
+            if (offset > 0)
+            {
+                const int remaining = client->m_nRecvBufLen - offset;
+                if (remaining > 0)
+                {
+                    std::memmove(client->m_RecvBuf, client->m_RecvBuf + offset, static_cast<size_t>(remaining));
+                }
+                client->m_nRecvBufLen = remaining;
+            }
+            break;
+        }
+
         if (client->m_RecvBuf[offset] == 0xC1 || client->m_RecvBuf[offset] == 0xC3)
         {
             packetSize = static_cast<int>(client->m_RecvBuf[offset + 1]);
@@ -623,19 +666,33 @@ void CWsctlc::AndroidOnPacket(int32_t handle, int32_t size, uint8_t* data)
                 client->m_RecvBuf[offset],
                 client->m_nRecvBufLen,
                 hexPrefix);
+            if (resyncToNextHeader(offset))
+            {
+                continue;
+            }
+
             g_ErrorReport.Write(
                 "[Android Socket] sync hint: expect C1/C2/C3/C4 — if garbage, wrong TCP service on port or extra Protect/XOR layer\r\n");
             client->m_nRecvBufLen = 0;
             return;
         }
 
-        if (packetSize <= 0)
+        if (packetSize < 3 || packetSize > MAX_RECVBUF)
         {
-            g_ErrorReport.Write("[Android Socket] invalid packet size=%d handle=%d\r\n", packetSize, handle);
+            g_ErrorReport.Write(
+                "[Android Socket] invalid packet size=%d handle=%d offset=%d\r\n",
+                packetSize,
+                handle,
+                offset);
+            if (resyncToNextHeader(offset))
+            {
+                continue;
+            }
+
             client->m_nRecvBufLen = 0;
             return;
         }
-        else if (packetSize <= client->m_nRecvBufLen)
+        else if (packetSize <= (client->m_nRecvBufLen - offset))
         {
             const BYTE* pkt = client->m_RecvBuf + offset;
             BYTE head = 0;
@@ -673,21 +730,28 @@ void CWsctlc::AndroidOnPacket(int32_t handle, int32_t size, uint8_t* data)
 
             client->m_pPacketQueue->PushPacket(client->m_RecvBuf + offset, packetSize);
             offset += packetSize;
-            client->m_nRecvBufLen -= packetSize;
 
-            if (client->m_nRecvBufLen <= 0)
+            if (offset >= client->m_nRecvBufLen)
             {
+                client->m_nRecvBufLen = 0;
                 break;
             }
         }
         else
         {
-            if (offset > 0 && client->m_nRecvBufLen > 0)
-            {
-                std::memmove(client->m_RecvBuf, client->m_RecvBuf + offset, static_cast<size_t>(client->m_nRecvBufLen));
-            }
             break;
         }
+    }
+
+    if (offset > 0 && client->m_nRecvBufLen > offset)
+    {
+        const int remaining = client->m_nRecvBufLen - offset;
+        std::memmove(client->m_RecvBuf, client->m_RecvBuf + offset, static_cast<size_t>(remaining));
+        client->m_nRecvBufLen = remaining;
+    }
+    else if (offset > 0)
+    {
+        client->m_nRecvBufLen = 0;
     }
 }
 

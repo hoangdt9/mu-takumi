@@ -1,6 +1,10 @@
 namespace Takumi.Server.Protocol;
 
 /// <summary>Season 6 skill list (<c>C1 F3 11</c> / <c>GCSkillListSend</c>).</summary>
+/// <remarks>
+/// After <c>C1 len F3 11</c>, byte[4] = skill count (or <c>0xFE</c>/<c>0xFF</c> for single add/remove),
+/// byte[5] = list type — matches OpenMU skill list send and client <c>PHEADER_MAGIC_LIST_COUNT</c>.
+/// </remarks>
 public static class MagicListWire602
 {
     public const byte ListTypeMaster = 0;
@@ -19,8 +23,8 @@ public static class MagicListWire602
         buf[1] = 10;
         buf[2] = 0xF3;
         buf[3] = 0x11;
-        buf[4] = listType;
-        buf[5] = 0xFE;
+        buf[4] = 0xFE;
+        buf[5] = listType;
         buf[6] = slot;
         buf[7] = (byte)(skillType & 0xFF);
         buf[8] = (byte)((skillType >> 8) & 0xFF);
@@ -36,8 +40,8 @@ public static class MagicListWire602
         buf[1] = (byte)size;
         buf[2] = 0xF3;
         buf[3] = 0x11;
-        buf[4] = listType;
-        buf[5] = (byte)skills.Length;
+        buf[4] = (byte)skills.Length;
+        buf[5] = listType;
 
         var offset = 6;
         foreach (var skill in skills)

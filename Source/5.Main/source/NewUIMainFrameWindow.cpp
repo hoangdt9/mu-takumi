@@ -45,6 +45,59 @@
 #include "CustomRanking.h"
 #include "ZzzOpenData.h"
 
+#if defined(__ANDROID__)
+#include "Utilities/Log/ErrorReport.h"
+
+/// Log once per hovered picker cell (slot or pet cmd) to verify tooltip vs icon data path.
+static void TakumiLogSkillPickerHoverCell(int renderInfoType)
+{
+	static int s_lastHoverType = -9999;
+	if (renderInfoType == s_lastHoverType)
+	{
+		return;
+	}
+	s_lastHoverType = renderInfoType;
+
+	if (CharacterAttribute == NULL)
+	{
+		return;
+	}
+
+	if (renderInfoType >= AT_PET_COMMAND_DEFAULT && renderInfoType < AT_PET_COMMAND_END)
+	{
+		g_ErrorReport.Write("[SkillPicker] hover petCmd=%d\r\n", renderInfoType);
+		return;
+	}
+
+	if (renderInfoType < 0 || renderInfoType >= MAX_MAGIC)
+	{
+		g_ErrorReport.Write("[SkillPicker] hover badIndex=%d\r\n", renderInfoType);
+		return;
+	}
+
+	const WORD skillType = CharacterAttribute->Skill[renderInfoType];
+	const BYTE useType = SkillAttribute[skillType].SkillUseType;
+	const int magicIcon = SkillAttribute[skillType].Magic_Icon;
+
+	char nameBuf[160] = {};
+	int mana = 0;
+	int dist = 0;
+	int skillMana = 0;
+	if (skillType > 0)
+	{
+		gSkillManager.GetSkillInformation(skillType, 1, nameBuf, &mana, &dist, &skillMana);
+	}
+
+	g_ErrorReport.Write(
+		"[SkillPicker] hover magicSlot=%d wireType=%u useType=%u Magic_Icon=%d GetSkillInfo=%s\r\n",
+		renderInfoType,
+		(unsigned)skillType,
+		(unsigned)useType,
+		magicIcon,
+		nameBuf);
+}
+#endif // __ANDROID__
+
 extern float g_fScreenRate_x;
 
 static void TakumiResolveMainFrameVitals(DWORD& lifeMax, DWORD& life, DWORD& manaMax, DWORD& mana)
@@ -122,6 +175,89 @@ static void GetLegacySkillPickerCellRect(int order, float& x, float& y, float& w
 	{
 		x = fOrigX - (12 * width) + ((order - 17) * width);
 	}
+}
+
+/// Keeps picker render, cached layout, mouse hit-testing, and tooltips on the same slot order.
+static bool LegacyPickerIncludeMagicArrayIndex(int magicArrayIndex)
+{
+	if (CharacterAttribute == NULL)
+	{
+		return false;
+	}
+
+	const WORD iSkillType = CharacterAttribute->Skill[magicArrayIndex];
+
+	if (iSkillType >= AT_PET_COMMAND_DEFAULT && iSkillType < AT_PET_COMMAND_END)
+	{
+		return false;
+	}
+
+	if (iSkillType == 0 || (iSkillType >= AT_SKILL_STUN && iSkillType <= AT_SKILL_REMOVAL_BUFF))
+	{
+		return false;
+	}
+
+	const BYTE bySkillUseType = SkillAttribute[iSkillType].SkillUseType;
+
+	if (bySkillUseType == SKILL_USE_TYPE_MASTER || bySkillUseType == SKILL_USE_TYPE_MASTERLEVEL)
+	{
+		return false;
+	}
+
+	return true;
+}
+
+static bool HitLegacyPickerPetCommandRow(float uiX, float uiY, OUT int* outCommand)
+{
+	if (outCommand == NULL || Hero == NULL || Hero->m_pPet == NULL)
+	{
+		return false;
+	}
+
+	float fixX = 0.0f;
+	if (gProtect.m_MainInfo.IsVersion == 1)
+	{
+		fixX = 75.f;
+	}
+
+	float x = 353.f - fixX + DisplayWinExt;
+	const float y = 352.f + DisplayHeightExt;
+	const float width = 32.f;
+	const float height = 38.f;
+
+	for (int i = AT_PET_COMMAND_DEFAULT; i < AT_PET_COMMAND_END; ++i)
+	{
+		if (uiX >= x && uiX <= (x + width) && uiY >= y && uiY <= (y + height))
+		{
+			*outCommand = i;
+			return true;
+		}
+		x += width;
+	}
+
+	return false;
+}
+
+static bool GetLegacyPickerPetCommandCellRect(int commandIndex, OUT float& x, OUT float& y, OUT float& w, OUT float& h)
+{
+	if (commandIndex < AT_PET_COMMAND_DEFAULT || commandIndex >= AT_PET_COMMAND_END)
+	{
+		return false;
+	}
+
+	float fixX = 0.0f;
+	if (gProtect.m_MainInfo.IsVersion == 1)
+	{
+		fixX = 75.f;
+	}
+
+	x = 353.f - fixX + DisplayWinExt;
+	y = 352.f + DisplayHeightExt;
+	w = 32.f;
+	h = 38.f;
+	x += static_cast<float>(commandIndex - AT_PET_COMMAND_DEFAULT) * w;
+
+	return true;
 }
 
 static bool IsRenderableSkillSlotIndex(int skillIndex)
@@ -2310,6 +2446,7 @@ void SEASON3B::CNewUISkillList::Reset()
 #if TAKUMI_ANDROID_UI_SKILL_PICKER_CACHE
 	m_skillPickerLayoutDirty = true;
 	m_skillPickerLayout.clear();
+	m_skillPickerLayoutSig = 0;
 #endif
 
 	m_bRenderSkillInfo = false;
@@ -2317,6 +2454,11 @@ void SEASON3B::CNewUISkillList::Reset()
 	m_iRenderSkillInfoPosX = 0;
 	m_iRenderSkillInfoPosY = 0;
 	m_iAndroidTouchAssignSkillIndex = -1;
+
+#if defined(__ANDROID__) || defined(MU_IOS)
+	m_legacySkillPickerOffsetX = 0.f;
+	m_legacyPickerTargetHotKey = -1;
+#endif
 
 	for (int i = 0; i < SKILLHOTKEY_COUNT; ++i)
 	{
@@ -2595,8 +2737,6 @@ bool SEASON3B::CNewUISkillList::UpdateMouseEvent()
 	if (m_bSkillList == false)
 		return true;
 
-	WORD bySkillType = 0;
-
 	int iSkillCount = 0;
 	bool bMouseOnSkillList = false;
 
@@ -2604,39 +2744,30 @@ bool SEASON3B::CNewUISkillList::UpdateMouseEvent()
 
 	for (int i = 0; i < MAX_MAGIC; ++i)
 	{
-		bySkillType = CharacterAttribute->Skill[i];
-
-		if (bySkillType == 0 || (bySkillType >= AT_SKILL_STUN && bySkillType <= AT_SKILL_REMOVAL_BUFF))
-			continue;
-
-		BYTE bySkillUseType = SkillAttribute[bySkillType].SkillUseType;
-
-		if (bySkillUseType == SKILL_USE_TYPE_MASTERLEVEL)
+		if (!LegacyPickerIncludeMagicArrayIndex(i))
 		{
 			continue;
 		}
 
 		GetLegacySkillPickerCellRect(iSkillCount, x, y, width, height);
-
+#if defined(__ANDROID__) || defined(MU_IOS)
+		x += m_legacySkillPickerOffsetX;
+#endif
 		iSkillCount++;
 
 		if (SEASON3B::CheckMouseIn(x, y, width, height) == true)
 		{
 			bMouseOnSkillList = true;
-#if defined(__ANDROID__) || defined(MU_IOS)
-			if (MouseLButtonPush)
-			{
-				m_EventState = EVENT_NONE;
-				ApplySelectedSkillIndex(i);
-				m_iAndroidTouchAssignSkillIndex = i;
-				SetSkillPickerOpen(false);
-				PlayBuffer(SOUND_CLICK01);
-				return false;
-			}
-#endif
 			if (m_EventState == EVENT_NONE && MouseLButtonPush == false)
 			{
 				m_EventState = EVENT_BTN_HOVER_SKILLLIST;
+				m_bRenderSkillInfo = true;
+				m_iRenderSkillInfoType = i;
+#if defined(__ANDROID__)
+				TakumiLogSkillPickerHoverCell(i);
+#endif
+				m_iRenderSkillInfoPosX = x;
+				m_iRenderSkillInfoPosY = y - 15;
 				break;
 			}
 		}
@@ -2653,6 +2784,9 @@ bool SEASON3B::CNewUISkillList::UpdateMouseEvent()
 		{
 			m_bRenderSkillInfo = true;
 			m_iRenderSkillInfoType = i;
+#if defined(__ANDROID__)
+			TakumiLogSkillPickerHoverCell(i);
+#endif
 			m_iRenderSkillInfoPosX = x;
 			m_iRenderSkillInfoPosY = y - 15;
 		}
@@ -2661,12 +2795,13 @@ bool SEASON3B::CNewUISkillList::UpdateMouseEvent()
 			&& m_iRenderSkillInfoType == i && SEASON3B::CheckMouseIn(x, y, width, height) == true)
 		{
 			m_EventState = EVENT_NONE;
-			ApplySelectedSkillIndex(i);
 #if defined(__ANDROID__) || defined(MU_IOS)
-			m_iAndroidTouchAssignSkillIndex = i;
-#endif
+			FinalizeMagicSlotSelectionFromLegacyPicker(i);
+#else
+			ApplySelectedSkillIndex(i);
 			SetSkillPickerOpen(false);
 			PlayBuffer(SOUND_CLICK01);
+#endif
 			return false;
 		}
 	}
@@ -2678,31 +2813,29 @@ bool SEASON3B::CNewUISkillList::UpdateMouseEvent()
 		return false;
 	}
 
-	if (Hero->m_pPet != NULL)
+	if (Hero != NULL && Hero->m_pPet != NULL)
 	{
-		for (int i = AT_PET_COMMAND_DEFAULT; i < AT_PET_COMMAND_END; ++i)
+		int petCmd = AT_PET_COMMAND_DEFAULT;
+		if (HitLegacyPickerPetCommandRow(static_cast<float>(MouseX), static_cast<float>(MouseY), &petCmd))
 		{
-			GetLegacySkillPickerCellRect(iSkillCount, x, y, width, height);
-			iSkillCount++;
-
-			if (SEASON3B::CheckMouseIn(x, y, width, height) == true)
+			float px = 0.f;
+			float py = 0.f;
+			float pw = 0.f;
+			float ph = 0.f;
+			if (GetLegacyPickerPetCommandCellRect(petCmd, px, py, pw, ph))
 			{
 				bMouseOnSkillList = true;
 
-#if defined(__ANDROID__) || defined(MU_IOS)
-				if (MouseLButtonPush)
-				{
-					m_EventState = EVENT_NONE;
-					ApplySelectedSkillIndex(i);
-					m_iAndroidTouchAssignSkillIndex = i;
-					SetSkillPickerOpen(false);
-					PlayBuffer(SOUND_CLICK01);
-					return false;
-				}
-#endif
 				if (m_EventState == EVENT_NONE && MouseLButtonPush == false)
 				{
 					m_EventState = EVENT_BTN_HOVER_SKILLLIST;
+					m_bRenderSkillInfo = true;
+					m_iRenderSkillInfoType = petCmd;
+#if defined(__ANDROID__)
+					TakumiLogSkillPickerHoverCell(petCmd);
+#endif
+					m_iRenderSkillInfoPosX = px;
+					m_iRenderSkillInfoPosY = py - 15;
 					return true;
 				}
 				if (m_EventState == EVENT_BTN_HOVER_SKILLLIST && MouseLButtonPush == true)
@@ -2714,20 +2847,24 @@ bool SEASON3B::CNewUISkillList::UpdateMouseEvent()
 				if (m_EventState == EVENT_BTN_HOVER_SKILLLIST)
 				{
 					m_bRenderSkillInfo = true;
-					m_iRenderSkillInfoType = i;
-					m_iRenderSkillInfoPosX = x;
-					m_iRenderSkillInfoPosY = y - 15;
+					m_iRenderSkillInfoType = petCmd;
+#if defined(__ANDROID__)
+					TakumiLogSkillPickerHoverCell(petCmd);
+#endif
+					m_iRenderSkillInfoPosX = px;
+					m_iRenderSkillInfoPosY = py - 15;
 				}
 				if (m_EventState == EVENT_BTN_DOWN_SKILLLIST && MouseLButtonPush == false
-					&& m_iRenderSkillInfoType == i)
+					&& m_iRenderSkillInfoType == petCmd)
 				{
 					m_EventState = EVENT_NONE;
-					ApplySelectedSkillIndex(i);
 #if defined(__ANDROID__) || defined(MU_IOS)
-					m_iAndroidTouchAssignSkillIndex = i;
-#endif
+					FinalizeMagicSlotSelectionFromLegacyPicker(petCmd);
+#else
+					ApplySelectedSkillIndex(petCmd);
 					SetSkillPickerOpen(false);
 					PlayBuffer(SOUND_CLICK01);
+#endif
 					return false;
 				}
 			}
@@ -2961,6 +3098,13 @@ void SEASON3B::CNewUISkillList::SetSkillPickerOpen(bool open)
 	{
 		m_iAndroidTouchAssignSkillIndex = -1;
 	}
+	else
+	{
+#if defined(__ANDROID__) || defined(MU_IOS)
+		m_legacyPickerTargetHotKey = -1;
+		m_legacySkillPickerOffsetX = 0.f;
+#endif
+	}
 #if TAKUMI_ANDROID_UI_SKILL_PICKER_CACHE
 	InvalidateSkillPickerLayout();
 #endif
@@ -2975,6 +3119,38 @@ void SEASON3B::CNewUISkillList::OnMagicListUpdated()
 void SEASON3B::CNewUISkillList::InvalidateSkillPickerLayout()
 {
 	m_skillPickerLayoutDirty = true;
+}
+
+uint64_t SEASON3B::CNewUISkillList::ComputeSkillPickerLayoutSig() const
+{
+	if (CharacterAttribute == NULL)
+	{
+		return 0;
+	}
+
+	uint64_t sig = 14695981039346656037ull;
+	auto mix = [&sig](uint64_t v)
+	{
+		sig = (sig ^ v) * 1099511628211ull;
+	};
+
+	mix((uint64_t)(int32_t)(DisplayWinExt * 1000.0f));
+	mix((uint64_t)(int32_t)(DisplayHeightExt * 1000.0f));
+#if defined(__ANDROID__) || defined(MU_IOS)
+	mix((uint64_t)(int32_t)(m_legacySkillPickerOffsetX * 1000.0f));
+#endif
+
+	for (int i = 0; i < MAX_MAGIC; ++i)
+	{
+		if (!LegacyPickerIncludeMagicArrayIndex(i))
+		{
+			continue;
+		}
+		mix((uint64_t)(uint32_t)i);
+		mix((uint64_t)(uint32_t)CharacterAttribute->Skill[i]);
+	}
+
+	return sig;
 }
 
 void SEASON3B::CNewUISkillList::RebuildSkillPickerLayout()
@@ -2996,25 +3172,14 @@ void SEASON3B::CNewUISkillList::RebuildSkillPickerLayout()
 
 	for (int i = 0; i < MAX_MAGIC; ++i)
 	{
-		const int iSkillType = CharacterAttribute->Skill[i];
-		if (iSkillType >= AT_PET_COMMAND_DEFAULT && iSkillType < AT_PET_COMMAND_END)
-		{
-			continue;
-		}
-		if (iSkillType == 0 || (iSkillType >= AT_SKILL_STUN && iSkillType <= AT_SKILL_REMOVAL_BUFF))
-		{
-			continue;
-		}
-
-		const BYTE bySkillUseType = SkillAttribute[iSkillType].SkillUseType;
-		if (bySkillUseType == SKILL_USE_TYPE_MASTER || bySkillUseType == SKILL_USE_TYPE_MASTERLEVEL)
+		if (!LegacyPickerIncludeMagicArrayIndex(i))
 		{
 			continue;
 		}
 
 		float x = fOrigX;
 		float y = yBase;
-		if (iSkillCount == 18)
+		if (iSkillCount >= 18)
 		{
 			y -= height;
 		}
@@ -3044,7 +3209,11 @@ void SEASON3B::CNewUISkillList::RebuildSkillPickerLayout()
 
 		SkillPickerLayoutEntry entry;
 		entry.slotIndex = i;
+#if defined(__ANDROID__) || defined(MU_IOS)
+		entry.x = x + m_legacySkillPickerOffsetX;
+#else
 		entry.x = x;
+#endif
 		entry.y = y;
 		m_skillPickerLayout.push_back(entry);
 		++iSkillCount;
@@ -3074,6 +3243,262 @@ void SEASON3B::CNewUISkillList::SetAndroidTouchAssignSkillIndex(int skillIndex)
 	m_iAndroidTouchAssignSkillIndex = skillIndex;
 }
 
+#if defined(__ANDROID__) || defined(MU_IOS)
+int SEASON3B::CNewUISkillList::HitTestLegacyMobileSkillHotKey(float uiX, float uiY) const
+{
+	if (CharacterAttribute == NULL || CharacterAttribute->SkillNumber <= 0)
+	{
+		return -1;
+	}
+
+	float x = 0.0f;
+	float y = 0.0f;
+	float width = 32.0f;
+	float height = 38.0f;
+	if (gProtect.m_MainInfo.IsVersion == 1)
+	{
+		x = 310.0f + DisplayWinExt;
+		y = 447.0f + DisplayHeightExt;
+		width = 20.0f;
+		height = 28.0f;
+	}
+	else
+	{
+		x = 190.0f + DisplayWinExt;
+		y = 431.0f + DisplayHeightExt;
+	}
+
+	int iStartSkillIndex = m_bHotKeySkillListUp ? 6 : 1;
+	for (int i = 0; i < 5; ++i)
+	{
+		x += width;
+		int iIndex = iStartSkillIndex + i;
+		if (iIndex == 10)
+		{
+			iIndex = 0;
+		}
+
+		if (uiX >= x && uiX <= (x + width) && uiY >= y && uiY <= (y + height))
+		{
+			return iIndex;
+		}
+	}
+
+	return -1;
+}
+
+void SEASON3B::CNewUISkillList::RenderAndroidLegacySkillHotBar()
+{
+	if (CharacterAttribute == NULL || CharacterAttribute->SkillNumber <= 0)
+	{
+		return;
+	}
+
+	float x = 0.0f;
+	float y = 0.0f;
+	float width = 32.0f;
+	float height = 38.0f;
+	if (gProtect.m_MainInfo.IsVersion == 1)
+	{
+		x = 310.0f + DisplayWinExt;
+		y = 447.0f + DisplayHeightExt;
+		width = 20.0f;
+		height = 28.0f;
+	}
+	else
+	{
+		x = 190.0f + DisplayWinExt;
+		y = 431.0f + DisplayHeightExt;
+	}
+
+	int iStartSkillIndex = m_bHotKeySkillListUp ? 6 : 1;
+	for (int i = 0; i < 5; ++i)
+	{
+		x += width;
+		int iIndex = iStartSkillIndex + i;
+		if (iIndex == 10)
+		{
+			iIndex = 0;
+		}
+
+		if (m_iHotKeySkillType[iIndex] == -1)
+		{
+			continue;
+		}
+
+		if (m_iHotKeySkillType[iIndex] >= AT_PET_COMMAND_DEFAULT
+			&& m_iHotKeySkillType[iIndex] < AT_PET_COMMAND_END)
+		{
+			if (Hero == NULL || Hero->m_pPet == NULL)
+			{
+				continue;
+			}
+		}
+
+		if (Hero != NULL && Hero->CurrentSkill == m_iHotKeySkillType[iIndex])
+		{
+			SEASON3B::RenderImage(IMAGE_SKILLBOX_USE, x, y, width, height);
+		}
+		else
+		{
+			SEASON3B::RenderImage(IMAGE_SKILLBOX, x, y, width, height);
+		}
+
+		RenderSkillIcon(m_iHotKeySkillType[iIndex], x + 6.0f, y + 6.0f, 20.0f, 28.0f, 0, iIndex);
+	}
+}
+
+bool SEASON3B::CNewUISkillList::GetLegacyMobileSkillHotBarSlotRect(
+	int hotKeyUiIndex,
+	float& outX,
+	float& outY,
+	float& outW,
+	float& outH) const
+{
+	if (CharacterAttribute == NULL || CharacterAttribute->SkillNumber <= 0)
+	{
+		return false;
+	}
+
+	float x = 0.0f;
+	float y = 0.0f;
+	float width = 32.0f;
+	float height = 38.0f;
+	if (gProtect.m_MainInfo.IsVersion == 1)
+	{
+		x = 310.0f + DisplayWinExt;
+		y = 447.0f + DisplayHeightExt;
+		width = 20.0f;
+		height = 28.0f;
+	}
+	else
+	{
+		x = 190.0f + DisplayWinExt;
+		y = 431.0f + DisplayHeightExt;
+	}
+
+	const int iStartSkillIndex = m_bHotKeySkillListUp ? 6 : 1;
+	for (int i = 0; i < 5; ++i)
+	{
+		x += width;
+		int idx = iStartSkillIndex + i;
+		if (idx == 10)
+		{
+			idx = 0;
+		}
+
+		if (idx == hotKeyUiIndex)
+		{
+			outX = x;
+			outY = y;
+			outW = width;
+			outH = height;
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool SEASON3B::CNewUISkillList::TryOpenLegacyMobileSkillAssignPickerForHotKey(int hotKeyUiIndex)
+{
+	if (CharacterAttribute == NULL || CharacterAttribute->SkillNumber <= 0)
+	{
+		return false;
+	}
+
+	if (hotKeyUiIndex < 0 || hotKeyUiIndex >= SKILLHOTKEY_COUNT)
+	{
+		return false;
+	}
+
+	float sx = 0.f;
+	float sy = 0.f;
+	float sw = 0.f;
+	float sh = 0.f;
+	if (!GetLegacyMobileSkillHotBarSlotRect(hotKeyUiIndex, sx, sy, sw, sh))
+	{
+		return false;
+	}
+
+	float fixX = (gProtect.m_MainInfo.IsVersion == 1) ? 75.f : 0.f;
+	const float fOrigX = 385.f - fixX + DisplayWinExt;
+	const float skillBoxHalf = 16.f;
+	m_legacySkillPickerOffsetX = (sx + sw * 0.5f) - (fOrigX + skillBoxHalf);
+	m_legacyPickerTargetHotKey = hotKeyUiIndex;
+
+	SetSkillPickerOpen(true);
+	PlayBuffer(SOUND_CLICK01);
+	return true;
+}
+
+bool SEASON3B::CNewUISkillList::TryOpenLegacyMobileSkillAssignPicker(float uiX, float uiY)
+{
+	if (CharacterAttribute == NULL || CharacterAttribute->SkillNumber <= 0)
+	{
+		return false;
+	}
+
+	const int hk = HitTestLegacyMobileSkillHotKey(uiX, uiY);
+	if (hk < 0)
+	{
+		return false;
+	}
+
+	return TryOpenLegacyMobileSkillAssignPickerForHotKey(hk);
+}
+
+void SEASON3B::CNewUISkillList::FinalizeMagicSlotSelectionFromLegacyPicker(int pickedSlotIdx)
+{
+	if (!IsRenderableSkillSlotIndex(pickedSlotIdx))
+	{
+		return;
+	}
+
+#if defined(TAKUMI_SKILL_PICKER_VERBOSE)
+	{
+		const int hkSnap = (m_legacyPickerTargetHotKey >= 0 && m_legacyPickerTargetHotKey < SKILLHOTKEY_COUNT)
+			? m_legacyPickerTargetHotKey : -1;
+		if (pickedSlotIdx >= AT_PET_COMMAND_DEFAULT && pickedSlotIdx < AT_PET_COMMAND_END)
+		{
+			fprintf(stderr, "[TakumiSkillPicker] finalize petCmd=%d targetHotKey=%d\n", pickedSlotIdx, hkSnap);
+		}
+		else if (CharacterAttribute != NULL && pickedSlotIdx >= 0 && pickedSlotIdx < MAX_MAGIC)
+		{
+			fprintf(
+				stderr,
+				"[TakumiSkillPicker] finalize magicSlot=%d skillType=%u targetHotKey=%d\n",
+				pickedSlotIdx,
+				static_cast<unsigned>(CharacterAttribute->Skill[pickedSlotIdx]),
+				hkSnap);
+		}
+	}
+#endif // TAKUMI_SKILL_PICKER_VERBOSE
+
+	const bool hasTargetHotKey =
+		m_legacyPickerTargetHotKey >= 0 && m_legacyPickerTargetHotKey < SKILLHOTKEY_COUNT;
+	if (hasTargetHotKey)
+	{
+		SetHeroPriorSkill(GetCurrentSkillTypeForPrior());
+		SetHotKey(m_legacyPickerTargetHotKey, pickedSlotIdx);
+		if (Hero != NULL)
+		{
+			Hero->CurrentSkill = static_cast<BYTE>(pickedSlotIdx);
+		}
+		m_legacyPickerTargetHotKey = -1;
+		m_legacySkillPickerOffsetX = 0.f;
+	}
+	else
+	{
+		ApplySelectedSkillIndex(pickedSlotIdx);
+		m_iAndroidTouchAssignSkillIndex = pickedSlotIdx;
+	}
+
+	SetSkillPickerOpen(false);
+	PlayBuffer(SOUND_CLICK01);
+}
+#endif
+
 bool SEASON3B::CNewUISkillList::TryToggleSkillPickerAtTouch(float uiX, float uiY)
 {
 #if !defined(__ANDROID__) && !defined(MU_IOS)
@@ -3095,13 +3520,19 @@ bool SEASON3B::CNewUISkillList::TryToggleSkillPickerAtTouch(float uiX, float uiY
 		return false;
 	}
 
+	if (!m_bSkillList)
+	{
+		m_legacyPickerTargetHotKey = -1;
+		m_legacySkillPickerOffsetX = 0.f;
+	}
+
 	SetSkillPickerOpen(!m_bSkillList);
 	PlayBuffer(SOUND_CLICK01);
 	return true;
 #endif
 }
 
-int SEASON3B::CNewUISkillList::HitTestAndroidTouchSkillPicker(float uiX, float uiY) const
+int SEASON3B::CNewUISkillList::HitTestAndroidTouchSkillPicker(float uiX, float uiY)
 {
 #if !defined(__ANDROID__) && !defined(MU_IOS)
 	return -1;
@@ -3111,29 +3542,45 @@ int SEASON3B::CNewUISkillList::HitTestAndroidTouchSkillPicker(float uiX, float u
 		return -1;
 	}
 
+#if TAKUMI_ANDROID_UI_SKILL_PICKER_CACHE
+	const uint64_t layoutSig = ComputeSkillPickerLayoutSig();
+	if (layoutSig != m_skillPickerLayoutSig)
+	{
+		m_skillPickerLayoutSig = layoutSig;
+		m_skillPickerLayoutDirty = true;
+	}
+	if (m_skillPickerLayoutDirty)
+	{
+		RebuildSkillPickerLayout();
+	}
+	for (size_t layoutIdx = 0; layoutIdx < m_skillPickerLayout.size(); ++layoutIdx)
+	{
+		const SkillPickerLayoutEntry& entry = m_skillPickerLayout[layoutIdx];
+		const float x = entry.x;
+		const float y = entry.y;
+		const float width = 32.f;
+		const float height = 38.f;
+		if (uiX >= x && uiX <= (x + width) && uiY >= y && uiY <= (y + height))
+		{
+			return entry.slotIndex;
+		}
+	}
+#else
 	int iSkillCount = 0;
 	float x = 0.0f;
 	float y = 0.0f;
 	float width = 0.0f;
 	float height = 0.0f;
-	WORD bySkillType = 0;
 
 	for (int i = 0; i < MAX_MAGIC; ++i)
 	{
-		bySkillType = CharacterAttribute->Skill[i];
-
-		if (bySkillType == 0 || (bySkillType >= AT_SKILL_STUN && bySkillType <= AT_SKILL_REMOVAL_BUFF))
-		{
-			continue;
-		}
-
-		const BYTE bySkillUseType = SkillAttribute[bySkillType].SkillUseType;
-		if (bySkillUseType == SKILL_USE_TYPE_MASTERLEVEL)
+		if (!LegacyPickerIncludeMagicArrayIndex(i))
 		{
 			continue;
 		}
 
 		GetLegacySkillPickerCellRect(iSkillCount, x, y, width, height);
+		x += m_legacySkillPickerOffsetX;
 		iSkillCount++;
 
 		if (uiX >= x && uiX <= (x + width)
@@ -3142,20 +3589,12 @@ int SEASON3B::CNewUISkillList::HitTestAndroidTouchSkillPicker(float uiX, float u
 			return i;
 		}
 	}
+#endif
 
-	if (Hero != NULL && Hero->m_pPet != NULL)
+	int petCmd = 0;
+	if (HitLegacyPickerPetCommandRow(uiX, uiY, &petCmd))
 	{
-		for (int i = AT_PET_COMMAND_DEFAULT; i < AT_PET_COMMAND_END; ++i)
-		{
-			GetLegacySkillPickerCellRect(iSkillCount, x, y, width, height);
-			iSkillCount++;
-
-			if (uiX >= x && uiX <= (x + width)
-				&& uiY >= y && uiY <= (y + height))
-			{
-				return i;
-			}
-		}
+		return petCmd;
 	}
 
 	return -1;
@@ -3288,7 +3727,7 @@ void SEASON3B::CNewUISkillList::RenderCurrentSkillAndHotSkillList()
 				{
 					SEASON3B::RenderImage(IMAGE_SKILLBOX_USE, x, y, width, height);
 				}
-				RenderSkillIcon(m_iHotKeySkillType[iIndex], x + 6, y + 6, 20, 28);
+				RenderSkillIcon(m_iHotKeySkillType[iIndex], x + 6, y + 6, 20, 28, 0, iIndex);
 			}
 		}
 
@@ -3305,7 +3744,7 @@ void SEASON3B::CNewUISkillList::RenderCurrentSkillAndHotSkillList()
 		if (ShouldDrawCurrentSkillIcon())
 		{
 			const int drawSkillIndex = GetPrimarySkillSlotIndex();
-			RenderSkillIcon(drawSkillIndex, x + 6.f, y + 6.f, 20.f, 28.f);
+			RenderSkillIcon(drawSkillIndex, x + 6.f, y + 6.f, 20.f, 28.f, 0, 0);
 		}
 	}
 }
@@ -3450,6 +3889,12 @@ bool SEASON3B::CNewUISkillList::Render()
 			width = 32; height = 38;
 
 #if TAKUMI_ANDROID_UI_SKILL_PICKER_CACHE
+			const uint64_t layoutSig = ComputeSkillPickerLayoutSig();
+			if (layoutSig != m_skillPickerLayoutSig)
+			{
+				m_skillPickerLayoutSig = layoutSig;
+				m_skillPickerLayoutDirty = true;
+			}
 			if (m_skillPickerLayoutDirty)
 			{
 				RebuildSkillPickerLayout();
@@ -3476,66 +3921,61 @@ bool SEASON3B::CNewUISkillList::Render()
 #else
 			x = 385 - FixX + DisplayWinExt; y = 390 + DisplayHeightExt; width = 32; height = 38;
 			float fOrigX = 385.f - FixX + DisplayWinExt;
-			int iSkillType = 0;
 			int iSkillCount = 0;
 
 			for (i = 0; i < MAX_MAGIC; ++i)
 			{
-				iSkillType = CharacterAttribute->Skill[i];
-				if (iSkillType >= AT_PET_COMMAND_DEFAULT && iSkillType < AT_PET_COMMAND_END)
+				if (!LegacyPickerIncludeMagicArrayIndex(i))
 				{
 					continue;
 				}
-				if (iSkillType != 0 && (iSkillType < AT_SKILL_STUN || iSkillType > AT_SKILL_REMOVAL_BUFF))
+
+				if (iSkillCount == 18)
 				{
-					BYTE bySkillUseType = SkillAttribute[iSkillType].SkillUseType;
-
-					if (bySkillUseType == SKILL_USE_TYPE_MASTER || bySkillUseType == SKILL_USE_TYPE_MASTERLEVEL)
-					{
-						continue;
-					}
-
-					if (iSkillCount == 18)
-					{
-						y -= height;
-					}
-
-					if (iSkillCount < 14)
-					{
-						int iRemainder = iSkillCount % 2;
-						int iQuotient = iSkillCount / 2;
-
-						if (iRemainder == 0)
-						{
-							x = fOrigX + iQuotient * width;
-						}
-						else
-						{
-							x = fOrigX - (iQuotient + 1) * width;
-						}
-					}
-					else if (iSkillCount >= 14 && iSkillCount < 18)
-					{
-						x = fOrigX - (8 * width) - ((iSkillCount - 14) * width);
-					}
-					else
-					{
-						x = fOrigX - (12 * width) + ((iSkillCount - 17) * width);
-					}
-
-					iSkillCount++;
-
-					if (i == Hero->CurrentSkill)
-					{
-						SEASON3B::RenderImage(IMAGE_SKILLBOX_USE, x, y, width, height);
-					}
-					else
-					{
-						SEASON3B::RenderImage(IMAGE_SKILLBOX, x, y, width, height);
-					}
-
-					RenderSkillIcon(i, x + 6, y + 6, 20, 28);
+					y -= height;
 				}
+
+				if (iSkillCount < 14)
+				{
+					int iRemainder = iSkillCount % 2;
+					int iQuotient = iSkillCount / 2;
+
+					if (iRemainder == 0)
+					{
+						x = fOrigX + iQuotient * width;
+					}
+					else
+					{
+						x = fOrigX - (iQuotient + 1) * width;
+					}
+				}
+				else if (iSkillCount >= 14 && iSkillCount < 18)
+				{
+					x = fOrigX - (8 * width) - ((iSkillCount - 14) * width);
+				}
+				else
+				{
+					x = fOrigX - (12 * width) + ((iSkillCount - 17) * width);
+				}
+
+				iSkillCount++;
+
+#if defined(__ANDROID__) || defined(MU_IOS)
+				const float cellDrawX = x + m_legacySkillPickerOffsetX;
+#else
+				const float cellDrawX = x;
+#endif
+
+				if (i == Hero->CurrentSkill)
+				{
+					SEASON3B::RenderImage(IMAGE_SKILLBOX_USE, cellDrawX, y, width, height);
+				}
+				else
+				{
+					SEASON3B::RenderImage(IMAGE_SKILLBOX, cellDrawX, y, width, height);
+				}
+
+				RenderSkillIcon(i, cellDrawX + 6.f, y + 6.f, 20.f, 28.f);
 			}
 #endif
 			RenderPetSkill();
@@ -3605,7 +4045,14 @@ void SEASON3B::CNewUISkillList::RenderPetSkill()
 	}
 }
 
-void SEASON3B::CNewUISkillList::RenderSkillIcon(int iIndex, float x, float y, float width, float height, int TypeMuHelper)
+void SEASON3B::CNewUISkillList::RenderSkillIcon(
+	int iIndex,
+	float x,
+	float y,
+	float width,
+	float height,
+	int TypeMuHelper,
+	int hotKeyLabelOverride)
 {
 	if (TypeMuHelper != 1 && !IsRenderableSkillSlotIndex(iIndex))
 	{
@@ -4000,6 +4447,14 @@ void SEASON3B::CNewUISkillList::RenderSkillIcon(int iIndex, float x, float y, fl
 		iKindofSkill = KOS_SKILL3;
 	}
 #endif //PBG_ADD_NEWCHAR_MONK_SKILL
+	else if (bySkillType >= 57 && Skill_Icon != 0)
+	{
+		// Skill.bmd Magic_Icon on SKILL2 (12-wide, row +4) matches master/season UI for skill IDs >= 57.
+		// Lower IDs keep the legacy SKILL1 / explicit branches so icon matches hotbar + tooltip.
+		fU = (width / 256.f) * (Skill_Icon % 12);
+		fV = (height / 256.f) * ((Skill_Icon / 12) + 4);
+		iKindofSkill = KOS_SKILL2;
+	}
 	else if (bySkillType >= 57)
 	{
 		fU = ((bySkillType - 57) % 8) * width / 256.f;
@@ -4070,17 +4525,21 @@ void SEASON3B::CNewUISkillList::RenderSkillIcon(int iIndex, float x, float y, fl
 		}
 	}
 
-	int iHotKey = -1;
-	for (int i = 0; i < SKILLHOTKEY_COUNT; ++i)
+	int iHotKey = hotKeyLabelOverride;
+	if (hotKeyLabelOverride < 0)
 	{
-		if (m_iHotKeySkillType[i] == iIndex)
+		iHotKey = -1;
+		for (int i = 0; i < SKILLHOTKEY_COUNT; ++i)
 		{
-			iHotKey = i;
-			break;
+			if (m_iHotKeySkillType[i] == iIndex)
+			{
+				iHotKey = i;
+				break;
+			}
 		}
 	}
 
-	if (iHotKey != -1)
+	if (TypeMuHelper != 1 && iHotKey >= 0 && iHotKey < SKILLHOTKEY_COUNT)
 	{
 		glColor3f(1.f, 0.9f, 0.8f);
 		SEASON3B::RenderNumber(x + 20, y + 20, iHotKey);

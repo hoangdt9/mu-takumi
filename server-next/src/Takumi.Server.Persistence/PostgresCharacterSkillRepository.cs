@@ -83,7 +83,8 @@ public sealed class PostgresCharacterSkillRepository : IAsyncDisposable
         }
         catch (PostgresException ex) when (ex.SqlState == PostgresErrorCodes.UndefinedTable)
         {
-            // Table not migrated yet — caller may still send F3 11 from class defaults.
+            Console.Error.WriteLine(
+                "[postgres-mirror] character_skill table missing (sql/patches/016_character_skill.sql) — learned skills won't survive relog.");
         }
     }
 

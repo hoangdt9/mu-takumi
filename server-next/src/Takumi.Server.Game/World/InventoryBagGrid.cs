@@ -129,6 +129,54 @@ public static class InventoryBagGrid
         }
     }
 
+    /// <summary>
+    /// True when bag anchors overlap footprints, extend outside the 8×8 grid, or use invalid anchors.
+    /// Used on join to decide whether full <see cref="CompactBagSlots"/> (repack) is needed.
+    /// </summary>
+    public static bool BagAnchorsHaveFootprintConflicts(IReadOnlyDictionary<byte, byte[]> slots)
+    {
+        var occupied = new bool[CellCount];
+        foreach (var kv in slots)
+        {
+            if (!ItemWire602.IsBagSlot(kv.Key) || ItemWire602.IsEmpty(kv.Value))
+            {
+                continue;
+            }
+
+            if (!WireToCell(kv.Key, out var col, out var row))
+            {
+                return true;
+            }
+
+            ItemSizeCatalog.GetSize(kv.Value, out var w, out var h);
+            if (w <= 0 || h <= 0 || col + w > Columns || row + h > Rows || col < 0 || row < 0)
+            {
+                return true;
+            }
+
+            for (var y = 0; y < h; y++)
+            {
+                for (var x = 0; x < w; x++)
+                {
+                    var idx = ((row + y) * Columns) + (col + x);
+                    if ((uint)idx >= (uint)CellCount)
+                    {
+                        return true;
+                    }
+
+                    if (occupied[idx])
+                    {
+                        return true;
+                    }
+
+                    occupied[idx] = true;
+                }
+            }
+        }
+
+        return false;
+    }
+
     public static bool CanPlaceAt(
         IReadOnlyDictionary<byte, byte[]> slots,
         ReadOnlySpan<byte> item12,

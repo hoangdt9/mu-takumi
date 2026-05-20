@@ -24,6 +24,12 @@ bool TakumiAndroid_HandleInventoryTouchMove(const SDL_TouchFingerEvent& touch);
 /// Returns true when long-press or double-tap "use item" consumed the touch.
 bool TakumiAndroid_HandleInventoryTouchUp(const SDL_TouchFingerEvent& touch);
 
+/// World combat: long-press / double-tap on monster = PC right-click skill (hotbar CurrentSkill).
+bool TakumiAndroid_HandleWorldSkillTouchDown(const SDL_TouchFingerEvent& touch);
+bool TakumiAndroid_HandleWorldSkillTouchMove(const SDL_TouchFingerEvent& touch);
+/// Returns true when skill gesture consumed the touch (suppress LMB release attack).
+bool TakumiAndroid_HandleWorldSkillTouchUp(const SDL_TouchFingerEvent& touch);
+
 #else
 
 inline bool TakumiAndroid_PeekInventoryUsePress() { return false; }
@@ -34,5 +40,8 @@ inline void TakumiAndroid_ProcessInventoryUseFrame() {}
 inline bool TakumiAndroid_HandleInventoryTouchDown(const void*) { return false; }
 inline bool TakumiAndroid_HandleInventoryTouchMove(const void*) { return false; }
 inline bool TakumiAndroid_HandleInventoryTouchUp(const void*) { return false; }
+inline bool TakumiAndroid_HandleWorldSkillTouchDown(const void*) { return false; }
+inline bool TakumiAndroid_HandleWorldSkillTouchMove(const void*) { return false; }
+inline bool TakumiAndroid_HandleWorldSkillTouchUp(const void*) { return false; }
 
 #endif

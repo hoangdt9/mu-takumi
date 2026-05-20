@@ -560,7 +560,8 @@ public static class ItemWorldHandler
             return true;
         }
 
-        if (InventorySkillOrbRules.TryGetSkillOrbLearn(itemIndex, out var orbLearn))
+        if (InventorySkillOrbRules.TryGetSkillOrbLearn(itemIndex, out var orbLearn)
+            || InventoryEtcSkillScrollRules.TryGetSkillScrollLearn(itemIndex, out orbLearn))
         {
             return await HandleSkillOrbUseAsync(
                     player,
@@ -640,7 +641,8 @@ public static class ItemWorldHandler
             ItemWire602.SetDurability(blob, nextDur);
             PlayerShopSession.SetSlot(presenceSessionId, sourceSlot, blob);
             PlayerShopSession.PersistSlotToMirror(accountId, characterName10, sourceSlot, blob);
-            await writeAsync(ItemWorldWire602.BuildItemDur(sourceSlot, nextDur), ct).ConfigureAwait(false);
+            // Flag=1: client ReceiveDurability clears EnableUse only when KeyL != 0 (see wsclientinline.h SendRequestUse).
+            await writeAsync(ItemWorldWire602.BuildItemDur(sourceSlot, nextDur, 1), ct).ConfigureAwait(false);
         }
 
         Console.WriteLine(
@@ -690,6 +692,18 @@ public static class ItemWorldHandler
             return true;
         }
 
+        if (orbLearn.MinEnergy > 0 && player.Energy < orbLearn.MinEnergy)
+        {
+            Console.WriteLine(
+                "[m7] skill item energy too low idx={0} skill={1} need={2} have={3} {4}",
+                itemIndex,
+                orbLearn.SkillType,
+                orbLearn.MinEnergy,
+                player.Energy,
+                remote);
+            return true;
+        }
+
         var charName = Encoding.ASCII.GetString(characterName10.AsSpan(0, 10)).TrimEnd('\0');
         var skillRepo = TakumiPostgresMirror.CharacterSkills;
         var rows = new List<CharacterSkillRow>();
@@ -708,10 +722,19 @@ public static class ItemWorldHandler
                     MagicListWire602.BuildAddSkill(existing.Slot, orbLearn.SkillType, existing.Level),
                     ct)
                 .ConfigureAwait(false);
+            // Match PC-style “use scroll/orb” UX: consuming a duplicate still removes the item from the bag.
+            var emptyScroll = new byte[ItemWire602.WireBytes];
+            PlayerShopSession.SetSlot(presenceSessionId, sourceSlot, emptyScroll);
+            PlayerShopSession.PersistSlotToMirror(accountId, characterName10, sourceSlot, emptyScroll);
+            await writeAsync(ItemWorldWire602.BuildItemDelete(sourceSlot), ct).ConfigureAwait(false);
+
             Console.WriteLine(
-                "[m7] skill orb already learned skill={0} (resent F3 FE sync) {1}",
+                "[m7] skill orb already learned skill={0}; consumed duplicate idx={1} slot={2} (resent F3 FE + 0x28) {3}",
                 orbLearn.SkillType,
+                itemIndex,
+                sourceSlot,
                 remote);
+            await PersistInventorySnapshotAsync(presenceSessionId, accountId, characterName10, ct).ConfigureAwait(false);
             return true;
         }
 
@@ -725,7 +748,26 @@ public static class ItemWorldHandler
 
         if (skillRepo is not null && !string.IsNullOrEmpty(accountId))
         {
-            await skillRepo.ReplaceAllAsync(accountId, charName, rows, ct).ConfigureAwait(false);
+            try
+            {
+                await skillRepo.ReplaceAllAsync(accountId, charName, rows, ct).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(
+                    "[m7] ERROR skill ReplaceAll failed account={0} char={1}: {2}",
+                    accountId,
+                    charName,
+                    ex.Message);
+            }
+        }
+        else
+        {
+            Console.WriteLine(
+                "[m7] WARN skill learned in memory only (not saved): CharacterSkills={0} accountId={1} char={2}",
+                skillRepo is null ? "null" : "ok",
+                string.IsNullOrEmpty(accountId) ? "(empty)" : accountId,
+                charName);
         }
 
         var empty = new byte[ItemWire602.WireBytes];
@@ -742,6 +784,7 @@ public static class ItemWorldHandler
             sourceSlot,
             itemIndex,
             remote);
+        await PersistInventorySnapshotAsync(presenceSessionId, accountId, characterName10, ct).ConfigureAwait(false);
         return true;
     }
 

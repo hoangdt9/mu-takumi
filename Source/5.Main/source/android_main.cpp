@@ -600,20 +600,13 @@ void SetPlayerAttack(CHARACTER* c);
 
 namespace
 {
+bool AndroidTriggerHotKeySkillTapInternal(int hotKeySkillIndex);
+
 bool IsLegacyMainHud()
 {
     return MU_MobileIsLegacyMainHudEnabled();
 }
 
-bool ShowVirtualAttackButton()
-{
-    return !IsLegacyMainHud();
-}
-
-bool ShowVirtualSkillButtons()
-{
-    return !IsLegacyMainHud();
-}
 constexpr int kVirtualAttackButton = 0;
 constexpr int kVirtualSkillButtonBase = 1;
 constexpr int kVirtualAttackSkillSlot = 0;
@@ -1103,6 +1096,151 @@ bool IsVirtualPadAvailable()
         && CharacterAttribute != nullptr
         && g_pMainFrame != nullptr
         && !AndroidHasFocusedTextInput();
+}
+
+bool ShowVirtualAttackButton()
+{
+    return IsVirtualPadAvailable();
+}
+
+bool ShowVirtualSkillButtons()
+{
+    return IsVirtualPadAvailable() && !IsLegacyMainHud();
+}
+
+bool ShowLegacyMobileSkillHotBar()
+{
+    return IsLegacyMainHud() && IsVirtualPadAvailable();
+}
+
+struct LegacySkillHotBarPendingTouch
+{
+    SDL_FingerID fingerId = static_cast<SDL_FingerID>(-1);
+    int hotKeyUiIndex = -1;
+    uint32_t downMs = 0;
+    bool pickerOpenedFromHold = false;
+};
+
+LegacySkillHotBarPendingTouch g_legacySkillHotBarPendingTouch{};
+
+static void ClearLegacySkillHotBarPendingTouch()
+{
+    g_legacySkillHotBarPendingTouch = LegacySkillHotBarPendingTouch{};
+}
+
+static void TickLegacySkillHotBarLongPress(uint32_t nowMs)
+{
+    if (g_legacySkillHotBarPendingTouch.fingerId == static_cast<SDL_FingerID>(-1))
+    {
+        return;
+    }
+
+    if (!ShowLegacyMobileSkillHotBar() || g_pSkillList == nullptr)
+    {
+        ClearLegacySkillHotBarPendingTouch();
+        return;
+    }
+
+    if (g_legacySkillHotBarPendingTouch.pickerOpenedFromHold)
+    {
+        return;
+    }
+
+    if ((nowMs - g_legacySkillHotBarPendingTouch.downMs) < kVirtualSkillAssignLongPressMs)
+    {
+        return;
+    }
+
+    const int hk = g_legacySkillHotBarPendingTouch.hotKeyUiIndex;
+
+    // Open assign picker anchored on the held slot; if it fails, drop the gesture.
+    if (g_pSkillList->TryOpenLegacyMobileSkillAssignPickerForHotKey(hk))
+    {
+        g_legacySkillHotBarPendingTouch.pickerOpenedFromHold = true;
+    }
+    else
+    {
+        ClearLegacySkillHotBarPendingTouch();
+    }
+}
+
+static void MaybeCancelLegacySkillHotBarTouchOnMotion(const SDL_TouchFingerEvent& touch, float uiX, float uiY)
+{
+    if (g_legacySkillHotBarPendingTouch.fingerId == static_cast<SDL_FingerID>(-1))
+    {
+        return;
+    }
+
+    if (g_legacySkillHotBarPendingTouch.fingerId != touch.fingerId)
+    {
+        return;
+    }
+
+    if (g_legacySkillHotBarPendingTouch.pickerOpenedFromHold)
+    {
+        return;
+    }
+
+    if (g_pSkillList == nullptr)
+    {
+        return;
+    }
+
+    const int hkNow = g_pSkillList->HitTestLegacyMobileSkillHotKey(uiX, uiY);
+    const int hkSaved = g_legacySkillHotBarPendingTouch.hotKeyUiIndex;
+    if (hkNow != hkSaved)
+    {
+        ClearLegacySkillHotBarPendingTouch();
+    }
+}
+
+static bool ConsumeLegacySkillHotBarFingerUp(const SDL_TouchFingerEvent& touch)
+{
+    if (g_legacySkillHotBarPendingTouch.fingerId == static_cast<SDL_FingerID>(-1))
+    {
+        return false;
+    }
+
+    if (g_legacySkillHotBarPendingTouch.fingerId != touch.fingerId)
+    {
+        return false;
+    }
+
+    const uint32_t downMs = g_legacySkillHotBarPendingTouch.downMs;
+    const bool openedPicker = g_legacySkillHotBarPendingTouch.pickerOpenedFromHold;
+    const int hk = g_legacySkillHotBarPendingTouch.hotKeyUiIndex;
+    ClearLegacySkillHotBarPendingTouch();
+
+    if (openedPicker)
+    {
+        return true;
+    }
+
+    const uint32_t nowMs = MU_MobileGetTicks();
+    if ((nowMs - downMs) >= kVirtualSkillAssignLongPressMs)
+    {
+        // Long-hold threshold passed without casting; avoid accidental spell fire on release.
+        return true;
+    }
+
+    if (g_pSkillList == nullptr)
+    {
+        return true;
+    }
+
+    const int skillIndex = g_pSkillList->GetHotKey(hk);
+    if (skillIndex < 0)
+    {
+        return true;
+    }
+
+    if (Hero != nullptr)
+    {
+        Hero->CurrentSkill = static_cast<BYTE>(skillIndex);
+    }
+
+    AndroidTriggerHotKeySkillTapInternal(skillIndex);
+    return true;
 }
 
 void SyncVirtualHudChatBox()
@@ -1865,6 +2003,7 @@ static bool IsInventoryUiOpenForUse()
 }
 
 bool HandleVirtualCombatFingerDown(float uiX, float uiY, const SDL_TouchFingerEvent& touch);
+bool HandleLegacyMobileSkillHotBarTouch(const SDL_TouchFingerEvent& touch, float uiX, float uiY);
 
 bool IsVirtualJoystickCaptured(SDL_FingerID fingerId)
 {
@@ -3584,7 +3723,7 @@ int HitTestVirtualSkillButton(float uiX, float uiY)
 
 bool HandleVirtualCombatFingerDown(float uiX, float uiY, const SDL_TouchFingerEvent& touch)
 {
-    if (!kShowVirtualAttackButton && !kShowVirtualSkillButtons)
+    if (!ShowVirtualAttackButton() && !ShowVirtualSkillButtons())
     {
         return false;
     }
@@ -3648,6 +3787,27 @@ bool HandleVirtualCombatFingerDown(float uiX, float uiY, const SDL_TouchFingerEv
     }
 
     return false;
+}
+
+bool HandleLegacyMobileSkillHotBarTouch(const SDL_TouchFingerEvent& touch, float uiX, float uiY)
+{
+    if (!ShowLegacyMobileSkillHotBar() || g_pSkillList == nullptr)
+    {
+        return false;
+    }
+
+    const int hk = g_pSkillList->HitTestLegacyMobileSkillHotKey(uiX, uiY);
+    if (hk < 0)
+    {
+        return false;
+    }
+
+    ClearLegacySkillHotBarPendingTouch();
+    g_legacySkillHotBarPendingTouch.fingerId = touch.fingerId;
+    g_legacySkillHotBarPendingTouch.hotKeyUiIndex = hk;
+    g_legacySkillHotBarPendingTouch.downMs = MU_MobileGetTicks();
+    g_legacySkillHotBarPendingTouch.pickerOpenedFromHold = false;
+    return true;
 }
 
 bool HandleVirtualFingerDown(const SDL_TouchFingerEvent& touch)
@@ -3730,6 +3890,17 @@ bool HandleVirtualFingerDown(const SDL_TouchFingerEvent& touch)
 
     if (IsLegacyMainHud())
     {
+        if (HandleLegacyMobileSkillHotBarTouch(touch, uiX, uiY))
+        {
+            return true;
+        }
+
+        if (ShowVirtualAttackButton() && HitTestVirtualAttackButton(uiX, uiY) == kVirtualAttackButton)
+        {
+            AndroidTriggerNormalAttackButtonInternal();
+            return true;
+        }
+
         return HandleVirtualJoystickFingerDown(touch);
     }
 
@@ -3824,6 +3995,7 @@ bool HandleVirtualFingerMotion(const SDL_TouchFingerEvent& touch)
 
     if (IsLegacyMainHud())
     {
+        MaybeCancelLegacySkillHotBarTouchOnMotion(touch, uiX, uiY);
         return HandleVirtualJoystickFingerMotion(touch);
     }
 
@@ -3844,6 +4016,10 @@ bool HandleVirtualFingerUp(const SDL_TouchFingerEvent& touch)
 
     if (IsLegacyMainHud())
     {
+        if (ConsumeLegacySkillHotBarFingerUp(touch))
+        {
+            return true;
+        }
         return HandleVirtualJoystickFingerUp(touch);
     }
 
@@ -3891,12 +4067,14 @@ void UpdateVirtualPadHolds()
             }
         }
 
+        TickLegacySkillHotBarLongPress(MU_MobileGetTicks());
+
         ApplyVirtualJoystickMovement();
         return;
     }
 
     const uint32_t nowMs = MU_MobileGetTicks();
-    if (kShowVirtualAttackButton)
+    if (ShowVirtualAttackButton())
     {
         for (ActiveVirtualTouch& active : g_activeVirtualTouches)
         {
@@ -4988,6 +5166,35 @@ void RenderVirtualPad()
 
     if (IsLegacyMainHud())
     {
+        if (g_pSkillList != nullptr)
+        {
+            g_pSkillList->RenderAndroidLegacySkillHotBar();
+        }
+
+        if (ShowVirtualAttackButton())
+        {
+            BeginBitmap();
+            EnsureUITextures();
+            const VirtualButtonLayout& attackButton = kVirtualButtons[kVirtualAttackButton];
+            const float attackRingSize = attackButton.radius * 2.0f + 20.0f;
+            const float attackIconSize = attackButton.radius * 1.34f + 3.0f;
+            DrawIconButton(
+                attackButton.cx - attackRingSize * 0.5f,
+                attackButton.cy - attackRingSize * 0.5f,
+                attackRingSize,
+                attackRingSize,
+                g_uiTex_skillline,
+                IsVirtualButtonPressed(kVirtualAttackButton) ? 1.0f : 0.98f);
+            DrawIconButton(
+                attackButton.cx - attackIconSize * 0.5f,
+                attackButton.cy - attackIconSize * 0.5f,
+                attackIconSize,
+                attackIconSize,
+                g_uiTex_attack,
+                IsVirtualButtonPressed(kVirtualAttackButton) ? 1.0f : 0.96f);
+            EndBitmap();
+        }
+
         return;
     }
 
@@ -6754,6 +6961,10 @@ static void HandleSDLEvent(const SDL_Event& ev, int& screenW, int& screenH)
         {
             break;
         }
+        if (g_primaryTouchFinger == -1 || ev.tfinger.fingerId == g_primaryTouchFinger)
+        {
+            TakumiAndroid_HandleWorldSkillTouchDown(ev.tfinger);
+        }
         if (HandleVirtualFingerDown(ev.tfinger))
         {
             break;
@@ -6807,8 +7018,18 @@ static void HandleSDLEvent(const SDL_Event& ev, int& screenW, int& screenH)
         {
             break;
         }
-        TakumiAndroid_HandleInventoryTouchMove(ev.tfinger);
+        // Inventory long-press is evaluated inside TakumiAndroid_HandleInventoryTouchMove; it must run
+        // after touch→MouseX/MouseY sync — otherwise AndroidTryUseItemUnderCursor hits a stale cursor.
         UpdateMouseFromTouch(ev.tfinger, screenW, screenH);
+        TakumiAndroid_HandleInventoryTouchMove(ev.tfinger);
+        if (TakumiAndroid_HandleWorldSkillTouchMove(ev.tfinger))
+        {
+            if (ev.tfinger.fingerId == g_primaryTouchFinger)
+            {
+                MouseLButtonPush = false;
+                MouseLButton = false;
+            }
+        }
         break;
 
     case SDL_FINGERUP:
@@ -6828,6 +7049,17 @@ static void HandleSDLEvent(const SDL_Event& ev, int& screenW, int& screenH)
                 g_primaryTouchFinger = -1;
             }
             TakumiAndroid_ProcessInventoryUseFrame();
+            break;
+        }
+        if (TakumiAndroid_HandleWorldSkillTouchUp(ev.tfinger))
+        {
+            if (ev.tfinger.fingerId == g_primaryTouchFinger)
+            {
+                MouseLButtonPush = false;
+                MouseLButtonPop = false;
+                MouseLButton = false;
+                g_primaryTouchFinger = -1;
+            }
             break;
         }
         if (HandleVirtualFingerUp(ev.tfinger))

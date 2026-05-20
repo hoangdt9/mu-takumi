@@ -154,6 +154,9 @@ void Attack(CHARACTER *c);
 int ExecuteSkill(CHARACTER* c, int Skill, float Distance);
 bool ExecuteSkillComplete(CHARACTER* c);
 bool CheckMana(CHARACTER* c, int Skill);
+/// Evil Spirit / Storm-style channel skills (PC RMB path); sets packet + local VFX state.
+bool IsDirectionChannelSkillType(int skillType);
+bool CastDirectionChannelSkill(CHARACTER* c, int Skill, BYTE skillIndex);
 
 bool SkillElf(CHARACTER *c,ITEM *p);
 bool SkillWarrior(CHARACTER *c,ITEM *p);

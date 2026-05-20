@@ -704,7 +704,7 @@ void CreateJoint(int Type, vec3_t Position, vec3_t TargetPosition, vec3_t Angle,
 				{
 				case 0:
 					o->Weapon = CharacterMachine->PacketSerial;
-					o->Velocity = 70.f;
+					o->Velocity = GetEvilSpiritJointVelocity();
 					o->LifeTime = 49;
 					o->Scale = Scale;
 					o->MaxTails = 6;
@@ -3808,7 +3808,7 @@ void MoveJoint(JOINT * o, int iIndex)
 
 		if (0 == o->SubType || o->SubType == 5 || o->SubType == 19)
 		{
-			if (o->Scale == 80.f)
+			if (IsEvilSpiritFastJointScale(o->Scale))
 			{
 				if (o->SubType == 5)
 					CreateEffect(MODEL_LASER, o->Position, o->Angle, o->Light, 3);
@@ -3849,7 +3849,7 @@ void MoveJoint(JOINT * o, int iIndex)
 			}
 			else
 			{
-				MoveHumming(o->Position, o->Angle, o->TargetPosition, 10.f);
+				MoveHumming(o->Position, o->Angle, o->TargetPosition, GetEvilSpiritMoveHummingSpeed());
 			}
 			if (!o->Collision && Distance <= o->Velocity * 2.f * FPS_ANIMATION_FACTOR)
 			{

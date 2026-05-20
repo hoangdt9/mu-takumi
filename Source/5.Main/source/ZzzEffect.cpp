@@ -10615,15 +10615,23 @@ void MoveEffect(OBJECT * o, int iIndex)
 					break;
 				}
 			}
-			if ((int)o->LifeTime % 15 == 0)
-				if (o->Owner == &Hero->Object)
-					AttackCharacterRange(o->Skill, o->Position, 150.f, o->Weapon, o->PKKey);
+			{
+				const float speedRatio = GetMagicSpeedEffectRatio();
+				const int tickInterval = (int)(15.f / speedRatio);
+				if (tickInterval > 0 && (int)o->LifeTime % tickInterval == 0)
+				{
+					if (o->Owner == &Hero->Object)
+					{
+						AttackCharacterRange(o->Skill, o->Position, 150.f, o->Weapon, o->PKKey);
+					}
+				}
+			}
 			break;
 
 		case 1:
 			o->BlendMeshLight = o->LifeTime * 0.01f;
 			o->BlendMeshTexCoordU = -(float)o->LifeTime * 0.1f;
-			o->Angle[2] += (rand() % 30 + 30.f) * FPS_ANIMATION_FACTOR;
+			o->Angle[2] += (rand() % 30 + 30.f) * GetMagicSpeedEffectRatio() * FPS_ANIMATION_FACTOR;
 
 			VectorCopy(o->Position, Position);
 			Position[2] += 100.f;

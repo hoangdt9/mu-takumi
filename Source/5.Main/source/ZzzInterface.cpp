@@ -7837,6 +7837,150 @@ int ExecuteSkill(CHARACTER* c, int Skill, float Distance)
 	return (int)ExecuteSkillComplete(c);
 }
 
+bool IsDirectionChannelSkillType(int skillType)
+{
+	if (skillType == AT_SKILL_EVIL || skillType == AT_SKILL_STORM)
+	{
+		return true;
+	}
+
+	if (skillType >= AT_SKILL_EVIL_SPIRIT_UP && skillType <= AT_SKILL_EVIL_SPIRIT_UP + 4)
+	{
+		return true;
+	}
+
+	if (skillType >= AT_SKILL_EVIL_SPIRIT_UP_M && skillType <= AT_SKILL_EVIL_SPIRIT_UP_M + 4)
+	{
+		return true;
+	}
+
+	if (skillType == MASTER_SKILL_ADD_EVIL_SPIRIT_IMPROVED1
+		|| skillType == MASTER_SKILL_ADD_EVIL_SPIRIT_IMPROVED2)
+	{
+		return true;
+	}
+
+	// MG / DL directional 0x1E (Fire Slash, Power Slash, Flame Strike, Gigantic Storm, …)
+	if (skillType == AT_SKILL_REDUCEDEFENSE
+		|| skillType == MASTER_SKILL_ADD_FIRE_SLASH_IMPROVED
+		|| skillType == MASTER_SKILL_ADD_FIRE_SLASH_ENHANCED)
+	{
+		return true;
+	}
+
+	if (skillType == AT_SKILL_ICE_BLADE
+		|| skillType == MASTER_SKILL_ADD_POWER_SLASH_IMPROVED
+		|| (skillType >= AT_SKILL_POWER_SLASH_UP && skillType <= AT_SKILL_POWER_SLASH_UP + 4))
+	{
+		return true;
+	}
+
+	if (skillType >= AT_SKILL_BLOOD_ATT_UP && skillType <= AT_SKILL_BLOOD_ATT_UP + 4)
+	{
+		return true;
+	}
+
+	if (skillType == AT_SKILL_FLAME_STRIKE || skillType == AT_SKILL_GIGANTIC_STORM)
+	{
+		return true;
+	}
+
+	if (skillType == AT_SKILL_GAOTIC || skillType == MASTER_SKILL_ADD_BIRDS_IMPROVED)
+	{
+		return true;
+	}
+
+	if (skillType == AT_SKILL_FLAME
+		|| skillType == MASTER_SKILL_ADD_FLAME_IMPROVED1
+		|| skillType == MASTER_SKILL_ADD_FLAME_IMPROVED2)
+	{
+		return true;
+	}
+
+	if (skillType == AT_SKILL_HELL
+		|| skillType == AT_SKILL_HELL_FIRE_UP
+		|| skillType == MASTER_SKILL_ADD_HELL_FIRE_IMPROVED
+		|| skillType == AT_SKILL_INFERNO
+		|| skillType == MASTER_SKILL_ADD_INFERNO_IMPROVED1
+		|| skillType == MASTER_SKILL_ADD_INFERNO_IMPROVED2)
+	{
+		return true;
+	}
+
+	return false;
+}
+
+bool CastDirectionChannelSkill(CHARACTER* c, int Skill, BYTE skillIndex)
+{
+	if (c == nullptr || Skill <= 0 || !IsDirectionChannelSkillType(Skill))
+	{
+		return false;
+	}
+
+	OBJECT* o = &c->Object;
+	const float distance = gSkillManager.GetSkillDistance(Skill, c);
+
+	if (!CanExecuteSkill(c, Skill, distance))
+	{
+		return false;
+	}
+
+	if (g_pSkillList->GetSkillIndex(Skill) == -1)
+	{
+		return false;
+	}
+
+	const BYTE previousSkillIndex = c->CurrentSkill;
+	c->CurrentSkill = skillIndex;
+
+	if (gSkillManager.CheckSkillDelay(c->CurrentSkill) == false)
+	{
+		c->CurrentSkill = previousSkillIndex;
+		return false;
+	}
+
+	const bool hadTarget = CheckTarget(c);
+	if (!hadTarget)
+	{
+		c->CurrentSkill = previousSkillIndex;
+		return false;
+	}
+
+	int wallTargetX = TargetX;
+	int wallTargetY = TargetY;
+	if (!CheckWall(c->PositionX, c->PositionY, wallTargetX, wallTargetY))
+	{
+		wallTargetX = c->PositionX;
+		wallTargetY = c->PositionY;
+		if (!CheckWall(c->PositionX, c->PositionY, wallTargetX, wallTargetY))
+		{
+			c->CurrentSkill = previousSkillIndex;
+			return false;
+		}
+	}
+
+	o->Angle[2] = CreateAngle(o->Position[0], o->Position[1], c->TargetPosition[0], c->TargetPosition[1]);
+	SendRequestMagicContinue(
+		Skill,
+		c->PositionX,
+		c->PositionY,
+		(BYTE)(o->Angle[2] / 360.f * 256.f),
+		0,
+		0,
+		0xffff,
+		&o->m_bySkillSerialNum);
+	SetPlayerMagic(c);
+
+	c->Skill = Skill;
+	c->AttackTime = 1;
+	c->SkillSuccess = true;
+	c->Movement = 0;
+	Attacking = 2;
+
+	c->CurrentSkill = previousSkillIndex;
+	return true;
+}
+
 bool ExecuteSkillComplete(CHARACTER* c)
 {
 	return c->SkillSuccess && !c->Movement;

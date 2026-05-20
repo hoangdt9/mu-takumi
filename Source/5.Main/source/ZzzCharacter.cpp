@@ -1550,6 +1550,66 @@ float BCalculateAttackSpeed(int Type)
 	return SpeedReturn;
 }
 
+namespace
+{
+constexpr float kEvilSpiritBaseMagicSpeed = 447.f;
+constexpr float kEvilSpiritBaseJointVelocity = 70.f;
+constexpr float kEvilSpiritBaseFastScale = 80.f;
+constexpr float kEvilSpiritBaseSlowScale = 20.f;
+constexpr float kEvilSpiritBaseHumming = 10.f;
+
+float EvilSpiritMagicSpeedRatio()
+{
+	float magicSpeed = BCalculateAttackSpeed(0);
+	if (magicSpeed < 1.f)
+	{
+		magicSpeed = kEvilSpiritBaseMagicSpeed;
+	}
+
+	float ratio = magicSpeed / kEvilSpiritBaseMagicSpeed;
+	if (ratio < 0.5f)
+	{
+		ratio = 0.5f;
+	}
+	else if (ratio > 3.f)
+	{
+		ratio = 3.f;
+	}
+
+	return ratio;
+}
+}
+
+float GetMagicSpeedEffectRatio()
+{
+	return EvilSpiritMagicSpeedRatio();
+}
+
+float GetEvilSpiritJointVelocity()
+{
+	return kEvilSpiritBaseJointVelocity * EvilSpiritMagicSpeedRatio();
+}
+
+float GetEvilSpiritJointFastScale()
+{
+	return kEvilSpiritBaseFastScale * EvilSpiritMagicSpeedRatio();
+}
+
+float GetEvilSpiritJointSlowScale()
+{
+	return kEvilSpiritBaseSlowScale * EvilSpiritMagicSpeedRatio();
+}
+
+float GetEvilSpiritMoveHummingSpeed()
+{
+	return kEvilSpiritBaseHumming * EvilSpiritMagicSpeedRatio();
+}
+
+bool IsEvilSpiritFastJointScale(const float scale)
+{
+	return scale >= GetEvilSpiritJointSlowScale() * 2.5f;
+}
+
 void SetAttackSpeed()
 {
 	//float AttackSpeed1 = CharacterAttribute->AttackSpeed * 0.004f;
@@ -2455,7 +2515,6 @@ void AttackEffect(CHARACTER *c)
 	float Luminosity = (float)(rand()%6+2)*0.1f;
 	Vector(0.f,0.f,0.f,p);
 	Vector(1.f,1.f,1.f,Light);
-	return;
     if ( gMapManager.InHellas() )
     {
         CHARACTER *tc = NULL;
@@ -5449,8 +5508,8 @@ void MoveCharacter(CHARACTER *c,OBJECT *o)
 				Vector(0.f,0.f,i*90.f,Angle);
 
                 int SkillIndex = FindHotKey( ( c->Skill ));
-				CreateJoint(BITMAP_JOINT_SPIRIT,Position,o->Position,Angle,0,o,80.f,o->PKKey,SkillIndex,o->m_bySkillSerialNum);
-				CreateJoint(BITMAP_JOINT_SPIRIT,Position,o->Position,Angle,0,o,20.f);
+				CreateJoint(BITMAP_JOINT_SPIRIT,Position,o->Position,Angle,0,o,GetEvilSpiritJointFastScale(),o->PKKey,SkillIndex,o->m_bySkillSerialNum);
+				CreateJoint(BITMAP_JOINT_SPIRIT,Position,o->Position,Angle,0,o,GetEvilSpiritJointSlowScale());
 			}
 			if ( c == Hero)
 			{

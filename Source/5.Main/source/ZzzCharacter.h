@@ -86,6 +86,15 @@ CHARACTER *CreateMonster(int Type,int PositionX,int PositionY,int Key=0);
 CHARACTER*  CreateHellGate ( BYTE* ID, int Key, int Index, int x, int y, int CreateFlag );
 
 void SetAttackSpeed();
+
+// MagicSpeed VFX scale (server F3 E1 → CharacterAttribute->MagicSpeed). Base 447, cap 0.5×–3×.
+float GetMagicSpeedEffectRatio();
+// Evil Spirit (skill 9) joint VFX — uses GetMagicSpeedEffectRatio().
+float GetEvilSpiritJointVelocity();
+float GetEvilSpiritJointFastScale();
+float GetEvilSpiritJointSlowScale();
+float GetEvilSpiritMoveHummingSpeed();
+bool IsEvilSpiritFastJointScale(float scale);
 void SetPlayerShock(CHARACTER *c,int Hit);
 void SetPlayerStop(CHARACTER *c);
 void SetPlayerWalk(CHARACTER *c);

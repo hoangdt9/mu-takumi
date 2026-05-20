@@ -21,6 +21,10 @@ Optional: Gradle `cppFlags "-DTAKUMI_ANDROID_DEBUG_PROTOCOL=1"` (same for wear) 
 
 See `server-next/.env.lan.example`: `TAKUMI_M9_COMBAT_LOG`, `TAKUMI_M9_VIEWPORT_LOG`, and `TAKUMI_VERBOSE` for game-host log volume.
 
+## Touch / combat mapping
+
+See [`ANDROID-INPUT.md`](ANDROID-INPUT.md) — PC LMB/RMB parity (attack button, skill ring, inventory long-press = use item).
+
 ## UI FPS (inventory / skill picker)
 
 File: `Source/5.Main/source/Utilities/Log/TakumiAndroidUiPerf.h`

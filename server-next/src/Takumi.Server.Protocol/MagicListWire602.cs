@@ -11,6 +11,23 @@ public static class MagicListWire602
     /// <summary>Empty skill list (client accepts count=0).</summary>
     public static byte[] BuildEmpty(byte listType = ListTypeNormal) => Build(listType, ReadOnlySpan<Entry>.Empty);
 
+    /// <summary>Single skill add (<c>ReceiveMagicList</c> when <c>Value == 0xFE</c>).</summary>
+    public static byte[] BuildAddSkill(byte slot, ushort skillType, byte level = 1, byte listType = ListTypeNormal)
+    {
+        var buf = new byte[10];
+        buf[0] = 0xC1;
+        buf[1] = 10;
+        buf[2] = 0xF3;
+        buf[3] = 0x11;
+        buf[4] = listType;
+        buf[5] = 0xFE;
+        buf[6] = slot;
+        buf[7] = (byte)(skillType & 0xFF);
+        buf[8] = (byte)((skillType >> 8) & 0xFF);
+        buf[9] = level;
+        return buf;
+    }
+
     public static byte[] Build(byte listType, ReadOnlySpan<Entry> skills)
     {
         var size = 6 + (skills.Length * 4);

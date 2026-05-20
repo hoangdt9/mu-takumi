@@ -2340,6 +2340,16 @@ void ReceiveMagicList( BYTE *ReceiveBuffer )
 	if(Master_Skill_Bool > -1 && Skill_Bool > -1)
 		CharacterAttribute->Skill[Skill_Bool] = 0;
 
+#if TAKUMI_ANDROID_UI_SKILL_PICKER_CACHE
+	if (g_pSkillList != nullptr)
+	{
+		g_pSkillList->OnMagicListUpdated();
+	}
+#endif
+#if defined(__ANDROID__)
+	TakumiAndroidOnSkillListChanged();
+#endif
+
 	g_ConsoleDebug->Write(MCD_RECEIVE, "0x11 [ReceiveMagicList]");
 
 }

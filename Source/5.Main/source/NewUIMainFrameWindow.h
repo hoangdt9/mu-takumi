@@ -149,6 +149,10 @@ namespace SEASON3B
 		int HitTestAndroidTouchSkillPicker(float uiX, float uiY) const;
 		bool TryToggleSkillPickerAtTouch(float uiX, float uiY);
 
+#if TAKUMI_ANDROID_UI_SKILL_PICKER_CACHE
+		void OnMagicListUpdated();
+#endif
+
 		bool IsSkillListUp();
 
 		static void UI2DEffectCallback(LPVOID pClass, DWORD dwParamA, DWORD dwParamB);

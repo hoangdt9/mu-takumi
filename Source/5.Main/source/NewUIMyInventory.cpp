@@ -28,6 +28,7 @@
 #include "w_CursedTemple.h"
 #include "PortalMgr.h"
 #include "Utilities/Log/TakumiAndroidUiPerf.h"
+#include "Platform/TakumiAndroidInput.h"
 #ifdef CSK_FIX_BLUELUCKYBAG_MOVECOMMAND
 #include "Event.h"
 #endif // CSK_FIX_BLUELUCKYBAG_MOVECOMMAND
@@ -40,6 +41,11 @@
 #include "Util.h"
 #include "CUIController.h"
 #include "MenuCustom.h"
+#include "SkillManager.h"
+#if defined(__ANDROID__)
+#include "Utilities/Log/ErrorReport.h"
+extern CErrorReport g_ErrorReport;
+#endif
 extern int DisplayWinCDepthBox;
 extern int DisplayWin;
 extern int DisplayWinMid;
@@ -2073,6 +2079,49 @@ bool CNewUIMyInventory::TryStackItems(CNewUIInventoryCtrl * targetControl, ITEM 
 	return false;
 }
 
+#if defined(__ANDROID__)
+namespace
+{
+int MapSkillOrbItemTypeToSkillId(const int itemType)
+{
+	switch (itemType)
+	{
+	case ITEM_WING + 7: return 19;
+	case ITEM_WING + 8: return 8;
+	case ITEM_WING + 9: return 13;
+	case ITEM_WING + 10: return 14;
+	case ITEM_WING + 11: return 214;
+	case ITEM_WING + 12: return 41;
+	case ITEM_WING + 13: return 47;
+	case ITEM_WING + 14: return 48;
+	case ITEM_WING + 16: return AT_SKILL_REDUCEDEFENSE;
+	case ITEM_WING + 17: return 52;
+	case ITEM_WING + 18: return 51;
+	case ITEM_WING + 19: return 43;
+	default: return -1;
+	}
+}
+
+bool HasCharacterLearnedSkill(const int skillId)
+{
+	if (CharacterAttribute == nullptr || skillId <= 0)
+	{
+		return false;
+	}
+
+	for (int i = 0; i < MAX_SKILLS; ++i)
+	{
+		if (CharacterAttribute->Skill[i] == skillId)
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+} // namespace
+#endif
+
 bool CNewUIMyInventory::TryConsumeItem(CNewUIInventoryCtrl * targetControl, ITEM * pItem, const int iIndex)
 {
 	if (pItem == nullptr)
@@ -2323,6 +2372,22 @@ bool CNewUIMyInventory::TryConsumeItem(CNewUIInventoryCtrl * targetControl, ITEM
 				Energy >= pItem->RequireEnergy &&
 				Strength >= pItem->RequireStrength)
 			{
+#if defined(__ANDROID__)
+				const int orbSkillId = MapSkillOrbItemTypeToSkillId(pItem->Type);
+				if (orbSkillId > 0 && HasCharacterLearnedSkill(orbSkillId))
+				{
+					if (g_pChatListBox != nullptr)
+					{
+						g_pChatListBox->AddText(
+							"",
+							"Da hoc skill nay roi (kiem tra skill bar)",
+							SEASON3B::TYPE_ERROR_MESSAGE);
+					}
+
+					g_ErrorReport.Write("[InvUse] skill %d already learned (item type=%d)", orbSkillId, pItem->Type);
+					return true;
+				}
+#endif
 				SendRequestUse(iIndex, 0);
 			}
 
@@ -2454,6 +2519,12 @@ bool CNewUIMyInventory::TryConsumeItem(CNewUIInventoryCtrl * targetControl, ITEM
 // TODO: This whole logic (and possibly others) should be moved into a 'controller' class or similar.
 bool CNewUIMyInventory::HandleInventoryActions(CNewUIInventoryCtrl * targetControl)
 {
+#if defined(__ANDROID__)
+	const bool androidInventoryUse = TakumiAndroid_PeekInventoryUsePress();
+#else
+	const bool androidInventoryUse = false;
+#endif
+
 	CNewUIPickedItem* pPickedItem = CNewUIInventoryCtrl::GetPickedItem();
 	if (pPickedItem && IsRelease(VK_LBUTTON))
 	{
@@ -2531,9 +2602,10 @@ bool CNewUIMyInventory::HandleInventoryActions(CNewUIInventoryCtrl * targetContr
 		}
 	}
 
-	else if (g_pMyInventory->GetRepairMode() == REPAIR_MODE_OFF && IsPress(VK_RBUTTON))
+	else if (g_pMyInventory->GetRepairMode() == REPAIR_MODE_OFF
+		&& (IsPress(VK_RBUTTON) || androidInventoryUse))
 	{
-		// handle right click (item usage etc.)
+		// handle right click (item usage etc.) — Android: long-press / double-tap item in bag
 		g_pMyInventory->ResetMouseRButton();
 
 		if (g_pNewUISystem->IsVisible(INTERFACE_STORAGE))
@@ -2559,8 +2631,21 @@ bool CNewUIMyInventory::HandleInventoryActions(CNewUIInventoryCtrl * targetContr
 			ITEM* pItem = targetControl->FindItemAtPt(MouseX, MouseY);
 			if (!pItem)
 			{
+#if defined(__ANDROID__)
+				if (androidInventoryUse)
+				{
+					TakumiAndroid_CancelInventoryUsePress();
+				}
+#endif
 				return false;
 			}
+
+#if defined(__ANDROID__)
+			if (androidInventoryUse)
+			{
+				TakumiAndroid_ConsumeInventoryUsePress();
+			}
+#endif
 
 			const int iIndex = targetControl->GetIndexByItem(pItem);
 			//===Custom Send Item
@@ -2707,6 +2792,40 @@ bool CNewUIMyInventory::InventoryProcess() const
 
 	return HandleInventoryActions(m_pNewInventoryCtrl);
 }
+
+#if defined(__ANDROID__)
+bool CNewUIMyInventory::ProcessAndroidInventoryUsePress() const
+{
+	return InventoryProcess();
+}
+
+bool CNewUIMyInventory::AndroidTryUseItemUnderCursor() const
+{
+	if (m_pNewInventoryCtrl == nullptr)
+	{
+		return false;
+	}
+
+	if (CheckMouseIn(m_Pos.x, m_Pos.y, INVENTORY_WIDTH, INVENTORY_HEIGHT) == false)
+	{
+		return false;
+	}
+
+	ITEM* pItem = m_pNewInventoryCtrl->FindItemAtPt(MouseX, MouseY);
+	if (pItem == nullptr)
+	{
+		return false;
+	}
+
+	const int iIndex = m_pNewInventoryCtrl->GetIndexByItem(pItem);
+	if (iIndex < 0)
+	{
+		return false;
+	}
+
+	return TryConsumeItem(m_pNewInventoryCtrl, pItem, iIndex);
+}
+#endif
 
 bool CNewUIMyInventory::BtnProcess()
 {

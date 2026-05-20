@@ -103,6 +103,8 @@ void TakumiNotifyAndroidTerrainLoaded(int map);
 void TakumiProcessAndroidPendingLoadWorld();
 /// Reset adaptive perf penalties for a few seconds after terrain/world load.
 void TakumiAndroidOnWorldJoinLoaded();
+/// Refresh skill picker + virtual HUD rings after F3 0x11 magic list changes.
+void TakumiAndroidOnSkillListChanged();
 /// Skip monster PathFinding2 right after deferred LoadWorld (join burst C2 0x13).
 bool TakumiShouldSkipMonsterViewportPathfinding();
 void TakumiClearMonsterViewportPathfindingSkip();

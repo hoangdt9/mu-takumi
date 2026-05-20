@@ -41,7 +41,8 @@
 #endif
 #define TAKUMI_PACKETINFO_COMPAT 1
 struct PacketInfo { std::unique_ptr<BYTE[]> ReceiveBuffer; int32_t Size; };
-static int g_MaxMessagePerCycle = 0;
+// Shared with android_main.cpp SetMaxMessagePerCycle / adaptive perf.
+extern int g_MaxMessagePerCycle;
 static void ProcessPacketCallback(const PacketInfo*) {}
 
 #ifndef MSG_NOSIGNAL
@@ -1462,8 +1463,10 @@ MU_EXPORT void SendRageAttackRangeRequest(int32_t handle, uint16_t skillId, uint
     SendGameEncrypted(handle, packet, sizeof(packet));
 }
 
-MU_EXPORT void SendPing(int32_t /*handle*/, uint32_t /*tickCount*/, uint16_t /*attackSpeed*/)
+MU_EXPORT void SendPing(int32_t handle, uint32_t /*tickCount*/, uint16_t /*attackSpeed*/)
 {
+    const uint8_t packet[] = { 0xC1, 0x03, 0x71 };
+    SendGameEncrypted(handle, packet, sizeof(packet));
 }
 
 MU_EXPORT void SendChecksumResponse(int32_t /*handle*/, uint32_t /*checksum*/)
@@ -1734,8 +1737,10 @@ MU_EXPORT void SendClientReadyAfterMapChange(int32_t handle)
     SendGameEncrypted(handle, packet, sizeof(packet));
 }
 
-MU_EXPORT void SendPingResponse(int32_t /*handle*/)
+MU_EXPORT void SendPingResponse(int32_t handle)
 {
+    const uint8_t packet[] = { 0xC1, 0x03, 0x71 };
+    SendGameEncrypted(handle, packet, sizeof(packet));
 }
 
 MU_EXPORT void SendGuildListRequest(int32_t /*handle*/)

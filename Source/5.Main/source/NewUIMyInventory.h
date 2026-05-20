@@ -127,6 +127,12 @@ namespace SEASON3B
 #endif //LJH_ADD_SYSTEM_OF_EQUIPPING_ITEM_FROM_INVENTORY
 
 		bool UpdateMouseEvent();
+#if defined(__ANDROID__)
+		/// Run bag RMB / use-item handling when Android synthesizes right-click.
+		bool ProcessAndroidInventoryUsePress() const;
+		/// Use book/gem under cursor (long-press / double-tap); bypasses VK_RBUTTON path.
+		bool AndroidTryUseItemUnderCursor() const;
+#endif
 		bool UpdateKeyEvent();
 		bool Update();
 		bool Render();

@@ -68,6 +68,8 @@ void MU_AndroidSetPreferLoopbackTcp(bool prefer);
 bool MU_AndroidIsVirtualJoystickDrivingMouse();
 /** True while the player is steering (joystick) — suppress auto-target / proximity combat. */
 bool MU_AndroidShouldSuppressCombatTargeting();
+/** Per-frame cap for ProtocolCompiler packet drain (see SetMaxMessagePerCycle). */
+extern int g_MaxMessagePerCycle;
 #endif
 
 #endif // defined(__ANDROID__) || defined(MU_IOS)

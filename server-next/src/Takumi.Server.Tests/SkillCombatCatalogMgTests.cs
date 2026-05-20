@@ -1,0 +1,48 @@
+using Takumi.Server.Protocol;
+using Xunit;
+
+namespace Takumi.Server.Tests;
+
+public sealed class SkillCombatCatalogMgTests
+{
+    [Theory]
+    [InlineData(9)]
+    [InlineData(8)]
+    [InlineData(55)]
+    [InlineData(56)]
+    [InlineData(61)]
+    [InlineData(236)]
+    [InlineData(237)]
+    [InlineData(238)]
+    public void Mg_continue_skills_recognized(ushort skillId)
+    {
+        Assert.True(SkillCombatCatalog.IsAreaContinueSkill(skillId));
+        Assert.True(SkillCombatCatalog.UsesMagicDamage(skillId));
+        Assert.True(SkillCombatCatalog.GetAreaContinueRange(skillId) >= 4);
+    }
+
+    [Theory]
+    [InlineData(3)]
+    [InlineData(4)]
+    [InlineData(5)]
+    public void Targeted_magic_skills(ushort skillId)
+    {
+        Assert.True(SkillCombatCatalog.IsTargetedMagicSkill(skillId));
+        Assert.False(SkillCombatCatalog.IsAreaContinueSkill(skillId));
+        Assert.True(SkillCombatCatalog.GetTargetedSkillRange(skillId) >= 6);
+    }
+
+    [Fact]
+    public void Mg_class_index()
+    {
+        Assert.True(SkillCombatCatalog.IsMagicGladiator(0x60)); // MG wire class 96 / 0x60 typical
+    }
+
+    [Fact]
+    public void Mg_magic_preview_nonzero()
+    {
+        var sheet = CharacterSheetStats.FromInts(100, 100, 100, 500, 0, 0);
+        var preview = CharacterCombatPreview602.FromSheet(0x60, 100, sheet);
+        Assert.True(preview.MagicDamageMax > 0);
+    }
+}

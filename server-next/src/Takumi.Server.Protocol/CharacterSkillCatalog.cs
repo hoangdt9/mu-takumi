@@ -33,13 +33,18 @@ public static class CharacterSkillCatalog
         1, 3, 24, 25, 26, 27, 28, 52,
     ];
 
+    /// <summary>MG/DM QA + combat rollout (<c>SkillCombatCatalog</c> / <c>SKILL-MATRIX.csv</c>).</summary>
     static readonly ushort[] MagicGladiatorSkillTypes =
     [
         1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 17,
         18, 19, 20, 21, 22, 23,
         41, 47,
-        55, 56, 57, 73,
-        236, 237,
+        48, 49, 50, 51, 52,
+        55, 56, 57,
+        61, 62, 63, 64, 65,
+        73,
+        236, 237, 238,
+        385, 482, 487, 490, 493,
     ];
 
     static readonly ushort[] DarkLordSkillTypes =

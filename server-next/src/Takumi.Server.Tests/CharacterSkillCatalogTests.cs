@@ -13,6 +13,16 @@ public sealed class CharacterSkillCatalogTests
     }
 
     [Fact]
+    public void MagicGladiator_defaults_include_combat_rollout_skills()
+    {
+        var skills = CharacterSkillCatalog.GetDefaultEntries(96);
+        Assert.Contains(skills, s => s.Type == 61);
+        Assert.Contains(skills, s => s.Type == 238);
+        Assert.Contains(skills, s => s.Type == 490);
+        Assert.Equal(44, skills.Count);
+    }
+
+    [Fact]
     public void BuildForServerClass_elf_sends_skills()
     {
         var pkt = MagicListWire602.BuildForServerClass(64);

@@ -6,6 +6,46 @@ namespace Takumi.Server.Tests;
 public sealed class MonsterCombatWire602Tests
 {
     [Fact]
+    public void Magic_continue_C1_1E_evil_spirit_parsed()
+    {
+        var p = new byte[]
+        {
+            0xC1, 0x0C, 0x1E,
+            0x00, 0x09,
+            0x37, 0x21,
+            0x80,
+            0x00, 0x00,
+            0xFF, 0xFF,
+            0x01,
+        };
+        Assert.True(ClientHitPackets602.TryFindMagicContinue(p, out _, out var skill, out var x, out var y, out _, out var key));
+        Assert.Equal(9, skill);
+        Assert.Equal(0x37, x);
+        Assert.Equal(0x21, y);
+        Assert.Equal(0xFFFF, key);
+    }
+
+    [Fact]
+    public void Magic_continue_C3_1E_evil_spirit_parsed()
+    {
+        var p = new byte[]
+        {
+            0xC3, 0x0C, 0x1E,
+            0x00, 0x09,
+            0x55, 0x25,
+            0x40,
+            0x00, 0x00,
+            0xFF, 0xFF,
+            0x02,
+        };
+        Assert.True(ClientHitPackets602.TryFindMagicContinue(p, out _, out var skill, out var x, out var y, out _, out var key));
+        Assert.Equal(9, skill);
+        Assert.Equal(0x55, x);
+        Assert.Equal(0x25, y);
+        Assert.Equal(0xFFFF, key);
+    }
+
+    [Fact]
     public void Hit_request_C1_11_parsed()
     {
         var p = new byte[] { 0xC1, 0x07, 0x11, 0x2E, 0xE1, 0x02, 0x04 };

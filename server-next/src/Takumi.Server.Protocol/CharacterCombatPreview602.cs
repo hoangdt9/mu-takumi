@@ -71,6 +71,7 @@ public static class CharacterCombatPreview602
         cls switch
         {
             0 => ((uint)Math.Max(1, energy / 9), (uint)Math.Max(1, energy / 4)), // DW
+            3 => ((uint)Math.Max(1, energy / 9), (uint)Math.Max(1, energy / 4)), // MG — wizardry from Energy
             5 => ((uint)Math.Max(1, energy / 9), (uint)Math.Max(1, energy / 4)), // SU
             _ => (0, 0),
         };

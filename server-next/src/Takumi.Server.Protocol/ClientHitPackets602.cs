@@ -5,6 +5,7 @@ public static class ClientHitPackets602
 {
     public const byte HitHeadCode = 0x11;
     public const byte SkillHeadCode = 0x19;
+    public const byte MagicContinueHeadCode = 0x1E;
 
     /// <summary><c>C1 07 11 targetId[BE] attackAnim dir</c>.</summary>
     public static bool TryFindHitRequest(
@@ -115,6 +116,46 @@ public static class ClientHitPackets602
                 targetIds.Add(ReadUInt16Be(packet, off));
             }
 
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <summary><c>C1/C3 … 0x1E skill[BE] x y angle dest tpos targetKey[BE] skillSerial</c> (Evil Spirit / Storm channel; client sends SM-wrapped <c>C3</c>).</summary>
+    public static bool TryFindMagicContinue(
+        ReadOnlySpan<byte> packet,
+        out int frameOffset,
+        out ushort skillId,
+        out byte x,
+        out byte y,
+        out byte angle,
+        out ushort targetKey)
+    {
+        frameOffset = -1;
+        skillId = 0;
+        x = y = angle = 0;
+        targetKey = 0;
+        for (var i = 0; i <= packet.Length - 12; i++)
+        {
+            var kind = packet[i];
+            if (kind is not (0xC1 or 0xC3) || packet[i + 2] != MagicContinueHeadCode)
+            {
+                continue;
+            }
+
+            var len = packet[i + 1];
+            if (len < 12 || i + len > packet.Length)
+            {
+                continue;
+            }
+
+            frameOffset = i;
+            skillId = ReadUInt16Be(packet, i + 3);
+            x = packet[i + 5];
+            y = packet[i + 6];
+            angle = packet[i + 7];
+            targetKey = ReadUInt16Be(packet, i + 10);
             return true;
         }
 

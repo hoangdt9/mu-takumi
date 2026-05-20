@@ -16,6 +16,8 @@
 
 #include "stdafx.h"
 #include "MobilePlatform.h"
+#include "Platform/MobileHud.h"
+#include "Platform/MobileChatHud.h"
 #include "GameConfigConstants.h"
 #include "Platform/TakumiAndroidHud.h"
 #ifdef min
@@ -597,7 +599,20 @@ void SetPlayerAttack(CHARACTER* c);
 
 namespace
 {
-constexpr bool kUseLegacyMainHud = true;
+bool IsLegacyMainHud()
+{
+    return MU_MobileIsLegacyMainHudEnabled();
+}
+
+bool ShowVirtualAttackButton()
+{
+    return !IsLegacyMainHud();
+}
+
+bool ShowVirtualSkillButtons()
+{
+    return !IsLegacyMainHud();
+}
 constexpr int kVirtualAttackButton = 0;
 constexpr int kVirtualSkillButtonBase = 1;
 constexpr int kVirtualAttackSkillSlot = 0;
@@ -652,8 +667,10 @@ constexpr float kVirtualJoystickIdleKnobAlpha = 0.24f;
 constexpr float kVirtualJoystickActiveRingAlpha = 0.70f;
 constexpr float kVirtualJoystickActiveKnobAlpha = 0.86f;
 constexpr SDL_FingerID kPcMouseJoystickFingerId = static_cast<SDL_FingerID>(-2);
-constexpr bool kShowVirtualAttackButton = !kUseLegacyMainHud;
-constexpr bool kShowVirtualSkillButtons = !kUseLegacyMainHud;
+constexpr float kMobileHudToggleX = 8.0f;
+constexpr float kMobileHudToggleY = 55.0f;
+constexpr float kMobileHudToggleW = 52.0f;
+constexpr float kMobileHudToggleH = 22.0f;
 
 struct VirtualButtonLayout
 {
@@ -792,6 +809,14 @@ AndroidUiRect GetMapButtonRect()
 {
     return GetTopRightStackButtonRect(1);
 }
+
+AndroidUiRect GetMobileHudToggleButtonRect()
+{
+    return { kMobileHudToggleX, kMobileHudToggleY, kMobileHudToggleW, kMobileHudToggleH };
+}
+
+bool HitTestMobileHudToggleButton(float uiX, float uiY);
+void DrawMobileHudModeToggleButton();
 
 AndroidUiRect GetCompactMiniMapRect()
 {
@@ -1022,6 +1047,12 @@ void SyncVirtualHudChatBox()
         return;
     }
 
+    if (MU_MobileIsModernMobileHudEnabled())
+    {
+        MU_MobileChatHudSyncLayout();
+        return;
+    }
+
     g_pChatInputBox->SetWndPos(
         static_cast<int>(std::lround(kVirtualHudChatBoxX)),
         static_cast<int>(std::lround(kVirtualHudChatBoxY)));
@@ -1036,16 +1067,23 @@ void SyncVirtualHudChatBox()
         return;
     }
 
-    // Keep compact chat panel visible in HUD without stealing gameplay focus.
     g_pNewUISystem->Show(SEASON3B::INTERFACE_CHATINPUTBOX);
     SetFocus(g_hWnd ? g_hWnd : reinterpret_cast<HWND>(0x1));
 }
 
 bool HitTestVirtualHudChatBox(float uiX, float uiY)
 {
-    if (SceneFlag != MAIN_SCENE
-        || g_pNewUISystem == nullptr
-        || !g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_CHATINPUTBOX))
+    if (SceneFlag != MAIN_SCENE || g_pNewUISystem == nullptr)
+    {
+        return false;
+    }
+
+    if (MU_MobileIsModernMobileHudEnabled())
+    {
+        return MU_MobileHitTestChatPanel(uiX, uiY);
+    }
+
+    if (!g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_CHATINPUTBOX))
     {
         return false;
     }
@@ -1088,6 +1126,17 @@ bool FocusVirtualChatInputAt(float uiX, float uiY)
         return true;
     }
 
+    if (MU_MobileIsModernMobileHudEnabled())
+    {
+        if (MU_MobileHitTestChatInputBar(uiX, uiY) && g_pChatInputBox->m_pChatInputBox != nullptr)
+        {
+            g_pChatInputBox->m_pChatInputBox->GiveFocus(FALSE);
+            return true;
+        }
+
+        return false;
+    }
+
     if (HitTestVirtualHudChatBox(uiX, uiY) && g_pChatInputBox->m_pChatInputBox != nullptr)
     {
         g_pChatInputBox->m_pChatInputBox->GiveFocus(FALSE);
@@ -1109,10 +1158,12 @@ void ToggleVirtualChatInputBox()
     if (!isVisible)
     {
         g_pNewUISystem->Show(SEASON3B::INTERFACE_CHATINPUTBOX);
+#if !defined(__ANDROID__) && !defined(MU_IOS)
         if (g_pChatInputBox->m_pChatInputBox != nullptr)
         {
             g_pChatInputBox->m_pChatInputBox->GiveFocus(TRUE);
         }
+#endif
         return;
     }
 
@@ -1755,7 +1806,7 @@ void ClearVirtualPickerTouch()
 
 bool HandleVirtualPickerFingerDown(const SDL_TouchFingerEvent& touch)
 {
-    if (kUseLegacyMainHud)
+    if (IsLegacyMainHud())
     {
         return false;
     }
@@ -1782,7 +1833,7 @@ bool HandleVirtualPickerFingerDown(const SDL_TouchFingerEvent& touch)
 
 bool HandleVirtualPickerFingerMotion(const SDL_TouchFingerEvent& touch)
 {
-    if (kUseLegacyMainHud)
+    if (IsLegacyMainHud())
     {
         return false;
     }
@@ -1792,7 +1843,7 @@ bool HandleVirtualPickerFingerMotion(const SDL_TouchFingerEvent& touch)
 
 bool HandleVirtualPickerFingerUp(const SDL_TouchFingerEvent& touch)
 {
-    if (kUseLegacyMainHud)
+    if (IsLegacyMainHud())
     {
         return false;
     }
@@ -2340,6 +2391,23 @@ bool HandleVirtualTopControlTap(float uiX, float uiY)
 {
     const uint32_t nowMs = MU_MobileGetTicks();
 
+    if (HitTestMobileHudToggleButton(uiX, uiY))
+    {
+        MU_MobileToggleMainHudMode();
+        if (IsLegacyMainHud())
+        {
+            MU_MobileChatHudRestoreLegacyLayout();
+        }
+        else
+        {
+            MU_MobileChatHudSyncLayout();
+        }
+        LOGI(
+            "VirtualPad: HUD mode -> %s",
+            IsLegacyMainHud() ? "classic" : "mobile");
+        return true;
+    }
+
     if (HitTestMiniMapToggleButton(uiX, uiY))
     {
         if ((nowMs - g_virtualLastMiniMapTapMs) >= kVirtualMiniMapButtonCooldownMs)
@@ -2388,7 +2456,7 @@ bool HandleVirtualTopControlTap(float uiX, float uiY)
         }
     }
 
-    if (kUseLegacyMainHud)
+    if (IsLegacyMainHud())
     {
         return false;
     }
@@ -3269,7 +3337,7 @@ void TriggerVirtualCombat(bool useNormalAttack, int skillSlot)
 
 bool AndroidTriggerNormalAttackButtonInternal()
 {
-    if (!kShowVirtualAttackButton)
+    if (!ShowVirtualAttackButton())
     {
         return false;
     }
@@ -3362,7 +3430,7 @@ bool AndroidTriggerHotKeySkillTapInternal(int hotKeySkillIndex)
 
 int HitTestVirtualAttackButton(float uiX, float uiY)
 {
-    if (!kShowVirtualAttackButton || !IsVirtualPadAvailable())
+    if (!ShowVirtualAttackButton() || !IsVirtualPadAvailable())
     {
         return -1;
     }
@@ -3378,7 +3446,7 @@ int HitTestVirtualAttackButton(float uiX, float uiY)
 
 int HitTestVirtualSkillButton(float uiX, float uiY)
 {
-    if (!kShowVirtualSkillButtons || !IsVirtualPadAvailable())
+    if (!ShowVirtualSkillButtons() || !IsVirtualPadAvailable())
     {
         return -1;
     }
@@ -3408,7 +3476,8 @@ bool HandleVirtualFingerDown(const SDL_TouchFingerEvent& touch)
     // Chat input must receive tap priority so Android IME pops up reliably.
     if (g_pNewUISystem != nullptr
         && g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_CHATINPUTBOX)
-        && g_pChatInputBox != nullptr)
+        && g_pChatInputBox != nullptr
+        && (!MU_MobileIsModernMobileHudEnabled() || MU_MobileHitTestChatInputBar(uiX, uiY)))
     {
         const bool focused = FocusVirtualChatInputAt(uiX, uiY);
 #if !defined(MU_ANDROID_DISABLE_LOG)
@@ -3432,7 +3501,7 @@ bool HandleVirtualFingerDown(const SDL_TouchFingerEvent& touch)
     }
 
 #if defined(__ANDROID__) || defined(MU_IOS)
-    if (kUseLegacyMainHud
+    if (IsLegacyMainHud()
         && g_pSkillList != nullptr
         && g_pSkillList->TryToggleSkillPickerAtTouch(uiX, uiY))
     {
@@ -3463,9 +3532,34 @@ bool HandleVirtualFingerDown(const SDL_TouchFingerEvent& touch)
         return true;
     }
 
-    if (kUseLegacyMainHud)
+    if (MU_MobileIsModernMobileHudEnabled()
+        && MU_MobileHandleChatUiFingerDownAt(uiX, uiY, touch.fingerId))
+    {
+        return true;
+    }
+
+    if (IsLegacyMainHud())
     {
         return HandleVirtualJoystickFingerDown(touch);
+    }
+
+    const int utilityButton = HitTestVirtualUtilityButton(uiX, uiY);
+    if (utilityButton >= 0 && utilityButton != kVirtualUtilityButtonChat)
+    {
+        const uint32_t nowMs = MU_MobileGetTicks();
+        if ((nowMs - g_virtualLastUtilityTapMs) >= kVirtualUtilityButtonCooldownMs)
+        {
+            g_virtualLastUtilityTapMs = nowMs;
+            ToggleVirtualUtilityButton(utilityButton);
+        }
+        return true;
+    }
+
+    const int consumableSlot = HitTestVirtualConsumableSlot(uiX, uiY);
+    if (consumableSlot >= 0)
+    {
+        UseVirtualConsumableSlot(consumableSlot);
+        return true;
     }
 
     if (HitTestVirtualAttackButton(uiX, uiY) == kVirtualAttackButton)
@@ -3529,7 +3623,16 @@ bool HandleVirtualFingerDown(const SDL_TouchFingerEvent& touch)
 
 bool HandleVirtualFingerMotion(const SDL_TouchFingerEvent& touch)
 {
-    if (kUseLegacyMainHud)
+    float uiX = 0.0f;
+    float uiY = 0.0f;
+    TouchToVirtualUi(touch, uiX, uiY);
+
+    if (MU_MobileHandleChatUiFingerMotionAt(uiX, uiY, touch.fingerId))
+    {
+        return true;
+    }
+
+    if (IsLegacyMainHud())
     {
         return HandleVirtualJoystickFingerMotion(touch);
     }
@@ -3544,7 +3647,12 @@ bool HandleVirtualFingerMotion(const SDL_TouchFingerEvent& touch)
 
 bool HandleVirtualFingerUp(const SDL_TouchFingerEvent& touch)
 {
-    if (kUseLegacyMainHud)
+    if (MU_MobileHandleChatUiFingerUp(touch.fingerId))
+    {
+        return true;
+    }
+
+    if (IsLegacyMainHud())
     {
         return HandleVirtualJoystickFingerUp(touch);
     }
@@ -3583,7 +3691,7 @@ void UpdateVirtualPadHolds()
         return;
     }
 
-    if (kUseLegacyMainHud)
+    if (IsLegacyMainHud())
     {
         for (int i = 0; i < static_cast<int>(g_activeVirtualTouches.size()); ++i)
         {
@@ -4272,6 +4380,77 @@ void DrawVirtualZoomButtons()
     EndBitmap();
 }
 
+void DrawMobileChatPanelChrome()
+{
+}
+
+bool HitTestMobileHudToggleButton(float uiX, float uiY)
+{
+    if (!IsVirtualPadAvailable())
+    {
+        return false;
+    }
+
+    const AndroidUiRect rect = GetMobileHudToggleButtonRect();
+    return uiX >= rect.x
+        && uiX <= (rect.x + rect.w)
+        && uiY >= rect.y
+        && uiY <= (rect.y + rect.h);
+}
+
+void DrawMobileHudModeToggleButton()
+{
+    if (!IsVirtualPadAvailable())
+    {
+        return;
+    }
+
+    BeginBitmap();
+    EnableAlphaBlend();
+
+    const AndroidUiRect rect = GetMobileHudToggleButtonRect();
+    const bool legacy = IsLegacyMainHud();
+    const float x = UiToScreenX(rect.x);
+    const float yTop = UiToScreenY(rect.y);
+    const float w = UiToScreenX(rect.w);
+    const float h = UiToScreenY(rect.h);
+    const float y = static_cast<float>(WindowHeight) - yTop - h;
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glColor4f(legacy ? 0.18f : 0.10f, legacy ? 0.10f : 0.22f, legacy ? 0.10f : 0.34f, 0.88f);
+    glBegin(GL_TRIANGLE_FAN);
+    glVertex2f(x, y);
+    glVertex2f(x + w, y);
+    glVertex2f(x + w, y + h);
+    glVertex2f(x, y + h);
+    glEnd();
+
+    glColor4f(1.0f, 1.0f, 1.0f, 0.92f);
+    glBegin(GL_LINE_LOOP);
+    glVertex2f(x + 0.5f, y + 0.5f);
+    glVertex2f(x + w - 0.5f, y + 0.5f);
+    glVertex2f(x + w - 0.5f, y + h - 0.5f);
+    glVertex2f(x + 0.5f, y + h - 0.5f);
+    glEnd();
+
+    if (g_hFont != nullptr)
+    {
+        g_pRenderText->SetFont(g_hFont);
+        g_pRenderText->SetBgColor(0);
+        g_pRenderText->SetTextColor(255, 255, 255, 255);
+        g_pRenderText->RenderText(
+            static_cast<int>(rect.x + rect.w * 0.5f),
+            static_cast<int>(rect.y + 4.0f),
+            legacy ? _T("UI: Classic") : _T("UI: Mobile"),
+            0,
+            0,
+            RT3_WRITE_CENTER);
+    }
+
+    EndBitmap();
+}
+
 // Helper: draw a solid filled axis-aligned rectangle in screen space (GL y-up).
 static void DrawFilledRect(float x, float y, float w, float h)
 {
@@ -4445,11 +4624,21 @@ void DrawVirtualNumber(float uiCenterX, float uiTopY, int number,
     }
 }
 
+void HideLegacyWindowMenuForModernHud()
+{
+    if (!MU_MobileIsModernMobileHudEnabled() || g_pNewUISystem == nullptr)
+    {
+        return;
+    }
+
+    if (g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_WINDOW_MENU))
+    {
+        g_pNewUISystem->Hide(SEASON3B::INTERFACE_WINDOW_MENU);
+    }
+}
+
 void RenderVirtualPad()
 {
-    // Keep only the virtual joystick overlay on mobile.
-    // The rest of the custom Android HUD is intentionally disabled so the
-    // original MU UI can render and handle input again.
     if (!IsVirtualPadAvailable())
     {
         static uint32_t s_lastUnavailableLog = 0;
@@ -4481,8 +4670,17 @@ void RenderVirtualPad()
     EndBitmap();
 
     DrawVirtualZoomButtons();
+    DrawMobileHudModeToggleButton();
 
-    if (kUseLegacyMainHud && TakumiAndroid_UsePngHudOverlay())
+    HideLegacyWindowMenuForModernHud();
+
+    if (MU_MobileIsModernMobileHudEnabled())
+    {
+        MU_MobileChatHudSyncLayout();
+        DrawMobileChatPanelChrome();
+    }
+
+    if (IsLegacyMainHud() && TakumiAndroid_UsePngHudOverlay())
     {
         BeginBitmap();
         EnsureUITextures();
@@ -4521,12 +4719,12 @@ void RenderVirtualPad()
         return;
     }
 
-    if (kUseLegacyMainHud)
+    if (IsLegacyMainHud())
     {
         return;
     }
 
-    if (kShowVirtualAttackButton)
+    if (ShowVirtualAttackButton())
     {
         BeginBitmap();
         EnsureUITextures();
@@ -4578,7 +4776,7 @@ void RenderVirtualPad()
         g_pRenderText->RenderText(attackLabelX, attackLabelY + 12, attackHasSkill ? _T("SLOT") : _T("NORMAL"), 0, 0, RT3_WRITE_CENTER);
     }
 
-    if (kShowVirtualSkillButtons)
+    if (ShowVirtualSkillButtons())
     {
         LoadVirtualSkillSlots();
         const bool assignModeActive = IsVirtualAssignModeActive()
@@ -4625,51 +4823,10 @@ void RenderVirtualPad()
         }
     }
 
-#if 0
-    // Disabled: custom Android HUD. We keep this code commented for now so it
-    // can be restored later if needed, but the active mobile UI should remain
-    // the original MU interface plus joystick movement only.
-
-    for (int i = 0; i < static_cast<int>(kVirtualButtons.size()); ++i)
+    // Top-right utility buttons (inventory / character / settings) — PNG icons.
     {
-        const bool isAttack = (i == kVirtualAttackButton);
-        const bool isAssignGlow = assignModeActive && !isAttack;
-
-        if (isAssignGlow)
-        {
-            // Skill button in assign-mode: keep a soft fill under the decorative ring
-            // so the user still gets clear feedback.
-            const float fillA = 0.68f + 0.08f * assignPulse;
-            DrawVirtualCircle(kVirtualButtons[i].cx, kVirtualButtons[i].cy,
-                kVirtualButtons[i].radius,
-                0.18f, 0.55f, 0.80f, fillA, true);
-        }
-        else
-        {
-            // Decorative ring is drawn in the skill loop so there is no extra GL circle here.
-        }
-    }
-
-    // â”€â”€ Top-right utility buttons (Inventory / Character / Settings) â€” PNG icons â”€â”€
-    {
-        const VirtualButtonLayout& attackButton = kVirtualButtons[kVirtualAttackButton];
-        const float attackRingSize = attackButton.radius * 2.0f + 34.0f;
-        const float attackIconSize = attackButton.radius * 1.48f + 5.0f;
-        DrawIconButton(
-            attackButton.cx - attackRingSize * 0.5f,
-            attackButton.cy - attackRingSize * 0.5f,
-            attackRingSize,
-            attackRingSize,
-            g_uiTex_skillline,
-            IsVirtualButtonPressed(kVirtualAttackButton) ? 1.0f : 0.98f);
-        DrawIconButton(
-            attackButton.cx - attackIconSize * 0.5f,
-            attackButton.cy - attackIconSize * 0.5f,
-            attackIconSize,
-            attackIconSize,
-            g_uiTex_attack,
-            IsVirtualButtonPressed(kVirtualAttackButton) ? 1.0f : 0.96f);
-
+        BeginBitmap();
+        EnsureUITextures();
         const UITexture* kUtilIcons[kVirtualUtilityButtonCount] = {
             &g_uiTex_balo,
             &g_uiTex_character,
@@ -4683,8 +4840,10 @@ void RenderVirtualPad()
                 continue;
             }
             const AndroidUiRect rect = GetVirtualUtilityButtonRect(i);
-            DrawIconButton(rect.x, rect.y, rect.w, rect.h, *kUtilIcons[i], 1.0f);
+            const float alpha = IsVirtualUtilityButtonActive(i) ? 1.0f : 0.92f;
+            DrawIconButton(rect.x, rect.y, rect.w, rect.h, *kUtilIcons[i], alpha);
         }
+        EndBitmap();
     }
 
     // â”€â”€ Bottom HUD â€” HP/MP/AG/EXP (1/3 width, solid, numbers on bar) â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -4763,182 +4922,27 @@ void RenderVirtualPad()
         glBlendFunc(GL_ONE, GL_ONE);
     }
 
-    // Top utility controls (map/minimap/zoom) must use regular alpha blending.
-    // Additive blend can make them appear "missing" on bright backgrounds.
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    // â”€â”€ Map list button (top-left red square, in game area) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    BeginBitmap();
+    EnsureUITextures();
     DrawVirtualMapButton();
 
     if (IsMiniMapToggleAvailable())
     {
         const AndroidUiRect rect = GetMiniMapButtonRect();
-        // minimap.png icon â€” full alpha always
         DrawIconButton(rect.x, rect.y, rect.w, rect.h, g_uiTex_minimap, 1.0f);
     }
 
-    DrawVirtualChatUtilityButton();
-
-    // â”€â”€ ZOOM -/+ buttons (top center) â”€â”€
+    if (!MU_MobileIsModernMobileHudEnabled())
     {
-        auto drawZoomBtn = [](float uiLeft, float uiTop, float uiW, float uiH,
-                              const char* label, bool isMinus)
-        {
-            const float x = UiToScreenX(uiLeft);
-            const float yTop = UiToScreenY(uiTop);
-            const float w = UiToScreenX(uiW);
-            const float h = UiToScreenY(uiH);
-            const float y = static_cast<float>(WindowHeight) - yTop - h;
-
-            // Background
-            glColor4f(0.10f, 0.10f, 0.10f, 0.82f);
-            glBegin(GL_TRIANGLE_FAN);
-            glVertex2f(x, y);
-            glVertex2f(x + w, y);
-            glVertex2f(x + w, y + h);
-            glVertex2f(x, y + h);
-            glEnd();
-
-            // Border
-            glColor4f(1.0f, 1.0f, 1.0f, 0.96f);
-            glBegin(GL_LINE_LOOP);
-            glVertex2f(x + 0.5f, y + 0.5f);
-            glVertex2f(x + w - 0.5f, y + 0.5f);
-            glVertex2f(x + w - 0.5f, y + h - 0.5f);
-            glVertex2f(x + 0.5f, y + h - 0.5f);
-            glEnd();
-
-            // Symbol: horizontal line (minus) + vertical line (plus)
-            const float cx = x + w * 0.5f;
-            const float cy = y + h * 0.5f;
-            const float armLen = std::min(w, h) * 0.25f;
-            glColor4f(1.0f, 1.0f, 1.0f, 0.95f);
-            glBegin(GL_LINES);
-            glVertex2f(cx - armLen, cy);
-            glVertex2f(cx + armLen, cy);
-            if (!isMinus)
-            {
-                glVertex2f(cx, cy - armLen);
-                glVertex2f(cx, cy + armLen);
-            }
-            glEnd();
-        };
-
-        drawZoomBtn(kZoomMinusX, kZoomButtonY, kZoomButtonW, kZoomButtonH, "ZOOM-", true);
-        drawZoomBtn(kZoomPlusX,  kZoomButtonY, kZoomButtonW, kZoomButtonH, "ZOOM+", false);
+        DrawVirtualChatUtilityButton();
     }
+    EndBitmap();
 
-    // â”€â”€ Current skill box (legacy-like UI element on custom Android HUD) â”€â”€
-    if (kShowVirtualCurrentSkillBox)
-    {
-        const bool pickerOpen = (g_pSkillList != nullptr) && g_pSkillList->IsSkillPickerOpen();
-        const GLuint frameImage = pickerOpen
-            ? SEASON3B::CNewUISkillList::IMAGE_SKILLBOX_USE
-            : SEASON3B::CNewUISkillList::IMAGE_SKILLBOX;
-
-        ConfigureVirtualSkillIconNoBlendState();
-        SEASON3B::RenderImage(
-            frameImage,
-            kVirtualCurrentSkillBoxX,
-            kVirtualCurrentSkillBoxY,
-            kVirtualCurrentSkillBoxW,
-            kVirtualCurrentSkillBoxH);
-
-        if (g_pSkillList != nullptr && Hero != nullptr)
-        {
-            g_pSkillList->RenderSkillIcon(
-                static_cast<int>(Hero->CurrentSkill),
-                kVirtualCurrentSkillBoxX + 6.0f,
-                kVirtualCurrentSkillBoxY + 6.0f,
-                20.0f,
-                28.0f);
-        }
-    }
-
-    // Check stencil availability once per frame (cached in static to avoid repeated queries).
-    static GLint s_cachedStencilBits = -1;
-    if (s_cachedStencilBits < 0)
-        glGetIntegerv(GL_STENCIL_BITS, &s_cachedStencilBits);
-    const bool kUseStencilClip = (s_cachedStencilBits > 0);
-    if (kUseStencilClip)
-    {
-        GL_FlushPending();
-        glClearStencil(0);
-        glStencilMask(0xFF);
-        glClear(GL_STENCIL_BUFFER_BIT);
-    }
-
-    if (kShowVirtualSkillButtons)
-    {
-        for (int slot = 0; slot < kVirtualSkillSlotCount; ++slot)
-        {
-            const VirtualButtonLayout& button = kVirtualButtons[kVirtualSkillButtonBase + slot];
-            const float skillRingSize = button.radius * 2.0f + 24.0f;
-            const float skillClipRadius = std::max(skillRingSize * 0.30f, 1.0f);
-            const float skillIconSize = std::max(skillClipRadius * 1.28f - 1.0f, 1.0f);
-            const int renderSkillIndex = g_virtualSkillSlots[slot];
-
-            DrawIconButton(
-                button.cx - skillRingSize * 0.5f,
-                button.cy - skillRingSize * 0.5f,
-                skillRingSize,
-                skillRingSize,
-                g_uiTex_skillline,
-                IsVirtualButtonPressed(kVirtualSkillButtonBase + slot) ? 1.0f : 0.98f);
-
-            const bool hasSkillIcon =
-                (g_pSkillList != nullptr) && IsAssignableVirtualSkillIndex(renderSkillIndex);
-
-            if (hasSkillIcon && kUseStencilClip)
-            {
-                GL_FlushPending();
-                glEnable(GL_STENCIL_TEST);
-                glStencilMask(0xFF);
-                glStencilFunc(GL_ALWAYS, 1, 0xFF);
-                glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-                glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-                DrawVirtualCircle(button.cx, button.cy, skillClipRadius,
-                    0.0f, 0.0f, 0.0f, 1.0f, true);
-                GL_FlushPending();
-
-                glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-                glStencilFunc(GL_EQUAL, 1, 0xFF);
-                glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-            }
-
-            if (hasSkillIcon)
-            {
-                ConfigureVirtualSkillIconNoBlendState();
-                g_pSkillList->RenderSkillIcon(
-                    renderSkillIndex,
-                    button.cx - (skillIconSize * 0.5f),
-                    button.cy - (skillIconSize * 0.5f),
-                    skillIconSize,
-                    skillIconSize);
-            }
-
-            if (hasSkillIcon && kUseStencilClip)
-            {
-                GL_FlushPending();
-                glStencilMask(0xFF);
-                glStencilFunc(GL_ALWAYS, 0, 0xFF);
-                glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-                glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-                DrawVirtualCircle(button.cx, button.cy, skillClipRadius,
-                    0.0f, 0.0f, 0.0f, 1.0f, true);
-                GL_FlushPending();
-
-                glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-                glDisable(GL_STENCIL_TEST);
-            }
-        }
-    }
-
-    // Restore standard blend state for anything that follows (consumable icons, etc.)
+    BeginBitmap();
+    EnsureUITextures();
     EnableAlphaBlend();
 
-    // â”€â”€ Consumable item icons â”€â”€
+    // Consumable item icons
     // RenderItem3D is a 3D function â€” needs perspective projection, NOT the
     // 2D ortho mode set up by BeginBitmap.  Follow the same pattern used by
     // CNewUI3DCamera::Render() / CNewUIGoldBowmanLena::Render3D().
@@ -5058,7 +5062,6 @@ void RenderVirtualPad()
     glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
     EndBitmap();
-#endif
 }
 } // namespace
 

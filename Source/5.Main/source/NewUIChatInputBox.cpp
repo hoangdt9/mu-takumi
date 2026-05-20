@@ -3,6 +3,9 @@
 #include "NewUIChatLogWindow.h"
 #include "UIControls.h"
 #include "NewUISystem.h"
+#if defined(__ANDROID__) || defined(MU_IOS)
+#include "Platform/MobileHud.h"
+#endif
 #include "wsclientinline.h"
 #include "ZzzOpenData.h"
 #include "MapManager.h"
@@ -164,6 +167,13 @@ void SEASON3B::CNewUIChatInputBox::SetWndPos(int x, int y)
 		m_pWhsprIDInputBox->SetPosition(m_WndPos.x + 5, m_WndPos.y + 32);
 	}
 }
+
+#if defined(__ANDROID__) || defined(MU_IOS)
+void SEASON3B::CNewUIChatInputBox::RelayoutMobilePanel()
+{
+	SetButtonInfo();
+}
+#endif
 
 void SEASON3B::CNewUIChatInputBox::SetInputMsgType(int iInputMsgType)
 {
@@ -368,20 +378,45 @@ bool SEASON3B::CNewUIChatInputBox::UpdateMouseEvent()
 
 	if (m_pNewUIChatLogWnd->IsShowFrame())
 	{
-		if (m_BtnSize.UpdateMouseEvent())
+#if defined(__ANDROID__) || defined(MU_IOS)
+		if (MU_MobileIsModernMobileHudEnabled())
 		{
-			m_pNewUIChatLogWnd->SetSizeAuto();
-			m_pNewUIChatLogWnd->UpdateWndSize();
-			m_pNewUIChatLogWnd->UpdateScrollPos();
-			PlayBuffer(SOUND_CLICK01);
-			return false;
-		}
+			if (CheckMouseIn(m_WndPos.x + FRAME_RESIZE_START_X, m_WndPos.y, BUTTON_WIDTH, BUTTON_HEIGHT)
+				&& SEASON3B::IsPress(VK_LBUTTON))
+			{
+				m_pNewUIChatLogWnd->SetSizeAuto();
+				m_pNewUIChatLogWnd->UpdateWndSize();
+				m_pNewUIChatLogWnd->UpdateScrollPos();
+				PlayBuffer(SOUND_CLICK01);
+				return false;
+			}
 
-		if (m_BtnTransparency.UpdateMouseEvent())
+			if (CheckMouseIn(m_WndPos.x + TRANSPARENCY_START_X, m_WndPos.y, BUTTON_WIDTH, BUTTON_HEIGHT)
+				&& SEASON3B::IsPress(VK_LBUTTON))
+			{
+				m_pNewUIChatLogWnd->SetBackAlphaAuto();
+				PlayBuffer(SOUND_CLICK01);
+				return false;
+			}
+		}
+		else
+#endif
 		{
-			m_pNewUIChatLogWnd->SetBackAlphaAuto();
-			PlayBuffer(SOUND_CLICK01);
-			return false;
+			if (m_BtnSize.UpdateMouseEvent())
+			{
+				m_pNewUIChatLogWnd->SetSizeAuto();
+				m_pNewUIChatLogWnd->UpdateWndSize();
+				m_pNewUIChatLogWnd->UpdateScrollPos();
+				PlayBuffer(SOUND_CLICK01);
+				return false;
+			}
+
+			if (m_BtnTransparency.UpdateMouseEvent())
+			{
+				m_pNewUIChatLogWnd->SetBackAlphaAuto();
+				PlayBuffer(SOUND_CLICK01);
+				return false;
+			}
 		}
 	}
 
@@ -572,6 +607,10 @@ bool SEASON3B::CNewUIChatInputBox::UpdateKeyEvent()
 						g_pMultiLanguage->ConvertWideCharToStr(strText, wstrText.c_str(), CP_UTF8);
 						strncpy(szChatText, strText.c_str(), sizeof szChatText);
 						SendChat(szChatText);
+						if (Hero != nullptr)
+						{
+							g_pChatListBox->AddText(Hero->ID, szChatText, SEASON3B::TYPE_CHAT_MESSAGE);
+						}
 						AddChatHistory(szChatText);
 					}
 				}
@@ -582,7 +621,18 @@ bool SEASON3B::CNewUIChatInputBox::UpdateKeyEvent()
 
 		SaveIMEStatus();
 
-		g_pNewUISystem->Hide(SEASON3B::INTERFACE_CHATINPUTBOX);
+#if defined(__ANDROID__) || defined(MU_IOS)
+		if (!MU_MobileIsModernMobileHudEnabled())
+#endif
+		{
+			g_pNewUISystem->Hide(SEASON3B::INTERFACE_CHATINPUTBOX);
+		}
+#if defined(__ANDROID__) || defined(MU_IOS)
+		else
+		{
+			m_pChatInputBox->GiveFocus(FALSE);
+		}
+#endif
 		return false;
 	}
 	if (IsVisible() && m_pChatInputBox->HaveFocus())
@@ -804,7 +854,12 @@ float SEASON3B::CNewUIChatInputBox::GetKeyEventOrder()
 
 void SEASON3B::CNewUIChatInputBox::OpenningProcess()
 {
-	m_pChatInputBox->GiveFocus();
+#if defined(__ANDROID__) || defined(MU_IOS)
+	if (!MU_MobileIsModernMobileHudEnabled())
+#endif
+	{
+		m_pChatInputBox->GiveFocus();
+	}
 	m_pChatInputBox->SetState(UISTATE_NORMAL);
 	m_pChatInputBox->SetText("");
 

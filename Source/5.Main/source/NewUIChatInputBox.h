@@ -143,6 +143,9 @@ namespace SEASON3B
 		void Release();
 
 		void SetWndPos(int x, int y);
+#if defined(__ANDROID__) || defined(MU_IOS)
+		void RelayoutMobilePanel();
+#endif
 
 		void SetFont(HFONT hFont);
 

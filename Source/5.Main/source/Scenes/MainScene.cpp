@@ -30,6 +30,8 @@
 #include "../UIMapName.h"
 
 #if defined(__ANDROID__) || defined(MU_IOS)
+#include "../Platform/MobileChatHud.h"
+#include "../Platform/MobileHud.h"
 #include <android/log.h>
 #if defined(MU_ANDROID_DISABLE_LOG)
 #define MAINSCENE_LOGI(...) ((void)0)
@@ -219,6 +221,11 @@ static void UpdateUIAndInput()
 
     if (MouseY >= (int)(480 - 48))
         MouseOnWindow = true;
+
+#if defined(__ANDROID__) || defined(MU_IOS)
+    if (MU_MobileIsModernMobileHudEnabled() && MU_MobileIsChatUiCapturing())
+        MouseOnWindow = true;
+#endif
 
     g_pPartyManager->Update();
     g_pNewUISystem->Update();

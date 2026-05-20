@@ -180,7 +180,7 @@ namespace SEASON3B
 
 		void ChangeMessage(MESSAGE_TYPE MsgType);
 
-		void ShowChatLog();
+		void ShowChatLog(bool scrollToEnd = true);
 		void HideChatLog();
 
 		int GetCurrentRenderEndLine() const;
@@ -212,6 +212,13 @@ namespace SEASON3B
 
 		void UpdateWndSize();
 		void UpdateScrollPos();
+
+#if defined(__ANDROID__) || defined(MU_IOS)
+		bool HitTestScrollBar(float uiX, float uiY);
+		void BeginScrollDragAt(int mouseY);
+		void UpdateScrollDragAt(int mouseY);
+		void EndScrollDrag();
+#endif
 
 	protected:
 		type_vector_msgs* GetMsgs(MESSAGE_TYPE MsgType);

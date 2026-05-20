@@ -1,6 +1,8 @@
 #if defined(__ANDROID__) || defined(MU_IOS)
 
 #include "MobilePlatform.h"
+#include "MobileHud.h"
+#include "MobileChatHud.h"
 
 #include <sokol_app.h>
 
@@ -865,6 +867,8 @@ void MU_MobilePlatformInit()
     MU_MobileClearKeyboardState();
     g_textInputRect = {};
     g_textInputActive = false;
+    MU_MobileLoadMainHudMode();
+    MU_MobileChatHudInit();
 }
 
 void MU_MobilePlatformShutdown()

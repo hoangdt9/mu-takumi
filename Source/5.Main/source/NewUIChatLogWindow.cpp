@@ -7,6 +7,10 @@
 #include "UIControls.h"
 #include "ZzzInterface.h"
 #include "CBInterface.h"
+#if defined(__ANDROID__) || defined(MU_IOS)
+#include "Platform/MobileChatHud.h"
+#include "Platform/MobileHud.h"
+#endif
 
 extern int DisplayWinCDepthBox;
 extern int DisplayWin;
@@ -84,18 +88,120 @@ bool SEASON3B::CNewUIChatLogWindow::RenderBackground()
 	return true;
 }
 
+namespace
+{
+constexpr float kSystemNotificationPosX = 0.f;
+constexpr float kSystemNotificationPosY = 110.f;
+constexpr float kErrorNotificationPosX = 0.f;
+constexpr float kErrorNotificationPosY = 310.f;
+constexpr int kNotificationMaxLines = 4;
+
+bool IsMobilePanelMessageType(MESSAGE_TYPE msgType)
+{
+#if defined(__ANDROID__) || defined(MU_IOS)
+	if (MU_MobileIsModernMobileHudEnabled())
+	{
+		return msgType != TYPE_SYSTEM_MESSAGE && msgType != TYPE_ERROR_MESSAGE;
+	}
+#endif
+	return true;
+}
+
+MESSAGE_TYPE ResolveMessageRenderType(int renderPass, MESSAGE_TYPE currentType)
+{
+	if (renderPass == 1)
+	{
+		return TYPE_SYSTEM_MESSAGE;
+	}
+
+	if (renderPass == 2)
+	{
+		return TYPE_ERROR_MESSAGE;
+	}
+
+#if defined(__ANDROID__) || defined(MU_IOS)
+	if (MU_MobileIsModernMobileHudEnabled())
+	{
+		if (currentType == TYPE_SYSTEM_MESSAGE || currentType == TYPE_ERROR_MESSAGE)
+		{
+			return TYPE_UNKNOWN;
+		}
+	}
+#endif
+
+	return currentType;
+}
+
+bool UsesFixedNotificationAnchor(int renderPass, MESSAGE_TYPE msgType)
+{
+	if (renderPass == 1 || renderPass == 2)
+	{
+		return true;
+	}
+
+	return msgType == TYPE_SYSTEM_MESSAGE;
+}
+
+bool IsChatPrimaryClick()
+{
+	return MouseLButtonPush || SEASON3B::IsPress(VK_LBUTTON);
+}
+
+bool IsChatPrimaryHeld()
+{
+	return MouseLButton || SEASON3B::IsRepeat(VK_LBUTTON) || SEASON3B::IsPress(VK_LBUTTON);
+}
+
+bool IsChatPrimaryReleased()
+{
+	return (!MouseLButton && !SEASON3B::IsRepeat(VK_LBUTTON))
+		|| MouseLButtonPop
+		|| SEASON3B::IsRelease(VK_LBUTTON);
+}
+} // namespace
+
 bool SEASON3B::CNewUIChatLogWindow::RenderMessages(int Type)
 {
 	float fRenderPosX = m_WndPos.x, fRenderPosY = m_WndPos.y - m_WndSize.cy + SCROLL_TOP_BOTTOM_PART_HEIGHT;
 	int MaxShowLines = m_nShowingLines;
-	int GetTypeMsg = (Type != -1 ? TYPE_SYSTEM_MESSAGE : GetCurrentMsgType());
+	const MESSAGE_TYPE GetTypeMsg = ResolveMessageRenderType(Type, GetCurrentMsgType());
 
-	if (GetTypeMsg == TYPE_SYSTEM_MESSAGE)
+	if (GetTypeMsg == TYPE_UNKNOWN)
 	{
-		fRenderPosY = 110;
-		MaxShowLines = 4;
+		return true;
 	}
-	type_vector_msgs* pvecMsgs = GetMsgs((MESSAGE_TYPE)GetTypeMsg);
+
+	if (UsesFixedNotificationAnchor(Type, GetTypeMsg))
+	{
+		MaxShowLines = kNotificationMaxLines;
+
+#if defined(__ANDROID__) || defined(MU_IOS)
+		if (MU_MobileIsModernMobileHudEnabled())
+		{
+			if (Type == 2)
+			{
+				fRenderPosX = kErrorNotificationPosX;
+				fRenderPosY = kErrorNotificationPosY;
+			}
+			else
+			{
+				fRenderPosX = kSystemNotificationPosX;
+				fRenderPosY = kSystemNotificationPosY;
+			}
+		}
+		else
+#endif
+		{
+			fRenderPosX = static_cast<float>(m_WndPos.x);
+			fRenderPosY = kSystemNotificationPosY;
+			if (Type == 2)
+			{
+				fRenderPosY = kErrorNotificationPosY;
+			}
+		}
+	}
+
+	type_vector_msgs* pvecMsgs = GetMsgs(GetTypeMsg);
 
 	if (pvecMsgs == nullptr)
 	{
@@ -103,7 +209,11 @@ bool SEASON3B::CNewUIChatLogWindow::RenderMessages(int Type)
 		return false;
 	}
 
-	int Bm_iCurrentRenderEndLine = (Type != -1 ? pvecMsgs->size() - 1 : GetCurrentRenderEndLine());
+	int Bm_iCurrentRenderEndLine = (Type != -1 ? static_cast<int>(pvecMsgs->size()) - 1 : GetCurrentRenderEndLine());
+	if (Type == -1 && Bm_iCurrentRenderEndLine < 0 && !pvecMsgs->empty())
+	{
+		Bm_iCurrentRenderEndLine = static_cast<int>(pvecMsgs->size()) - 1;
+	}
 
 	int iRenderStartLine = 0;
 	if (Bm_iCurrentRenderEndLine >= MaxShowLines)
@@ -121,12 +231,25 @@ bool SEASON3B::CNewUIChatLogWindow::RenderMessages(int Type)
 	EnableAlphaTest();
 	for (int i = iRenderStartLine, s = 0; i <= Bm_iCurrentRenderEndLine; i++, s++)
 	{
-		if (i < 0 && i >= (int)pvecMsgs->size()) break;
+		if (i < 0 || i >= static_cast<int>(pvecMsgs->size()))
+		{
+			break;
+		}
+
+		auto const pMsgText = (*pvecMsgs)[i];
+#if defined(__ANDROID__) || defined(MU_IOS)
+		if (MU_MobileIsModernMobileHudEnabled() && Type != 1 && Type != 2)
+		{
+			if (!IsMobilePanelMessageType(pMsgText->GetType()))
+			{
+				continue;
+			}
+		}
+#endif
+
 		//DAT MÃ MÀU MESAGER
 		bool bRenderMessage = true;
 		g_pRenderText->SetFont(g_hFont);
-
-		auto const pMsgText = (*pvecMsgs)[i];
 
 		if (pMsgText->GetType() == TYPE_WHISPER_MESSAGE)
 		{
@@ -664,6 +787,13 @@ void SEASON3B::CNewUIChatLogWindow::SetNumberOfShowingLines(int nShowingLines, O
 		lpBoxSize->cx = WND_WIDTH;
 		lpBoxSize->cy = (SCROLL_MIDDLE_PART_HEIGHT * GetNumberOfShowingLines()) + (SCROLL_TOP_BOTTOM_PART_HEIGHT * 2) + (WND_TOP_BOTTOM_EDGE * 2);
 	}
+
+#if defined(__ANDROID__) || defined(MU_IOS)
+	if (MU_MobileIsModernMobileHudEnabled())
+	{
+		MU_MobileChatHudSetShowingLines(static_cast<int>(m_nShowingLines));
+	}
+#endif
 }
 size_t SEASON3B::CNewUIChatLogWindow::GetNumberOfShowingLines() const
 {
@@ -796,8 +926,9 @@ bool SEASON3B::CNewUIChatLogWindow::UpdateMouseEvent()
 
 	if (m_bShowFrame)
 	{
-		if (m_EventState == EVENT_CLIENT_WND_HOVER && MouseLButtonPush &&
-			SEASON3B::CheckMouseIn(m_ScrollBtnPos.x, m_ScrollBtnPos.y, SCROLL_BTN_WIDTH, SCROLL_BTN_HEIGHT))
+		if ((m_EventState == EVENT_NONE || m_EventState == EVENT_CLIENT_WND_HOVER)
+			&& IsChatPrimaryClick()
+			&& SEASON3B::CheckMouseIn(m_ScrollBtnPos.x, m_ScrollBtnPos.y, SCROLL_BTN_WIDTH, SCROLL_BTN_HEIGHT))
 		{
 			extern int MouseY;
 
@@ -807,7 +938,7 @@ bool SEASON3B::CNewUIChatLogWindow::UpdateMouseEvent()
 		}
 		if (m_EventState == EVENT_SCROLL_BTN_DOWN)
 		{
-			if (SEASON3B::IsRepeat(VK_LBUTTON))
+			if (IsChatPrimaryHeld())
 			{
 				if (GetNumberOfLines(GetCurrentMsgType()) > GetNumberOfShowingLines())
 				{
@@ -852,15 +983,21 @@ bool SEASON3B::CNewUIChatLogWindow::UpdateMouseEvent()
 			m_EventState = EVENT_NONE;
 			return true;
 		}
-		if (m_EventState == EVENT_RESIZING_BTN_HOVER && MouseLButtonPush &&
-			SEASON3B::CheckMouseIn(ptResizingBtn.x, ptResizingBtn.y, RESIZING_BTN_WIDTH, RESIZING_BTN_HEIGHT))
+		if (m_EventState == EVENT_NONE && IsChatPrimaryClick()
+			&& SEASON3B::CheckMouseIn(ptResizingBtn.x, ptResizingBtn.y, RESIZING_BTN_WIDTH, RESIZING_BTN_HEIGHT))
+		{
+			m_EventState = EVENT_RESIZING_BTN_DOWN;
+			return false;
+		}
+		if (m_EventState == EVENT_RESIZING_BTN_HOVER && IsChatPrimaryClick()
+			&& SEASON3B::CheckMouseIn(ptResizingBtn.x, ptResizingBtn.y, RESIZING_BTN_WIDTH, RESIZING_BTN_HEIGHT))
 		{
 			m_EventState = EVENT_RESIZING_BTN_DOWN;
 			return false;
 		}
 		if (m_EventState == EVENT_RESIZING_BTN_DOWN)
 		{
-			if (MouseLButtonPush)
+			if (IsChatPrimaryHeld())
 			{
 				int nTopSections = (15 - GetNumberOfShowingLines()) / 3;
 				int nBottomSections = (GetNumberOfShowingLines() - 3) / 3;
@@ -893,7 +1030,7 @@ bool SEASON3B::CNewUIChatLogWindow::UpdateMouseEvent()
 				}
 				return false;
 			}
-			if (false == MouseLButtonPush || true == MouseLButtonPop)
+			if (IsChatPrimaryReleased())
 			{
 				m_EventState = EVENT_NONE;
 				return true;
@@ -954,6 +1091,21 @@ bool SEASON3B::CNewUIChatLogWindow::Render()
 			return false;
 		}
 
+#if defined(__ANDROID__) || defined(MU_IOS)
+		if (MU_MobileIsModernMobileHudEnabled())
+		{
+			if (RenderMessages(2) == false)
+			{
+				return false;
+			}
+
+			if (RenderMessages() == false)
+			{
+				return false;
+			}
+		}
+		else
+#endif
 		if (RenderMessages() == false)
 		{
 			return false;
@@ -1138,9 +1290,14 @@ SEASON3B::MESSAGE_TYPE SEASON3B::CNewUIChatLogWindow::GetCurrentMsgType() const
 	return m_CurrentRenderMsgType;
 }
 
-void SEASON3B::CNewUIChatLogWindow::ShowChatLog()
+void SEASON3B::CNewUIChatLogWindow::ShowChatLog(bool scrollToEnd)
 {
 	m_bShowChatLog = true;
+
+	if (!scrollToEnd)
+	{
+		return;
+	}
 
 	type_vector_msgs* pvecMsgs = GetMsgs(GetCurrentMsgType());
 	if (pvecMsgs == nullptr)
@@ -1155,6 +1312,91 @@ void SEASON3B::CNewUIChatLogWindow::HideChatLog()
 {
 	m_bShowChatLog = false;
 }
+
+#if defined(__ANDROID__) || defined(MU_IOS)
+
+bool SEASON3B::CNewUIChatLogWindow::HitTestScrollBar(float uiX, float uiY)
+{
+	if (!m_bShowFrame)
+	{
+		return false;
+	}
+
+	UpdateScrollPos();
+
+	const int prevMouseX = MouseX;
+	const int prevMouseY = MouseY;
+	MouseX = static_cast<int>(uiX);
+	MouseY = static_cast<int>(uiY);
+	const bool hit = SEASON3B::CheckMouseIn(
+		static_cast<int>(m_ScrollBtnPos.x),
+		static_cast<int>(m_ScrollBtnPos.y),
+		SCROLL_BTN_WIDTH,
+		SCROLL_BTN_HEIGHT);
+	MouseX = prevMouseX;
+	MouseY = prevMouseY;
+	return hit;
+}
+
+void SEASON3B::CNewUIChatLogWindow::BeginScrollDragAt(int mouseY)
+{
+	if (!m_bShowFrame)
+	{
+		return;
+	}
+
+	UpdateScrollPos();
+	m_EventState = EVENT_SCROLL_BTN_DOWN;
+	m_iGrapRelativePosY = mouseY - m_ScrollBtnPos.y;
+}
+
+void SEASON3B::CNewUIChatLogWindow::UpdateScrollDragAt(int mouseY)
+{
+	if (m_EventState != EVENT_SCROLL_BTN_DOWN)
+	{
+		return;
+	}
+
+	if (GetNumberOfLines(GetCurrentMsgType()) <= GetNumberOfShowingLines())
+	{
+		return;
+	}
+
+	const int trackTop = m_WndPos.y - m_WndSize.cy + WND_TOP_BOTTOM_EDGE;
+	const int trackBottom = m_WndPos.y - SCROLL_BTN_HEIGHT - WND_TOP_BOTTOM_EDGE;
+
+	if (mouseY - m_iGrapRelativePosY < trackTop)
+	{
+		Scrolling(static_cast<int>(GetNumberOfShowingLines()) - 1);
+		m_ScrollBtnPos.y = trackTop;
+	}
+	else if (mouseY - m_iGrapRelativePosY > trackBottom)
+	{
+		Scrolling(static_cast<int>(GetNumberOfLines(GetCurrentMsgType())) - 1);
+		m_ScrollBtnPos.y = trackBottom;
+	}
+	else
+	{
+		const float trackHeight = static_cast<float>(m_WndSize.cy - WND_TOP_BOTTOM_EDGE * 2 - SCROLL_BTN_HEIGHT);
+		if (trackHeight > 0.0f)
+		{
+			const float scrollRate = static_cast<float>((mouseY - m_iGrapRelativePosY) - trackTop) / trackHeight;
+			const int lineSpan = static_cast<int>(GetNumberOfLines(GetCurrentMsgType()) - GetNumberOfShowingLines());
+			Scrolling(static_cast<int>(GetNumberOfShowingLines()) + static_cast<int>(lineSpan * scrollRate));
+		}
+		m_ScrollBtnPos.y = mouseY - m_iGrapRelativePosY;
+	}
+}
+
+void SEASON3B::CNewUIChatLogWindow::EndScrollDrag()
+{
+	if (m_EventState == EVENT_SCROLL_BTN_DOWN)
+	{
+		m_EventState = EVENT_NONE;
+	}
+}
+
+#endif
 
 void SEASON3B::RemoveItem(ITEM* pItem)
 {

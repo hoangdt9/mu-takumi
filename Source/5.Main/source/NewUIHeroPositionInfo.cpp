@@ -8,6 +8,9 @@
 #include "MapManager.h"
 #include "NewUISystem.h"
 #include "Protocol.h"
+#if defined(__ANDROID__) || defined(MU_IOS)
+#include "Platform/MobileHud.h"
+#endif
 #include "ZzzAI.h"
 #include "wsclientinline.h"
 #if defined(__ANDROID__)
@@ -306,6 +309,25 @@ void CNewUIHeroPositionInfo::DataViewPortMapLoad(float x, float y) {
       glColor3f(0 / 255.f, 255 / 255.f, 234 / 255.f); // Guild
       // RenderColor((float)(XNPC), (float)(YNPC), 3.f, 3.f);
     }
+
+#if defined(__ANDROID__) || defined(MU_IOS)
+    if (MU_MobileIsModernMobileHudEnabled()) {
+      const float iconSize = 8.0f;
+      if (o->Kind == KIND_PLAYER) {
+        RenderBitmapRotate(BITMAP_INTERFACE_CUSTOM + 4, X, Y, iconSize, iconSize, 0.0f,
+                           0.0f, 0.0f, 0.1030000001f, 0.05200000107f);
+      } else if (o->Kind == KIND_MONSTER) {
+        RenderBitmapRotate(BITMAP_INTERFACE_CUSTOM + 4, X, Y, iconSize, iconSize, 0.0f,
+                           0.1349999905f, 0.0f, 0.1030000001f, 0.05200000107f);
+      } else if (o->Kind == KIND_NPC) {
+        RenderBitmapRotate(BITMAP_INTERFACE_CUSTOM + 4, X, Y, iconSize, iconSize, 0.0f,
+                           0.009999999776f, 0.1319999844f, 0.1030000001f, 0.05200000107f);
+      } else {
+        RenderColor((float)(X), (float)(Y), 3.f, 3.f);
+      }
+      continue;
+    }
+#endif
 
     if (x < 94 && y < 94)
       RenderColor((float)(X), (float)(Y), 3.f, 3.f); // 11
@@ -659,6 +681,12 @@ void CNewUIHeroPositionInfo::DrawMiniMap() {
 
   x = 2;
   y = 2;
+#if defined(__ANDROID__) || defined(MU_IOS)
+  if (MU_MobileIsModernMobileHudEnabled()) {
+    x = 640.0f - 108.0f;
+    y = 10.0f;
+  }
+#endif
   EnableAlphaTest(1);
   glColor4f(1.0, 1.0, 1.0, 1.0);
 

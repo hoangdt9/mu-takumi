@@ -29,6 +29,9 @@
 #include "GMDoppelGanger3.h"
 #include "GMDoppelGanger4.h"
 #include "./Time/CTimCheck.h"
+#if defined(__ANDROID__) || defined(MU_IOS)
+#include "Platform/MobileHud.h"
+#endif
 #ifdef PBG_ADD_NEWCHAR_MONK_SKILL
 #include "MonkSystem.h"
 #endif //PBG_ADD_NEWCHAR_MONK_SKILL
@@ -823,6 +826,12 @@ void SEASON3B::CNewUIMainFrameWindow::RenderButtonsSS2()
 }
 bool SEASON3B::CNewUIMainFrameWindow::RenderSS2()
 {
+#if defined(__ANDROID__) || defined(MU_IOS)
+	if (MU_MobileIsModernMobileHudEnabled())
+	{
+		return true;
+	}
+#endif
 	EnableAlphaTest();
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
@@ -843,6 +852,12 @@ bool SEASON3B::CNewUIMainFrameWindow::RenderSS2()
 }
 bool SEASON3B::CNewUIMainFrameWindow::Render()
 {
+#if defined(__ANDROID__) || defined(MU_IOS)
+	if (MU_MobileIsModernMobileHudEnabled())
+	{
+		return true;
+	}
+#endif
 	if (gProtect.m_MainInfo.IsVersion == 1) //Skin Ss2
 	{
 		return RenderSS2();
@@ -874,6 +889,12 @@ void SEASON3B::CNewUIMainFrameWindow::Render3D()
 #if defined(__ANDROID__) && TAKUMI_ANDROID_UI_SKIP_HOTKEY_ITEM_3D
 	return;
 #endif
+#if defined(__ANDROID__) || defined(MU_IOS)
+	if (MU_MobileIsModernMobileHudEnabled())
+	{
+		return;
+	}
+#endif
 	m_ItemHotKey.RenderItems();
 }
 
@@ -890,6 +911,12 @@ bool SEASON3B::CNewUIMainFrameWindow::IsVisible() const
 
 void SEASON3B::CNewUIMainFrameWindow::RenderFrame()
 {
+#if defined(__ANDROID__) || defined(MU_IOS)
+	if (MU_MobileIsModernMobileHudEnabled())
+	{
+		return;
+	}
+#endif
 	float width, height;
 	float x, y;
 	//if (gProtect.m_MainInfo.IsVersion == 1) //Skin Ss2
@@ -1356,6 +1383,12 @@ void SEASON3B::CNewUIMainFrameWindow::RenderExperience()
 
 void SEASON3B::CNewUIMainFrameWindow::RenderHotKeyItemCount()
 {
+#if defined(__ANDROID__) || defined(MU_IOS)
+	if (MU_MobileIsModernMobileHudEnabled())
+	{
+		return;
+	}
+#endif
 	m_ItemHotKey.RenderItemCount();
 }
 
@@ -1472,6 +1505,12 @@ bool SEASON3B::CNewUIMainFrameWindow::UpdateMouseEvent()
 
 bool SEASON3B::CNewUIMainFrameWindow::BtnProcess()
 {
+#if defined(__ANDROID__) || defined(MU_IOS)
+	if (MU_MobileIsModernMobileHudEnabled())
+	{
+		return false;
+	}
+#endif
 	if (gProtect.m_MainInfo.IsVersion == 1) //Skin Ss2 Button Click
 	{
 		//if (SEASON3B::CheckMouseIn((int)ButtonSS2.x, (int)ButtonSS2.y, (int)ButtonSS2W, (int)ButtonSS2H))

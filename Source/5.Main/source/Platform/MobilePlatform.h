@@ -2,6 +2,7 @@
 
 #if defined(__ANDROID__) || defined(MU_IOS)
 
+#include "MobileHud.h"
 #include <SDL.h>
 
 #include <string>

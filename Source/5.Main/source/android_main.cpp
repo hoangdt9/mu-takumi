@@ -8438,6 +8438,7 @@ static void RunAndroidGameFrame()
     ProcessAndroidEventQueue();
 #if defined(__ANDROID__)
     TakumiAndroid_ProcessInventoryUseFrame();
+    TakumiAndroid_ProcessWorldSkillFrame();
 #endif
     if (Destroy)
     {

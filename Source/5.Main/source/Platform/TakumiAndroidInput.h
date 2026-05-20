@@ -19,6 +19,9 @@ void TakumiAndroid_PulseRightClick();
 /// Run inventory use handling immediately after SDL events (before ZzzInterface hotkey path).
 void TakumiAndroid_ProcessInventoryUseFrame();
 
+/// Deferred single-tap melee (waits past double-tap window so double-tap does not melee first).
+void TakumiAndroid_ProcessWorldSkillFrame();
+
 bool TakumiAndroid_HandleInventoryTouchDown(const SDL_TouchFingerEvent& touch);
 bool TakumiAndroid_HandleInventoryTouchMove(const SDL_TouchFingerEvent& touch);
 /// Returns true when long-press or double-tap "use item" consumed the touch.
@@ -37,6 +40,7 @@ inline bool TakumiAndroid_ConsumeInventoryUsePress() { return false; }
 inline void TakumiAndroid_CancelInventoryUsePress() {}
 inline void TakumiAndroid_PulseRightClick() {}
 inline void TakumiAndroid_ProcessInventoryUseFrame() {}
+inline void TakumiAndroid_ProcessWorldSkillFrame() {}
 inline bool TakumiAndroid_HandleInventoryTouchDown(const void*) { return false; }
 inline bool TakumiAndroid_HandleInventoryTouchMove(const void*) { return false; }
 inline bool TakumiAndroid_HandleInventoryTouchUp(const void*) { return false; }

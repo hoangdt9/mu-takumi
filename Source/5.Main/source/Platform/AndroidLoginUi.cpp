@@ -583,7 +583,7 @@ void MU_AndroidTickLoginAfterServerPickFallback()
 	rUIMng.ShowWin(&rUIMng.m_ServerSelWin);
 	rUIMng.PopUpMsgWin(MESSAGE_SERVER_LOST);
 	g_ErrorReport.Write(
-		"[TakumiLoginBg] F4 03 timeout after %u ms — run server-next/scripts/adb-reverse-takumi-dev.sh "
+		"[TakumiLoginBg] F4 03 timeout after %u ms — run server-next/scripts/android/adb-reverse-takumi-dev.sh "
 		"(Docker Mac blocks phone→%s:44605; need 127.0.0.1 + reverse). game TCP %u.\r\n",
 		elapsedMs,
 		szServerIpAddress != nullptr ? szServerIpAddress : "?",

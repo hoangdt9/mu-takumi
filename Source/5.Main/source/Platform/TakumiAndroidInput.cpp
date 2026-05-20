@@ -16,14 +16,17 @@
 #include "ZzzObject.h"
 #include "MobilePlatform.h"
 #include "NewUIMainFrameWindow.h"
+#include "SkillManager.h"
 #include "Utilities/Log/ErrorReport.h"
 
 #include <algorithm>
 #include <cmath>
+#include <cstring>
 
 #include <android/log.h>
 
 extern CErrorReport g_ErrorReport;
+extern MovementSkill g_MovementSkill;
 #define TAKUMI_INV_LOGI(...) __android_log_print(ANDROID_LOG_INFO, "TakumiInvUse", __VA_ARGS__)
 #define TAKUMI_INV_LOGW(...) __android_log_print(ANDROID_LOG_WARN, "TakumiInvUse", __VA_ARGS__)
 #define TAKUMI_SKILL_LOGI(...) __android_log_print(ANDROID_LOG_INFO, "TakumiSkillAtk", __VA_ARGS__)
@@ -56,6 +59,7 @@ float g_inventoryLastShortTapUiY = 0.0f;
 
 constexpr uint32_t kWorldSkillLongPressMs = 480;
 constexpr uint32_t kWorldSkillDoubleTapMaxMs = 420;
+constexpr uint32_t kWorldSkillChannelIntervalMs = 120;
 constexpr float kWorldSkillLongPressCancelMoveUi = 48.0f;
 constexpr float kWorldSkillDoubleTapMaxDistUi = 28.0f;
 
@@ -74,6 +78,11 @@ bool g_worldSkillTouchConsumed = false;
 uint32_t g_worldSkillLastShortTapMs = 0;
 float g_worldSkillLastShortTapUiX = 0.0f;
 float g_worldSkillLastShortTapUiY = 0.0f;
+
+uint32_t g_worldSkillPendingMeleeMs = 0;
+bool g_worldSkillChannelHold = false;
+bool g_worldSkillChannelLatched = false;
+uint32_t g_worldSkillLastChannelTickMs = 0;
 
 void TouchToVirtualUi(const SDL_TouchFingerEvent& touch, float& outX, float& outY)
 {
@@ -226,29 +235,29 @@ bool IsWorldSkillGestureBlockedByUiAt(const float uiX, const float uiY)
     return false;
 }
 
-bool HasActiveHotbarSkill()
+int SkillTypeAtIndex(const int skillIndex)
+{
+    if (skillIndex < 0 || skillIndex >= MAX_MAGIC)
+    {
+        return 0;
+    }
+
+    return CharacterAttribute->Skill[skillIndex];
+}
+
+int ResolveActiveHotbarSkillIndex()
 {
     if (!IsWorldSkillGestureScene())
     {
-        return false;
+        return -1;
     }
-
-    auto skillTypeAt = [](const int skillIndex) -> int
-    {
-        if (skillIndex < 0 || skillIndex >= MAX_MAGIC)
-        {
-            return 0;
-        }
-
-        return CharacterAttribute->Skill[skillIndex];
-    };
 
     if (Hero->CurrentSkill >= 0 && Hero->CurrentSkill < MAX_MAGIC)
     {
-        const int skillType = skillTypeAt(Hero->CurrentSkill);
+        const int skillType = SkillTypeAtIndex(Hero->CurrentSkill);
         if (skillType > 0 && skillType < MAX_SKILLS)
         {
-            return true;
+            return Hero->CurrentSkill;
         }
     }
 
@@ -257,16 +266,83 @@ bool HasActiveHotbarSkill()
         for (int hotKey = 0; hotKey < 10; ++hotKey)
         {
             const int skillIndex = g_pSkillList->GetHotKey(hotKey);
-            const int skillType = skillTypeAt(skillIndex);
+            const int skillType = SkillTypeAtIndex(skillIndex);
             if (skillType > 0 && skillType < MAX_SKILLS)
             {
-                Hero->CurrentSkill = static_cast<BYTE>(skillIndex);
-                return true;
+                return skillIndex;
             }
         }
     }
 
-    return false;
+    return -1;
+}
+
+bool HasActiveHotbarSkill()
+{
+    return ResolveActiveHotbarSkillIndex() >= 0;
+}
+
+bool IsSupportOrSelfSkillType(const int skillType)
+{
+    return IsCorrectSkillType_Buff(skillType) == TRUE
+        || IsCorrectSkillType_FrendlySkill(skillType) == TRUE;
+}
+
+// IsDirectionChannelSkillType — shared with PC path in ZzzInterface.cpp
+
+void PrimeHeroForSkillCast()
+{
+    if (Hero == nullptr)
+    {
+        return;
+    }
+
+    LetHeroStop(Hero, TRUE);
+    Hero->Movement = false;
+    SetPlayerStop(Hero);
+}
+
+void SetupMovementSkillForCast(const int skillIndex)
+{
+    ZeroMemory(&g_MovementSkill, sizeof(g_MovementSkill));
+    g_MovementSkill.m_bMagic = TRUE;
+    g_MovementSkill.m_iSkill = skillIndex;
+
+    if (CheckAttack())
+    {
+        g_MovementSkill.m_iTarget = SelectedCharacter;
+    }
+    else
+    {
+        g_MovementSkill.m_iTarget = -1;
+    }
+}
+
+void PulseAndroidSkillAttack(const bool holdRightButton)
+{
+    MouseLButtonPush = false;
+    MouseLButtonPop = false;
+    MouseLButton = false;
+    MouseRButtonPop = false;
+    MouseRButtonPush = true;
+    MouseRButton = holdRightButton;
+    SyncAndroidRightButtonKeyPress();
+    Attack(Hero);
+    if (!holdRightButton)
+    {
+        MouseRButtonPush = false;
+        MouseRButton = false;
+    }
+}
+
+void StopWorldSkillChannel()
+{
+    g_worldSkillChannelHold = false;
+    g_worldSkillChannelLatched = false;
+    MouseRButtonPush = false;
+    MouseRButton = false;
+    MouseRButtonPop = false;
+    Attacking = -1;
 }
 
 int GetHeroCharacterIndexLocal()
@@ -282,6 +358,61 @@ int GetHeroCharacterIndexLocal()
     }
 
     return static_cast<int>(Hero - &CharactersClient[0]);
+}
+
+bool TrySelectNearestAttackableMonster()
+{
+    if (!IsWorldSkillGestureScene() || CharactersClient == nullptr || Hero == nullptr)
+    {
+        return false;
+    }
+
+    const int heroIndex = GetHeroCharacterIndexLocal();
+    int bestIndex = -1;
+    float bestDist2 = 0.0f;
+
+    for (int i = 0; i < MAX_CHARACTERS_CLIENT; ++i)
+    {
+        if (i == heroIndex)
+        {
+            continue;
+        }
+
+        CHARACTER* candidate = &CharactersClient[i];
+        if (candidate->Dead > 0 || !candidate->Object.Visible)
+        {
+            continue;
+        }
+
+        if (candidate->Object.Kind != KIND_MONSTER && candidate->Object.Kind != KIND_EDIT)
+        {
+            continue;
+        }
+
+        const float dx = static_cast<float>(candidate->Object.Position[0] - Hero->Object.Position[0]);
+        const float dy = static_cast<float>(candidate->Object.Position[1] - Hero->Object.Position[1]);
+        const float dist2 = (dx * dx) + (dy * dy);
+        if (bestIndex < 0 || dist2 < bestDist2)
+        {
+            bestIndex = i;
+            bestDist2 = dist2;
+        }
+    }
+
+    if (bestIndex < 0)
+    {
+        return false;
+    }
+
+    const int previousTarget = SelectedCharacter;
+    SelectedCharacter = bestIndex;
+    if (!CheckAttack())
+    {
+        SelectedCharacter = previousTarget;
+        return false;
+    }
+
+    return true;
 }
 
 bool RefreshAttackableTargetAtMouse()
@@ -335,15 +466,27 @@ bool PrepareWorldSkillTarget(int skillType, WorldSkillTargetKind& outKind)
 
     SelectObjects();
 
+    if (IsDirectionChannelSkillType(skillType))
+    {
+        const int previousTarget = SelectedCharacter;
+        SelectedCharacter = -1;
+        if (!CheckTarget(Hero))
+        {
+            SelectedCharacter = previousTarget;
+            return false;
+        }
+
+        outKind = WorldSkillTargetKind::Ground;
+        return true;
+    }
+
     if (RefreshAttackableTargetAtMouse())
     {
         outKind = WorldSkillTargetKind::AttackCharacter;
         return true;
     }
 
-    const bool friendlySkill =
-        IsCorrectSkillType_Buff(skillType) == TRUE
-        || IsCorrectSkillType_FrendlySkill(skillType) == TRUE;
+    const bool friendlySkill = IsSupportOrSelfSkillType(skillType);
 
     if (friendlySkill)
     {
@@ -373,6 +516,12 @@ bool PrepareWorldSkillTarget(int skillType, WorldSkillTargetKind& outKind)
         }
     }
 
+    if (!friendlySkill && TrySelectNearestAttackableMonster())
+    {
+        outKind = WorldSkillTargetKind::AttackCharacter;
+        return true;
+    }
+
     const int previousTarget = SelectedCharacter;
     SelectedCharacter = -1;
     if (!CheckTarget(Hero))
@@ -383,6 +532,67 @@ bool PrepareWorldSkillTarget(int skillType, WorldSkillTargetKind& outKind)
 
     outKind = WorldSkillTargetKind::Ground;
     return true;
+}
+
+bool FireWorldSkillChannelTick(const char* reason)
+{
+    if (!IsWorldSkillGestureScene())
+    {
+        return false;
+    }
+
+    const int skillIndex = ResolveActiveHotbarSkillIndex();
+    if (skillIndex < 0)
+    {
+        return false;
+    }
+
+    const int skillType = SkillTypeAtIndex(skillIndex);
+    if (!IsDirectionChannelSkillType(skillType))
+    {
+        return false;
+    }
+
+    const uint32_t nowMs = MU_MobileGetTicks();
+    if ((nowMs - g_worldSkillLastChannelTickMs) < kWorldSkillChannelIntervalMs)
+    {
+        return true;
+    }
+
+    g_worldSkillLastChannelTickMs = nowMs;
+
+    const int previousSkillIndex = Hero->CurrentSkill;
+    Hero->CurrentSkill = static_cast<BYTE>(skillIndex);
+
+    WorldSkillTargetKind targetKind = WorldSkillTargetKind::None;
+    if (!PrepareWorldSkillTarget(skillType, targetKind))
+    {
+        Hero->CurrentSkill = static_cast<BYTE>(previousSkillIndex);
+        return false;
+    }
+
+    PrimeHeroForSkillCast();
+    SetupMovementSkillForCast(skillIndex);
+    const bool castOk = CastDirectionChannelSkill(Hero, skillType, static_cast<BYTE>(skillIndex));
+
+    Hero->CurrentSkill = static_cast<BYTE>(previousSkillIndex);
+    TAKUMI_SKILL_LOGI(
+        "skill channel tick reason=%s skill=%d type=%d cast=%d attacking=%d skillId=%d atkTime=%d",
+        reason != nullptr ? reason : "?",
+        skillIndex,
+        skillType,
+        castOk ? 1 : 0,
+        Attacking,
+        Hero->Skill,
+        Hero->AttackTime);
+    g_ErrorReport.Write(
+        "[SkillAtk] channel reason=%s skill=%d type=%d cast=%d attacking=%d",
+        reason != nullptr ? reason : "?",
+        skillIndex,
+        skillType,
+        castOk ? 1 : 0,
+        Attacking);
+    return castOk;
 }
 
 bool FireWorldPickUpItem(const char* reason)
@@ -582,49 +792,107 @@ bool FireWorldSkillAttack(const char* reason)
         return false;
     }
 
-    const int skillIndex = Hero->CurrentSkill;
-    const int skillType = CharacterAttribute->Skill[skillIndex];
-    WorldSkillTargetKind targetKind = WorldSkillTargetKind::None;
-    if (!HasActiveHotbarSkill() || !PrepareWorldSkillTarget(skillType, targetKind))
+    g_worldSkillPendingMeleeMs = 0;
+
+    const int skillIndex = ResolveActiveHotbarSkillIndex();
+    if (skillIndex < 0)
     {
         return false;
     }
 
+    const int skillType = SkillTypeAtIndex(skillIndex);
+    if (skillType <= 0 || skillType >= MAX_SKILLS)
+    {
+        return false;
+    }
+
+    const int previousSkillIndex = Hero->CurrentSkill;
+    Hero->CurrentSkill = static_cast<BYTE>(skillIndex);
+
+    WorldSkillTargetKind targetKind = WorldSkillTargetKind::None;
+    if (!PrepareWorldSkillTarget(skillType, targetKind))
+    {
+        Hero->CurrentSkill = static_cast<BYTE>(previousSkillIndex);
+        TAKUMI_SKILL_LOGW(
+            "skill attack no target reason=%s skillIndex=%d skillType=%d",
+            reason != nullptr ? reason : "?",
+            skillIndex,
+            skillType);
+        return false;
+    }
+
     const int target = SelectedCharacter;
+    const bool channelSkill = IsDirectionChannelSkillType(skillType);
+
+    PrimeHeroForSkillCast();
+    SetupMovementSkillForCast(skillIndex);
+
+    bool castOk = false;
+    if (channelSkill)
+    {
+        castOk = CastDirectionChannelSkill(Hero, skillType, static_cast<BYTE>(skillIndex));
+    }
+    else
+    {
+        PulseAndroidSkillAttack(false);
+        castOk = (Attacking == 2);
+    }
+
+    if (!castOk)
+    {
+        Hero->CurrentSkill = static_cast<BYTE>(previousSkillIndex);
+        TAKUMI_SKILL_LOGW(
+            "skill attack fail reason=%s skillIndex=%d skillType=%d",
+            reason != nullptr ? reason : "?",
+            skillIndex,
+            skillType);
+        g_ErrorReport.Write(
+            "[SkillAtk] fail reason=%s skill=%d type=%d",
+            reason != nullptr ? reason : "?",
+            skillIndex,
+            skillType);
+        return false;
+    }
+
+    Hero->CurrentSkill = static_cast<BYTE>(previousSkillIndex);
 
     g_worldSkillLongPressFired = true;
     g_worldSkillTouchConsumed = true;
+    g_worldSkillLastChannelTickMs = MU_MobileGetTicks();
 
-    MouseLButtonPush = false;
-    MouseLButtonPop = false;
-    MouseLButton = false;
-
-    MouseRButtonPop = false;
-    MouseRButtonPush = true;
-    MouseRButton = true;
-    SyncAndroidRightButtonKeyPress();
-
-    Attack(Hero);
-
-    MouseRButtonPush = false;
-    MouseRButton = false;
+    if (channelSkill)
+    {
+        if (strcmp(reason, "double-tap") == 0)
+        {
+            g_worldSkillChannelLatched = true;
+        }
+        else
+        {
+            g_worldSkillChannelHold = true;
+        }
+    }
 
     TAKUMI_SKILL_LOGI(
-        "skill attack ok reason=%s skillIndex=%d skillType=%d kind=%d target=%d Mouse=%d,%d",
+        "skill attack ok reason=%s skillIndex=%d skillType=%d kind=%d target=%d channel=%d attacking=%d heroSkill=%d atkTime=%d",
         reason != nullptr ? reason : "?",
         skillIndex,
         skillType,
         static_cast<int>(targetKind),
         target,
-        MouseX,
-        MouseY);
+        channelSkill ? 1 : 0,
+        Attacking,
+        Hero->Skill,
+        Hero->AttackTime);
     g_ErrorReport.Write(
-        "[SkillAtk] ok reason=%s skill=%d type=%d kind=%d target=%d",
+        "[SkillAtk] ok reason=%s skill=%d type=%d kind=%d target=%d channel=%d attacking=%d heroSkill=%d",
         reason != nullptr ? reason : "?",
         skillIndex,
         skillType,
         static_cast<int>(targetKind),
-        target);
+        target,
+        channelSkill ? 1 : 0,
+        Attacking,
+        Hero->Skill);
 
     return true;
 }
@@ -696,6 +964,28 @@ void TakumiAndroid_PulseRightClick()
     g_inventoryUsePressPending = true;
     SyncAndroidRightButtonKeyPress();
     TAKUMI_INV_LOGI("pulse RMB use (Mouse=%d,%d)", MouseX, MouseY);
+}
+
+void TakumiAndroid_ProcessWorldSkillFrame()
+{
+    if (g_worldSkillChannelLatched)
+    {
+        FireWorldSkillChannelTick("latched");
+    }
+
+    if (g_worldSkillPendingMeleeMs == 0)
+    {
+        return;
+    }
+
+    const uint32_t nowMs = MU_MobileGetTicks();
+    if ((nowMs - g_worldSkillPendingMeleeMs) <= kWorldSkillDoubleTapMaxMs)
+    {
+        return;
+    }
+
+    g_worldSkillPendingMeleeMs = 0;
+    FireWorldMeleeAttack("tap-delayed");
 }
 
 void TakumiAndroid_ProcessInventoryUseFrame()
@@ -867,6 +1157,8 @@ bool TakumiAndroid_HandleWorldSkillTouchDown(const SDL_TouchFingerEvent& touch)
     g_worldSkillTouch.downUiY = uiY;
     g_worldSkillLongPressFired = false;
     g_worldSkillTouchConsumed = false;
+    g_worldSkillPendingMeleeMs = 0;
+    g_worldSkillChannelHold = false;
     TAKUMI_SKILL_LOGI(
         "touch down finger=%lld ui=(%.0f,%.0f) Mouse=(%d,%d)",
         static_cast<long long>(touch.fingerId),
@@ -906,6 +1198,10 @@ bool TakumiAndroid_HandleWorldSkillTouchMove(const SDL_TouchFingerEvent& touch)
             FireWorldSecondaryAction("long-press");
         }
     }
+    else if (g_worldSkillChannelHold)
+    {
+        FireWorldSkillChannelTick("hold");
+    }
 
     return g_worldSkillTouchConsumed;
 }
@@ -932,7 +1228,16 @@ bool TakumiAndroid_HandleWorldSkillTouchUp(const SDL_TouchFingerEvent& touch)
 
     if (g_worldSkillTouchConsumed)
     {
+        if (g_worldSkillChannelHold || g_worldSkillChannelLatched)
+        {
+            StopWorldSkillChannel();
+        }
         return true;
+    }
+
+    if (g_worldSkillChannelLatched)
+    {
+        StopWorldSkillChannel();
     }
 
     const float dx = uiX - g_worldSkillLastShortTapUiX;
@@ -949,6 +1254,7 @@ bool TakumiAndroid_HandleWorldSkillTouchUp(const SDL_TouchFingerEvent& touch)
     if (doubleTap)
     {
         g_worldSkillLastShortTapMs = 0;
+        g_worldSkillPendingMeleeMs = 0;
         if (FireWorldSecondaryAction("double-tap"))
         {
             return true;
@@ -957,11 +1263,17 @@ bool TakumiAndroid_HandleWorldSkillTouchUp(const SDL_TouchFingerEvent& touch)
 
     if (heldMs < kWorldSkillLongPressMs && !g_worldSkillLongPressFired)
     {
-        if (FireWorldMeleeAttack("tap"))
+        if (g_worldSkillChannelLatched)
         {
-            g_worldSkillLongPressFired = true;
-            return true;
+            StopWorldSkillChannel();
+            TAKUMI_SKILL_LOGI("tap end channel latch off heldMs=%u", heldMs);
+            return false;
         }
+
+        g_worldSkillPendingMeleeMs = nowMs;
+        TAKUMI_SKILL_LOGI("tap end deferred melee heldMs=%u ui=(%.0f,%.0f)", heldMs, uiX, uiY);
+        g_ErrorReport.Write("[SkillAtk] tap end deferred melee heldMs=%u", heldMs);
+        return false;
     }
 
     TAKUMI_SKILL_LOGI("tap end (no skill) heldMs=%u ui=(%.0f,%.0f)", heldMs, uiX, uiY);

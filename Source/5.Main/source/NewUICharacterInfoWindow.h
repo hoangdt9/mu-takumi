@@ -78,6 +78,7 @@ namespace SEASON3B
 		bool Create(CNewUIManager* pNewUIMng, int x, int y);
 		void Release();
 		void SetPos(int x, int y);
+		const POINT& GetPos() const { return m_Pos; }
 		bool UpdateMouseEvent();
 		bool UpdateKeyEvent();
 		bool Update();

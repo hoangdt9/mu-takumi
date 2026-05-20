@@ -325,6 +325,8 @@ namespace SEASON3B
 		void PopAllMessageBoxes();
 
 		bool IsEmpty();
+		/** True when MouseX/MouseY lies inside any queued message box. */
+		bool HitTestPointer();
 
 		void SendEvent(CNewUIMessageBoxBase* pOwner, DWORD dwEvent);
 		void SendEvent(CNewUIMessageBoxBase* pOwner, DWORD dwEvent, const leaf::xstreambuf& xParam);

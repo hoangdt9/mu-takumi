@@ -23,6 +23,9 @@
 #include "UIManager.h"
 #include "CSItemOption.h"
 #include "MapManager.h"
+#if defined(__ANDROID__) || defined(MU_IOS)
+#include "Platform/MobileHud.h"
+#endif
 #include "w_PetProcess.h"
 #include "SocketSystem.h"
 #include "w_CursedTemple.h"
@@ -423,6 +426,11 @@ void CNewUIMyInventory::DeleteAllItems() const
 
 void CNewUIMyInventory::SetPos(int x, int y)
 {
+#if defined(__ANDROID__) || defined(MU_IOS)
+	if (MU_MobileIsModernMobileHudEnabled()) {
+		y = MU_MobileGetSidePanelAnchorY(INVENTORY_HEIGHT);
+	}
+#endif
 	x = x + DisplayWinCDepthBox;
 	m_Pos.x = x;
 	m_Pos.y = y;

@@ -629,7 +629,7 @@ bool IsLegacyMainHud()
 constexpr int kVirtualAttackButton = 0;
 constexpr int kVirtualSkillButtonBase = 1;
 constexpr int kVirtualAttackSkillSlot = 0;
-constexpr int kVirtualVisibleSkillButtonCount = 4;
+constexpr int kVirtualVisibleSkillButtonCount = 3;
 constexpr int kVirtualSkillSlotCount = 1 + kVirtualVisibleSkillButtonCount;
 constexpr int kVirtualUtilityButtonCount = 5;
 constexpr int kVirtualUtilityButtonHudMode = 3;
@@ -695,54 +695,35 @@ struct VirtualButtonLayout
     float radius;
 };
 
-constexpr float kVirtualAttackButtonCx = 588.0f;
-constexpr float kVirtualAttackButtonCy = 396.0f;
-constexpr float kVirtualAttackButtonRadius = 27.0f;
-constexpr float kVirtualSkillButtonRadius = 14.5f;
-struct VirtualUiOffset
-{
-    float x;
-    float y;
+// Combat cluster hub (main + 3 satellites share this center).
+constexpr float kVirtualCombatClusterCx = 598.0f;
+constexpr float kVirtualCombatClusterCy = 406.0f;
+constexpr float kVirtualAttackButtonRadius = 32.0f;
+constexpr float kVirtualSkillButtonRadius = 24.0f;
+constexpr float kVirtualAttackRingPad = 24.0f;
+constexpr float kVirtualSkillOrbitGap = 28.0f;
+constexpr float kVirtualSkillArcStartDeg = 112.0f;
+constexpr float kVirtualSkillArcEndDeg = 188.0f;
+// Fine-tune satellite anchors (UI px): main ring art (skillline 612x408) is not square, so even arc
+// spacing around the layout hub looks uneven; nudge the bottom slot toward the visible main ring.
+constexpr std::array<float, kVirtualVisibleSkillButtonCount> kVirtualSkillSatelliteOffsetX = {
+    0.0f, 0.0f, 24.0f
 };
-constexpr std::array<VirtualUiOffset, kVirtualVisibleSkillButtonCount> kVirtualSkillCenters = {
-    // Four compact skill slots orbit the attack button, evenly spaced like the
-    // reference mobile cluster and kept away from the right screen edge.
-    VirtualUiOffset{ 544.0f, 426.0f },
-    VirtualUiOffset{ 544.0f, 366.0f },
-    VirtualUiOffset{ 600.0f, 342.0f },
-    VirtualUiOffset{ 634.0f, 396.0f },
+constexpr std::array<float, kVirtualVisibleSkillButtonCount> kVirtualSkillSatelliteOffsetY = {
+    0.0f, 0.0f, 20.0f
 };
 
-const std::array<VirtualButtonLayout, 1 + kVirtualVisibleSkillButtonCount> kVirtualButtons = []()
-{
-    std::array<VirtualButtonLayout, 1 + kVirtualVisibleSkillButtonCount> buttons{};
-    buttons[kVirtualAttackButton] = {
-        kVirtualAttackButtonCx,
-        kVirtualAttackButtonCy,
-        kVirtualAttackButtonRadius
-    };
-
-    for (int i = 0; i < kVirtualVisibleSkillButtonCount; ++i)
-    {
-        buttons[kVirtualSkillButtonBase + i] = {
-            kVirtualSkillCenters[i].x,
-            kVirtualSkillCenters[i].y,
-            kVirtualSkillButtonRadius
-        };
-    }
-
-    return buttons;
-}();
-
-// â”€â”€ Consumable potion slots (restored stable layout) â”€â”€
 constexpr int kVirtualConsumableSlotCount = 3;
-constexpr float kVirtualConsumableRowCy = 302.0f;
-constexpr float kVirtualConsumableSpacingX = 34.0f;
-constexpr float kVirtualConsumableRowCx = kVirtualAttackButtonCx;
+// HP/MP/AG quick slots: same size as secondary skill circles, row above skill arc.
+constexpr float kVirtualConsumableSlotRadius = kVirtualSkillButtonRadius;
+constexpr float kVirtualConsumableSpacingX = kVirtualConsumableSlotRadius * 2.0f;
+constexpr float kVirtualConsumableRowCy = 258.0f;
+constexpr float kVirtualConsumableRingPad = 6.0f;
+constexpr float kVirtualConsumableRowCx = kVirtualCombatClusterCx - 26.0f;
 constexpr std::array<VirtualButtonLayout, kVirtualConsumableSlotCount> kVirtualConsumableSlots = {
-    VirtualButtonLayout{ kVirtualConsumableRowCx - kVirtualConsumableSpacingX, kVirtualConsumableRowCy, 15.0f },
-    VirtualButtonLayout{ kVirtualConsumableRowCx, kVirtualConsumableRowCy, 15.0f },
-    VirtualButtonLayout{ kVirtualConsumableRowCx + kVirtualConsumableSpacingX, kVirtualConsumableRowCy, 15.0f },
+    VirtualButtonLayout{ kVirtualConsumableRowCx - kVirtualConsumableSpacingX, kVirtualConsumableRowCy, kVirtualConsumableSlotRadius },
+    VirtualButtonLayout{ kVirtualConsumableRowCx, kVirtualConsumableRowCy, kVirtualConsumableSlotRadius },
+    VirtualButtonLayout{ kVirtualConsumableRowCx + kVirtualConsumableSpacingX, kVirtualConsumableRowCy, kVirtualConsumableSlotRadius },
 };
 
 struct VirtualConsumableSlot {
@@ -750,6 +731,57 @@ struct VirtualConsumableSlot {
     int itemLevel = 0;
 };
 std::array<VirtualConsumableSlot, kVirtualConsumableSlotCount> g_virtualConsumableSlots{};
+
+struct MobileCombatClusterRuntime {
+    std::array<VirtualButtonLayout, 1 + kVirtualVisibleSkillButtonCount> buttons{};
+    std::array<VirtualButtonLayout, kVirtualConsumableSlotCount> consumables{};
+};
+
+MobileCombatClusterRuntime g_mobileCombatRuntime{};
+
+void SyncMobileCombatClusterRuntime()
+{
+    constexpr float kPi = 3.14159265358979323846f;
+    constexpr float kDegToRad = kPi / 180.0f;
+    const float orbitRadius =
+        kVirtualAttackButtonRadius + kVirtualSkillButtonRadius + kVirtualSkillOrbitGap;
+
+    auto& buttons = g_mobileCombatRuntime.buttons;
+    buttons[kVirtualAttackButton] = {
+        kVirtualCombatClusterCx,
+        kVirtualCombatClusterCy,
+        kVirtualAttackButtonRadius
+    };
+
+    for (int i = 0; i < kVirtualVisibleSkillButtonCount; ++i)
+    {
+        const float t = (kVirtualVisibleSkillButtonCount <= 1)
+            ? 0.5f
+            : static_cast<float>(i) / static_cast<float>(kVirtualVisibleSkillButtonCount - 1);
+        const float deg = kVirtualSkillArcStartDeg
+            + t * (kVirtualSkillArcEndDeg - kVirtualSkillArcStartDeg);
+        const float rad = deg * kDegToRad;
+        buttons[kVirtualSkillButtonBase + i] = {
+            kVirtualCombatClusterCx + std::cos(rad) * orbitRadius + kVirtualSkillSatelliteOffsetX[i],
+            kVirtualCombatClusterCy - std::sin(rad) * orbitRadius + kVirtualSkillSatelliteOffsetY[i],
+            kVirtualSkillButtonRadius
+        };
+    }
+
+    g_mobileCombatRuntime.consumables = kVirtualConsumableSlots;
+}
+
+const VirtualButtonLayout& GetRuntimeVirtualButton(int button)
+{
+    SyncMobileCombatClusterRuntime();
+    return g_mobileCombatRuntime.buttons[button];
+}
+
+const VirtualButtonLayout& GetRuntimeConsumableSlot(int slot)
+{
+    SyncMobileCombatClusterRuntime();
+    return g_mobileCombatRuntime.consumables[slot];
+}
 
 constexpr float kTopRightButtonY = 26.0f;
 constexpr float kTopRightButtonSize = 37.0f; // +3 px for all top-right icon buttons
@@ -797,10 +829,7 @@ static UITexture g_uiTex_chat;
 static UITexture g_uiTex_hudSwitch;
 static bool g_uiTexturesLoaded = false;
 
-constexpr float kSkillLineU = 157.0f / 677.0f;
-constexpr float kSkillLineV = 3.0f / 369.0f;
-constexpr float kSkillLineUW = 363.0f / 677.0f;
-constexpr float kSkillLineVH = 363.0f / 369.0f;
+// skillline.png is a standalone 612x408 asset (full UV 0..1).
 // joystick1.png / joystick2.png are standalone full textures (see LoadUITextureAsset).
 // Draw with a pixel quad matching tex w:h so full UV (0,0)-(1,1) is not squashed (avoids
 // oval distortion and avoids center-UV crops that can clip one side if art is not centered).
@@ -1102,19 +1131,17 @@ int GetVirtualHotKeyBySlot(int slot)
 
 float GetVirtualButtonHitRadius(int button)
 {
-    if (button < 0 || button >= static_cast<int>(kVirtualButtons.size()))
+    if (button < 0 || button >= (1 + kVirtualVisibleSkillButtonCount))
     {
         return 0.0f;
     }
 
-    const VirtualButtonLayout& layout = kVirtualButtons[button];
+    const VirtualButtonLayout& layout = GetRuntimeVirtualButton(button);
     if (button == kVirtualAttackButton)
     {
         return layout.radius + 5.0f;
     }
 
-    // Keep the radial skill slots easy to tap without letting neighboring slots
-    // steal input from each other.
     return layout.radius + 9.0f;
 }
 
@@ -1147,12 +1174,17 @@ bool IsVirtualPadAvailable()
 
 bool ShowVirtualAttackButton()
 {
-    return IsVirtualPadAvailable();
+    return IsVirtualPadAvailable() && MU_MobileShouldShowCombatCluster();
 }
 
 bool ShowVirtualSkillButtons()
 {
-    return IsVirtualPadAvailable() && !IsLegacyMainHud();
+    return IsVirtualPadAvailable() && !IsLegacyMainHud() && MU_MobileShouldShowCombatCluster();
+}
+
+bool ShowVirtualConsumableButtons()
+{
+    return IsVirtualPadAvailable() && !IsLegacyMainHud() && MU_MobileShouldShowCombatCluster();
 }
 
 bool ShowLegacyMobileSkillHotBar()
@@ -1941,7 +1973,7 @@ int GetPendingVirtualAssignSkillIndex(uint32_t nowMs)
     }
 
     // Keep the last picker-selected skill pending until the player assigns it
-    // to one of the 4 slots or explicitly reopens the picker.
+    // to one of the 3 secondary slots or explicitly reopens the picker.
     if (IsAssignableVirtualSkillIndex(g_virtualAssignPickerSkillIndex))
     {
         return g_virtualAssignPickerSkillIndex;
@@ -2017,6 +2049,11 @@ void TouchToVirtualUi(const SDL_TouchFingerEvent& touch, float& outX, float& out
 
 bool IsTouchOverInventoryWindow(float uiX, float uiY)
 {
+    if (MU_MobileIsModernMobileHudEnabled())
+    {
+        return MU_MobileHitTestSidePanel(uiX, uiY);
+    }
+
     if (g_pNewUISystem == nullptr
         || g_pMyInventory == nullptr
         || !g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_INVENTORY))
@@ -2825,7 +2862,7 @@ void ToggleVirtualSkillPickerByTouch()
 
 int HitTestVirtualButton(float uiX, float uiY)
 {
-    if (!IsVirtualPadAvailable())
+    if (!IsVirtualPadAvailable() || !MU_MobileShouldShowCombatCluster())
     {
         return -1;
     }
@@ -2833,10 +2870,11 @@ int HitTestVirtualButton(float uiX, float uiY)
     int bestButton = -1;
     float bestNormDist = 1000.0f;
 
-    for (int i = 0; i < static_cast<int>(kVirtualButtons.size()); ++i)
+    SyncMobileCombatClusterRuntime();
+    for (int i = 0; i < static_cast<int>(g_mobileCombatRuntime.buttons.size()); ++i)
     {
-        const float dx = uiX - kVirtualButtons[i].cx;
-        const float dy = uiY - kVirtualButtons[i].cy;
+        const float dx = uiX - g_mobileCombatRuntime.buttons[i].cx;
+        const float dy = uiY - g_mobileCombatRuntime.buttons[i].cy;
         const float hitRadius = GetVirtualButtonHitRadius(i);
         const float r2 = hitRadius * hitRadius;
         const float d2 = (dx * dx) + (dy * dy);
@@ -2879,14 +2917,14 @@ int FindConsumableInInventory(int itemType, int itemLevel)
 
 int HitTestVirtualConsumableSlot(float uiX, float uiY)
 {
-    if (!IsVirtualPadAvailable())
+    if (!IsVirtualPadAvailable() || !ShowVirtualConsumableButtons())
         return -1;
-    // Use a larger touch radius than the visual radius so fat fingers can tap easily.
-    constexpr float kTouchRadius = 24.0f;  // visual radius is 14; this gives ~50% more hit area
+    constexpr float kTouchRadius = 24.0f;
+    SyncMobileCombatClusterRuntime();
     for (int i = 0; i < kVirtualConsumableSlotCount; ++i)
     {
-        const float dx = uiX - kVirtualConsumableSlots[i].cx;
-        const float dy = uiY - kVirtualConsumableSlots[i].cy;
+        const float dx = uiX - g_mobileCombatRuntime.consumables[i].cx;
+        const float dy = uiY - g_mobileCombatRuntime.consumables[i].cy;
         if ((dx * dx + dy * dy) <= (kTouchRadius * kTouchRadius))
             return i;
     }
@@ -3739,7 +3777,7 @@ int HitTestVirtualAttackButton(float uiX, float uiY)
         return -1;
     }
 
-    const VirtualButtonLayout& button = kVirtualButtons[kVirtualAttackButton];
+    const VirtualButtonLayout& button = GetRuntimeVirtualButton(kVirtualAttackButton);
     const float dx = uiX - button.cx;
     const float dy = uiY - button.cy;
     const float hitRadius = GetVirtualButtonHitRadius(kVirtualAttackButton);
@@ -3758,7 +3796,7 @@ int HitTestVirtualSkillButton(float uiX, float uiY)
     for (int visualSlot = 0; visualSlot < kVirtualVisibleSkillButtonCount; ++visualSlot)
     {
         const int buttonIndex = kVirtualSkillButtonBase + visualSlot;
-        const VirtualButtonLayout& button = kVirtualButtons[buttonIndex];
+        const VirtualButtonLayout& button = GetRuntimeVirtualButton(buttonIndex);
         const float dx = uiX - button.cx;
         const float dy = uiY - button.cy;
         const float hitRadius = GetVirtualButtonHitRadius(buttonIndex);
@@ -3923,6 +3961,12 @@ bool HandleVirtualFingerDown(const SDL_TouchFingerEvent& touch)
     }
 
     if (!IsVirtualPadAvailable())
+    {
+        return false;
+    }
+
+    if (MU_MobileIsModernMobileHudEnabled()
+        && (MU_MobileHitTestBlockingOverlay(uiX, uiY) || MU_MobileHitTestSidePanel(uiX, uiY)))
     {
         return false;
     }
@@ -4678,33 +4722,85 @@ static void DrawIconButtonUv(float uiX, float uiY, float uiW, float uiH,
     glBlendFunc(GL_ONE, GL_ONE);
 }
 
-static void DrawIconButtonUvSquare(
-    float centerUiX,
-    float centerUiY,
-    float uiDiameter,
+static void GetTextureSquareCenteredUvCrop(
     const UITexture& tex,
-    float alpha,
-    bool forceSquareOnScreen = false)
+    float& outU0,
+    float& outV0,
+    float& outUW,
+    float& outVH)
 {
-    if (tex.id == 0 || uiDiameter <= 0.5f)
+    outU0 = 0.0f;
+    outV0 = 0.0f;
+    outUW = 1.0f;
+    outVH = 1.0f;
+    if (tex.w <= 0 || tex.h <= 0)
     {
         return;
     }
 
-    const float ar = (tex.w > 0 && tex.h > 0)
-        ? (static_cast<float>(tex.w) / static_cast<float>(tex.h))
-        : 1.0f;
+    const float tw = static_cast<float>(tex.w);
+    const float th = static_cast<float>(tex.h);
+    if (tw >= th)
+    {
+        outUW = th / tw;
+        outU0 = (1.0f - outUW) * 0.5f;
+        outV0 = 0.0f;
+        outVH = 1.0f;
+    }
+    else
+    {
+        outVH = tw / th;
+        outV0 = (1.0f - outVH) * 0.5f;
+        outU0 = 0.0f;
+        outUW = 1.0f;
+    }
+}
+
+static void DrawIconButtonUvSquare(
+    float centerUiX,
+    float centerUiY,
+    float uiHeightDiameter,
+    const UITexture& tex,
+    float alpha,
+    bool forceSquareOnScreen = false,
+    float u0 = 0.0f,
+    float v0 = 0.0f,
+    float uW = 1.0f,
+    float vH = 1.0f,
+    float uiWidthDiameter = 0.0f)
+{
+    if (tex.id == 0 || uiHeightDiameter <= 0.5f)
+    {
+        return;
+    }
+
+    if (uiWidthDiameter < 0.5f)
+    {
+        uiWidthDiameter = uiHeightDiameter;
+    }
+
     const float visibleFrac = std::max(tex.contentVisibleFrac, 0.01f);
-    const float drawDiameterUi = uiDiameter / visibleFrac;
-    const float halfW0 = UiToScreenUniform(drawDiameterUi * 0.5f);
-    const float halfH0 = halfW0 / std::max(ar, 0.001f);
-    float halfW = halfW0;
-    float halfH = halfH0;
+    const float drawWUi = uiWidthDiameter / visibleFrac;
+    const float drawHUi = uiHeightDiameter / visibleFrac;
+    float halfW = 0.0f;
+    float halfH = 0.0f;
     if (forceSquareOnScreen)
     {
-        const float half = std::min(halfW0, halfH0);
-        halfW = half;
-        halfH = half;
+        halfW = halfH = UiToScreenUniform(drawHUi * 0.5f);
+    }
+    else if (std::fabs(uiWidthDiameter - uiHeightDiameter) < 0.01f)
+    {
+        // Joystick / square icons: preserve texture aspect (legacy sizing).
+        const float ar = (tex.w > 0 && tex.h > 0)
+            ? (static_cast<float>(tex.w) / static_cast<float>(tex.h))
+            : 1.0f;
+        halfW = UiToScreenUniform(drawWUi * 0.5f);
+        halfH = halfW / std::max(ar, 0.001f);
+    }
+    else
+    {
+        halfW = UiToScreenUniform(drawWUi * 0.5f);
+        halfH = UiToScreenUniform(drawHUi * 0.5f);
     }
     const float sw = halfW * 2.0f;
     const float sh = halfH * 2.0f;
@@ -4727,14 +4823,44 @@ static void DrawIconButtonUvSquare(
     glBindTexture(GL_TEXTURE_2D, tex.id);
     glColor4f(1.0f, 1.0f, 1.0f, alpha);
     glBegin(GL_TRIANGLE_FAN);
-    glTexCoord2f(0.0f, 0.0f); glVertex2f(sx,      syB);
-    glTexCoord2f(1.0f, 0.0f); glVertex2f(sx + sw, syB);
-    glTexCoord2f(1.0f, 1.0f); glVertex2f(sx + sw, syT);
-    glTexCoord2f(0.0f, 1.0f); glVertex2f(sx,      syT);
+    glTexCoord2f(u0,      v0);      glVertex2f(sx,      syB);
+    glTexCoord2f(u0 + uW, v0);      glVertex2f(sx + sw, syB);
+    glTexCoord2f(u0 + uW, v0 + vH); glVertex2f(sx + sw, syT);
+    glTexCoord2f(u0,      v0 + vH); glVertex2f(sx,      syT);
     glEnd();
     glDisable(GL_TEXTURE_2D);
 
     glBlendFunc(GL_ONE, GL_ONE);
+}
+
+static void DrawVirtualAttackRing(
+    float centerUiX,
+    float centerUiY,
+    float uiDiameter,
+    float alpha)
+{
+    EnsureUITextures();
+    if (g_uiTex_skillline.id == 0 || uiDiameter <= 0.5f)
+    {
+        return;
+    }
+
+    float u0 = 0.0f;
+    float v0 = 0.0f;
+    float uW = 1.0f;
+    float vH = 1.0f;
+    GetTextureSquareCenteredUvCrop(g_uiTex_skillline, u0, v0, uW, vH);
+    DrawIconButtonUvSquare(
+        centerUiX,
+        centerUiY,
+        uiDiameter,
+        g_uiTex_skillline,
+        alpha,
+        true,
+        u0,
+        v0,
+        uW,
+        vH);
 }
 
 void DrawVirtualJoystickHud()
@@ -5420,23 +5546,21 @@ void RenderVirtualPad()
         {
             BeginBitmap();
             EnsureUITextures();
-            const VirtualButtonLayout& attackButton = kVirtualButtons[kVirtualAttackButton];
-            const float attackRingSize = attackButton.radius * 2.0f + 20.0f;
-            const float attackIconSize = attackButton.radius * 1.34f + 3.0f;
-            DrawIconButton(
-                attackButton.cx - attackRingSize * 0.5f,
-                attackButton.cy - attackRingSize * 0.5f,
+            const VirtualButtonLayout& attackButton = GetRuntimeVirtualButton(kVirtualAttackButton);
+            const float attackRingSize = attackButton.radius * 2.0f + kVirtualAttackRingPad;
+            const float attackIconSize = attackButton.radius * 1.34f + 4.0f;
+            DrawVirtualAttackRing(
+                attackButton.cx,
+                attackButton.cy,
                 attackRingSize,
-                attackRingSize,
-                g_uiTex_skillline,
                 IsVirtualButtonPressed(kVirtualAttackButton) ? 1.0f : 0.98f);
-            DrawIconButton(
-                attackButton.cx - attackIconSize * 0.5f,
-                attackButton.cy - attackIconSize * 0.5f,
-                attackIconSize,
+            DrawIconButtonUvSquare(
+                attackButton.cx,
+                attackButton.cy,
                 attackIconSize,
                 g_uiTex_attack,
-                IsVirtualButtonPressed(kVirtualAttackButton) ? 1.0f : 0.96f);
+                IsVirtualButtonPressed(kVirtualAttackButton) ? 1.0f : 0.96f,
+                true);
             EndBitmap();
         }
 
@@ -5445,38 +5569,37 @@ void RenderVirtualPad()
 
     if (ShowVirtualAttackButton())
     {
+        SyncMobileCombatClusterRuntime();
         BeginBitmap();
         EnsureUITextures();
         LoadVirtualSkillSlots();
-        const VirtualButtonLayout& attackButton = kVirtualButtons[kVirtualAttackButton];
+        const VirtualButtonLayout& attackButton = GetRuntimeVirtualButton(kVirtualAttackButton);
         const int attackSkillIndex = g_virtualSkillSlots[kVirtualAttackSkillSlot];
         const bool attackHasSkill =
             (g_pSkillList != nullptr) && IsAssignableVirtualSkillIndex(attackSkillIndex);
-        const float attackRingSize = attackButton.radius * 2.0f + 20.0f;
-        const float attackIconSize = attackButton.radius * 1.34f + 3.0f;
-        DrawIconButton(
-            attackButton.cx - attackRingSize * 0.5f,
-            attackButton.cy - attackRingSize * 0.5f,
+        const float attackRingSize = attackButton.radius * 2.0f + kVirtualAttackRingPad;
+        const float attackIconSize = attackButton.radius * 1.34f + 4.0f;
+        DrawVirtualAttackRing(
+            attackButton.cx,
+            attackButton.cy,
             attackRingSize,
-            attackRingSize,
-            g_uiTex_skillline,
             IsVirtualButtonPressed(kVirtualAttackButton) ? 1.0f : 0.98f);
         if (!attackHasSkill)
         {
-            DrawIconButton(
-                attackButton.cx - attackIconSize * 0.5f,
-                attackButton.cy - attackIconSize * 0.5f,
-                attackIconSize,
+            DrawIconButtonUvSquare(
+                attackButton.cx,
+                attackButton.cy,
                 attackIconSize,
                 g_uiTex_attack,
-                IsVirtualButtonPressed(kVirtualAttackButton) ? 1.0f : 0.96f);
+                IsVirtualButtonPressed(kVirtualAttackButton) ? 1.0f : 0.96f,
+                true);
         }
         EndBitmap();
 
         if (attackHasSkill)
         {
             ConfigureVirtualSkillIconNoBlendState();
-            const float skillIconSize = attackButton.radius * 1.12f;
+            const float skillIconSize = attackButton.radius * 1.20f;
             g_pSkillList->RenderSkillIcon(
                 attackSkillIndex,
                 attackButton.cx - skillIconSize * 0.5f,
@@ -5497,6 +5620,7 @@ void RenderVirtualPad()
 
     if (ShowVirtualSkillButtons())
     {
+        SyncMobileCombatClusterRuntime();
         LoadVirtualSkillSlots();
         const bool assignModeActive = IsVirtualAssignModeActive()
             || IsAssignableVirtualSkillIndex(g_virtualAssignPickerSkillIndex);
@@ -5508,17 +5632,16 @@ void RenderVirtualPad()
         for (int visualSlot = 0; visualSlot < kVirtualVisibleSkillButtonCount; ++visualSlot)
         {
             const int buttonIndex = kVirtualSkillButtonBase + visualSlot;
-            const int skillSlot = visualSlot + 1;
-            const VirtualButtonLayout& button = kVirtualButtons[buttonIndex];
-            const float boxSize = button.radius * 2.0f + 5.0f;
+            const VirtualButtonLayout& button = GetRuntimeVirtualButton(buttonIndex);
+            const float boxDiameter = button.radius * 2.0f + 14.0f;
             const float alpha = IsVirtualButtonPressed(buttonIndex) ? 1.0f : 0.92f;
-            DrawIconButton(
-                button.cx - boxSize * 0.5f,
-                button.cy - boxSize * 0.5f,
-                boxSize,
-                boxSize,
+            DrawIconButtonUvSquare(
+                button.cx,
+                button.cy,
+                boxDiameter,
                 g_uiTex_skillbox,
-                assignModeActive ? (0.86f + 0.14f * assignPulse) : alpha);
+                assignModeActive ? (0.86f + 0.14f * assignPulse) : alpha,
+                true);
         }
         EndBitmap();
 
@@ -5526,12 +5649,12 @@ void RenderVirtualPad()
         {
             const int buttonIndex = kVirtualSkillButtonBase + visualSlot;
             const int skillSlot = visualSlot + 1;
-            const VirtualButtonLayout& button = kVirtualButtons[buttonIndex];
+            const VirtualButtonLayout& button = GetRuntimeVirtualButton(buttonIndex);
             const int renderSkillIndex = g_virtualSkillSlots[skillSlot];
             if (g_pSkillList != nullptr && IsAssignableVirtualSkillIndex(renderSkillIndex))
             {
                 ConfigureVirtualSkillIconNoBlendState();
-                const float skillIconSize = button.radius * 1.18f;
+                const float skillIconSize = button.radius * 1.24f;
                 g_pSkillList->RenderSkillIcon(
                     renderSkillIndex,
                     button.cx - skillIconSize * 0.5f,
@@ -5647,6 +5770,8 @@ void RenderVirtualPad()
     }
     EndBitmap();
 
+    if (ShowVirtualConsumableButtons())
+    {
     BeginBitmap();
     EnsureUITextures();
     EnableAlphaBlend();
@@ -5686,7 +5811,7 @@ void RenderVirtualPad()
                 const VirtualConsumableSlot& cs = g_virtualConsumableSlots[i];
                 if (cs.itemType < 0) continue;
 
-                const VirtualButtonLayout& layout = kVirtualConsumableSlots[i];
+                const VirtualButtonLayout& layout = GetRuntimeConsumableSlot(i);
                 const float iconHalf = layout.radius * 0.85f;
                 RenderItem3D(
                     layout.cx - iconHalf,
@@ -5709,28 +5834,19 @@ void RenderVirtualPad()
         }
     }
 
-    // â”€â”€ Consumable rings (same skillline frame for visual consistency) â”€â”€
+    SyncMobileCombatClusterRuntime();
     for (int i = 0; i < kVirtualConsumableSlotCount; ++i)
     {
-        const VirtualButtonLayout& layout = kVirtualConsumableSlots[i];
+        const VirtualButtonLayout& layout = GetRuntimeConsumableSlot(i);
         DrawVirtualCircle(
             layout.cx,
             layout.cy,
-            layout.radius + 11.0f,
+            layout.radius + kVirtualConsumableRingPad,
             0.05f,
             0.05f,
             0.05f,
             (g_virtualConsumableSlots[i].itemType >= 0) ? 0.55f : 0.32f,
             true);
-        const float ringSize = layout.radius * 2.0f + 20.0f;
-        const float ringAlpha = (g_virtualConsumableSlots[i].itemType >= 0) ? 1.0f : 0.84f;
-        DrawIconButton(
-            layout.cx - ringSize * 0.5f,
-            layout.cy - ringSize * 0.5f,
-            ringSize,
-            ringSize,
-            g_uiTex_skillline,
-            ringAlpha);
     }
 
     // â”€â”€ Consumable quantity numbers â”€â”€
@@ -5761,7 +5877,7 @@ void RenderVirtualPad()
                          ? 1
                          : static_cast<int>(pFoundItem->Durability);
 
-        const VirtualButtonLayout& layout = kVirtualConsumableSlots[i];
+        const VirtualButtonLayout& layout = GetRuntimeConsumableSlot(i);
         // Position number at bottom-right of the circle
         SEASON3B::RenderNumber(
             layout.cx + layout.radius * 0.5f,
@@ -5771,7 +5887,9 @@ void RenderVirtualPad()
     glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
     EndBitmap();
+    }
 }
+
 } // namespace
 
 bool MU_AndroidIsVirtualJoystickDrivingMouse()

@@ -435,6 +435,29 @@ bool SEASON3B::CNewUIMessageBoxMng::IsEmpty()
 	return m_vecMsgBoxes.empty(); 
 }
 
+bool SEASON3B::CNewUIMessageBoxMng::HitTestPointer()
+{
+	for (type_vector_msgbox::iterator vi = m_vecMsgBoxes.begin();
+	     vi != m_vecMsgBoxes.end();
+	     ++vi)
+	{
+		CNewUIMessageBoxBase* pBox = *vi;
+		if (pBox == nullptr)
+		{
+			continue;
+		}
+
+		const POINT& pos = pBox->GetPos();
+		const SIZE& size = pBox->GetSize();
+		if (SEASON3B::CheckMouseIn(pos.x, pos.y, size.cx, size.cy))
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
 void SEASON3B::CNewUIMessageBoxMng::SendEvent(CNewUIMessageBoxBase* pOwner, DWORD dwEvent)
 {
 	CNewUIEvent* pEvent = new CNewUIEvent(pOwner, dwEvent);

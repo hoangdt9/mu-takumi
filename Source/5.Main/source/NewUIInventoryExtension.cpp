@@ -3,6 +3,9 @@
 
 #include "NewUISystem.h"
 #include "wsclientinline.h"
+#if defined(__ANDROID__) || defined(MU_IOS)
+#include "Platform/MobileHud.h"
+#endif
 extern int DisplayWinCDepthBox;
 extern int DisplayWin;
 extern int DisplayWinMid;
@@ -90,7 +93,11 @@ const POINT& CNewUIInventoryExtension::GetPos() const
 }
 void CNewUIInventoryExtension::SetPos(int x, int y)
 {
-	x = x;
+#if defined(__ANDROID__) || defined(MU_IOS)
+	if (MU_MobileIsModernMobileHudEnabled()) {
+		y = MU_MobileGetSidePanelAnchorY(HEIGHT);
+	}
+#endif
     m_Pos.x = x;
     m_Pos.y = y;
 	int i = 0;

@@ -21,6 +21,30 @@
 #include <cmath>
 
 using namespace SEASON3B;
+
+#if defined(__ANDROID__) || defined(MU_IOS)
+extern int MouseX;
+extern int MouseY;
+
+/** Minimap cluster buttons: ignore pointer when a higher UI covers this point. */
+static bool MinimapClusterMouseIn(int x, int y, int w, int h)
+{
+  if (!SEASON3B::CheckMouseIn(x, y, w, h))
+  {
+    return false;
+  }
+
+  if (MU_MobileIsModernMobileHudEnabled()
+      && MU_MobileHitTestBlockingOverlay(static_cast<float>(MouseX),
+                                          static_cast<float>(MouseY)))
+  {
+    return false;
+  }
+
+  return true;
+}
+#endif
+
 char *ButtonText[6] = {"Menu",      "Show Name",   "Show HP Bar",
                        "Camera 3D", "Config Auto", "Active Auto"};
 double ScaleMap = 0.125;
@@ -58,6 +82,7 @@ inline bool IsMuHelperStarted() {
   CNewUIMuHelper *muHelper = GetSafeMuHelper();
   return (muHelper != NULL && muHelper->DataAutoMu.Started);
 }
+
 } // namespace
 
 CNewUIHeroPositionInfo::CNewUIHeroPositionInfo() {
@@ -165,6 +190,11 @@ void CNewUIHeroPositionInfo::SetPos(int x, int y) {
 }
 
 bool CNewUIHeroPositionInfo::BtnProcess() {
+#if defined(__ANDROID__) || defined(MU_IOS)
+  if (MU_MobileIsModernMobileHudEnabled()) {
+    return false;
+  }
+#endif
   if (m_BtnConfig.UpdateMouseEvent()) {
     g_pNewUISystem->Toggle(SEASON3B::INTERFACE_MuHelper);
     PlayBuffer(SOUND_CLICK01);
@@ -192,8 +222,29 @@ bool CNewUIHeroPositionInfo::UpdateMouseEvent() {
   if (true == BtnProcess() || BlockClickCustom)
     return false;
 
-  int Width = HERO_POSITION_INFO_BASEA_WINDOW_WIDTH + WidenX +
-              HERO_POSITION_INFO_BASEC_WINDOW_WIDTH;
+#if defined(__ANDROID__) || defined(MU_IOS)
+  if (MU_MobileIsModernMobileHudEnabled()) {
+    if (MU_MobileHitTestBlockingOverlay(static_cast<float>(MouseX),
+                                        static_cast<float>(MouseY)))
+    {
+      return true;
+    }
+
+    const MU_MobileMinimapClusterLayout layout = MU_MobileGetMinimapClusterLayout();
+    if (CheckMouseIn(static_cast<int>(layout.coordBarX),
+                     static_cast<int>(layout.coordBarY),
+                     static_cast<int>(layout.rowWidth + 4.0f),
+                     static_cast<int>(layout.coordBarH + 2.0f)))
+      return false;
+    if (CheckMouseIn(static_cast<int>(layout.minimapX),
+                     static_cast<int>(layout.minimapY), 108, 100))
+      return false;
+    return true;
+  }
+#endif
+
+  const int Width = HERO_POSITION_INFO_BASEA_WINDOW_WIDTH + WidenX +
+                    HERO_POSITION_INFO_BASEC_WINDOW_WIDTH;
   if (CheckMouseIn(m_Pos.x, m_Pos.y, Width + 80,
                    HERO_POSITION_INFO_BASE_WINDOW_HEIGHT))
     return false;
@@ -359,8 +410,13 @@ void SetBlockCur(bool Set) {
   }
 }
 void JShowButtonSlash(float X, float Y, float W, float DropCurrentY) {
-  if (SEASON3B::CheckMouseIn((int)X, (int)Y, (int)W, (int)W) &&
-      !g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_MOVEMAP)) {
+  if (
+#if defined(__ANDROID__) || defined(MU_IOS)
+      MinimapClusterMouseIn((int)X, (int)Y, (int)W, (int)W)
+#else
+      SEASON3B::CheckMouseIn((int)X, (int)Y, (int)W, (int)W)
+#endif
+      && !g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_MOVEMAP)) {
     SetBlockCur(true);
     RenderTipText(X + 30, Y + 3, ButtonText[0]);
     if (SEASON3B::IsPress(VK_LBUTTON) &&
@@ -386,8 +442,13 @@ void JShowButtonSlash(float X, float Y, float W, float DropCurrentY) {
 }
 
 void JGetEventZoom(float X, float Y, float W) {
-  if (SEASON3B::CheckMouseIn((int)X, (int)Y, (int)W, (int)W) &&
-      !g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_MOVEMAP)) {
+  if (
+#if defined(__ANDROID__) || defined(MU_IOS)
+      MinimapClusterMouseIn((int)X, (int)Y, (int)W, (int)W)
+#else
+      SEASON3B::CheckMouseIn((int)X, (int)Y, (int)W, (int)W)
+#endif
+      && !g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_MOVEMAP)) {
     SetBlockCur(true);
     if (SEASON3B::IsPress(VK_LBUTTON) && ScaleMap != 0.125 &&
         GetTickCount() >= CacheTimeClick + 300) {
@@ -409,8 +470,13 @@ void JGetEventZoom(float X, float Y, float W) {
 }
 
 void JGetEventinZoom(float X, float Y, float W) {
-  if (SEASON3B::CheckMouseIn((int)X, (int)Y, (int)W, (int)W) &&
-      !g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_MOVEMAP)) {
+  if (
+#if defined(__ANDROID__) || defined(MU_IOS)
+      MinimapClusterMouseIn((int)X, (int)Y, (int)W, (int)W)
+#else
+      SEASON3B::CheckMouseIn((int)X, (int)Y, (int)W, (int)W)
+#endif
+      && !g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_MOVEMAP)) {
     SetBlockCur(true);
     if (SEASON3B::IsPress(VK_LBUTTON) && ScaleMap != 0.375 &&
         GetTickCount() >= CacheTimeClick + 300) {
@@ -433,7 +499,13 @@ void JGetEventinZoom(float X, float Y, float W) {
   }
 }
 void JShowButton3DCamera(float X, float Y, float W, float DropCurrentY) {
-  if (SEASON3B::CheckMouseIn((int)X, (int)Y, (int)W, (int)W) &&
+  if (
+#if defined(__ANDROID__) || defined(MU_IOS)
+      MinimapClusterMouseIn((int)X, (int)Y, (int)W, (int)W)
+#else
+      SEASON3B::CheckMouseIn((int)X, (int)Y, (int)W, (int)W)
+#endif
+      &&
       !g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_MOVEMAP)) {
     SetBlockCur(true);
     RenderTipText(X + 30, Y + 3, ButtonText[3]);
@@ -465,7 +537,13 @@ void JShowButton3DCamera(float X, float Y, float W, float DropCurrentY) {
   }
 }
 void JShowButtonHPBar(float X, float Y, float W, float DropCurrentY) {
-  if (SEASON3B::CheckMouseIn((int)X, (int)Y, (int)W, (int)W) &&
+  if (
+#if defined(__ANDROID__) || defined(MU_IOS)
+      MinimapClusterMouseIn((int)X, (int)Y, (int)W, (int)W)
+#else
+      SEASON3B::CheckMouseIn((int)X, (int)Y, (int)W, (int)W)
+#endif
+      &&
       !g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_MOVEMAP)) {
     RenderTipText(X + 30, Y + 3, ButtonText[2]);
     SetBlockCur(true);
@@ -491,7 +569,13 @@ void JShowButtonHPBar(float X, float Y, float W, float DropCurrentY) {
   }
 }
 void JShowButtonShowName(float X, float Y, float W, float DropCurrentY) {
-  if (SEASON3B::CheckMouseIn((int)X, (int)Y, (int)W, (int)W) &&
+  if (
+#if defined(__ANDROID__) || defined(MU_IOS)
+      MinimapClusterMouseIn((int)X, (int)Y, (int)W, (int)W)
+#else
+      SEASON3B::CheckMouseIn((int)X, (int)Y, (int)W, (int)W)
+#endif
+      &&
       !g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_MOVEMAP)) {
     RenderTipText(X + 30, Y + 3, ButtonText[1]);
     SetBlockCur(true);
@@ -522,7 +606,13 @@ void JShowButtonShowName(float X, float Y, float W, float DropCurrentY) {
 }
 
 void JShowButtonConfigAuto(float X, float Y, float W, float DropCurrentY) {
-  if (SEASON3B::CheckMouseIn((int)X, (int)Y, (int)W, (int)W) &&
+  if (
+#if defined(__ANDROID__) || defined(MU_IOS)
+      MinimapClusterMouseIn((int)X, (int)Y, (int)W, (int)W)
+#else
+      SEASON3B::CheckMouseIn((int)X, (int)Y, (int)W, (int)W)
+#endif
+      &&
       !g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_MOVEMAP)) {
     RenderTipText(X + 30, Y + 3, ButtonText[4]);
     SetBlockCur(true);
@@ -553,7 +643,13 @@ void JShowButtonConfigAuto(float X, float Y, float W, float DropCurrentY) {
   }
 }
 void JShowButtonPlayAuto(float X, float Y, float W, float DropCurrentY) {
-  if (SEASON3B::CheckMouseIn((int)X, (int)Y, (int)W, (int)W) &&
+  if (
+#if defined(__ANDROID__) || defined(MU_IOS)
+      MinimapClusterMouseIn((int)X, (int)Y, (int)W, (int)W)
+#else
+      SEASON3B::CheckMouseIn((int)X, (int)Y, (int)W, (int)W)
+#endif
+      &&
       !g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_MOVEMAP)) {
     RenderTipText(X + 30, Y + 3, ButtonText[5]);
     SetBlockCur(true);
@@ -585,8 +681,13 @@ void JShowButtonPlayAuto(float X, float Y, float W, float DropCurrentY) {
   }
 }
 void JGetButtonClosed(float X, float Y, float W) {
-  if (SEASON3B::CheckMouseIn((int)X, (int)Y, (int)W, (int)W) &&
-      !g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_MOVEMAP)) {
+  if (
+#if defined(__ANDROID__) || defined(MU_IOS)
+      MinimapClusterMouseIn((int)X, (int)Y, (int)W, (int)W)
+#else
+      SEASON3B::CheckMouseIn((int)X, (int)Y, (int)W, (int)W)
+#endif
+      && !g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_MOVEMAP)) {
     SetBlockCur(true);
     if (SEASON3B::IsPress(VK_LBUTTON) &&
         (GetTickCount() - CacheTimeClick) > 300) {
@@ -612,8 +713,13 @@ void JGetButtonClosed(float X, float Y, float W) {
 void JGetButtonAutoReset(float X, float Y, float W) {
   EnableAlphaTest(1);
   glColor4f(1.0, 1.0, 1.0, 1.0);
-  if (SEASON3B::CheckMouseIn((int)X, (int)Y, (int)W, (int)W) &&
-      !g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_MOVEMAP)) {
+  if (
+#if defined(__ANDROID__) || defined(MU_IOS)
+      MinimapClusterMouseIn((int)X, (int)Y, (int)W, (int)W)
+#else
+      SEASON3B::CheckMouseIn((int)X, (int)Y, (int)W, (int)W)
+#endif
+      && !g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_MOVEMAP)) {
     SetBlockCur(true);
     if (SEASON3B::IsPress(VK_LBUTTON) &&
         (GetTickCount() - CacheTimeClick) > 300) {
@@ -701,31 +807,52 @@ void CNewUIHeroPositionInfo::DrawMiniMap() {
   x = 2;
   y = 2;
 #if defined(__ANDROID__) || defined(MU_IOS)
-  if (MU_MobileIsModernMobileHudEnabled()) {
-    x = 640.0f - 108.0f;
-    y = 10.0f;
+  const bool kMobileTopCluster = MU_MobileIsModernMobileHudEnabled();
+  MU_MobileMinimapClusterLayout mobileLayout{};
+  if (kMobileTopCluster) {
+    mobileLayout = MU_MobileGetMinimapClusterLayout();
+    x = mobileLayout.minimapX;
+    y = mobileLayout.minimapY;
+
+    RenderColor(static_cast<int>(mobileLayout.coordBarX + 1.0f),
+                static_cast<int>(mobileLayout.coordBarY + 1.0f),
+                static_cast<int>(mobileLayout.coordBarW - 2.0f),
+                static_cast<int>(mobileLayout.coordBarH - 2.0f), 0.38f, 1);
+    EndRenderColor();
+    EnableAlphaTest(1);
+    glColor4f(1.0f, 1.0f, 1.0f, 0.9f);
+    RenderBitmap(BITMAP_INTERFACE_CUSTOM + 4, mobileLayout.coordBarX,
+                 mobileLayout.coordBarY, mobileLayout.coordBarW,
+                 mobileLayout.coordBarH, 0.326000005f, 0.004999999888f,
+                 0.6700000167f, 0.04500000179f, 1, 1, 0.0f);
+    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+    g_pRenderText->SetFont(g_hFontBold);
+    g_pRenderText->SetBgColor(0);
+    g_pRenderText->SetShadowText(0);
+    g_pRenderText->SetTextColor(255, 255, 255, 255);
+    unicode::_sprintf(
+        Cord, "%s (%d/%d)", gMapManager.GetMapName(gMapManager.WorldActive),
+        m_CurHeroPosition.x, m_CurHeroPosition.y);
+    constexpr int kCoordTextH = 11;
+    const int coordTextY = static_cast<int>(
+        mobileLayout.coordBarY +
+        (mobileLayout.coordBarH - static_cast<float>(kCoordTextH)) * 0.5f);
+    g_pRenderText->RenderText(static_cast<int>(mobileLayout.coordBarX), coordTextY,
+                              Cord, static_cast<int>(mobileLayout.coordBarW),
+                              kCoordTextH, RT3_SORT_CENTER);
   }
+#else
+  const bool kMobileTopCluster = false;
 #endif
   EnableAlphaTest(1);
   glColor4f(1.0, 1.0, 1.0, 1.0);
 
-  //===ButonClose
-  JGetButtonClosed(x, y, 15.0);
-  //=== End Button Close
-
-  //-- Khung Map Name
-  // RenderBitmap(BITMAP_INTERFACE_CUSTOM + 4, x + 16.0, y, 135.0, 15.0,
-  // 0.326000005, 0.004999999888, 0.6700000167, 0.04500000179, 1, 1, 0.0);
-  // g_pRenderText->SetFont(g_hFontBold);
-
-  // g_pRenderText->SetBgColor(0);
-
-  // g_pRenderText->SetShadowText(2);
-  // g_pRenderText->SetTextColor(255, 255, 255, 255);
-  // unicode::_sprintf(Cord, "%s (%d , %d)",
-  // gMapManager.GetMapName(gMapManager.WorldActive), m_CurHeroPosition.x,
-  // m_CurHeroPosition.y); g_pRenderText->RenderText(x + 20.0, y + 1.0, Cord,
-  // 131, 13 - 4, RT3_SORT_CENTER); g_pRenderText->SetShadowText(0);
+  if (kMobileTopCluster) {
+    JGetButtonClosed(mobileLayout.closeX, mobileLayout.closeY,
+                     mobileLayout.closeSize);
+  } else {
+    JGetButtonClosed(x, y, 15.0f);
+  }
   if (ShowMiniMapColtrol) {
     //=== Vong Tron Map — kích thước cố định 84px (không đổi theo zoom). Zoom +/- chỉ đổi
     // ScaleMap trong GetDrawCircle + DataViewPortMapLoad (phạm vi / vị trí quái).
@@ -976,11 +1103,17 @@ void ShowInfoTitleWindow() {
 
 #if (UseNewMacroUI == 0)
 bool CNewUIHeroPositionInfo::Render() {
-  // gInterface.DrawMessage(1, "CNewUIHeroPositionInfo::Render() %d/%d",
-  // m_Pos.x, m_Pos.y);
   ShowInfoTitleWindow();
   MiniMapLoad();
   AutoMove();
+
+#if defined(__ANDROID__) || defined(MU_IOS)
+  if (MU_MobileIsModernMobileHudEnabled()) {
+    DrawMiniMap();
+    return true;
+  }
+#endif
+
   unicode::t_char szText[255] = {
       NULL,
   };
@@ -1004,61 +1137,42 @@ bool CNewUIHeroPositionInfo::Render() {
   RenderImage(IMAGE_HERO_POSITION_INFO_BASE_WINDOW + 2,
               m_Pos.x + HERO_POSITION_INFO_BASEA_WINDOW_WIDTH + WidenX, m_Pos.y,
               73.f, 20.f);
-  //--
-  m_BtnConfig.Render();
 
-  // if (g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_MuHelper))
-  //{
-  //	m_BtnConfig.ChangeButtonState(BUTTON_STATE_DOWN, 2);
-  // }
+  m_BtnConfig.Render();
   if (!IsMuHelperStarted()) {
     m_BtnStart.Render();
   } else {
     m_BtnStop.Render();
   }
 
-  //--
   unicode::_sprintf(szText, "%s (%d/%d)",
                     gMapManager.GetMapName(gMapManager.WorldActive),
                     m_CurHeroPosition.x, m_CurHeroPosition.y);
 
-  g_pRenderText->RenderText(m_Pos.x + 10, m_Pos.y + 2, szText, WidenX + 20,
-                            13 - 4, RT3_SORT_CENTER);
+  g_pRenderText->RenderText(m_Pos.x + 10, m_Pos.y + 2, szText, WidenX + 20, 13 - 4,
+                            RT3_SORT_CENTER);
 
-  //==MenuCustom
-#if defined(__ANDROID__) || defined(MU_IOS)
-  const int kMobileHeroMenuShiftX =
-      (MU_MobileIsModernMobileHudEnabled() && !MU_MobileIsUtilityToolbarExpanded()) ? 176 : 0;
-#else
-  const int kMobileHeroMenuShiftX = 0;
-#endif
   const int menuClusterX =
-      m_Pos.x + HERO_POSITION_INFO_BASEA_WINDOW_WIDTH + WidenX + 57 - kMobileHeroMenuShiftX;
+      m_Pos.x + HERO_POSITION_INFO_BASEA_WINDOW_WIDTH + WidenX + 57;
 
   if (g_pBCustomMenuInfo != NULL && gInterface.Data[eMenu].ModelID > 0 &&
       gInterface.Data[eMenu].Width > 0 &&
       gInterface.Data[eMenu].Height > 0) {
-    g_pBCustomMenuInfo->DrawGUI(
-        eMenuBG, menuClusterX,
-        0);
+    g_pBCustomMenuInfo->DrawGUI(eMenuBG, menuClusterX, 0);
     if (g_pBCustomMenuInfo->DrawButtonGUI(
-            gInterface.Data[eMenu].ModelID,
-            menuClusterX + 1,
-            2, gInterface.Data[eMenu].Width, gInterface.Data[eMenu].Height)) {
+            gInterface.Data[eMenu].ModelID, menuClusterX + 1, 2,
+            gInterface.Data[eMenu].Width, gInterface.Data[eMenu].Height)) {
       gInterface.Data[eMenu_MAIN].OnShow ^= 1;
     }
   }
 
   if (gInterface.Data[eMenu].Width > 0 && gInterface.Data[eMenu].Height > 0 &&
-      SEASON3B::CheckMouseIn(
-          menuClusterX + 1, 2,
-          gInterface.Data[eMenu].Width, gInterface.Data[eMenu].Height) == 1) {
-    RenderTipText(static_cast<float>(menuClusterX + 1 - 5),
-                  2 + 27, "Menu");
+      SEASON3B::CheckMouseIn(menuClusterX + 1, 2, gInterface.Data[eMenu].Width,
+                             gInterface.Data[eMenu].Height) == 1) {
+    RenderTipText(static_cast<float>(menuClusterX + 1 - 5), 2 + 27, "Menu");
   }
   DisableAlphaBlend();
 
-  //===DrawMapo
   DrawMiniMap();
   return true;
 }

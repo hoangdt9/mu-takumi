@@ -6,6 +6,10 @@
 #include "NewUISystem.h"
 #include "wsclientinline.h"
 #include "CharacterManager.h"
+#if defined(__ANDROID__) || defined(MU_IOS)
+#include "Platform/MobileHud.h"
+#endif
+#include "ZzzObject.h"
 
 #ifdef PJH_FIX_SPRIT
 #include "GIPetManager.h"
@@ -14,6 +18,7 @@
 extern float g_fScreenRate_x;
 extern int DisplayWinCDepthBox;
 extern int DisplayWin;
+extern int DisplayWinReal;
 extern int DisplayWinMid;
 extern int DisplayWinExt;
 extern int DisplayWinReal;
@@ -58,23 +63,64 @@ void SEASON3B::CNewUIItemEnduranceInfo::Release()
 		m_pNewUIMng = NULL;
 	}
 }
+#if defined(__ANDROID__) || defined(MU_IOS)
+namespace {
+// IMAGE_SIZE in NewUIItemEnduranceInfo.h (protected) — literals for file-scope helper.
+constexpr int kPetHpBarWidth = 49;
+constexpr int kPetHpFrameWidth = 57;
+
+void ApplyModernMobilePetBarLayout(int panelAnchorX, POINT& uiStartPos, int& textEndPosX) {
+  const MU_MobileMinimapClusterLayout cluster = MU_MobileGetMinimapClusterLayout();
+  const int defaultPetX = static_cast<int>(cluster.petBarX);
+  const int panelPetX = panelAnchorX - kPetHpBarWidth - 15;
+  const int screenRight = (DisplayWinReal > 0) ? DisplayWinReal : DisplayWin;
+  // Giống SetPos(x) desktop: mở 1 hoặc 2 panel (C/V/…) thì neo sát mép trái cửa sổ.
+  const bool anchorShiftedByPanel = (panelAnchorX < screenRight - 1);
+  uiStartPos.x = anchorShiftedByPanel ? panelPetX : defaultPetX;
+  // RenderHPUI vẽ tại (iX, iY - 368); desktop mặc định iY=370 → màn 2px.
+  uiStartPos.y = static_cast<int>(cluster.petBarY) + 368;
+  textEndPosX = uiStartPos.x + kPetHpFrameWidth;
+}
+} // namespace
+#endif
+
 //=== HP PET
 void SEASON3B::CNewUIItemEnduranceInfo::SetPos( int x, int y )
 {
-	m_UIStartPos.x = (GetScreenWidth() + DisplayWinCDepthBox) - PETHP_BAR_WIDTH - 15;
-	m_UIStartPos.y = 370;
-	m_ItemDurUIStartPos.x = (GetScreenWidth() + DisplayWinCDepthBox) - ITEM_DUR_WIDTH - 2;
-	m_ItemDurUIStartPos.y = 140;
-  	
-	m_iTextEndPosX = m_UIStartPos.x + PETHP_FRAME_WIDTH;
+#if defined(__ANDROID__) || defined(MU_IOS)
+  if (MU_MobileIsModernMobileHudEnabled()) {
+    ApplyModernMobilePetBarLayout(BGetScreenWidth(), m_UIStartPos, m_iTextEndPosX);
+    m_ItemDurUIStartPos.x =
+        (GetScreenWidth() + DisplayWinCDepthBox) - ITEM_DUR_WIDTH - 2;
+    m_ItemDurUIStartPos.y = 140;
+    return;
+  }
+#endif
+  (void)x;
+  (void)y;
+  m_UIStartPos.x = (GetScreenWidth() + DisplayWinCDepthBox) - PETHP_BAR_WIDTH - 15;
+  m_UIStartPos.y = 370;
+  m_ItemDurUIStartPos.x = (GetScreenWidth() + DisplayWinCDepthBox) - ITEM_DUR_WIDTH - 2;
+  m_ItemDurUIStartPos.y = 140;
+
+  m_iTextEndPosX = m_UIStartPos.x + PETHP_FRAME_WIDTH;
 }
 
 void SEASON3B::CNewUIItemEnduranceInfo::SetPos( int x )
 {
-	m_UIStartPos.x = x - PETHP_BAR_WIDTH - 15;
-	m_UIStartPos.y = 370;
-	m_ItemDurUIStartPos.x = x - ITEM_DUR_WIDTH - 2; 
-	m_ItemDurUIStartPos.y = 140;
+#if defined(__ANDROID__) || defined(MU_IOS)
+  if (MU_MobileIsModernMobileHudEnabled()) {
+    ApplyModernMobilePetBarLayout(x, m_UIStartPos, m_iTextEndPosX);
+    m_ItemDurUIStartPos.x = x - ITEM_DUR_WIDTH - 2;
+    m_ItemDurUIStartPos.y = 140;
+    return;
+  }
+#endif
+  m_UIStartPos.x = x - PETHP_BAR_WIDTH - 15;
+  m_UIStartPos.y = 370;
+  m_ItemDurUIStartPos.x = x - ITEM_DUR_WIDTH - 2;
+  m_ItemDurUIStartPos.y = 140;
+  m_iTextEndPosX = m_UIStartPos.x + PETHP_FRAME_WIDTH;
 }
 
 bool SEASON3B::CNewUIItemEnduranceInfo::UpdateMouseEvent()
@@ -231,6 +277,12 @@ bool SEASON3B::CNewUIItemEnduranceInfo::Update()
 {
 	if( !IsVisible() )
 		return true;
+
+#if defined(__ANDROID__) || defined(MU_IOS)
+	if (MU_MobileIsModernMobileHudEnabled()) {
+		ApplyModernMobilePetBarLayout(BGetScreenWidth(), m_UIStartPos, m_iTextEndPosX);
+	}
+#endif
 
 	if ( gCharacterManager.GetBaseClass(Hero->Class)==CLASS_ELF )
     {

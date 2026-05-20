@@ -20,7 +20,10 @@
 #include "CustomMessage.h"
 #include "CB_StatsAdvance.h"
 #include "Other.h"
-#include "NewUICustomMessageBox.h" 
+#include "NewUICustomMessageBox.h"
+#if defined(__ANDROID__) || defined(MU_IOS)
+#include "Platform/MobileHud.h"
+#endif
 using namespace SEASON3B;
 int FixYSetPage = 20;
 extern int g_SelectedStatType;
@@ -146,6 +149,11 @@ void SEASON3B::CNewUICharacterInfoWindow::Release()
 
 void SEASON3B::CNewUICharacterInfoWindow::SetPos(int x, int y)
 {
+#if defined(__ANDROID__) || defined(MU_IOS)
+	if (MU_MobileIsModernMobileHudEnabled()) {
+		y = MU_MobileGetSidePanelAnchorY(CHAINFO_WINDOW_HEIGHT);
+	}
+#endif
 	m_Pos.x = x;
 	m_Pos.y = y + FixYSetPage;
 }

@@ -19,6 +19,15 @@ void TakumiAndroid_PulseRightClick();
 /// Run inventory use handling immediately after SDL events (before ZzzInterface hotkey path).
 void TakumiAndroid_ProcessInventoryUseFrame();
 
+/// Cancel armed skill / channel when moving (joystick parity with PC LMB walk click).
+void TakumiAndroid_DisarmSkillMouseForMovement();
+
+/// True when this finger owns the in-world skill gesture (long-press / tap on map).
+bool TakumiAndroid_IsWorldSkillFinger(SDL_FingerID fingerId);
+
+/// True while a world long-press / channel gesture is active (may use a different finger than the joystick).
+bool TakumiAndroid_HasActiveWorldSkillGesture();
+
 /// Deferred single-tap melee (waits past double-tap window so double-tap does not melee first).
 void TakumiAndroid_ProcessWorldSkillFrame();
 
@@ -40,6 +49,9 @@ inline bool TakumiAndroid_ConsumeInventoryUsePress() { return false; }
 inline void TakumiAndroid_CancelInventoryUsePress() {}
 inline void TakumiAndroid_PulseRightClick() {}
 inline void TakumiAndroid_ProcessInventoryUseFrame() {}
+inline void TakumiAndroid_DisarmSkillMouseForMovement() {}
+inline bool TakumiAndroid_IsWorldSkillFinger(SDL_FingerID) { return false; }
+inline bool TakumiAndroid_HasActiveWorldSkillGesture() { return false; }
 inline void TakumiAndroid_ProcessWorldSkillFrame() {}
 inline bool TakumiAndroid_HandleInventoryTouchDown(const void*) { return false; }
 inline bool TakumiAndroid_HandleInventoryTouchMove(const void*) { return false; }

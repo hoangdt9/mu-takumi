@@ -66,6 +66,10 @@ bool MU_AndroidShouldPreferLoopbackTcp();
 void MU_AndroidSetPreferLoopbackTcp(bool prefer);
 /** True while virtual joystick simulates MouseLButton for click-to-walk. */
 bool MU_AndroidIsVirtualJoystickDrivingMouse();
+/** True while a finger is on the virtual joystick (including before walk threshold). */
+bool MU_AndroidIsVirtualJoystickEngaged();
+/** Stop joystick-simulated walk so a world tap can melee (does not cancel skill channel). */
+void MU_Android_StopJoystickMovementForCombat();
 /** True while the player is steering (joystick) — suppress auto-target / proximity combat. */
 bool MU_AndroidShouldSuppressCombatTargeting();
 /** Per-frame cap for ProtocolCompiler packet drain (see SetMaxMessagePerCycle). */

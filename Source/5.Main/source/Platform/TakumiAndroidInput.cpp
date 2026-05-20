@@ -69,7 +69,14 @@ struct WorldSkillTouchState
     uint32_t downMs = 0;
     float downUiX = 0.0f;
     float downUiY = 0.0f;
+    int aimMouseX = 320;
+    int aimMouseY = 240;
 };
+
+bool ShouldSkipPrimeHeroStopForConcurrentJoystick()
+{
+    return MU_AndroidIsVirtualJoystickDrivingMouse() || MU_AndroidIsVirtualJoystickEngaged();
+}
 
 WorldSkillTouchState g_worldSkillTouch{};
 bool g_worldSkillLongPressFired = false;
@@ -83,6 +90,38 @@ uint32_t g_worldSkillPendingMeleeMs = 0;
 bool g_worldSkillChannelHold = false;
 bool g_worldSkillChannelLatched = false;
 uint32_t g_worldSkillLastChannelTickMs = 0;
+
+struct ScopedWorldSkillAimMouse
+{
+    int savedX = 0;
+    int savedY = 0;
+    bool active = false;
+
+    ScopedWorldSkillAimMouse()
+    {
+        if (g_worldSkillTouch.finger == static_cast<SDL_FingerID>(-1))
+        {
+            return;
+        }
+
+        savedX = MouseX;
+        savedY = MouseY;
+        MouseX = g_worldSkillTouch.aimMouseX;
+        MouseY = g_worldSkillTouch.aimMouseY;
+        active = true;
+    }
+
+    ~ScopedWorldSkillAimMouse()
+    {
+        if (!active)
+        {
+            return;
+        }
+
+        MouseX = savedX;
+        MouseY = savedY;
+    }
+};
 
 void TouchToVirtualUi(const SDL_TouchFingerEvent& touch, float& outX, float& outY)
 {
@@ -292,7 +331,7 @@ bool IsSupportOrSelfSkillType(const int skillType)
 
 void PrimeHeroForSkillCast()
 {
-    if (Hero == nullptr)
+    if (Hero == nullptr || ShouldSkipPrimeHeroStopForConcurrentJoystick())
     {
         return;
     }
@@ -561,6 +600,8 @@ bool FireWorldSkillChannelTick(const char* reason)
 
     g_worldSkillLastChannelTickMs = nowMs;
 
+    const ScopedWorldSkillAimMouse aimGuard;
+
     const int previousSkillIndex = Hero->CurrentSkill;
     Hero->CurrentSkill = static_cast<BYTE>(skillIndex);
 
@@ -752,6 +793,14 @@ bool FireWorldMeleeAttack(const char* reason)
         return false;
     }
 
+    if (MU_AndroidIsVirtualJoystickDrivingMouse())
+    {
+        MU_Android_StopJoystickMovementForCombat();
+    }
+
+    StopWorldSkillChannel();
+    g_worldSkillPendingMeleeMs = 0;
+
     g_worldSkillTouchConsumed = true;
 
     MouseRButtonPush = false;
@@ -824,6 +873,7 @@ bool FireWorldSkillAttack(const char* reason)
     const int target = SelectedCharacter;
     const bool channelSkill = IsDirectionChannelSkillType(skillType);
 
+    const ScopedWorldSkillAimMouse aimGuard;
     PrimeHeroForSkillCast();
     SetupMovementSkillForCast(skillIndex);
 
@@ -934,6 +984,50 @@ bool FireWorldSecondaryAction(const char* reason)
 
 } // namespace
 
+bool TakumiAndroid_HasActiveWorldSkillGesture()
+{
+    return g_worldSkillTouch.finger != static_cast<SDL_FingerID>(-1);
+}
+
+void TakumiAndroid_DisarmSkillMouseForMovement()
+{
+    // Joystick uses a separate finger: do not cancel an in-progress world long-press / channel.
+    if (TakumiAndroid_HasActiveWorldSkillGesture())
+    {
+        return;
+    }
+
+    StopWorldSkillChannel();
+
+    g_worldSkillTouch.finger = static_cast<SDL_FingerID>(-1);
+    g_worldSkillLongPressFired = false;
+    g_worldSkillTouchConsumed = false;
+    g_worldSkillPendingMeleeMs = 0;
+    g_worldSkillLastShortTapMs = 0;
+    g_worldSkillLastChannelTickMs = 0;
+
+    if (Hero != nullptr)
+    {
+        Hero->AttackTime = 0;
+        Hero->SkillSuccess = false;
+    }
+
+    Attacking = -1;
+
+    ZeroMemory(&g_MovementSkill, sizeof(g_MovementSkill));
+
+    MouseRButtonPop = false;
+    MouseRButtonPush = false;
+    MouseRButton = false;
+    MouseRButtonPress = 0;
+}
+
+bool TakumiAndroid_IsWorldSkillFinger(const SDL_FingerID fingerId)
+{
+    return g_worldSkillTouch.finger != static_cast<SDL_FingerID>(-1)
+        && g_worldSkillTouch.finger == fingerId;
+}
+
 bool TakumiAndroid_PeekInventoryUsePress()
 {
     return g_inventoryUsePressPending;
@@ -968,6 +1062,22 @@ void TakumiAndroid_PulseRightClick()
 
 void TakumiAndroid_ProcessWorldSkillFrame()
 {
+    if (g_worldSkillTouch.finger != static_cast<SDL_FingerID>(-1))
+    {
+        const uint32_t nowMs = MU_MobileGetTicks();
+        const uint32_t heldMs =
+            (g_worldSkillTouch.downMs > 0) ? (nowMs - g_worldSkillTouch.downMs) : 0;
+
+        if (!g_worldSkillLongPressFired && heldMs >= kWorldSkillLongPressMs)
+        {
+            FireWorldSecondaryAction("long-press-frame");
+        }
+        else if (g_worldSkillChannelHold)
+        {
+            FireWorldSkillChannelTick("hold-frame");
+        }
+    }
+
     if (g_worldSkillChannelLatched)
     {
         FireWorldSkillChannelTick("latched");
@@ -1155,10 +1265,13 @@ bool TakumiAndroid_HandleWorldSkillTouchDown(const SDL_TouchFingerEvent& touch)
     g_worldSkillTouch.downMs = MU_MobileGetTicks();
     g_worldSkillTouch.downUiX = uiX;
     g_worldSkillTouch.downUiY = uiY;
+    g_worldSkillTouch.aimMouseX = std::clamp(static_cast<int>(uiX), 0, 640);
+    g_worldSkillTouch.aimMouseY = std::clamp(static_cast<int>(uiY), 0, 480);
     g_worldSkillLongPressFired = false;
     g_worldSkillTouchConsumed = false;
     g_worldSkillPendingMeleeMs = 0;
     g_worldSkillChannelHold = false;
+    g_worldSkillChannelLatched = false;
     TAKUMI_SKILL_LOGI(
         "touch down finger=%lld ui=(%.0f,%.0f) Mouse=(%d,%d)",
         static_cast<long long>(touch.fingerId),
@@ -1166,7 +1279,7 @@ bool TakumiAndroid_HandleWorldSkillTouchDown(const SDL_TouchFingerEvent& touch)
         uiY,
         MouseX,
         MouseY);
-    return false;
+    return true;
 }
 
 bool TakumiAndroid_HandleWorldSkillTouchMove(const SDL_TouchFingerEvent& touch)

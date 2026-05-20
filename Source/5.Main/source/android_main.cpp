@@ -2227,7 +2227,7 @@ float GetVirtualJoystickRenderCenterY()
 
 void InterruptVirtualCombatForMovement()
 {
-    Attacking = -1;
+    TakumiAndroid_DisarmSkillMouseForMovement();
 
     if (Hero != nullptr)
     {
@@ -2235,8 +2235,6 @@ void InterruptVirtualCombatForMovement()
         {
             Hero->MovementType = MOVEMENT_MOVE;
         }
-
-        Hero->AttackTime = 0;
     }
 
     SelectedCharacter = -1;
@@ -2260,6 +2258,25 @@ void ClearVirtualJoystick()
 {
     g_virtualJoystick = ActiveVirtualJoystick{};
     ReleaseVirtualJoystickMouseDrive();
+}
+
+void StopJoystickMovementForCombatInternal()
+{
+    ReleaseVirtualJoystickMouseDrive();
+
+    if (Hero != nullptr)
+    {
+        if (Hero->MovementType == MOVEMENT_ATTACK)
+        {
+            Hero->MovementType = MOVEMENT_MOVE;
+        }
+
+        Hero->Movement = false;
+        SetPlayerStop(Hero);
+    }
+
+    SelectedCharacter = -1;
+    Attacking = -1;
 }
 
 bool HitTestVirtualJoystick(float uiX, float uiY)
@@ -2340,6 +2357,7 @@ bool HandleVirtualJoystickFingerDown(const SDL_TouchFingerEvent& touch)
     if (g_virtualJoystick.fingerId != static_cast<SDL_FingerID>(-1)
         && g_virtualJoystick.fingerId != touch.fingerId)
     {
+        // Joystick already owned by another finger; do not steal.
         return true;
     }
 
@@ -2435,7 +2453,11 @@ void ApplyVirtualJoystickMovement()
         return;
     }
 
-    InterruptVirtualCombatForMovement();
+    // World skill long-press may use another finger; keep channel + allow click-to-walk together.
+    if (!TakumiAndroid_HasActiveWorldSkillGesture())
+    {
+        InterruptVirtualCombatForMovement();
+    }
 
     const float driveRadius = kVirtualJoystickMouseMinRadius
         + (kVirtualJoystickMouseMaxRadius - kVirtualJoystickMouseMinRadius) * g_virtualJoystick.moveStrength;
@@ -4093,6 +4115,11 @@ bool HandleVirtualFingerMotion(const SDL_TouchFingerEvent& touch)
     if (IsLegacyMainHud())
     {
         MaybeCancelLegacySkillHotBarTouchOnMotion(touch, uiX, uiY);
+        if (TakumiAndroid_HandleWorldSkillTouchMove(touch))
+        {
+            return true;
+        }
+
         return HandleVirtualJoystickFingerMotion(touch);
     }
 
@@ -5897,6 +5924,16 @@ bool MU_AndroidIsVirtualJoystickDrivingMouse()
     return g_virtualJoystickDrivingMouse;
 }
 
+bool MU_AndroidIsVirtualJoystickEngaged()
+{
+    return g_virtualJoystick.fingerId != static_cast<SDL_FingerID>(-1);
+}
+
+void MU_Android_StopJoystickMovementForCombat()
+{
+    StopJoystickMovementForCombatInternal();
+}
+
 bool MU_AndroidShouldSuppressCombatTargeting()
 {
     return g_virtualJoystick.fingerId != static_cast<SDL_FingerID>(-1)
@@ -7299,6 +7336,7 @@ static void HandleSDLEvent(const SDL_Event& ev, int& screenW, int& screenH)
     // SDL2 maps first finger to mouse; additional fingers need manual mapping
     // For now: second finger â†’ right-click
     case SDL_FINGERDOWN:
+    {
         g_seenFingerInput = true;
         // Sync touch → MouseX/MouseY before any handler that may return early (chat,
         // delete-resident IME, etc.). Otherwise MsgWin::UpdateWhileShow still sees
@@ -7311,11 +7349,12 @@ static void HandleSDLEvent(const SDL_Event& ev, int& screenW, int& screenH)
         {
             break;
         }
-        if (g_primaryTouchFinger == -1 || ev.tfinger.fingerId == g_primaryTouchFinger)
-        {
-            TakumiAndroid_HandleWorldSkillTouchDown(ev.tfinger);
-        }
+        const bool worldSkillFinger = TakumiAndroid_HandleWorldSkillTouchDown(ev.tfinger);
         if (HandleVirtualFingerDown(ev.tfinger))
+        {
+            break;
+        }
+        if (worldSkillFinger || TakumiAndroid_IsWorldSkillFinger(ev.tfinger.fingerId))
         {
             break;
         }
@@ -7357,6 +7396,7 @@ static void HandleSDLEvent(const SDL_Event& ev, int& screenW, int& screenH)
             MouseRButton     = true;
         }
         break;
+    }
 
     case SDL_FINGERMOTION:
         g_seenFingerInput = true;
@@ -7364,14 +7404,7 @@ static void HandleSDLEvent(const SDL_Event& ev, int& screenW, int& screenH)
         {
             break;
         }
-        if (HandleVirtualFingerMotion(ev.tfinger))
-        {
-            break;
-        }
-        // Inventory long-press is evaluated inside TakumiAndroid_HandleInventoryTouchMove; it must run
-        // after touch→MouseX/MouseY sync — otherwise AndroidTryUseItemUnderCursor hits a stale cursor.
         UpdateMouseFromTouch(ev.tfinger, screenW, screenH);
-        TakumiAndroid_HandleInventoryTouchMove(ev.tfinger);
         if (TakumiAndroid_HandleWorldSkillTouchMove(ev.tfinger))
         {
             if (ev.tfinger.fingerId == g_primaryTouchFinger)
@@ -7379,7 +7412,13 @@ static void HandleSDLEvent(const SDL_Event& ev, int& screenW, int& screenH)
                 MouseLButtonPush = false;
                 MouseLButton = false;
             }
+            break;
         }
+        if (HandleVirtualFingerMotion(ev.tfinger))
+        {
+            break;
+        }
+        TakumiAndroid_HandleInventoryTouchMove(ev.tfinger);
         break;
 
     case SDL_FINGERUP:
@@ -8556,7 +8595,6 @@ static void RunAndroidGameFrame()
     ProcessAndroidEventQueue();
 #if defined(__ANDROID__)
     TakumiAndroid_ProcessInventoryUseFrame();
-    TakumiAndroid_ProcessWorldSkillFrame();
 #endif
     if (Destroy)
     {
@@ -8570,6 +8608,10 @@ static void RunAndroidGameFrame()
 
     AndroidDrainPackets();
     UpdateVirtualPadHolds();
+#if defined(__ANDROID__)
+    // After joystick applies movement input so skill channel can run concurrently.
+    TakumiAndroid_ProcessWorldSkillFrame();
+#endif
     UpdateVirtualProximityCombat();
 
     const uint32_t nowTicks = MU_MobileGetTicks();

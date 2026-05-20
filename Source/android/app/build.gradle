@@ -54,7 +54,7 @@ String readBootstrapHostFromServerNextEnv() {
 
 /**
  * USB dev: {@code ./gradlew -PmuBootstrapAdbReverse=true} bakes 127.0.0.1 cho TCP + data.zip
- * sau khi chạy {@code server-next/scripts/adb-reverse-takumi-dev.sh} (bỏ qua Wi‑Fi / AP isolation).
+ * sau khi chạy {@code server-next/scripts/android/adb-reverse-takumi-dev.sh} (bỏ qua Wi‑Fi / AP isolation).
  */
 boolean isMuBootstrapAdbReverseEnabled() {
     String v = rootProject.findProperty("muBootstrapAdbReverse")?.toString()?.trim()
@@ -82,7 +82,7 @@ String resolveDataZipUrlForBuildConfig() {
                 p = 18080
             }
         }
-        println("TakumiMu: muBootstrapAdbReverse=true — DATA_ZIP_URL_LAN = http://127.0.0.1:${p}/data.zip (use ./scripts/adb-reverse.sh)")
+        println("TakumiMu: muBootstrapAdbReverse=true — DATA_ZIP_URL_LAN = http://127.0.0.1:${p}/data.zip (use server-next/scripts/android/adb-reverse.sh)")
         return "http://127.0.0.1:${p}/data.zip"
     }
     String cli = rootProject.findProperty("muDataZipLan")?.toString()?.trim()
@@ -148,7 +148,7 @@ String resolveMuBootstrapServerHost() {
         return cli
     }
     if (isMuBootstrapAdbReverseEnabled()) {
-        println("TakumiMu: -PmuBootstrapAdbReverse=true → MU_BOOTSTRAP_SERVER host = 127.0.0.1 (USB adb reverse); run server-next/scripts/adb-reverse-takumi-dev.sh")
+        println("TakumiMu: -PmuBootstrapAdbReverse=true → MU_BOOTSTRAP_SERVER host = 127.0.0.1 (USB adb reverse); run server-next/scripts/android/adb-reverse-takumi-dev.sh")
         return "127.0.0.1"
     }
     return readBootstrapHostFromServerNextEnv()

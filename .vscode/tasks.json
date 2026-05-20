@@ -4,7 +4,7 @@
     {
       "label": "server-next: LegacyLoginHost (watch)",
       "type": "shell",
-      "command": "./scripts/run-legacy-login-host.sh",
+      "command": "./scripts/host/run-legacy-login-host.sh",
       "options": {
         "cwd": "${workspaceFolder}/server-next"
       },
@@ -17,7 +17,7 @@
     {
       "label": "server-next: Android logcat (Takumi)",
       "type": "shell",
-      "command": "./scripts/watch-android-takumi-log.sh",
+      "command": "./scripts/android/watch-android-takumi-log.sh",
       "options": {
         "cwd": "${workspaceFolder}/server-next"
       },

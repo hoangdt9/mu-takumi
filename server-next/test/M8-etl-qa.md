@@ -29,7 +29,7 @@ docker compose logs legacy-login 2>&1 | grep -E '\[m8\]|monster_spawn|MapGate|Np
 
 ## Phần D — Gate Lorencia → Devias
 
-1. [ ] Recreate stack: `./scripts/docker-stack.sh --host-build --recreate --detach`
+1. [ ] Recreate stack: `./scripts/docker/docker-stack.sh --host-build --recreate --detach`
 2. [ ] Vào Lorencia, đứng gần **(123,233)** (cổng index **1** trong `Gate.txt`).
 3. [ ] Dùng cổng / teleport client (`C1/C3 0x1C` gate=1).
 4. [ ] **Host log:** `[m8] gate teleport gate=1 ok=True map=1 …`

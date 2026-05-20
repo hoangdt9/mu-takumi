@@ -2,10 +2,10 @@
 -- full DK Hoàng Long 380 +15: 0,22 x2 Đao Quyền Năng, 7–11,46 armor, 12,36 Cánh Cuồng Phong (W3 DK),
 -- 50k stat points, 2B character zen (join gold / inventory wallet).
 -- Login: account **test1** / password **test1** (not test/test).
--- After apply, run: ./scripts/export-roster-json-from-db.sh test1
+-- After apply, run: ./scripts/db/export-roster-json-from-db.sh test1
 --   (legacy-login + game-host also read takumi-roster/test1.json when present)
 -- Requires: sql/patches/015_character_key_configuration.sql (or sql/init/013) on DB first.
--- Apply: ./scripts/apply-sql.sh "$TAKUMI_PG_CONNECTION_STRING" ./sql/patches/016_test1_dk400_blade_master_seed.sql
+-- Apply: ./scripts/db/apply-sql.sh "$TAKUMI_PG_CONNECTION_STRING" ./sql/patches/016_test1_dk400_blade_master_seed.sql
 -- Logout in-game before apply.
 
 BEGIN;

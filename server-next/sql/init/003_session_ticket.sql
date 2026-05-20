@@ -1,4 +1,4 @@
--- Cross-process login → game TCP handoff (M5/M6). Apply on existing DBs: ./scripts/apply-sql.sh "postgresql://…"
+-- Cross-process login → game TCP handoff (M5/M6). Apply on existing DBs: ./scripts/db/apply-sql.sh "postgresql://…"
 -- One unconsumed row per account at a time (login host replaces on re-login).
 
 CREATE TABLE IF NOT EXISTS session_ticket (

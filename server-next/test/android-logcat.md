@@ -5,7 +5,7 @@
 Từ `server-next/`:
 
 ```bash
-./scripts/watch-android-takumi-log.sh
+./scripts/android/watch-android-takumi-log.sh
 ```
 
 ## Lệnh thủ công

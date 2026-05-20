@@ -3,7 +3,7 @@
 # Usage from server-next/:
 #   export TAKUMI_PG_CONNECTION_STRING='postgresql://takumi:takumi@127.0.0.1:54444/takumi_runtime'
 #   export TAKUMI_MONSTER_SET_BASE_PATH=/path/to/MuServer/4.GameServer/Data/Monster/MonsterSetBase.txt
-#   ./scripts/import-monster-spawn.sh
+#   ./scripts/db/import-monster-spawn.sh
 set -euo pipefail
 # shellcheck source=../_lib/paths.sh disable=SC1091
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../_lib/paths.sh"

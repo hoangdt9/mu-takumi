@@ -2,9 +2,9 @@
 # Clear all inventory_slot + warehouse_slot rows for one account (clean bag QA).
 #
 # Usage:
-#   ./scripts/clear-inventory-account.sh test
-#   ./scripts/clear-inventory-account.sh test 'postgresql://takumi:takumi@127.0.0.1:54444/takumi_runtime'
-#   ./scripts/clear-inventory-account.sh test '' rf001   # only one character
+#   ./scripts/db/clear-inventory-account.sh test
+#   ./scripts/db/clear-inventory-account.sh test 'postgresql://takumi:takumi@127.0.0.1:54444/takumi_runtime'
+#   ./scripts/db/clear-inventory-account.sh test '' rf001   # only one character
 set -euo pipefail
 
 # shellcheck source=../_lib/paths.sh disable=SC1091

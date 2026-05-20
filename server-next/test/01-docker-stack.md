@@ -14,13 +14,13 @@ docker compose down
 ## 2. Build host (tuỳ chọn, nhanh bắt lỗi compile)
 
 ```bash
-./scripts/docker-stack.sh --host-build --recreate --detach
+./scripts/docker/docker-stack.sh --host-build --recreate --detach
 ```
 
 Hoặc **foreground + log** (khuyến nghị lần đầu):
 
 ```bash
-./scripts/docker-stack.sh --host-build --recreate
+./scripts/docker/docker-stack.sh --host-build --recreate
 ```
 
 - [ ] Thấy `COMPOSE_PROFILES` gồm `datazip` (mặc định).
@@ -38,7 +38,7 @@ Trong log tìm:
 ## 4. Kiểm tra cổng
 
 ```bash
-./scripts/check-takumi-ports.sh
+./scripts/smoke/check-takumi-ports.sh
 docker compose ps
 ```
 

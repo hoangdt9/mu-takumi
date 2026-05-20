@@ -1,5 +1,5 @@
 -- M4b+: per-character inventory rows for Season 6 F3 10 (12-byte item blobs, same as GameServer ItemByteConvert wire).
--- Apply on existing DBs: ./scripts/apply-sql.sh "$URI"  (runs all sql/init/*.sql in order)
+-- Apply on existing DBs: ./scripts/db/apply-sql.sh "$URI"  (runs all sql/init/*.sql in order)
 
 CREATE TABLE IF NOT EXISTS inventory_slot (
     account_login   TEXT        NOT NULL,

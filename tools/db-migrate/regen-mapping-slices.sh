@@ -13,7 +13,7 @@ if [[ -f "$ENV_FILE" ]]; then
 fi
 MSQL_PROJ="$ROOT/tools/db-migrate/dotnet/Takumi.MssqlInspect/Takumi.MssqlInspect.csproj"
 PG_PROJ="$ROOT/tools/db-migrate/dotnet/Takumi.PgInspect/Takumi.PgInspect.csproj"
-DOC="$ROOT/docs/takumi-game-spec"
+DOC="$ROOT/docs/game-spec"
 SCHEMA_DIR="$ROOT/tools/db-migrate/schemas"
 
 mkdir -p "$SCHEMA_DIR"

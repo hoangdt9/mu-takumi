@@ -1,5 +1,5 @@
 -- M8: map gates (Gate.txt), NPC shops (ShopManager + Shop/*.txt), Custom/*.txt snapshots.
--- Apply: ./scripts/apply-sql.sh 'postgresql://...'
+-- Apply: ./scripts/db/apply-sql.sh 'postgresql://...'
 
 CREATE TABLE IF NOT EXISTS map_gate (
     id              SERIAL PRIMARY KEY,

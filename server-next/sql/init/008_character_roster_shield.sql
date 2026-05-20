@@ -1,5 +1,5 @@
 -- M7: SD / shield columns (legacy GCLifeSend shield field) on roster + domain mirror.
--- Apply with ./scripts/apply-sql.sh (runs init scripts in lexical order).
+-- Apply with ./scripts/db/apply-sql.sh (runs init scripts in lexical order).
 
 ALTER TABLE character_roster ADD COLUMN IF NOT EXISTS current_shield INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE character_roster ADD COLUMN IF NOT EXISTS max_shield INTEGER NOT NULL DEFAULT 0;

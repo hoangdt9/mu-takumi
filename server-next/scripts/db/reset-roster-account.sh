@@ -3,8 +3,8 @@
 # Clears Postgres mirror rows so login reloads from JSON.
 #
 # Usage:
-#   ./scripts/reset-roster-account.sh test
-#   ./scripts/reset-roster-account.sh test 'postgresql://takumi:takumi@127.0.0.1:54444/takumi_runtime'
+#   ./scripts/db/reset-roster-account.sh test
+#   ./scripts/db/reset-roster-account.sh test 'postgresql://takumi:takumi@127.0.0.1:54444/takumi_runtime'
 set -euo pipefail
 
 # shellcheck source=../_lib/paths.sh disable=SC1091

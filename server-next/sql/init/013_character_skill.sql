@@ -1,6 +1,6 @@
 -- Learned skills per character (C1 F3 11 / GCSkillListSend parity).
 -- Fresh Docker volume: applied via /docker-entrypoint-initdb.d.
--- Existing volumes: ./scripts/apply-sql.sh "$URI" sql/patches/016_character_skill.sql
+-- Existing volumes: ./scripts/db/apply-sql.sh "$URI" sql/patches/016_character_skill.sql
 
 CREATE TABLE IF NOT EXISTS character_skill (
     account_login   TEXT        NOT NULL,

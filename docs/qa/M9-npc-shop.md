@@ -1,6 +1,6 @@
 # QA — M9 NPC shop / gate (APK)
 
-**Dev:** `server-next/docs/M9-M8-NPC-GAMEPLAY-OWNERSHIP.md`
+**Dev:** `server-next/docs/combat/M9-M8-NPC-GAMEPLAY-OWNERSHIP.md`
 
 **Quy ước:** `[ ]` · `[x]` · `[!]` · `[-]`
 

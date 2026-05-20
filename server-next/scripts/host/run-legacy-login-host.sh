@@ -2,7 +2,7 @@
 # Auto-run Takumi LegacyLoginHost: sources server-next/env.defaults (committed) then .env (local),
 # then `dotnet watch` rebuilds on every Program.cs change. Program also loads those files at startup.
 #
-# Không chạy khi Docker đã chiếm 44605/44606 (xem ./scripts/docker-stack.sh — stack đầy đủ + log).
+# Không chạy khi Docker đã chiếm 44605/44606 (xem ./scripts/docker/docker-stack.sh — stack đầy đủ + log).
 set -euo pipefail
 
 # shellcheck source=../_lib/paths.sh disable=SC1091

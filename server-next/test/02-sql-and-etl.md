@@ -12,7 +12,7 @@ Từ Mac (cần `psql` hoặc dùng container):
 
 ```bash
 cd /Users/hoangmac/Project/MU/takumi/server-next
-./scripts/apply-sql.sh "postgresql://takumi:takumi@127.0.0.1:54444/takumi_runtime"
+./scripts/db/apply-sql.sh "postgresql://takumi:takumi@127.0.0.1:54444/takumi_runtime"
 ```
 
 - [ ] Không lỗi `ON_ERROR_STOP` trên `004`, `005`, `006`.
@@ -31,7 +31,7 @@ Trên **host** (đường dẫn file thật trên Mac):
 ```bash
 export TAKUMI_PG_CONNECTION_STRING='postgresql://takumi:takumi@127.0.0.1:54444/takumi_runtime'
 export TAKUMI_MONSTER_SET_BASE_PATH='/path/to/MuServer/4.GameServer/Data/Monster/MonsterSetBase.txt'
-./scripts/import-monster-spawn.sh
+./scripts/db/import-monster-spawn.sh
 ```
 
 - [ ] Test filter `MonsterSpawnPostgresEtlTests` pass.
@@ -45,7 +45,7 @@ psql "$TAKUMI_PG_CONNECTION_STRING" -c 'SELECT COUNT(*) FROM monster_spawn;'
 
 ```bash
 export TAKUMI_GAMESERVER_DATA_PATH='/path/to/MuServer/4.GameServer/Sub 1/Data'
-./scripts/import-world-static-data.sh
+./scripts/db/import-world-static-data.sh
 ```
 
 - [ ] `map_gate`, `npc_shop` có dữ liệu (nếu file nguồn tồn tại).

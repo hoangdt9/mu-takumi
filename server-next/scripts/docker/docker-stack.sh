@@ -1,19 +1,19 @@
 #!/usr/bin/env bash
 # Takumi server-next — pull image → up stack → (mặc định) tail log Docker.
-# Docs: docs/DOCKER-BUILD-RUN.md (khi nào recreate vs build image vs APK).
+# Docs: docs/docker/DOCKER-BUILD-RUN.md (khi nào recreate vs build image vs APK).
 #
 # Stack mặc định: Postgres + LegacyLoginHost (44605/44606) + data.zip (profile datazip, nginx 18080).
 # M6: nếu .env có TAKUMI_GAME_PORT (số > 0) thì tự thêm profile **gamehost** — một lệnh đủ Connect + GameHost.
-# Không chạy đồng thời ./scripts/run-legacy-login-host.sh (trùng cổng 44606).
+# Không chạy đồng thời ./scripts/host/run-legacy-login-host.sh (trùng cổng 44606).
 #
 # Usage:
-#   ./scripts/docker-stack.sh
-#   ./scripts/docker-stack.sh --detach
-#   ./scripts/docker-stack.sh --no-datazip
-#   ./scripts/docker-stack.sh --with-gamehost   # bật game-host kể cả khi chưa set TAKUMI_GAME_PORT
-#   ./scripts/docker-stack.sh --no-gamehost     # tắt auto game-host dù .env có TAKUMI_GAME_PORT
-#   ./scripts/docker-stack.sh --recreate
-#   ./scripts/docker-stack.sh --host-build
+#   ./scripts/docker/docker-stack.sh
+#   ./scripts/docker/docker-stack.sh --detach
+#   ./scripts/docker/docker-stack.sh --no-datazip
+#   ./scripts/docker/docker-stack.sh --with-gamehost   # bật game-host kể cả khi chưa set TAKUMI_GAME_PORT
+#   ./scripts/docker/docker-stack.sh --no-gamehost     # tắt auto game-host dù .env có TAKUMI_GAME_PORT
+#   ./scripts/docker/docker-stack.sh --recreate
+#   ./scripts/docker/docker-stack.sh --host-build
 #
 # COMPOSE_PROFILES trong .env được tôn trọng; script chỉ bổ sung profile nếu thiếu.
 set -euo pipefail
@@ -103,7 +103,7 @@ compose_profiles_has_gamehost() {
 echo "== Takumi server-next: stack Docker =="
 echo "  cwd: $ROOT"
 echo "  COMPOSE_PROFILES=${COMPOSE_PROFILES:-<none>}"
-echo "  Lưu ý: không chạy ./scripts/run-legacy-login-host.sh đồng thời (trùng cổng 44606)."
+echo "  Lưu ý: không chạy ./scripts/host/run-legacy-login-host.sh đồng thời (trùng cổng 44606)."
 echo ""
 
 if [[ "$HOST_BUILD" -eq 1 ]]; then
@@ -186,13 +186,13 @@ fi
 if compose_profiles_has_gamehost; then
   echo "  game-host:       ${TAKUMI_GAME_PUBLISH:-55901} (F4 03 phải khớp .env; vừa force-recreate nếu không dùng --recreate toàn stack)"
 fi
-echo "  LAN check:       ./scripts/check-lan-connect-ports.sh"
-echo "  Smoke C2 local:  ./scripts/smoke-connect-from-host.sh 127.0.0.1 ${TAKUMI_CONNECT_PUBLISH:-44605}"
-echo "  USB (AP isolation): ./scripts/adb-reverse-takumi-dev.sh  rồi build APK -PmuBootstrapAdbReverse=true"
-echo "  Nếu APK không recv C2: dừng container rồi chạy host (bỏ NAT Docker): docker compose stop legacy-login && ./scripts/run-legacy-login-host.sh"
+echo "  LAN check:       ./scripts/smoke/check-lan-connect-ports.sh"
+echo "  Smoke C2 local:  ./scripts/smoke/smoke-connect-from-host.sh 127.0.0.1 ${TAKUMI_CONNECT_PUBLISH:-44605}"
+echo "  USB (AP isolation): ./scripts/android/adb-reverse-takumi-dev.sh  rồi build APK -PmuBootstrapAdbReverse=true"
+echo "  Nếu APK không recv C2: dừng container rồi chạy host (bỏ NAT Docker): docker compose stop legacy-login && ./scripts/host/run-legacy-login-host.sh"
 echo ""
 if compose_profiles_has_gamehost; then
-  echo "  M6 tip: đợi legacy-login log \"build OK\" rồi mới mở app — nếu không thấy dòng sub-server, xem legacy-login có \"sent … ServerList\" không; BMD/ids: TAKUMI_CS_CONNECT_* (docs/M3-CONNECT-BMD.md)."
+  echo "  M6 tip: đợi legacy-login log \"build OK\" rồi mới mở app — nếu không thấy dòng sub-server, xem legacy-login có \"sent … ServerList\" không; BMD/ids: TAKUMI_CS_CONNECT_* (docs/protocol/M3-CONNECT-BMD.md)."
   echo ""
 fi
 

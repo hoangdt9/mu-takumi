@@ -1,5 +1,5 @@
 -- M7 (schema prep): vitals + zen alongside world columns on character_roster.
--- Apply on existing DBs: ./scripts/apply-sql.sh "postgresql://…"  (runs all sql/init/*.sql in lexical order).
+-- Apply on existing DBs: ./scripts/db/apply-sql.sh "postgresql://…"  (runs all sql/init/*.sql in lexical order).
 -- Fresh Docker volume: picked up with other init scripts.
 
 ALTER TABLE character_roster ADD COLUMN IF NOT EXISTS current_hp INTEGER NOT NULL DEFAULT 0;

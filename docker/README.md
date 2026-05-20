@@ -26,7 +26,7 @@ Dùng khi muốn điện thoại/emulator tải `data.zip` từ máy bạn (LAN)
    ```bash
    cd takumi/server-next
    docker compose --profile datazip up -d
-   # hoặc: ./scripts/docker-stack.sh --detach
+   # hoặc: cd server-next && ./scripts/docker/docker-stack.sh --detach
    ```
 
    **Không** bật **Cách A** và **Cách B** cùng lúc nếu cả hai publish **18080** trên host.
@@ -130,4 +130,4 @@ Trong mạng nội bộ Compose, hostname **`sqlserver`** (tên service). Cấu 
 
 ## Không thay được
 
-Đây vẫn là **Wine + exe**, không native macOS. Kế hoạch server portable: **`docs/SERVER-PORT-PLAN.md`**.
+Đây vẫn là **Wine + exe**, không native macOS. Kế hoạch server portable: **`docs/ops/SERVER-PORT-PLAN.md`**.

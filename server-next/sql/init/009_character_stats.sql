@@ -1,5 +1,5 @@
 -- M7: base stats + level-up points + AG (BP) for join wire and stat allocation.
--- Apply: ./scripts/apply-sql.sh 'postgresql://takumi:takumi@127.0.0.1:54444/takumi_runtime'
+-- Apply: ./scripts/db/apply-sql.sh 'postgresql://takumi:takumi@127.0.0.1:54444/takumi_runtime'
 
 ALTER TABLE character_roster ADD COLUMN IF NOT EXISTS strength INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE character_roster ADD COLUMN IF NOT EXISTS dexterity INTEGER NOT NULL DEFAULT 0;

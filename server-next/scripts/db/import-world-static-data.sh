@@ -4,7 +4,7 @@
 # Usage from server-next/:
 #   export TAKUMI_PG_CONNECTION_STRING='Host=localhost;Port=54444;Username=takumi;Password=takumi;Database=takumi_runtime'
 #   export TAKUMI_GAMESERVER_DATA_PATH=/path/to/MuServer/4.GameServer/Sub\ 1/Data
-#   ./scripts/import-world-static-data.sh
+#   ./scripts/db/import-world-static-data.sh
 set -euo pipefail
 # shellcheck source=../_lib/paths.sh disable=SC1091
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../_lib/paths.sh"

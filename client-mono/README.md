@@ -21,6 +21,6 @@ Requires **.NET 10** and sibling folder `../server-next/`.
 
 ## Docs
 
-- Roadmap: `../server-next/docs/MONOGAME-CLIENT-ROADMAP.md`
-- Server checklist: `../server-next/docs/IMPLEMENTATION-CHECKLIST.md`
-- S2 QA (C++ + Docker): `../server-next/docs/S2-GATE-QA.md`
+- Roadmap: `../server-next/docs/client/MONOGAME-CLIENT-ROADMAP.md`
+- Server checklist: `../server-next/docs/milestones/IMPLEMENTATION-CHECKLIST.md`
+- S2 QA (C++ + Docker): `../server-next/docs/qa-gates/S2-GATE-QA.md`

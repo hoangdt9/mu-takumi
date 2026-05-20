@@ -1,6 +1,6 @@
 # DB migrate — Takumi (MSSQL) → OpenMU (PostgreSQL)
 
-Quy ước layout **Phase 2** (xem [`docs/TAKUMI-MIGRATION-OPENMU-CHECKLIST.md`](../../docs/TAKUMI-MIGRATION-OPENMU-CHECKLIST.md)). Repo có inspectors read-only + **`regen-mapping-slices.sh`** + **`takumi-etl`**: **`preview-login-path`** (chỉ đọc), **`staging-login-path`** (mirror vào Postgres schema **`takumi_staging`**). Bước **promote** staging → **`data.Account` / `data.Character`** OpenMU (BCrypt, Guid, blob) vẫn TODO.
+Quy ước layout **Phase 2** (xem [`docs/migration/TAKUMI-MIGRATION-OPENMU-CHECKLIST.md`](../../docs/migration/TAKUMI-MIGRATION-OPENMU-CHECKLIST.md)). Repo có inspectors read-only + **`regen-mapping-slices.sh`** + **`takumi-etl`**: **`preview-login-path`** (chỉ đọc), **`staging-login-path`** (mirror vào Postgres schema **`takumi_staging`**). Bước **promote** staging → **`data.Account` / `data.Character`** OpenMU (BCrypt, Guid, blob) vẫn TODO.
 
 ## Mục tiêu
 
@@ -24,11 +24,11 @@ tools/db-migrate/
   schemas/                     export CSV redirect — không chứa password
 ```
 
-**Nguyên tắc dữ liệu:** khi ETL/trùng tên, **ưu tiên bảo toàn nội dung từ MSSQL** (legacy là sự thật cho account/char/item); Postgres OpenMU là **đa schema** (`data`, `config`, …) trong một DB — không nhầm với “multi-language”. Chi tiết: [`PHASE2-OPENMU-DATA-MODEL-MAP.md`](../../docs/takumi-game-spec/PHASE2-OPENMU-DATA-MODEL-MAP.md) **§0**.
+**Nguyên tắc dữ liệu:** khi ETL/trùng tên, **ưu tiên bảo toàn nội dung từ MSSQL** (legacy là sự thật cho account/char/item); Postgres OpenMU là **đa schema** (`data`, `config`, …) trong một DB — không nhầm với “multi-language”. Chi tiết: [`PHASE2-OPENMU-DATA-MODEL-MAP.md`](../../docs/game-spec/PHASE2-OPENMU-DATA-MODEL-MAP.md) **§0**.
 
 ### Spreadsheet mapping — **đủ tầng** (proc + dbo + OpenMU EF + heuristic)
 
-[`docs/takumi-game-spec/PHASE2-MAPPING-TEMPLATE.csv`](../../docs/takumi-game-spec/PHASE2-MAPPING-TEMPLATE.csv) — **236 dòng** (bao gồm header): `LEGACY_PROC` (62), `LEGACY_TABLE` (61 dbo), `OPENMU_TABLE` (101), `HEURISTIC_VERIFY` (11). Cột **`openmu_or_plugin` / `parity_status` / notes** có **default *ưu tiên Takumi* (dbo = chân lý)** — có thể tái áp đặt bằng:
+[`docs/game-spec/PHASE2-MAPPING-TEMPLATE.csv`](../../docs/game-spec/PHASE2-MAPPING-TEMPLATE.csv) — **236 dòng** (bao gồm header): `LEGACY_PROC` (62), `LEGACY_TABLE` (61 dbo), `OPENMU_TABLE` (101), `HEURISTIC_VERIFY` (11). Cột **`openmu_or_plugin` / `parity_status` / notes** có **default *ưu tiên Takumi* (dbo = chân lý)** — có thể tái áp đặt bằng:
 
 ```bash
 python3 tools/db-migrate/scripts/apply_phase2_takumi_defaults.py
@@ -49,14 +49,14 @@ Tương đương từng lệnh:
 ```bash
 # MSSQL: mọi bảng dbo → CSV (chỉ phần LEGACY_TABLE + header)
 dotnet run --project tools/db-migrate/dotnet/Takumi.MssqlInspect -- --mapping-rows \
-  > docs/takumi-game-spec/PHASE2-MAPPING-MSSQL-DBO-AUTO.csv
+  > docs/game-spec/PHASE2-MAPPING-MSSQL-DBO-AUTO.csv
 
 # Postgres OpenMU: đủ 4 schema EF
 dotnet run --project tools/db-migrate/dotnet/Takumi.PgInspect -- --mapping-openmu-all \
-  > docs/takumi-game-spec/PHASE2-MAPPING-OPENMU-EF-TABLES-FULL.csv
+  > docs/game-spec/PHASE2-MAPPING-OPENMU-EF-TABLES-FULL.csv
 ```
 
-Sau đó merge tay với backlog khi khác nguồn C++/SQL cố định: [`TAKUMI-SQL-BACKLOG.md`](../../docs/takumi-game-spec/TAKUMI-SQL-BACKLOG.md).
+Sau đó merge tay với backlog khi khác nguồn C++/SQL cố định: [`TAKUMI-SQL-BACKLOG.md`](../../docs/game-spec/TAKUMI-SQL-BACKLOG.md).
 
 **Connection env:** copy [`tools/db-migrate/db-migrate.env.sample`](db-migrate.env.sample) → `tools/db-migrate/.env`; `staging-login-sync.sh`, `regen-mapping-slices.sh` và **`takumi-etl`** tự nạp file đó (`source` trong bash hoặc `EnvLoader` .NET).
 
@@ -177,7 +177,7 @@ dotnet run --project tools/db-migrate/dotnet/Takumi.PgInspect -- --row-counts-op
 
 *(Port `5433` nếu dùng `deploy/all-in-one/docker-compose.override.yml`; mặc định compose có thể là `5432`.)*
 
-Chiến lược entity / ADR: **[`docs/takumi-game-spec/PHASE2-OPENMU-DATA-MODEL-MAP.md`](../../docs/takumi-game-spec/PHASE2-OPENMU-DATA-MODEL-MAP.md)**.
+Chiến lược entity / ADR: **[`docs/game-spec/PHASE2-OPENMU-DATA-MODEL-MAP.md`](../../docs/game-spec/PHASE2-OPENMU-DATA-MODEL-MAP.md)**.
 
 ## Quy tắc
 

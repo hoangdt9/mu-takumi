@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # M7g: push takumi-inventory/*.json → Postgres inventory_slot.
 # Usage (from server-next/):
-#   ./scripts/migrate-inventory-json-to-db.sh
-#   ./scripts/migrate-inventory-json-to-db.sh 'postgresql://takumi:takumi@127.0.0.1:54444/takumi_runtime'
+#   ./scripts/db/migrate-inventory-json-to-db.sh
+#   ./scripts/db/migrate-inventory-json-to-db.sh 'postgresql://takumi:takumi@127.0.0.1:54444/takumi_runtime'
 set -euo pipefail
 # shellcheck source=../_lib/paths.sh disable=SC1091
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../_lib/paths.sh"

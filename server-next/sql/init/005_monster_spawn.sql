@@ -1,5 +1,5 @@
 -- M8: static monster spawns (ETL from MonsterSetBase*.txt).
--- Apply on existing DBs: ./scripts/apply-sql.sh 'postgresql://...'
+-- Apply on existing DBs: ./scripts/db/apply-sql.sh 'postgresql://...'
 
 CREATE TABLE IF NOT EXISTS monster_spawn (
     id              SERIAL PRIMARY KEY,

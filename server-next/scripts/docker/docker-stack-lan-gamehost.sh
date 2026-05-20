@@ -3,9 +3,9 @@
 # Phone and Mac must be on the same Wi‑Fi; .env TAKUMI_PUBLIC_HOST = this machine's LAN IP.
 #
 # Usage:
-#   ./scripts/docker-stack-lan-gamehost.sh           # up + detach + smoke
-#   ./scripts/docker-stack-lan-gamehost.sh --follow  # up then tail logs (like docker-stack.sh)
-#   ./scripts/docker-stack-lan-gamehost.sh --no-sql    # skip apply-sql (volume already seeded)
+#   ./scripts/docker/docker-stack-lan-gamehost.sh           # up + detach + smoke
+#   ./scripts/docker/docker-stack-lan-gamehost.sh --follow  # up then tail logs (like docker-stack.sh)
+#   ./scripts/docker/docker-stack-lan-gamehost.sh --no-sql    # skip apply-sql (volume already seeded)
 #
 # After stack is healthy, rebuild APK (no adb reverse):
 #   cd ../../Source/android && ./gradlew assembleRealDevicePreloadDefaultRelease
@@ -90,7 +90,7 @@ warn_port_conflict() {
   echo "== WARN: something listens on ${port} (${label}) =="
   lsof -nP -iTCP:"${port}" -sTCP:LISTEN 2>/dev/null || true
   if lsof -nP -iTCP:"${port}" -sTCP:LISTEN 2>/dev/null | grep -qE 'dotnet|LegacyLogin'; then
-    echo "  Stop ./scripts/run-legacy-login-host.sh before using Docker on the same ports."
+    echo "  Stop ./scripts/host/run-legacy-login-host.sh before using Docker on the same ports."
   fi
   echo ""
 }
@@ -176,8 +176,8 @@ if [[ -n "${LAN_HOST}" ]]; then
     echo "  OK: C2 over LAN IP (Docker published port reachable)"
   else
     echo "  WARN: LAN IP smoke failed — Docker Desktop may block phone→Mac NAT."
-    echo "        Try: USB ./scripts/adb-reverse-takumi-dev.sh + APK -PmuBootstrapAdbReverse=true"
-    echo "        Or: docker compose stop legacy-login && ./scripts/run-legacy-login-host.sh"
+    echo "        Try: USB ./scripts/android/adb-reverse-takumi-dev.sh + APK -PmuBootstrapAdbReverse=true"
+    echo "        Or: docker compose stop legacy-login && ./scripts/host/run-legacy-login-host.sh"
   fi
 fi
 

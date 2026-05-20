@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# M5: login/game TCP only (Takumi.Server.LoginHost). Run Connect separately: ./scripts/run-connect-host.sh
+# M5: login/game TCP only (Takumi.Server.LoginHost). Run Connect separately: ./scripts/host/run-connect-host.sh
 set -euo pipefail
 
 # shellcheck source=../_lib/paths.sh disable=SC1091
@@ -26,7 +26,7 @@ export DOTNET_ENVIRONMENT="${DOTNET_ENVIRONMENT:-Development}"
 
 echo "== Takumi LoginHost (M5 split — no Connect port) =="
 echo "  TAKUMI_LOGIN_PORT=${TAKUMI_LOGIN_PORT:-44606}"
-echo "  Pair with: ./scripts/run-connect-host.sh (TAKUMI_CONNECT_PORT)"
+echo "  Pair with: ./scripts/host/run-connect-host.sh (TAKUMI_CONNECT_PORT)"
 echo ""
 
 exec dotnet watch run \

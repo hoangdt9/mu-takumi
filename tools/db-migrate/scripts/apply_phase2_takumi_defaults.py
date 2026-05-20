@@ -10,7 +10,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
-TARGET = ROOT / "docs/takumi-game-spec/PHASE2-MAPPING-TEMPLATE.csv"
+TARGET = ROOT / "docs/game-spec/PHASE2-MAPPING-TEMPLATE.csv"
 
 
 LEGACY_TABLE: dict[str, tuple[str, str, str]] = {

@@ -15,7 +15,7 @@ TAKUMI_COMBAT_SKILL_DAMAGE_PCT=150
 Apply wallet SQL if testing coin shop / warehouse zen:
 
 ```bash
-./scripts/apply-sql.sh "postgresql://takumi:takumi@127.0.0.1:54444/takumi_runtime"
+./scripts/db/apply-sql.sh "postgresql://takumi:takumi@127.0.0.1:54444/takumi_runtime"
 ```
 
 ## AoE (`C1 0xDB`)

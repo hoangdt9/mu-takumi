@@ -26,7 +26,7 @@ internal static class Program
           TAKUMI_PG_CONNECTION="Host=127.0.0.1;Port=5433;..." \\
             dotnet run --project tools/db-migrate/dotnet/Takumi.PgInspect -- --schema data --tables
           dotnet run --project tools/db-migrate/dotnet/Takumi.PgInspect -- --mapping-openmu-all \\
-            > docs/takumi-game-spec/PHASE2-MAPPING-OPENMU-EF-TABLES-FULL.csv
+            > docs/game-spec/PHASE2-MAPPING-OPENMU-EF-TABLES-FULL.csv
         """;
 
     public static async Task<int> Main(string[] args)

@@ -105,7 +105,7 @@ internal static class Program
             Character.Name         -> data.Character.Name
             Character.Class / cLevel / inventory blob -> EF shape + parsers (staging: takumi_staging.legacy_*)
 
-            Docs: docs/takumi-game-spec/PHASE2-OPENMU-DATA-MODEL-MAP.md §2–§5.
+            Docs: docs/game-spec/PHASE2-OPENMU-DATA-MODEL-MAP.md §2–§5.
             """);
 
         return 0;

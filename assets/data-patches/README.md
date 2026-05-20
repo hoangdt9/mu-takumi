@@ -27,4 +27,4 @@ After repack, Android must re-download `data.zip` (wipe app storage or use a `da
 ./scripts/sync-data-patches-android.sh
 ```
 
-See [`docs/DATA-ZIP-MERGE-PLAN.md`](../docs/DATA-ZIP-MERGE-PLAN.md) — Phase 3b.
+See [`docs/migration/DATA-ZIP-MERGE-PLAN.md`](../docs/migration/DATA-ZIP-MERGE-PLAN.md) — Phase 3b.

@@ -1,6 +1,7 @@
 # QA — M9 monster viewport + combat (APK)
 
-**Dev:** `server-next/docs/M9-NPC-MONSTER-CHECKLIST.md`, `docs/M9-MONSTER-AI-PORT-CHECKLIST.md` · log `[m9]`
+**Dev:** `server-next/docs/combat/M9-NPC-MONSTER-CHECKLIST.md` · log `[m9]`  
+**MG skill (mobile):** [M9-mg-skill-combat.md](./M9-mg-skill-combat.md) · [MOBILE-SKILL-COMBAT-GUIDE.md](../android/MOBILE-SKILL-COMBAT-GUIDE.md)
 
 **Quy ước:** `[ ]` · `[x]` · `[!]` · `[-]`
 
@@ -31,6 +32,7 @@
 ## Combat
 
 - [ ] Tap đánh mob ≤ 3 tile — host `[m9] combat hit`
+- [ ] (MG) Channel skill — host `[m9] magic continue skill=…` — checklist: [M9-mg-skill-combat.md](./M9-mg-skill-combat.md)
 - [ ] Mob chết: `0x16` + `0x14`
 - [ ] Player mất HP khi đứng gần mob aggro
 

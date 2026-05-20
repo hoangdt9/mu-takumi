@@ -9,7 +9,7 @@ HOST_DLL="src/Takumi.Server.GameHost/bin/Release/net10.0/Takumi.Server.GameHost.
 CONTAINER_DLL="/tmp/takumi-gamehost/bin/Takumi.Server.GameHost/Release/net10.0/Takumi.Server.GameHost.dll"
 
 if [ "$TAKUMI_SKIP_CONTAINER_BUILD" = "1" ] || [ "$TAKUMI_SKIP_CONTAINER_BUILD" = "true" ]; then
-  echo "[game-host] TAKUMI_SKIP_CONTAINER_BUILD=1 — using host-built IL (./scripts/docker-stack.sh --host-build); dotnet exec DLL"
+  echo "[game-host] TAKUMI_SKIP_CONTAINER_BUILD=1 — using host-built IL (./scripts/docker/docker-stack.sh --host-build); dotnet exec DLL"
   GAMEHOST_DLL="$HOST_DLL"
   if [ ! -f "$GAMEHOST_DLL" ]; then
     echo "[game-host] ERROR: missing $GAMEHOST_DLL — run: dotnet build src/Takumi.Server.GameHost/Takumi.Server.GameHost.csproj -c Release" >&2

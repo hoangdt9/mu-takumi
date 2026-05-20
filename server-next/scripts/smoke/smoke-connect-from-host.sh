@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Open one TCP to the connect port and print how many bytes the server sends first (expect C2 F4 06, first byte 0xC2).
-# Usage: ./scripts/smoke-connect-from-host.sh [host] [port]
-#   ./scripts/smoke-connect-from-host.sh 127.0.0.1 44605
+# Usage: ./scripts/smoke/smoke-connect-from-host.sh [host] [port]
+#   ./scripts/smoke/smoke-connect-from-host.sh 127.0.0.1 44605
 set -euo pipefail
 HOST="${1:-127.0.0.1}"
 PORT="${2:-44605}"

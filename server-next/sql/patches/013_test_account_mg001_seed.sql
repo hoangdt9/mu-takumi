@@ -1,7 +1,7 @@
 -- QA seed: MG character mg001 on account `test` — lv400 Duel Master (3rd class),
 -- set Thánh Thần MG +15 (380, no helm), Kiếm Thánh Thần (MG) 0,58 +15, Cánh Lôi Vũ (12,39) +15,
 -- full MG skill list on join (server F3 11), 50k stat points, 2B warehouse zen.
--- Apply: ./scripts/apply-sql.sh "$TAKUMI_PG_CONNECTION_STRING" sql/patches/013_test_account_mg001_seed.sql
+-- Apply: ./scripts/db/apply-sql.sh "$TAKUMI_PG_CONNECTION_STRING" sql/patches/013_test_account_mg001_seed.sql
 -- Disconnect in-game before apply so a live session does not overwrite rows.
 
 BEGIN;

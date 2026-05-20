@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Apply SQL to Postgres. psql expects a libpq URI, not an Npgsql key=value string.
 # Usage from server-next/:
-#   ./scripts/apply-sql.sh "postgresql://takumi:takumi@127.0.0.1:54444/takumi_runtime"
-#   ./scripts/apply-sql.sh "postgresql://takumi:takumi@127.0.0.1:54444/takumi_runtime" sql/patches/013_test_account_mg001_seed.sql
+#   ./scripts/db/apply-sql.sh "postgresql://takumi:takumi@127.0.0.1:54444/takumi_runtime"
+#   ./scripts/db/apply-sql.sh "postgresql://takumi:takumi@127.0.0.1:54444/takumi_runtime" sql/patches/013_test_account_mg001_seed.sql
 # Default (no second arg): every sql/init/*.sql in lexical order.
 set -euo pipefail
 # shellcheck source=../_lib/paths.sh disable=SC1091

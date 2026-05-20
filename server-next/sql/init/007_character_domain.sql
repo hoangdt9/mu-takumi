@@ -1,5 +1,5 @@
 -- M4b/M7: domain mirror of roster world + vitals (one-way sync from character_roster writes).
--- Apply on existing DBs: ./scripts/apply-sql.sh 'postgresql://takumi:takumi@127.0.0.1:54444/takumi_runtime'
+-- Apply on existing DBs: ./scripts/db/apply-sql.sh 'postgresql://takumi:takumi@127.0.0.1:54444/takumi_runtime'
 
 CREATE TABLE IF NOT EXISTS character_domain (
     account_login   TEXT        NOT NULL,

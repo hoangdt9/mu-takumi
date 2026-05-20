@@ -18,6 +18,7 @@ apply "sql/patches/015_character_key_configuration.sql"
 apply "sql/patches/013_test_account_mg001_seed.sql"
 apply "sql/patches/016_character_skill.sql"
 apply "sql/patches/017_seed_mg001_character_skill.sql"
+apply "sql/patches/019_mg001_add_combat_rollout_skills.sql"
 
 if command -v dotnet >/dev/null 2>&1 && [[ -f "$SCRIPTS_ROOT/db/migrate-inventory-json-to-db.sh" ]]; then
   echo "[dev-seed] inventory JSON → DB (test.json)"

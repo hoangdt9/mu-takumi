@@ -2,26 +2,26 @@
 
 Private/dev fork of the Takumi MU stack focused on:
 
-- Migration path to **OpenMU** (.NET, Linux/macOS/Docker) — see `docs/TAKUMI-MIGRATION-OPENMU-CHECKLIST.md`.
-- Baseline manifests and protocol/network notes — `docs/`, `docs/takumi-manifests/`.
+- Migration path to **OpenMU** (.NET, Linux/macOS/Docker) — see `docs/migration/TAKUMI-MIGRATION-OPENMU-CHECKLIST.md`.
+- Baseline manifests and protocol/network notes — `docs/`, `docs/manifests/`.
 
 ## Tài liệu migration (OpenMU)
 
-- [`docs/TAKUMI-MIGRATION-OPENMU-CHECKLIST.md`](docs/TAKUMI-MIGRATION-OPENMU-CHECKLIST.md) — phases + gate.
-- [`docs/TAKUMI-FULL-FILE-MIGRATION-CHECKLIST.md`](docs/TAKUMI-FULL-FILE-MIGRATION-CHECKLIST.md) — inventory file + manifest.
+- [`docs/migration/TAKUMI-MIGRATION-OPENMU-CHECKLIST.md`](docs/migration/TAKUMI-MIGRATION-OPENMU-CHECKLIST.md) — phases + gate.
+- [`docs/migration/TAKUMI-FULL-FILE-MIGRATION-CHECKLIST.md`](docs/migration/TAKUMI-FULL-FILE-MIGRATION-CHECKLIST.md) — inventory file + manifest.
 - [`docs/protocol/TAKUMI-SERVER-NETWORK-BASELINE.md`](docs/protocol/TAKUMI-SERVER-NETWORK-BASELINE.md) — cổng & shard.
 - [`docs/protocol/COMPATIBILITY-MATRIX.md`](docs/protocol/COMPATIBILITY-MATRIX.md) — ma trận gói tin (điền sau pcap).
 - [`docs/protocol/TAKUMI-PROTOCOL-DISPATCH-INDEX.md`](docs/protocol/TAKUMI-PROTOCOL-DISPATCH-INDEX.md) — head/sub dispatcher từ mã (Connect / Join-internal / Game).
-- [`docs/takumi-game-spec/TAKUMI-SQL-BACKLOG.md`](docs/takumi-game-spec/TAKUMI-SQL-BACKLOG.md) — ODBC / proc / bảng + **SQL Back**.
-- [`docs/takumi-game-spec/PHASE2-OPENMU-DATA-MODEL-MAP.md`](docs/takumi-game-spec/PHASE2-OPENMU-DATA-MODEL-MAP.md) — Phase 2: `SQLUp` ↔ entity OpenMU / ADR nháp ETL.
-- [`docs/takumi-game-spec/PHASE2-MAPPING-TEMPLATE.csv`](docs/takumi-game-spec/PHASE2-MAPPING-TEMPLATE.csv) — seed CSV proc/bảng × OpenMU / plugin.
+- [`docs/game-spec/TAKUMI-SQL-BACKLOG.md`](docs/game-spec/TAKUMI-SQL-BACKLOG.md) — ODBC / proc / bảng + **SQL Back**.
+- [`docs/game-spec/PHASE2-OPENMU-DATA-MODEL-MAP.md`](docs/game-spec/PHASE2-OPENMU-DATA-MODEL-MAP.md) — Phase 2: `SQLUp` ↔ entity OpenMU / ADR nháp ETL.
+- [`docs/game-spec/PHASE2-MAPPING-TEMPLATE.csv`](docs/game-spec/PHASE2-MAPPING-TEMPLATE.csv) — seed CSV proc/bảng × OpenMU / plugin.
 - [`tools/db-migrate/README.md`](tools/db-migrate/README.md) — **`takumi-mssql-inspect`** + **`takumi-pg-inspect`** (dump schema read-only) + quy ước ETL (ETL TODO).
-- [`docs/takumi-game-spec/DATA-SUB1-DRIFT.md`](docs/takumi-game-spec/DATA-SUB1-DRIFT.md) — drift `Sub 1/Data` vs `Data`.
-- [`docs/takumi-game-spec/GAMESERVER-VS-GAMESERVER-REAL.md`](docs/takumi-game-spec/GAMESERVER-VS-GAMESERVER-REAL.md) — `4.GameServer` vs `4.GameServer_real`.
-- [`docs/takumi-game-spec/CONNECT-SERVER-REAL-DRIFT.md`](docs/takumi-game-spec/CONNECT-SERVER-REAL-DRIFT.md) — `1.ConnectServer` vs `_real`.
-- [`docs/takumi-game-spec/GAMESERVER-DATA-FOLDER-MAP.md`](docs/takumi-game-spec/GAMESERVER-DATA-FOLDER-MAP.md) — bản đồ thư mục `Data/`.
-- [`docs/MANIFEST-TRACKER-TEMPLATE.md`](docs/MANIFEST-TRACKER-TEMPLATE.md) — template tracker manifest §17.
-- [`docs/OPERATIONS-MIGRATION-NOTES.md`](docs/OPERATIONS-MIGRATION-NOTES.md) — thứ tự batch Windows, Docker, scripts.
+- [`docs/game-spec/DATA-SUB1-DRIFT.md`](docs/game-spec/DATA-SUB1-DRIFT.md) — drift `Sub 1/Data` vs `Data`.
+- [`docs/game-spec/GAMESERVER-VS-GAMESERVER-REAL.md`](docs/game-spec/GAMESERVER-VS-GAMESERVER-REAL.md) — `4.GameServer` vs `4.GameServer_real`.
+- [`docs/game-spec/CONNECT-SERVER-REAL-DRIFT.md`](docs/game-spec/CONNECT-SERVER-REAL-DRIFT.md) — `1.ConnectServer` vs `_real`.
+- [`docs/game-spec/GAMESERVER-DATA-FOLDER-MAP.md`](docs/game-spec/GAMESERVER-DATA-FOLDER-MAP.md) — bản đồ thư mục `Data/`.
+- [`docs/migration/MANIFEST-TRACKER-TEMPLATE.md`](docs/migration/MANIFEST-TRACKER-TEMPLATE.md) — template tracker manifest §17.
+- [`docs/migration/OPERATIONS-MIGRATION-NOTES.md`](docs/migration/OPERATIONS-MIGRATION-NOTES.md) — thứ tự batch Windows, Docker, scripts.
 
 Repository: https://github.com/hoangdt9/mu-takumi  
 

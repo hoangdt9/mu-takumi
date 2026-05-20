@@ -1,5 +1,5 @@
 -- Learned skills per character (C1 F3 11 / GCSkillListSend parity).
--- Apply: ./scripts/apply-sql.sh "$TAKUMI_PG_CONNECTION_STRING" sql/patches/016_character_skill.sql
+-- Apply: ./scripts/db/apply-sql.sh "$TAKUMI_PG_CONNECTION_STRING" sql/patches/016_character_skill.sql
 
 CREATE TABLE IF NOT EXISTS character_skill (
     account_login   TEXT        NOT NULL,

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# M5: Connect Server only (Takumi.Server.ConnectHost — F4 06/03). Pair with ./scripts/run-login-host.sh
+# M5: Connect Server only (Takumi.Server.ConnectHost — F4 06/03). Pair with ./scripts/host/run-login-host.sh
 set -euo pipefail
 
 # shellcheck source=../_lib/paths.sh disable=SC1091

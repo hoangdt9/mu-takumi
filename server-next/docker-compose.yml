@@ -4,8 +4,8 @@
 #   cd takumi/server-next
 #   cp -n .env.lan.example .env   # set TAKUMI_LAN_IP to this machine's LAN IP (same Wi‑Fi as the phone)
 #   docker compose up -d                   # with .env COMPOSE_PROFILES=datazip,gamehost → + datazip + game-host
-#   ./scripts/docker-stack.sh              # pull + up (postgres + legacy-login + data.zip + game-host) + docker logs -f
-#   ./scripts/docker-stack.sh --detach     # same, không bám log
+#   ./scripts/docker/docker-stack.sh              # pull + up (postgres + legacy-login + data.zip + game-host) + docker logs -f
+#   ./scripts/docker/docker-stack.sh --detach     # same, không bám log
 #
 # After the first `up`, Docker Desktop restarts will bring containers back if they were running
 # (`restart: unless-stopped`). Stop explicitly: `docker compose down`.
@@ -107,7 +107,7 @@ services:
       - |
         LEGACY_DLL=src/Takumi.Server.LegacyLoginHost/bin/Release/net10.0/Takumi.Server.LegacyLoginHost.dll
         if [ "$$TAKUMI_SKIP_CONTAINER_BUILD" = "1" ] || [ "$$TAKUMI_SKIP_CONTAINER_BUILD" = "true" ]; then
-          echo "[legacy-login] TAKUMI_SKIP_CONTAINER_BUILD=1 — using host-built IL (./scripts/docker-stack.sh --host-build); dotnet exec DLL (not macOS apphost)"
+          echo "[legacy-login] TAKUMI_SKIP_CONTAINER_BUILD=1 — using host-built IL (./scripts/docker/docker-stack.sh --host-build); dotnet exec DLL (not macOS apphost)"
           if [ ! -f "$$LEGACY_DLL" ]; then
             echo "[legacy-login] ERROR: missing $$LEGACY_DLL — run: dotnet build src/Takumi.Server.LegacyLoginHost/Takumi.Server.LegacyLoginHost.csproj -c Release" >&2
             exit 1

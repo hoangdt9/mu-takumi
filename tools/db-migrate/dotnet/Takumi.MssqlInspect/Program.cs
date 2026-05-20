@@ -24,7 +24,7 @@ internal static class Program
 
         Example (regenerate LEGACY_TABLE list):
           dotnet run --project tools/db-migrate/dotnet/Takumi.MssqlInspect -- --mapping-rows \\
-            > docs/takumi-game-spec/PHASE2-MAPPING-MSSQL-DBO-AUTO.csv
+            > docs/game-spec/PHASE2-MAPPING-MSSQL-DBO-AUTO.csv
         Row counts (verify vs ETL / snapshot):
           dotnet run --project tools/db-migrate/dotnet/Takumi.MssqlInspect -- --row-counts \\
             > tools/db-migrate/schemas/mssql-dbo-row-counts.csv

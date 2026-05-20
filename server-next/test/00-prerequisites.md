@@ -5,12 +5,12 @@
 - [ ] **1. Wi‑Fi:** Điện thoại và Mac cùng mạng LAN (ví dụ `192.168.1.x`).
 - [ ] **2. APK:** Đã build & cài `realDevicePreloadDefaultDebug` (ABI `armeabi-v7a` + `arm64-v8a`).
   - **LAN:** BuildConfig khớp `.env` — `MU_BOOTSTRAP_SERVER=<LAN>:44605`, `DATA_ZIP_URL_LAN=http://<LAN>:18080/data.zip`.
-  - **USB adb reverse (không rebuild APK mỗi lần đổi server):** build **một lần** với `-PmuBootstrapAdbReverse=true`, mỗi session chạy `./scripts/adb-reverse.sh`, `.env` dùng `TAKUMI_PUBLIC_HOST=127.0.0.1` + recreate stack.
+  - **USB adb reverse (không rebuild APK mỗi lần đổi server):** build **một lần** với `-PmuBootstrapAdbReverse=true`, mỗi session chạy `./scripts/android/adb-reverse.sh`, `.env` dùng `TAKUMI_PUBLIC_HOST=127.0.0.1` + recreate stack.
 - [ ] **3. `server-next/.env`:** Copy từ `.env.lan.example` nếu chưa có; `TAKUMI_PUBLIC_HOST` = IP Mac.
 - [ ] **4. `keys/Dec2.dat`:** Có trong `server-next/keys/` (mount vào container `/keys/Dec2.dat`).
 - [ ] **5. Tắt stack khác** tránh trùng cổng:
   - OpenMU / `takumi-openmu-*` (44505, …)
-  - Không chạy `./scripts/run-legacy-login-host.sh` trên host khi Docker đã bind `44605`/`44606`.
+  - Không chạy `./scripts/host/run-legacy-login-host.sh` trên host khi Docker đã bind `44605`/`44606`.
 - [ ] **6. (Tuỳ chọn M8 DB)** Có file MuServer trên máy:
   - `…/4.GameServer/Data/Monster/MonsterSetBase.txt`
   - `…/4.GameServer/Data/Monster/Monster.txt`
@@ -32,7 +32,7 @@ TAKUMI_CHARACTER_DOMAIN_SYNC=1
 TAKUMI_PG_CONNECTION_STRING=Host=postgres;Port=5432;Username=takumi;Password=takumi;Database=takumi_runtime
 
 # M7 — đẩy hết nhân vật trong takumi-roster/*.json lên DB (một lần hoặc mỗi lần start)
-# ./scripts/migrate-roster-json-to-db.sh
+# ./scripts/db/migrate-roster-json-to-db.sh
 # TAKUMI_MIGRATE_ROSTER_JSON=1
 
 # M7d — gửi 0x26/0x27 sau join

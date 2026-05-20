@@ -3,22 +3,22 @@
 # Use when Wi‑Fi/AP isolation blocks phone → Mac LAN, or to avoid rebuilding APK after each server-next change.
 #
 # Workflow (one-time APK with localhost bootstrap):
-#   ./scripts/adb-reverse.sh
+#   ./scripts/android/adb-reverse.sh
 #   cd ../../Source/android && ./gradlew :app:assembleRealDevicePreloadDefaultDebug \
 #     -PmuRequiredAbis=armeabi-v7a,arm64-v8a -PmuBootstrapAdbReverse=true
 #   adb install -r app/build/outputs/apk/realDevicePreloadDefault/debug/app-realDevice-preloadDefault-debug.apk
 #
 # Daily QA (server/docker changes only):
-#   ./scripts/docker-stack.sh --host-build --recreate --detach
-#   ./scripts/adb-reverse.sh
+#   ./scripts/docker/docker-stack.sh --host-build --recreate --detach
+#   ./scripts/android/adb-reverse.sh
 #   (no APK rebuild if already installed with -PmuBootstrapAdbReverse=true)
 #
 # F4 03 game sub-server must advertise 127.0.0.1 (not LAN IP) while on USB reverse:
 #   TAKUMI_PUBLIC_HOST=127.0.0.1 and TAKUMI_LAN_IP=127.0.0.1 in server-next/.env, then recreate stack.
 #
 # Usage:
-#   ./scripts/adb-reverse.sh
-#   ./scripts/adb-reverse.sh --remove
+#   ./scripts/android/adb-reverse.sh
+#   ./scripts/android/adb-reverse.sh --remove
 set -euo pipefail
 
 # shellcheck source=../_lib/paths.sh disable=SC1091
@@ -88,6 +88,6 @@ echo "APK (once): cd Source/android && ./gradlew :app:assembleRealDevicePreloadD
 echo "  -PmuRequiredAbis=armeabi-v7a,arm64-v8a -PmuBootstrapAdbReverse=true"
 echo ""
 echo "Server list / F4 03: set TAKUMI_PUBLIC_HOST=127.0.0.1 in server-next/.env when using USB reverse."
-echo "Logcat: ./scripts/watch-android-takumi-log.sh"
+echo "Logcat: ./scripts/android/watch-android-takumi-log.sh"
 echo ""
 adb reverse --list 2>/dev/null || true

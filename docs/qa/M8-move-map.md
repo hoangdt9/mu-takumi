@@ -1,6 +1,6 @@
 # QA — M8 move-map (APK)
 
-**Dev:** `server-next/docs/M8-MOVE-MAP-PARITY-CHECKLIST.md` + `./scripts/smoke-m8.sh --no-recreate`
+**Dev:** `server-next/docs/world/M8-MOVE-MAP-PARITY-CHECKLIST.md` + `./scripts/smoke/smoke-m8.sh --no-recreate`
 
 **Quy ước:** `[ ]` · `[x]` · `[!]` · `[-]`
 
@@ -11,7 +11,7 @@
 | # | Việc | OK |
 |---|------|-----|
 | A.1 | `docker compose ps` → `legacy-login`, `game-host` | [ ] |
-| A.2 | `./scripts/smoke-m8.sh --no-recreate` → PASS | [ ] |
+| A.2 | `./scripts/smoke/smoke-m8.sh --no-recreate` → PASS | [ ] |
 | A.3 | `TAKUMI_PUBLIC_HOST` = IP Mac (cùng Wi‑Fi APK) | [ ] |
 | A.4 | APK → login → vào game | [ ] |
 

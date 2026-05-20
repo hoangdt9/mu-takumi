@@ -1,5 +1,5 @@
 -- M11: account-wide warehouse zen + cash-shop coin balances (WCoin / Goblin Point).
--- Apply: ./scripts/apply-sql.sh "$TAKUMI_PG_CONNECTION_STRING"
+-- Apply: ./scripts/db/apply-sql.sh "$TAKUMI_PG_CONNECTION_STRING"
 
 ALTER TABLE account ADD COLUMN IF NOT EXISTS warehouse_zen BIGINT NOT NULL DEFAULT 0;
 ALTER TABLE account ADD COLUMN IF NOT EXISTS wcoin_c BIGINT NOT NULL DEFAULT 0;

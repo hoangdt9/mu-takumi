@@ -1,10 +1,10 @@
 # QA — Gate S2 (login / join / world)
 
-Moved from `server-next/docs/S2-GATE-QA.md`. **Dev:** `server-next/docs/M6-GAME-TCP-CHECKLIST.md`.
+Moved from `server-next/docs/qa-gates/S2-GATE-QA.md`. **Dev:** `server-next/docs/character/M6-GAME-TCP-CHECKLIST.md`.
 
 Last updated: 2026-05-18
 
-**Gate S2** (`server-next/docs/MONOGAME-CLIENT-ROADMAP.md`): game TCP + login + join + inventory ổn định.
+**Gate S2** (`server-next/docs/client/MONOGAME-CLIENT-ROADMAP.md`): game TCP + login + join + inventory ổn định.
 
 ---
 
@@ -12,7 +12,7 @@ Last updated: 2026-05-18
 
 ```bash
 cd server-next
-./scripts/docker-stack.sh --detach
+./scripts/docker/docker-stack.sh --detach
 ```
 
 `.env`: `TAKUMI_PUBLIC_HOST`, `TAKUMI_GAME_PORT=55901`, `TAKUMI_ROSTER_DB_SYNC=1`. DB user compose: **`takumi`** (không `postgres`).
@@ -20,7 +20,7 @@ cd server-next
 Reset roster (tuỳ chọn):
 
 ```bash
-./scripts/reset-roster-account.sh test
+./scripts/db/reset-roster-account.sh test
 docker compose restart game-host legacy-login
 ```
 
@@ -45,7 +45,7 @@ docker compose restart game-host legacy-login
 ## 4. Smoke Mac (no phone)
 
 ```bash
-./scripts/smoke-connect-from-host.sh 127.0.0.1 44605
+./scripts/smoke/smoke-connect-from-host.sh 127.0.0.1 44605
 ```
 
 ---

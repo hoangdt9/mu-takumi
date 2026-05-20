@@ -29,26 +29,26 @@ Checklist từng bước để test trên **Mac LAN + APK Android** sau khi merg
 
 ```bash
 # Stack + log (foreground)
-./scripts/docker-stack.sh --host-build --recreate
+./scripts/docker/docker-stack.sh --host-build --recreate
 
 # Stack nền, log riêng
-./scripts/docker-stack.sh --host-build --recreate --detach
+./scripts/docker/docker-stack.sh --host-build --recreate --detach
 docker compose logs -f legacy-login postgres datazip game-host
 
 # Log Android
-./scripts/watch-android-takumi-log.sh
+./scripts/android/watch-android-takumi-log.sh
 
 # USB adb reverse (skip APK rebuild after server changes; one-time APK -PmuBootstrapAdbReverse=true)
-./scripts/adb-reverse.sh
+./scripts/android/adb-reverse.sh
 ```
 
 ## Không cần rebuild APK khi
 
-Chỉ đổi C# server, SQL, `.env` → **chỉ recreate Docker** (xem `docs/IMPLEMENTATION-CHECKLIST.md` § *Client APK, data.zip, and Docker*).
+Chỉ đổi C# server, SQL, `.env` → **chỉ recreate Docker** (xem `docs/milestones/IMPLEMENTATION-CHECKLIST.md` § *Client APK, data.zip, and Docker*).
 
 ## Tài liệu gốc
 
-- `docs/M7-CHARACTER-PERSISTENCE-CHECKLIST.md`
-- `docs/M8-M10-WORLD-RUNTIME-CHECKLIST.md`
-- `docs/M9-NPC-MONSTER-CHECKLIST.md`
-- `docs/IMPLEMENTATION-CHECKLIST.md`
+- `character/M7-CHARACTER-PERSISTENCE-CHECKLIST.md`
+- `docs/world/M8-M10-WORLD-RUNTIME-CHECKLIST.md`
+- `combat/M9-NPC-MONSTER-CHECKLIST.md`
+- `docs/milestones/IMPLEMENTATION-CHECKLIST.md`

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Open BNS-2020 VMware VM. VM lives under takumi/VMWare.
-# IMPORTANT: This .vmx is Intel (x86); it will NOT power on on Apple Silicon (ARM) — see docs/MU-SERVER-MAC-VMWARE.md .
+# IMPORTANT: This .vmx is Intel (x86); it will NOT power on on Apple Silicon (ARM) — see docs/ops/MU-SERVER-MAC-VMWARE.md .
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 VMX="${ROOT}/VMWare/BNS-2020.vmx"

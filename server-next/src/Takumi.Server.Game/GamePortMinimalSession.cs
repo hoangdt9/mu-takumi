@@ -240,8 +240,7 @@ public static class GamePortMinimalSession
                         return;
                     }
 
-                    var t = packet[0];
-                    GameRxStructuredLog.DecryptedRx(remote, packet.Length, t, verbose);
+                    GameRxStructuredLog.DecryptedRx(remote, packet.AsSpan(), verbose);
 
                     if (!loginLatch.IsLoggedIn
                         && SessionTicketWire602.TryFindClientAttach(packet.AsSpan(), out var attachBody)

@@ -8,18 +8,23 @@ public static class GameRxStructuredLog
         string.Equals(Environment.GetEnvironmentVariable("TAKUMI_STRUCTURED_LOG"), "1", StringComparison.OrdinalIgnoreCase)
         || string.Equals(Environment.GetEnvironmentVariable("TAKUMI_STRUCTURED_LOG"), "true", StringComparison.OrdinalIgnoreCase);
 
-    public static void DecryptedRx(string remote, int decryptedLength, byte headCode, bool verbose)
+    public static void DecryptedRx(string remote, ReadOnlySpan<byte> packet, bool verbose)
     {
+        var headCode = packet.Length > 0 ? packet[0] : (byte)0;
+        var subCode = packet.Length > 2 ? packet[2] : (byte)0;
         if (verbose || IsForced)
         {
             Console.Error.WriteLine(
-                "[event=decrypted_rx] remote={0} len={1} head=0x{2:X2}",
+                packet.Length is >= 3 and <= 24
+                    ? "[event=decrypted_rx] remote={0} len={1} head=0x{2:X2} sub=0x{3:X2}"
+                    : "[event=decrypted_rx] remote={0} len={1} head=0x{2:X2}",
                 remote,
-                decryptedLength,
-                headCode);
+                packet.Length,
+                headCode,
+                subCode);
             return;
         }
 
-        Console.WriteLine("[{0}] decrypted len={1} head=0x{2:X2}", remote, decryptedLength, headCode);
+        Console.WriteLine("[{0}] decrypted len={1} head=0x{2:X2}", remote, packet.Length, headCode);
     }
 }

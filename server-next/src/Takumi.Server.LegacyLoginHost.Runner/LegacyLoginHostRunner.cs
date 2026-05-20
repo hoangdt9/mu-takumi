@@ -661,8 +661,7 @@ public static class LegacyLoginHostRunner
                     return;
                 }
 
-                var t = packet[0];
-                GameRxStructuredLog.DecryptedRx(remote, packet.Length, t, verbose);
+                GameRxStructuredLog.DecryptedRx(remote, packet.AsSpan(), verbose);
 
                 if (loginLatch.IsLoggedIn && packet.Length == 15 && packet[0] == 0xC1)
                 {

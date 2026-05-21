@@ -253,7 +253,8 @@ namespace
 
 		strcpy_s(output,outputSize,address);
 
-#if defined(__ANDROID__) && defined(MU_BOOTSTRAP_ADB_REVERSE)
+#if defined(__ANDROID__)
+		// Runtime loopback after LAN fail (adb reverse) — not only -PmuBootstrapAdbReverse builds.
 		if (MU_AndroidShouldPreferLoopbackTcp()
 			&& IsPrivateIPv4(address)
 			&& !IsLoopbackIPv4(address))

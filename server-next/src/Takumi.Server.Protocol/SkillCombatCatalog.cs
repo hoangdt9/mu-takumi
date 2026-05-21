@@ -4,7 +4,9 @@ namespace Takumi.Server.Protocol;
 public static class SkillCombatCatalog
 {
     public const ushort EvilSpirit = 9;
-    public const ushort Storm = 8;
+    /// <summary>Twister (<c>AT_SKILL_STORM</c>).</summary>
+    public const ushort Twister = 8;
+    public const ushort Storm = Twister;
     public const ushort FireSlash = 55;
     public const ushort PowerSlash = 56;
     public const ushort FlameStrike = 236;
@@ -93,15 +95,38 @@ public static class SkillCombatCatalog
             _ => 20,
         };
 
+    /// <summary>
+    /// Directional channel skills (MG slashes / flame strike): forward arc (~140°).
+    /// </summary>
+    public static bool IsDirectionalContinueSkill(ushort skillId) =>
+        skillId is FireSlash or PowerSlash or FlameStrike or GiganticStorm
+            or 490 or 493 or 482 or >= 48 and <= 52
+            or 10 or 13 or 378 or 483;
+
+    /// <summary>
+    /// Narrow forward corridor (OpenMU frustum: start/end width 1.5, distance 4, skill range 6).
+    /// Twister only travels along the tornado path — not a wide square.
+    /// </summary>
+    public static bool IsForwardCorridorContinueSkill(ushort skillId) =>
+        skillId is Twister;
+
+    /// <summary>Half-width of the forward corridor in tile units (OpenMU <c>1.5f</c>).</summary>
+    public const float ForwardCorridorHalfWidth = 1.5f;
+
+    /// <summary>
+    /// Max Chebyshev hit distance from caster tile for omnidirectional skills, Manhattan arc depth for directional.
+    /// Values follow <c>Skill.txt</c> Radio (when Range=0) or Range column; +1 buffer for channel tick parity.
+    /// </summary>
     public static int GetAreaContinueRange(ushort skillId) =>
         skillId switch
         {
-            EvilSpirit or Storm or >= 14 and <= 18 or >= 61 and <= 65 or 385 or 487 => 7,
-            GiganticStorm or 237 or 238 => 6,
-            FlameStrike or 236 => 5,
-            FireSlash or 490 or 493 => 4,
-            PowerSlash or 482 or >= 48 and <= 52 => 5,
-            10 or 13 or 14 => 5,
+            // Evil Spirit / Twister / Inferno channel: Radio=6 in Skill.txt
+            EvilSpirit or Storm or >= 14 and <= 18 or >= 61 and <= 65 or 385 or 487 => 6,
+            GiganticStorm or 237 or 238 => 3,
+            FlameStrike or 236 => 2,
+            FireSlash or 490 or 493 => 2,
+            PowerSlash or 482 or >= 48 and <= 52 => 2,
+            10 or 13 => 5,
             _ => 3,
         };
 

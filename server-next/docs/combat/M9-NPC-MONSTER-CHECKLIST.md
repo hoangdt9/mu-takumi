@@ -2,7 +2,7 @@
 
 Last updated: 2026-05-18
 
-**QA APK:** [`../../docs/qa/M9-monster-combat.md`](../../docs/qa/M9-monster-combat.md) · shop/gate: [`../../docs/qa/M9-npc-shop.md`](../../docs/qa/M9-npc-shop.md)
+**QA APK:** [`../../docs/qa/M9-monster-combat.md`](../../docs/qa/M9-monster-combat.md) · MG skills: [`../../docs/qa/M9-mg-skill-combat.md`](../../docs/qa/M9-mg-skill-combat.md) · **Skill checklist:** [`../../docs/android/SKILL-COMBAT-CHECKLIST.md`](../../docs/android/SKILL-COMBAT-CHECKLIST.md) · shop/gate: [`../../docs/qa/M9-npc-shop.md`](../../docs/qa/M9-npc-shop.md)
 
 **Chi tiết AI:** `M9-MONSTER-AI-PORT-CHECKLIST.md` · **Ownership:** `M9-M8-NPC-GAMEPLAY-OWNERSHIP.md`
 

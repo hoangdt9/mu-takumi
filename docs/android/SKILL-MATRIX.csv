@@ -1,16 +1,18 @@
-skill_id,name,class,wire,server_handler,client_cast,client_char_anim,client_world_vfx,client_vfx_speed,android_gesture,notes
-9,Linh hồn,DW/MG,0x1E,HandleMagicContinueAsync,y,y,y,y,double-tap channel,reference: full E+F+G
-8,Lốc,DW/MG,0x1E,HandleMagicContinueAsync,y,n,n,y,channel,MODEL_STORM speed only; spawn TODO
-61-65,Linh hồn MG,MG,0x1E,HandleMagicContinueAsync,y,y,y,y,channel,inherit skill 9
-55,Fire Slash,MG,0x1E,HandleMagicContinueAsync,y,n,n,n,channel,needs PLAYER_ATTACK_SKILL_WHEEL + gathering
-56,Power Slash,MG,0x1E,HandleMagicContinueAsync,y,n,n,n,channel,needs TWO_HAND + MODEL_MAGIC2
-48-52,Power Slash+,MG,0x1E,HandleMagicContinueAsync,y,n,n,n,channel,inherit 56
-236,Flame Strike,MG,0x1E,HandleMagicContinueAsync,y,n,n,n,channel,MODEL_EFFECT_FLAME_STRIKE
-237,Gigantic Storm,MG,0x1E,HandleMagicContinueAsync,y,n,n,n,channel,BITMAP_JOINT_THUNDER fan
-238,Chaotic,MG/DL,0x1E,HandleMagicContinueAsync,y,n,n,n,channel,GAOTIC FX
-5,Hỏa ngục (ground),DW/MG,0x1E,HandleMagicContinueAsync,y,n,n,n,channel,FLAME ground
-3,Sét,DW,0x19,targeted+stat,y,n,n,n,tap,THUNDER projectile
-4,Hỏa cầu,DW,0x19,targeted+stat,y,n,n,n,tap,FIREBALL
-12,Độc,DW,0x19,targeted+stat,y,n,n,n,tap,FLASH
-13,Inferno,DW/MG,0xDB,magic burst,y,n,n,n,tap,MODEL_SKILL_INFERNO
-14,Hell,DW/MG,0x1E+DB,y,n,n,n,tap,HELL
+skill_id,name,class,wire,server_handler,server_hit_volume,server_hit_done,client_cast,client_char_anim,client_world_vfx,client_vfx_speed,android_gesture,notes
+9,Linh hồn,DW/MG,0x1E,HandleMagicContinueAsync,chebyshev_6,y,y,y,y,y,double-tap channel,reference: full E+F+G
+8,Lốc,DW/MG,0x1E,HandleMagicContinueAsync,forward_corridor,pending,y,n,n,y,channel,QA mode=2; MODEL_STORM spawn TODO
+61-65,Linh hồn MG,MG,0x1E,HandleMagicContinueAsync,inherit_9,pending,y,y,y,y,channel,not twister geometry
+55,Fire Slash,MG,0x1E,HandleMagicContinueAsync,forward_arc_2,pending,y,n,n,n,channel,PLAYER_ATTACK_SKILL_WHEEL + gathering
+56,Power Slash,MG,0x1E,HandleMagicContinueAsync,forward_arc_2,pending,y,n,n,n,channel,TWO_HAND + MODEL_MAGIC2
+48-52,Power Slash+,MG,0x1E,HandleMagicContinueAsync,forward_arc_2,pending,y,n,n,n,channel,inherit 56
+236,Flame Strike,MG,0x1E,HandleMagicContinueAsync,forward_arc_2,pending,y,n,n,n,channel,MODEL_EFFECT_FLAME_STRIKE
+237,Gigantic Storm,MG,0x1E,HandleMagicContinueAsync,forward_arc_3,pending,y,n,n,n,channel,BITMAP_JOINT_THUNDER fan
+238,Chaotic,MG/DL,0x1E,HandleMagicContinueAsync,forward_arc_3,pending,y,n,n,n,channel,CHAOTIC FX
+5,Hỏa ngục (ground),DW/MG,0x1E,HandleMagicContinueAsync,chebyshev_6,pending,y,n,n,n,channel,FLAME ground
+10,Hell Fire,DW/MG,0x1E,HandleMagicContinueAsync,forward_arc_5,pending,y,n,n,n,channel,
+13,Blast,DW/MG,0x1E,HandleMagicContinueAsync,forward_arc_5,pending,y,n,n,n,channel,
+3,Sét,DW,0x19,targeted+stat,targeted_6,pending,y,n,n,n,tap,THUNDER projectile
+4,Hỏa cầu,DW,0x19,targeted+stat,targeted_6,pending,y,n,n,n,tap,FIREBALL
+12,Độc,DW,0x19,targeted+stat,targeted_7,pending,y,n,n,n,tap,FLASH
+13,Inferno,DW/MG,0xDB,magic burst,burst_aoe,pending,y,n,n,n,tap,MODEL_SKILL_INFERNO
+14,Hell,DW/MG,0x1E+DB,HandleMagicContinueAsync,chebyshev_6,pending,y,n,n,n,tap,HELL channel + burst

@@ -142,6 +142,12 @@ bool AndroidTryReconnectLoopbackConnect()
 		return false;
 	}
 
+	// Keep bootstrap host in sync so F4 03 / game TCP use loopback + adb reverse (not stale LAN IP).
+	{
+		static char s_loopbackBootstrapHost[] = "127.0.0.1";
+		szServerIpAddress = s_loopbackBootstrapHost;
+	}
+
 	const SOCKET fd = SocketClient.GetSocket();
 	if (fd != INVALID_SOCKET && static_cast<int>(fd) > 0)
 	{

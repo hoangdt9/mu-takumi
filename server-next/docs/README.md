@@ -25,6 +25,7 @@ Parity, wire, Docker. **QA APK:** [`../../docs/QA-MILESTONE.md`](../../docs/QA-M
 | [world/M8-MOVE-MAP-PARITY-CHECKLIST.md](./world/M8-MOVE-MAP-PARITY-CHECKLIST.md) | Move map `0x8E` + gate/skill TP |
 | [world/M8-MAP-MONSTER-SPAWN-TASKS.md](./world/M8-MAP-MONSTER-SPAWN-TASKS.md) | Spawn quái/NPC theo map |
 | [combat/M9-NPC-MONSTER-CHECKLIST.md](./combat/M9-NPC-MONSTER-CHECKLIST.md) | Monster scope A |
+| [../../docs/android/SKILL-COMBAT-CHECKLIST.md](../../docs/android/SKILL-COMBAT-CHECKLIST.md) | Skill hit volume + MG QA done/chưa |
 | [combat/M9-MONSTER-AI-PORT-CHECKLIST.md](./combat/M9-MONSTER-AI-PORT-CHECKLIST.md) | AI / viewport port |
 | [combat/M9-M8-NPC-GAMEPLAY-OWNERSHIP.md](./combat/M9-M8-NPC-GAMEPLAY-OWNERSHIP.md) | File ownership |
 | [character/M6-GAME-TCP-CHECKLIST.md](./character/M6-GAME-TCP-CHECKLIST.md) | Game TCP |

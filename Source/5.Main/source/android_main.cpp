@@ -7349,12 +7349,8 @@ static void HandleSDLEvent(const SDL_Event& ev, int& screenW, int& screenH)
         {
             break;
         }
-        const bool worldSkillFinger = TakumiAndroid_HandleWorldSkillTouchDown(ev.tfinger);
+        TakumiAndroid_HandleWorldSkillTouchDown(ev.tfinger);
         if (HandleVirtualFingerDown(ev.tfinger))
-        {
-            break;
-        }
-        if (worldSkillFinger || TakumiAndroid_IsWorldSkillFinger(ev.tfinger.fingerId))
         {
             break;
         }

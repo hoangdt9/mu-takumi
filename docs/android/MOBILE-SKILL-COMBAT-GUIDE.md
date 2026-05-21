@@ -1,8 +1,8 @@
 # Hướng dẫn skill combat trên mobile (Takumi)
 
-**Cập nhật:** 2026-05-20  
+**Cập nhật:** 2026-05-21  
 **Phạm vi:** Android client (`Source/5.Main`) + `server-next` game host (Season 6 wire).  
-**Liên quan:** [SKILL-COMBAT-ROLLOUT-PLAN.md](./SKILL-COMBAT-ROLLOUT-PLAN.md) (kế hoạch toàn class) · [SKILL-MATRIX.csv](./SKILL-MATRIX.csv) (tracking) · [ANDROID-INPUT.md](./ANDROID-INPUT.md) (bảng gesture ngắn) · [game-spec/SKILL-HOTKEY-PERSISTENCE.md](../game-spec/SKILL-HOTKEY-PERSISTENCE.md) (gán ô skill) · [qa/M9-mg-skill-combat.md](../qa/M9-mg-skill-combat.md) (QA APK)
+**Liên quan:** [SKILL-COMBAT-CHECKLIST.md](./SKILL-COMBAT-CHECKLIST.md) (**SSOT** — skill done/chưa + test) · [SKILL-COMBAT-ROLLOUT-PLAN.md](./SKILL-COMBAT-ROLLOUT-PLAN.md) (kế hoạch toàn class) · [SKILL-MATRIX.csv](./SKILL-MATRIX.csv) (tracking) · [ANDROID-INPUT.md](./ANDROID-INPUT.md) (bảng gesture ngắn) · [game-spec/SKILL-HOTKEY-PERSISTENCE.md](../game-spec/SKILL-HOTKEY-PERSISTENCE.md) (gán ô skill) · [qa/M9-mg-skill-combat.md](../qa/M9-mg-skill-combat.md) (QA APK)
 
 ---
 
@@ -15,6 +15,7 @@
 | Damage MG theo Energy / wizardry | ✅ | `SkillCombatCatalog`, `PlayerSkillCombatDamage602` |
 | VFX + tốc độ **Linh hồn (9)** | ✅ | `GetEvilSpiritJoint*`, `GetMagicSpeedEffectRatio` |
 | VFX tốc độ **Lốc (8)** | ✅ partial | `MODEL_STORM` scale; spawn VFX channel TODO |
+| Server hit volume (AoE đúng hình) | 🟡 | Evil Spirit ✅ Chebyshev; Twister 🟡 corridor `mode=2` — xem [SKILL-COMBAT-CHECKLIST.md](./SKILL-COMBAT-CHECKLIST.md) |
 | Animation đầy đủ skill MG khác | ⬜ | Wire + damage OK; pose/VFX riêng chưa nối mobile |
 | QA account `test` / `mg001` | ✅ 44 skill | `character_skill` + `CharacterSkillCatalog` |
 | Scripts `server-next/scripts/` | ✅ | Bỏ wrapper trùng; chỉ thư mục con |
@@ -209,7 +210,7 @@ Nhân vật QA: **`test` / `mg001`** (Duel Master, class wire 120). Join gửi *
 | ID | Tên | Wire | Cast mobile | Damage server | Anim + VFX client |
 |----|-----|------|-------------|---------------|-------------------|
 | 9 | Linh hồn | `0x1E` | ✅ channel | ✅ | ✅ đầy đủ + MagicSpeed |
-| 8 | Lốc | `0x1E` | ✅ | ✅ | speed storm ✅; spawn TODO |
+| 8 | Lốc | `0x1E` | ✅ | 🟡 corridor `mode=2` | speed storm ✅; spawn TODO; QA wide-hit |
 | 61–65 | Linh hồn MG+ | `0x1E` | ✅ | ✅ | kế thừa 9 |
 | 55 | Fire Slash | `0x1E` | ✅ | ✅ | ⬜ wheel + gathering |
 | 56, 48–52 | Power Slash | `0x1E` | ✅ | ✅ | ⬜ two-hand + magic2 |
@@ -264,7 +265,9 @@ cd Source/android
 | File | Thay đổi |
 |------|----------|
 | `ClientHitPackets602.cs` | `TryFindMagicContinue` — C1 + C3 |
-| `SkillCombatCatalog.cs` | MG continue / targeted / burst, range, base damage |
+| `SkillCombatCatalog.cs` | MG continue / targeted / burst, range, **hit mode** (omni / arc / corridor) |
+| `SkillCombatRange.cs` | `IsMobInSkillVolume` — Chebyshev / forward arc / Twister corridor |
+| `SkillCombatDirection.cs` | `IsInForwardArc`, `IsInForwardCorridor` |
 | `CharacterCombatPreview602.cs` | MG `MagicDamage` từ Energy |
 | `PlayerSkillCombatDamage602.cs` | Wizardry / hybrid fallback |
 | `MonsterCombatHandler.cs` | `0x1E` / `0x19` / `0xDB`, log `[m9]` |
@@ -316,7 +319,8 @@ Skill hotkey persistence: [game-spec/SKILL-HOTKEY-PERSISTENCE.md](./game-spec/SK
    - Quái mất HP
 7. Đổi đồ +speed → linh hồn bay nhanh hơn (chỉ sau rebuild APK client)
 
-Checklist QA chi tiết: [qa/M9-mg-skill-combat.md](./qa/M9-mg-skill-combat.md).
+Checklist QA chi tiết: [qa/M9-mg-skill-combat.md](../qa/M9-mg-skill-combat.md).  
+Tracking done/chưa từng skill: [SKILL-COMBAT-CHECKLIST.md](./SKILL-COMBAT-CHECKLIST.md).
 
 ---
 

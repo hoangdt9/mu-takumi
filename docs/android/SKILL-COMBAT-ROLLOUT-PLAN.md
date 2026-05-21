@@ -4,7 +4,7 @@
 **Phạm vi:** Takumi Android client (`Source/5.Main`) + `server-next` game host.  
 **Mục tiêu:** Mỗi skill playable trên mobile có **cast đúng wire**, **server ra damage đúng stat**, **animation nhân vật + hiệu ứng thế giới**, **tốc độ VFX khớp MagicSpeed/AttackSpeed** (parity PC Season 6).
 
-**Hướng dẫn thực tế (đã làm 19–20/05):** [MOBILE-SKILL-COMBAT-GUIDE.md](./MOBILE-SKILL-COMBAT-GUIDE.md) · QA APK: [qa/M9-mg-skill-combat.md](../qa/M9-mg-skill-combat.md) · Nhật ký: [DEVELOPMENT-LOG-2026-05-20.md](../journal/DEVELOPMENT-LOG-2026-05-20.md)
+**Hướng dẫn thực tế (đã làm 19–21/05):** [MOBILE-SKILL-COMBAT-GUIDE.md](./MOBILE-SKILL-COMBAT-GUIDE.md) · **Checklist done/chưa:** [SKILL-COMBAT-CHECKLIST.md](./SKILL-COMBAT-CHECKLIST.md) · QA APK: [qa/M9-mg-skill-combat.md](../qa/M9-mg-skill-combat.md) · Nhật ký: [DEVELOPMENT-LOG-2026-05-20.md](../journal/DEVELOPMENT-LOG-2026-05-20.md)
 
 ---
 
@@ -46,7 +46,7 @@ flowchart LR
 |-----|------------|-------------|--------------|-------------------|
 | **A. Input** | `TakumiAndroidInput.cpp` | Gesture, `IsDirectionChannelSkillType` | ✅ | ✅ |
 | **B. Client TX** | `ZzzInterface.cpp` | `SendRequestMagicContinue` / `0x19` / `0xDB` | ✅ | ✅ wire |
-| **C. Server** | `MonsterCombatHandler.cs`, `SkillCombatCatalog.cs` | Parse, damage, range | ✅ | ✅ |
+| **C. Server** | `MonsterCombatHandler.cs`, `SkillCombatCatalog.cs`, `SkillCombatRange.cs` | Parse, damage, **hit volume** (omni/arc/corridor) | ✅ | 🟡 Twister corridor; slash arc QA |
 | **E. Animation nhân vật** | `ZzzCharacter.cpp` (`SetAction`, `AttackStage`) | Pose + frame skill (`PLAYER_ATTACK_SKILL_WHEEL`, …), `SetAttackSpeed` | ✅ generic cast | ⬜ cần `SetAction` đúng skill |
 | **F. VFX thế giới** | `ZzzCharacter.cpp` (`MoveCharacter` → `c->Skill` switch), `ZzzEffect*.cpp` | `CreateJoint` / `CreateEffect` / `MODEL_STORM` | ✅ `BITMAP_JOINT_SPIRIT` | ⬜ từng `case AT_SKILL_*` |
 | **G. Tốc độ VFX** | `GetMagicSpeedEffectRatio`, `GetEvilSpiritJoint*` | Scale velocity / tick / `PlaySpeed` effect | ✅ | ⬜ theo nhóm effect |
@@ -123,7 +123,7 @@ flowchart LR
 | Skill ID | Tên | Wire | Server | Anim (E) | VFX (F) | Speed (G) |
 |----------|-----|------|--------|----------|---------|-----------|
 | 9 | Linh hồn | `0x1E` | ✅ | ✅ | ✅ | ✅ |
-| 8 | Lốc | `0x1E` | ✅ | ⬜ | ⬜ | ✅ `MODEL_STORM` ratio |
+| 8 | Lốc | `0x1E` | 🟡 corridor `mode=2` | ⬜ | ⬜ | ✅ `MODEL_STORM` ratio |
 | 5, 378 | Hỏa cầu line | `0x19` | ⬜ | ⬜ |
 | 13, 382 | Lửa địa ngục | `0xDB`? | ⬜ | ⬜ |
 | 38–39, 385–387 | Master upgrades | inherit | ⬜ | ⬜ |
@@ -147,7 +147,7 @@ flowchart LR
 | Skill ID | Tên | Wire | Server | Anim (E) | VFX (F) | Speed (G) |
 |----------|-----|------|--------|----------|---------|-----------|
 | 9, 61–65 | Linh hồn | `0x1E` | ✅ | ✅ | ✅ | ✅ |
-| 8 | Lốc | `0x1E` | ✅ | ⬜ | ⬜ | ✅ |
+| 8 | Lốc | `0x1E` | 🟡 corridor | ⬜ | ⬜ | ✅ |
 | 55, 490, 493 | Fire Slash | `0x1E` | ✅ | ⬜ wheel anim | ⬜ gathering/force | ⬜ |
 | 56, 48–52, 482 | Power Slash | `0x1E` | ✅ | ⬜ two-hand anim | ⬜ `MODEL_MAGIC2` | ⬜ |
 | 236 | Flame Strike | `0x1E` | ✅ | ⬜ | ⬜ `MODEL_EFFECT_FLAME_STRIKE` | ⬜ |

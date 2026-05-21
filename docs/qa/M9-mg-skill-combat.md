@@ -1,6 +1,6 @@
 # QA — M9 MG skill combat trên Android (APK)
 
-**Guide:** [../android/MOBILE-SKILL-COMBAT-GUIDE.md](../android/MOBILE-SKILL-COMBAT-GUIDE.md) · **Dev:** `SkillCombatCatalog.cs`, `MonsterCombatHandler.cs` · **Matrix:** [../android/SKILL-MATRIX.csv](../android/SKILL-MATRIX.csv)
+**Guide:** [../android/MOBILE-SKILL-COMBAT-GUIDE.md](../android/MOBILE-SKILL-COMBAT-GUIDE.md) · **Checklist SSOT:** [../android/SKILL-COMBAT-CHECKLIST.md](../android/SKILL-COMBAT-CHECKLIST.md) · **Dev:** `SkillCombatCatalog.cs`, `SkillCombatRange.cs`, `MonsterCombatHandler.cs` · **Matrix:** [../android/SKILL-MATRIX.csv](../android/SKILL-MATRIX.csv)
 
 **Account QA:** `test` / `mg001` (44 skill MG — `./scripts/db/verify-mg001-skills.sh`)
 
@@ -44,22 +44,24 @@ Chi tiết: [MOBILE-SKILL-COMBAT-GUIDE.md](../android/MOBILE-SKILL-COMBAT-GUIDE.
 
 - [ ] **Long-press** hoặc **double-tap** lên quái (trong tầm) → thấy linh hồn bay
 - [ ] Quái **mất HP** (không chỉ VFX)
-- [ ] Server log: `[m9] magic continue skill=9` (không chỉ `len=12 head=0xC3` rồi im)
+- [ ] Server log: `[m9] magic continue skill=9` **`mode=0`** (không chỉ `len=12 head=0xC3` rồi im)
 - [ ] Đổi đồ tăng MagicSpeed → linh hồn bay **nhanh hơn** rõ (cần APK client mới)
 
 Ghi chú damage / log: ____
 
 ---
 
-## MG channel khác (wire + damage)
+## MG channel khác (wire + damage + hit volume)
 
-| Skill | ID | Gesture | Server log mong đợi | HP quái giảm | VFX/anim đẹp |
-|-------|-----|---------|---------------------|--------------|--------------|
-| Lốc | 8 | channel | `skill=8` | [ ] | [ ] (speed OK, spawn TODO) |
-| Fire Slash | 55 | channel | `skill=55` | [ ] | [ ] |
-| Power Slash | 56 | channel | `skill=56` | [ ] | [ ] |
-| Flame Strike | 236 | channel | `skill=236` | [ ] | [ ] |
-| Gigantic Storm | 237 | channel | `skill=237` | [ ] | [ ] |
+Log `0x1E`: `mode=0` vòng Chebyshev (Evil Spirit) · `mode=1` cung phía trước (slash) · `mode=2` hành lang hẹp (Lốc).
+
+| Skill | ID | Gesture | Server log mong đợi | Hit volume | HP quái giảm | VFX/anim |
+|-------|-----|---------|---------------------|------------|--------------|----------|
+| Lốc | 8 | channel | `skill=8` **`mode=2`** `hits=1-4` | [ ] chỉ trên đường lốc, không 10+ mob hai bên | [ ] | [ ] |
+| Fire Slash | 55 | channel | `skill=55` **`mode=1`** | [ ] chỉ phía trước ~2 ô | [ ] | [ ] |
+| Power Slash | 56 | channel | `skill=56` **`mode=1`** | [ ] | [ ] | [ ] |
+| Flame Strike | 236 | channel | `skill=236` **`mode=1`** | [ ] | [ ] | [ ] |
+| Gigantic Storm | 237 | channel | `skill=237` **`mode=1`** | [ ] | [ ] | [ ] |
 
 ---
 
@@ -87,6 +89,7 @@ Ghi chú damage / log: ____
 | Triệu chứng | Kiểm tra |
 |-------------|----------|
 | Có VFX, không damage | Server rebuild? Log có `magic continue`? Trước đây: C3 `0x1E` không parse |
+| Lốc quét rộng 2 bên | Log `mode=0` hoặc `hits=10+` → deploy bản corridor; xem [SKILL-COMBAT-CHECKLIST.md](../android/SKILL-COMBAT-CHECKLIST.md) §2.1 |
 | Không cast | Hotbar có skill? `TakumiSkillAtk` logcat; tầm / `CheckTarget` |
 | Không skill trên bar | `verify-mg001-skills.sh`; relog sau SQL; `game-host` restart |
 | Chỉ Linh hồn đẹp, skill khác trơ | Đúng trạng thái hiện tại — xem guide §10 animation TODO |

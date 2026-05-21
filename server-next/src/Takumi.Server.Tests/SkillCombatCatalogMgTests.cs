@@ -18,7 +18,21 @@ public sealed class SkillCombatCatalogMgTests
     {
         Assert.True(SkillCombatCatalog.IsAreaContinueSkill(skillId));
         Assert.True(SkillCombatCatalog.UsesMagicDamage(skillId));
-        Assert.True(SkillCombatCatalog.GetAreaContinueRange(skillId) >= 4);
+        var expectedMinRange = skillId is 9 or 8 ? 6 : 2;
+        if (skillId is 9 or 8)
+        {
+            Assert.Equal(6, SkillCombatCatalog.GetAreaContinueRange(skillId));
+        }
+        Assert.True(SkillCombatCatalog.GetAreaContinueRange(skillId) >= expectedMinRange);
+    }
+
+    [Theory]
+    [InlineData(55)]
+    [InlineData(236)]
+    public void Mg_directional_slash_short_range(ushort skillId)
+    {
+        Assert.True(SkillCombatCatalog.IsDirectionalContinueSkill(skillId));
+        Assert.Equal(2, SkillCombatCatalog.GetAreaContinueRange(skillId));
     }
 
     [Theory]

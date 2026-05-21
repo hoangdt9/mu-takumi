@@ -37,6 +37,7 @@ bool TakumiAndroid_HandleInventoryTouchMove(const SDL_TouchFingerEvent& touch);
 bool TakumiAndroid_HandleInventoryTouchUp(const SDL_TouchFingerEvent& touch);
 
 /// World combat: long-press / double-tap on monster = PC right-click skill (hotbar CurrentSkill).
+/// Tracks world gestures; returns false so empty-map taps still set MouseLButton (click-to-walk).
 bool TakumiAndroid_HandleWorldSkillTouchDown(const SDL_TouchFingerEvent& touch);
 bool TakumiAndroid_HandleWorldSkillTouchMove(const SDL_TouchFingerEvent& touch);
 /// Returns true when skill gesture consumed the touch (suppress LMB release attack).

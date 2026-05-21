@@ -144,7 +144,7 @@ public static class MonsterCombatHandler
                 out var continueSkillId,
                 out var continueX,
                 out var continueY,
-                out _,
+                out var continueAngle,
                 out _))
         {
             await HandleMagicContinueAsync(
@@ -157,6 +157,7 @@ public static class MonsterCombatHandler
                     continueSkillId,
                     continueX,
                     continueY,
+                    continueAngle,
                     remote,
                     ct,
                     playerLevel,
@@ -181,6 +182,7 @@ public static class MonsterCombatHandler
         ushort skillId,
         byte skillX,
         byte skillY,
+        byte skillAngleWire,
         string remote,
         CancellationToken ct,
         int playerLevel,
@@ -203,9 +205,22 @@ public static class MonsterCombatHandler
             return;
         }
 
-        var centerX = skillX != 0 ? skillX : playerX;
-        var centerY = skillY != 0 ? skillY : playerY;
+        var directional = SkillCombatCatalog.IsDirectionalContinueSkill(skillId);
+        var corridor = SkillCombatCatalog.IsForwardCorridorContinueSkill(skillId);
+        (var centerX, var centerY) = SkillCombatRange.GetAreaContinueCenter(
+            playerX,
+            playerY,
+            skillX,
+            skillY,
+            directional);
         var range = SkillCombatCatalog.GetAreaContinueRange(skillId);
+        var facingWire = skillAngleWire;
+        if ((directional || corridor) && facingWire == 0 && presenceSessionId is { } dirSid
+            && GameMapPresenceRegistry.TryGetSession(dirSid, out var presence)
+            && presence is not null)
+        {
+            facingWire = presence.Angle;
+        }
         var wearSlots = CharacterCalcBroadcast602.ResolveWearSlots(presenceSessionId);
         var effects = PlayerCombatEffectSession.GetOrEmpty(presenceSessionId);
         var rolledSkillDamage = 0;
@@ -231,7 +246,14 @@ public static class MonsterCombatHandler
                 continue;
             }
 
-            if (Math.Abs(mob.X - centerX) + Math.Abs(mob.Y - centerY) > range)
+            if (!SkillCombatRange.IsMobInSkillVolume(
+                    skillId,
+                    centerX,
+                    centerY,
+                    facingWire,
+                    mob.X,
+                    mob.Y,
+                    range))
             {
                 continue;
             }
@@ -260,14 +282,17 @@ public static class MonsterCombatHandler
             hitCount++;
         }
 
+        var hitMode = corridor ? 2 : directional ? 1 : 0;
         Console.WriteLine(
-            "[{0}] [m9] magic continue skill={1} center=({2},{3}) range={4} hits={5} statDmg={6}",
+            "[{0}] [m9] magic continue skill={1} center=({2},{3}) range={4} hits={5} mode={6} angle={7} statDmg={8}",
             remote,
             skillId,
             centerX,
             centerY,
             range,
             hitCount,
+            hitMode,
+            facingWire,
             useStatDamage ? rolledSkillDamage : -1);
     }
 
@@ -295,9 +320,23 @@ public static class MonsterCombatHandler
             return;
         }
 
-        var aoeRange = SkillCombatCatalog.IsMagicBurstSkill(skillId)
-            ? SkillCombatCatalog.GetSkillHitRange(skillId, isTargetedPacket: false)
-            : ParseIntEnv("TAKUMI_COMBAT_AOE_RANGE", 3, 1, 8);
+        var directionalBurst = SkillCombatCatalog.IsDirectionalContinueSkill(skillId);
+        var aoeRange = directionalBurst
+            ? SkillCombatCatalog.GetAreaContinueRange(skillId)
+            : SkillCombatCatalog.IsMagicBurstSkill(skillId)
+                ? SkillCombatCatalog.GetSkillHitRange(skillId, isTargetedPacket: false)
+                : ParseIntEnv("TAKUMI_COMBAT_AOE_RANGE", 3, 1, 8);
+        // Omnidirectional bursts (Hellfire, …) radiate from the caster, not the ground target tile.
+        var burstOriginX = playerX;
+        var burstOriginY = playerY;
+        var facingWire = (byte)0;
+        if (directionalBurst && presenceSessionId is { } burstSid
+            && GameMapPresenceRegistry.TryGetSession(burstSid, out var burstPresence)
+            && burstPresence is not null)
+        {
+            facingWire = burstPresence.Angle;
+        }
+
         var skillPct = ParseIntEnv("TAKUMI_COMBAT_SKILL_DAMAGE_PCT", 150, 50, 500);
         var useStat = TryRollPlayerSkillDamage(
             player,
@@ -310,6 +349,20 @@ public static class MonsterCombatHandler
         foreach (var tid in targetIds)
         {
             var tk = tid & 0x7FFF;
+            if (directionalBurst
+                && MapMonsterWorld.TryResolveCombatTarget(mapId, playerX, playerY, tid, aoeRange, out var burstMob)
+                && burstMob is not null
+                && !SkillCombatDirection.IsInForwardArc(
+                    burstOriginX,
+                    burstOriginY,
+                    facingWire,
+                    burstMob.X,
+                    burstMob.Y,
+                    aoeRange))
+            {
+                continue;
+            }
+
             if (MonsterViewerRegistry.TryGetByPlayerKey(tk, out _))
             {
                 await TryHandlePvPAsync(
@@ -352,20 +405,22 @@ public static class MonsterCombatHandler
             processed.Add(tid & 0x7FFF);
         }
 
-        MapMonsterWorld.EnsureInitialized();
-        foreach (var mob in MapMonsterWorld.GetMonstersOnMap(mapId))
+        if (!directionalBurst)
         {
-            if (!mob.IsAlive || mob.IsNpc || processed.Contains(mob.ObjectKey))
+            MapMonsterWorld.EnsureInitialized();
+            foreach (var mob in MapMonsterWorld.GetMonstersOnMap(mapId))
             {
-                continue;
-            }
+                if (!mob.IsAlive || mob.IsNpc || processed.Contains(mob.ObjectKey))
+                {
+                    continue;
+                }
 
-            if (Math.Abs(mob.X - skillX) + Math.Abs(mob.Y - skillY) > aoeRange)
-            {
-                continue;
-            }
+                if (!SkillCombatRange.IsWithinChebyshev(burstOriginX, burstOriginY, mob.X, mob.Y, aoeRange))
+                {
+                    continue;
+                }
 
-            await HandleHitAsync(
+                await HandleHitAsync(
                     tracker,
                     connection,
                     clientProtectOutbound,
@@ -386,17 +441,19 @@ public static class MonsterCombatHandler
                     skillDamageOverride: useStat ? burstDmg : null,
                     skillDamageTypeOverride: useStat ? burstDmgType : null,
                     hitRangeOverride: aoeRange)
-                .ConfigureAwait(false);
+                    .ConfigureAwait(false);
+            }
         }
 
         Console.WriteLine(
-            "[{0}] [m9] magic aoe skill={1} xy=({2},{3}) targets={4} range={5} statDmg={6} map={7}",
+            "[{0}] [m9] magic aoe skill={1} xy=({2},{3}) targets={4} range={5} dir={6} statDmg={7} map={8}",
             remote,
             skillId,
-            skillX,
-            skillY,
+            burstOriginX,
+            burstOriginY,
             targetIds.Count,
             aoeRange,
+            directionalBurst ? 1 : 0,
             useStat ? burstDmg : -1,
             mapId);
     }
@@ -623,15 +680,17 @@ public static class MonsterCombatHandler
         }
         else if (hitRangeOverride is int skillRange)
         {
-            var dist = Math.Abs(monster.X - playerX) + Math.Abs(monster.Y - playerY);
-            if (dist > skillRange)
+            if (!SkillCombatRange.IsWithinChebyshev(playerX, playerY, monster.X, monster.Y, skillRange))
             {
                 Console.WriteLine(
-                    "[{0}] [m9] combat skip — key={1} out of skill range dist={2} max={3}",
+                    "[{0}] [m9] combat skip — key={1} out of skill range max={2} player=({3},{4}) mob=({5},{6})",
                     remote,
                     targetKey,
-                    dist,
-                    skillRange);
+                    skillRange,
+                    playerX,
+                    playerY,
+                    monster.X,
+                    monster.Y);
                 return;
             }
         }

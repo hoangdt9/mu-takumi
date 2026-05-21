@@ -99,7 +99,8 @@ struct ScopedWorldSkillAimMouse
 
     ScopedWorldSkillAimMouse()
     {
-        if (g_worldSkillTouch.finger == static_cast<SDL_FingerID>(-1))
+        // Finger id is cleared on touch-up before deferred melee; downMs stays until the next gesture.
+        if (g_worldSkillTouch.downMs == 0)
         {
             return;
         }
@@ -788,6 +789,8 @@ bool FireWorldMeleeAttack(const char* reason)
         return false;
     }
 
+    const ScopedWorldSkillAimMouse aimGuard;
+
     if (!RefreshAttackableTargetAtMouse())
     {
         return false;
@@ -825,6 +828,7 @@ bool FireWorldMeleeAttack(const char* reason)
         "[SkillAtk] melee ok reason=%s target=%d",
         reason != nullptr ? reason : "?",
         SelectedCharacter);
+    g_worldSkillTouch.downMs = 0;
     return true;
 }
 
@@ -997,12 +1001,18 @@ void TakumiAndroid_DisarmSkillMouseForMovement()
         return;
     }
 
+    // Finger is up but tap-melee may still be in the double-tap wait window.
+    if (g_worldSkillPendingMeleeMs != 0)
+    {
+        return;
+    }
+
     StopWorldSkillChannel();
 
     g_worldSkillTouch.finger = static_cast<SDL_FingerID>(-1);
+    g_worldSkillTouch.downMs = 0;
     g_worldSkillLongPressFired = false;
     g_worldSkillTouchConsumed = false;
-    g_worldSkillPendingMeleeMs = 0;
     g_worldSkillLastShortTapMs = 0;
     g_worldSkillLastChannelTickMs = 0;
 
@@ -1095,6 +1105,7 @@ void TakumiAndroid_ProcessWorldSkillFrame()
     }
 
     g_worldSkillPendingMeleeMs = 0;
+    g_worldSkillTouch.downMs = 0;
     FireWorldMeleeAttack("tap-delayed");
 }
 
@@ -1279,7 +1290,8 @@ bool TakumiAndroid_HandleWorldSkillTouchDown(const SDL_TouchFingerEvent& touch)
         uiY,
         MouseX,
         MouseY);
-    return true;
+    // Do not consume the touch: SDL path still sets MouseLButton for PC click-to-walk on empty map.
+    return false;
 }
 
 bool TakumiAndroid_HandleWorldSkillTouchMove(const SDL_TouchFingerEvent& touch)
@@ -1383,9 +1395,15 @@ bool TakumiAndroid_HandleWorldSkillTouchUp(const SDL_TouchFingerEvent& touch)
             return false;
         }
 
-        g_worldSkillPendingMeleeMs = nowMs;
-        TAKUMI_SKILL_LOGI("tap end deferred melee heldMs=%u ui=(%.0f,%.0f)", heldMs, uiX, uiY);
-        g_ErrorReport.Write("[SkillAtk] tap end deferred melee heldMs=%u", heldMs);
+        if (FireWorldMeleeAttack("tap"))
+        {
+            g_worldSkillTouch.downMs = 0;
+            return true;
+        }
+
+        // No attackable target: let SDL finger-up emit MouseLButtonPop (PC LMB click-to-walk / game attack path).
+        g_worldSkillTouch.downMs = 0;
+        TAKUMI_SKILL_LOGI("tap end passthrough ui=(%.0f,%.0f) heldMs=%u", uiX, uiY, heldMs);
         return false;
     }
 

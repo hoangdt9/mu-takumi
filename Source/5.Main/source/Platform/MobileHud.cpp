@@ -12,6 +12,7 @@
 #include "NewUIMessageBox.h"
 #include "NewUIMyInventory.h"
 #include "NewUICharacterInfoWindow.h"
+#include "NewUIMoveCommandWindow.h"
 
 extern int DisplayHeight;
 
@@ -212,7 +213,22 @@ bool MU_MobileShouldShowCombatCluster()
         return true;
     }
 
+    if (MU_MobileIsMoveMapModalOpen())
+    {
+        return false;
+    }
+
     return !MU_MobileIsSidePanelOpen();
+}
+
+bool MU_MobileIsMoveMapModalOpen()
+{
+    if (!MU_MobileIsModernMobileHudEnabled() || g_pNewUISystem == nullptr)
+    {
+        return false;
+    }
+
+    return g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_MOVEMAP);
 }
 
 int MU_MobileGetSidePanelBottomY()
@@ -251,6 +267,13 @@ bool MU_MobileHitTestBlockingOverlay(float uiX, float uiY)
     if (!MU_MobileIsModernMobileHudEnabled())
     {
         return false;
+    }
+
+    (void)uiX;
+    (void)uiY;
+    if (MU_MobileIsMoveMapModalOpen())
+    {
+        return true;
     }
 
     if (MU_MobileHitTestSidePanel(uiX, uiY))

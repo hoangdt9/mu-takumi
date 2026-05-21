@@ -883,6 +883,13 @@ bool SEASON3B::CNewUIMoveCommandWindow::BtnProcess()
 	return false;
 }
 
+#if defined(__ANDROID__) || defined(MU_IOS)
+bool SEASON3B::CNewUIMoveCommandWindow::HitTestPanel(float uiX, float uiY) const
+{
+	return CheckMouseIn(m_Pos.x, m_Pos.y, m_MapNameUISize.x, m_MapNameUISize.y);
+}
+#endif
+
 bool SEASON3B::CNewUIMoveCommandWindow::UpdateMouseEvent()
 {
 	if( true == BtnProcess() )
@@ -891,10 +898,8 @@ bool SEASON3B::CNewUIMoveCommandWindow::UpdateMouseEvent()
 #if defined(__ANDROID__) || defined(MU_IOS)
 	if (IsAndroidMoveMapGridMode())
 	{
-		if (CheckMouseIn(m_Pos.x, m_Pos.y, m_MapNameUISize.x, m_MapNameUISize.y))
-			return false;
-
-		return true;
+		// Full-screen modal: block every UI layer below; no click-outside dismiss.
+		return false;
 	}
 #endif
 
@@ -1252,6 +1257,10 @@ bool SEASON3B::CNewUIMoveCommandWindow::Render()
 	if (IsAndroidMoveMapGridMode())
 	{
 		EnableAlphaBlend3();
+		glColor4f(0.f, 0.f, 0.f, 0.72f);
+		RenderColor(0.f, 0.f, 640.f, 480.f);
+		EndRenderColor();
+		EnableAlphaTest();
 		glColor4f(1.f, 1.f, 1.f, 1.f);
 		SettingCanMoveMap();
 		RenderFrame();
@@ -1474,7 +1483,8 @@ void SEASON3B::CNewUIMoveCommandWindow::ClosingProcess()
 
 float SEASON3B::CNewUIMoveCommandWindow::GetLayerDepth()
 {
-	return 8.3f;
+	// Above window menu (10.4) and below message boxes; virtual pad is suppressed while open.
+	return 12.0f;
 }
 
 void SEASON3B::CNewUIMoveCommandWindow::LoadImages()

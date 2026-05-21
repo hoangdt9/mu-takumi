@@ -2457,7 +2457,11 @@ void SEASON3B::CNewUISkillList::Reset()
 
 #if defined(__ANDROID__) || defined(MU_IOS)
 	m_legacySkillPickerOffsetX = 0.f;
+	m_virtualSkillPickerOffsetY = 0.f;
+	m_virtualPickerAnchorCx = 0.f;
+	m_virtualPickerAnchorCy = 0.f;
 	m_legacyPickerTargetHotKey = -1;
+	m_virtualPickerTargetVisualSlot = -1;
 #endif
 
 	for (int i = 0; i < SKILLHOTKEY_COUNT; ++i)
@@ -2752,6 +2756,7 @@ bool SEASON3B::CNewUISkillList::UpdateMouseEvent()
 		GetLegacySkillPickerCellRect(iSkillCount, x, y, width, height);
 #if defined(__ANDROID__) || defined(MU_IOS)
 		x += m_legacySkillPickerOffsetX;
+		y += m_virtualSkillPickerOffsetY;
 #endif
 		iSkillCount++;
 
@@ -3085,6 +3090,49 @@ void SEASON3B::CNewUISkillList::RenderSkillIconPreview(int iSkillIndex, float x,
 	CharacterAttribute->SkillDelay[iSkillIndex] = oldDelay;
 }
 
+void SEASON3B::CNewUISkillList::RenderSkillIconCircularPreview(
+	int iSkillIndex,
+	float centerX,
+	float centerY,
+	float radiusUi)
+{
+	if (iSkillIndex < 0)
+	{
+		return;
+	}
+
+	if (iSkillIndex >= AT_PET_COMMAND_DEFAULT && iSkillIndex < AT_PET_COMMAND_END)
+	{
+		const float diameter = radiusUi * 2.f;
+		RenderSkillIcon(iSkillIndex, centerX - radiusUi, centerY - radiusUi, diameter, diameter);
+		return;
+	}
+
+	if (iSkillIndex >= MAX_MAGIC)
+	{
+		return;
+	}
+
+	if (CharacterAttribute == NULL || CharacterAttribute->Skill[iSkillIndex] <= 0)
+	{
+		return;
+	}
+
+	const int oldDelay = CharacterAttribute->SkillDelay[iSkillIndex];
+	CharacterAttribute->SkillDelay[iSkillIndex] = 0;
+	RenderSkillIcon(
+		iSkillIndex,
+		centerX,
+		centerY,
+		20.f,
+		28.f,
+		0,
+		-1,
+		true,
+		radiusUi);
+	CharacterAttribute->SkillDelay[iSkillIndex] = oldDelay;
+}
+
 bool SEASON3B::CNewUISkillList::IsSkillPickerOpen() const
 {
 	return m_bSkillList;
@@ -3103,6 +3151,11 @@ void SEASON3B::CNewUISkillList::SetSkillPickerOpen(bool open)
 #if defined(__ANDROID__) || defined(MU_IOS)
 		m_legacyPickerTargetHotKey = -1;
 		m_legacySkillPickerOffsetX = 0.f;
+		m_virtualSkillPickerOffsetY = 0.f;
+		m_virtualPickerAnchorCx = 0.f;
+		m_virtualPickerAnchorCy = 0.f;
+		m_virtualPickerTargetVisualSlot = -1;
+		ClearAndroidTouchSkillTooltip();
 #endif
 	}
 #if TAKUMI_ANDROID_UI_SKILL_PICKER_CACHE
@@ -3138,6 +3191,10 @@ uint64_t SEASON3B::CNewUISkillList::ComputeSkillPickerLayoutSig() const
 	mix((uint64_t)(int32_t)(DisplayHeightExt * 1000.0f));
 #if defined(__ANDROID__) || defined(MU_IOS)
 	mix((uint64_t)(int32_t)(m_legacySkillPickerOffsetX * 1000.0f));
+	mix((uint64_t)(int32_t)(m_virtualSkillPickerOffsetY * 1000.0f));
+	mix((uint64_t)(int32_t)(m_virtualPickerAnchorCx * 1000.0f));
+	mix((uint64_t)(int32_t)(m_virtualPickerAnchorCy * 1000.0f));
+	mix((uint64_t)m_virtualPickerTargetVisualSlot);
 #endif
 
 	for (int i = 0; i < MAX_MAGIC; ++i)
@@ -3163,11 +3220,62 @@ void SEASON3B::CNewUISkillList::RebuildSkillPickerLayout()
 		return;
 	}
 
+	const float width = 32.f;
+	const float height = 38.f;
+
+#if defined(__ANDROID__) || defined(MU_IOS)
+	// Modern HUD: compact grid above the tapped secondary skill button (legacy fan grid is off-screen).
+	if (m_virtualPickerTargetVisualSlot >= 0)
+	{
+		const int columns = 4;
+		const float gridW = columns * width;
+		float startX = m_virtualPickerAnchorCx - gridW * 0.5f;
+		float startY = m_virtualPickerAnchorCy - height * 4.f - 28.f;
+		const float maxStartX = 640.f - gridW - 4.f;
+		if (startX < 4.f)
+		{
+			startX = 4.f;
+		}
+		else if (startX > maxStartX)
+		{
+			startX = maxStartX;
+		}
+		if (startY < 40.f)
+		{
+			startY = 40.f;
+		}
+
+		int col = 0;
+		int row = 0;
+		for (int i = 0; i < MAX_MAGIC; ++i)
+		{
+			if (!LegacyPickerIncludeMagicArrayIndex(i))
+			{
+				continue;
+			}
+
+			SkillPickerLayoutEntry entry;
+			entry.slotIndex = i;
+			entry.x = startX + col * width;
+			entry.y = startY + row * height;
+			m_skillPickerLayout.push_back(entry);
+
+			++col;
+			if (col >= columns)
+			{
+				col = 0;
+				++row;
+			}
+		}
+
+		m_skillPickerLayoutDirty = false;
+		return;
+	}
+#endif
+
 	float FixX = (gProtect.m_MainInfo.IsVersion == 1) ? 75.f : 0.f;
 	const float fOrigX = 385.f - FixX + DisplayWinExt;
 	const float yBase = 390.f + DisplayHeightExt;
-	const float width = 32.f;
-	const float height = 38.f;
 	int iSkillCount = 0;
 
 	for (int i = 0; i < MAX_MAGIC; ++i)
@@ -3211,10 +3319,11 @@ void SEASON3B::CNewUISkillList::RebuildSkillPickerLayout()
 		entry.slotIndex = i;
 #if defined(__ANDROID__) || defined(MU_IOS)
 		entry.x = x + m_legacySkillPickerOffsetX;
+		entry.y = y + m_virtualSkillPickerOffsetY;
 #else
 		entry.x = x;
-#endif
 		entry.y = y;
+#endif
 		m_skillPickerLayout.push_back(entry);
 		++iSkillCount;
 	}
@@ -3432,6 +3541,255 @@ bool SEASON3B::CNewUISkillList::TryOpenLegacyMobileSkillAssignPickerForHotKey(in
 	return true;
 }
 
+bool SEASON3B::CNewUISkillList::TryOpenVirtualMobileSkillAssignPicker(int visualSlot, float anchorCx, float anchorCy)
+{
+	if (CharacterAttribute == NULL || CharacterAttribute->SkillNumber <= 0)
+	{
+		return false;
+	}
+
+	if (visualSlot < 0 || visualSlot >= 3)
+	{
+		return false;
+	}
+
+	m_legacyPickerTargetHotKey = -1;
+	m_virtualPickerTargetVisualSlot = visualSlot;
+	m_virtualPickerAnchorCx = anchorCx;
+	m_virtualPickerAnchorCy = anchorCy;
+	m_legacySkillPickerOffsetX = 0.f;
+	m_virtualSkillPickerOffsetY = 0.f;
+
+	SetAndroidTouchAssignSkillIndex(-1);
+	SetSkillPickerOpen(true);
+	PlayBuffer(SOUND_CLICK01);
+	return true;
+}
+
+int SEASON3B::CNewUISkillList::GetVirtualPickerTargetVisualSlot() const
+{
+	return m_virtualPickerTargetVisualSlot;
+}
+
+void SEASON3B::CNewUISkillList::ClearVirtualPickerTargetVisualSlot()
+{
+	m_virtualPickerTargetVisualSlot = -1;
+	m_virtualPickerAnchorCx = 0.f;
+	m_virtualPickerAnchorCy = 0.f;
+}
+
+bool SEASON3B::CNewUISkillList::HitTestAndroidSkillPickerPanel(float uiX, float uiY) const
+{
+	if (!m_bSkillList || CharacterAttribute == NULL)
+	{
+		return false;
+	}
+
+#if TAKUMI_ANDROID_UI_SKILL_PICKER_CACHE
+	const uint64_t layoutSig = const_cast<CNewUISkillList*>(this)->ComputeSkillPickerLayoutSig();
+	if (layoutSig != m_skillPickerLayoutSig)
+	{
+		const_cast<CNewUISkillList*>(this)->m_skillPickerLayoutSig = layoutSig;
+		const_cast<CNewUISkillList*>(this)->m_skillPickerLayoutDirty = true;
+	}
+	if (const_cast<CNewUISkillList*>(this)->m_skillPickerLayoutDirty)
+	{
+		const_cast<CNewUISkillList*>(this)->RebuildSkillPickerLayout();
+	}
+
+	const float width = 32.f;
+	const float height = 38.f;
+	for (size_t layoutIdx = 0; layoutIdx < m_skillPickerLayout.size(); ++layoutIdx)
+	{
+		const SkillPickerLayoutEntry& entry = m_skillPickerLayout[layoutIdx];
+		if (uiX >= entry.x && uiX <= (entry.x + width)
+			&& uiY >= entry.y && uiY <= (entry.y + height))
+		{
+			return true;
+		}
+	}
+#else
+	int iSkillCount = 0;
+	float x = 0.f;
+	float y = 0.f;
+	float width = 0.f;
+	float height = 0.f;
+	for (int i = 0; i < MAX_MAGIC; ++i)
+	{
+		if (!LegacyPickerIncludeMagicArrayIndex(i))
+		{
+			continue;
+		}
+
+		GetLegacySkillPickerCellRect(iSkillCount, x, y, width, height);
+		x += m_legacySkillPickerOffsetX;
+		y += m_virtualSkillPickerOffsetY;
+		++iSkillCount;
+		if (uiX >= x && uiX <= (x + width) && uiY >= y && uiY <= (y + height))
+		{
+			return true;
+		}
+	}
+#endif
+
+	if (Hero != NULL && Hero->m_pPet != NULL)
+	{
+		int petCmd = AT_PET_COMMAND_DEFAULT;
+		if (HitLegacyPickerPetCommandRow(uiX, uiY, &petCmd))
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool SEASON3B::CNewUISkillList::TryGetAndroidSkillPickerCellPos(int magicSlot, float& outX, float& outY) const
+{
+	if (magicSlot < 0)
+	{
+		return false;
+	}
+
+#if TAKUMI_ANDROID_UI_SKILL_PICKER_CACHE
+	for (size_t layoutIdx = 0; layoutIdx < m_skillPickerLayout.size(); ++layoutIdx)
+	{
+		const SkillPickerLayoutEntry& entry = m_skillPickerLayout[layoutIdx];
+		if (entry.slotIndex == magicSlot)
+		{
+			outX = entry.x + 16.f;
+			outY = entry.y + 19.f;
+			return true;
+		}
+	}
+#endif
+
+	int iSkillCount = 0;
+	float x = 0.f;
+	float y = 0.f;
+	float width = 0.f;
+	float height = 0.f;
+	for (int i = 0; i < MAX_MAGIC; ++i)
+	{
+		if (!LegacyPickerIncludeMagicArrayIndex(i))
+		{
+			continue;
+		}
+
+		GetLegacySkillPickerCellRect(iSkillCount, x, y, width, height);
+#if defined(__ANDROID__) || defined(MU_IOS)
+		x += m_legacySkillPickerOffsetX;
+		y += m_virtualSkillPickerOffsetY;
+#endif
+		++iSkillCount;
+		if (i == magicSlot)
+		{
+			outX = x + width * 0.5f;
+			outY = y + height * 0.5f;
+			return true;
+		}
+	}
+
+	if (magicSlot >= AT_PET_COMMAND_DEFAULT && magicSlot < AT_PET_COMMAND_END)
+	{
+		float px = 0.f;
+		float py = 0.f;
+		float pw = 0.f;
+		float ph = 0.f;
+		if (GetLegacyPickerPetCommandCellRect(magicSlot, px, py, pw, ph))
+		{
+			outX = px + pw * 0.5f;
+			outY = py + ph * 0.5f;
+			return true;
+		}
+	}
+
+	return false;
+}
+
+void SEASON3B::CNewUISkillList::UpdateAndroidTouchSkillTooltip(float uiX, float uiY)
+{
+	if (!m_bSkillList || CharacterAttribute == NULL)
+	{
+		ClearAndroidTouchSkillTooltip();
+		return;
+	}
+
+	int hit = HitTestAndroidTouchSkillPicker(uiX, uiY);
+	if (hit < 0 && Hero != NULL && Hero->m_pPet != NULL)
+	{
+		int petCmd = AT_PET_COMMAND_DEFAULT;
+		if (HitLegacyPickerPetCommandRow(uiX, uiY, &petCmd))
+		{
+			hit = petCmd;
+		}
+	}
+
+	if (!IsRenderableSkillSlotIndex(hit))
+	{
+		ClearAndroidTouchSkillTooltip();
+		return;
+	}
+
+	float anchorX = uiX;
+	float anchorY = uiY;
+	if (!TryGetAndroidSkillPickerCellPos(hit, anchorX, anchorY))
+	{
+		anchorX = uiX;
+		anchorY = uiY;
+	}
+
+	m_bRenderSkillInfo = true;
+	m_iRenderSkillInfoType = hit;
+	m_iRenderSkillInfoPosX = anchorX;
+	m_iRenderSkillInfoPosY = anchorY - 15.f;
+#if defined(__ANDROID__)
+	TakumiLogSkillPickerHoverCell(hit);
+#endif
+}
+
+void SEASON3B::CNewUISkillList::UpdateAndroidVirtualSlotSkillTooltip(
+	int magicSlotIndex,
+	float anchorCx,
+	float anchorCy)
+{
+	if (!IsRenderableSkillSlotIndex(magicSlotIndex))
+	{
+		ClearAndroidTouchSkillTooltip();
+		return;
+	}
+
+	m_bRenderSkillInfo = true;
+	m_iRenderSkillInfoType = magicSlotIndex;
+	m_iRenderSkillInfoPosX = anchorCx;
+	m_iRenderSkillInfoPosY = anchorCy - 15.f;
+}
+
+void SEASON3B::CNewUISkillList::ClearAndroidTouchSkillTooltip()
+{
+	m_bRenderSkillInfo = false;
+	m_iRenderSkillInfoType = -1;
+}
+
+void SEASON3B::CNewUISkillList::AssignVirtualMobileSkillFromPicker(int pickedMagicSlot)
+{
+	FinalizeMagicSlotSelectionFromLegacyPicker(pickedMagicSlot);
+}
+
+void SEASON3B::CNewUISkillList::RenderAndroidSkillPickerBackdrop() const
+{
+	if (!m_bSkillList || !MU_MobileIsModernMobileHudEnabled() || MU_MobileIsLegacyMainHudEnabled())
+	{
+		return;
+	}
+
+	// Use standard alpha (not EnableAlphaBlend's GL_ONE,GL_ONE additive) or the world washes out white.
+	EnableAlphaTest();
+	RenderColor(0.f, 0.f, 640.f, 480.f, 0.55f, 1);
+	EndRenderColor();
+	glColor4f(1.f, 1.f, 1.f, 1.f);
+}
+
 bool SEASON3B::CNewUISkillList::TryOpenLegacyMobileSkillAssignPicker(float uiX, float uiY)
 {
 	if (CharacterAttribute == NULL || CharacterAttribute->SkillNumber <= 0)
@@ -3452,6 +3810,18 @@ void SEASON3B::CNewUISkillList::FinalizeMagicSlotSelectionFromLegacyPicker(int p
 {
 	if (!IsRenderableSkillSlotIndex(pickedSlotIdx))
 	{
+		return;
+	}
+
+	if (m_virtualPickerTargetVisualSlot >= 0 && m_virtualPickerTargetVisualSlot < 3)
+	{
+		TakumiAndroidAssignVirtualSkillSlot(m_virtualPickerTargetVisualSlot + 1, pickedSlotIdx);
+		m_virtualPickerTargetVisualSlot = -1;
+		m_legacySkillPickerOffsetX = 0.f;
+		m_virtualSkillPickerOffsetY = 0.f;
+		SetSkillPickerOpen(false);
+		m_iAndroidTouchAssignSkillIndex = -1;
+		PlayBuffer(SOUND_CLICK01);
 		return;
 	}
 
@@ -3581,6 +3951,7 @@ int SEASON3B::CNewUISkillList::HitTestAndroidTouchSkillPicker(float uiX, float u
 
 		GetLegacySkillPickerCellRect(iSkillCount, x, y, width, height);
 		x += m_legacySkillPickerOffsetX;
+		y += m_virtualSkillPickerOffsetY;
 		iSkillCount++;
 
 		if (uiX >= x && uiX <= (x + width)
@@ -3882,6 +4253,13 @@ bool SEASON3B::CNewUISkillList::Render()
 
 	gInterface.HidenCustom = m_bSkillList;
 
+#if defined(__ANDROID__) || defined(MU_IOS)
+	if (m_bSkillList)
+	{
+		RenderAndroidSkillPickerBackdrop();
+	}
+#endif
+
 	if (bySkillNumber > 0)
 	{
 		if (m_bSkillList == true)
@@ -3917,6 +4295,15 @@ bool SEASON3B::CNewUISkillList::Render()
 				}
 
 				RenderSkillIcon(i, x + 6, y + 6, 20, 28);
+#if defined(__ANDROID__) || defined(MU_IOS)
+				if (SEASON3B::CheckMouseIn(x + 6.f, y + 6.f, 20.f, 28.f))
+				{
+					m_bRenderSkillInfo = true;
+					m_iRenderSkillInfoType = i;
+					m_iRenderSkillInfoPosX = x + 16.f - 5.f;
+					m_iRenderSkillInfoPosY = y + 19.f - 15.f;
+				}
+#endif
 			}
 #else
 			x = 385 - FixX + DisplayWinExt; y = 390 + DisplayHeightExt; width = 32; height = 38;
@@ -3962,20 +4349,22 @@ bool SEASON3B::CNewUISkillList::Render()
 
 #if defined(__ANDROID__) || defined(MU_IOS)
 				const float cellDrawX = x + m_legacySkillPickerOffsetX;
+				const float cellDrawY = y + m_virtualSkillPickerOffsetY;
 #else
 				const float cellDrawX = x;
+				const float cellDrawY = y;
 #endif
 
 				if (i == Hero->CurrentSkill)
 				{
-					SEASON3B::RenderImage(IMAGE_SKILLBOX_USE, cellDrawX, y, width, height);
+					SEASON3B::RenderImage(IMAGE_SKILLBOX_USE, cellDrawX, cellDrawY, width, height);
 				}
 				else
 				{
-					SEASON3B::RenderImage(IMAGE_SKILLBOX, cellDrawX, y, width, height);
+					SEASON3B::RenderImage(IMAGE_SKILLBOX, cellDrawX, cellDrawY, width, height);
 				}
 
-				RenderSkillIcon(i, cellDrawX + 6.f, y + 6.f, 20.f, 28.f);
+				RenderSkillIcon(i, cellDrawX + 6.f, cellDrawY + 6.f, 20.f, 28.f);
 			}
 #endif
 			RenderPetSkill();
@@ -4052,7 +4441,9 @@ void SEASON3B::CNewUISkillList::RenderSkillIcon(
 	float width,
 	float height,
 	int TypeMuHelper,
-	int hotKeyLabelOverride)
+	int hotKeyLabelOverride,
+	bool useCircularDraw,
+	float circularRadiusUi)
 {
 	if (TypeMuHelper != 1 && !IsRenderableSkillSlotIndex(iIndex))
 	{
@@ -4302,6 +4693,9 @@ void SEASON3B::CNewUISkillList::RenderSkillIcon(
 
 	float fU, fV;
 	int iKindofSkill = 0;
+	// UV layout in newui_skill*.jpg is for 20x28 cells — independent of on-screen draw size.
+	const float atlasW = 20.f;
+	const float atlasH = 28.f;
 
 	if (g_csItemOption.Special_Option_Check() == false && (
 		bySkillType == AT_SKILL_ICE_BLADE
@@ -4320,68 +4714,68 @@ void SEASON3B::CNewUISkillList::RenderSkillIcon(
 
 	if (bySkillType >= AT_PET_COMMAND_DEFAULT && bySkillType <= AT_PET_COMMAND_END)
 	{
-		fU = ((bySkillType - AT_PET_COMMAND_DEFAULT) % 8) * width / 256.f;
-		fV = ((bySkillType - AT_PET_COMMAND_DEFAULT) / 8) * height / 256.f;
+		fU = ((bySkillType - AT_PET_COMMAND_DEFAULT) % 8) * atlasW / 256.f;
+		fV = ((bySkillType - AT_PET_COMMAND_DEFAULT) / 8) * atlasH / 256.f;
 		iKindofSkill = KOS_COMMAND;
 	}
 	else if (bySkillType == AT_SKILL_PLASMA_STORM_FENRIR)
 	{
-		fU = 4 * width / 256.f;
+		fU = 4 * atlasW / 256.f;
 		fV = 0.f;
 		iKindofSkill = KOS_COMMAND;
 	}
 	else if ((bySkillType >= AT_SKILL_ALICE_DRAINLIFE && bySkillType <= AT_SKILL_ALICE_THORNS))
 	{
-		fU = ((bySkillType - AT_SKILL_ALICE_DRAINLIFE) % 8) * width / 256.f;
-		fV = 3 * height / 256.f;
+		fU = ((bySkillType - AT_SKILL_ALICE_DRAINLIFE) % 8) * atlasW / 256.f;
+		fV = 3 * atlasH / 256.f;
 		iKindofSkill = KOS_SKILL2;
 	}
 	else if (bySkillType >= AT_SKILL_ALICE_SLEEP && bySkillType <= AT_SKILL_ALICE_BLIND)
 	{
-		fU = ((bySkillType - AT_SKILL_ALICE_SLEEP + 4) % 8) * width / 256.f;
-		fV = 3 * height / 256.f;
+		fU = ((bySkillType - AT_SKILL_ALICE_SLEEP + 4) % 8) * atlasW / 256.f;
+		fV = 3 * atlasH / 256.f;
 		iKindofSkill = KOS_SKILL2;
 	}
 	else if (bySkillType == AT_SKILL_ALICE_BERSERKER)
 	{
-		fU = 10 * width / 256.f;
-		fV = 3 * height / 256.f;
+		fU = 10 * atlasW / 256.f;
+		fV = 3 * atlasH / 256.f;
 		iKindofSkill = KOS_SKILL2;
 	}
 	else if (bySkillType >= AT_SKILL_ALICE_WEAKNESS && bySkillType <= AT_SKILL_ALICE_ENERVATION)
 	{
-		fU = (bySkillType - AT_SKILL_ALICE_WEAKNESS + 8) * width / 256.f;
-		fV = 3 * height / 256.f;
+		fU = (bySkillType - AT_SKILL_ALICE_WEAKNESS + 8) * atlasW / 256.f;
+		fV = 3 * atlasH / 256.f;
 		iKindofSkill = KOS_SKILL2;
 	}
 	else if (bySkillType >= AT_SKILL_SUMMON_EXPLOSION && bySkillType <= AT_SKILL_SUMMON_REQUIEM)
 	{
-		fU = ((bySkillType - AT_SKILL_SUMMON_EXPLOSION + 6) % 8) * width / 256.f;
-		fV = 3 * height / 256.f;
+		fU = ((bySkillType - AT_SKILL_SUMMON_EXPLOSION + 6) % 8) * atlasW / 256.f;
+		fV = 3 * atlasH / 256.f;
 		iKindofSkill = KOS_SKILL2;
 	}
 	else if (bySkillType == AT_SKILL_SUMMON_POLLUTION)
 	{
-		fU = 11 * width / 256.f;
-		fV = 3 * height / 256.f;
+		fU = 11 * atlasW / 256.f;
+		fV = 3 * atlasH / 256.f;
 		iKindofSkill = KOS_SKILL2;
 	}
 	else if (bySkillType == AT_SKILL_BLOW_OF_DESTRUCTION)
 	{
-		fU = 7 * width / 256.f;
-		fV = 2 * height / 256.f;
+		fU = 7 * atlasW / 256.f;
+		fV = 2 * atlasH / 256.f;
 		iKindofSkill = KOS_SKILL2;
 	}
 	else if (bySkillType == AT_SKILL_GAOTIC)
 	{
-		fU = 3 * width / 256.f;
-		fV = 8 * height / 256.f;
+		fU = 3 * atlasW / 256.f;
+		fV = 8 * atlasH / 256.f;
 		iKindofSkill = KOS_SKILL2;
 	}
 	else if (bySkillType == AT_SKILL_RECOVER)
 	{
-		fU = 9 * width / 256.f;
-		fV = 2 * height / 256.f;
+		fU = 9 * atlasW / 256.f;
+		fV = 2 * atlasH / 256.f;
 		iKindofSkill = KOS_SKILL2;
 	}
 	else if (bySkillType == AT_SKILL_MULTI_SHOT)
@@ -4391,8 +4785,8 @@ void SEASON3B::CNewUISkillList::RenderSkillIcon(
 			bCantSkill = true;
 		}
 
-		fU = 0 * width / 256.f;
-		fV = 8 * height / 256.f;
+		fU = 0 * atlasW / 256.f;
+		fV = 8 * atlasH / 256.f;
 		iKindofSkill = KOS_SKILL2;
 	}
 	else if (bySkillType == AT_SKILL_FLAME_STRIKE)
@@ -4405,45 +4799,45 @@ void SEASON3B::CNewUISkillList::RenderSkillIcon(
 			bCantSkill = true;
 		}
 
-		fU = 1 * width / 256.f;
-		fV = 8 * height / 256.f;
+		fU = 1 * atlasW / 256.f;
+		fV = 8 * atlasH / 256.f;
 		iKindofSkill = KOS_SKILL2;
 	}
 	else if (bySkillType == AT_SKILL_GIGANTIC_STORM)
 	{
-		fU = 2 * width / 256.f;
-		fV = 8 * height / 256.f;
+		fU = 2 * atlasW / 256.f;
+		fV = 8 * atlasH / 256.f;
 		iKindofSkill = KOS_SKILL2;
 	}
 	else if (bySkillType == AT_SKILL_LIGHTNING_SHOCK)
 	{
-		fU = 2 * width / 256.f;
-		fV = 3 * height / 256.f;
+		fU = 2 * atlasW / 256.f;
+		fV = 3 * atlasH / 256.f;
 		iKindofSkill = KOS_SKILL2;
 	}
 	else if (AT_SKILL_LIGHTNING_SHOCK_UP <= bySkillType && bySkillType <= AT_SKILL_LIGHTNING_SHOCK_UP + 4)
 	{
-		fU = 6 * width / 256.f;
-		fV = 8 * height / 256.f;
+		fU = 6 * atlasW / 256.f;
+		fV = 8 * atlasH / 256.f;
 		iKindofSkill = KOS_SKILL2;
 	}
 	else if (bySkillType == AT_SKILL_SWELL_OF_MAGICPOWER)
 	{
-		fU = 8 * width / 256.f;
-		fV = 2 * height / 256.f;
+		fU = 8 * atlasW / 256.f;
+		fV = 2 * atlasH / 256.f;
 		iKindofSkill = KOS_SKILL2;
 	}
 	else if (bySkillUseType == 4)
 	{
-		fU = (width / 256.f) * (Skill_Icon % 12);
-		fV = (height / 256.f) * ((Skill_Icon / 12) + 4);
+		fU = (atlasW / 256.f) * (Skill_Icon % 12);
+		fV = (atlasH / 256.f) * ((Skill_Icon / 12) + 4);
 		iKindofSkill = KOS_SKILL2;
 	}
 #ifdef PBG_ADD_NEWCHAR_MONK_SKILL
 	else if (bySkillType >= AT_SKILL_THRUST)
 	{
-		fU = ((bySkillType - 260) % 12) * width / 256.f;
-		fV = ((bySkillType - 260) / 12) * height / 256.f;
+		fU = ((bySkillType - 260) % 12) * atlasW / 256.f;
+		fV = ((bySkillType - 260) / 12) * atlasH / 256.f;
 		iKindofSkill = KOS_SKILL3;
 	}
 #endif //PBG_ADD_NEWCHAR_MONK_SKILL
@@ -4451,20 +4845,20 @@ void SEASON3B::CNewUISkillList::RenderSkillIcon(
 	{
 		// Skill.bmd Magic_Icon on SKILL2 (12-wide, row +4) matches master/season UI for skill IDs >= 57.
 		// Lower IDs keep the legacy SKILL1 / explicit branches so icon matches hotbar + tooltip.
-		fU = (width / 256.f) * (Skill_Icon % 12);
-		fV = (height / 256.f) * ((Skill_Icon / 12) + 4);
+		fU = (atlasW / 256.f) * (Skill_Icon % 12);
+		fV = (atlasH / 256.f) * ((Skill_Icon / 12) + 4);
 		iKindofSkill = KOS_SKILL2;
 	}
 	else if (bySkillType >= 57)
 	{
-		fU = ((bySkillType - 57) % 8) * width / 256.f;
-		fV = ((bySkillType - 57) / 8) * height / 256.f;
+		fU = ((bySkillType - 57) % 8) * atlasW / 256.f;
+		fV = ((bySkillType - 57) / 8) * atlasH / 256.f;
 		iKindofSkill = KOS_SKILL2;
 	}
 	else
 	{
-		fU = ((bySkillType - 1) % 8) * width / 256.f;
-		fV = ((bySkillType - 1) / 8) * height / 256.f;
+		fU = ((bySkillType - 1) % 8) * atlasW / 256.f;
+		fV = ((bySkillType - 1) / 8) * atlasH / 256.f;
 		iKindofSkill = KOS_SKILL1;
 	}
 	int iSkillIndex = 0;
@@ -4519,9 +4913,26 @@ void SEASON3B::CNewUISkillList::RenderSkillIcon(
 
 		}
 
+		else if (useCircularDraw && circularRadiusUi > 0.5f)
+		{
+			const float uW = atlasW / 256.f;
+			const float uH = atlasH / 256.f;
+			RenderBitmapCircle(
+				iSkillIndex,
+				x - circularRadiusUi,
+				y - circularRadiusUi,
+				circularRadiusUi,
+				fU + uW * 0.5f,
+				fV + uH * 0.5f,
+				uW * 0.5f,
+				uH * 0.5f,
+				true,
+				true,
+				0.f);
+		}
 		else
 		{
-			RenderBitmap(iSkillIndex, x, y, width, height, fU, fV, width / 256.f, height / 256.f);
+			RenderBitmap(iSkillIndex, x, y, width, height, fU, fV, atlasW / 256.f, atlasH / 256.f);
 		}
 	}
 

@@ -2877,10 +2877,44 @@ void ReceiveMoveCharacter(BYTE *ReceiveBuffer)
 		c->TargetAngle = Data->Path[0]>>4;
 		if(Key == HeroKey)
 		{
-			if(!c->Movement)
+			const BYTE serverX = Data->PositionX;
+			const BYTE serverY = Data->PositionY;
+			const int tileBeforeAckX = c->PositionX;
+			const int tileBeforeAckY = c->PositionY;
+
+			c->PositionX = serverX;
+			c->PositionY = serverY;
+
+			if(c->Movement)
 			{
-				c->PositionX = Data->PositionX;
-				c->PositionY = Data->PositionY;
+				PATH_t* path = &c->Path;
+				int expectedX = tileBeforeAckX;
+				int expectedY = tileBeforeAckY;
+				if(path->PathNum > 0)
+				{
+					const int step = (path->CurrentPath + 1 < path->PathNum)
+						? (path->CurrentPath + 1)
+						: (path->PathNum - 1);
+					expectedX = path->PathX[step];
+					expectedY = path->PathY[step];
+				}
+
+				const bool serverAdvanced =
+					(serverX != tileBeforeAckX || serverY != tileBeforeAckY)
+					&& (serverX == expectedX && serverY == expectedY);
+				const bool serverBlocked =
+					(serverX == tileBeforeAckX && serverY == tileBeforeAckY)
+					|| (!serverAdvanced && (serverX != expectedX || serverY != expectedY));
+
+				if(serverBlocked)
+				{
+					c->Movement = false;
+					SetPlayerStop(c);
+					o->Position[0] = (serverX + 0.5f) * TERRAIN_SCALE;
+					o->Position[1] = (serverY + 0.5f) * TERRAIN_SCALE;
+				}
+
+				o->Angle[2] = ((float)(c->TargetAngle) - 1.f) * 45.f;
 			}
 		}
 		else

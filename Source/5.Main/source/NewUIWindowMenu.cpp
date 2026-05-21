@@ -73,84 +73,93 @@ void SEASON3B::CNewUIWindowMenu::SetPos(int x, int y)
 	m_Pos.y = (STANDARD_POS_Y+ DisplayHeightExt) - (20*(MENU_MAX_INDEX-4));
 }
 
+int SEASON3B::CNewUIWindowMenu::HitTestMenuItem(float uiX, float uiY) const
+{
+	const float rowX = static_cast<float>(m_Pos.x);
+	const float rowW = 112.f;
+	const float rowH = 20.f;
+	float rowY = static_cast<float>(m_Pos.y) + 20.f;
+
+	for (int i = 0; i < MENU_MAX_INDEX; ++i)
+	{
+		if (uiX >= rowX && uiX < (rowX + rowW) && uiY >= rowY && uiY < (rowY + rowH))
+		{
+			return i;
+		}
+		rowY += rowH;
+	}
+
+	return -1;
+}
+
+bool SEASON3B::CNewUIWindowMenu::ActivateMenuItem(int itemIndex)
+{
+	if (itemIndex < 0 || itemIndex >= MENU_MAX_INDEX)
+	{
+		return false;
+	}
+
+	switch (itemIndex)
+	{
+	case 0:
+		g_pNewUISystem->Hide(SEASON3B::INTERFACE_WINDOW_MENU);
+		SEASON3B::CreateMessageBox(MSGBOX_LAYOUT_CLASS(SEASON3B::CSystemMenuMsgBoxLayout));
+		return true;
+	case 1:
+		if (g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_HELP))
+		{
+			g_pHelp->AutoUpdateIndex();
+		}
+		else
+		{
+			g_pNewUISystem->Show(SEASON3B::INTERFACE_HELP);
+		}
+		return true;
+	case 2:
+		g_pNewUISystem->Show(SEASON3B::INTERFACE_GUILDINFO);
+		g_pNewUISystem->Hide(SEASON3B::INTERFACE_WINDOW_MENU);
+		return true;
+	case 3:
+		g_pNewUISystem->Toggle(SEASON3B::INTERFACE_MOVEMAP);
+		return true;
+	case 4:
+		g_pNewUISystem->Hide(SEASON3B::INTERFACE_WINDOW_MENU);
+		if (g_pNewUIMiniMap->m_bSuccess == false)
+		{
+			g_pNewUISystem->Hide(SEASON3B::INTERFACE_MINI_MAP);
+		}
+		else
+		{
+			g_pNewUISystem->Toggle(SEASON3B::INTERFACE_MINI_MAP);
+		}
+		return true;
+	case 5:
+		if (g_pNewUIGensRanking->SetGensInfo())
+		{
+			g_pNewUISystem->Show(SEASON3B::INTERFACE_GENSRANKING);
+			g_pNewUISystem->Hide(SEASON3B::INTERFACE_WINDOW_MENU);
+		}
+		return true;
+	default:
+		return false;
+	}
+}
+
 bool SEASON3B::CNewUIWindowMenu::UpdateMouseEvent()
 {
-	POINT pt = { m_Pos.x, m_Pos.y+20 };
+	m_iSelectedIndex = HitTestMenuItem(static_cast<float>(MouseX), static_cast<float>(MouseY));
 
-	for(int i=0; i < MENU_MAX_INDEX; ++i)
+	if (m_iSelectedIndex > -1 && SEASON3B::IsRelease(VK_LBUTTON))
 	{
-		if(CheckMouseIn(pt.x, pt.y, 112, 20) == true)
+		if (ActivateMenuItem(m_iSelectedIndex))
 		{
-			m_iSelectedIndex = i;
-			break;
-		}
-
-		pt.y += 20.f;
-	}
-
-	if(m_iSelectedIndex > -1 && SEASON3B::IsRelease(VK_LBUTTON))
-	{
-		switch(m_iSelectedIndex)
-		{
-		case 0:
-			{
-				g_pNewUISystem->Hide(SEASON3B::INTERFACE_WINDOW_MENU);
-				SEASON3B::CreateMessageBox(MSGBOX_LAYOUT_CLASS(SEASON3B::CSystemMenuMsgBoxLayout));
-				return false;
-			}
-			break;
-		case 1:
-			{
-				if(g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_HELP))
-				{
-					g_pHelp->AutoUpdateIndex();
-				}
-				else
-				{
-					g_pNewUISystem->Show(SEASON3B::INTERFACE_HELP);		
-				}
-				return false;
-			}
-			break;
-		case 2:
-			{
-				g_pNewUISystem->Show(SEASON3B::INTERFACE_GUILDINFO);
-				g_pNewUISystem->Hide(SEASON3B::INTERFACE_WINDOW_MENU);
-				return false;
-			}
-			break;
-		case 3:
-			{
-				g_pNewUISystem->Toggle(SEASON3B::INTERFACE_MOVEMAP);
-				return false;
-			}
-			break;
-		case 4:
-			{
-				g_pNewUISystem->Hide(SEASON3B::INTERFACE_WINDOW_MENU);
-				if(g_pNewUIMiniMap->m_bSuccess == false)
-				{
-					g_pNewUISystem->Hide(SEASON3B::INTERFACE_MINI_MAP);
-				}
-				else
-					g_pNewUISystem->Toggle( SEASON3B::INTERFACE_MINI_MAP );
-				return false;
-			}
-			break;
-		case 5:
-			{
-				if(g_pNewUIGensRanking->SetGensInfo())
-				{
-					g_pNewUISystem->Show(SEASON3B::INTERFACE_GENSRANKING);
-					g_pNewUISystem->Hide(SEASON3B::INTERFACE_WINDOW_MENU);
-				}
-				return false;
-			}
-			break;
+			PlayBuffer(SOUND_CLICK01);
+			return false;
 		}
 	}
 
-	if(CheckMouseIn(m_Pos.x, m_Pos.y+20, 112, 95 + 20*(MENU_MAX_INDEX-5)) == false)
+	const int panelH = 20 * MENU_MAX_INDEX;
+	if (CheckMouseIn(m_Pos.x, m_Pos.y + 20, 112, panelH) == false)
 	{
 		m_iSelectedIndex = -1;
 	}
@@ -269,6 +278,41 @@ void SEASON3B::CNewUIWindowMenu::RenderArrow()
 	x = m_Pos.x + 90.f;
 	RenderImage(IMAGE_WINDOW_MENU_ARROWR, x, y, 6.f, 9.f);	
 }
+
+#if defined(__ANDROID__) || defined(MU_IOS)
+bool SEASON3B::CNewUIWindowMenu::HitTestPanel(float uiX, float uiY) const
+{
+	const float panelX = static_cast<float>(m_Pos.x);
+	const float panelY = static_cast<float>(m_Pos.y) + 20.f;
+	const float panelW = 112.f;
+	const float panelH = 20.f * static_cast<float>(MENU_MAX_INDEX);
+	return uiX >= panelX && uiX < (panelX + panelW)
+		&& uiY >= panelY && uiY < (panelY + panelH);
+}
+
+void SEASON3B::CNewUIWindowMenu::UpdateAndroidTouchHover(float uiX, float uiY)
+{
+	m_iSelectedIndex = HitTestMenuItem(uiX, uiY);
+}
+
+bool SEASON3B::CNewUIWindowMenu::TryHandleAndroidTouchRelease(float uiX, float uiY)
+{
+	const int itemIndex = HitTestMenuItem(uiX, uiY);
+	if (itemIndex < 0)
+	{
+		return false;
+	}
+
+	m_iSelectedIndex = itemIndex;
+	if (!ActivateMenuItem(itemIndex))
+	{
+		return false;
+	}
+
+	PlayBuffer(SOUND_CLICK01);
+	return true;
+}
+#endif
 
 float SEASON3B::CNewUIWindowMenu::GetLayerDepth()
 {

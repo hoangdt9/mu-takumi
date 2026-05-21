@@ -157,6 +157,21 @@ namespace SEASON3B
 		bool TryOpenLegacyMobileSkillAssignPicker(float uiX, float uiY);
 		/// Same as touch hit-test open, but when the hotkey index is already known (e.g. long-press hold).
 		bool TryOpenLegacyMobileSkillAssignPickerForHotKey(int hotKeyUiIndex);
+		/// Modern HUD: open picker anchored above a secondary skill ring (visual slot 0..2).
+		bool TryOpenVirtualMobileSkillAssignPicker(int visualSlot, float anchorCx, float anchorCy);
+		int GetVirtualPickerTargetVisualSlot() const;
+		void ClearVirtualPickerTargetVisualSlot();
+		bool HitTestAndroidSkillPickerPanel(float uiX, float uiY) const;
+		void RenderAndroidSkillPickerBackdrop() const;
+		void UpdateAndroidTouchSkillTooltip(float uiX, float uiY);
+		void UpdateAndroidVirtualSlotSkillTooltip(int magicSlotIndex, float anchorCx, float anchorCy);
+		void ClearAndroidTouchSkillTooltip();
+		void AssignVirtualMobileSkillFromPicker(int pickedMagicSlot);
+		void RenderSkillIconCircularPreview(
+			int iSkillIndex,
+			float centerX,
+			float centerY,
+			float radiusUi);
 #endif
 
 #if TAKUMI_ANDROID_UI_SKILL_PICKER_CACHE
@@ -173,7 +188,9 @@ namespace SEASON3B
 			float width,
 			float height,
 			int TypeMuHelper = 0,
-			int hotKeyLabelOverride = -1);
+			int hotKeyLabelOverride = -1,
+			bool useCircularDraw = false,
+			float circularRadiusUi = 0.f);
 	private:
 		void LoadImages();
 		void UnloadImages();
@@ -190,6 +207,7 @@ namespace SEASON3B
 #if defined(__ANDROID__) || defined(MU_IOS)
 		bool GetLegacyMobileSkillHotBarSlotRect(int hotKeyUiIndex, float& x, float& y, float& w, float& h) const;
 		void FinalizeMagicSlotSelectionFromLegacyPicker(int pickedSlotIdx);
+		bool TryGetAndroidSkillPickerCellPos(int magicSlot, float& outX, float& outY) const;
 #endif
 
 #if TAKUMI_ANDROID_UI_SKILL_PICKER_CACHE
@@ -230,7 +248,11 @@ namespace SEASON3B
 
 #if defined(__ANDROID__) || defined(MU_IOS)
 		float m_legacySkillPickerOffsetX;
+		float m_virtualSkillPickerOffsetY;
+		float m_virtualPickerAnchorCx;
+		float m_virtualPickerAnchorCy;
 		int m_legacyPickerTargetHotKey;
+		int m_virtualPickerTargetVisualSlot;
 #endif
 	};
 

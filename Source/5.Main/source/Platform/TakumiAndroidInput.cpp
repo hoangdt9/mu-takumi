@@ -1312,6 +1312,7 @@ bool TakumiAndroid_HandleWorldSkillTouchDown(const SDL_TouchFingerEvent& touch)
     {
         return false;
     }
+
     g_worldSkillTouch.finger = touch.fingerId;
     g_worldSkillTouch.downMs = MU_MobileGetTicks();
     g_worldSkillTouch.downUiX = uiX;

@@ -48,13 +48,19 @@ int SEASON3B::IsPurchaseShop()
 
 bool SEASON3B::CheckMouseIn(int x, int y, int width, int height)
 {
-	if (MouseX >= x && MouseX < x + width && MouseY >= y && MouseY < y + height && GetForegroundWindow() == g_hWnd)
+#if defined(__ANDROID__) || defined(MU_IOS)
+	if (MouseX >= x && MouseX < x + width && MouseY >= y && MouseY < y + height)
 	{
-
 		return true;
 	}
-
 	return false;
+#else
+	if (MouseX >= x && MouseX < x + width && MouseY >= y && MouseY < y + height && GetForegroundWindow() == g_hWnd)
+	{
+		return true;
+	}
+	return false;
+#endif
 }
 
 void SEASON3B::RenderImage(GLuint uiImageType, float x, float y, float width, float height)

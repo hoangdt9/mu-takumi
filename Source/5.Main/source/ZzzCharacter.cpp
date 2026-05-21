@@ -7441,7 +7441,22 @@ void MoveMonsterClient(CHARACTER *c,OBJECT *o)
 			{
 				c->Movement = false;
 				SetPlayerStop(c);
-				c->Object.Angle[2] = ((float)(c->TargetAngle)-1.f)*45.f;
+				OBJECT* pathObj = &c->Object;
+				PATH_t* path = &c->Path;
+				if(path->PathNum >= 2)
+				{
+					const int from = path->PathNum - 2;
+					const int to = path->PathNum - 1;
+					pathObj->Angle[2] = CreateAngle(
+						(path->PathX[from] + 0.5f) * TERRAIN_SCALE,
+						(path->PathY[from] + 0.5f) * TERRAIN_SCALE,
+						(path->PathX[to] + 0.5f) * TERRAIN_SCALE,
+						(path->PathY[to] + 0.5f) * TERRAIN_SCALE);
+				}
+				else
+				{
+					pathObj->Angle[2] = ((float)(c->TargetAngle) - 1.f) * 45.f;
+				}
 			}
 			
 			MoveCharacterPosition(c);

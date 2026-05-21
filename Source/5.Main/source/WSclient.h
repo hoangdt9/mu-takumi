@@ -105,6 +105,10 @@ void TakumiProcessAndroidPendingLoadWorld();
 void TakumiAndroidOnWorldJoinLoaded();
 /// Refresh skill picker + virtual HUD rings after F3 0x11 magic list changes.
 void TakumiAndroidOnSkillListChanged();
+/// Assign a picked magic slot to a virtual HUD skill ring (slot 1..3 = secondary rings).
+void TakumiAndroidAssignVirtualSkillSlot(int slot, int skillIndex);
+/// Close the mobile skill picker popup (outside-tap / cancel).
+void TakumiAndroidCloseVirtualSkillPicker();
 /// Skip monster PathFinding2 right after deferred LoadWorld (join burst C2 0x13).
 bool TakumiShouldSkipMonsterViewportPathfinding();
 void TakumiClearMonsterViewportPathfindingSkip();

@@ -25,6 +25,7 @@
 #include "GameConfigConstants.h"
 #include "Platform/TakumiAndroidHud.h"
 #include "Platform/TakumiAndroidInput.h"
+#include "Platform/gl_compat.h"
 #ifdef min
 #undef min
 #endif
@@ -615,6 +616,29 @@ bool MU_Android_UtilityToolbarExpandedQuery()
 {
     return g_virtualUtilityToolbarExpanded;
 }
+
+using TakumiVirtualSkillAssignFn = void (*)(int slot, int skillIndex);
+static TakumiVirtualSkillAssignFn g_takumiVirtualSkillAssignFn = nullptr;
+
+void TakumiAndroidAssignVirtualSkillSlot(int slot, int skillIndex)
+{
+    if (g_takumiVirtualSkillAssignFn != nullptr)
+    {
+        g_takumiVirtualSkillAssignFn(slot, skillIndex);
+    }
+}
+
+void TakumiAndroidCloseVirtualSkillPicker()
+{
+    if (g_pSkillList == nullptr)
+    {
+        return;
+    }
+
+    g_pSkillList->SetSkillPickerOpen(false);
+    g_pSkillList->SetAndroidTouchAssignSkillIndex(-1);
+    g_pSkillList->ClearVirtualPickerTargetVisualSlot();
+}
 #endif
 
 namespace
@@ -700,6 +724,15 @@ constexpr float kVirtualCombatClusterCx = 598.0f;
 constexpr float kVirtualCombatClusterCy = 406.0f;
 constexpr float kVirtualAttackButtonRadius = 32.0f;
 constexpr float kVirtualSkillButtonRadius = 24.0f;
+// Icon clip/fill inside skill rings (layout radius, not boxDiameter / skillline pad).
+constexpr float kVirtualAttackSkillIconClipRadiusMul = 0.98f;
+constexpr float kVirtualAttackSkillIconFillMul = 1.09f;
+constexpr float kVirtualAttackSkillIconHeightMul = 1.22f;
+constexpr float kVirtualSecondarySkillIconClipRadiusMul = 0.998f;
+constexpr float kVirtualSecondarySkillIconFillMul = 1.09f;
+constexpr float kVirtualSecondarySkillIconHeightMul = 1.30f;
+// UI Y grows downward: negative shifts icon up to match the ring art center (skillline gems sit high).
+constexpr float kVirtualSkillIconVerticalShiftUi = -1.6f;
 constexpr float kVirtualAttackRingPad = 24.0f;
 constexpr float kVirtualSkillOrbitGap = 28.0f;
 constexpr float kVirtualSkillArcStartDeg = 112.0f;
@@ -1100,6 +1133,10 @@ std::array<int, kVirtualSkillSlotCount> g_virtualSkillSlots = []()
 std::array<int, kVirtualSkillSlotCount> g_virtualSkillTypes{};
 ActiveVirtualJoystick g_virtualJoystick{};
 ActiveVirtualPickerTouch g_virtualPickerTouch{};
+// Finger that long-pressed a secondary slot to open the assign picker; its finger-up must not dismiss the popup.
+static SDL_FingerID g_virtualPickerOpenFingerId = static_cast<SDL_FingerID>(-1);
+// First list tap shows tooltip only; second tap on the same cell confirms assign to the secondary circle.
+static int g_virtualPickerArmedSkillIndex = -1;
 bool g_virtualJoystickDrivingMouse = false;
 bool g_joystickPcMouseCaptured = false;
 bool g_virtualSkillSlotsLoaded = false;
@@ -1174,7 +1211,10 @@ bool IsVirtualPadAvailable()
 
 bool ShowVirtualAttackButton()
 {
-    return IsVirtualPadAvailable() && MU_MobileShouldShowCombatCluster();
+    // Classic PC HUD already has its own skill/attack bar; skip mobile combat ring overlay.
+    return IsVirtualPadAvailable()
+        && !IsLegacyMainHud()
+        && MU_MobileShouldShowCombatCluster();
 }
 
 bool ShowVirtualSkillButtons()
@@ -1201,6 +1241,191 @@ struct LegacySkillHotBarPendingTouch
 };
 
 LegacySkillHotBarPendingTouch g_legacySkillHotBarPendingTouch{};
+
+struct VirtualSkillButtonPendingTouch
+{
+    SDL_FingerID fingerId = static_cast<SDL_FingerID>(-1);
+    int buttonIndex = -1;
+    uint32_t downMs = 0;
+    bool pickerOpenedFromHold = false;
+};
+
+VirtualSkillButtonPendingTouch g_virtualSkillButtonPendingTouch{};
+
+void SetVirtualSkillSlot(int slot, int skillIndex);
+void DeactivateVirtualAssignMode(const char* reason);
+void UpdateVirtualAssignMode();
+void ClearVirtualPickerTouch();
+void TriggerVirtualCombat(bool useNormalAttack, int skillSlot);
+int HitTestVirtualSkillButton(float uiX, float uiY);
+
+struct TakumiVirtualSkillAssignRegistrar
+{
+    TakumiVirtualSkillAssignRegistrar()
+    {
+        g_takumiVirtualSkillAssignFn = [](int slot, int skillIndex)
+        {
+            SetVirtualSkillSlot(slot, skillIndex);
+            DeactivateVirtualAssignMode("picker-direct-assign");
+            g_virtualAssignPickerSkillIndex = -1;
+            g_virtualAssignConsumedForPickerSkill = true;
+            g_virtualAssignConsumedForPickerSession = true;
+            ClearVirtualPickerTouch();
+            if (g_pSkillList != nullptr)
+            {
+                g_pSkillList->ClearVirtualPickerTargetVisualSlot();
+            }
+        };
+    }
+};
+
+static TakumiVirtualSkillAssignRegistrar g_takumiVirtualSkillAssignRegistrar;
+
+static void ClearVirtualSkillButtonPendingTouch()
+{
+    g_virtualSkillButtonPendingTouch = VirtualSkillButtonPendingTouch{};
+}
+
+static void ClearVirtualPickerArmState()
+{
+    g_virtualPickerArmedSkillIndex = -1;
+}
+
+static void CloseVirtualSkillPickerPopup()
+{
+    if (g_pSkillList == nullptr)
+    {
+        return;
+    }
+
+    g_pSkillList->SetSkillPickerOpen(false);
+    g_pSkillList->SetAndroidTouchAssignSkillIndex(-1);
+    g_pSkillList->ClearVirtualPickerTargetVisualSlot();
+    ClearVirtualPickerTouch();
+    ClearVirtualPickerArmState();
+    g_virtualPickerOpenFingerId = static_cast<SDL_FingerID>(-1);
+    if (g_pSkillList != nullptr)
+    {
+        g_pSkillList->SetAndroidTouchAssignSkillIndex(-1);
+    }
+    DeactivateVirtualAssignMode("picker-dismiss");
+    g_virtualAssignPickerSkillIndex = -1;
+    g_virtualAssignConsumedForPickerSkill = false;
+    g_virtualAssignConsumedForPickerSession = false;
+    UpdateVirtualAssignMode();
+}
+
+static void TickVirtualSkillButtonLongPress(uint32_t nowMs)
+{
+    if (g_virtualSkillButtonPendingTouch.fingerId == static_cast<SDL_FingerID>(-1))
+    {
+        return;
+    }
+
+    if (!ShowVirtualSkillButtons() || g_pSkillList == nullptr)
+    {
+        ClearVirtualSkillButtonPendingTouch();
+        return;
+    }
+
+    if (g_virtualSkillButtonPendingTouch.pickerOpenedFromHold)
+    {
+        return;
+    }
+
+    if ((nowMs - g_virtualSkillButtonPendingTouch.downMs) < kVirtualSkillAssignLongPressMs)
+    {
+        return;
+    }
+
+    const int buttonIndex = g_virtualSkillButtonPendingTouch.buttonIndex;
+    if (buttonIndex < kVirtualSkillButtonBase)
+    {
+        ClearVirtualSkillButtonPendingTouch();
+        return;
+    }
+
+    const int visualSlot = buttonIndex - kVirtualSkillButtonBase;
+    const VirtualButtonLayout& button = GetRuntimeVirtualButton(buttonIndex);
+    if (g_pSkillList->TryOpenVirtualMobileSkillAssignPicker(visualSlot, button.cx, button.cy))
+    {
+        g_virtualSkillButtonPendingTouch.pickerOpenedFromHold = true;
+        g_virtualPickerOpenFingerId = g_virtualSkillButtonPendingTouch.fingerId;
+        g_virtualPickerTouch.fingerId = g_virtualSkillButtonPendingTouch.fingerId;
+        g_virtualPickerTouch.skillIndex = -1;
+        g_virtualAssignPickerSkillIndex = -1;
+        g_virtualAssignConsumedForPickerSkill = false;
+        g_virtualAssignConsumedForPickerSession = false;
+        ClearVirtualPickerArmState();
+        DeactivateVirtualAssignMode("picker-open-slot");
+        UpdateVirtualAssignMode();
+    }
+    else
+    {
+        ClearVirtualSkillButtonPendingTouch();
+    }
+}
+
+static void MaybeCancelVirtualSkillButtonTouchOnMotion(const SDL_TouchFingerEvent& touch, float uiX, float uiY)
+{
+    if (g_virtualSkillButtonPendingTouch.fingerId == static_cast<SDL_FingerID>(-1))
+    {
+        return;
+    }
+
+    if (g_virtualSkillButtonPendingTouch.fingerId != touch.fingerId)
+    {
+        return;
+    }
+
+    if (g_virtualSkillButtonPendingTouch.pickerOpenedFromHold)
+    {
+        return;
+    }
+
+    const int buttonNow = HitTestVirtualSkillButton(uiX, uiY);
+    if (buttonNow != g_virtualSkillButtonPendingTouch.buttonIndex)
+    {
+        ClearVirtualSkillButtonPendingTouch();
+    }
+}
+
+static bool ConsumeVirtualSkillButtonFingerUp(const SDL_TouchFingerEvent& touch)
+{
+    if (g_virtualSkillButtonPendingTouch.fingerId == static_cast<SDL_FingerID>(-1))
+    {
+        return false;
+    }
+
+    if (g_virtualSkillButtonPendingTouch.fingerId != touch.fingerId)
+    {
+        return false;
+    }
+
+    const uint32_t downMs = g_virtualSkillButtonPendingTouch.downMs;
+    const bool openedPicker = g_virtualSkillButtonPendingTouch.pickerOpenedFromHold;
+    const int buttonIndex = g_virtualSkillButtonPendingTouch.buttonIndex;
+    ClearVirtualSkillButtonPendingTouch();
+
+    if (openedPicker)
+    {
+        return true;
+    }
+
+    const uint32_t nowMs = MU_MobileGetTicks();
+    if ((nowMs - downMs) >= kVirtualSkillAssignLongPressMs)
+    {
+        return true;
+    }
+
+    if (buttonIndex >= kVirtualSkillButtonBase)
+    {
+        const int skillSlot = buttonIndex - kVirtualSkillButtonBase + 1;
+        TriggerVirtualCombat(false, skillSlot);
+    }
+
+    return true;
+}
 
 static void ClearLegacySkillHotBarPendingTouch()
 {
@@ -1493,11 +1718,17 @@ int FindSkillIndexByType(int skillType)
 
 bool IsAssignableVirtualSkillIndex(int skillIndex)
 {
-    // The custom mobile skill rings stay disabled; if they are ever re-enabled,
-    // keep index 0 out so they only store explicit skill-list entries.
-    return skillIndex > 0
-        && skillIndex <= static_cast<int>(std::numeric_limits<BYTE>::max())
-        && IsValidSkillIndex(skillIndex);
+    if (CharacterAttribute == nullptr || Hero == nullptr)
+    {
+        return false;
+    }
+
+    if (skillIndex >= AT_PET_COMMAND_DEFAULT && skillIndex < AT_PET_COMMAND_END)
+    {
+        return Hero->m_pPet != nullptr;
+    }
+
+    return IsValidSkillIndex(skillIndex);
 }
 
 int GetSkillTypeFromIndex(int skillIndex)
@@ -1898,6 +2129,12 @@ void SetVirtualSkillSlot(int slot, int skillIndex)
         skillIndex,
         CharacterAttribute->Skill[skillIndex],
         slotText.c_str());
+    g_ErrorReport.Write(
+        "[SkillPicker] virtual slot%d <= magicSlot=%d skillType=%u slots=%s",
+        slot,
+        skillIndex,
+        static_cast<unsigned>(CharacterAttribute->Skill[skillIndex]),
+        slotText.c_str());
 }
 
 void DeactivateVirtualAssignMode(const char* reason)
@@ -2098,6 +2335,88 @@ void ClearVirtualPickerTouch()
     g_virtualPickerTouch.skillIndex = -1;
 }
 
+// Virtual secondary-slot picker: tap 1 = tooltip, tap 2 on same icon = assign.
+static bool TryVirtualAssignPickerPick(float uiX, float uiY, int chosenSkill)
+{
+    if (g_pSkillList == nullptr || chosenSkill < 0 || !IsAssignableVirtualSkillIndex(chosenSkill))
+    {
+        return false;
+    }
+
+    const int pendingSkill = g_pSkillList->GetAndroidTouchAssignSkillIndex();
+    const bool confirmAssign =
+        (g_virtualPickerArmedSkillIndex == chosenSkill)
+        || (pendingSkill == chosenSkill);
+
+    if (confirmAssign)
+    {
+        const int targetSlot = g_pSkillList->GetVirtualPickerTargetVisualSlot();
+        ClearVirtualPickerArmState();
+        g_virtualPickerOpenFingerId = static_cast<SDL_FingerID>(-1);
+        g_pSkillList->SetAndroidTouchAssignSkillIndex(-1);
+        g_pSkillList->AssignVirtualMobileSkillFromPicker(chosenSkill);
+        DeactivateVirtualAssignMode("picker-assigned");
+        UpdateVirtualAssignMode();
+        g_ErrorReport.Write(
+            "[SkillPicker] assign ok magicSlot=%d visualSlot=%d",
+            chosenSkill,
+            targetSlot);
+        ClearVirtualPickerTouch();
+        ClearVirtualSkillButtonPendingTouch();
+        return true;
+    }
+
+    g_virtualPickerArmedSkillIndex = chosenSkill;
+    g_pSkillList->SetAndroidTouchAssignSkillIndex(chosenSkill);
+    g_pSkillList->UpdateAndroidTouchSkillTooltip(uiX, uiY);
+    g_virtualPickerOpenFingerId = static_cast<SDL_FingerID>(-1);
+    DeactivateVirtualAssignMode("picker-await-confirm");
+    g_ErrorReport.Write(
+        "[SkillPicker] arm magicSlot=%d (tap same icon again to assign)",
+        chosenSkill);
+    ClearVirtualPickerTouch();
+    ClearVirtualSkillButtonPendingTouch();
+    return true;
+}
+
+static void UpdateMobileSkillTooltips(float uiX, float uiY)
+{
+    if (g_pSkillList == nullptr || IsLegacyMainHud())
+    {
+        return;
+    }
+
+    if (g_pSkillList->IsSkillPickerOpen())
+    {
+        g_pSkillList->UpdateAndroidTouchSkillTooltip(uiX, uiY);
+        return;
+    }
+
+    if (!ShowVirtualSkillButtons())
+    {
+        g_pSkillList->ClearAndroidTouchSkillTooltip();
+        return;
+    }
+
+    const int buttonIndex = HitTestVirtualSkillButton(uiX, uiY);
+    if (buttonIndex < kVirtualSkillButtonBase)
+    {
+        g_pSkillList->ClearAndroidTouchSkillTooltip();
+        return;
+    }
+
+    const int skillSlot = buttonIndex - kVirtualSkillButtonBase + 1;
+    const int magicIndex = g_virtualSkillSlots[skillSlot];
+    if (!IsAssignableVirtualSkillIndex(magicIndex))
+    {
+        g_pSkillList->ClearAndroidTouchSkillTooltip();
+        return;
+    }
+
+    const VirtualButtonLayout& button = GetRuntimeVirtualButton(buttonIndex);
+    g_pSkillList->UpdateAndroidVirtualSlotSkillTooltip(magicIndex, button.cx, button.cy);
+}
+
 bool HandleVirtualPickerFingerDown(const SDL_TouchFingerEvent& touch)
 {
     if (IsLegacyMainHud())
@@ -2122,27 +2441,47 @@ bool HandleVirtualPickerFingerDown(const SDL_TouchFingerEvent& touch)
 
     g_virtualPickerTouch.fingerId = touch.fingerId;
     g_virtualPickerTouch.skillIndex = skillIndex;
+    UpdateMobileSkillTooltips(uiX, uiY);
     return true;
 }
 
 bool HandleVirtualPickerFingerMotion(const SDL_TouchFingerEvent& touch)
 {
-    if (IsLegacyMainHud())
+    if (IsLegacyMainHud() || g_pSkillList == nullptr || !g_pSkillList->IsSkillPickerOpen())
     {
         return false;
     }
 
-    return IsVirtualPickerTouchCaptured(touch.fingerId);
+    float uiX = 0.0f;
+    float uiY = 0.0f;
+    TouchToVirtualUi(touch, uiX, uiY);
+    UpdateMobileSkillTooltips(uiX, uiY);
+
+    const int hoveredSkill = g_pSkillList->HitTestAndroidTouchSkillPicker(uiX, uiY);
+    if (hoveredSkill >= 0)
+    {
+        g_virtualPickerTouch.fingerId = touch.fingerId;
+        g_virtualPickerTouch.skillIndex = hoveredSkill;
+    }
+
+    if (IsVirtualPickerTouchCaptured(touch.fingerId))
+    {
+        return true;
+    }
+
+    if (g_pSkillList->GetVirtualPickerTargetVisualSlot() >= 0
+        && (touch.fingerId == g_virtualSkillButtonPendingTouch.fingerId
+            || touch.fingerId == g_primaryTouchFinger))
+    {
+        return true;
+    }
+
+    return false;
 }
 
 bool HandleVirtualPickerFingerUp(const SDL_TouchFingerEvent& touch)
 {
-    if (IsLegacyMainHud())
-    {
-        return false;
-    }
-
-    if (!IsVirtualPickerTouchCaptured(touch.fingerId))
+    if (IsLegacyMainHud() || g_pSkillList == nullptr || !g_pSkillList->IsSkillPickerOpen())
     {
         return false;
     }
@@ -2151,15 +2490,50 @@ bool HandleVirtualPickerFingerUp(const SDL_TouchFingerEvent& touch)
     float uiY = 0.0f;
     TouchToVirtualUi(touch, uiX, uiY);
 
-    const int releasedSkill = (g_pSkillList != nullptr)
-        ? g_pSkillList->HitTestAndroidTouchSkillPicker(uiX, uiY)
-        : -1;
-    const int chosenSkill = (releasedSkill == g_virtualPickerTouch.skillIndex)
-        ? releasedSkill
-        : g_virtualPickerTouch.skillIndex;
+    const int targetVisualSlot = g_pSkillList->GetVirtualPickerTargetVisualSlot();
+    const bool virtualAssignPicker =
+        targetVisualSlot >= 0 && targetVisualSlot < kVirtualVisibleSkillButtonCount;
+
+    const int releasedSkill = g_pSkillList->HitTestAndroidTouchSkillPicker(uiX, uiY);
+    int chosenSkill = -1;
+    if (releasedSkill >= 0)
+    {
+        chosenSkill = releasedSkill;
+    }
+    else if (IsVirtualPickerTouchCaptured(touch.fingerId))
+    {
+        chosenSkill = g_virtualPickerTouch.skillIndex;
+    }
+
+    if (virtualAssignPicker && chosenSkill >= 0
+        && TryVirtualAssignPickerPick(uiX, uiY, chosenSkill))
+    {
+        return true;
+    }
+
+    // Long-press release on the secondary slot (lift before picking a list icon): keep popup open.
+    if (virtualAssignPicker
+        && g_virtualPickerOpenFingerId != static_cast<SDL_FingerID>(-1)
+        && touch.fingerId == g_virtualPickerOpenFingerId)
+    {
+        g_virtualPickerOpenFingerId = static_cast<SDL_FingerID>(-1);
+        ClearVirtualPickerTouch();
+        ClearVirtualSkillButtonPendingTouch();
+        return true;
+    }
+
+    if (!IsVirtualPickerTouchCaptured(touch.fingerId))
+    {
+        return false;
+    }
 
     if (g_pSkillList != nullptr && chosenSkill >= 0)
     {
+        if (virtualAssignPicker && TryVirtualAssignPickerPick(uiX, uiY, chosenSkill))
+        {
+            return true;
+        }
+
         int previousSkillType = 0;
         if (Hero != nullptr && CharacterAttribute != nullptr)
         {
@@ -2453,11 +2827,8 @@ void ApplyVirtualJoystickMovement()
         return;
     }
 
-    // World skill long-press may use another finger; keep channel + allow click-to-walk together.
-    if (!TakumiAndroid_HasActiveWorldSkillGesture())
-    {
-        InterruptVirtualCombatForMovement();
-    }
+    // Joystick walk wins over a held map long-press on another finger (see TakumiAndroid_DisarmSkillMouseForMovement).
+    InterruptVirtualCombatForMovement();
 
     const float driveRadius = kVirtualJoystickMouseMinRadius
         + (kVirtualJoystickMouseMaxRadius - kVirtualJoystickMouseMinRadius) * g_virtualJoystick.moveStrength;
@@ -3975,6 +4346,16 @@ bool HandleVirtualFingerDown(const SDL_TouchFingerEvent& touch)
         return false;
     }
 
+    // Classic HUD: window menu (Hệ thống, Hướng dẫn, …) uses CheckMouseIn + MouseLButton*.
+    if (IsLegacyMainHud()
+        && g_pNewUISystem != nullptr
+        && g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_WINDOW_MENU)
+        && g_pWindowMenu != nullptr
+        && g_pWindowMenu->HitTestPanel(uiX, uiY))
+    {
+        return false;
+    }
+
     // Chat resize/scroll must work even when IME is open (IsVirtualPadAvailable is false).
     if (MU_MobileIsModernMobileHudEnabled()
         && MU_MobileHandleChatUiFingerDownAt(uiX, uiY, touch.fingerId))
@@ -3985,6 +4366,18 @@ bool HandleVirtualFingerDown(const SDL_TouchFingerEvent& touch)
     if (!IsVirtualPadAvailable())
     {
         return false;
+    }
+
+    if (g_pSkillList != nullptr && g_pSkillList->IsSkillPickerOpen())
+    {
+        if (g_pSkillList->HitTestAndroidSkillPickerPanel(uiX, uiY))
+        {
+            return HandleVirtualPickerFingerDown(touch);
+        }
+
+        CloseVirtualSkillPickerPopup();
+        ClearVirtualSkillButtonPendingTouch();
+        return true;
     }
 
     if (MU_MobileIsModernMobileHudEnabled()
@@ -4009,6 +4402,14 @@ bool HandleVirtualFingerDown(const SDL_TouchFingerEvent& touch)
 
     if (IsLegacyMainHud())
     {
+        if (g_pNewUISystem != nullptr
+            && g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_WINDOW_MENU)
+            && g_pWindowMenu != nullptr
+            && g_pWindowMenu->HitTestPanel(uiX, uiY))
+        {
+            return false;
+        }
+
         if (HandleLegacyMobileSkillHotBarTouch(touch, uiX, uiY))
         {
             return true;
@@ -4085,15 +4486,11 @@ bool HandleVirtualFingerDown(const SDL_TouchFingerEvent& touch)
         }
         else
         {
-            const int activeSlot = AcquireActiveVirtualTouchSlot(touch.fingerId);
-            if (activeSlot >= 0)
-            {
-                g_activeVirtualTouches[activeSlot].fingerId = touch.fingerId;
-                g_activeVirtualTouches[activeSlot].button = skillButton;
-                g_activeVirtualTouches[activeSlot].downMs = nowMs;
-                g_activeVirtualTouches[activeSlot].lastRepeatMs = nowMs;
-            }
-            TriggerVirtualCombat(false, skillSlot);
+            ClearVirtualSkillButtonPendingTouch();
+            g_virtualSkillButtonPendingTouch.fingerId = touch.fingerId;
+            g_virtualSkillButtonPendingTouch.buttonIndex = skillButton;
+            g_virtualSkillButtonPendingTouch.downMs = nowMs;
+            g_virtualSkillButtonPendingTouch.pickerOpenedFromHold = false;
         }
         return true;
     }
@@ -4114,6 +4511,14 @@ bool HandleVirtualFingerMotion(const SDL_TouchFingerEvent& touch)
 
     if (IsLegacyMainHud())
     {
+        if (g_pNewUISystem != nullptr
+            && g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_WINDOW_MENU)
+            && g_pWindowMenu != nullptr
+            && g_pWindowMenu->HitTestPanel(uiX, uiY))
+        {
+            g_pWindowMenu->UpdateAndroidTouchHover(uiX, uiY);
+        }
+
         MaybeCancelLegacySkillHotBarTouchOnMotion(touch, uiX, uiY);
         if (TakumiAndroid_HandleWorldSkillTouchMove(touch))
         {
@@ -4122,6 +4527,9 @@ bool HandleVirtualFingerMotion(const SDL_TouchFingerEvent& touch)
 
         return HandleVirtualJoystickFingerMotion(touch);
     }
+
+    MaybeCancelVirtualSkillButtonTouchOnMotion(touch, uiX, uiY);
+    UpdateMobileSkillTooltips(uiX, uiY);
 
     if (FindActiveVirtualTouchSlot(touch.fingerId) >= 0)
     {
@@ -4140,11 +4548,40 @@ bool HandleVirtualFingerUp(const SDL_TouchFingerEvent& touch)
 
     if (IsLegacyMainHud())
     {
+        if (g_pNewUISystem != nullptr
+            && g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_WINDOW_MENU)
+            && g_pWindowMenu != nullptr)
+        {
+            float menuUiX = 0.0f;
+            float menuUiY = 0.0f;
+            TouchToVirtualUi(touch, menuUiX, menuUiY);
+            if (g_pWindowMenu->TryHandleAndroidTouchRelease(menuUiX, menuUiY))
+            {
+                if (touch.fingerId == g_primaryTouchFinger)
+                {
+                    MouseLButtonPush = false;
+                    MouseLButtonPop = false;
+                    MouseLButton = false;
+                    g_primaryTouchFinger = -1;
+                }
+                return true;
+            }
+        }
+
         if (ConsumeLegacySkillHotBarFingerUp(touch))
         {
             return true;
         }
         return HandleVirtualJoystickFingerUp(touch);
+    }
+
+    if (ConsumeVirtualSkillButtonFingerUp(touch))
+    {
+        if (g_pSkillList != nullptr)
+        {
+            g_pSkillList->ClearAndroidTouchSkillTooltip();
+        }
+        return true;
     }
 
     const int slot = FindActiveVirtualTouchSlot(touch.fingerId);
@@ -4196,6 +4633,8 @@ void UpdateVirtualPadHolds()
         ApplyVirtualJoystickMovement();
         return;
     }
+
+    TickVirtualSkillButtonLongPress(MU_MobileGetTicks());
 
     const uint32_t nowMs = MU_MobileGetTicks();
     if (ShowVirtualAttackButton())
@@ -5374,6 +5813,156 @@ static void ConfigureVirtualSkillIconNoBlendState()
     glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 }
 
+// Atlas cells are 20x28 — size the rect so all four corners stay inside the stencil circle
+// (a w=h square equal to the diameter clips flat edges at left/right/top/bottom).
+static void GetVirtualMobileSkillIconRectInCircle(
+    float centerCx,
+    float centerCy,
+    float clipRadius,
+    float fillMul,
+    float heightMul,
+    float& outX,
+    float& outY,
+    float& outW,
+    float& outH)
+{
+    constexpr float kListIconW = 20.f;
+    constexpr float kListIconH = 28.f;
+    const float kIconAspect = kListIconW / kListIconH;
+    const float cornerRadiusMul = std::sqrt(1.f + kIconAspect * kIconAspect);
+    const float safeClipR = std::max(clipRadius, 4.f);
+    const float rimInset = std::clamp(0.98f + 0.02f * (heightMul - 1.0f), 0.97f, 0.995f);
+    const float maxHalfH = (safeClipR * std::clamp(fillMul, 0.5f, 1.1f) * rimInset)
+        / cornerRadiusMul;
+    const float hBase = maxHalfH * 2.f;
+    const float w = hBase * kIconAspect;
+    // Scale height only so head/tail of 20x28 atlas are visible; width stays inside the circle clip.
+    const float h = hBase * std::clamp(heightMul, 1.0f, 1.45f);
+
+    outW = w;
+    outH = h;
+    outX = centerCx - w * 0.5f;
+    outY = centerCy - h * 0.5f + kVirtualSkillIconVerticalShiftUi;
+}
+
+static int QueryGlStencilBits()
+{
+    static int cachedBits = -1;
+    if (cachedBits < 0)
+    {
+        GLint bits = 0;
+        glGetIntegerv(GL_STENCIL_BITS, &bits);
+        cachedBits = static_cast<int>(bits);
+    }
+    return cachedBits;
+}
+
+static bool CanUseVirtualSkillIconStencilClip()
+{
+    return QueryGlStencilBits() >= 8;
+}
+
+static void ClearStencilInUiCircle(float uiCx, float uiCy, float uiRadius)
+{
+    const float pad = 1.0f;
+    const float r = uiRadius + pad;
+    const int sx = static_cast<int>(std::floor(UiToScreenX(uiCx - r)));
+    const int sw = static_cast<int>(std::ceil(UiToScreenX(uiCx + r) - UiToScreenX(uiCx - r)));
+    const int syTop = static_cast<int>(std::floor(
+        static_cast<float>(WindowHeight) - UiToScreenY(uiCy - r)));
+    const int syBot = static_cast<int>(std::ceil(
+        static_cast<float>(WindowHeight) - UiToScreenY(uiCy + r)));
+    const int sh = std::max(syTop - syBot, 1);
+
+    glEnable(GL_SCISSOR_TEST);
+    glScissor(sx, syBot, sw, sh);
+    glClearStencil(0);
+    glClear(GL_STENCIL_BUFFER_BIT);
+    glDisable(GL_SCISSOR_TEST);
+}
+
+static void BeginVirtualSkillIconCircleClip(float uiCx, float uiCy, float uiRadius)
+{
+    if (!CanUseVirtualSkillIconStencilClip())
+    {
+        return;
+    }
+
+    // Flush batched HUD quads (skillbox, etc.) before touching stencil.
+    GL_FlushPending();
+
+    ClearStencilInUiCircle(uiCx, uiCy, uiRadius);
+
+    glEnable(GL_STENCIL_TEST);
+    glStencilMask(0xFF);
+    glStencilFunc(GL_ALWAYS, 1, 0xFF);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+    glDisable(GL_BLEND);
+    DrawVirtualCircle(uiCx, uiCy, uiRadius, 0.f, 0.f, 0.f, 1.f, true);
+    // Compat layer batches glBegin geometry — flush mask while color writes are off.
+    GL_FlushPending();
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glStencilFunc(GL_EQUAL, 1, 0xFF);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+}
+
+static void EndVirtualSkillIconCircleClip()
+{
+    if (!CanUseVirtualSkillIconStencilClip())
+    {
+        return;
+    }
+
+    GL_FlushPending();
+    glDisable(GL_STENCIL_TEST);
+    glStencilMask(0xFF);
+}
+
+static void RenderVirtualMobileSkillIconInCircle(
+    int renderSkillIndex,
+    float centerCx,
+    float centerCy,
+    float clipRadius,
+    float fillMul,
+    float heightMul)
+{
+    if (g_pSkillList == nullptr || !IsAssignableVirtualSkillIndex(renderSkillIndex))
+    {
+        return;
+    }
+
+    // Same atlas path as the picker (RenderSkillIconPreview + 20x28).
+    // Do not use RenderBitmapCircle / RenderSkillIconCircularPreview on GLES — glVertex4fv
+    // does not draw there and icons disappear. Stencil masks the rectangular preview instead.
+    BeginVirtualSkillIconCircleClip(centerCx, centerCy, clipRadius);
+    ConfigureVirtualSkillIconNoBlendState();
+    float iconX = 0.f;
+    float iconY = 0.f;
+    float iconW = 0.f;
+    float iconH = 0.f;
+    GetVirtualMobileSkillIconRectInCircle(
+        centerCx,
+        centerCy,
+        clipRadius,
+        fillMul,
+        heightMul,
+        iconX,
+        iconY,
+        iconW,
+        iconH);
+    g_pSkillList->RenderSkillIconPreview(
+        renderSkillIndex,
+        iconX,
+        iconY,
+        iconW,
+        iconH);
+    GL_FlushPending();
+    EndVirtualSkillIconCircleClip();
+}
+
 // Draw one 7-segment digit at screen coordinates (sx,sy) with size (sw,sh).
 // In OpenGL y-up: sy = bottom of digit box, sy+sh = top.
 // Each segment is rendered as a filled rectangle â€” always crisp on any DPI.
@@ -5569,28 +6158,6 @@ void RenderVirtualPad()
             g_pSkillList->RenderAndroidLegacySkillHotBar();
         }
 
-        if (ShowVirtualAttackButton())
-        {
-            BeginBitmap();
-            EnsureUITextures();
-            const VirtualButtonLayout& attackButton = GetRuntimeVirtualButton(kVirtualAttackButton);
-            const float attackRingSize = attackButton.radius * 2.0f + kVirtualAttackRingPad;
-            const float attackIconSize = attackButton.radius * 1.34f + 4.0f;
-            DrawVirtualAttackRing(
-                attackButton.cx,
-                attackButton.cy,
-                attackRingSize,
-                IsVirtualButtonPressed(kVirtualAttackButton) ? 1.0f : 0.98f);
-            DrawIconButtonUvSquare(
-                attackButton.cx,
-                attackButton.cy,
-                attackIconSize,
-                g_uiTex_attack,
-                IsVirtualButtonPressed(kVirtualAttackButton) ? 1.0f : 0.96f,
-                true);
-            EndBitmap();
-        }
-
         return;
     }
 
@@ -5621,19 +6188,19 @@ void RenderVirtualPad()
                 IsVirtualButtonPressed(kVirtualAttackButton) ? 1.0f : 0.96f,
                 true);
         }
-        EndBitmap();
-
-        if (attackHasSkill)
+        else
         {
-            ConfigureVirtualSkillIconNoBlendState();
-            const float skillIconSize = attackButton.radius * 1.20f;
-            g_pSkillList->RenderSkillIcon(
+            const float clipRadius =
+                attackButton.radius * kVirtualAttackSkillIconClipRadiusMul;
+            RenderVirtualMobileSkillIconInCircle(
                 attackSkillIndex,
-                attackButton.cx - skillIconSize * 0.5f,
-                attackButton.cy - skillIconSize * 0.5f,
-                skillIconSize,
-                skillIconSize);
+                attackButton.cx,
+                attackButton.cy,
+                clipRadius,
+                kVirtualAttackSkillIconFillMul,
+                kVirtualAttackSkillIconHeightMul);
         }
+        EndBitmap();
 
         g_pRenderText->SetFont(g_hFontBold != nullptr ? g_hFontBold : g_hFixFont);
         g_pRenderText->SetBgColor(0);
@@ -5654,6 +6221,7 @@ void RenderVirtualPad()
         const uint32_t nowMs = MU_MobileGetTicks();
         const float assignPulse = 0.5f + 0.5f * std::sin(static_cast<float>(nowMs % 900u) * 0.006981317f);
 
+        // Pass 1: skillbox rings (flush before atlas icons — batched glBegin must not defer icons).
         BeginBitmap();
         EnsureUITextures();
         for (int visualSlot = 0; visualSlot < kVirtualVisibleSkillButtonCount; ++visualSlot)
@@ -5671,25 +6239,33 @@ void RenderVirtualPad()
                 true);
         }
         EndBitmap();
+        GL_FlushPending();
 
+        // Pass 2: skill icons on top of rings (same preview path as main attack slot).
+        BeginBitmap();
+        EnsureUITextures();
         for (int visualSlot = 0; visualSlot < kVirtualVisibleSkillButtonCount; ++visualSlot)
         {
-            const int buttonIndex = kVirtualSkillButtonBase + visualSlot;
             const int skillSlot = visualSlot + 1;
-            const VirtualButtonLayout& button = GetRuntimeVirtualButton(buttonIndex);
+            const VirtualButtonLayout& button = GetRuntimeVirtualButton(kVirtualSkillButtonBase + visualSlot);
             const int renderSkillIndex = g_virtualSkillSlots[skillSlot];
-            if (g_pSkillList != nullptr && IsAssignableVirtualSkillIndex(renderSkillIndex))
+            if (!IsAssignableVirtualSkillIndex(renderSkillIndex))
             {
-                ConfigureVirtualSkillIconNoBlendState();
-                const float skillIconSize = button.radius * 1.24f;
-                g_pSkillList->RenderSkillIcon(
-                    renderSkillIndex,
-                    button.cx - skillIconSize * 0.5f,
-                    button.cy - skillIconSize * 0.5f,
-                    skillIconSize,
-                    skillIconSize);
+                continue;
             }
+
+            const float clipRadius =
+                button.radius * kVirtualSecondarySkillIconClipRadiusMul;
+            RenderVirtualMobileSkillIconInCircle(
+                renderSkillIndex,
+                button.cx,
+                button.cy,
+                clipRadius,
+                kVirtualSecondarySkillIconFillMul,
+                kVirtualSecondarySkillIconHeightMul);
         }
+        EndBitmap();
+        GL_FlushPending();
     }
 
     // Top-left utility buttons (inventory / character / settings / HUD) — PNG icons.
@@ -5790,6 +6366,15 @@ void RenderVirtualPad()
 
     DrawVirtualMapButton();
     DrawUtilityToolbarToggleButton();
+
+    if (g_pSkillList != nullptr && !IsLegacyMainHud())
+    {
+        if (g_pSkillList->IsSkillPickerOpen()
+            || (g_primaryTouchFinger != static_cast<SDL_FingerID>(-1) && ShowVirtualSkillButtons()))
+        {
+            UpdateMobileSkillTooltips(static_cast<float>(MouseX), static_cast<float>(MouseY));
+        }
+    }
 
     if (!MU_MobileIsModernMobileHudEnabled())
     {
@@ -7396,11 +7981,11 @@ static void HandleSDLEvent(const SDL_Event& ev, int& screenW, int& screenH)
 
     case SDL_FINGERMOTION:
         g_seenFingerInput = true;
+        UpdateMouseFromTouch(ev.tfinger, screenW, screenH);
         if (HandleVirtualPickerFingerMotion(ev.tfinger))
         {
             break;
         }
-        UpdateMouseFromTouch(ev.tfinger, screenW, screenH);
         if (TakumiAndroid_HandleWorldSkillTouchMove(ev.tfinger))
         {
             if (ev.tfinger.fingerId == g_primaryTouchFinger)

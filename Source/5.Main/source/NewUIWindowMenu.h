@@ -54,7 +54,15 @@ namespace SEASON3B
 		void OpenningProcess();
 		void ClosingProcess();
 
+#if defined(__ANDROID__) || defined(MU_IOS)
+		bool HitTestPanel(float uiX, float uiY) const;
+		void UpdateAndroidTouchHover(float uiX, float uiY);
+		bool TryHandleAndroidTouchRelease(float uiX, float uiY);
+#endif
+
 	private:
+		bool ActivateMenuItem(int itemIndex);
+		int HitTestMenuItem(float uiX, float uiY) const;
 		void LoadImages();
 		void UnloadImages();
 

@@ -105,6 +105,9 @@ namespace SEASON3B
 
 		void OpenBuyConfirmDialog(BYTE slot);
 		void ResetShopItemClickState();
+#if defined(__ANDROID__) || defined(MU_IOS)
+		bool HitTestPanel(float uiX, float uiY) const;
+#endif
 
 		static int ResolveBuyZen(const ITEM* pItem);
 		static int ResolveBuyZenWithTax(const ITEM* pItem);

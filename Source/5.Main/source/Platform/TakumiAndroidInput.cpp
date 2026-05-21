@@ -3,6 +3,7 @@
 #include "stdafx.h"
 #include "Platform/TakumiAndroidInput.h"
 #include "NewUISystem.h"
+#include "NewUINPCShop.h"
 #include "NewUIMyInventory.h"
 #include "NewUIInventoryCtrl.h"
 #include "NewUICommon.h"
@@ -31,6 +32,8 @@ extern MovementSkill g_MovementSkill;
 #define TAKUMI_INV_LOGW(...) __android_log_print(ANDROID_LOG_WARN, "TakumiInvUse", __VA_ARGS__)
 #define TAKUMI_SKILL_LOGI(...) __android_log_print(ANDROID_LOG_INFO, "TakumiSkillAtk", __VA_ARGS__)
 #define TAKUMI_SKILL_LOGW(...) __android_log_print(ANDROID_LOG_WARN, "TakumiSkillAtk", __VA_ARGS__)
+
+bool TakumiAndroid_IsHudBlockingWorldGesture(float uiX, float uiY);
 
 namespace
 {
@@ -218,42 +221,6 @@ bool IsWorldSkillGestureScene()
         && Hero->Dead <= 0;
 }
 
-bool TakumiAndroid_IsHudBlockingWorldGesture(float uiX, float uiY)
-{
-    if (SceneFlag != MAIN_SCENE || Hero == nullptr)
-    {
-        return false;
-    }
-
-    if (g_MessageBox != nullptr && !g_MessageBox->IsEmpty())
-    {
-        return true;
-    }
-
-    if (IsInventoryUiOpenForUse() && IsMouseOverInventoryPanel())
-    {
-        return true;
-    }
-
-    // Virtual 640×480 — legacy HUD chrome (joystick / attack / skill row).
-    if (uiX < 220.0f && uiY > 290.0f)
-    {
-        return true;
-    }
-
-    if (uiY > 395.0f && uiX > 460.0f)
-    {
-        return true;
-    }
-
-    if (uiY > 418.0f && uiX > 180.0f && uiX < 540.0f)
-    {
-        return true;
-    }
-
-    return false;
-}
-
 bool IsWorldSkillGestureBlockedByUiAt(const float uiX, const float uiY)
 {
     (void)uiX;
@@ -281,7 +248,7 @@ bool IsWorldSkillGestureBlockedByUiAt(const float uiX, const float uiY)
         return true;
     }
 
-    if (TakumiAndroid_IsHudBlockingWorldGesture(uiX, uiY))
+    if (::TakumiAndroid_IsHudBlockingWorldGesture(uiX, uiY))
     {
         return true;
     }
@@ -999,6 +966,57 @@ bool FireWorldSecondaryAction(const char* reason)
 
 } // namespace
 
+bool TakumiAndroid_IsHudBlockingWorldGesture(float uiX, float uiY)
+{
+    if (SceneFlag != MAIN_SCENE || Hero == nullptr)
+    {
+        return false;
+    }
+
+    if (g_MessageBox != nullptr && !g_MessageBox->IsEmpty())
+    {
+        return true;
+    }
+
+    if (g_pNewUISystem != nullptr
+        && g_pMyInventory != nullptr
+        && g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_INVENTORY)
+        && g_pMyInventory->GetRepairMode() == SEASON3B::CNewUIMyInventory::REPAIR_MODE_OFF)
+    {
+        const POINT& pos = g_pMyInventory->GetPos();
+        if (SEASON3B::CheckMouseIn(pos.x, pos.y, 190, 429))
+        {
+            return true;
+        }
+    }
+
+    if (g_pNewUISystem != nullptr
+        && g_pNPCShop != nullptr
+        && g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_NPCSHOP)
+        && g_pNPCShop->HitTestPanel(uiX, uiY))
+    {
+        return true;
+    }
+
+    // Virtual 640×480 — legacy HUD chrome (joystick / attack / skill row).
+    if (uiX < 220.0f && uiY > 290.0f)
+    {
+        return true;
+    }
+
+    if (uiY > 395.0f && uiX > 460.0f)
+    {
+        return true;
+    }
+
+    if (uiY > 418.0f && uiX > 180.0f && uiX < 540.0f)
+    {
+        return true;
+    }
+
+    return false;
+}
+
 bool TakumiAndroid_HasActiveWorldSkillGesture()
 {
     return g_worldSkillTouch.finger != static_cast<SDL_FingerID>(-1);
@@ -1006,7 +1024,7 @@ bool TakumiAndroid_HasActiveWorldSkillGesture()
 
 bool MU_AndroidShouldShowPrimaryCursorDown()
 {
-    return TakumiAndroid_HasActiveWorldSkillGesture();
+    return TakumiAndroid_HasActiveWorldSkillGesture() || MU_Android_IsWorldSwipeWalkEngaged();
 }
 
 void MU_AndroidSyncWorldTouchAimToMouse()
@@ -1303,6 +1321,7 @@ bool TakumiAndroid_HandleWorldSkillTouchDown(const SDL_TouchFingerEvent& touch)
     g_worldSkillPendingMeleeMs = 0;
     g_worldSkillChannelHold = false;
     g_worldSkillChannelLatched = false;
+    MU_Android_BeginWorldSwipeWalk(touch.fingerId, uiX, uiY);
     TAKUMI_SKILL_LOGI(
         "touch down finger=%lld ui=(%.0f,%.0f) Mouse=(%d,%d)",
         static_cast<long long>(touch.fingerId),
@@ -1325,31 +1344,45 @@ bool TakumiAndroid_HandleWorldSkillTouchMove(const SDL_TouchFingerEvent& touch)
     TouchToVirtualUi(touch, uiX, uiY);
     g_worldSkillTouch.aimMouseX = std::clamp(MouseX, 0, 640);
     g_worldSkillTouch.aimMouseY = std::clamp(MouseY, 0, 480);
+
     const float dx = uiX - g_worldSkillTouch.downUiX;
     const float dy = uiY - g_worldSkillTouch.downUiY;
-    if ((dx * dx) + (dy * dy) > (kWorldSkillLongPressCancelMoveUi * kWorldSkillLongPressCancelMoveUi))
-    {
-        TAKUMI_SKILL_LOGI("long-press cancelled (moved %.0f ui)", std::sqrt((dx * dx) + (dy * dy)));
-        g_worldSkillTouch.finger = static_cast<SDL_FingerID>(-1);
-        return false;
-    }
+    const float distSq = (dx * dx) + (dy * dy);
+    const float longPressSlopSq =
+        kWorldSkillLongPressCancelMoveUi * kWorldSkillLongPressCancelMoveUi;
+    const uint32_t nowMs = MU_MobileGetTicks();
+    const uint32_t heldMs =
+        (g_worldSkillTouch.downMs > 0) ? (nowMs - g_worldSkillTouch.downMs) : 0;
 
-    if (!g_worldSkillLongPressFired)
-    {
-        const uint32_t nowMs = MU_MobileGetTicks();
-        const uint32_t heldMs =
-            (g_worldSkillTouch.downMs > 0) ? (nowMs - g_worldSkillTouch.downMs) : 0;
-        if (heldMs >= kWorldSkillLongPressMs)
-        {
-            FireWorldSecondaryAction("long-press");
-        }
-    }
-    else if (g_worldSkillChannelHold)
+    if (g_worldSkillChannelHold)
     {
         FireWorldSkillChannelTick("hold");
     }
 
-    return g_worldSkillTouchConsumed;
+    // Inside long-press / double-tap slop: RMB-equivalent gestures win over walk swipe.
+    if (distSq <= longPressSlopSq)
+    {
+        if (!g_worldSkillLongPressFired && heldMs >= kWorldSkillLongPressMs)
+        {
+            FireWorldSecondaryAction("long-press");
+        }
+
+        return g_worldSkillTouchConsumed;
+    }
+
+    // Deliberate drag on map: walk in swipe direction (joystick parity).
+    if (MU_Android_UpdateWorldSwipeWalk(touch.fingerId, uiX, uiY))
+    {
+        g_worldSkillPendingMeleeMs = 0;
+        return true;
+    }
+
+    TAKUMI_SKILL_LOGI(
+        "gesture cancelled (moved %.0f ui, no swipe)",
+        std::sqrt(distSq));
+    g_worldSkillTouch.finger = static_cast<SDL_FingerID>(-1);
+    MU_Android_EndWorldSwipeWalk(touch.fingerId);
+    return false;
 }
 
 bool TakumiAndroid_HandleWorldSkillTouchUp(const SDL_TouchFingerEvent& touch)
@@ -1361,11 +1394,21 @@ bool TakumiAndroid_HandleWorldSkillTouchUp(const SDL_TouchFingerEvent& touch)
 
     const uint32_t nowMs = MU_MobileGetTicks();
     const uint32_t heldMs = (g_worldSkillTouch.downMs > 0) ? (nowMs - g_worldSkillTouch.downMs) : 0;
-    g_worldSkillTouch.finger = static_cast<SDL_FingerID>(-1);
 
     float uiX = 0.0f;
     float uiY = 0.0f;
     TouchToVirtualUi(touch, uiX, uiY);
+
+    const bool endedSwipeWalk = MU_Android_EndWorldSwipeWalk(touch.fingerId);
+    if (endedSwipeWalk)
+    {
+        g_worldSkillTouch.finger = static_cast<SDL_FingerID>(-1);
+        g_worldSkillPendingMeleeMs = 0;
+        TAKUMI_SKILL_LOGI("swipe-walk end heldMs=%u ui=(%.0f,%.0f)", heldMs, uiX, uiY);
+        return true;
+    }
+
+    g_worldSkillTouch.finger = static_cast<SDL_FingerID>(-1);
 
     if (!g_worldSkillLongPressFired && heldMs >= kWorldSkillLongPressMs)
     {

@@ -76,6 +76,11 @@ bool MU_AndroidShouldSuppressCombatTargeting();
 bool MU_AndroidShouldShowPrimaryCursorDown();
 /** Pin MouseX/Y to active world-touch aim before SelectObjects / RenderCursor. */
 void MU_AndroidSyncWorldTouchAimToMouse();
+/** World-map swipe walk (same drive as virtual joystick). */
+void MU_Android_BeginWorldSwipeWalk(SDL_FingerID fingerId, float uiX, float uiY);
+bool MU_Android_UpdateWorldSwipeWalk(SDL_FingerID fingerId, float uiX, float uiY);
+bool MU_Android_EndWorldSwipeWalk(SDL_FingerID fingerId);
+bool MU_Android_IsWorldSwipeWalkEngaged();
 /** Per-frame cap for ProtocolCompiler packet drain (see SetMaxMessagePerCycle). */
 extern int g_MaxMessagePerCycle;
 /** True when touch (virtual 640×480 UI) is on joystick / attack / hotbar — not world combat gestures. */

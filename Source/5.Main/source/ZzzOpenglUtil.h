@@ -118,6 +118,10 @@ void RenderColor(float x,float y,float Width,float Height,float Alpha = 0.f,int 
 void EndRenderColor();
 void RenderBitmap(int Texture,float x,float y,float Width,float Height,float u=0.f,float v=0.f,float uWidth=1.f,float vHeight=1.f,bool Scale=true,bool StartScale=true,float Alpha = 0.f);
 void RenderBitmapCircle(int Texture, float x, float y, float Radius, float u, float v, float uWidth, float vHeight, bool Scale, bool StartScale, float Alpha);
+#if defined(__ANDROID__) || defined(MU_IOS)
+/** GLES2-safe circular atlas draw (glVertex2f); HUD skill rings only — not inventory grids. */
+void RenderBitmapCircleGles(int Texture, float x, float y, float Radius, float u, float v, float uWidth, float vHeight, bool Scale, bool StartScale, float Alpha);
+#endif
 void RenderColorBitmap(int Texture,float x,float y,float Width,float Height,float u=0.f,float v=0.f,float uWidth=1.f,float vHeight=1.f, unsigned int color = 0xffffffff);
 void RenderBitmapRotate(int Texture,float x,float y,float Width,float Height,float Angle,float u = 0.f,float v = 0.f,float uWidth = 1.f,float vHeight = 1.f);
 void RenderBitRotate(int Texture,float x,float y,float Width,float Height,float Rotate);

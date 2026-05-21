@@ -2544,7 +2544,10 @@ bool SEASON3B::CNewUISkillList::UpdateMouseEvent()
 	GetLegacyCurrentSkillSlotRect(x, y, width, height);
 
 #if defined(__ANDROID__) || defined(MU_IOS)
-	if (MouseLButtonPush && SEASON3B::CheckMouseIn(x, y, width, height) == true)
+	// Legacy HUD: open/close via TryToggleSkillPickerAtTouch in android_main (finger-up dismiss there too).
+	if (!MU_MobileIsLegacyMainHudEnabled()
+		&& MouseLButtonPush
+		&& SEASON3B::CheckMouseIn(x, y, width, height) == true)
 	{
 		SetSkillPickerOpen(!m_bSkillList);
 		PlayBuffer(SOUND_CLICK01);
@@ -2805,7 +2808,10 @@ bool SEASON3B::CNewUISkillList::UpdateMouseEvent()
 		{
 			m_EventState = EVENT_NONE;
 #if defined(__ANDROID__) || defined(MU_IOS)
-			FinalizeMagicSlotSelectionFromLegacyPicker(i);
+			if (!MU_MobileIsLegacyMainHudEnabled())
+			{
+				FinalizeMagicSlotSelectionFromLegacyPicker(i);
+			}
 #else
 			ApplySelectedSkillIndex(i);
 			SetSkillPickerOpen(false);
@@ -2868,7 +2874,10 @@ bool SEASON3B::CNewUISkillList::UpdateMouseEvent()
 				{
 					m_EventState = EVENT_NONE;
 #if defined(__ANDROID__) || defined(MU_IOS)
-					FinalizeMagicSlotSelectionFromLegacyPicker(petCmd);
+					if (!MU_MobileIsLegacyMainHudEnabled())
+					{
+						FinalizeMagicSlotSelectionFromLegacyPicker(petCmd);
+					}
 #else
 					ApplySelectedSkillIndex(petCmd);
 					SetSkillPickerOpen(false);
@@ -3142,6 +3151,10 @@ bool SEASON3B::CNewUISkillList::IsSkillPickerOpen() const
 	return m_bSkillList;
 }
 
+#if defined(__ANDROID__)
+extern void TakumiAndroid_ClearLegacySkillPickerArmState();
+#endif
+
 void SEASON3B::CNewUISkillList::SetSkillPickerOpen(bool open)
 {
 	m_bSkillList = open;
@@ -3149,6 +3162,9 @@ void SEASON3B::CNewUISkillList::SetSkillPickerOpen(bool open)
 	if (open == true)
 	{
 		m_iAndroidTouchAssignSkillIndex = -1;
+#if defined(__ANDROID__)
+		TakumiAndroid_ClearLegacySkillPickerArmState();
+#endif
 	}
 	else
 	{
@@ -5072,26 +5088,43 @@ void SEASON3B::CNewUISkillList::RenderSkillIcon(
 
 		}
 
-#if !defined(__ANDROID__) && !defined(MU_IOS)
 		else if (useCircularDraw && circularRadiusUi > 0.5f)
 		{
 			const float uW = atlasW / 256.f;
 			const float uH = atlasH / 256.f;
+			// Skill cells are 20x28 in the atlas — crop a centered square so the fan is round.
+			const float uvHalf = ((uW < uH) ? uW : uH) * 0.5f;
+			const float uCenter = fU + uW * 0.5f;
+			const float vCenter = fV + uH * 0.5f;
+#if defined(__ANDROID__) || defined(MU_IOS)
+			RenderBitmapCircleGles(
+				iSkillIndex,
+				x - circularRadiusUi,
+				y - circularRadiusUi,
+				circularRadiusUi,
+				uCenter,
+				vCenter,
+				uvHalf,
+				uvHalf,
+				true,
+				true,
+				0.f);
+#else
 			RenderBitmapCircle(
 				iSkillIndex,
 				x - circularRadiusUi,
 				y - circularRadiusUi,
 				circularRadiusUi,
-				fU + uW * 0.5f,
-				fV + uH * 0.5f,
-				uW * 0.5f,
-				uH * 0.5f,
+				uCenter,
+				vCenter,
+				uvHalf,
+				uvHalf,
 				true,
 				true,
 				0.f);
+#endif
 		}
 		else
-#endif
 		{
 			RenderBitmap(iSkillIndex, x, y, width, height, fU, fV, atlasW / 256.f, atlasH / 256.f);
 		}

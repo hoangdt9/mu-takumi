@@ -61,6 +61,10 @@ inline bool TakumiAndroid_IsWorldSkillFinger(SDL_FingerID) { return false; }
 inline bool TakumiAndroid_HasActiveWorldSkillGesture() { return false; }
 inline bool MU_AndroidShouldShowPrimaryCursorDown() { return false; }
 inline void MU_AndroidSyncWorldTouchAimToMouse() {}
+inline void MU_Android_BeginWorldSwipeWalk(SDL_FingerID, float, float) {}
+inline bool MU_Android_UpdateWorldSwipeWalk(SDL_FingerID, float, float) { return false; }
+inline bool MU_Android_EndWorldSwipeWalk(SDL_FingerID) { return false; }
+inline bool MU_Android_IsWorldSwipeWalkEngaged() { return false; }
 inline void TakumiAndroid_ProcessWorldSkillFrame() {}
 inline bool TakumiAndroid_HandleInventoryTouchDown(const void*) { return false; }
 inline bool TakumiAndroid_HandleInventoryTouchMove(const void*) { return false; }

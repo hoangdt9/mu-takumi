@@ -598,6 +598,16 @@ void SEASON3B::CNewUINPCShop::ResetShopItemClickState()
 	SetNpcShopBuyConfirmSlot(-1);
 }
 
+#if defined(__ANDROID__) || defined(MU_IOS)
+bool SEASON3B::CNewUINPCShop::HitTestPanel(float uiX, float uiY) const
+{
+	return uiX >= static_cast<float>(m_Pos.x)
+		&& uiX <= static_cast<float>(m_Pos.x + NPCSHOP_WIDTH)
+		&& uiY >= static_cast<float>(m_Pos.y)
+		&& uiY <= static_cast<float>(m_Pos.y + NPCSHOP_HEIGHT);
+}
+#endif
+
 int SEASON3B::CNewUINPCShop::ResolveBuyZen(const ITEM* pItem)
 {
 	if (pItem == nullptr)

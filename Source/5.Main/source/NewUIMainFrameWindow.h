@@ -169,6 +169,7 @@ namespace SEASON3B
 		void UpdateAndroidVirtualSlotSkillTooltip(int magicSlotIndex, float anchorCx, float anchorCy);
 		void ClearAndroidTouchSkillTooltip();
 		void AssignVirtualMobileSkillFromPicker(int pickedMagicSlot);
+		void FinalizeMagicSlotSelectionFromLegacyPicker(int pickedSlotIdx);
 		void RenderSkillIconCircularPreview(
 			int iSkillIndex,
 			float centerX,
@@ -208,7 +209,6 @@ namespace SEASON3B
 
 #if defined(__ANDROID__) || defined(MU_IOS)
 		bool GetLegacyMobileSkillHotBarSlotRect(int hotKeyUiIndex, float& x, float& y, float& w, float& h) const;
-		void FinalizeMagicSlotSelectionFromLegacyPicker(int pickedSlotIdx);
 		bool TryGetAndroidSkillPickerCellPos(int magicSlot, float& outX, float& outY) const;
 #endif
 

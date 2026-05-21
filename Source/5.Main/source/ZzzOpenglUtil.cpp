@@ -1851,6 +1851,81 @@ void RenderBitmapCircle(int Texture, float x, float y, float Radius, float u, fl
 	glEnd();
 }
 
+#if defined(__ANDROID__) || defined(MU_IOS)
+void RenderBitmapCircleGles(
+	int Texture,
+	float x,
+	float y,
+	float Radius,
+	float u,
+	float v,
+	float uWidth,
+	float vHeight,
+	bool Scale,
+	bool StartScale,
+	float Alpha)
+{
+	float centerX = x + Radius;
+	float centerY = y + Radius;
+	float radiusX = Radius;
+	float radiusY = Radius;
+
+	if (Scale)
+	{
+		centerX = ConvertX(centerX);
+		centerY = ConvertY(centerY);
+	}
+
+	if (StartScale)
+	{
+		radiusX = ConvertX(Radius);
+		radiusY = ConvertY(Radius);
+	}
+	else if (Scale)
+	{
+		radiusX = ConvertX(Radius);
+		radiusY = ConvertY(Radius);
+	}
+
+	// Keep a true circle on non-square viewports (avoid wide oval skill icons on phone).
+	const float uniformRadius = (radiusX < radiusY) ? radiusX : radiusY;
+	radiusX = uniformRadius;
+	radiusY = uniformRadius;
+
+	centerY = static_cast<float>(WindowHeight) - centerY;
+
+	constexpr int kSegments = 32;
+	const float stepAngle = 2.0f * 3.14159265358979323846f / static_cast<float>(kSegments);
+
+	BindTexture(Texture);
+	glBegin(GL_TRIANGLE_FAN);
+
+	if (Alpha > 0.0f)
+	{
+		glColor4f(1.0f, 1.0f, 1.0f, Alpha);
+	}
+
+	glTexCoord2f(u, v);
+	glVertex2f(centerX, centerY);
+
+	for (int i = 0; i <= kSegments; ++i)
+	{
+		const float angle = stepAngle * static_cast<float>(i);
+		glTexCoord2f((std::cos(angle) * uWidth) + u, (std::sin(angle) * vHeight) + v);
+		glVertex2f(
+			centerX + (std::cos(angle) * radiusX),
+			centerY + (std::sin(angle) * -radiusY));
+	}
+
+	if (Alpha > 0.0f)
+	{
+		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+	}
+
+	glEnd();
+}
+#endif
+
 void RenderBitmapRotate(int Texture,float x,float y,float Width,float Height,float Rotate,float u,float v,float uWidth,float vHeight)
 {
 	x = ConvertX(x);

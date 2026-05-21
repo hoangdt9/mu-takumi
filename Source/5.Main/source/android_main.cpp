@@ -724,15 +724,11 @@ constexpr float kVirtualCombatClusterCx = 598.0f;
 constexpr float kVirtualCombatClusterCy = 406.0f;
 constexpr float kVirtualAttackButtonRadius = 32.0f;
 constexpr float kVirtualSkillButtonRadius = 24.0f;
-// Icon clip/fill inside skill rings (layout radius, not boxDiameter / skillline pad).
-constexpr float kVirtualAttackSkillIconClipRadiusMul = 0.98f;
-constexpr float kVirtualAttackSkillIconFillMul = 1.09f;
-constexpr float kVirtualAttackSkillIconHeightMul = 1.22f;
-constexpr float kVirtualSecondarySkillIconClipRadiusMul = 0.998f;
-constexpr float kVirtualSecondarySkillIconFillMul = 1.09f;
-constexpr float kVirtualSecondarySkillIconHeightMul = 1.30f;
+// Icon radius inside skillbox ring art (layout radius; ring PNG frame ~= radius+7px).
+constexpr float kVirtualAttackSkillIconRadiusMul = 0.88f;
+constexpr float kVirtualSecondarySkillIconRadiusMul = 0.92f;
 // UI Y grows downward: negative shifts icon up to match the ring art center (skillline gems sit high).
-constexpr float kVirtualSkillIconVerticalShiftUi = -1.6f;
+constexpr float kVirtualSkillIconVerticalShiftUi = -1.0f;
 constexpr float kVirtualAttackRingPad = 24.0f;
 constexpr float kVirtualSkillOrbitGap = 28.0f;
 constexpr float kVirtualSkillArcStartDeg = 112.0f;
@@ -1140,11 +1136,30 @@ std::array<int, kVirtualSkillSlotCount> g_virtualSkillSlots = []()
 }();
 std::array<int, kVirtualSkillSlotCount> g_virtualSkillTypes{};
 ActiveVirtualJoystick g_virtualJoystick{};
+struct ActiveVirtualSwipeWalk
+{
+    SDL_FingerID fingerId = static_cast<SDL_FingerID>(-1);
+    float anchorUiX = 0.0f;
+    float anchorUiY = 0.0f;
+    float moveDirX = 0.0f;
+    float moveDirY = 0.0f;
+    float moveStrength = 0.0f;
+    bool engaged = false;
+};
+ActiveVirtualSwipeWalk g_virtualSwipeWalk{};
+// Match long-press cancel slop (48 ui): inside = skill gestures; beyond = swipe walk.
+constexpr float kVirtualSwipeWalkEngageMinUi = 48.0f;
+constexpr float kVirtualSwipeWalkMaxDistUi = 110.0f;
+constexpr float kVirtualSwipeWalkDeadZoneUi = 10.0f;
 ActiveVirtualPickerTouch g_virtualPickerTouch{};
 // Finger that long-pressed a secondary slot to open the assign picker; its finger-up must not dismiss the popup.
 static SDL_FingerID g_virtualPickerOpenFingerId = static_cast<SDL_FingerID>(-1);
 // First list tap shows tooltip only; second tap on the same cell confirms assign to the secondary circle.
 static int g_virtualPickerArmedSkillIndex = -1;
+// Classic HUD skill list: tap 1 = tooltip, tap 2 on same icon = assign (hotbar / master slot).
+static int g_legacyPickerArmedSkillIndex = -1;
+// Finger that tapped the current-skill HUD cell to open the list; finger-up must not dismiss it.
+static SDL_FingerID g_legacySkillPickerToggleFingerId = static_cast<SDL_FingerID>(-1);
 bool g_virtualJoystickDrivingMouse = false;
 bool g_joystickPcMouseCaptured = false;
 bool g_virtualSkillSlotsLoaded = false;
@@ -1265,7 +1280,12 @@ void DeactivateVirtualAssignMode(const char* reason);
 void UpdateVirtualAssignMode();
 void ClearVirtualPickerTouch();
 void TriggerVirtualCombat(bool useNormalAttack, int skillSlot);
+int HitTestVirtualAttackButton(float uiX, float uiY);
 int HitTestVirtualSkillButton(float uiX, float uiY);
+int HitTestVirtualConsumableSlot(float uiX, float uiY);
+int HitTestVirtualUtilityButton(float uiX, float uiY);
+bool HitTestMapButton(float uiX, float uiY);
+int HitTestVirtualZoomButton(float uiX, float uiY);
 
 struct TakumiVirtualSkillAssignRegistrar
 {
@@ -1299,6 +1319,11 @@ static void ClearVirtualPickerArmState()
     g_virtualPickerArmedSkillIndex = -1;
 }
 
+static void ClearLegacyPickerArmState()
+{
+    g_legacyPickerArmedSkillIndex = -1;
+}
+
 static void CloseVirtualSkillPickerPopup()
 {
     if (g_pSkillList == nullptr)
@@ -1311,6 +1336,8 @@ static void CloseVirtualSkillPickerPopup()
     g_pSkillList->ClearVirtualPickerTargetVisualSlot();
     ClearVirtualPickerTouch();
     ClearVirtualPickerArmState();
+    ClearLegacyPickerArmState();
+    g_legacySkillPickerToggleFingerId = static_cast<SDL_FingerID>(-1);
     g_virtualPickerOpenFingerId = static_cast<SDL_FingerID>(-1);
     if (g_pSkillList != nullptr)
     {
@@ -1470,6 +1497,7 @@ static void TickLegacySkillHotBarLongPress(uint32_t nowMs)
     {
         g_legacySkillHotBarPendingTouch.pickerOpenedFromHold = true;
         g_virtualPickerOpenFingerId = g_legacySkillHotBarPendingTouch.fingerId;
+        ClearLegacyPickerArmState();
     }
     else
     {
@@ -2344,6 +2372,130 @@ void ClearVirtualPickerTouch()
     g_virtualPickerTouch.skillIndex = -1;
 }
 
+// Classic HUD skill list: tap 1 = tooltip, tap 2 on same icon = assign to target hotkey.
+static bool TryLegacySkillPickerPick(float uiX, float uiY, int chosenSkill)
+{
+    if (g_pSkillList == nullptr || chosenSkill < 0)
+    {
+        return false;
+    }
+
+    const int pendingSkill = g_pSkillList->GetAndroidTouchAssignSkillIndex();
+    const bool confirmAssign =
+        (g_legacyPickerArmedSkillIndex == chosenSkill)
+        || (pendingSkill == chosenSkill);
+
+    if (confirmAssign)
+    {
+        ClearLegacyPickerArmState();
+        g_pSkillList->SetAndroidTouchAssignSkillIndex(-1);
+        g_pSkillList->FinalizeMagicSlotSelectionFromLegacyPicker(chosenSkill);
+        ClearVirtualPickerTouch();
+        ClearLegacySkillHotBarPendingTouch();
+        g_virtualPickerOpenFingerId = static_cast<SDL_FingerID>(-1);
+        return true;
+    }
+
+    g_legacyPickerArmedSkillIndex = chosenSkill;
+    g_pSkillList->SetAndroidTouchAssignSkillIndex(chosenSkill);
+    g_pSkillList->UpdateAndroidTouchSkillTooltip(uiX, uiY);
+    ClearVirtualPickerTouch();
+    return true;
+}
+
+static bool HandleLegacySkillPickerFingerDown(const SDL_TouchFingerEvent& touch)
+{
+    if (!IsLegacyMainHud() || g_pSkillList == nullptr || !g_pSkillList->IsSkillPickerOpen())
+    {
+        return false;
+    }
+
+    float uiX = 0.0f;
+    float uiY = 0.0f;
+    TouchToVirtualUi(touch, uiX, uiY);
+
+    if (!g_pSkillList->HitTestAndroidSkillPickerPanel(uiX, uiY))
+    {
+        return false;
+    }
+
+    const int skillIndex = g_pSkillList->HitTestAndroidTouchSkillPicker(uiX, uiY);
+    if (skillIndex >= 0)
+    {
+        g_virtualPickerTouch.fingerId = touch.fingerId;
+        g_virtualPickerTouch.skillIndex = skillIndex;
+    }
+
+    g_pSkillList->UpdateAndroidTouchSkillTooltip(uiX, uiY);
+    return true;
+}
+
+static bool HandleLegacySkillPickerFingerMotion(const SDL_TouchFingerEvent& touch)
+{
+    if (!IsLegacyMainHud() || g_pSkillList == nullptr || !g_pSkillList->IsSkillPickerOpen())
+    {
+        return false;
+    }
+
+    float uiX = 0.0f;
+    float uiY = 0.0f;
+    TouchToVirtualUi(touch, uiX, uiY);
+
+    if (!g_pSkillList->HitTestAndroidSkillPickerPanel(uiX, uiY))
+    {
+        return false;
+    }
+
+    const int hoveredSkill = g_pSkillList->HitTestAndroidTouchSkillPicker(uiX, uiY);
+    if (hoveredSkill >= 0)
+    {
+        g_virtualPickerTouch.fingerId = touch.fingerId;
+        g_virtualPickerTouch.skillIndex = hoveredSkill;
+    }
+
+    g_pSkillList->UpdateAndroidTouchSkillTooltip(uiX, uiY);
+    return true;
+}
+
+static bool HandleLegacySkillPickerFingerUp(const SDL_TouchFingerEvent& touch)
+{
+    if (!IsLegacyMainHud() || g_pSkillList == nullptr || !g_pSkillList->IsSkillPickerOpen())
+    {
+        return false;
+    }
+
+    // Opening tap releases on the HUD skill cell (below the panel), not on the picker grid.
+    if (g_legacySkillPickerToggleFingerId != static_cast<SDL_FingerID>(-1)
+        && touch.fingerId == g_legacySkillPickerToggleFingerId)
+    {
+        g_legacySkillPickerToggleFingerId = static_cast<SDL_FingerID>(-1);
+        return true;
+    }
+
+    float uiX = 0.0f;
+    float uiY = 0.0f;
+    TouchToVirtualUi(touch, uiX, uiY);
+
+    int chosenSkill = g_pSkillList->HitTestAndroidTouchSkillPicker(uiX, uiY);
+    if (chosenSkill < 0 && IsVirtualPickerTouchCaptured(touch.fingerId))
+    {
+        chosenSkill = g_virtualPickerTouch.skillIndex;
+    }
+
+    if (chosenSkill >= 0)
+    {
+        return TryLegacySkillPickerPick(uiX, uiY, chosenSkill);
+    }
+
+    if (g_pSkillList->HitTestAndroidSkillPickerPanel(uiX, uiY))
+    {
+        ClearVirtualPickerTouch();
+        return true;
+    }
+
+    return false;
+}
+
 // Virtual secondary-slot picker: tap 1 = tooltip, tap 2 on same icon = assign.
 static bool TryVirtualAssignPickerPick(float uiX, float uiY, int chosenSkill)
 {
@@ -2793,6 +2945,60 @@ bool HandleVirtualJoystickFingerUp(const SDL_TouchFingerEvent& touch)
     return true;
 }
 
+static void ApplyDirectionalAim(float dirX, float dirY)
+{
+    const float aimRadius = kVirtualJoystickMouseMinRadius + 12.0f;
+    MouseX = std::clamp(
+        static_cast<int>(320.0f + dirX * aimRadius),
+        0,
+        640);
+    MouseY = std::clamp(
+        static_cast<int>(180.0f - dirY * aimRadius),
+        0,
+        480);
+    g_iNoMouseTime = 0;
+}
+
+static void ApplyDirectionalWalk(float dirX, float dirY, float strength)
+{
+    if (strength <= kVirtualJoystickCombatMoveStrength)
+    {
+        ReleaseVirtualJoystickMouseDrive();
+        ApplyDirectionalAim(dirX, dirY);
+        return;
+    }
+
+    if (!TakumiAndroid_HasActiveWorldSkillGesture())
+    {
+        InterruptVirtualCombatForMovement();
+    }
+
+    const float driveRadius = kVirtualJoystickMouseMinRadius
+        + (kVirtualJoystickMouseMaxRadius - kVirtualJoystickMouseMinRadius) * strength;
+    MouseX = std::clamp(
+        static_cast<int>(320.0f + dirX * driveRadius),
+        0,
+        640);
+    MouseY = std::clamp(
+        static_cast<int>(180.0f - dirY * driveRadius),
+        0,
+        480);
+    g_iNoMouseTime = 0;
+
+    MouseLButtonPop = false;
+    if (!MouseLButton)
+    {
+        MouseLButtonPush = true;
+        MouseLButton = true;
+    }
+    else
+    {
+        MouseLButtonPush = false;
+    }
+
+    g_virtualJoystickDrivingMouse = true;
+}
+
 void ApplyVirtualJoystickAim()
 {
     if (g_virtualJoystick.fingerId == static_cast<SDL_FingerID>(-1))
@@ -2816,23 +3022,13 @@ void ApplyVirtualJoystickAim()
         dirY = thumbY / thumbLen;
     }
 
-    const float aimRadius = kVirtualJoystickMouseMinRadius + 12.0f;
-    MouseX = std::clamp(
-        static_cast<int>(320.0f + dirX * aimRadius),
-        0,
-        640);
-    MouseY = std::clamp(
-        static_cast<int>(180.0f - dirY * aimRadius),
-        0,
-        480);
-    g_iNoMouseTime = 0;
+    ApplyDirectionalAim(dirX, dirY);
 }
 
 void ApplyVirtualJoystickMovement()
 {
     if (g_virtualJoystick.fingerId == static_cast<SDL_FingerID>(-1))
     {
-        ReleaseVirtualJoystickMouseDrive();
         return;
     }
 
@@ -2849,46 +3045,90 @@ void ApplyVirtualJoystickMovement()
         return;
     }
 
-    if (g_virtualJoystick.moveStrength <= kVirtualJoystickCombatMoveStrength)
+    ApplyDirectionalWalk(
+        g_virtualJoystick.moveDirX,
+        g_virtualJoystick.moveDirY,
+        g_virtualJoystick.moveStrength);
+}
+
+static bool IsWorldSwipeWalkStartEligible(float uiX, float uiY)
+{
+    if (!IsVirtualPadAvailable() || SceneFlag != MAIN_SCENE)
     {
-        ReleaseVirtualJoystickMouseDrive();
-        ApplyVirtualJoystickAim();
+        return false;
+    }
+
+    if (HitTestVirtualJoystick(uiX, uiY))
+    {
+        return false;
+    }
+
+    if (TakumiAndroid_IsHudBlockingWorldGesture(uiX, uiY))
+    {
+        return false;
+    }
+
+    if (MU_MobileIsModernMobileHudEnabled() && MU_MobileHitTestBlockingOverlay(uiX, uiY))
+    {
+        return false;
+    }
+
+    if (ShowVirtualAttackButton() && HitTestVirtualAttackButton(uiX, uiY) == kVirtualAttackButton)
+    {
+        return false;
+    }
+
+    if (ShowVirtualSkillButtons() && HitTestVirtualSkillButton(uiX, uiY) >= kVirtualSkillButtonBase)
+    {
+        return false;
+    }
+
+    if (HitTestVirtualConsumableSlot(uiX, uiY) >= 0)
+    {
+        return false;
+    }
+
+    if (HitTestVirtualUtilityButton(uiX, uiY) >= 0)
+    {
+        return false;
+    }
+
+    if (HitTestMapButton(uiX, uiY))
+    {
+        return false;
+    }
+
+    if (!MU_MobileIsModernMobileHudEnabled() && HitTestVirtualZoomButton(uiX, uiY) >= 0)
+    {
+        return false;
+    }
+
+    return true;
+}
+
+static void ApplyVirtualSwipeWalkMovement()
+{
+    if (!g_virtualSwipeWalk.engaged || g_virtualSwipeWalk.fingerId == static_cast<SDL_FingerID>(-1))
+    {
         return;
     }
 
-    // World skill long-press may use another finger; keep channel + allow click-to-walk together.
-    if (!TakumiAndroid_HasActiveWorldSkillGesture())
+    if (!IsVirtualPadAvailable())
     {
-        InterruptVirtualCombatForMovement();
+        MU_Android_EndWorldSwipeWalk(g_virtualSwipeWalk.fingerId);
+        return;
     }
 
-    const float driveRadius = kVirtualJoystickMouseMinRadius
-        + (kVirtualJoystickMouseMaxRadius - kVirtualJoystickMouseMinRadius) * g_virtualJoystick.moveStrength;
-    const int targetMouseX = std::clamp(
-        static_cast<int>(320.0f + g_virtualJoystick.moveDirX * driveRadius),
-        0,
-        640);
-    const int targetMouseY = std::clamp(
-        static_cast<int>(180.0f - g_virtualJoystick.moveDirY * driveRadius),
-        0,
-        480);
-
-    MouseX = targetMouseX;
-    MouseY = targetMouseY;
-    g_iNoMouseTime = 0;
-
-    MouseLButtonPop = false;
-    if (!MouseLButton)
+    if (g_virtualJoystick.fingerId != static_cast<SDL_FingerID>(-1)
+        && g_virtualJoystick.moveStrength > kVirtualJoystickCombatMoveStrength)
     {
-        MouseLButtonPush = true;
-        MouseLButton = true;
-    }
-    else
-    {
-        MouseLButtonPush = false;
+        return;
     }
 
-    g_virtualJoystickDrivingMouse = true;
+    ApplyDirectionalWalk(
+        g_virtualSwipeWalk.moveDirX,
+        g_virtualSwipeWalk.moveDirY,
+        g_virtualSwipeWalk.moveStrength);
 }
 
 bool IsMiniMapToggleAvailable()
@@ -4335,6 +4575,17 @@ bool HandleVirtualFingerDown(const SDL_TouchFingerEvent& touch)
         return false;
     }
 
+#if defined(__ANDROID__) || defined(MU_IOS)
+    // NPC shop: two-tap buy uses IsRelease(VK_LBUTTON) in NewUINPCShop::UpdateMouseEvent.
+    if (g_pNewUISystem != nullptr
+        && g_pNPCShop != nullptr
+        && g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_NPCSHOP)
+        && g_pNPCShop->HitTestPanel(uiX, uiY))
+    {
+        return false;
+    }
+#endif
+
     // Chat input must receive tap priority so Android IME pops up reliably.
     if (g_pNewUISystem != nullptr
         && g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_CHATINPUTBOX)
@@ -4363,11 +4614,21 @@ bool HandleVirtualFingerDown(const SDL_TouchFingerEvent& touch)
     }
 
 #if defined(__ANDROID__) || defined(MU_IOS)
-    if (IsLegacyMainHud()
-        && g_pSkillList != nullptr
-        && g_pSkillList->TryToggleSkillPickerAtTouch(uiX, uiY))
+    if (IsLegacyMainHud() && g_pSkillList != nullptr)
     {
-        return true;
+        const bool pickerWasOpen = g_pSkillList->IsSkillPickerOpen();
+        if (g_pSkillList->TryToggleSkillPickerAtTouch(uiX, uiY))
+        {
+            if (!pickerWasOpen && g_pSkillList->IsSkillPickerOpen())
+            {
+                g_legacySkillPickerToggleFingerId = touch.fingerId;
+            }
+            else
+            {
+                g_legacySkillPickerToggleFingerId = static_cast<SDL_FingerID>(-1);
+            }
+            return true;
+        }
     }
 #endif
 
@@ -4407,6 +4668,19 @@ bool HandleVirtualFingerDown(const SDL_TouchFingerEvent& touch)
 
     if (g_pSkillList != nullptr && g_pSkillList->IsSkillPickerOpen())
     {
+        if (IsLegacyMainHud())
+        {
+            if (g_pSkillList->HitTestAndroidSkillPickerPanel(uiX, uiY))
+            {
+                return HandleLegacySkillPickerFingerDown(touch);
+            }
+
+            CloseVirtualSkillPickerPopup();
+            ClearVirtualSkillButtonPendingTouch();
+            ClearLegacySkillHotBarPendingTouch();
+            return true;
+        }
+
         if (g_pSkillList->HitTestAndroidSkillPickerPanel(uiX, uiY))
         {
             return HandleVirtualPickerFingerDown(touch);
@@ -4548,6 +4822,13 @@ bool HandleVirtualFingerMotion(const SDL_TouchFingerEvent& touch)
 
     if (IsLegacyMainHud())
     {
+        if (g_pSkillList != nullptr
+            && g_pSkillList->IsSkillPickerOpen()
+            && HandleLegacySkillPickerFingerMotion(touch))
+        {
+            return true;
+        }
+
         if (g_pNewUISystem != nullptr
             && g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_WINDOW_MENU)
             && g_pWindowMenu != nullptr
@@ -4585,6 +4866,21 @@ bool HandleVirtualFingerUp(const SDL_TouchFingerEvent& touch)
 
     if (IsLegacyMainHud())
     {
+        if (g_pSkillList != nullptr && g_pSkillList->IsSkillPickerOpen())
+        {
+            if (HandleLegacySkillPickerFingerUp(touch))
+            {
+                if (touch.fingerId == g_primaryTouchFinger)
+                {
+                    MouseLButtonPush = false;
+                    MouseLButtonPop = false;
+                    MouseLButton = false;
+                    g_primaryTouchFinger = -1;
+                }
+                return true;
+            }
+        }
+
         if (g_pNewUISystem != nullptr
             && g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_WINDOW_MENU)
             && g_pWindowMenu != nullptr)
@@ -4680,6 +4976,7 @@ void UpdateVirtualPadHolds()
         TickLegacySkillHotBarLongPress(MU_MobileGetTicks());
 
         ApplyVirtualJoystickMovement();
+        ApplyVirtualSwipeWalkMovement();
         return;
     }
 
@@ -4705,6 +5002,7 @@ void UpdateVirtualPadHolds()
     }
 
     ApplyVirtualJoystickMovement();
+    ApplyVirtualSwipeWalkMovement();
 }
 
 void UpdateVirtualProximityCombat()
@@ -5862,155 +6160,26 @@ static void ConfigureVirtualSkillIconNoBlendState()
     glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 }
 
-// Atlas cells are 20x28 — size the rect so all four corners stay inside the stencil circle
-// (a w=h square equal to the diameter clips flat edges at left/right/top/bottom).
-static void GetVirtualMobileSkillIconRectInCircle(
-    float centerCx,
-    float centerCy,
-    float clipRadius,
-    float fillMul,
-    float heightMul,
-    float& outX,
-    float& outY,
-    float& outW,
-    float& outH)
-{
-    constexpr float kListIconW = 20.f;
-    constexpr float kListIconH = 28.f;
-    const float kIconAspect = kListIconW / kListIconH;
-    const float cornerRadiusMul = std::sqrt(1.f + kIconAspect * kIconAspect);
-    const float safeClipR = std::max(clipRadius, 4.f);
-    const float rimInset = std::clamp(0.98f + 0.02f * (heightMul - 1.0f), 0.97f, 0.995f);
-    const float maxHalfH = (safeClipR * std::clamp(fillMul, 0.5f, 1.1f) * rimInset)
-        / cornerRadiusMul;
-    const float hBase = maxHalfH * 2.f;
-    const float w = hBase * kIconAspect;
-    // Scale height only so head/tail of 20x28 atlas are visible; width stays inside the circle clip.
-    const float h = hBase * std::clamp(heightMul, 1.0f, 1.45f);
-
-    outW = w;
-    outH = h;
-    outX = centerCx - w * 0.5f;
-    outY = centerCy - h * 0.5f + kVirtualSkillIconVerticalShiftUi;
-}
-
-static int QueryGlStencilBits()
-{
-    static int cachedBits = -1;
-    if (cachedBits < 0)
-    {
-        GLint bits = 0;
-        glGetIntegerv(GL_STENCIL_BITS, &bits);
-        cachedBits = static_cast<int>(bits);
-    }
-    return cachedBits;
-}
-
-static bool CanUseVirtualSkillIconStencilClip()
-{
-    return QueryGlStencilBits() >= 8;
-}
-
-static void ClearStencilInUiCircle(float uiCx, float uiCy, float uiRadius)
-{
-    const float pad = 1.0f;
-    const float r = uiRadius + pad;
-    const int sx = static_cast<int>(std::floor(UiToScreenX(uiCx - r)));
-    const int sw = static_cast<int>(std::ceil(UiToScreenX(uiCx + r) - UiToScreenX(uiCx - r)));
-    const int syTop = static_cast<int>(std::floor(
-        static_cast<float>(WindowHeight) - UiToScreenY(uiCy - r)));
-    const int syBot = static_cast<int>(std::ceil(
-        static_cast<float>(WindowHeight) - UiToScreenY(uiCy + r)));
-    const int sh = std::max(syTop - syBot, 1);
-
-    glEnable(GL_SCISSOR_TEST);
-    glScissor(sx, syBot, sw, sh);
-    glClearStencil(0);
-    glClear(GL_STENCIL_BUFFER_BIT);
-    glDisable(GL_SCISSOR_TEST);
-}
-
-static void BeginVirtualSkillIconCircleClip(float uiCx, float uiCy, float uiRadius)
-{
-    if (!CanUseVirtualSkillIconStencilClip())
-    {
-        return;
-    }
-
-    // Flush batched HUD quads (skillbox, etc.) before touching stencil.
-    GL_FlushPending();
-
-    ClearStencilInUiCircle(uiCx, uiCy, uiRadius);
-
-    glEnable(GL_STENCIL_TEST);
-    glStencilMask(0xFF);
-    glStencilFunc(GL_ALWAYS, 1, 0xFF);
-    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-    glDisable(GL_BLEND);
-    DrawVirtualCircle(uiCx, uiCy, uiRadius, 0.f, 0.f, 0.f, 1.f, true);
-    // Compat layer batches glBegin geometry — flush mask while color writes are off.
-    GL_FlushPending();
-    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glStencilFunc(GL_EQUAL, 1, 0xFF);
-    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-}
-
-static void EndVirtualSkillIconCircleClip()
-{
-    if (!CanUseVirtualSkillIconStencilClip())
-    {
-        return;
-    }
-
-    GL_FlushPending();
-    glDisable(GL_STENCIL_TEST);
-    glStencilMask(0xFF);
-}
-
 static void RenderVirtualMobileSkillIconInCircle(
     int renderSkillIndex,
     float centerCx,
     float centerCy,
-    float clipRadius,
-    float fillMul,
-    float heightMul)
+    float drawRadiusUi)
 {
     if (g_pSkillList == nullptr || !IsAssignableVirtualSkillIndex(renderSkillIndex))
     {
         return;
     }
 
-    // Android-only skill circle clip (stencil + 20x28 atlas rect). Do not use
-    // RenderBitmapCircle / RenderSkillIconCircularPreview on GLES — glVertex4fv does not draw.
-    // Inventory/storage grids use legacy RenderImage/RenderBitmap; never add global square
-    // scaling there (see DrawIconButtonUvSquare for HUD skill rings).
-    BeginVirtualSkillIconCircleClip(centerCx, centerCy, clipRadius);
+    // Circular atlas fan (RenderBitmapCircleGles) — HUD combat rings only.
+    // Inventory/storage still use square RenderImage/RenderBitmap; no global square scaling.
     ConfigureVirtualSkillIconNoBlendState();
-    float iconX = 0.f;
-    float iconY = 0.f;
-    float iconW = 0.f;
-    float iconH = 0.f;
-    GetVirtualMobileSkillIconRectInCircle(
-        centerCx,
-        centerCy,
-        clipRadius,
-        fillMul,
-        heightMul,
-        iconX,
-        iconY,
-        iconW,
-        iconH);
-    g_pSkillList->RenderSkillIconPreview(
+    g_pSkillList->RenderSkillIconCircularPreview(
         renderSkillIndex,
-        iconX,
-        iconY,
-        iconW,
-        iconH);
+        centerCx,
+        centerCy + kVirtualSkillIconVerticalShiftUi,
+        drawRadiusUi);
     GL_FlushPending();
-    EndVirtualSkillIconCircleClip();
 }
 
 // Draw one 7-segment digit at screen coordinates (sx,sy) with size (sw,sh).
@@ -6246,15 +6415,11 @@ void RenderVirtualPad()
         }
         else
         {
-            const float clipRadius =
-                attackButton.radius * kVirtualAttackSkillIconClipRadiusMul;
             RenderVirtualMobileSkillIconInCircle(
                 attackSkillIndex,
                 attackButton.cx,
                 attackButton.cy,
-                clipRadius,
-                kVirtualAttackSkillIconFillMul,
-                kVirtualAttackSkillIconHeightMul);
+                attackButton.radius * kVirtualAttackSkillIconRadiusMul);
         }
         EndBitmap();
 
@@ -6310,15 +6475,11 @@ void RenderVirtualPad()
                 continue;
             }
 
-            const float clipRadius =
-                button.radius * kVirtualSecondarySkillIconClipRadiusMul;
             RenderVirtualMobileSkillIconInCircle(
                 renderSkillIndex,
                 button.cx,
                 button.cy,
-                clipRadius,
-                kVirtualSecondarySkillIconFillMul,
-                kVirtualSecondarySkillIconHeightMul);
+                button.radius * kVirtualSecondarySkillIconRadiusMul);
         }
         EndBitmap();
         GL_FlushPending();
@@ -6576,6 +6737,86 @@ void RenderVirtualPad()
 
 } // namespace
 
+void TakumiAndroid_ClearLegacySkillPickerArmState()
+{
+    g_legacyPickerArmedSkillIndex = -1;
+}
+
+void MU_Android_BeginWorldSwipeWalk(const SDL_FingerID fingerId, const float uiX, const float uiY)
+{
+    g_virtualSwipeWalk = ActiveVirtualSwipeWalk{};
+    if (!IsWorldSwipeWalkStartEligible(uiX, uiY))
+    {
+        return;
+    }
+
+    g_virtualSwipeWalk.fingerId = fingerId;
+    g_virtualSwipeWalk.anchorUiX = uiX;
+    g_virtualSwipeWalk.anchorUiY = uiY;
+}
+
+bool MU_Android_UpdateWorldSwipeWalk(const SDL_FingerID fingerId, const float uiX, const float uiY)
+{
+    if (g_virtualSwipeWalk.fingerId != fingerId)
+    {
+        return false;
+    }
+
+    const float dx = uiX - g_virtualSwipeWalk.anchorUiX;
+    const float dy = uiY - g_virtualSwipeWalk.anchorUiY;
+    const float dist = std::sqrt((dx * dx) + (dy * dy));
+
+    if (!g_virtualSwipeWalk.engaged)
+    {
+        if (dist < kVirtualSwipeWalkEngageMinUi)
+        {
+            return false;
+        }
+
+        g_virtualSwipeWalk.engaged = true;
+    }
+
+    float dirX = 0.0f;
+    float dirY = 0.0f;
+    if (dist > 0.0001f)
+    {
+        const float invDist = 1.0f / dist;
+        dirX = dx * invDist;
+        dirY = -dy * invDist;
+    }
+
+    const float activeDist = std::max(dist - kVirtualSwipeWalkDeadZoneUi, 0.0f);
+    const float activeRange = std::max(kVirtualSwipeWalkMaxDistUi - kVirtualSwipeWalkDeadZoneUi, 1.0f);
+    const float strength = std::clamp(activeDist / activeRange, 0.0f, 1.0f);
+
+    g_virtualSwipeWalk.moveDirX = dirX;
+    g_virtualSwipeWalk.moveDirY = dirY;
+    g_virtualSwipeWalk.moveStrength = strength;
+    return true;
+}
+
+bool MU_Android_EndWorldSwipeWalk(const SDL_FingerID fingerId)
+{
+    if (g_virtualSwipeWalk.fingerId != fingerId)
+    {
+        return false;
+    }
+
+    const bool wasEngaged = g_virtualSwipeWalk.engaged;
+    g_virtualSwipeWalk = ActiveVirtualSwipeWalk{};
+    if (wasEngaged)
+    {
+        ReleaseVirtualJoystickMouseDrive();
+    }
+
+    return wasEngaged;
+}
+
+bool MU_Android_IsWorldSwipeWalkEngaged()
+{
+    return g_virtualSwipeWalk.engaged && g_virtualSwipeWalk.moveStrength > 0.001f;
+}
+
 bool MU_AndroidIsVirtualJoystickDrivingMouse()
 {
     return g_virtualJoystickDrivingMouse;
@@ -6593,6 +6834,11 @@ void MU_Android_StopJoystickMovementForCombat()
 
 bool MU_AndroidShouldSuppressCombatTargeting()
 {
+    if (MU_Android_IsWorldSwipeWalkEngaged())
+    {
+        return true;
+    }
+
     return g_virtualJoystick.fingerId != static_cast<SDL_FingerID>(-1)
         && g_virtualJoystick.moveStrength > kVirtualJoystickCombatMoveStrength;
 }
@@ -8002,13 +8248,25 @@ static void HandleSDLEvent(const SDL_Event& ev, int& screenW, int& screenH)
         g_iNoMouseTime = 0;
         UpdateMouseFromTouch(ev.tfinger, screenW, screenH);
         TakumiAndroid_HandleInventoryTouchDown(ev.tfinger);
-        if (g_pSkillList != nullptr
-            && g_pSkillList->IsSkillPickerOpen()
-            && !IsLegacyMainHud())
+        if (g_pSkillList != nullptr && g_pSkillList->IsSkillPickerOpen())
         {
             float pickerUiX = 0.0f;
             float pickerUiY = 0.0f;
             TouchToVirtualUi(ev.tfinger, pickerUiX, pickerUiY);
+            if (IsLegacyMainHud())
+            {
+                if (g_pSkillList->HitTestAndroidSkillPickerPanel(pickerUiX, pickerUiY))
+                {
+                    HandleLegacySkillPickerFingerDown(ev.tfinger);
+                    break;
+                }
+
+                CloseVirtualSkillPickerPopup();
+                ClearVirtualSkillButtonPendingTouch();
+                ClearLegacySkillHotBarPendingTouch();
+                break;
+            }
+
             if (g_pSkillList->HitTestAndroidSkillPickerPanel(pickerUiX, pickerUiY))
             {
                 HandleVirtualPickerFingerDown(ev.tfinger);
@@ -8090,14 +8348,19 @@ static void HandleSDLEvent(const SDL_Event& ev, int& screenW, int& screenH)
 
     case SDL_FINGERMOTION:
         g_seenFingerInput = true;
-        if (g_pSkillList != nullptr
-            && g_pSkillList->IsSkillPickerOpen()
-            && !IsLegacyMainHud())
+        if (g_pSkillList != nullptr && g_pSkillList->IsSkillPickerOpen())
         {
             float pickerUiX = 0.0f;
             float pickerUiY = 0.0f;
             TouchToVirtualUi(ev.tfinger, pickerUiX, pickerUiY);
-            if (g_pSkillList->HitTestAndroidSkillPickerPanel(pickerUiX, pickerUiY))
+            if (IsLegacyMainHud())
+            {
+                if (HandleLegacySkillPickerFingerMotion(ev.tfinger))
+                {
+                    break;
+                }
+            }
+            else if (g_pSkillList->HitTestAndroidSkillPickerPanel(pickerUiX, pickerUiY))
             {
                 HandleVirtualPickerFingerMotion(ev.tfinger);
                 break;
@@ -8128,10 +8391,28 @@ static void HandleSDLEvent(const SDL_Event& ev, int& screenW, int& screenH)
         g_seenFingerInput = true;
         g_iNoMouseTime = 0;
         UpdateMouseFromTouch(ev.tfinger, screenW, screenH);
-        if (g_pSkillList != nullptr
-            && g_pSkillList->IsSkillPickerOpen()
-            && !IsLegacyMainHud())
+        if (g_pSkillList != nullptr && g_pSkillList->IsSkillPickerOpen())
         {
+            if (IsLegacyMainHud())
+            {
+                if (HandleLegacySkillPickerFingerUp(ev.tfinger))
+                {
+                    if (ev.tfinger.fingerId == g_primaryTouchFinger)
+                    {
+                        MouseLButtonPush = false;
+                        MouseLButtonPop = false;
+                        MouseLButton = false;
+                        g_primaryTouchFinger = -1;
+                    }
+                    break;
+                }
+
+                CloseVirtualSkillPickerPopup();
+                ClearVirtualSkillButtonPendingTouch();
+                ClearLegacySkillHotBarPendingTouch();
+                break;
+            }
+
             if (HandleVirtualPickerFingerUp(ev.tfinger))
             {
                 break;

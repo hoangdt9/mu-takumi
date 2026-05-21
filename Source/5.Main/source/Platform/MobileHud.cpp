@@ -206,11 +206,22 @@ bool MU_MobileIsSidePanelOpen()
         || g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_CHARACTER);
 }
 
+bool MU_MobileIsMoveMapModalOpen()
+{
+    return g_pNewUISystem != nullptr
+        && g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_MOVEMAP);
+}
+
 bool MU_MobileShouldShowCombatCluster()
 {
     if (!MU_MobileIsModernMobileHudEnabled())
     {
         return true;
+    }
+
+    if (MU_MobileIsMoveMapModalOpen())
+    {
+        return false;
     }
 
     return !MU_MobileIsSidePanelOpen();
@@ -273,6 +284,13 @@ bool MU_MobileHitTestBlockingOverlay(float uiX, float uiY)
     if (!MU_MobileIsModernMobileHudEnabled())
     {
         return false;
+    }
+
+    (void)uiX;
+    (void)uiY;
+    if (MU_MobileIsMoveMapModalOpen())
+    {
+        return true;
     }
 
     if (MU_MobileHitTestMoveMapPanel(uiX, uiY))

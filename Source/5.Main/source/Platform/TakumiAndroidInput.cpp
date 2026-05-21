@@ -256,6 +256,15 @@ bool TakumiAndroid_IsHudBlockingWorldGesture(float uiX, float uiY)
 
 bool IsWorldSkillGestureBlockedByUiAt(const float uiX, const float uiY)
 {
+    (void)uiX;
+    (void)uiY;
+
+    if (g_pNewUISystem != nullptr
+        && g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_MOVEMAP))
+    {
+        return true;
+    }
+
     if (g_MessageBox != nullptr && !g_MessageBox->IsEmpty())
     {
         return true;

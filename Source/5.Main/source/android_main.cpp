@@ -2648,7 +2648,12 @@ void ReleaseVirtualJoystickMouseDrive()
     g_virtualJoystickDrivingMouse = false;
     MouseLButtonPush = false;
     MouseLButton = false;
-    MouseLButtonPop = false;
+    const bool moveMapModalOpen = g_pNewUISystem != nullptr
+        && g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_MOVEMAP);
+    if (!moveMapModalOpen)
+    {
+        MouseLButtonPop = false;
+    }
     CancelHeroClickMove(true);
 }
 
@@ -4373,6 +4378,13 @@ bool HandleVirtualFingerDown(const SDL_TouchFingerEvent& touch)
         return false;
     }
 
+    // Move-map modal: only Season3B grid handles input; block joystick/skills/HUD below.
+    if (g_pNewUISystem != nullptr
+        && g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_MOVEMAP))
+    {
+        return false;
+    }
+
     // Classic HUD: window menu (Hệ thống, Hướng dẫn, …) uses CheckMouseIn + MouseLButton*.
     if (IsLegacyMainHud()
         && g_pNewUISystem != nullptr
@@ -4637,6 +4649,18 @@ void UpdateVirtualPadHolds()
 {
     if (!IsVirtualPadAvailable())
     {
+        for (int i = 0; i < static_cast<int>(g_activeVirtualTouches.size()); ++i)
+        {
+            ClearActiveVirtualTouchSlot(i);
+        }
+        ClearVirtualJoystick();
+        return;
+    }
+
+    if (g_pNewUISystem != nullptr
+        && g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_MOVEMAP))
+    {
+        ReleaseVirtualJoystickMouseDrive();
         for (int i = 0; i < static_cast<int>(g_activeVirtualTouches.size()); ++i)
         {
             ClearActiveVirtualTouchSlot(i);
@@ -6108,6 +6132,12 @@ void HideLegacyWindowMenuForModernHud()
 
 void RenderVirtualPad()
 {
+    if (g_pNewUISystem != nullptr
+        && g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_MOVEMAP))
+    {
+        return;
+    }
+
     if (!IsVirtualPadAvailable())
     {
         static uint32_t s_lastUnavailableLog = 0;
@@ -7995,7 +8025,13 @@ static void HandleSDLEvent(const SDL_Event& ev, int& screenW, int& screenH)
         {
             break;
         }
-        const bool worldSkillFinger = TakumiAndroid_HandleWorldSkillTouchDown(ev.tfinger);
+        const bool moveMapModalOpen = g_pNewUISystem != nullptr
+            && g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_MOVEMAP);
+        bool worldSkillFinger = false;
+        if (!moveMapModalOpen)
+        {
+            worldSkillFinger = TakumiAndroid_HandleWorldSkillTouchDown(ev.tfinger);
+        }
         if (HandleVirtualFingerDown(ev.tfinger))
         {
             break;
@@ -9266,7 +9302,11 @@ static void RunAndroidGameFrame()
     SyncAndroidDrawableSizeFromSokol("frame");
 
     MouseLButtonDBClick = false;
-    if (MouseLButtonPop && ((g_iMousePopPosition_x != MouseX) || (g_iMousePopPosition_y != MouseY)))
+    const bool moveMapModalOpen = g_pNewUISystem != nullptr
+        && g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_MOVEMAP);
+    if (!moveMapModalOpen
+        && MouseLButtonPop
+        && ((g_iMousePopPosition_x != MouseX) || (g_iMousePopPosition_y != MouseY)))
     {
         MouseLButtonPop = false;
     }
@@ -10148,9 +10188,14 @@ int SDL_main(int argc, char* argv[])
     {
         // Reset per-frame transient mouse state
         MouseLButtonDBClick = false;
-        if (MouseLButtonPop &&
-            (g_iMousePopPosition_x != MouseX || g_iMousePopPosition_y != MouseY))
+        const bool moveMapModalOpen = g_pNewUISystem != nullptr
+            && g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_MOVEMAP);
+        if (!moveMapModalOpen
+            && MouseLButtonPop
+            && (g_iMousePopPosition_x != MouseX || g_iMousePopPosition_y != MouseY))
+        {
             MouseLButtonPop = false;
+        }
 
         // Process all pending events
         while (SDL_PollEvent(&event))

@@ -67,6 +67,7 @@ namespace
 	const int kAndroidMoveMapCloseButtonSize = 22;
 	const int kAndroidMoveMapPageButtonWidth = 44;
 	const int kAndroidMoveMapPageButtonHeight = 22;
+	const float kAndroidMoveMapBackdropAlpha = 0.72f;
 
 	int GetAndroidMoveMapItemsPerPage()
 	{
@@ -179,6 +180,21 @@ namespace
 	bool IsAndroidMoveMapGridMode()
 	{
 		return true;
+	}
+
+	bool AndroidMoveMapLButtonPressed()
+	{
+		return MouseLButtonPush || SEASON3B::IsPress(VK_LBUTTON);
+	}
+
+	bool AndroidMoveMapLButtonReleased()
+	{
+		return MouseLButtonPop || SEASON3B::IsRelease(VK_LBUTTON);
+	}
+
+	void AndroidMoveMapConsumeLButtonRelease()
+	{
+		MouseLButtonPop = false;
 	}
 #else
 	bool IsAndroidMoveMapGridMode()
@@ -643,9 +659,10 @@ bool SEASON3B::CNewUIMoveCommandWindow::BtnProcess()
 			int closeW = 0;
 			int closeH = 0;
 			GetAndroidMoveMapCloseButtonRect(m_Pos.x, m_Pos.y, m_MapNameUISize.x, &closeX, &closeY, &closeW, &closeH);
-			if (SEASON3B::IsRelease(VK_LBUTTON) && CheckMouseIn(closeX, closeY, closeW, closeH))
+			if (AndroidMoveMapLButtonReleased() && CheckMouseIn(closeX, closeY, closeW, closeH))
 			{
 				m_AndroidMoveMapPressedOrder = -1;
+				AndroidMoveMapConsumeLButtonRelease();
 				g_pNewUISystem->Hide(SEASON3B::INTERFACE_MOVEMAP);
 				return true;
 			}
@@ -655,9 +672,10 @@ bool SEASON3B::CNewUIMoveCommandWindow::BtnProcess()
 			int prevW = 0;
 			int prevH = 0;
 			GetAndroidMoveMapPageButtonRect(m_Pos.x, m_Pos.y, m_MapNameUISize.x, m_MapNameUISize.y, false, &prevX, &prevY, &prevW, &prevH);
-			if (m_iCurPage > 1 && SEASON3B::IsRelease(VK_LBUTTON) && CheckMouseIn(prevX, prevY, prevW, prevH))
+			if (m_iCurPage > 1 && AndroidMoveMapLButtonReleased() && CheckMouseIn(prevX, prevY, prevW, prevH))
 			{
 				m_AndroidMoveMapPressedOrder = -1;
+				AndroidMoveMapConsumeLButtonRelease();
 				--m_iCurPage;
 				UpdateScrolling();
 				SettingCanMoveMap();
@@ -669,9 +687,10 @@ bool SEASON3B::CNewUIMoveCommandWindow::BtnProcess()
 			int nextW = 0;
 			int nextH = 0;
 			GetAndroidMoveMapPageButtonRect(m_Pos.x, m_Pos.y, m_MapNameUISize.x, m_MapNameUISize.y, true, &nextX, &nextY, &nextW, &nextH);
-			if (m_iCurPage < m_iNumPage && SEASON3B::IsRelease(VK_LBUTTON) && CheckMouseIn(nextX, nextY, nextW, nextH))
+			if (m_iCurPage < m_iNumPage && AndroidMoveMapLButtonReleased() && CheckMouseIn(nextX, nextY, nextW, nextH))
 			{
 				m_AndroidMoveMapPressedOrder = -1;
+				AndroidMoveMapConsumeLButtonRelease();
 				++m_iCurPage;
 				UpdateScrolling();
 				SettingCanMoveMap();
@@ -707,7 +726,7 @@ bool SEASON3B::CNewUIMoveCommandWindow::BtnProcess()
 					{
 						(*li)->_bSelected = true;
 
-						if (SEASON3B::IsPress(VK_LBUTTON))
+						if (AndroidMoveMapLButtonPressed())
 						{
 							m_AndroidMoveMapPressedOrder = order;
 						}
@@ -715,10 +734,11 @@ bool SEASON3B::CNewUIMoveCommandWindow::BtnProcess()
 				}
 			}
 
-			if (SEASON3B::IsRelease(VK_LBUTTON) && m_AndroidMoveMapPressedOrder >= 0)
+			if (AndroidMoveMapLButtonReleased() && m_AndroidMoveMapPressedOrder >= 0)
 			{
 				const int pressedOrder = m_AndroidMoveMapPressedOrder;
 				m_AndroidMoveMapPressedOrder = -1;
+				AndroidMoveMapConsumeLButtonRelease();
 				int ord2 = 0;
 				for (std::list<CMoveCommandData::MOVEINFODATA*>::iterator lj = m_listMoveInfoData.begin();
 					lj != m_listMoveInfoData.end();
@@ -744,10 +764,13 @@ bool SEASON3B::CNewUIMoveCommandWindow::BtnProcess()
 			}
 		}
 
-		if (SEASON3B::IsRelease(VK_LBUTTON)
+		if (AndroidMoveMapLButtonReleased()
 			&& !CheckMouseIn(m_Pos.x, m_Pos.y, m_MapNameUISize.x, m_MapNameUISize.y))
 		{
 			m_AndroidMoveMapPressedOrder = -1;
+			AndroidMoveMapConsumeLButtonRelease();
+			g_pNewUISystem->Hide(SEASON3B::INTERFACE_MOVEMAP);
+			return true;
 		}
 
 		return false;
@@ -891,10 +914,8 @@ bool SEASON3B::CNewUIMoveCommandWindow::UpdateMouseEvent()
 #if defined(__ANDROID__) || defined(MU_IOS)
 	if (IsAndroidMoveMapGridMode())
 	{
-		if (CheckMouseIn(m_Pos.x, m_Pos.y, m_MapNameUISize.x, m_MapNameUISize.y))
-			return false;
-
-		return true;
+		// Full-screen modal: swallow every touch; only BtnProcess handles panel controls.
+		return false;
 	}
 #endif
 
@@ -1252,6 +1273,10 @@ bool SEASON3B::CNewUIMoveCommandWindow::Render()
 	if (IsAndroidMoveMapGridMode())
 	{
 		EnableAlphaBlend3();
+		glColor4f(0.f, 0.f, 0.f, kAndroidMoveMapBackdropAlpha);
+		RenderColor(0.f, 0.f, 640.f, 480.f);
+		EndRenderColor();
+		EnableAlphaTest();
 		glColor4f(1.f, 1.f, 1.f, 1.f);
 		SettingCanMoveMap();
 		RenderFrame();
@@ -1474,7 +1499,8 @@ void SEASON3B::CNewUIMoveCommandWindow::ClosingProcess()
 
 float SEASON3B::CNewUIMoveCommandWindow::GetLayerDepth()
 {
-	return 8.3f;
+	// Above window menu (10.4) and message boxes (10.7); virtual pad is not drawn while open.
+	return 12.0f;
 }
 
 void SEASON3B::CNewUIMoveCommandWindow::LoadImages()

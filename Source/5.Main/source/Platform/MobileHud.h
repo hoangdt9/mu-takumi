@@ -45,6 +45,9 @@ int MU_MobileGetSidePanelAnchorY(int panelHeight);
 bool MU_MobileIsSidePanelOpen();
 /** Modern HUD: show attack / skill / potion cluster only when neither C nor V is open. */
 bool MU_MobileShouldShowCombatCluster();
+
+/** Map list modal (Move / M) is open. */
+bool MU_MobileIsMoveMapModalOpen();
 int MU_MobileGetSidePanelBottomY();
 bool MU_MobileHitTestSidePanel(float uiX, float uiY);
 

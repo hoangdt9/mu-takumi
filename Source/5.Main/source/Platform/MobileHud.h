@@ -42,6 +42,9 @@ MU_MobileMinimapClusterLayout MU_MobileGetMinimapClusterLayout();
 /** Modern HUD (no bottom bar): vertical center for side panels (C/V), keep size. */
 int MU_MobileGetSidePanelAnchorY(int panelHeight);
 
+/** Re-apply centered Y (and C+V horizontal layout) after Show/Hide/Toggle. */
+void MU_MobileRefreshSidePanelPositions();
+
 bool MU_MobileIsSidePanelOpen();
 /** Modern HUD: show attack / skill / potion cluster only when neither C nor V is open. */
 bool MU_MobileShouldShowCombatCluster();

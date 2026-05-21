@@ -221,36 +221,6 @@ int MU_MobileGetSidePanelBottomY()
     return MU_MobileGetSidePanelAnchorY(kPanelH) + kPanelH;
 }
 
-void MU_MobileRefreshSidePanelPositions()
-{
-    if (!MU_MobileIsModernMobileHudEnabled() || g_pNewUISystem == nullptr)
-    {
-        return;
-    }
-
-    constexpr int kPanelW = 190;
-    const bool characterOpen =
-        g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_CHARACTER);
-    const bool inventoryOpen =
-        g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_INVENTORY);
-
-    if (characterOpen && g_pCharacterInfoWindow != nullptr)
-    {
-        g_pCharacterInfoWindow->SetPos(640 - kPanelW, 0);
-    }
-
-    if (inventoryOpen && g_pMyInventory != nullptr)
-    {
-        const int inventoryX = characterOpen ? (640 - kPanelW * 2) : (640 - kPanelW);
-        g_pMyInventory->SetPos(inventoryX, 0);
-        if (g_pMyInventoryExt != nullptr
-            && g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_ExpandInventory))
-        {
-            g_pMyInventoryExt->SetPos(g_pMyInventory->GetPos().x - kPanelW, 0);
-        }
-    }
-}
-
 bool MU_MobileHitTestMinimapCluster(float uiX, float uiY)
 {
     if (!MU_MobileIsModernMobileHudEnabled())

@@ -4229,7 +4229,7 @@ bool SEASON3B::CNewUISkillList::RenderMuHelper(float X, float Y, int SkillSelect
 
 	if (m_bRenderSkillInfo == true && m_pNewUI3DRenderMng)
 	{
-		m_pNewUI3DRenderMng->RenderUI2DEffect(ITEMHOTKEYNUMBER_CAMERA_Z_ORDER, UI2DEffectCallback, this, 0, 0);
+		m_pNewUI3DRenderMng->RenderUI2DEffect(INVENTORY_CAMERA_Z_ORDER, UI2DEffectCallback, this, 0, 0);
 		m_bRenderSkillInfo = false;
 
 	}
@@ -4373,7 +4373,7 @@ bool SEASON3B::CNewUISkillList::Render()
 
 	if (m_bRenderSkillInfo == true && m_pNewUI3DRenderMng)
 	{
-		m_pNewUI3DRenderMng->RenderUI2DEffect(ITEMHOTKEYNUMBER_CAMERA_Z_ORDER, UI2DEffectCallback, this, 0, 0);
+		m_pNewUI3DRenderMng->RenderUI2DEffect(INVENTORY_CAMERA_Z_ORDER, UI2DEffectCallback, this, 0, 0);
 		m_bRenderSkillInfo = false;
 
 	}

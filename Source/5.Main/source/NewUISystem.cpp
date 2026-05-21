@@ -23,7 +23,6 @@ extern int DisplayWinExt;
 extern int DisplayWinReal;
 
 #if defined(__ANDROID__) || defined(MU_IOS)
-#include "Platform/MobileHud.h"
 extern bool AndroidGetMoveMapWindowPosition(int panelWidth, int panelHeight, int* outX, int* outY);
 #endif
 
@@ -692,20 +691,11 @@ void SEASON3B::CNewUISystem::Show(DWORD dwKey)
 				g_pMyInventory->SetPos((640-(190*2)), 0);
 				g_pMyInventoryExt->SetPos(g_pMyInventory->GetPos().x - 190, 0);
 			}
-#if defined(__ANDROID__) || defined(MU_IOS)
-			else
-			{
-				g_pMyInventory->SetPos(640 - 190, 0);
-			}
-#endif
 			if(IsVisible(SEASON3B::INTERFACE_MYQUEST))
 			{
 				Hide(SEASON3B::INTERFACE_MYQUEST);
 			}
 			g_pMyInventory->OpenningProcess();
-#if defined(__ANDROID__) || defined(MU_IOS)
-			MU_MobileRefreshSidePanelPositions();
-#endif
 		}
 		else if(dwKey == SEASON3B::INTERFACE_CHARACTER)
 		{
@@ -724,9 +714,6 @@ void SEASON3B::CNewUISystem::Show(DWORD dwKey)
 				g_pMyQuestInfoWindow->SetPos(640-190*2, 0);
 			}
 			g_pCharacterInfoWindow->OpenningProcess();
-#if defined(__ANDROID__) || defined(MU_IOS)
-			MU_MobileRefreshSidePanelPositions();
-#endif
 		}
 		else if( dwKey == SEASON3B::INTERFACE_PET )
 		{
@@ -1159,9 +1146,6 @@ void SEASON3B::CNewUISystem::Hide(DWORD dwKey)
 				g_pMyInventory->SetPos(640-190, 0);
 				g_pMyInventoryExt->SetPos(g_pMyInventory->GetPos().x - 190, 0);
 			}
-#if defined(__ANDROID__) || defined(MU_IOS)
-			MU_MobileRefreshSidePanelPositions();
-#endif
 			if(IsVisible((SEASON3B::INTERFACE_PET)))
 			{
 				Hide(SEASON3B::INTERFACE_PET);
@@ -1246,9 +1230,6 @@ void SEASON3B::CNewUISystem::Hide(DWORD dwKey)
 
 			g_pMyInventory->SetPos(640-190, 0);
 			g_pMyInventoryExt->SetPos(g_pMyInventory->GetPos().x - 190, 0);
-#if defined(__ANDROID__) || defined(MU_IOS)
-			MU_MobileRefreshSidePanelPositions();
-#endif
 			g_pMyInventory->ClosingProcess();
 		}
 		else if (dwKey == SEASON3B::INTERFACE_MIXINVENTORY)

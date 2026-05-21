@@ -156,12 +156,6 @@ void SEASON3B::CNewUICharacterInfoWindow::SetPos(int x, int y)
 #endif
 	m_Pos.x = x;
 	m_Pos.y = y + FixYSetPage;
-#if defined(__ANDROID__) || defined(MU_IOS)
-	if (MU_MobileIsModernMobileHudEnabled())
-	{
-		SetButtonInfo();
-	}
-#endif
 }
 
 bool SEASON3B::CNewUICharacterInfoWindow::UpdateMouseEvent()
@@ -1870,9 +1864,6 @@ void SEASON3B::CNewUICharacterInfoWindow::UnloadImages()
 
 void SEASON3B::CNewUICharacterInfoWindow::OpenningProcess()
 {
-#if defined(__ANDROID__) || defined(MU_IOS)
-	MU_MobileRefreshSidePanelPositions();
-#endif
 	ResetEquipmentLevel();
 #if (OnOffMasterSkill) 
 	if (gCharacterManager.IsMasterLevel(Hero->Class) == true

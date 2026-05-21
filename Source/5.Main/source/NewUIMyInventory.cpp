@@ -869,9 +869,6 @@ bool CNewUIMyInventory::IsVisible() const
 
 void CNewUIMyInventory::OpenningProcess()
 {
-#if defined(__ANDROID__) || defined(MU_IOS)
-	MU_MobileRefreshSidePanelPositions();
-#endif
 	SetRepairMode(false);
 
 	m_MyShopMode = MYSHOP_MODE_OPEN;

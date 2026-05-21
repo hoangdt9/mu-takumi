@@ -4349,13 +4349,6 @@ bool HandleVirtualFingerDown(const SDL_TouchFingerEvent& touch)
         return false;
     }
 
-    // Map list modal: only NewUI move-map handles touches; no joystick/skills/utility.
-    if (g_pNewUISystem != nullptr
-        && g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_MOVEMAP))
-    {
-        return false;
-    }
-
     // Classic HUD: window menu (Hệ thống, Hướng dẫn, …) uses CheckMouseIn + MouseLButton*.
     if (IsLegacyMainHud()
         && g_pNewUISystem != nullptr
@@ -4625,13 +4618,6 @@ void UpdateVirtualPadHolds()
             ClearActiveVirtualTouchSlot(i);
         }
         ClearVirtualJoystick();
-        return;
-    }
-
-    if (g_pNewUISystem != nullptr
-        && g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_MOVEMAP))
-    {
-        ReleaseVirtualJoystickMouseDrive();
         return;
     }
 
@@ -6097,12 +6083,6 @@ void HideLegacyWindowMenuForModernHud()
 
 void RenderVirtualPad()
 {
-    if (g_pNewUISystem != nullptr
-        && g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_MOVEMAP))
-    {
-        return;
-    }
-
     if (!IsVirtualPadAvailable())
     {
         static uint32_t s_lastUnavailableLog = 0;

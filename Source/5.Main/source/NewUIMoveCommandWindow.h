@@ -109,10 +109,6 @@ namespace SEASON3B
 		DWORD GetMoveCommandKey();
 		int GetWindowWidth() const { return m_MapNameUISize.x; }
 		int GetWindowHeight() const { return m_MapNameUISize.y; }
-		const POINT& GetPanelPos() const { return m_Pos; }
-#if defined(__ANDROID__) || defined(MU_IOS)
-		bool HitTestPanel(float uiX, float uiY) const;
-#endif
 
 		BOOL IsTheMapInDifferentServer(const int iFromMapIndex, const int iToMapIndex) const;
 		int GetMapIndexFromMovereq(const char *pszMapName);

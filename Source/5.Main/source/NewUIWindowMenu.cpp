@@ -145,14 +145,31 @@ bool SEASON3B::CNewUIWindowMenu::ActivateMenuItem(int itemIndex)
 	}
 }
 
+#if defined(__ANDROID__) || defined(MU_IOS)
+namespace
+{
+	bool WindowMenuLButtonReleased()
+	{
+		return MouseLButtonPop || SEASON3B::IsRelease(VK_LBUTTON);
+	}
+}
+#endif
+
 bool SEASON3B::CNewUIWindowMenu::UpdateMouseEvent()
 {
 	m_iSelectedIndex = HitTestMenuItem(static_cast<float>(MouseX), static_cast<float>(MouseY));
 
+#if defined(__ANDROID__) || defined(MU_IOS)
+	if (m_iSelectedIndex > -1 && WindowMenuLButtonReleased())
+#else
 	if (m_iSelectedIndex > -1 && SEASON3B::IsRelease(VK_LBUTTON))
+#endif
 	{
 		if (ActivateMenuItem(m_iSelectedIndex))
 		{
+#if defined(__ANDROID__) || defined(MU_IOS)
+			MouseLButtonPop = false;
+#endif
 			PlayBuffer(SOUND_CLICK01);
 			return false;
 		}
@@ -309,6 +326,7 @@ bool SEASON3B::CNewUIWindowMenu::TryHandleAndroidTouchRelease(float uiX, float u
 		return false;
 	}
 
+	MouseLButtonPop = false;
 	PlayBuffer(SOUND_CLICK01);
 	return true;
 }

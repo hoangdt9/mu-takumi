@@ -265,6 +265,12 @@ bool IsWorldSkillGestureBlockedByUiAt(const float uiX, const float uiY)
         return true;
     }
 
+    if (g_pNewUISystem != nullptr
+        && g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_WINDOW_MENU))
+    {
+        return true;
+    }
+
     if (g_MessageBox != nullptr && !g_MessageBox->IsEmpty())
     {
         return true;

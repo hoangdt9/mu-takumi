@@ -4385,12 +4385,10 @@ bool HandleVirtualFingerDown(const SDL_TouchFingerEvent& touch)
         return false;
     }
 
-    // Classic HUD: window menu (Hệ thống, Hướng dẫn, …) uses CheckMouseIn + MouseLButton*.
+    // Classic HUD window menu: route all touches to MouseLButton* / TryHandleAndroidTouchRelease.
     if (IsLegacyMainHud()
         && g_pNewUISystem != nullptr
-        && g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_WINDOW_MENU)
-        && g_pWindowMenu != nullptr
-        && g_pWindowMenu->HitTestPanel(uiX, uiY))
+        && g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_WINDOW_MENU))
     {
         return false;
     }
@@ -8027,8 +8025,11 @@ static void HandleSDLEvent(const SDL_Event& ev, int& screenW, int& screenH)
         }
         const bool moveMapModalOpen = g_pNewUISystem != nullptr
             && g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_MOVEMAP);
+        const bool windowMenuOpen = IsLegacyMainHud()
+            && g_pNewUISystem != nullptr
+            && g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_WINDOW_MENU);
         bool worldSkillFinger = false;
-        if (!moveMapModalOpen)
+        if (!moveMapModalOpen && !windowMenuOpen)
         {
             worldSkillFinger = TakumiAndroid_HandleWorldSkillTouchDown(ev.tfinger);
         }
@@ -8154,6 +8155,26 @@ static void HandleSDLEvent(const SDL_Event& ev, int& screenW, int& screenH)
             }
             TakumiAndroid_ProcessInventoryUseFrame();
             break;
+        }
+        if (IsLegacyMainHud()
+            && g_pNewUISystem != nullptr
+            && g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_WINDOW_MENU)
+            && g_pWindowMenu != nullptr)
+        {
+            float menuUiX = 0.0f;
+            float menuUiY = 0.0f;
+            TouchToVirtualUi(ev.tfinger, menuUiX, menuUiY);
+            if (g_pWindowMenu->TryHandleAndroidTouchRelease(menuUiX, menuUiY))
+            {
+                if (ev.tfinger.fingerId == g_primaryTouchFinger)
+                {
+                    MouseLButtonPush = false;
+                    MouseLButtonPop = false;
+                    MouseLButton = false;
+                    g_primaryTouchFinger = -1;
+                }
+                break;
+            }
         }
         if (TakumiAndroid_HandleWorldSkillTouchUp(ev.tfinger))
         {

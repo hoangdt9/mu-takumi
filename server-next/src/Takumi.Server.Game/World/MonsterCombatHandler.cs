@@ -92,7 +92,8 @@ public static class MonsterCombatHandler
                     onRosterDirty,
                     skillDamageOverride: useStat ? skillDmg : null,
                     skillDamageTypeOverride: useStat ? skillDmgType : null,
-                    hitRangeOverride: hitRange)
+                    hitRangeOverride: hitRange,
+                    skillIdForMitigation: targetedSkillId)
                 .ConfigureAwait(false);
 
             Console.WriteLine(
@@ -277,23 +278,59 @@ public static class MonsterCombatHandler
                     accountId,
                     onRosterDirty,
                     skillDamageOverride: useStatDamage ? rolledSkillDamage : null,
-                    skillDamageTypeOverride: useStatDamage ? rolledSkillDamageType : null)
+                    skillDamageTypeOverride: useStatDamage ? rolledSkillDamageType : null,
+                    skillIdForMitigation: skillId)
                 .ConfigureAwait(false);
             hitCount++;
         }
 
         var hitMode = corridor ? 2 : directional ? 1 : 0;
+        var nearMiss = 0;
+        var closestOutside = -1;
+        if (hitCount == 0)
+        {
+            foreach (var mob in MapMonsterWorld.GetMonstersOnMap(mapId))
+            {
+                if (!mob.IsAlive || mob.IsNpc)
+                {
+                    continue;
+                }
+
+                var cheb = Math.Max(Math.Abs(mob.X - centerX), Math.Abs(mob.Y - centerY));
+                if (cheb <= range)
+                {
+                    continue;
+                }
+
+                if (cheb <= range + 12)
+                {
+                    nearMiss++;
+                }
+
+                if (closestOutside < 0 || cheb < closestOutside)
+                {
+                    closestOutside = cheb;
+                }
+            }
+        }
+
         Console.WriteLine(
-            "[{0}] [m9] magic continue skill={1} center=({2},{3}) range={4} hits={5} mode={6} angle={7} statDmg={8}",
+            hitCount == 0 && nearMiss > 0
+                ? "[{0}] [m9] magic continue skill={1} center=({2},{3}) range={4} hits=0 mode={5} angle={6} statDmg={7} near={8} closestTile={9} player=({10},{11})"
+                : "[{0}] [m9] magic continue skill={1} center=({2},{3}) range={4} hits={5} mode={6} angle={7} statDmg={8}",
             remote,
             skillId,
             centerX,
             centerY,
             range,
-            hitCount,
+            hitCount == 0 && nearMiss > 0 ? 0 : hitCount,
             hitMode,
             facingWire,
-            useStatDamage ? rolledSkillDamage : -1);
+            useStatDamage ? rolledSkillDamage : -1,
+            hitCount == 0 && nearMiss > 0 ? nearMiss : 0,
+            hitCount == 0 && nearMiss > 0 ? closestOutside : 0,
+            hitCount == 0 && nearMiss > 0 ? playerX : (byte)0,
+            hitCount == 0 && nearMiss > 0 ? playerY : (byte)0);
     }
 
     static async Task HandleMagicAttackAsync(
@@ -458,6 +495,25 @@ public static class MonsterCombatHandler
             mapId);
     }
 
+    static bool TryRollMeleeStatDamage(
+        GameRosterEntry player,
+        Guid? presenceSessionId,
+        out int damage,
+        out byte damageType)
+    {
+        var effects = PlayerCombatEffectSession.GetOrEmpty(presenceSessionId);
+        return PlayerSkillCombatDamage602.TryRollPhysiHit(
+            player.ServerClass,
+            Math.Max((ushort)1, player.Level),
+            player.ResolveSheet(),
+            CharacterCalcBroadcast602.ResolveWearSlots(presenceSessionId),
+            effects == CombatEffectState602.Empty ? null : effects,
+            skillId: 0,
+            Random.Shared,
+            out damage,
+            out damageType);
+    }
+
     static bool TryRollPlayerSkillDamage(
         GameRosterEntry? player,
         Guid? presenceSessionId,
@@ -467,19 +523,42 @@ public static class MonsterCombatHandler
     {
         damage = 0;
         damageType = 0;
-        if (player is null || !SkillCombatCatalog.UsesMagicDamage(skillId))
+        if (player is null)
         {
             return false;
         }
 
         var wearSlots = CharacterCalcBroadcast602.ResolveWearSlots(presenceSessionId);
         var effects = PlayerCombatEffectSession.GetOrEmpty(presenceSessionId);
+        var lvl = Math.Max((ushort)1, player.Level);
+        var sheet = player.ResolveSheet();
+        var effectsOrNull = effects == CombatEffectState602.Empty ? null : effects;
+
+        if (SkillCombatCatalog.UsesPhysicalStatRoll(skillId))
+        {
+            return PlayerSkillCombatDamage602.TryRollPhysiHit(
+                player.ServerClass,
+                lvl,
+                sheet,
+                wearSlots,
+                effectsOrNull,
+                skillId,
+                Random.Shared,
+                out damage,
+                out damageType);
+        }
+
+        if (!SkillCombatCatalog.UsesWizardryStatRoll(skillId))
+        {
+            return false;
+        }
+
         return PlayerSkillCombatDamage602.TryRollWizardryHit(
             player.ServerClass,
-            Math.Max((ushort)1, player.Level),
-            player.ResolveSheet(),
+            lvl,
+            sheet,
             wearSlots,
-            effects == CombatEffectState602.Empty ? null : effects,
+            effectsOrNull,
             skillId,
             Random.Shared,
             out damage,
@@ -582,7 +661,8 @@ public static class MonsterCombatHandler
         Action? onRosterDirty = null,
         int? skillDamageOverride = null,
         byte? skillDamageTypeOverride = null,
-        int? hitRangeOverride = null)
+        int? hitRangeOverride = null,
+        ushort skillIdForMitigation = 0)
     {
         if (IsPlayerCombatBlocked(presenceSessionId))
         {
@@ -732,8 +812,24 @@ public static class MonsterCombatHandler
         byte damageType;
         if (skillDamageOverride is int skillDmg)
         {
-            damage = MonsterCombatCalculator.ApplySkillDamageToMonster(skillDmg, attackElement, stat);
+            damage = MonsterCombatCalculator.ApplySkillDamageToMonster(
+                skillDmg,
+                attackElement,
+                stat,
+                playerLevel,
+                skillIdForMitigation);
             damageType = skillDamageTypeOverride ?? 0;
+        }
+        else if (player is not null
+                 && TryRollMeleeStatDamage(player, presenceSessionId, out var physRoll, out var physType))
+        {
+            damage = MonsterCombatCalculator.ApplySkillDamageToMonster(
+                physRoll,
+                attackElement,
+                stat,
+                playerLevel,
+                skillIdForMitigation);
+            damageType = physType;
         }
         else
         {

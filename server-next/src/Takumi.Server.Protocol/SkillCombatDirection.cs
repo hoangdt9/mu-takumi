@@ -8,6 +8,12 @@ public static class SkillCombatDirection
         wireAngle256 * 360.0 / 256.0;
 
     /// <summary>
+    /// Facing for hit volumes — OpenMU <c>FrustumBasedTargetFilter</c> adds 180° to wire rotation.
+    /// </summary>
+    public static double WireAngleToFacingDegrees(byte wireAngle256) =>
+        (WireAngleToDegrees(wireAngle256) + 180.0) % 360.0;
+
+    /// <summary>
     /// True when <paramref name="targetX"/>/<paramref name="targetY"/> lies within Manhattan
     /// <paramref name="maxRange"/> tiles of origin and inside a forward arc (~140° default).
     /// </summary>
@@ -28,7 +34,7 @@ public static class SkillCombatDirection
             return false;
         }
 
-        var facingRad = WireAngleToDegrees(facingWire256) * Math.PI / 180.0;
+        var facingRad = WireAngleToFacingDegrees(facingWire256) * Math.PI / 180.0;
         var targetRad = Math.Atan2(dy, dx);
         var delta = NormalizeRadians(targetRad - facingRad);
         var halfArcRad = halfArcDegrees * Math.PI / 180.0;
@@ -56,7 +62,7 @@ public static class SkillCombatDirection
             return false;
         }
 
-        var facingRad = WireAngleToDegrees(facingWire256) * Math.PI / 180.0;
+        var facingRad = WireAngleToFacingDegrees(facingWire256) * Math.PI / 180.0;
         var forwardX = Math.Cos(facingRad);
         var forwardY = Math.Sin(facingRad);
         var forward = (dx * forwardX) + (dy * forwardY);

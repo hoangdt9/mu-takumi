@@ -35,7 +35,7 @@ public sealed class SkillCombatRangeTests
     {
         const ushort evilSpirit = SkillCombatCatalog.EvilSpirit;
         Assert.False(SkillCombatCatalog.IsDirectionalContinueSkill(evilSpirit));
-        Assert.Equal(6, SkillCombatCatalog.GetAreaContinueRange(evilSpirit));
+        Assert.Equal(7, SkillCombatCatalog.GetAreaContinueRange(evilSpirit));
         Assert.True(
             SkillCombatRange.IsMobInSkillVolume(
                 evilSpirit,
@@ -44,7 +44,7 @@ public sealed class SkillCombatRangeTests
                 facingWire256: 175,
                 40,
                 64,
-                range: 6));
+                range: 7));
         Assert.False(
             SkillCombatRange.IsMobInSkillVolume(
                 evilSpirit,
@@ -53,7 +53,7 @@ public sealed class SkillCombatRangeTests
                 facingWire256: 175,
                 29,
                 77,
-                range: 6));
+                range: 7));
     }
 
     [Fact]
@@ -68,6 +68,12 @@ public sealed class SkillCombatRangeTests
             SkillCombatRange.IsMobInSkillVolume(twister, 43, 65, 34, 39, 64, range: 6));
         Assert.False(
             SkillCombatRange.IsMobInSkillVolume(twister, 43, 65, 34, 49, 65, range: 6));
+
+        // Kanturu QA: player (221,38) angle 188 — mob far to the right must not be in corridor.
+        Assert.False(
+            SkillCombatRange.IsMobInSkillVolume(twister, 221, 38, 188, 229, 38, range: 6));
+        Assert.False(
+            SkillCombatRange.IsMobInSkillVolume(twister, 221, 38, 188, 221, 46, range: 6));
     }
 
     [Theory]

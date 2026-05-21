@@ -1,8 +1,8 @@
 # QA — M9 MG skill combat trên Android (APK)
 
-**Guide:** [../android/MOBILE-SKILL-COMBAT-GUIDE.md](../android/MOBILE-SKILL-COMBAT-GUIDE.md) · **Checklist SSOT:** [../android/SKILL-COMBAT-CHECKLIST.md](../android/SKILL-COMBAT-CHECKLIST.md) · **Dev:** `SkillCombatCatalog.cs`, `SkillCombatRange.cs`, `MonsterCombatHandler.cs` · **Matrix:** [../android/SKILL-MATRIX.csv](../android/SKILL-MATRIX.csv)
+**Guide:** [../android/MOBILE-SKILL-COMBAT-GUIDE.md](../android/MOBILE-SKILL-COMBAT-GUIDE.md) · **Checklist SSOT:** [../android/SKILL-QA-CHECKLIST.md](../android/SKILL-QA-CHECKLIST.md) · [../android/SKILL-QA-CHECKLIST.csv](../android/SKILL-QA-CHECKLIST.csv) · **Dev:** `SkillCombatCatalog.cs`, `SkillCombatRange.cs`, `MonsterCombatHandler.cs`
 
-**Account QA:** `test` / `mg001` (44 skill MG — `./scripts/db/verify-mg001-skills.sh`)
+**Account QA:** `test` / `mg001` (30 combat MG — `./scripts/db/reset-mg001-skills.sh`)
 
 **Quy ước:** `[ ]` · `[x]` · `[!]` · `[-]`
 
@@ -23,7 +23,7 @@ Chi tiết: [MOBILE-SKILL-COMBAT-GUIDE.md](../android/MOBILE-SKILL-COMBAT-GUIDE.
 ## Chuẩn bị
 
 - [ ] `cd server-next && ./scripts/docker/docker-stack.sh --host-build --detach`
-- [ ] `./scripts/db/verify-mg001-skills.sh` → OK 44 skill
+- [ ] `./scripts/db/reset-mg001-skills.sh` → verify OK 30 combat, slot 1..30
 - [ ] APK build **sau** mọi đổi `ZzzCharacter.cpp` / `ZzzInterface.cpp` / `TakumiAndroidInput.cpp`
 - [ ] (USB) `./scripts/android/adb-reverse-takumi-dev.sh` nếu không ping LAN
 - [ ] Terminal: `docker compose logs -f game-host 2>&1 | grep '\[m9\]'`
@@ -89,7 +89,7 @@ Log `0x1E`: `mode=0` vòng Chebyshev (Evil Spirit) · `mode=1` cung phía trư�
 | Triệu chứng | Kiểm tra |
 |-------------|----------|
 | Có VFX, không damage | Server rebuild? Log có `magic continue`? Trước đây: C3 `0x1E` không parse |
-| Lốc quét rộng 2 bên | Log `mode=0` hoặc `hits=10+` → deploy bản corridor; xem [SKILL-COMBAT-CHECKLIST.md](../android/SKILL-COMBAT-CHECKLIST.md) §2.1 |
+| Lốc quét rộng 2 bên | Log `mode=0` hoặc `hits=10+` → deploy bản corridor; xem [SKILL-QA-CHECKLIST.md](../android/SKILL-QA-CHECKLIST.md) (MG test nhanh) |
 | Không cast | Hotbar có skill? `TakumiSkillAtk` logcat; tầm / `CheckTarget` |
 | Không skill trên bar | `verify-mg001-skills.sh`; relog sau SQL; `game-host` restart |
 | Chỉ Linh hồn đẹp, skill khác trơ | Đúng trạng thái hiện tại — xem guide §10 animation TODO |

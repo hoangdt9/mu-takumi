@@ -31,9 +31,17 @@ public static class JoinSkillLifecycle
             }
         }
 
-        return rows.Count == 0
+        var wireRows = rows;
+        if (rows.Count > 0 && CharacterSheetCalculator.ClassIndex(serverClass) == 3)
+        {
+            var normalized = CharacterSkillCatalog.NormalizeMagicGladiatorForClientWire(
+                rows.Select(r => new MagicListWire602.Entry(r.Slot, r.Type, r.Level)).ToArray());
+            wireRows = ToRows(normalized);
+        }
+
+        return wireRows.Count == 0
             ? MagicListWire602.BuildEmpty()
-            : MagicListWire602.BuildFromRows(rows);
+            : MagicListWire602.BuildFromRows(wireRows);
     }
 
     static async Task<List<SkillRowAdapter>> LoadRowsAsync(

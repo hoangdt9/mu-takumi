@@ -57,13 +57,14 @@ public static class SkillCombatRange
 
         if (SkillCombatCatalog.IsForwardCorridorContinueSkill(skillId))
         {
+            var corridorDepth = SkillCombatCatalog.GetForwardCorridorMaxTiles(skillId);
             return SkillCombatDirection.IsInForwardCorridor(
                 centerX,
                 centerY,
                 facingWire256,
                 mobX,
                 mobY,
-                maxForwardTiles: range,
+                maxForwardTiles: corridorDepth,
                 SkillCombatCatalog.ForwardCorridorHalfWidth);
         }
 

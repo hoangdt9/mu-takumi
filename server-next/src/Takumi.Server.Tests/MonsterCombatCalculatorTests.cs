@@ -66,4 +66,20 @@ public sealed class MonsterCombatCalculatorTests
         var dmg = MonsterCombatCalculator.ApplyClientDamageTypeMultiplier(1000, damageType: 0x03);
         Assert.Equal(1300, dmg);
     }
+
+    [Fact]
+    public void ApplySkillDamage_uses_level_floor_when_defense_eats_roll()
+    {
+        var stat = new MonsterStat(353, 85, 22000, 365, 395, 280, 3, 0, 2, 5, 10);
+        var dmg = MonsterCombatCalculator.ApplySkillDamageToMonster(rolledDamage: 300, attackElement: 0, stat, playerLevel: 400, skillId: 55);
+        Assert.Equal(40, dmg);
+    }
+
+    [Fact]
+    public void ApplySkillDamage_still_subtracts_defense_when_above_floor()
+    {
+        var stat = new MonsterStat(353, 85, 22000, 365, 395, 280, 3, 0, 2, 5, 10);
+        var dmg = MonsterCombatCalculator.ApplySkillDamageToMonster(rolledDamage: 1200, attackElement: 0, stat, playerLevel: 100);
+        Assert.True(dmg >= 900);
+    }
 }

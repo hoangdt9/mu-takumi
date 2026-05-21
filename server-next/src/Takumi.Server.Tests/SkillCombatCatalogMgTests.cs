@@ -18,8 +18,21 @@ public sealed class SkillCombatCatalogMgTests
     {
         Assert.True(SkillCombatCatalog.IsAreaContinueSkill(skillId));
         Assert.True(SkillCombatCatalog.UsesMagicDamage(skillId));
-        var expectedMinRange = skillId is 9 or 8 ? 6 : 2;
-        if (skillId is 9 or 8)
+        if (skillId is 55 or 56 or 236)
+        {
+            Assert.True(SkillCombatCatalog.UsesPhysicalStatRoll(skillId));
+            Assert.False(SkillCombatCatalog.UsesWizardryStatRoll(skillId));
+        }
+        else if (skillId is 9 or 8)
+        {
+            Assert.True(SkillCombatCatalog.UsesWizardryStatRoll(skillId));
+        }
+        var expectedMinRange = skillId is 9 ? 7 : skillId is 8 ? 6 : 2;
+        if (skillId is 9)
+        {
+            Assert.Equal(7, SkillCombatCatalog.GetAreaContinueRange(skillId));
+        }
+        else if (skillId is 8)
         {
             Assert.Equal(6, SkillCombatCatalog.GetAreaContinueRange(skillId));
         }
@@ -33,6 +46,17 @@ public sealed class SkillCombatCatalogMgTests
     {
         Assert.True(SkillCombatCatalog.IsDirectionalContinueSkill(skillId));
         Assert.Equal(2, SkillCombatCatalog.GetAreaContinueRange(skillId));
+    }
+
+    [Fact]
+    public void Gigantic_storm_omnidirectional_chebyshev_radius()
+    {
+        Assert.Equal(6, SkillCombatCatalog.GetAreaContinueRange(SkillCombatCatalog.GiganticStorm));
+        Assert.False(SkillCombatCatalog.IsDirectionalContinueSkill(SkillCombatCatalog.GiganticStorm));
+        Assert.False(SkillCombatCatalog.IsForwardCorridorContinueSkill(SkillCombatCatalog.GiganticStorm));
+        Assert.Equal(110, SkillCombatCatalog.GetSkillBaseDamage(SkillCombatCatalog.GiganticStorm));
+        Assert.Equal(160, SkillCombatCatalog.GetSkillFinalMultiplierPercent(SkillCombatCatalog.GiganticStorm));
+        Assert.True(SkillCombatCatalog.UsesWizardryStatRoll(SkillCombatCatalog.GiganticStorm));
     }
 
     [Theory]

@@ -1,4 +1,5 @@
 using System.Globalization;
+using Takumi.Server.Protocol;
 
 namespace Takumi.Server.Game.World;
 
@@ -29,8 +30,13 @@ public static class MonsterCombatCalculator
         return Math.Clamp(mitigated, 1, 65_000);
     }
 
-    /// <summary>Apply monster defense/resist to a pre-rolled wizardry hit.</summary>
-    public static int ApplySkillDamageToMonster(int rolledDamage, int attackElement, MonsterStat target)
+    /// <summary>Apply monster defense/resist to a pre-rolled skill hit (OpenMU min damage = level/10 after mitigation).</summary>
+    public static int ApplySkillDamageToMonster(
+        int rolledDamage,
+        int attackElement,
+        MonsterStat target,
+        int playerLevel = 1,
+        ushort skillId = 0)
     {
         if (rolledDamage <= 0)
         {
@@ -40,7 +46,16 @@ public static class MonsterCombatCalculator
         var mitigated = rolledDamage - Math.Max(0, target.Defense);
         mitigated = ApplyResistance(mitigated, attackElement, target);
         mitigated = ApplyElemental(mitigated, attackElement, target);
-        return Math.Clamp(mitigated, 1, 65_000);
+
+        if (skillId > 0)
+        {
+            mitigated = mitigated * SkillCombatCatalog.GetSkillFinalMultiplierPercent(skillId) / 100;
+        }
+
+        var floor = skillId > 0
+            ? Math.Max(1, Math.Max(1, playerLevel) / 10)
+            : Math.Max(1, Math.Max(1, playerLevel) / 20);
+        return Math.Clamp(Math.Max(mitigated, floor), 1, 65_000);
     }
 
     /// <summary>Resistance slot 0–3 from <c>Monster.txt</c> (physical / poison / ice / fire stub).</summary>

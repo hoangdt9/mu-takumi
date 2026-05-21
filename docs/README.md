@@ -6,7 +6,7 @@ Tài liệu repo `takumi/` — client native, migration, QA APK. **Dev checklist
 
 | Thư mục | Nội dung |
 |---------|----------|
-| [`android/`](android/) | Build Mac, input touch, skill combat MG, rollout plan, matrix CSV |
+| [`android/`](android/) | Build Mac, input touch, skill QA checklist (286 skill) |
 | [`qa/`](qa/) | Checklist QA trên APK (S2, M8, M9…) — index [`QA-MILESTONE.md`](QA-MILESTONE.md) |
 | [`journal/`](journal/) | Nhật ký dev theo ngày (`DEVELOPMENT-LOG-*`, worklog) |
 | [`protocol/`](protocol/) | Baseline mạng Takumi, compatibility matrix, dispatch index |
@@ -20,5 +20,5 @@ Tài liệu repo `takumi/` — client native, migration, QA APK. **Dev checklist
 
 - **QA milestone (APK):** [`QA-MILESTONE.md`](QA-MILESTONE.md)
 - **Android dev Mac:** [`android/ANDROID-DEV-MAC.md`](android/ANDROID-DEV-MAC.md)
-- **Skill combat mobile:** [`android/MOBILE-SKILL-COMBAT-GUIDE.md`](android/MOBILE-SKILL-COMBAT-GUIDE.md)
+- **Skill combat mobile:** [`android/MOBILE-SKILL-COMBAT-GUIDE.md`](android/MOBILE-SKILL-COMBAT-GUIDE.md) · **QA checklist:** [`android/SKILL-QA-CHECKLIST.md`](android/SKILL-QA-CHECKLIST.md)
 - **Migration OpenMU:** [`migration/TAKUMI-MIGRATION-OPENMU-CHECKLIST.md`](migration/TAKUMI-MIGRATION-OPENMU-CHECKLIST.md)

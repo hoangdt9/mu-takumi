@@ -47,6 +47,7 @@ public sealed class PostgresCharacterSkillRepository : IAsyncDisposable
         await using var reader = await cmd.ExecuteReaderAsync(ct).ConfigureAwait(false);
         while (await reader.ReadAsync(ct).ConfigureAwait(false))
         {
+            // Wire F3 11 uses a byte index; MG combat QA uses compact slots 1..30 (see CharacterSkillCatalog).
             var slot = reader.GetInt16(0);
             if (slot is < 0 or > 255)
             {

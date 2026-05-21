@@ -1,9 +1,14 @@
--- Seed mg001 MG skill list into character_skill (parity MagicListWire602 / F3 11).
--- Apply after 016_character_skill.sql.
+-- QA seed test/mg001: MG combat only (30 skills), compact skill_slot 1..30 for client picker.
+-- Master passives: F3 53 tree (not wired) — not in this seed.
+-- Apply: ./scripts/db/reset-mg001-skills.sh
 
 BEGIN;
 
 DELETE FROM character_skill
+WHERE account_login = 'test' AND character_name = 'mg001';
+
+UPDATE character_roster
+SET key_configuration = NULL, updated_at = now()
 WHERE account_login = 'test' AND character_name = 'mg001';
 
 INSERT INTO character_skill (account_login, character_name, skill_slot, skill_type, skill_level)
@@ -13,45 +18,31 @@ VALUES
     ('test', 'mg001', 3, 3, 20),
     ('test', 'mg001', 4, 4, 20),
     ('test', 'mg001', 5, 5, 20),
-    ('test', 'mg001', 7, 7, 20),
-    ('test', 'mg001', 8, 8, 20),
-    ('test', 'mg001', 9, 9, 20),
-    ('test', 'mg001', 10, 10, 20),
-    ('test', 'mg001', 11, 11, 20),
-    ('test', 'mg001', 12, 12, 20),
-    ('test', 'mg001', 13, 13, 20),
-    ('test', 'mg001', 14, 14, 20),
-    ('test', 'mg001', 17, 17, 20),
-    ('test', 'mg001', 18, 18, 20),
-    ('test', 'mg001', 19, 19, 20),
-    ('test', 'mg001', 20, 20, 20),
-    ('test', 'mg001', 21, 21, 20),
-    ('test', 'mg001', 22, 22, 20),
-    ('test', 'mg001', 23, 23, 20),
-    ('test', 'mg001', 41, 41, 20),
-    ('test', 'mg001', 47, 47, 20),
-    ('test', 'mg001', 48, 48, 20),
-    ('test', 'mg001', 49, 49, 20),
-    ('test', 'mg001', 50, 50, 20),
-    ('test', 'mg001', 51, 51, 20),
-    ('test', 'mg001', 52, 52, 20),
-    ('test', 'mg001', 55, 55, 20),
-    ('test', 'mg001', 56, 56, 20),
-    ('test', 'mg001', 57, 57, 20),
-    ('test', 'mg001', 61, 61, 20),
-    ('test', 'mg001', 62, 62, 20),
-    ('test', 'mg001', 63, 63, 20),
-    ('test', 'mg001', 64, 64, 20),
-    ('test', 'mg001', 65, 65, 20),
-    ('test', 'mg001', 73, 73, 20),
-    ('test', 'mg001', 236, 236, 20),
-    ('test', 'mg001', 237, 237, 20),
-    ('test', 'mg001', 238, 238, 20),
-    ('test', 'mg001', 385, 385, 20),
-    ('test', 'mg001', 482, 482, 20),
-    ('test', 'mg001', 487, 487, 20),
-    ('test', 'mg001', 490, 490, 20),
-    ('test', 'mg001', 493, 493, 20);
+    ('test', 'mg001', 6, 7, 20),
+    ('test', 'mg001', 7, 8, 20),
+    ('test', 'mg001', 8, 9, 20),
+    ('test', 'mg001', 9, 10, 20),
+    ('test', 'mg001', 10, 11, 20),
+    ('test', 'mg001', 11, 12, 20),
+    ('test', 'mg001', 12, 13, 20),
+    ('test', 'mg001', 13, 14, 20),
+    ('test', 'mg001', 14, 17, 20),
+    ('test', 'mg001', 15, 18, 20),
+    ('test', 'mg001', 16, 19, 20),
+    ('test', 'mg001', 17, 20, 20),
+    ('test', 'mg001', 18, 21, 20),
+    ('test', 'mg001', 19, 22, 20),
+    ('test', 'mg001', 20, 23, 20),
+    ('test', 'mg001', 21, 39, 20),
+    ('test', 'mg001', 22, 41, 20),
+    ('test', 'mg001', 23, 47, 20),
+    ('test', 'mg001', 24, 55, 20),
+    ('test', 'mg001', 25, 56, 20),
+    ('test', 'mg001', 26, 57, 20),
+    ('test', 'mg001', 27, 73, 20),
+    ('test', 'mg001', 28, 76, 20),
+    ('test', 'mg001', 29, 236, 20),
+    ('test', 'mg001', 30, 237, 20);
 
 COMMIT;
 

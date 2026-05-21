@@ -17,10 +17,70 @@ public static class PlayerSkillCombatDamage602
         damage = 0;
         damageType = 0;
 
-        if (!SkillCombatCatalog.UsesMagicDamage(skillId))
+        if (!SkillCombatCatalog.UsesWizardryStatRoll(skillId))
         {
             return false;
         }
+
+        return TryRollSkillHit(
+            serverClass,
+            level,
+            sheet,
+            wearSlots,
+            activeEffects,
+            skillId,
+            useMagic: true,
+            rng,
+            out damage,
+            out damageType);
+    }
+
+    public static bool TryRollPhysiHit(
+        byte serverClass,
+        ushort level,
+        CharacterSheetStats sheet,
+        IReadOnlyDictionary<byte, byte[]>? wearSlots,
+        CombatEffectState602? activeEffects,
+        ushort skillId,
+        Random rng,
+        out int damage,
+        out byte damageType)
+    {
+        damage = 0;
+        damageType = 0;
+
+        if (!SkillCombatCatalog.UsesPhysicalStatRoll(skillId) && skillId != 0)
+        {
+            return false;
+        }
+
+        return TryRollSkillHit(
+            serverClass,
+            level,
+            sheet,
+            wearSlots,
+            activeEffects,
+            skillId,
+            useMagic: false,
+            rng,
+            out damage,
+            out damageType);
+    }
+
+    static bool TryRollSkillHit(
+        byte serverClass,
+        ushort level,
+        CharacterSheetStats sheet,
+        IReadOnlyDictionary<byte, byte[]>? wearSlots,
+        CombatEffectState602? activeEffects,
+        ushort skillId,
+        bool useMagic,
+        Random rng,
+        out int damage,
+        out byte damageType)
+    {
+        damage = 0;
+        damageType = 0;
 
         var skillBase = SkillCombatCatalog.GetSkillBaseDamage(skillId);
         var calc = CharacterCombatCalculator602.Compute(
@@ -31,19 +91,23 @@ public static class PlayerSkillCombatDamage602
             activeEffects);
         var preview = calc.Combat;
 
-        var min = (int)preview.MagicDamageMin + skillBase;
-        var max = (int)preview.MagicDamageMax + skillBase + (skillBase / 2);
-
-        if (SkillCombatCatalog.IsMagicGladiator(serverClass) && min <= skillBase)
+        int min;
+        int max;
+        if (useMagic)
         {
-            var hybridMin = (int)preview.PhysiDamageMin + skillBase;
-            var hybridMax = (int)preview.PhysiDamageMax + skillBase + (skillBase / 2);
-            if (hybridMax > hybridMin)
-            {
-                min = hybridMin;
-                max = hybridMax;
-            }
+            // Webzen GetMagicSkillDamage: MagicMin/Max + SkillAttribute.Damage (+Damage/2 on max).
+            min = (int)preview.MagicDamageMin + skillBase;
+            max = (int)preview.MagicDamageMax + skillBase + (skillBase / 2);
+            ApplyDamageMultipliers(ref min, ref max, calc.MulMagicDamage, calc.MagicDamageRate);
         }
+        else
+        {
+            // Webzen GetAttackDamage: PhysiMin/Max + skill component (Power Slash may have skillBase=0).
+            min = (int)preview.PhysiDamageMin + skillBase;
+            max = (int)preview.PhysiDamageMax + skillBase + (skillBase / 2);
+            ApplyDamageMultipliers(ref min, ref max, calc.MulPhysiDamage, 0);
+        }
+
         if (max < min)
         {
             max = min;
@@ -56,9 +120,24 @@ public static class PlayerSkillCombatDamage602
         }
 
         damage = min >= max ? min : rng.Next(min, max + 1);
-        damageType = MonsterCombatDamageRoll602.RollClientDamageType(rng, isSkill: true);
+        damageType = MonsterCombatDamageRoll602.RollClientDamageType(rng, isSkill: skillId > 0);
         damage = MonsterCombatDamageRoll602.ApplyClientDamageTypeMultiplier(damage, damageType);
         return damage > 0;
+    }
+
+    static void ApplyDamageMultipliers(ref int min, ref int max, uint mulPercent, uint ratePercent)
+    {
+        if (mulPercent > 0)
+        {
+            min += min * (int)mulPercent / 100;
+            max += max * (int)mulPercent / 100;
+        }
+
+        if (ratePercent > 0)
+        {
+            min += min * (int)ratePercent / 100;
+            max += max * (int)ratePercent / 100;
+        }
     }
 }
 

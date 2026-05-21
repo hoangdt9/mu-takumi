@@ -13,13 +13,51 @@ public sealed class CharacterSkillCatalogTests
     }
 
     [Fact]
-    public void MagicGladiator_defaults_include_combat_rollout_skills()
+    public void MagicGladiator_defaults_are_combat_qa_kit_only()
     {
         var skills = CharacterSkillCatalog.GetDefaultEntries(96);
-        Assert.Contains(skills, s => s.Type == 61);
-        Assert.Contains(skills, s => s.Type == 238);
-        Assert.Contains(skills, s => s.Type == 490);
-        Assert.Equal(44, skills.Count);
+        Assert.Equal(30, skills.Count);
+        Assert.Contains(skills, s => s.Type == 55);
+        Assert.Contains(skills, s => s.Type == 39);
+        Assert.Contains(skills, s => s.Type == 76);
+        Assert.DoesNotContain(skills, s => s.Type == 490);
+        Assert.DoesNotContain(skills, s => s.Type == 48);
+        Assert.DoesNotContain(skills, s => s.Type == 238);
+
+        for (var i = 0; i < skills.Count; i++)
+        {
+            Assert.Equal((byte)(i + 1), skills[i].Index);
+            Assert.Equal(CharacterSkillCatalog.MagicGladiatorCombatSkillTypes[i], skills[i].Type);
+        }
+    }
+
+    [Fact]
+    public void NormalizeMagicGladiatorForClientWire_remaps_legacy_slot_equals_type()
+    {
+        var legacy =
+            CharacterSkillCatalog.ToMagicGladiatorCombatEntries(20)
+                .Select(e => new MagicListWire602.Entry((byte)e.Type, e.Type, e.Level))
+                .ToArray();
+
+        var normalized = CharacterSkillCatalog.NormalizeMagicGladiatorForClientWire(legacy, 20);
+
+        Assert.Equal(30, normalized.Length);
+        Assert.Equal((byte)29, normalized[28].Index);
+        Assert.Equal((ushort)236, normalized[28].Type);
+        Assert.Equal((byte)30, normalized[29].Index);
+        Assert.Equal((ushort)237, normalized[29].Type);
+    }
+
+    [Fact]
+    public void NormalizeMagicGladiatorForClientWire_strips_master_rows()
+    {
+        var rows = CharacterSkillCatalog.ToMagicGladiatorCombatEntries(20).ToList();
+        rows.Add(new MagicListWire602.Entry(120, 490, 20));
+
+        var normalized = CharacterSkillCatalog.NormalizeMagicGladiatorForClientWire(rows, 20);
+
+        Assert.Equal(30, normalized.Length);
+        Assert.DoesNotContain(normalized, e => e.Type == 490);
     }
 
     [Fact]
@@ -30,7 +68,6 @@ public sealed class CharacterSkillCatalogTests
         Assert.Equal(0x11, pkt[3]);
     }
 
-    /// <summary>Mỗi class cơ sở (wire = index×32) có bộ skill seed join &gt; 0.</summary>
     [Theory]
     [InlineData(0)]
     [InlineData(32)]
@@ -55,7 +92,7 @@ public sealed class CharacterSkillCatalogTests
         IReadOnlyList<MagicListWire602.CharacterSkillRowLike> rows =
         [
             new Row(1, 1, 20),
-            new Row(52, 52, 15),
+            new Row(24, 55, 15),
         ];
         var pkt = MagicListWire602.BuildFromRows(rows);
         Assert.Equal(0xC1, pkt[0]);

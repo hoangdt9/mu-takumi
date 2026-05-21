@@ -9,7 +9,7 @@ Operational scripts for Docker stack, Postgres, Android USB dev, host `dotnet ru
 | Folder | Purpose |
 |--------|---------|
 | [`docker/`](docker/) | `docker-stack.sh`, LAN+gamehost stack, `game-host` container boot |
-| [`db/`](db/) | `apply-sql.sh`, roster/inventory migrate, world ETL import, account QA, `verify-mg001-skills.sh` |
+| [`db/`](db/) | `apply-sql.sh`, roster/inventory migrate, world ETL import, account QA, `reset-mg001-skills.sh`, `verify-mg001-skills.sh` |
 | [`android/`](android/) | `adb-reverse.sh`, `adb-reverse-takumi-dev.sh`, logcat watch |
 | [`host/`](host/) | `dotnet run` Connect / Login / LegacyLogin on Mac (no Docker) |
 | [`smoke/`](smoke/) | M8 smoke, C2 connect probe, port checks |
@@ -31,6 +31,7 @@ cd server-next
 # SQL / seeds
 ./scripts/db/apply-sql.sh 'postgresql://takumi:takumi@127.0.0.1:54444/takumi_runtime'
 TAKUMI_APPLY_DEV_SEEDS=1 ./scripts/docker/docker-stack.sh --detach
+./scripts/db/reset-mg001-skills.sh
 ./scripts/db/verify-mg001-skills.sh
 
 # Monster spawn (file + Postgres)

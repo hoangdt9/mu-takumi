@@ -6,46 +6,46 @@ namespace Takumi.Server.Tests;
 public sealed class SkillCombatDirectionTests
 {
     [Theory]
-    [InlineData(0, 0, 0, 2, 0, true)]   // east, mob east
-    [InlineData(0, 0, 0, -2, 0, false)] // mob west (behind)
-    [InlineData(0, 0, 64, 0, 2, true)]   // ~90°, mob north
-    [InlineData(0, 0, 0, 0, 3, false)]  // out of range 2
+    [InlineData(50, 50, 128, 52, 50, true)]   // wire 128 → east; mob east
+    [InlineData(50, 50, 128, 48, 50, false)] // mob west (behind)
+    [InlineData(50, 50, 192, 50, 52, true)]  // wire 192 → north; mob north
+    [InlineData(50, 50, 128, 50, 53, false)] // out of arc range 2
     public void Forward_arc_filters_behind_and_range(
         byte ox,
         byte oy,
         byte angle,
-        int dx,
-        int dy,
+        byte tx,
+        byte ty,
         bool expected)
     {
         var actual = SkillCombatDirection.IsInForwardArc(
             ox,
             oy,
             angle,
-            (byte)(ox + dx),
-            (byte)(oy + dy),
+            tx,
+            ty,
             maxRange: 2);
         Assert.Equal(expected, actual);
     }
 
     [Theory]
-    [InlineData(0, 0, 0, 2, 0, true)]   // east, mob 2 tiles ahead on line
-    [InlineData(0, 0, 0, 0, 3, false)]  // 3 tiles lateral — outside corridor width
-    [InlineData(0, 0, 0, -2, 0, false)] // behind caster
+    [InlineData(50, 50, 0, 48, 50, true)]   // wire 0 + 180° → west; mob west on line
+    [InlineData(50, 50, 0, 52, 50, false)]  // east = behind
+    [InlineData(50, 50, 0, 50, 53, false)]  // lateral — outside corridor width
     public void Forward_corridor_filters_lateral_and_behind(
         byte ox,
         byte oy,
         byte angle,
-        int dx,
-        int dy,
+        byte tx,
+        byte ty,
         bool expected)
     {
         var actual = SkillCombatDirection.IsInForwardCorridor(
             ox,
             oy,
             angle,
-            (byte)(ox + dx),
-            (byte)(oy + dy),
+            tx,
+            ty,
             maxForwardTiles: 6);
         Assert.Equal(expected, actual);
     }
@@ -53,7 +53,8 @@ public sealed class SkillCombatDirectionTests
     [Theory]
     [InlineData(55, true, false, 2)]
     [InlineData(236, true, false, 2)]
-    [InlineData(9, false, false, 6)]
+    [InlineData(237, false, false, 6)]
+    [InlineData(9, false, false, 7)]
     [InlineData(8, false, true, 6)]
     public void Catalog_range_and_mode_flags(ushort skillId, bool directional, bool corridor, int range)
     {

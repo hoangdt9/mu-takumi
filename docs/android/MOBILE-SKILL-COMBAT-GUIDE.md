@@ -2,7 +2,7 @@
 
 **Cập nhật:** 2026-05-21  
 **Phạm vi:** Android client (`Source/5.Main`) + `server-next` game host (Season 6 wire).  
-**Liên quan:** [SKILL-COMBAT-CHECKLIST.md](./SKILL-COMBAT-CHECKLIST.md) (**SSOT** — skill done/chưa + test) · [SKILL-COMBAT-ROLLOUT-PLAN.md](./SKILL-COMBAT-ROLLOUT-PLAN.md) (kế hoạch toàn class) · [SKILL-MATRIX.csv](./SKILL-MATRIX.csv) (tracking) · [ANDROID-INPUT.md](./ANDROID-INPUT.md) (bảng gesture ngắn) · [game-spec/SKILL-HOTKEY-PERSISTENCE.md](../game-spec/SKILL-HOTKEY-PERSISTENCE.md) (gán ô skill) · [qa/M9-mg-skill-combat.md](../qa/M9-mg-skill-combat.md) (QA APK)
+**Liên quan:** [SKILL-QA-CHECKLIST.md](./SKILL-QA-CHECKLIST.md) (**SSOT QA** — 286 skill + checkbox) · [SKILL-QA-CHECKLIST.csv](./SKILL-QA-CHECKLIST.csv) (Excel) · [ANDROID-INPUT.md](./ANDROID-INPUT.md) (gesture) · [game-spec/SKILL-HOTKEY-PERSISTENCE.md](../game-spec/SKILL-HOTKEY-PERSISTENCE.md) · [qa/M9-mg-skill-combat.md](../qa/M9-mg-skill-combat.md) (QA APK)
 
 ---
 
@@ -12,17 +12,44 @@
 |----------|------------|---------|
 | Cast skill MG trên mobile (wire) | ✅ | Long-press / double-tap + hotbar; channel `0x1E` |
 | Server nhận **C3** magic continue | ✅ | Trước chỉ parse C1 → Linh hồn không damage |
-| Damage MG theo Energy / wizardry | ✅ | `SkillCombatCatalog`, `PlayerSkillCombatDamage602` |
+| Damage formula Webzen (wiz / phys skill) | 🟡 | **46** combat `wiz`/`phys`; **17** `pend`; **8** `tap` (`0x11`) — [SKILL-QA-CHECKLIST.md](./SKILL-QA-CHECKLIST.md#công-thức-damage-2026-05-21--đã-code-chưa-qa-hết) |
 | VFX + tốc độ **Linh hồn (9)** | ✅ | `GetEvilSpiritJoint*`, `GetMagicSpeedEffectRatio` |
 | VFX tốc độ **Lốc (8)** | ✅ partial | `MODEL_STORM` scale; spawn VFX channel TODO |
-| Server hit volume (AoE đúng hình) | 🟡 | Evil Spirit ✅ Chebyshev; Twister 🟡 corridor `mode=2` — xem [SKILL-COMBAT-CHECKLIST.md](./SKILL-COMBAT-CHECKLIST.md) |
+| Server hit volume (AoE đúng hình) | 🟡 | Evil Spirit ✅ · Bão điện (237) ✅ Chebyshev r6; Twister 🟡 corridor — [SKILL-QA-CHECKLIST.md](./SKILL-QA-CHECKLIST.md) |
 | Animation đầy đủ skill MG khác | ⬜ | Wire + damage OK; pose/VFX riêng chưa nối mobile |
-| QA account `test` / `mg001` | ✅ 44 skill | `character_skill` + `CharacterSkillCatalog` |
+| QA account `test` / `mg001` | ✅ **4/30** combat QA done | 9 · 8 · 55 · **237** — tiếp **56** · `./scripts/db/reset-mg001-skills.sh` |
 | Scripts `server-next/scripts/` | ✅ | Bỏ wrapper trùng; chỉ thư mục con |
 
 ---
 
-## 2. Vấn đề gốc — Linh hồn có VFX, không mất máu quái
+## 2. Tầm damage vs VFX màn hình (Linh hồn 9, Bão điện 237)
+
+**Triệu chứng:** Quái ở xa trên màn hình trông như trúng skill (hiệu ứng / bầy quái trong khung hình) nhưng **không có số damage**; log server `hits=0` trong khi vẫn thấy `statDmg=…`.
+
+**Nguyên nhân (không phải packet lỗi):**
+
+| Lớp | Cách tính |
+|-----|-----------|
+| **Server** | Chebyshev từ **ô nhân vật**: `max(|dx|,|dy|) ≤ range`. Center luôn `(PositionX, PositionY)` — bỏ qua tọa độ aim trong packet `0x1E`. |
+| **Linh hồn (9)** | `range=7` (OpenMU S6; client `Skill.txt` Radio=6 chỉ là UI). |
+| **Bão điện (237)** | `range=6`, omnidirectional `mode=0` (5 tia 72° quanh nhân vật). |
+| **Client VFX** | Hiệu ứng có thể phủ vùng **nhìn** rộng hơn (góc isometric, quái spawn góc màn hình). **Không** đồng nghĩa server gửi damage. |
+
+**Ví dụ Kanturu:** Hero `(226,49)`, quái góc màn `(236,92)` → khoảng cách ô `max(10,43)=43` → **ngoài** range 6–7 → `hits=0` là đúng.
+
+**Log server khi không trúng ai nhưng có quái gần trong viewport:**
+
+```text
+[m9] magic continue skill=9 … hits=0 … near=12 closestTile=43 player=(226,49)
+```
+
+`near` = số quái trong vòng `(range+12)` ô nhưng ngoài range; `closestTile` = quái sống gần nhất (ô).
+
+**QA:** Chỉ kỳ vọng damage khi quái trong vòng **ô** quanh hero; đứng sát bầy quái trên map (cùng cụm tile), không chỉ cùng khung hình.
+
+---
+
+## 3. Vấn đề gốc — Linh hồn có VFX, không mất máu quái
 
 **Triệu chứng:** Trên APK, cast Linh hồn (skill 9) thấy linh hồn bay, log client `cast=1`, nhưng quái không giảm HP; server không log `[m9] magic continue`.
 
@@ -40,7 +67,7 @@ docker compose logs -f game-host 2>&1 | grep '\[m9\]'
 
 ---
 
-## 3. Kiến trúc 5 lớp (mỗi skill “done” trên mobile)
+## 4. Kiến trúc 5 lớp (mỗi skill “done” trên mobile)
 
 ```mermaid
 flowchart TB
@@ -67,18 +94,16 @@ flowchart TB
 |-----|---------|-------------|
 | **A** Input | Long-press, double-tap, hotbar slot | ✅ |
 | **B** Wire TX | `0x1E` / `0x19` / `0xDB` / `0x11` | ✅ channel + targeted + burst |
-| **C** Server damage | Parse, range, wizardry/phys | ✅ catalog MG |
+| **C** Server damage | Parse, range, `stat_roll` (wiz/phys/tap/pend) | 🟡 MG/DW wired; xem cột **Roll** + **F** trong checklist |
 | **E** Animation nhân vật | `SetAction` skill (wheel, two-hand, …) | ⬜ hầu hết = pose `SetPlayerMagic` chung |
 | **F** VFX thế giới | Joint, storm, slash, inferno model | ✅ skill 9; ⬜ 55, 56, 236, … |
 | **G** Tốc độ VFX | `MagicSpeed` / `AttackSpeed` ratio | ✅ 9; partial 8 |
 
-**Lưu ý:** `client_cast=y` trong [SKILL-MATRIX.csv](./SKILL-MATRIX.csv) **không** có nghĩa đã có animation đẹp — chỉ là gửi packet đúng.
-
-Chi tiết rollout từng class: [SKILL-COMBAT-ROLLOUT-PLAN.md](./SKILL-COMBAT-ROLLOUT-PLAN.md).
+**Lưu ý:** cột **W** (wire) tick trong [SKILL-QA-CHECKLIST.csv](./SKILL-QA-CHECKLIST.csv) **không** có nghĩa đã có animation đẹp — chỉ là gửi packet đúng. Cần tick **A** + **V** + **QA** riêng.
 
 ---
 
-## 4. Chuyển đổi PC → Mobile (click, long-press, double-tap)
+## 5. Chuyển đổi PC → Mobile (click, long-press, double-tap)
 
 Trên PC, **chuột trái (LMB)** = di chuyển / đánh thường / nhặt (tùy target); **chuột phải (RMB)** = dùng skill đang chọn / dùng đồ túi. Trên Android không có nút phải — Takumi map sang **tap ngắn**, **giữ ~480ms**, **chạm hai lần nhanh** (~420ms, cùng vị trí ±28px UI), cộng **joystick** và **nút ATTACK**.
 
@@ -149,7 +174,7 @@ Khác với cast trên map — đây là **chọn skill nào** sẽ được RMB
 | Gán skill vào ô 1–9 | Chế độ assign (long-press picker) → tap ô ring/slot | `NewUIMainFrameWindow` assign flow |
 | Relog giữ ô skill | Server **F3 30** (30 byte hotkey) + DB `character_roster.key_configuration` | [SKILL-HOTKEY-PERSISTENCE.md](./game-spec/SKILL-HOTKEY-PERSISTENCE.md) |
 
-**Join game:** Server gửi **F3 11** (skill đã học) **trước** **F3 30** (hotkey). QA MG: `test/mg001` có 44 skill — `scripts/db/verify-mg001-skills.sh`.
+**Join game:** Server gửi **F3 11** (skill đã học) **trước** **F3 30** (hotkey). QA MG: `test/mg001` có **30 skill combat** (slot 1–30) — `scripts/db/reset-mg001-skills.sh`.
 
 ### 4.4 Học skill từ sách / dùng đồ túi (thay RMB trong inventory)
 
@@ -201,26 +226,26 @@ Spec ngắn (1 trang): [ANDROID-INPUT.md](./ANDROID-INPUT.md).
 
 ---
 
-## 5. Magic Gladiator — skill đã convert (mobile + server)
+## 6. Magic Gladiator — skill đã convert (mobile + server)
 
-Nhân vật QA: **`test` / `mg001`** (Duel Master, class wire 120). Join gửi **F3 11** từ bảng `character_skill` (44 skill).
+Nhân vật QA: **`test` / `mg001`** (Duel Master, class wire 120). Join gửi **F3 11** từ `character_skill` (30 combat, compact slot).
 
 ### 5.1 Bảng nhanh
 
 | ID | Tên | Wire | Cast mobile | Damage server | Anim + VFX client |
 |----|-----|------|-------------|---------------|-------------------|
-| 9 | Linh hồn | `0x1E` | ✅ channel | ✅ | ✅ đầy đủ + MagicSpeed |
+| 9 | Linh hồn | `0x1E` | ✅ channel | ✅ Chebyshev r7 | ✅ đầy đủ + MagicSpeed |
 | 8 | Lốc | `0x1E` | ✅ | 🟡 corridor `mode=2` | speed storm ✅; spawn TODO; QA wide-hit |
 | 61–65 | Linh hồn MG+ | `0x1E` | ✅ | ✅ | kế thừa 9 |
 | 55 | Fire Slash | `0x1E` | ✅ | ✅ | ⬜ wheel + gathering |
 | 56, 48–52 | Power Slash | `0x1E` | ✅ | ✅ | ⬜ two-hand + magic2 |
 | 236 | Flame Strike | `0x1E` | ✅ | ✅ | ⬜ flame model |
-| 237 | Gigantic Storm | `0x1E` | ✅ | ✅ | ⬜ thunder fan |
+| 237 | Gigantic Storm | `0x1E` | ✅ | ✅ | ✅ chebyshev r6 `mode=0` (5-bolt VFX) |
 | 238 | Chaotic | `0x1E` | ✅ | ✅ | ⬜ |
 | 3–5, 12 | Sét / Hỏa cầu / Độc | `0x19` | ✅ tap | ✅ stat | ⬜ projectile VFX |
 | 13–14 | Inferno / Hell | `0xDB` / `0x1E` | ✅ | ✅ | ⬜ |
 
-CSV đầy đủ: [SKILL-MATRIX.csv](./SKILL-MATRIX.csv).
+Ma trận đầy đủ: [SKILL-QA-CHECKLIST.csv](./SKILL-QA-CHECKLIST.csv) · [SKILL-QA-CHECKLIST.md](./SKILL-QA-CHECKLIST.md).
 
 ### 5.2 Wire head (server router)
 
@@ -236,7 +261,7 @@ Combat: `server-next/src/Takumi.Server.Game/World/MonsterCombatHandler.cs`
 
 ---
 
-## 6. Client — file chính đã sửa
+## 7. Client — file chính đã sửa
 
 | File | Thay đổi |
 |------|----------|
@@ -260,7 +285,7 @@ cd Source/android
 
 ---
 
-## 7. Server — file chính đã sửa
+## 8. Server — file chính đã sửa
 
 | File | Thay đổi |
 |------|----------|
@@ -274,7 +299,7 @@ cd Source/android
 | `GamePortMinimalSession.cs` | `DecryptedRx` signature fix |
 | `LegacyLoginHostRunner.cs` | Cùng fix `DecryptedRx` |
 | `JoinSkillLifecycle.cs` | F3 11 từ `character_skill` (không đổi logic) |
-| `CharacterSkillCatalog.cs` | Default 44 skill MG khi DB trống |
+| `CharacterSkillCatalog.cs` | Default 30 combat MG; `NormalizeMagicGladiatorForClientWire` trước F3 11 |
 
 **Tests:** `SkillCombatCatalogMgTests`, `MonsterCombatWire602Tests` (C3 `0x1E`).
 
@@ -287,13 +312,12 @@ cd server-next
 
 ---
 
-## 8. DB & skill list QA (`test` / `mg001`)
+## 9. DB & skill list QA (`test` / `mg001`)
 
 | Script | Mục đích |
 |--------|----------|
-| `scripts/db/apply-dev-character-seeds.sh` | Full seed mg001 + wear + 44 skill |
-| `scripts/db/019_mg001_add_combat_rollout_skills.sql` | Thêm 16 skill combat (incremental) |
-| `scripts/db/verify-mg001-skills.sh` | Kiểm tra đủ 44 skill type |
+| `scripts/db/reset-mg001-skills.sh` | Xóa + seed 30 combat MG (slot 1–30) |
+| `scripts/db/verify-mg001-skills.sh` | Kiểm tra 30 type + compact slot |
 
 ```bash
 cd server-next
@@ -307,7 +331,7 @@ Skill hotkey persistence: [game-spec/SKILL-HOTKEY-PERSISTENCE.md](./game-spec/SK
 
 ---
 
-## 9. Quy trình test nhanh (MG)
+## 10. Quy trình test nhanh (MG)
 
 1. Stack: `./scripts/docker/docker-stack.sh --host-build --detach`
 2. USB (nếu cần): `./scripts/android/adb-reverse-takumi-dev.sh`
@@ -320,13 +344,11 @@ Skill hotkey persistence: [game-spec/SKILL-HOTKEY-PERSISTENCE.md](./game-spec/SK
 7. Đổi đồ +speed → linh hồn bay nhanh hơn (chỉ sau rebuild APK client)
 
 Checklist QA chi tiết: [qa/M9-mg-skill-combat.md](../qa/M9-mg-skill-combat.md).  
-Tracking done/chưa từng skill: [SKILL-COMBAT-CHECKLIST.md](./SKILL-COMBAT-CHECKLIST.md).
+Tracking done/chưa từng skill: [SKILL-QA-CHECKLIST.md](./SKILL-QA-CHECKLIST.md).
 
 ---
 
-## 10. Việc tiếp theo (animation MG)
-
-Theo [SKILL-COMBAT-ROLLOUT-PLAN.md](./SKILL-COMBAT-ROLLOUT-PLAN.md) §12:
+## 11. Việc tiếp theo (animation MG)
 
 | Sprint | Skill | Việc client |
 |--------|-------|-------------|
@@ -338,7 +360,7 @@ Pattern: sau `CastDirectionChannelSkill`, gọi cùng nhánh `AttackStage` / `sw
 
 ---
 
-## 11. Tài liệu & script liên quan
+## 12. Tài liệu & script liên quan
 
 | Tài liệu | Nội dung |
 |----------|----------|

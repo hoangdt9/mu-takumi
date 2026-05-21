@@ -2,7 +2,7 @@
 
 Nhật ký thay đổi **skill combat mobile (MG)** + hạ tầng QA server. Tiếp nối [SESSION-WORKLOG-2026-05-19.md](./journal/SESSION-WORKLOG-2026-05-19.md) (spawn, damage màu, scripts layout).
 
-**Guide tổng hợp:** [MOBILE-SKILL-COMBAT-GUIDE.md](../android/MOBILE-SKILL-COMBAT-GUIDE.md) · **Checklist:** [SKILL-COMBAT-CHECKLIST.md](../android/SKILL-COMBAT-CHECKLIST.md)
+**Guide tổng hợp:** [MOBILE-SKILL-COMBAT-GUIDE.md](../android/MOBILE-SKILL-COMBAT-GUIDE.md) · **Checklist:** [SKILL-QA-CHECKLIST.md](../android/SKILL-QA-CHECKLIST.md)
 
 ---
 
@@ -13,7 +13,7 @@ Nhật ký thay đổi **skill combat mobile (MG)** + hạ tầng QA server. Ti�
 | Twister (8) forward corridor thay Chebyshev vuông | `SkillCombatDirection.cs`, `SkillCombatRange.cs`, `SkillCombatCatalog.cs` |
 | Log `mode=0/1/2` trên `magic continue` | `MonsterCombatHandler.cs` |
 | Unit tests 36 | `SkillCombatRangeTests`, `SkillCombatDirectionTests` |
-| Doc checklist SSOT | `docs/android/SKILL-COMBAT-CHECKLIST.md` |
+| Doc checklist SSOT | `docs/android/SKILL-QA-CHECKLIST.md` |
 
 **QA:** deploy `--host-build` → Lốc log `mode=2`, `hits` thấp; Evil Spirit vẫn `mode=0`.
 
@@ -58,10 +58,9 @@ Nhật ký thay đổi **skill combat mobile (MG)** + hạ tầng QA server. Ti�
 
 | Thay đổi | Path |
 |----------|------|
-| Rollout plan + animation layers | `docs/android/SKILL-COMBAT-ROLLOUT-PLAN.md` |
-| Skill matrix CSV | `docs/android/SKILL-MATRIX.csv` |
+| Skill QA CSV (286 skill) | `docs/android/SKILL-QA-CHECKLIST.csv` |
 | Mobile skill guide + **PC→mobile input §4** | `docs/android/MOBILE-SKILL-COMBAT-GUIDE.md` |
-| Skill checklist done/chưa + test | `docs/android/SKILL-COMBAT-CHECKLIST.md` |
+| Skill checklist done/chưa + test | `docs/android/SKILL-QA-CHECKLIST.md` |
 | ANDROID-INPUT bảng gesture | `docs/android/ANDROID-INPUT.md` |
 | QA MG (mới) | `docs/qa/M9-mg-skill-combat.md` |
 | Xóa 27 wrapper trùng `scripts/*.sh` | Chỉ `scripts/{docker,db,android,host,smoke,spawn}/` |

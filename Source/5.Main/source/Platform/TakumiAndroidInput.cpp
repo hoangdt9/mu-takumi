@@ -99,6 +99,12 @@ struct ScopedWorldSkillAimMouse
 
     ScopedWorldSkillAimMouse()
     {
+        // Latched auto-channel must not reuse attack-button UI coords (wrong facing → server hits=0).
+        if (g_worldSkillChannelLatched)
+        {
+            return;
+        }
+
         // Finger id is cleared on touch-up before deferred melee; downMs stays until the next gesture.
         if (g_worldSkillTouch.downMs == 0)
         {
@@ -375,6 +381,8 @@ void PulseAndroidSkillAttack(const bool holdRightButton)
     }
 }
 
+bool TrySelectNearestAttackableMonster();
+
 void StopWorldSkillChannel()
 {
     g_worldSkillChannelHold = false;
@@ -508,11 +516,8 @@ bool PrepareWorldSkillTarget(int skillType, WorldSkillTargetKind& outKind)
 
     if (IsDirectionChannelSkillType(skillType))
     {
-        const int previousTarget = SelectedCharacter;
-        SelectedCharacter = -1;
-        if (!CheckTarget(Hero))
+        if (!TakumiAndroid_ResolveDirectionChannelTarget(Hero))
         {
-            SelectedCharacter = previousTarget;
             return false;
         }
 
@@ -613,7 +618,7 @@ bool FireWorldSkillChannelTick(const char* reason)
         return false;
     }
 
-    PrimeHeroForSkillCast();
+    // Do not stop the hero between channel ticks — SetPlayerStop() cancels cast animation.
     SetupMovementSkillForCast(skillIndex);
     const bool castOk = CastDirectionChannelSkill(Hero, skillType, static_cast<BYTE>(skillIndex));
 
@@ -877,6 +882,13 @@ bool FireWorldSkillAttack(const char* reason)
     const int target = SelectedCharacter;
     const bool channelSkill = IsDirectionChannelSkillType(skillType);
 
+    const bool latchAutoChannel =
+        channelSkill && reason != nullptr && strcmp(reason, "double-tap") == 0;
+    if (latchAutoChannel)
+    {
+        g_worldSkillChannelLatched = true;
+    }
+
     const ScopedWorldSkillAimMouse aimGuard;
     PrimeHeroForSkillCast();
     SetupMovementSkillForCast(skillIndex);
@@ -894,6 +906,11 @@ bool FireWorldSkillAttack(const char* reason)
 
     if (!castOk)
     {
+        if (latchAutoChannel)
+        {
+            g_worldSkillChannelLatched = false;
+        }
+
         Hero->CurrentSkill = static_cast<BYTE>(previousSkillIndex);
         TAKUMI_SKILL_LOGW(
             "skill attack fail reason=%s skillIndex=%d skillType=%d",
@@ -916,11 +933,7 @@ bool FireWorldSkillAttack(const char* reason)
 
     if (channelSkill)
     {
-        if (strcmp(reason, "double-tap") == 0)
-        {
-            g_worldSkillChannelLatched = true;
-        }
-        else
+        if (!latchAutoChannel)
         {
             g_worldSkillChannelHold = true;
         }
@@ -987,6 +1000,33 @@ bool FireWorldSecondaryAction(const char* reason)
 }
 
 } // namespace
+
+bool TakumiAndroid_ResolveDirectionChannelTarget(CHARACTER* c)
+{
+    if (c == nullptr)
+    {
+        return false;
+    }
+
+    const int previousTarget = SelectedCharacter;
+    if (g_worldSkillChannelLatched && TrySelectNearestAttackableMonster())
+    {
+        const bool ok = CheckTarget(c);
+        if (!ok)
+        {
+            SelectedCharacter = previousTarget;
+        }
+        return ok;
+    }
+
+    SelectedCharacter = -1;
+    const bool ok = CheckTarget(c);
+    if (!ok)
+    {
+        SelectedCharacter = previousTarget;
+    }
+    return ok;
+}
 
 bool TakumiAndroid_HasActiveWorldSkillGesture()
 {

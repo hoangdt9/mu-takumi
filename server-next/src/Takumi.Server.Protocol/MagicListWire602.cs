@@ -81,9 +81,13 @@ public static class MagicListWire602
         byte Level { get; }
     }
 
-    /// <summary>MG / Duel Master QA kit: all combat skills with MG column in GameServer <c>Skill.txt</c>.</summary>
+    /// <summary>MG combat QA kit (30 skills, compact slots) — parity <c>017_seed_mg001</c>.</summary>
+    public static byte[] BuildMagicGladiatorCombatQa(byte maxLevel = 20) =>
+        Build(ListTypeNormal, CharacterSkillCatalog.ToMagicGladiatorCombatEntries(maxLevel));
+
+    /// <summary>Alias for MG class wire <c>0x60</c>.</summary>
     public static byte[] BuildMagicGladiatorFull(byte maxLevel = 20) =>
-        BuildForServerClass(0x60, maxLevel);
+        BuildMagicGladiatorCombatQa(maxLevel);
 
     public static byte[] BuildForServerClass(byte serverClass, byte maxLevel = 20)
     {

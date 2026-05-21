@@ -48,6 +48,9 @@
 #include "SummonSystem.h"
 #include "GMSwampOfQuiet.h"
 #include "w_MapHeaders.h"
+#if defined(__ANDROID__)
+#include "Platform/TakumiAndroidInput.h"
+#endif
 #include "DuelMgr.h"
 #include "ChangeRingManager.h"
 #include "NewUIGensRanking.h"
@@ -7910,6 +7913,53 @@ bool IsDirectionChannelSkillType(int skillType)
 	return false;
 }
 
+static void RestartPlayerSkillAction(OBJECT* o, const int action)
+{
+	if (o == nullptr || action < 0)
+	{
+		return;
+	}
+
+	if (o->CurrentAction == action)
+	{
+		o->AnimationFrame = 0.f;
+		o->PriorAnimationFrame = 0.f;
+		return;
+	}
+
+	SetAction(o, action);
+}
+
+static void ApplyDirectionChannelCastPresentation(CHARACTER* c, const int skillType)
+{
+	if (c == nullptr)
+	{
+		return;
+	}
+
+	OBJECT* o = &c->Object;
+	if (o->Type != MODEL_PLAYER)
+	{
+		SetPlayerMagic(c);
+		return;
+	}
+
+	switch (skillType)
+	{
+	case AT_SKILL_FLAME_STRIKE:
+		SetAttackSpeed();
+		RestartPlayerSkillAction(o, PLAYER_SKILL_FLAMESTRIKE);
+		break;
+	case AT_SKILL_GIGANTIC_STORM:
+		SetAttackSpeed();
+		RestartPlayerSkillAction(o, PLAYER_SKILL_GIGANTICSTORM);
+		break;
+	default:
+		SetPlayerMagic(c);
+		break;
+	}
+}
+
 bool CastDirectionChannelSkill(CHARACTER* c, int Skill, BYTE skillIndex)
 {
 	if (c == nullptr || Skill <= 0 || !IsDirectionChannelSkillType(Skill))
@@ -7939,7 +7989,11 @@ bool CastDirectionChannelSkill(CHARACTER* c, int Skill, BYTE skillIndex)
 		return false;
 	}
 
+#if defined(__ANDROID__)
+	const bool hadTarget = TakumiAndroid_ResolveDirectionChannelTarget(c);
+#else
 	const bool hadTarget = CheckTarget(c);
+#endif
 	if (!hadTarget)
 	{
 		c->CurrentSkill = previousSkillIndex;
@@ -7969,7 +8023,7 @@ bool CastDirectionChannelSkill(CHARACTER* c, int Skill, BYTE skillIndex)
 		0,
 		0xffff,
 		&o->m_bySkillSerialNum);
-	SetPlayerMagic(c);
+	ApplyDirectionChannelCastPresentation(c, Skill);
 
 	c->Skill = Skill;
 	c->AttackTime = 1;

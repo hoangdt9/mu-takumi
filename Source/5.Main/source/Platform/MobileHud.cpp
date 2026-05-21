@@ -12,6 +12,7 @@
 #include "NewUIMessageBox.h"
 #include "NewUIMyInventory.h"
 #include "NewUICharacterInfoWindow.h"
+#include "NewUIMoveCommandWindow.h"
 
 extern int DisplayHeight;
 
@@ -54,7 +55,7 @@ void MU_MobileLoadMainHudMode()
     }
 
     g_mobileHudModeLoaded = true;
-    g_mobileLegacyMainHud = true;
+    // g_mobileLegacyMainHud stays false (Mobile HUD) until config overrides.
 
     const std::string configPath = BuildHudModeConfigPath();
     FILE* file = fopen(configPath.c_str(), "rb");
@@ -246,11 +247,37 @@ bool MU_MobileHitTestMinimapCluster(float uiX, float uiY)
     return inCoordRow || inMinimapPanel;
 }
 
+bool MU_MobileHitTestMoveMapPanel(float uiX, float uiY)
+{
+    if (!MU_MobileIsModernMobileHudEnabled() || g_pNewUISystem == nullptr)
+    {
+        return false;
+    }
+
+    if (!g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_MOVEMAP)
+        || g_pMoveCommandWindow == nullptr)
+    {
+        return false;
+    }
+
+    const POINT pos = g_pMoveCommandWindow->GetPos();
+    const float left = static_cast<float>(pos.x);
+    const float top = static_cast<float>(pos.y);
+    const float width = static_cast<float>(g_pMoveCommandWindow->GetWindowWidth());
+    const float height = static_cast<float>(g_pMoveCommandWindow->GetWindowHeight());
+    return uiX >= left && uiX <= (left + width) && uiY >= top && uiY <= (top + height);
+}
+
 bool MU_MobileHitTestBlockingOverlay(float uiX, float uiY)
 {
     if (!MU_MobileIsModernMobileHudEnabled())
     {
         return false;
+    }
+
+    if (MU_MobileHitTestMoveMapPanel(uiX, uiY))
+    {
+        return true;
     }
 
     if (MU_MobileHitTestSidePanel(uiX, uiY))

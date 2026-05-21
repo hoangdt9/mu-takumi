@@ -9912,6 +9912,9 @@ extern int g_iKeyPadEnable;
 
 void RenderCursor()
 {
+#if defined(__ANDROID__) || defined(MU_IOS)
+	MU_AndroidSyncWorldTouchAimToMouse();
+#endif
    	EnableAlphaTest();
 	glColor3f(1.f,1.f,1.f);
 	
@@ -10012,8 +10015,16 @@ void RenderCursor()
     }
 	else
 	{
-		if(!MouseLButton)
+#if defined(__ANDROID__) || defined(MU_IOS)
+		const bool primaryCursorDown =
+			MouseLButton || MU_AndroidShouldShowPrimaryCursorDown();
+#else
+		const bool primaryCursorDown = MouseLButton;
+#endif
+		if (!primaryCursorDown)
+		{
 			RenderBitmap(BITMAP_CURSOR,(float)MouseX-2.f,(float)MouseY-2.f,24.f,24.f);
+		}
 		else
 		{
 			if(DontMove)

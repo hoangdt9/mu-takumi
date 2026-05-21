@@ -2460,6 +2460,10 @@ void SEASON3B::CNewUISkillList::Reset()
 	m_virtualSkillPickerOffsetY = 0.f;
 	m_virtualPickerAnchorCx = 0.f;
 	m_virtualPickerAnchorCy = 0.f;
+	m_skillPickerPanelX = 0.f;
+	m_skillPickerPanelY = 0.f;
+	m_skillPickerPanelW = 0.f;
+	m_skillPickerPanelH = 0.f;
 	m_legacyPickerTargetHotKey = -1;
 	m_virtualPickerTargetVisualSlot = -1;
 #endif
@@ -3154,6 +3158,10 @@ void SEASON3B::CNewUISkillList::SetSkillPickerOpen(bool open)
 		m_virtualSkillPickerOffsetY = 0.f;
 		m_virtualPickerAnchorCx = 0.f;
 		m_virtualPickerAnchorCy = 0.f;
+		m_skillPickerPanelX = 0.f;
+		m_skillPickerPanelY = 0.f;
+		m_skillPickerPanelW = 0.f;
+		m_skillPickerPanelH = 0.f;
 		m_virtualPickerTargetVisualSlot = -1;
 		ClearAndroidTouchSkillTooltip();
 #endif
@@ -3194,6 +3202,10 @@ uint64_t SEASON3B::CNewUISkillList::ComputeSkillPickerLayoutSig() const
 	mix((uint64_t)(int32_t)(m_virtualSkillPickerOffsetY * 1000.0f));
 	mix((uint64_t)(int32_t)(m_virtualPickerAnchorCx * 1000.0f));
 	mix((uint64_t)(int32_t)(m_virtualPickerAnchorCy * 1000.0f));
+	mix((uint64_t)(int32_t)(m_skillPickerPanelX * 1000.0f));
+	mix((uint64_t)(int32_t)(m_skillPickerPanelY * 1000.0f));
+	mix((uint64_t)(int32_t)(m_skillPickerPanelW * 1000.0f));
+	mix((uint64_t)(int32_t)(m_skillPickerPanelH * 1000.0f));
 	mix((uint64_t)m_virtualPickerTargetVisualSlot);
 #endif
 
@@ -3224,13 +3236,33 @@ void SEASON3B::CNewUISkillList::RebuildSkillPickerLayout()
 	const float height = 38.f;
 
 #if defined(__ANDROID__) || defined(MU_IOS)
-	// Modern HUD: compact grid above the tapped secondary skill button (legacy fan grid is off-screen).
+	// Modern HUD: grid left + above the long-pressed secondary ring (anchor = left-center of trigger).
 	if (m_virtualPickerTargetVisualSlot >= 0)
 	{
 		const int columns = 4;
+		constexpr float kGapLeft = 14.f;
+		constexpr float kGapAbove = 10.f;
+		constexpr float kAnchorButtonRadius = 24.f;
+		constexpr float kPanelPad = 8.f;
 		const float gridW = columns * width;
-		float startX = m_virtualPickerAnchorCx - gridW * 0.5f;
-		float startY = m_virtualPickerAnchorCy - height * 4.f - 28.f;
+
+		int skillCount = 0;
+		for (int i = 0; i < MAX_MAGIC; ++i)
+		{
+			if (LegacyPickerIncludeMagicArrayIndex(i))
+			{
+				++skillCount;
+			}
+		}
+
+		const int rowCount = (skillCount > 0)
+			? ((skillCount + columns - 1) / columns)
+			: 1;
+		const float gridH = rowCount * height;
+
+		float startX = m_virtualPickerAnchorCx - gridW - kGapLeft;
+		float startY = m_virtualPickerAnchorCy - kAnchorButtonRadius - kGapAbove - gridH;
+
 		const float maxStartX = 640.f - gridW - 4.f;
 		if (startX < 4.f)
 		{
@@ -3244,6 +3276,11 @@ void SEASON3B::CNewUISkillList::RebuildSkillPickerLayout()
 		{
 			startY = 40.f;
 		}
+
+		m_skillPickerPanelX = startX - kPanelPad;
+		m_skillPickerPanelY = startY - kPanelPad;
+		m_skillPickerPanelW = gridW + (2.f * kPanelPad);
+		m_skillPickerPanelH = gridH + (2.f * kPanelPad);
 
 		int col = 0;
 		int row = 0;
@@ -3271,6 +3308,11 @@ void SEASON3B::CNewUISkillList::RebuildSkillPickerLayout()
 		m_skillPickerLayoutDirty = false;
 		return;
 	}
+
+	m_skillPickerPanelX = 0.f;
+	m_skillPickerPanelY = 0.f;
+	m_skillPickerPanelW = 0.f;
+	m_skillPickerPanelH = 0.f;
 #endif
 
 	float FixX = (gProtect.m_MainInfo.IsVersion == 1) ? 75.f : 0.f;
@@ -3576,6 +3618,28 @@ void SEASON3B::CNewUISkillList::ClearVirtualPickerTargetVisualSlot()
 	m_virtualPickerTargetVisualSlot = -1;
 	m_virtualPickerAnchorCx = 0.f;
 	m_virtualPickerAnchorCy = 0.f;
+	m_skillPickerPanelX = 0.f;
+	m_skillPickerPanelY = 0.f;
+	m_skillPickerPanelW = 0.f;
+	m_skillPickerPanelH = 0.f;
+}
+
+bool SEASON3B::CNewUISkillList::TryGetAndroidSkillPickerPanelRect(
+	float& outX,
+	float& outY,
+	float& outW,
+	float& outH) const
+{
+	if (!m_bSkillList || m_skillPickerPanelW <= 0.f || m_skillPickerPanelH <= 0.f)
+	{
+		return false;
+	}
+
+	outX = m_skillPickerPanelX;
+	outY = m_skillPickerPanelY;
+	outW = m_skillPickerPanelW;
+	outH = m_skillPickerPanelH;
+	return true;
 }
 
 bool SEASON3B::CNewUISkillList::HitTestAndroidSkillPickerPanel(float uiX, float uiY) const
@@ -3583,6 +3647,19 @@ bool SEASON3B::CNewUISkillList::HitTestAndroidSkillPickerPanel(float uiX, float 
 	if (!m_bSkillList || CharacterAttribute == NULL)
 	{
 		return false;
+	}
+
+	float panelX = 0.f;
+	float panelY = 0.f;
+	float panelW = 0.f;
+	float panelH = 0.f;
+	if (TryGetAndroidSkillPickerPanelRect(panelX, panelY, panelW, panelH))
+	{
+		if (uiX >= panelX && uiX <= (panelX + panelW)
+			&& uiY >= panelY && uiY <= (panelY + panelH))
+		{
+			return true;
+		}
 	}
 
 #if TAKUMI_ANDROID_UI_SKILL_PICKER_CACHE
@@ -3785,9 +3862,79 @@ void SEASON3B::CNewUISkillList::RenderAndroidSkillPickerBackdrop() const
 
 	// Use standard alpha (not EnableAlphaBlend's GL_ONE,GL_ONE additive) or the world washes out white.
 	EnableAlphaTest();
-	RenderColor(0.f, 0.f, 640.f, 480.f, 0.55f, 1);
+	float panelX = 0.f;
+	float panelY = 0.f;
+	float panelW = 640.f;
+	float panelH = 480.f;
+	if (TryGetAndroidSkillPickerPanelRect(panelX, panelY, panelW, panelH))
+	{
+		RenderColor(panelX, panelY, panelW, panelH, 0.72f, 1);
+	}
+	else
+	{
+		RenderColor(0.f, 0.f, 640.f, 480.f, 0.55f, 1);
+	}
 	EndRenderColor();
 	glColor4f(1.f, 1.f, 1.f, 1.f);
+}
+
+void SEASON3B::CNewUISkillList::RenderAndroidSkillPickerCells()
+{
+	if (!m_bSkillList || CharacterAttribute == NULL || CharacterAttribute->SkillNumber <= 0)
+	{
+		return;
+	}
+
+	const float width = 32.f;
+	const float height = 38.f;
+
+#if TAKUMI_ANDROID_UI_SKILL_PICKER_CACHE
+	const uint64_t layoutSig = ComputeSkillPickerLayoutSig();
+	if (layoutSig != m_skillPickerLayoutSig)
+	{
+		m_skillPickerLayoutSig = layoutSig;
+		m_skillPickerLayoutDirty = true;
+	}
+	if (m_skillPickerLayoutDirty)
+	{
+		RebuildSkillPickerLayout();
+	}
+
+	for (size_t layoutIdx = 0; layoutIdx < m_skillPickerLayout.size(); ++layoutIdx)
+	{
+		const SkillPickerLayoutEntry& entry = m_skillPickerLayout[layoutIdx];
+		const float x = entry.x;
+		const float y = entry.y;
+		const int i = entry.slotIndex;
+
+		if (i == Hero->CurrentSkill)
+		{
+			SEASON3B::RenderImage(IMAGE_SKILLBOX_USE, x, y, width, height);
+		}
+		else
+		{
+			SEASON3B::RenderImage(IMAGE_SKILLBOX, x, y, width, height);
+		}
+
+		RenderSkillIcon(i, x + 6.f, y + 6.f, 20.f, 28.f);
+	}
+#endif
+}
+
+void SEASON3B::CNewUISkillList::RenderAndroidSkillPickerOverlay()
+{
+	if (!m_bSkillList || !MU_MobileIsModernMobileHudEnabled() || MU_MobileIsLegacyMainHudEnabled())
+	{
+		return;
+	}
+
+	RenderAndroidSkillPickerBackdrop();
+	RenderAndroidSkillPickerCells();
+
+	if (m_bRenderSkillInfo && m_pNewUI3DRenderMng)
+	{
+		m_pNewUI3DRenderMng->RenderUI2DEffect(INVENTORY_CAMERA_Z_ORDER, UI2DEffectCallback, this, 0, 0);
+	}
 }
 
 bool SEASON3B::CNewUISkillList::TryOpenLegacyMobileSkillAssignPicker(float uiX, float uiY)
@@ -4254,7 +4401,12 @@ bool SEASON3B::CNewUISkillList::Render()
 	gInterface.HidenCustom = m_bSkillList;
 
 #if defined(__ANDROID__) || defined(MU_IOS)
-	if (m_bSkillList)
+	const bool deferVirtualPickerToOverlay =
+		m_bSkillList
+		&& m_virtualPickerTargetVisualSlot >= 0
+		&& MU_MobileIsModernMobileHudEnabled()
+		&& !MU_MobileIsLegacyMainHudEnabled();
+	if (m_bSkillList && !deferVirtualPickerToOverlay)
 	{
 		RenderAndroidSkillPickerBackdrop();
 	}
@@ -4266,6 +4418,10 @@ bool SEASON3B::CNewUISkillList::Render()
 		{
 			width = 32; height = 38;
 
+#if defined(__ANDROID__) || defined(MU_IOS)
+			if (!deferVirtualPickerToOverlay)
+			{
+#endif
 #if TAKUMI_ANDROID_UI_SKILL_PICKER_CACHE
 			const uint64_t layoutSig = ComputeSkillPickerLayoutSig();
 			if (layoutSig != m_skillPickerLayoutSig)
@@ -4365,6 +4521,9 @@ bool SEASON3B::CNewUISkillList::Render()
 				}
 
 				RenderSkillIcon(i, cellDrawX + 6.f, cellDrawY + 6.f, 20.f, 28.f);
+			}
+#endif
+#if defined(__ANDROID__) || defined(MU_IOS)
 			}
 #endif
 			RenderPetSkill();
@@ -4913,6 +5072,7 @@ void SEASON3B::CNewUISkillList::RenderSkillIcon(
 
 		}
 
+#if !defined(__ANDROID__) && !defined(MU_IOS)
 		else if (useCircularDraw && circularRadiusUi > 0.5f)
 		{
 			const float uW = atlasW / 256.f;
@@ -4931,6 +5091,7 @@ void SEASON3B::CNewUISkillList::RenderSkillIcon(
 				0.f);
 		}
 		else
+#endif
 		{
 			RenderBitmap(iSkillIndex, x, y, width, height, fU, fV, atlasW / 256.f, atlasH / 256.f);
 		}

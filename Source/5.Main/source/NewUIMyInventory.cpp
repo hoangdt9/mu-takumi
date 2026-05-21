@@ -799,12 +799,6 @@ void CNewUIMyInventory::Render3D()
 {
 	for (int i = 0; i < MAX_EQUIPMENT_INDEX; i++)
 	{
-#if TAKUMI_ANDROID_UI_LIGHT_INVENTORY_ITEM_3D
-		if (m_iPointedSlotMuun == 1 || m_iPointedSlot < 0 || m_iPointedSlot != i)
-		{
-			continue;
-		}
-#endif
 		const ITEM* pEquippedItem = &CharacterMachine->Equipment[i];
 		if (pEquippedItem->Type >= 0)
 		{
@@ -834,12 +828,6 @@ void CNewUIMyInventory::Render3D()
 #if(HAISLOTRING)
 	for (int ii = 0; ii < 16; ii++)
 	{
-#if TAKUMI_ANDROID_UI_LIGHT_INVENTORY_ITEM_3D
-		if (m_iPointedSlotMuun != 1 || m_iPointedSlot != ii)
-		{
-			continue;
-		}
-#endif
 		const ITEM* pEquippedItemMuun = &CharacterMachine->EquipmentMuun[ii];
 		if (pEquippedItemMuun->Type >= 0)
 		{
@@ -2557,8 +2545,16 @@ bool CNewUIMyInventory::HandleInventoryActions(CNewUIInventoryCtrl * targetContr
 		const int iSourceIndex = pPickedItem->GetSourceLinealPos();
 		const int iTargetIndex = pPickedItem->GetTargetLinealPos(targetControl);
 		//gInterface.DrawMessage(1, "HandleInventoryActions %d -> %d %d", iSourceIndex, iTargetIndex, g_pMyInventoryExt->GetInventoryCtrl());
-		if (pPickedItem->GetOwnerInventory() == targetControl
-			|| g_pMyInventoryExt->GetInventoryCtrl()) // Movement between Inventory (and within extensions)
+		CNewUIInventoryCtrl* const pOwnerInventory = pPickedItem->GetOwnerInventory();
+		CNewUIInventoryCtrl* const pExtInventory =
+			(g_pMyInventoryExt != nullptr) ? g_pMyInventoryExt->GetInventoryCtrl() : nullptr;
+		CNewUIInventoryCtrl* const pMainInventory =
+			(g_pMyInventory != nullptr) ? g_pMyInventory->GetInventoryCtrl() : nullptr;
+		const bool inventoryFamilyMove =
+			(pOwnerInventory == targetControl)
+			|| (pOwnerInventory == pExtInventory && targetControl == pMainInventory)
+			|| (pOwnerInventory == pMainInventory && targetControl == pExtInventory);
+		if (inventoryFamilyMove) // main bag <-> expanded bag, or within one grid
 		{
 			
 			// Apply Jewels:

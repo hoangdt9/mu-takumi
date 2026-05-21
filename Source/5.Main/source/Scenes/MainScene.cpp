@@ -32,6 +32,7 @@
 #if defined(__ANDROID__) || defined(MU_IOS)
 #include "../Platform/MobileChatHud.h"
 #include "../Platform/MobileHud.h"
+#include "../Platform/MobilePlatform.h"
 #include <android/log.h>
 #if defined(MU_ANDROID_DISABLE_LOG)
 #define MAINSCENE_LOGI(...) ((void)0)
@@ -627,6 +628,9 @@ static void RenderMainSceneUI()
 {
     const Uint64 uiStart = MainScenePerfNow();
 
+#if defined(__ANDROID__) || defined(MU_IOS)
+    MU_AndroidSyncWorldTouchAimToMouse();
+#endif
     SelectObjects();
     BeginBitmap();
     RenderObjectDescription();

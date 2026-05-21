@@ -2933,6 +2933,9 @@ bool RenderMainScene()
 
 	const unsigned long long uiStart = MainScenePerfNow();
 
+#if defined(__ANDROID__) || defined(MU_IOS)
+    MU_AndroidSyncWorldTouchAimToMouse();
+#endif
     SelectObjects();
 	BeginBitmap();	
     RenderObjectDescription();

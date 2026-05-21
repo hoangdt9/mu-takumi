@@ -51,7 +51,10 @@ bool MU_MobileHitTestSidePanel(float uiX, float uiY);
 /** Modern HUD: coord strip + minimap panel (640×480 UI space). */
 bool MU_MobileHitTestMinimapCluster(float uiX, float uiY);
 
-/** True when (uiX, uiY) is under C/V panels or a message box (blocks minimap click-through). */
+/** True when (uiX, uiY) is under the Move Map (M) panel. */
+bool MU_MobileHitTestMoveMapPanel(float uiX, float uiY);
+
+/** True when (uiX, uiY) is under C/V/Move Map panels or a message box (blocks HUD click-through). */
 bool MU_MobileHitTestBlockingOverlay(float uiX, float uiY);
 
 #endif

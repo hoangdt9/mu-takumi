@@ -72,6 +72,10 @@ bool MU_AndroidIsVirtualJoystickEngaged();
 void MU_Android_StopJoystickMovementForCombat();
 /** True while the player is steering (joystick) — suppress auto-target / proximity combat. */
 bool MU_AndroidShouldSuppressCombatTargeting();
+/** True while a world-map finger is held (deferred tap); show LMB push cursor like PC. */
+bool MU_AndroidShouldShowPrimaryCursorDown();
+/** Pin MouseX/Y to active world-touch aim before SelectObjects / RenderCursor. */
+void MU_AndroidSyncWorldTouchAimToMouse();
 /** Per-frame cap for ProtocolCompiler packet drain (see SetMaxMessagePerCycle). */
 extern int g_MaxMessagePerCycle;
 /** True when touch (virtual 640×480 UI) is on joystick / attack / hotbar — not world combat gestures. */

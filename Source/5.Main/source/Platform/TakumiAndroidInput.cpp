@@ -781,14 +781,10 @@ bool FireWorldNpcTalk(const char* reason)
     return true;
 }
 
-bool FireWorldMeleeAttack(const char* reason)
+bool FireWorldPrimaryTap(const char* reason)
 {
-    if (!IsWorldSkillGestureScene())
-    {
-        return false;
-    }
-
-    if (!RefreshAttackableTargetAtMouse())
+    if (!IsWorldSkillGestureScene()
+        || IsWorldSkillGestureBlockedByUiAt(g_worldSkillTouch.downUiX, g_worldSkillTouch.downUiY))
     {
         return false;
     }
@@ -800,8 +796,10 @@ bool FireWorldMeleeAttack(const char* reason)
 
     StopWorldSkillChannel();
     g_worldSkillPendingMeleeMs = 0;
-
     g_worldSkillTouchConsumed = true;
+
+    const ScopedWorldSkillAimMouse aimGuard;
+    SelectObjects();
 
     MouseRButtonPush = false;
     MouseRButton = false;
@@ -810,19 +808,21 @@ bool FireWorldMeleeAttack(const char* reason)
     MouseLButtonPush = true;
     MouseLButton = true;
 
-    Attack(Hero);
+    MoveHero();
 
     MouseLButtonPush = false;
     MouseLButton = false;
 
     TAKUMI_SKILL_LOGI(
-        "melee attack ok reason=%s target=%d Mouse=%d,%d",
+        "primary tap ok reason=%s target=%d item=%d npc=%d Mouse=%d,%d",
         reason != nullptr ? reason : "?",
         SelectedCharacter,
+        SelectedItem,
+        SelectedNpc,
         MouseX,
         MouseY);
     g_ErrorReport.Write(
-        "[SkillAtk] melee ok reason=%s target=%d",
+        "[SkillAtk] primary tap reason=%s target=%d",
         reason != nullptr ? reason : "?",
         SelectedCharacter);
     return true;
@@ -989,6 +989,22 @@ bool TakumiAndroid_HasActiveWorldSkillGesture()
     return g_worldSkillTouch.finger != static_cast<SDL_FingerID>(-1);
 }
 
+bool MU_AndroidShouldShowPrimaryCursorDown()
+{
+    return TakumiAndroid_HasActiveWorldSkillGesture();
+}
+
+void MU_AndroidSyncWorldTouchAimToMouse()
+{
+    if (!TakumiAndroid_HasActiveWorldSkillGesture())
+    {
+        return;
+    }
+
+    MouseX = g_worldSkillTouch.aimMouseX;
+    MouseY = g_worldSkillTouch.aimMouseY;
+}
+
 void TakumiAndroid_DisarmSkillMouseForMovement()
 {
     // Joystick uses a separate finger: do not cancel an in-progress world long-press / channel.
@@ -1095,7 +1111,7 @@ void TakumiAndroid_ProcessWorldSkillFrame()
     }
 
     g_worldSkillPendingMeleeMs = 0;
-    FireWorldMeleeAttack("tap-delayed");
+    FireWorldPrimaryTap("tap-delayed");
 }
 
 void TakumiAndroid_ProcessInventoryUseFrame()
@@ -1265,8 +1281,8 @@ bool TakumiAndroid_HandleWorldSkillTouchDown(const SDL_TouchFingerEvent& touch)
     g_worldSkillTouch.downMs = MU_MobileGetTicks();
     g_worldSkillTouch.downUiX = uiX;
     g_worldSkillTouch.downUiY = uiY;
-    g_worldSkillTouch.aimMouseX = std::clamp(static_cast<int>(uiX), 0, 640);
-    g_worldSkillTouch.aimMouseY = std::clamp(static_cast<int>(uiY), 0, 480);
+    g_worldSkillTouch.aimMouseX = std::clamp(MouseX, 0, 640);
+    g_worldSkillTouch.aimMouseY = std::clamp(MouseY, 0, 480);
     g_worldSkillLongPressFired = false;
     g_worldSkillTouchConsumed = false;
     g_worldSkillPendingMeleeMs = 0;
@@ -1292,6 +1308,8 @@ bool TakumiAndroid_HandleWorldSkillTouchMove(const SDL_TouchFingerEvent& touch)
     float uiX = 0.0f;
     float uiY = 0.0f;
     TouchToVirtualUi(touch, uiX, uiY);
+    g_worldSkillTouch.aimMouseX = std::clamp(MouseX, 0, 640);
+    g_worldSkillTouch.aimMouseY = std::clamp(MouseY, 0, 480);
     const float dx = uiX - g_worldSkillTouch.downUiX;
     const float dy = uiY - g_worldSkillTouch.downUiY;
     if ((dx * dx) + (dy * dy) > (kWorldSkillLongPressCancelMoveUi * kWorldSkillLongPressCancelMoveUi))
@@ -1384,9 +1402,10 @@ bool TakumiAndroid_HandleWorldSkillTouchUp(const SDL_TouchFingerEvent& touch)
         }
 
         g_worldSkillPendingMeleeMs = nowMs;
-        TAKUMI_SKILL_LOGI("tap end deferred melee heldMs=%u ui=(%.0f,%.0f)", heldMs, uiX, uiY);
-        g_ErrorReport.Write("[SkillAtk] tap end deferred melee heldMs=%u", heldMs);
-        return false;
+        TAKUMI_SKILL_LOGI("tap end deferred primary heldMs=%u ui=(%.0f,%.0f)", heldMs, uiX, uiY);
+        g_ErrorReport.Write("[SkillAtk] tap end deferred primary heldMs=%u", heldMs);
+        // Suppress immediate LMB release; ProcessWorldSkillFrame fires PC left-click after double-tap window.
+        return true;
     }
 
     TAKUMI_SKILL_LOGI("tap end (no skill) heldMs=%u ui=(%.0f,%.0f)", heldMs, uiX, uiY);

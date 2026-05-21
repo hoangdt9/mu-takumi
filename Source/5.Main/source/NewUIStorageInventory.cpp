@@ -5,6 +5,9 @@
 #include "stdafx.h"
 #include "NewUIStorageInventory.h"
 #include "NewUISystem.h"
+#if defined(__ANDROID__) || defined(MU_IOS)
+#include "Platform/MobileHud.h"
+#endif
 #include "NewUICustomMessageBox.h"
 #include "ZzzInventory.h"
 #include "wsclientinline.h"
@@ -89,7 +92,12 @@ void CNewUIStorageInventory::Release()
 
 void CNewUIStorageInventory::SetPos(int x, int y)
 {
-
+#if defined(__ANDROID__) || defined(MU_IOS)
+	if (MU_MobileIsModernMobileHudEnabled())
+	{
+		y = MU_MobileGetSidePanelAnchorY(STORAGE_HEIGHT);
+	}
+#endif
 	m_Pos.x = x;
 	m_Pos.y = y;
 	if (m_pNewInventoryCtrl)

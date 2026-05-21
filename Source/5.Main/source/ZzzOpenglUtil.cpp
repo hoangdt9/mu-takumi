@@ -1581,27 +1581,8 @@ void RenderBitmap(int Texture,float x,float y,float Width,float Height,float u,f
 	}
 	if(Scale)
 	{
-#if defined(__ANDROID__) || defined(MU_IOS)
-		// Square skill/HUD icons: keep width==height on screen (avoid oval on tall phones).
-		if (std::fabs(Width - Height) < 0.01f)
-		{
-			const float scaledW = ConvertX(Width);
-			const float scaledH = ConvertY(Height);
-			const float uniform = (scaledW < scaledH) ? scaledW : scaledH;
-			if (StartScale)
-			{
-				x += (scaledW - uniform) * 0.5f;
-				y += (scaledH - uniform) * 0.5f;
-			}
-			Width = uniform;
-			Height = uniform;
-		}
-		else
-#endif
-		{
-			Width = ConvertX(Width);
-			Height = ConvertY(Height);
-		}
+		Width = ConvertX(Width);
+		Height = ConvertY(Height);
 	}
 
     BindTexture(Texture);

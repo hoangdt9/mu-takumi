@@ -13,6 +13,7 @@
 #define TAKUMI_ANDROID_UI_PERF 1
 #endif
 
+// Keep inventory grid/item rendering on legacy per-cell path (sparse/placeholder caused broken grids).
 #ifndef TAKUMI_ANDROID_UI_SPARSE_INVENTORY_GRID
 #define TAKUMI_ANDROID_UI_SPARSE_INVENTORY_GRID 0
 #endif

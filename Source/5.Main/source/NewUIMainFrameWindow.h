@@ -162,7 +162,9 @@ namespace SEASON3B
 		int GetVirtualPickerTargetVisualSlot() const;
 		void ClearVirtualPickerTargetVisualSlot();
 		bool HitTestAndroidSkillPickerPanel(float uiX, float uiY) const;
+		bool TryGetAndroidSkillPickerPanelRect(float& outX, float& outY, float& outW, float& outH) const;
 		void RenderAndroidSkillPickerBackdrop() const;
+		void RenderAndroidSkillPickerOverlay();
 		void UpdateAndroidTouchSkillTooltip(float uiX, float uiY);
 		void UpdateAndroidVirtualSlotSkillTooltip(int magicSlotIndex, float anchorCx, float anchorCy);
 		void ClearAndroidTouchSkillTooltip();
@@ -251,8 +253,13 @@ namespace SEASON3B
 		float m_virtualSkillPickerOffsetY;
 		float m_virtualPickerAnchorCx;
 		float m_virtualPickerAnchorCy;
+		float m_skillPickerPanelX;
+		float m_skillPickerPanelY;
+		float m_skillPickerPanelW;
+		float m_skillPickerPanelH;
 		int m_legacyPickerTargetHotKey;
 		int m_virtualPickerTargetVisualSlot;
+		void RenderAndroidSkillPickerCells();
 #endif
 	};
 

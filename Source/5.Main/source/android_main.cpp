@@ -1043,15 +1043,23 @@ bool GetAndroidMoveMapWindowPositionInternal(int panelWidth, int panelHeight, in
     }
 
     const int marginX = 12;
+    const int centeredX = (640 - panelWidth) / 2;
+    const int maxX = std::max(marginX, 640 - panelWidth - marginX);
+    *outX = std::clamp(centeredX, marginX, maxX);
+
+#if defined(__ANDROID__) || defined(MU_IOS)
+    if (MU_MobileIsModernMobileHudEnabled())
+    {
+        *outY = MU_MobileGetSidePanelAnchorY(panelHeight);
+        return true;
+    }
+#endif
+
     const int topReserved = 72;
     const int bottomReserved = 66;
     const int preferredY = 78;
-    const int centeredX = (640 - panelWidth) / 2;
-    const int maxX = std::max(marginX, 640 - panelWidth - marginX);
     const int minY = topReserved;
     const int maxY = std::max(minY, 480 - panelHeight - bottomReserved);
-
-    *outX = std::clamp(centeredX, marginX, maxX);
     *outY = std::clamp(preferredY, minY, maxY);
     return true;
 }
@@ -1461,6 +1469,7 @@ static void TickLegacySkillHotBarLongPress(uint32_t nowMs)
     if (g_pSkillList->TryOpenLegacyMobileSkillAssignPickerForHotKey(hk))
     {
         g_legacySkillHotBarPendingTouch.pickerOpenedFromHold = true;
+        g_virtualPickerOpenFingerId = g_legacySkillHotBarPendingTouch.fingerId;
     }
     else
     {
@@ -2433,14 +2442,18 @@ bool HandleVirtualPickerFingerDown(const SDL_TouchFingerEvent& touch)
     float uiY = 0.0f;
     TouchToVirtualUi(touch, uiX, uiY);
 
-    const int skillIndex = g_pSkillList->HitTestAndroidTouchSkillPicker(uiX, uiY);
-    if (skillIndex < 0)
+    if (!g_pSkillList->HitTestAndroidSkillPickerPanel(uiX, uiY))
     {
         return false;
     }
 
-    g_virtualPickerTouch.fingerId = touch.fingerId;
-    g_virtualPickerTouch.skillIndex = skillIndex;
+    const int skillIndex = g_pSkillList->HitTestAndroidTouchSkillPicker(uiX, uiY);
+    if (skillIndex >= 0)
+    {
+        g_virtualPickerTouch.fingerId = touch.fingerId;
+        g_virtualPickerTouch.skillIndex = skillIndex;
+    }
+
     UpdateMobileSkillTooltips(uiX, uiY);
     return true;
 }
@@ -2465,6 +2478,11 @@ bool HandleVirtualPickerFingerMotion(const SDL_TouchFingerEvent& touch)
     }
 
     if (IsVirtualPickerTouchCaptured(touch.fingerId))
+    {
+        return true;
+    }
+
+    if (g_pSkillList->HitTestAndroidSkillPickerPanel(uiX, uiY))
     {
         return true;
     }
@@ -2511,14 +2529,20 @@ bool HandleVirtualPickerFingerUp(const SDL_TouchFingerEvent& touch)
         return true;
     }
 
-    // Long-press release on the secondary slot (lift before picking a list icon): keep popup open.
-    if (virtualAssignPicker
-        && g_virtualPickerOpenFingerId != static_cast<SDL_FingerID>(-1)
+    // Long-press release on the slot that opened the list (finger-up often lands on the circle, not the panel).
+    if (g_virtualPickerOpenFingerId != static_cast<SDL_FingerID>(-1)
         && touch.fingerId == g_virtualPickerOpenFingerId)
     {
         g_virtualPickerOpenFingerId = static_cast<SDL_FingerID>(-1);
         ClearVirtualPickerTouch();
         ClearVirtualSkillButtonPendingTouch();
+        ClearLegacySkillHotBarPendingTouch();
+        return true;
+    }
+
+    if (g_pSkillList->HitTestAndroidSkillPickerPanel(uiX, uiY))
+    {
+        ClearVirtualPickerTouch();
         return true;
     }
 
@@ -5937,9 +5961,10 @@ static void RenderVirtualMobileSkillIconInCircle(
         return;
     }
 
-    // Same atlas path as the picker (RenderSkillIconPreview + 20x28).
-    // Do not use RenderBitmapCircle / RenderSkillIconCircularPreview on GLES — glVertex4fv
-    // does not draw there and icons disappear. Stencil masks the rectangular preview instead.
+    // Android-only skill circle clip (stencil + 20x28 atlas rect). Do not use
+    // RenderBitmapCircle / RenderSkillIconCircularPreview on GLES — glVertex4fv does not draw.
+    // Inventory/storage grids use legacy RenderImage/RenderBitmap; never add global square
+    // scaling there (see DrawIconButtonUvSquare for HUD skill rings).
     BeginVirtualSkillIconCircleClip(centerCx, centerCy, clipRadius);
     ConfigureVirtualSkillIconNoBlendState();
     float iconX = 0.f;
@@ -6503,6 +6528,22 @@ void RenderVirtualPad()
 
     EndBitmap();
     }
+
+    if (g_pSkillList != nullptr
+        && g_pSkillList->IsSkillPickerOpen()
+        && MU_MobileIsModernMobileHudEnabled())
+    {
+        BeginBitmap();
+        EnableAlphaTest();
+        g_pSkillList->RenderAndroidSkillPickerOverlay();
+        EndBitmap();
+        GL_FlushPending();
+    }
+
+#if defined(__ANDROID__) || defined(MU_IOS)
+    EnableAlphaTest();
+    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+#endif
 }
 
 } // namespace
@@ -7933,6 +7974,23 @@ static void HandleSDLEvent(const SDL_Event& ev, int& screenW, int& screenH)
         g_iNoMouseTime = 0;
         UpdateMouseFromTouch(ev.tfinger, screenW, screenH);
         TakumiAndroid_HandleInventoryTouchDown(ev.tfinger);
+        if (g_pSkillList != nullptr
+            && g_pSkillList->IsSkillPickerOpen()
+            && !IsLegacyMainHud())
+        {
+            float pickerUiX = 0.0f;
+            float pickerUiY = 0.0f;
+            TouchToVirtualUi(ev.tfinger, pickerUiX, pickerUiY);
+            if (g_pSkillList->HitTestAndroidSkillPickerPanel(pickerUiX, pickerUiY))
+            {
+                HandleVirtualPickerFingerDown(ev.tfinger);
+                break;
+            }
+
+            CloseVirtualSkillPickerPopup();
+            ClearVirtualSkillButtonPendingTouch();
+            break;
+        }
         if (HandleVirtualPickerFingerDown(ev.tfinger))
         {
             break;
@@ -7942,8 +8000,15 @@ static void HandleSDLEvent(const SDL_Event& ev, int& screenW, int& screenH)
         {
             break;
         }
-        if (worldSkillFinger || TakumiAndroid_IsWorldSkillFinger(ev.tfinger.fingerId))
+        // World tap: track finger + aim for SelectObjects/cursor, but defer LMB until
+        // double-tap window ends (see TakumiAndroid_HandleWorldSkillTouchUp / ProcessWorldSkillFrame).
+        if (worldSkillFinger)
         {
+            if (g_primaryTouchFinger == static_cast<SDL_FingerID>(-1)
+                || ev.tfinger.fingerId == g_primaryTouchFinger)
+            {
+                g_primaryTouchFinger = ev.tfinger.fingerId;
+            }
             break;
         }
 #if defined(__ANDROID__) || defined(MU_IOS)
@@ -7988,6 +8053,19 @@ static void HandleSDLEvent(const SDL_Event& ev, int& screenW, int& screenH)
 
     case SDL_FINGERMOTION:
         g_seenFingerInput = true;
+        if (g_pSkillList != nullptr
+            && g_pSkillList->IsSkillPickerOpen()
+            && !IsLegacyMainHud())
+        {
+            float pickerUiX = 0.0f;
+            float pickerUiY = 0.0f;
+            TouchToVirtualUi(ev.tfinger, pickerUiX, pickerUiY);
+            if (g_pSkillList->HitTestAndroidSkillPickerPanel(pickerUiX, pickerUiY))
+            {
+                HandleVirtualPickerFingerMotion(ev.tfinger);
+                break;
+            }
+        }
         if (HandleVirtualPickerFingerMotion(ev.tfinger))
         {
             break;
@@ -8013,6 +8091,19 @@ static void HandleSDLEvent(const SDL_Event& ev, int& screenW, int& screenH)
         g_seenFingerInput = true;
         g_iNoMouseTime = 0;
         UpdateMouseFromTouch(ev.tfinger, screenW, screenH);
+        if (g_pSkillList != nullptr
+            && g_pSkillList->IsSkillPickerOpen()
+            && !IsLegacyMainHud())
+        {
+            if (HandleVirtualPickerFingerUp(ev.tfinger))
+            {
+                break;
+            }
+
+            CloseVirtualSkillPickerPopup();
+            ClearVirtualSkillButtonPendingTouch();
+            break;
+        }
         if (HandleVirtualPickerFingerUp(ev.tfinger))
         {
             break;

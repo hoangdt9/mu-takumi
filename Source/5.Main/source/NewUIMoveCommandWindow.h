@@ -109,6 +109,7 @@ namespace SEASON3B
 		DWORD GetMoveCommandKey();
 		int GetWindowWidth() const { return m_MapNameUISize.x; }
 		int GetWindowHeight() const { return m_MapNameUISize.y; }
+		POINT GetPos() const { return m_Pos; }
 
 		BOOL IsTheMapInDifferentServer(const int iFromMapIndex, const int iToMapIndex) const;
 		int GetMapIndexFromMovereq(const char *pszMapName);

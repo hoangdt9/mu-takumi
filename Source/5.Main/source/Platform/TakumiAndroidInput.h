@@ -28,7 +28,13 @@ bool TakumiAndroid_IsWorldSkillFinger(SDL_FingerID fingerId);
 /// True while a world long-press / channel gesture is active (may use a different finger than the joystick).
 bool TakumiAndroid_HasActiveWorldSkillGesture();
 
-/// Deferred single-tap melee (waits past double-tap window so double-tap does not melee first).
+/// Mobile cursor parity: LMB push sprite while world finger is down (deferred tap).
+bool MU_AndroidShouldShowPrimaryCursorDown();
+
+/// Keep hover targeting aligned with finger position before SelectObjects.
+void MU_AndroidSyncWorldTouchAimToMouse();
+
+/// Deferred single-tap primary click (walk / melee / pickup) after double-tap window.
 void TakumiAndroid_ProcessWorldSkillFrame();
 
 bool TakumiAndroid_HandleInventoryTouchDown(const SDL_TouchFingerEvent& touch);
@@ -40,7 +46,7 @@ bool TakumiAndroid_HandleInventoryTouchUp(const SDL_TouchFingerEvent& touch);
 /// Tracks world gestures; returns false so empty-map taps still set MouseLButton (click-to-walk).
 bool TakumiAndroid_HandleWorldSkillTouchDown(const SDL_TouchFingerEvent& touch);
 bool TakumiAndroid_HandleWorldSkillTouchMove(const SDL_TouchFingerEvent& touch);
-/// Returns true when skill gesture consumed the touch (suppress LMB release attack).
+/// Returns true when gesture consumed the touch or defers primary click (suppress immediate LMB pop).
 bool TakumiAndroid_HandleWorldSkillTouchUp(const SDL_TouchFingerEvent& touch);
 
 #else
@@ -53,6 +59,8 @@ inline void TakumiAndroid_ProcessInventoryUseFrame() {}
 inline void TakumiAndroid_DisarmSkillMouseForMovement() {}
 inline bool TakumiAndroid_IsWorldSkillFinger(SDL_FingerID) { return false; }
 inline bool TakumiAndroid_HasActiveWorldSkillGesture() { return false; }
+inline bool MU_AndroidShouldShowPrimaryCursorDown() { return false; }
+inline void MU_AndroidSyncWorldTouchAimToMouse() {}
 inline void TakumiAndroid_ProcessWorldSkillFrame() {}
 inline bool TakumiAndroid_HandleInventoryTouchDown(const void*) { return false; }
 inline bool TakumiAndroid_HandleInventoryTouchMove(const void*) { return false; }

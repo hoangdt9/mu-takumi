@@ -75,11 +75,6 @@ public static class PlayerWalkHandler
                     endY,
                     srcOk,
                     srcMatches);
-
-                // Force stand so mobile/PC clients stop local path prediction at map corners.
-                const byte standAction = 122; // AT_STAND1 (client OptionType)
-                var stand = PlayerActionWire602.Build(heroKey, ackAngle, standAction, heroKey);
-                await GamePortOutboundWire.WriteAsync(connection, protect, stand, ct).ConfigureAwait(false);
             }
         }
 

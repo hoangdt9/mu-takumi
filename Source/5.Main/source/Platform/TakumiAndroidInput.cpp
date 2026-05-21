@@ -99,14 +99,7 @@ struct ScopedWorldSkillAimMouse
 
     ScopedWorldSkillAimMouse()
     {
-        // Latched auto-channel must not reuse attack-button UI coords (wrong facing → server hits=0).
-        if (g_worldSkillChannelLatched)
-        {
-            return;
-        }
-
-        // Finger id is cleared on touch-up before deferred melee; downMs stays until the next gesture.
-        if (g_worldSkillTouch.downMs == 0)
+        if (g_worldSkillTouch.finger == static_cast<SDL_FingerID>(-1))
         {
             return;
         }
@@ -381,8 +374,6 @@ void PulseAndroidSkillAttack(const bool holdRightButton)
     }
 }
 
-bool TrySelectNearestAttackableMonster();
-
 void StopWorldSkillChannel()
 {
     g_worldSkillChannelHold = false;
@@ -516,8 +507,11 @@ bool PrepareWorldSkillTarget(int skillType, WorldSkillTargetKind& outKind)
 
     if (IsDirectionChannelSkillType(skillType))
     {
-        if (!TakumiAndroid_ResolveDirectionChannelTarget(Hero))
+        const int previousTarget = SelectedCharacter;
+        SelectedCharacter = -1;
+        if (!CheckTarget(Hero))
         {
+            SelectedCharacter = previousTarget;
             return false;
         }
 
@@ -618,7 +612,7 @@ bool FireWorldSkillChannelTick(const char* reason)
         return false;
     }
 
-    // Do not stop the hero between channel ticks — SetPlayerStop() cancels cast animation.
+    PrimeHeroForSkillCast();
     SetupMovementSkillForCast(skillIndex);
     const bool castOk = CastDirectionChannelSkill(Hero, skillType, static_cast<BYTE>(skillIndex));
 
@@ -794,8 +788,6 @@ bool FireWorldMeleeAttack(const char* reason)
         return false;
     }
 
-    const ScopedWorldSkillAimMouse aimGuard;
-
     if (!RefreshAttackableTargetAtMouse())
     {
         return false;
@@ -833,7 +825,6 @@ bool FireWorldMeleeAttack(const char* reason)
         "[SkillAtk] melee ok reason=%s target=%d",
         reason != nullptr ? reason : "?",
         SelectedCharacter);
-    g_worldSkillTouch.downMs = 0;
     return true;
 }
 
@@ -882,13 +873,6 @@ bool FireWorldSkillAttack(const char* reason)
     const int target = SelectedCharacter;
     const bool channelSkill = IsDirectionChannelSkillType(skillType);
 
-    const bool latchAutoChannel =
-        channelSkill && reason != nullptr && strcmp(reason, "double-tap") == 0;
-    if (latchAutoChannel)
-    {
-        g_worldSkillChannelLatched = true;
-    }
-
     const ScopedWorldSkillAimMouse aimGuard;
     PrimeHeroForSkillCast();
     SetupMovementSkillForCast(skillIndex);
@@ -906,11 +890,6 @@ bool FireWorldSkillAttack(const char* reason)
 
     if (!castOk)
     {
-        if (latchAutoChannel)
-        {
-            g_worldSkillChannelLatched = false;
-        }
-
         Hero->CurrentSkill = static_cast<BYTE>(previousSkillIndex);
         TAKUMI_SKILL_LOGW(
             "skill attack fail reason=%s skillIndex=%d skillType=%d",
@@ -933,7 +912,11 @@ bool FireWorldSkillAttack(const char* reason)
 
     if (channelSkill)
     {
-        if (!latchAutoChannel)
+        if (strcmp(reason, "double-tap") == 0)
+        {
+            g_worldSkillChannelLatched = true;
+        }
+        else
         {
             g_worldSkillChannelHold = true;
         }
@@ -1001,33 +984,6 @@ bool FireWorldSecondaryAction(const char* reason)
 
 } // namespace
 
-bool TakumiAndroid_ResolveDirectionChannelTarget(CHARACTER* c)
-{
-    if (c == nullptr)
-    {
-        return false;
-    }
-
-    const int previousTarget = SelectedCharacter;
-    if (g_worldSkillChannelLatched && TrySelectNearestAttackableMonster())
-    {
-        const bool ok = CheckTarget(c);
-        if (!ok)
-        {
-            SelectedCharacter = previousTarget;
-        }
-        return ok;
-    }
-
-    SelectedCharacter = -1;
-    const bool ok = CheckTarget(c);
-    if (!ok)
-    {
-        SelectedCharacter = previousTarget;
-    }
-    return ok;
-}
-
 bool TakumiAndroid_HasActiveWorldSkillGesture()
 {
     return g_worldSkillTouch.finger != static_cast<SDL_FingerID>(-1);
@@ -1041,18 +997,12 @@ void TakumiAndroid_DisarmSkillMouseForMovement()
         return;
     }
 
-    // Finger is up but tap-melee may still be in the double-tap wait window.
-    if (g_worldSkillPendingMeleeMs != 0)
-    {
-        return;
-    }
-
     StopWorldSkillChannel();
 
     g_worldSkillTouch.finger = static_cast<SDL_FingerID>(-1);
-    g_worldSkillTouch.downMs = 0;
     g_worldSkillLongPressFired = false;
     g_worldSkillTouchConsumed = false;
+    g_worldSkillPendingMeleeMs = 0;
     g_worldSkillLastShortTapMs = 0;
     g_worldSkillLastChannelTickMs = 0;
 
@@ -1145,7 +1095,6 @@ void TakumiAndroid_ProcessWorldSkillFrame()
     }
 
     g_worldSkillPendingMeleeMs = 0;
-    g_worldSkillTouch.downMs = 0;
     FireWorldMeleeAttack("tap-delayed");
 }
 
@@ -1312,7 +1261,6 @@ bool TakumiAndroid_HandleWorldSkillTouchDown(const SDL_TouchFingerEvent& touch)
     {
         return false;
     }
-
     g_worldSkillTouch.finger = touch.fingerId;
     g_worldSkillTouch.downMs = MU_MobileGetTicks();
     g_worldSkillTouch.downUiX = uiX;
@@ -1331,8 +1279,7 @@ bool TakumiAndroid_HandleWorldSkillTouchDown(const SDL_TouchFingerEvent& touch)
         uiY,
         MouseX,
         MouseY);
-    // Do not consume the touch: SDL path still sets MouseLButton for PC click-to-walk on empty map.
-    return false;
+    return true;
 }
 
 bool TakumiAndroid_HandleWorldSkillTouchMove(const SDL_TouchFingerEvent& touch)
@@ -1436,15 +1383,9 @@ bool TakumiAndroid_HandleWorldSkillTouchUp(const SDL_TouchFingerEvent& touch)
             return false;
         }
 
-        if (FireWorldMeleeAttack("tap"))
-        {
-            g_worldSkillTouch.downMs = 0;
-            return true;
-        }
-
-        // No attackable target: let SDL finger-up emit MouseLButtonPop (PC LMB click-to-walk / game attack path).
-        g_worldSkillTouch.downMs = 0;
-        TAKUMI_SKILL_LOGI("tap end passthrough ui=(%.0f,%.0f) heldMs=%u", uiX, uiY, heldMs);
+        g_worldSkillPendingMeleeMs = nowMs;
+        TAKUMI_SKILL_LOGI("tap end deferred melee heldMs=%u ui=(%.0f,%.0f)", heldMs, uiX, uiY);
+        g_ErrorReport.Write("[SkillAtk] tap end deferred melee heldMs=%u", heldMs);
         return false;
     }
 

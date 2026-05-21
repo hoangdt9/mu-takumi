@@ -31,9 +31,6 @@ bool TakumiAndroid_HasActiveWorldSkillGesture();
 /// Deferred single-tap melee (waits past double-tap window so double-tap does not melee first).
 void TakumiAndroid_ProcessWorldSkillFrame();
 
-/// Directional 0x1E channel: when auto/latched, aim at nearest attackable mob (not HUD tap coords).
-bool TakumiAndroid_ResolveDirectionChannelTarget(CHARACTER* c);
-
 bool TakumiAndroid_HandleInventoryTouchDown(const SDL_TouchFingerEvent& touch);
 bool TakumiAndroid_HandleInventoryTouchMove(const SDL_TouchFingerEvent& touch);
 /// Returns true when long-press or double-tap "use item" consumed the touch.

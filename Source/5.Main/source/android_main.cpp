@@ -2827,8 +2827,11 @@ void ApplyVirtualJoystickMovement()
         return;
     }
 
-    // Joystick walk wins over a held map long-press on another finger (see TakumiAndroid_DisarmSkillMouseForMovement).
-    InterruptVirtualCombatForMovement();
+    // World skill long-press may use another finger; keep channel + allow click-to-walk together.
+    if (!TakumiAndroid_HasActiveWorldSkillGesture())
+    {
+        InterruptVirtualCombatForMovement();
+    }
 
     const float driveRadius = kVirtualJoystickMouseMinRadius
         + (kVirtualJoystickMouseMaxRadius - kVirtualJoystickMouseMinRadius) * g_virtualJoystick.moveStrength;
@@ -7934,8 +7937,12 @@ static void HandleSDLEvent(const SDL_Event& ev, int& screenW, int& screenH)
         {
             break;
         }
-        TakumiAndroid_HandleWorldSkillTouchDown(ev.tfinger);
+        const bool worldSkillFinger = TakumiAndroid_HandleWorldSkillTouchDown(ev.tfinger);
         if (HandleVirtualFingerDown(ev.tfinger))
+        {
+            break;
+        }
+        if (worldSkillFinger || TakumiAndroid_IsWorldSkillFinger(ev.tfinger.fingerId))
         {
             break;
         }
@@ -7981,11 +7988,11 @@ static void HandleSDLEvent(const SDL_Event& ev, int& screenW, int& screenH)
 
     case SDL_FINGERMOTION:
         g_seenFingerInput = true;
-        UpdateMouseFromTouch(ev.tfinger, screenW, screenH);
         if (HandleVirtualPickerFingerMotion(ev.tfinger))
         {
             break;
         }
+        UpdateMouseFromTouch(ev.tfinger, screenW, screenH);
         if (TakumiAndroid_HandleWorldSkillTouchMove(ev.tfinger))
         {
             if (ev.tfinger.fingerId == g_primaryTouchFinger)
